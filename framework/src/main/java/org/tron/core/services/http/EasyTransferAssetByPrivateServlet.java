@@ -16,8 +16,8 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.common.crypto.ECKey;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 
 
 @Component
@@ -55,9 +55,9 @@ public class EasyTransferAssetByPrivateServlet extends RateLimiterServlet {
       transactionCapsule = wallet
           .createTransactionCapsule(builder.build(), ContractType.TransferAssetContract);
       transactionCapsule.sign(privateKey);
-      GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
+      GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
       responseBuild.setTransaction(transactionCapsule.getInstance());
-      responseBuild.setResult(retur);
+      responseBuild.setResult(result);
       response.getWriter().println(Util.printEasyTransferResponse(responseBuild.build(), visible));
     } catch (Exception e) {
       returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)

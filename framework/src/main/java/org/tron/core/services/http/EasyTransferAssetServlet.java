@@ -18,8 +18,8 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.JsonFormat.ParseException;
-import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 
 
 @Component
@@ -56,9 +56,9 @@ public class EasyTransferAssetServlet extends RateLimiterServlet {
       transactionCapsule = wallet
           .createTransactionCapsule(builder.build(), ContractType.TransferAssetContract);
       transactionCapsule.sign(privateKey);
-      GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
+      GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
       responseBuild.setTransaction(transactionCapsule.getInstance());
-      responseBuild.setResult(retur);
+      responseBuild.setResult(result);
       response.getWriter().println(Util.printEasyTransferResponse(responseBuild.build(), visible));
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
