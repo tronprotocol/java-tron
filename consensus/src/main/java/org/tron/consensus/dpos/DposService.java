@@ -86,7 +86,7 @@ public class DposService implements ConsensusInterface {
 
     if (consensusDelegate.getLatestBlockHeaderNumber() == 0) {
       List<ByteString> witnesses = new ArrayList<>();
-      consensusDelegate.getWitnessStore().getAllWitnesses().forEach(witnessCapsule -> {
+      consensusDelegate.getAllWitnesses().forEach(witnessCapsule -> {
         if (witnessCapsule.getIsJobs()) {
           witnesses.add(witnessCapsule.getAddress());
         }
@@ -143,10 +143,9 @@ public class DposService implements ConsensusInterface {
     return true;
   }
 
-
   private void updateSolidBlock() {
     List<Long> numbers = consensusDelegate.getActiveWitnesses().stream()
-        .map(address -> consensusDelegate.getWitnesseByAddress(address).getLatestBlockNum())
+        .map(address -> consensusDelegate.getWitness(address.toByteArray()).getLatestBlockNum())
         .sorted()
         .collect(Collectors.toList());
     long size = consensusDelegate.getActiveWitnesses().size();
@@ -163,7 +162,7 @@ public class DposService implements ConsensusInterface {
 
   public void sortWitness(List<ByteString> list) {
     list.sort(Comparator.comparingLong((ByteString b) ->
-        consensusDelegate.getWitnesseByAddress(b).getVoteCount())
+        consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
         .reversed()
         .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }

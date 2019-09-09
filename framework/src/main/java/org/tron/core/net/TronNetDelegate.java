@@ -184,9 +184,10 @@ public class TronNetDelegate {
   }
 
   public void processBlock(BlockCapsule block) throws P2pException {
+    BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
       try {
-        if (!freshBlockId.contains(block.getBlockId())) {
+        if (!freshBlockId.contains(blockId)) {
           if (block.getNum() <= getHeadBlockId().getNum()) {
             logger.warn("Receive a fork block {} witness {}, head {}",
                 block.getBlockId().getString(),
@@ -194,8 +195,8 @@ public class TronNetDelegate {
                 getHeadBlockId().getString());
           }
           dbManager.pushBlock(block);
-          freshBlockId.add(block.getBlockId());
-          logger.info("Success process block {}.", block.getBlockId().getString());
+          freshBlockId.add(blockId);
+          logger.info("Success process block {}.", blockId.getString());
           if (!backupServerStartFlag
               && System.currentTimeMillis() - block.getTimeStamp() < BLOCK_PRODUCED_INTERVAL) {
             backupServerStartFlag = true;
@@ -219,6 +220,7 @@ public class TronNetDelegate {
           | ReceiptCheckErrException
           | VMIllegalException
           | ZksnarkException e) {
+        logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
       }
     }
