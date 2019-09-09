@@ -340,6 +340,22 @@ public class RpcApiServiceOnSolidity implements Service {
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getRewardInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getRewardInfo(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getBrokerageInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getBrokerageInfo(request, responseObserver)
+      );
+    }
   }
 
   @Override

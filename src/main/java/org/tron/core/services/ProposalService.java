@@ -410,6 +410,7 @@ public class ProposalService {
         }
         case ALLOW_CHANGE_DELEGATION: {
           manager.getDynamicPropertiesStore().saveChangeDelegation(entry.getValue());
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(49);
           break;
         }
         default:

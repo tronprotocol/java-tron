@@ -1,8 +1,12 @@
 package org.tron.core.services;
 
 import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.WalletGrpc;
+import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -83,4 +87,19 @@ public class DelegationServiceTest {
     testPay(0);
     testWithdraw();
   }
+
+  private static String fullnode = "127.0.0.1:50051";
+
+  public static void testGrpc() {
+    WalletBlockingStub walletStub = WalletGrpc
+        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build());
+    BytesMessage.Builder builder = BytesMessage.newBuilder();
+    builder.setValue(ByteString.copyFromUtf8("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD"));
+    System.out
+        .println("getBrokerageInfo: " + walletStub.getBrokerageInfo(builder.build()).getNum());
+    System.out.println("getRewardInfo: " + walletStub.getRewardInfo(builder.build()).getNum());
+  }
+  
 }

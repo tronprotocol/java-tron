@@ -491,6 +491,36 @@ public class RpcApiService implements Service {
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getRewardInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      try {
+        long value = dbManager.getDelegationService().queryReward(request.getValue().toByteArray());
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(value);
+        responseObserver.onNext(builder.build());
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBrokerageInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      try {
+        long cycle = dbManager.getDynamicPropertiesStore().getCurrentCycleNumber();
+        long value = dbManager.getDelegationStore()
+            .getBrokerage(cycle, request.getValue().toByteArray());
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(value);
+        responseObserver.onNext(builder.build());
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
   }
 
   /**
@@ -1693,6 +1723,35 @@ public class RpcApiService implements Service {
           responseObserver);
     }
 
+    @Override
+    public void getRewardInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      try {
+        long value = dbManager.getDelegationService().queryReward(request.getValue().toByteArray());
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(value);
+        responseObserver.onNext(builder.build());
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBrokerageInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      try {
+        long cycle = dbManager.getDynamicPropertiesStore().getCurrentCycleNumber();
+        long value = dbManager.getDelegationStore()
+            .getBrokerage(cycle, request.getValue().toByteArray());
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(value);
+        responseObserver.onNext(builder.build());
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
   }
 
   @Override

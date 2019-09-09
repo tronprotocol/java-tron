@@ -406,7 +406,7 @@ service Wallet {
 
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
-  
+
   rpc ClearContractABI (ClearABIContract) returns (TransactionExtention) {
   }
 
@@ -629,6 +629,12 @@ service Wallet {
 
   rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
   };
+
+  rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
+  };
 };
 
 
@@ -761,6 +767,12 @@ service WalletSolidity {
       }
     };
   }
+
+  rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
+  };
 };
 
 service WalletExtension {
