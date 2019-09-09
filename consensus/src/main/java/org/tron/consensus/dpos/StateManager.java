@@ -64,13 +64,13 @@ public class StateManager {
   }
 
   public State getState(ByteString scheduledWitness) {
-    if (!dposService.getMiners().containsKey(scheduledWitness)) {
+    Miner miner = dposService.getMiners().get(scheduledWitness);
+    if (miner == null) {
       return State.NOT_MY_TURN;
     }
     if (consensusDelegate.getAllowMultiSign() == 1) {
-      Miner miner = dposService.getMiners().get(scheduledWitness);
       byte[] privateKeyAddress = miner.getPrivateKeyAddress().toByteArray();
-      AccountCapsule account = consensusDelegate.getAccountStore().get(scheduledWitness.toByteArray());
+      AccountCapsule account = consensusDelegate.getAccount(scheduledWitness.toByteArray());
       if (!Arrays.equals(privateKeyAddress, account.getWitnessPermissionAddress())) {
         return State.PERMISSION_ERROR;
       }
