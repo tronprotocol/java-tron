@@ -368,6 +368,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAdaptiveResourceLimitTargetRatio();
+    } catch (IllegalArgumentException e) {
+      this.saveAdaptiveResourceLimitTargetRatio(14400);//24 * 60 * 10
+    }
+
+    try {
       this.getTotalEnergyLimit();
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyLimit(50_000_000_000L);
@@ -584,11 +590,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveAdaptiveResourceLimitLimitMultiplier(1000);
     }
 
-    try {
-      this.getAdaptiveResourceLimitTargetRatio();
-    } catch (IllegalArgumentException e) {
-      this.saveAdaptiveResourceLimitTargetRatio(14400);//24 * 60 * 10
-    }
+
 
     try {
       this.getTotalEnergyAverageTime();
@@ -999,9 +1001,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
                     () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER"));
   }
 
-  public void saveAdaptiveResourceLimitTargetRatio(long ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO) {
+  public void saveAdaptiveResourceLimitTargetRatio(long adaptiveResourceLimitTargetRatio) {
     this.put(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO,
-            new BytesCapsule(ByteArray.fromLong(ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO)));
+            new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitTargetRatio)));
   }
 
   public long getAdaptiveResourceLimitTargetRatio() {
