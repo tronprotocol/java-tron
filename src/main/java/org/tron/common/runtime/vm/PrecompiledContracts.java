@@ -67,6 +67,7 @@ import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
@@ -234,9 +235,8 @@ public class PrecompiledContracts {
     private long vmShouldEndInUs;
 
 
-    public long getCPUTimeLeftInUs() {
-      long vmNowInUs = System.nanoTime() / 1000;
-      long left = getVmShouldEndInUs() - vmNowInUs;
+    public long getCPUTimeLeftInNanoSecond() {
+      long left = getVmShouldEndInUs() * Constant.ONE_THOUSAND - System.nanoTime();
       if (left <= 0) {
         throw Program.Exception.notEnoughTime("call");
       } else {
@@ -1320,9 +1320,9 @@ public class PrecompiledContracts {
       }
       name = ByteArray.subArray(name, 0, length);
 
-      long assetBalance = this.getDeposit().
-          getAccount(convertToTronAddress(new DataWord(targetAddress).getLast20Bytes())).
-          getAssetMap().get(ByteArray.toStr(name));
+      long assetBalance = this.getDeposit()
+          .getAccount(convertToTronAddress(new DataWord(targetAddress).getLast20Bytes()))
+          .getAssetMap().get(ByteArray.toStr(name));
 
       return Pair.of(true, new DataWord(Longs.toByteArray(assetBalance)).getData());
     }
@@ -1360,7 +1360,6 @@ public class PrecompiledContracts {
     @Data
     @AllArgsConstructor
     private static class ValidateSignResult {
-
       private Boolean res;
       private int nonce;
     }
@@ -1413,7 +1412,7 @@ public class PrecompiledContracts {
           futures.add(future);
         }
         boolean withNoTimeout = countDownLatch
-            .await(getCPUTimeLeftInUs() * 1000, TimeUnit.NANOSECONDS);
+            .await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
 
         if (!withNoTimeout) {
           logger.info("MultiValidateSign timeout");
