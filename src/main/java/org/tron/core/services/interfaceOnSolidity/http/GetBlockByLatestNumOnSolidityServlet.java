@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.services.http.GetBlockByLatestNumServlet;
+import org.tron.core.services.interfaceOnSolidity.SolidityHttpRequest;
 import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 @Component
@@ -16,11 +17,11 @@ public class GetBlockByLatestNumOnSolidityServlet extends GetBlockByLatestNumSer
   private WalletOnSolidity walletOnSolidity;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-    walletOnSolidity.futureGet(() -> super.doGet(request, response));
+    walletOnSolidity.futureGet(() -> super.doGet(new SolidityHttpRequest(request), response));
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    walletOnSolidity.futureGet(() -> super.doPost(request, response));
+    walletOnSolidity.futureGet(() -> super.doPost(new SolidityHttpRequest(request), response));
   }
 
 }
