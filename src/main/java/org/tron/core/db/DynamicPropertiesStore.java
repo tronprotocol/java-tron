@@ -792,7 +792,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(getUnchecked(WITNESS_127_PAY_PER_BLOCK))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElse(48000000L);
+        .orElse(16000000L);
   }
 
   public void saveWitnessStandbyAllowance(long allowance) {
