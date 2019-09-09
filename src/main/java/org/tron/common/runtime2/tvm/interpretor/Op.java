@@ -1,9 +1,12 @@
 package org.tron.common.runtime2.tvm.interpretor;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.EnumSet;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime2.tvm.ContractExecutor;
+import org.tron.common.runtime2.tvm.VMConstant;
 import org.tron.common.utils.ByteUtil;
 
 
@@ -36,7 +39,7 @@ public enum Op {
       new OpExecutor() {
         @Override
         public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
-          executor.spendEnergy(5, op.name());
+          executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
           DataWord word2 = executor.stackPop();
@@ -51,7 +54,7 @@ public enum Op {
       new OpExecutor() {
         @Override
         public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
-          executor.spendEnergy(3, op.name());
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
           DataWord word2 = executor.stackPop();
@@ -61,7 +64,255 @@ public enum Op {
           executor.step();
         }
       }
+  ),
+  DIV(0x04, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          word1.div(word2);
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  SDIV(0x05, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          word1.sDiv(word2);
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  MOD(0x06, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          word1.mod(word2);
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  SMOD(0x07, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          word1.sMod(word2);
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  ADDMOD(0x08, 3, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.MidTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+          DataWord word3 = executor.stackPop();
+          word1.addmod(word2, word3);
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  MULMOD(0x09, 3, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.MidTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+          DataWord word3 = executor.stackPop();
+          word1.mulmod(word2, word3);
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  EXP(0x0a, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+          int bytesOccupied = word2.bytesOccupied();
+          int energyCost = 10 + 10 * bytesOccupied;
+
+          executor.spendEnergy(energyCost, op.name());
+
+          word1.exp(word2);
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  SIGNEXTEND(0x0b, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+
+          executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          BigInteger k = word1.value();
+          if (k.compareTo(VMConstant._32_) < 0) {
+            DataWord word2 = executor.stackPop();
+
+            word2.signExtend(k.byteValue());
+            executor.stackPush(word2);
+          }
+          executor.step();
+        }
+      }
+  ),
+  LT(0X10, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          if (word1.value().compareTo(word2.value()) < 0) {
+            word1.and(DataWord.ZERO);
+            word1.getData()[31] = 1;
+          } else {
+            word1.and(DataWord.ZERO);
+          }
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  GT(0X11, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          if (word1.value().compareTo(word2.value()) > 0) {
+            word1.and(DataWord.ZERO);
+            word1.getData()[31] = 1;
+          } else {
+            word1.and(DataWord.ZERO);
+          }
+          executor.stackPush(word1);
+          executor.step();
+
+        }
+      }
+  ),
+  SLT(0X12, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          if (word1.sValue().compareTo(word2.sValue()) < 0) {
+            word1.and(DataWord.ZERO);
+            word1.getData()[31] = 1;
+          } else {
+            word1.and(DataWord.ZERO);
+          }
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  SGT(0X13, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          if (word1.sValue().compareTo(word2.sValue()) > 0) {
+            word1.and(DataWord.ZERO);
+            word1.getData()[31] = 1;
+          } else {
+            word1.and(DataWord.ZERO);
+          }
+          executor.stackPush(word1);
+          executor.step();
+
+        }
+      }
+  ),
+  EQ(0X14, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          if (word1.xor(word2).isZero()) {
+            word1.and(DataWord.ZERO);
+            word1.getData()[31] = 1;
+          } else {
+            word1.and(DataWord.ZERO);
+          }
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  ISZERO(0X15, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          if (word1.isZero()) {
+            word1.getData()[31] = 1;
+          } else {
+            word1.and(DataWord.ZERO);
+          }
+
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
   );
+
 
   private final byte opcode;
   private final int require;

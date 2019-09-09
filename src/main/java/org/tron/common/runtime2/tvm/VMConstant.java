@@ -33,5 +33,7 @@ public class VMConstant {
 
   public static final int MAX_CALLDEEP_DEPTH = 64;
 
+  public static final BigInteger _32_ = BigInteger.valueOf(32);
+
 
 }
