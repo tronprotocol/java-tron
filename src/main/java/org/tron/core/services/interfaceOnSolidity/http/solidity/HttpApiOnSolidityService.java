@@ -154,9 +154,8 @@ public class HttpApiOnSolidityService implements Service {
               "/walletsolidity/gettransactioncountbyblocknum");
 
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
-      context.addServlet(new ServletHolder(getBrokerageServlet),
-          "/walletsolidity/getBrokerageServlet");
-      context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getRewardServlet");
+      context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
+      context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
