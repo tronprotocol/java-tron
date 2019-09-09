@@ -1,5 +1,7 @@
 package org.tron.core.services;
 
+import static org.tron.core.services.ProposalService.ProposalType.WITNESS_PAY_PER_BLOCK;
+
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,7 +51,11 @@ public class ProposalServiceTest {
     Assert.assertFalse(result);
     //
     for (ProposalType proposalType : ProposalType.values()) {
-      proposal = Proposal.newBuilder().putParameters(proposalType.code, 1).build();
+      if (proposalType == WITNESS_PAY_PER_BLOCK) {
+        proposal = Proposal.newBuilder().putParameters(proposalType.code, 1648).build();
+      } else {
+        proposal = Proposal.newBuilder().putParameters(proposalType.code, 1).build();
+      }
       proposalCapsule = new ProposalCapsule(proposal);
       result = ProposalService.process(manager, proposalCapsule);
       Assert.assertTrue(result);
