@@ -17,15 +17,16 @@ public class SolidityHttpRequest extends ServletRequestHttpWrapper {
     private Map<String, String[]> multiMap = null;
     public SolidityHttpRequest(HttpServletRequest request) {
         super(request);
-        try {
-            String method = request.getMethod();
-            if ("GET".equals(method)) {
-                multiMap = request.getParameterMap();
-            } else if ("POST".equals(method))
-            this.reader = new SolidityBufferedReader(request.getReader(),
-                    request.getReader().lines().collect(Collectors.toList()));
-        } catch (IOException e) {
-            exception = e;
+        String method = request.getMethod();
+        if ("GET".equals(method)) {
+            multiMap = request.getParameterMap();
+        } else if ("POST".equals(method)) {
+            try {
+                this.reader = new SolidityBufferedReader(request.getReader(),
+                        request.getReader().lines().collect(Collectors.toList()));
+            } catch (IOException e) {
+                exception = e;
+            }
         }
     }
 
