@@ -66,7 +66,7 @@ public class DposTask {
     };
     produceThread = new Thread(runnable, "DPosMiner");
     produceThread.start();
-    logger.info("DPoS service stared.");
+    logger.info("DPoS task started.");
   }
 
   public void stop() {
@@ -74,7 +74,7 @@ public class DposTask {
     if (produceThread != null) {
       produceThread.interrupt();
     }
-    logger.info("DPoS service stopped.");
+    logger.info("DPoS task stopped.");
   }
 
   private State produceBlock() {

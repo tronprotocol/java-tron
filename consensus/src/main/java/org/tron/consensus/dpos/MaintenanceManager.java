@@ -21,9 +21,7 @@ import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.store.AccountStore;
 import org.tron.core.store.VotesStore;
-import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
@@ -53,9 +51,7 @@ public class MaintenanceManager {
   }
 
   public void doMaintenance() {
-    WitnessStore witnessStore = consensusDelegate.getWitnessStore();
     VotesStore votesStore = consensusDelegate.getVotesStore();
-    AccountStore accountStore = consensusDelegate.getAccountStore();
 
     tryRemoveThePowerOfTheGr();
 
@@ -68,23 +64,23 @@ public class MaintenanceManager {
     List<ByteString> currentWits = consensusDelegate.getActiveWitnesses();
 
     List<ByteString> newWitnessAddressList = new ArrayList<>();
-    witnessStore.getAllWitnesses()
+    consensusDelegate.getAllWitnesses()
         .forEach(witnessCapsule -> newWitnessAddressList.add(witnessCapsule.getAddress()));
 
     countWitness.forEach((address, voteCount) -> {
       byte[] witnessAddress = address.toByteArray();
-      WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
+      WitnessCapsule witnessCapsule = consensusDelegate.getWitness(witnessAddress);
       if (witnessCapsule == null) {
         logger.warn("Witness capsule is null. address is {}", Hex.toHexString(witnessAddress));
         return;
       }
-      AccountCapsule account = accountStore.get(witnessAddress);
+      AccountCapsule account = consensusDelegate.getAccount(witnessAddress);
       if (account == null) {
         logger.warn("Witness account is null. address is {}", Hex.toHexString(witnessAddress));
         return;
       }
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
-      witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+      consensusDelegate.saveWitness(witnessCapsule);
       logger.info("address is {} , countVote is {}", witnessCapsule.createReadableString(),
           witnessCapsule.getVoteCount());
     });
@@ -103,14 +99,14 @@ public class MaintenanceManager {
     List<ByteString> newWits = consensusDelegate.getActiveWitnesses();
     if (!CollectionUtils.isEqualCollection(currentWits, newWits)) {
       currentWits.forEach(address -> {
-        WitnessCapsule witnessCapsule = consensusDelegate.getWitnesseByAddress(address);
+        WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address.toByteArray());
         witnessCapsule.setIsJobs(false);
-        witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+        consensusDelegate.saveWitness(witnessCapsule);
       });
       newWits.forEach(address -> {
-        WitnessCapsule witnessCapsule = consensusDelegate.getWitnesseByAddress(address);
+        WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address.toByteArray());
         witnessCapsule.setIsJobs(true);
-        witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+        consensusDelegate.saveWitness(witnessCapsule);
       });
     }
 
@@ -155,11 +151,10 @@ public class MaintenanceManager {
     if (consensusDelegate.getRemoveThePowerOfTheGr() != 1) {
       return;
     }
-    WitnessStore witnessStore = consensusDelegate.getWitnessStore();
     dposService.getGenesisBlock().getWitnesses().forEach(witness -> {
-      WitnessCapsule witnessCapsule = witnessStore.get(witness.getAddress());
+      WitnessCapsule witnessCapsule = consensusDelegate.getWitness(witness.getAddress());
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() - witness.getVoteCount());
-      witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+      consensusDelegate.saveWitness(witnessCapsule);
     });
     consensusDelegate.saveRemoveThePowerOfTheGr(-1);
   }

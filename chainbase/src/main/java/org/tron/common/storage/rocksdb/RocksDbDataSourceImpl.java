@@ -26,6 +26,7 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.DbSourceInter;
@@ -49,14 +50,12 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings) {
     this.dataBaseName = name;
-    this.parentPath = parentPath;
     RocksDbSettings.setSettings(settings);
     initDB();
   }
 
   public RocksDbDataSourceImpl(String parentPath, String name) {
     this.dataBaseName = name;
-    this.parentPath = parentPath;
   }
 
   public Path getDbPath() {
@@ -221,6 +220,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         try {
           logger.debug("Opening database");
           final Path dbPath = getDbPath();
+
           if (!Files.isSymbolicLink(dbPath.getParent())) {
             Files.createDirectories(dbPath.getParent());
           }

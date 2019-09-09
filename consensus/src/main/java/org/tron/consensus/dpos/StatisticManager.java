@@ -22,11 +22,11 @@ public class StatisticManager {
     long blockNum = block.getBlockHeader().getRawData().getNumber();
     long blockTime = block.getBlockHeader().getRawData().getTimestamp();
     byte[] blockWitness = block.getBlockHeader().getRawData().getWitnessAddress().toByteArray();
-    wc = consensusDelegate.getWitnessStore().getUnchecked(blockWitness);
+    wc = consensusDelegate.getWitness(blockWitness);
     wc.setTotalProduced(wc.getTotalProduced() + 1);
     wc.setLatestBlockNum(blockNum);
     wc.setLatestSlotNum(dposSlot.getAbSlot(blockTime));
-    consensusDelegate.getWitnessStore().put(blockWitness, wc);
+    consensusDelegate.saveWitness(wc);
 
     long slot = 1;
     if (blockNum != 1) {
@@ -34,9 +34,9 @@ public class StatisticManager {
     }
     for (int i = 1; i < slot; ++i) {
       byte[] witness = dposSlot.getScheduledWitness(i).toByteArray();
-      wc = consensusDelegate.getWitnessStore().getUnchecked(witness);
+      wc = consensusDelegate.getWitness(witness);
       wc.setTotalMissed(wc.getTotalMissed() + 1);
-      consensusDelegate.getWitnessStore().put(witness, wc);
+      consensusDelegate.saveWitness(wc);
       logger.info("Current block: {}, witness: {} totalMissed: {}",
           blockNum, wc.createReadableString(), wc.getTotalMissed());
       consensusDelegate.applyBlock(false);

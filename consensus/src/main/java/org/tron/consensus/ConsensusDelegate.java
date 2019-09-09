@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -31,6 +32,10 @@ public class ConsensusDelegate {
 
   @Autowired
   private VotesStore votesStore;
+
+  public VotesStore getVotesStore() {
+    return votesStore;
+  }
 
   public int calculateFilledSlotsCount() {
     return dynamicPropertiesStore.calculateFilledSlotsCount();
@@ -64,10 +69,6 @@ public class ConsensusDelegate {
     return dynamicPropertiesStore.getMaintenanceSkipSlots();
   }
 
-  public WitnessCapsule getWitnesseByAddress(ByteString address) {
-    return witnessStore.get(address.toByteArray());
-  }
-
   public void saveActiveWitnesses(List<ByteString> addresses) {
     witnessScheduleStore.saveActiveWitnesses(addresses);
   }
@@ -76,16 +77,24 @@ public class ConsensusDelegate {
     return witnessScheduleStore.getActiveWitnesses();
   }
 
-  public WitnessStore getWitnessStore() {
-    return witnessStore;
+  public AccountCapsule getAccount(byte[] address) {
+    return accountStore.get(address);
   }
 
-  public VotesStore getVotesStore() {
-    return votesStore;
+  public void saveAccount(AccountCapsule accountCapsule) {
+    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
   }
 
-  public AccountStore getAccountStore() {
-    return accountStore;
+  public WitnessCapsule getWitness(byte[] address) {
+    return witnessStore.get(address);
+  }
+
+  public void saveWitness(WitnessCapsule witnessCapsule) {
+    witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+  }
+
+  public List<WitnessCapsule> getAllWitnesses() {
+    return witnessStore.getAllWitnesses();
   }
 
   public void saveStateFlag(int flag) {
