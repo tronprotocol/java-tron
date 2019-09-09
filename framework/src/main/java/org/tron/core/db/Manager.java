@@ -523,10 +523,8 @@ public class Manager {
   public void initGenesis() {
     this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
     if (this.containBlock(this.genesisBlock.getBlockId())) {
-      System.out.println("=====1");
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
     } else {
-      System.out.println("=====2");
       if (this.hasBlocks()) {
         logger.error(
             "genesis block modify, please delete database directory({}) and restart",
