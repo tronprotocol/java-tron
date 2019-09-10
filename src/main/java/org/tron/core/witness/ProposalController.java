@@ -197,7 +197,7 @@ public class ProposalController {
               manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(2880);
               manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(
                       manager.getDynamicPropertiesStore().getTotalEnergyLimit() / 2880);
-              manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitLimitMultiplier(50);
+              manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitMultiplier(50);
             }
           }
           break;
@@ -235,7 +235,7 @@ public class ProposalController {
             break;
         }
         case (29): {
-            manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitLimitMultiplier(entry.getValue());
+            manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitMultiplier(entry.getValue());
             break;
         }
 

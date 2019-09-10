@@ -81,7 +81,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
-    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER = "ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER".getBytes();
+    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER = "ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER".getBytes();
     private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO = "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO".getBytes();
   }
 
@@ -585,9 +585,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAdaptiveResourceLimitLimitMultiplier();
+      this.getAdaptiveResourceLimitMultiplier();
     } catch (IllegalArgumentException e) {
-      this.saveAdaptiveResourceLimitLimitMultiplier(1000);
+      this.saveAdaptiveResourceLimitMultiplier(1000);
     }
 
 
@@ -988,17 +988,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_AVERAGE_USAGE"));
   }
 
-  public void saveAdaptiveResourceLimitLimitMultiplier(long adaptiveResourceLimitLimitMultiplier) {
-    this.put(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER,
-            new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitLimitMultiplier)));
+  public void saveAdaptiveResourceLimitMultiplier(long adaptiveResourceLimitMultiplier) {
+    this.put(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER,
+            new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitMultiplier)));
   }
 
-  public long getAdaptiveResourceLimitLimitMultiplier() {
-    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER))
+  public long getAdaptiveResourceLimitMultiplier() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER))
             .map(BytesCapsule::getData)
             .map(ByteArray::toLong)
             .orElseThrow(
-                    () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER"));
+                    () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER"));
   }
 
   public void saveAdaptiveResourceLimitTargetRatio(long adaptiveResourceLimitTargetRatio) {
