@@ -198,7 +198,8 @@ public class ProposalController {
             if (manager.getForkController().pass(Parameter.ForkBlockVersionEnum.VERSION_3_6_5)) {
               //24 * 60 * 2 . one minute,1/2 total limit.
               manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(2880);
-              manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(manager.getDynamicPropertiesStore().getTotalEnergyLimit() / 2880);
+              manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(
+                      manager.getDynamicPropertiesStore().getTotalEnergyLimit() / 2880);
               manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitLimitMultiplier(50);
             }
           }
@@ -229,6 +230,18 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(entry.getValue());
           break;
         }
+        case (30): {
+            long ratio = 24 * 60 * entry.getValue();
+            manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(ratio);
+            manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(
+                    manager.getDynamicPropertiesStore().getTotalEnergyLimit() / ratio);
+            break;
+        }
+        case (31): {
+            manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitLimitMultiplier(entry.getValue());
+            break;
+        }
+
         default:
           break;
       }

@@ -370,7 +370,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAdaptiveResourceLimitTargetRatio();
     } catch (IllegalArgumentException e) {
-      this.saveAdaptiveResourceLimitTargetRatio(14400);//24 * 60 * 10
+      this.saveAdaptiveResourceLimitTargetRatio(14400);// 24 * 60 * 10,one minute 1/10 total limit
     }
 
     try {
@@ -927,7 +927,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
 
     long ratio = getAdaptiveResourceLimitTargetRatio();
-    saveTotalEnergyTargetLimit(totalEnergyLimit / ratio);// 24 * 60 * 10,one minute 1/10 total limit
+    saveTotalEnergyTargetLimit(totalEnergyLimit / ratio);
   }
 
   public void saveTotalEnergyLimit2(long totalEnergyLimit) {
