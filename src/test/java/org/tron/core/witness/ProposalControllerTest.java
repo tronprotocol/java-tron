@@ -2,6 +2,7 @@ package org.tron.core.witness;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
@@ -86,10 +88,14 @@ public class ProposalControllerTest {
     parameters.put(21L,1L);
     proposalCapsule.setParameters(parameters);
 
+    byte[] stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    dynamicPropertiesStore
+            .statsByVersion(Parameter.ForkBlockVersionEnum.VERSION_3_6_5.getValue(), stats);
     proposalController.setDynamicParameters(proposalCapsule);
 
     Assert.assertEquals(2880,dynamicPropertiesStore.getAdaptiveResourceLimitTargetRatio());
-    Assert.assertEquals(100_000_000_000L/2880,dynamicPropertiesStore.getTotalEnergyTargetLimit());
+    Assert.assertEquals(50_000_000_000L/2880,dynamicPropertiesStore.getTotalEnergyTargetLimit());
     Assert.assertEquals(50,dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
 
     //proposal 28

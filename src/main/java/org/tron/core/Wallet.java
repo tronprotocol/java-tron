@@ -923,7 +923,7 @@ public class Wallet {
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAdaptiveResourceLimitTargetRatio")
-            .setValue(dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitTargetRatio())
+            .setValue(dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitTargetRatio()/(24 * 60))
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
