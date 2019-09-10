@@ -73,6 +73,55 @@ public class ProposalControllerTest {
   }
 
   @Test
+  public void testDynamicEnergyAdaptiveParameters() {
+    ProposalCapsule proposalCapsule = new ProposalCapsule(
+            Proposal.newBuilder().build());
+    Map<Long, Long> parameters = new HashMap<>();
+
+    DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
+    Assert.assertEquals(14400,dynamicPropertiesStore.getAdaptiveResourceLimitTargetRatio());
+    Assert.assertEquals(1000,dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
+
+    //proposal 21
+    parameters.put(21L,1L);
+    proposalCapsule.setParameters(parameters);
+
+    proposalController.setDynamicParameters(proposalCapsule);
+
+    Assert.assertEquals(2880,dynamicPropertiesStore.getAdaptiveResourceLimitTargetRatio());
+    Assert.assertEquals(100_000_000_000L/2880,dynamicPropertiesStore.getTotalEnergyTargetLimit());
+    Assert.assertEquals(50,dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
+
+    //proposal 28
+    parameters.clear();
+    parameters.put(28L,100L);
+    proposalCapsule.setParameters(parameters);
+
+    proposalController.setDynamicParameters(proposalCapsule);
+
+    Assert.assertEquals(144000L,dynamicPropertiesStore.getAdaptiveResourceLimitTargetRatio());
+
+    //proposal 29
+    parameters.clear();
+    parameters.put(29L,100L);
+    proposalCapsule.setParameters(parameters);
+
+    proposalController.setDynamicParameters(proposalCapsule);
+
+    Assert.assertEquals(100L,dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
+
+    //proposal 19
+    parameters.clear();
+    parameters.put(19L,144000L);
+    proposalCapsule.setParameters(parameters);
+
+    proposalController.setDynamicParameters(proposalCapsule);
+
+    Assert.assertEquals(1L,dynamicPropertiesStore.getTotalEnergyTargetLimit());
+
+  }
+
+  @Test
   public void testProcessProposal() {
     ProposalCapsule proposalCapsule = new ProposalCapsule(
         Proposal.newBuilder().build());
