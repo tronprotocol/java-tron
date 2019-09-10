@@ -27,9 +27,4 @@ public class SolidityBufferedReader extends BufferedReader {
     public Stream<String> lines() {
         return lines.stream();
     }
-
-    @Override
-    public void close() throws IOException {
-        super.close();
-    }
 }
