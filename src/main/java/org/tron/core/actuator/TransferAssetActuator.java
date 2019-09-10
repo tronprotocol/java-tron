@@ -169,7 +169,7 @@ public class TransferAssetActuator extends AbstractActuator {
       //after TvmSolidity059 proposal, send trx to smartContract by actuator is not allowed.
       if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1
               && toAccount.getType() == AccountType.Contract) {
-        throw new ContractValidateException("Cannot transfer trx to smartContract.");
+        throw new ContractValidateException("Cannot transfer asset to smartContract.");
       }
 
       if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
