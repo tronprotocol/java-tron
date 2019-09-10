@@ -227,14 +227,14 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(entry.getValue());
           break;
         }
-        case (30): {
+        case (28): {
             long ratio = 24 * 60 * entry.getValue();
             manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(ratio);
             manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(
                     manager.getDynamicPropertiesStore().getTotalEnergyLimit() / ratio);
             break;
         }
-        case (31): {
+        case (29): {
             manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitLimitMultiplier(entry.getValue());
             break;
         }
