@@ -5,7 +5,6 @@ import static java.lang.Long.max;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
@@ -68,7 +67,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     result = Math.min(
         Math.max(result, totalEnergyLimit),
-        totalEnergyLimit * dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitLimitMultiplier()
+        totalEnergyLimit * dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitMultiplier()
     );
 
     dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);

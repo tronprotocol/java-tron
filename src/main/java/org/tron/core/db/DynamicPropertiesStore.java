@@ -585,7 +585,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAdaptiveResourceLimitLimitMultiplier();
+      this.getAdaptiveResourceLimitMultiplier();
     } catch (IllegalArgumentException e) {
       this.saveAdaptiveResourceLimitMultiplier(1000);
     }
@@ -993,7 +993,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitMultiplier)));
   }
 
-  public long getAdaptiveResourceLimitLimitMultiplier() {
+  public long getAdaptiveResourceLimitMultiplier() {
     return Optional.ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER))
             .map(BytesCapsule::getData)
             .map(ByteArray::toLong)
