@@ -339,6 +339,26 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (28): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() < 1 || entry.getValue() > 1_000) {
+          throw new ContractValidateException(
+                  "Bad chain parameter value,valid range is [1,1_000]");
+        }
+        break;
+      }
+      case (29): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() < 1 || entry.getValue() > 10_000L) {
+          throw new ContractValidateException(
+                  "Bad chain parameter value,valid range is [1,10_000]");
+        }
+        break;
+      }
       default:
         break;
     }
