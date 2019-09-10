@@ -1,5 +1,7 @@
 package org.tron.common.runtime2.tvm.interpretor;
 
+import static org.tron.common.crypto.Hash.sha3;
+
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -59,7 +61,7 @@ public enum Op {
           DataWord word1 = executor.stackPop();
           DataWord word2 = executor.stackPop();
 
-          word1.mul(word2);
+          word1.sub(word2);
           executor.stackPush(word1);
           executor.step();
         }
@@ -163,7 +165,7 @@ public enum Op {
           DataWord word1 = executor.stackPop();
           DataWord word2 = executor.stackPop();
           int bytesOccupied = word2.bytesOccupied();
-          int energyCost = 10 + 10 * bytesOccupied;
+          int energyCost = Costs.EXP_ENERGY + Costs.EXP_BYTE_ENERGY * bytesOccupied;
 
           executor.spendEnergy(energyCost, op.name());
 
@@ -294,7 +296,7 @@ public enum Op {
         }
       }
   ),
-  ISZERO(0X15, 2, 1,
+  ISZERO(0X15, 1, 1,
       new OpExecutor() {
         @Override
         public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
@@ -311,8 +313,162 @@ public enum Op {
           executor.step();
         }
       }
-  );
+  ),
+  AND(0X16, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          word1.and(word2);
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  OR(0X17, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          word1.or(word2);
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  XOR(0X18, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          word1.xor(word2);
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  NOT(0X19, 1, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          word1.bnot();
+          executor.stackPush(word1);
+          executor.step();
+        }
+      }
+  ),
+  BYTE(0X1a, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          final DataWord result;
+          if (word1.value().compareTo(VMConstant._32_) < 0) {
+            byte tmp = word2.getData()[word1.intValue()];
+            word2.and(DataWord.ZERO);
+            word2.getData()[31] = tmp;
+            result = word2;
+          } else {
+            result = new DataWord();
+          }
+
+          executor.stackPush(result);
+          executor.step();
+        }
+      }
+  ),
+  SHL(0X1b, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          final DataWord result = word2.shiftLeft(word1);
+
+          executor.stackPush(result);
+          executor.step();
+        }
+      }
+  ),
+  SHR(0X1c, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          final DataWord result = word2.shiftRight(word1);
+
+          executor.stackPush(result);
+          executor.step();
+        }
+      }
+  ),
+  SAR(0X1d, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+
+          DataWord word1 = executor.stackPop();
+          DataWord word2 = executor.stackPop();
+
+          final DataWord result = word2.shiftRightSigned(word1);
+
+          executor.stackPush(result);
+          executor.step();
+        }
+      }
+  ),
+  SHA3(0X20, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+          DataWord memOffsetData = executor.stackPop();
+          DataWord lengthData = executor.stackPop();
+
+          long energy = Costs.SHA3 + calcMemEnergy(executor.getMemSize(),
+              memNeeded(memOffsetData, lengthData), 0, op);
+          long chunkUsed = (lengthData.longValueSafe() + 31) / 32;
+          energy += chunkUsed * Costs.SHA3_WORD;
+
+          executor.spendEnergy(energy, op.name());
+
+          byte[] buffer = executor
+              .memoryChunk(memOffsetData.intValueSafe(), lengthData.intValueSafe());
+
+          byte[] encoded = sha3(buffer);
+          DataWord word = new DataWord(encoded);
+
+          executor.stackPush(word);
+          executor.step();
+        }
+      }
+  );
 
   private final byte opcode;
   private final int require;
