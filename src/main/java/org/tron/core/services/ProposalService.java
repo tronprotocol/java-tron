@@ -86,7 +86,11 @@ public class ProposalService {
       return null;
     }
 
-    public long code;
+    private long code;
+
+    public long getCode() {
+      return code;
+    }
   }
 
   public static void validator(Manager manager, long code, long value)
@@ -278,7 +282,7 @@ public class ProposalService {
       case ALLOW_TVM_SOLIDITY_059: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
 
-          throw new ContractValidateException("Bad chain parameter id");
+          throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1) {
           throw new ContractValidateException(
@@ -293,7 +297,7 @@ public class ProposalService {
       }
       case ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
-          throw new ContractValidateException("Bad chain parameter id");
+          throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value < 1 || value > 1_000) {
           throw new ContractValidateException(
@@ -303,7 +307,7 @@ public class ProposalService {
       }
       case ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
-          throw new ContractValidateException("Bad chain parameter id");
+          throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value < 1 || value > 10_000L) {
           throw new ContractValidateException(

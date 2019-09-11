@@ -37,7 +37,7 @@ public class ProposalServiceTest {
   public void test() {
     Set<Long> set = new HashSet<>();
     for (ProposalType proposalType : ProposalType.values()) {
-      Assert.assertTrue(set.add(proposalType.code));
+      Assert.assertTrue(set.add(proposalType.getCode()));
     }
 
     Proposal proposal = Proposal.newBuilder().putParameters(1, 1).build();
@@ -52,9 +52,9 @@ public class ProposalServiceTest {
     //
     for (ProposalType proposalType : ProposalType.values()) {
       if (proposalType == WITNESS_PAY_PER_BLOCK) {
-        proposal = Proposal.newBuilder().putParameters(proposalType.code, 1648).build();
+        proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 1648).build();
       } else {
-        proposal = Proposal.newBuilder().putParameters(proposalType.code, 1).build();
+        proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 1).build();
       }
       proposalCapsule = new ProposalCapsule(proposal);
       result = ProposalService.process(manager, proposalCapsule);
