@@ -29,6 +29,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueLis
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.TriggerConstantContractOnSolidityServlet;
 
 @Slf4j(topic = "API")
 public class HttpApiOnSolidityService implements Service {
@@ -88,6 +89,8 @@ public class HttpApiOnSolidityService implements Service {
   private GetBrokerageServlet getBrokerageServlet;
   @Autowired
   private GetRewardServlet getRewardServlet;
+  @Autowired
+  private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
 
   @Override
   public void init() {
@@ -141,6 +144,8 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumOnSolidityServlet),
           "/walletsolidity/getblockbylatestnum");
+      context.addServlet(new ServletHolder(triggerConstantContractOnSolidityServlet),
+          "/walletsolidity/triggerconstantcontract");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),

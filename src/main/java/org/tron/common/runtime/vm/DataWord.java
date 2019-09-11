@@ -17,18 +17,15 @@
  */
 package org.tron.common.runtime.vm;
 
-import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.db.ByteArrayWrapper;
-
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
 
 /**
  * DataWord is the 32-byte array representation of a 256-bit number
@@ -45,7 +42,7 @@ public class DataWord implements Comparable<DataWord> {
   public static final BigInteger _2_256 = BigInteger.valueOf(2).pow(256);
   public static final BigInteger MAX_VALUE = _2_256.subtract(BigInteger.ONE);
   // TODO not safe
-  public static final DataWord ZERO = new DataWord(new byte[32]);      // don't push it in to the stack
+  public static final DataWord ZERO = new DataWord(new byte[WORD_SIZE]);      // don't push it in to the stack
 
   public static DataWord ONE() {
     return DataWord.of((byte)1);
@@ -510,5 +507,34 @@ public class DataWord implements Comparable<DataWord> {
 
   public static long sizeInWords(long bytesSize) {
     return bytesSize == 0 ? 0 : (bytesSize - 1) / WORD_SIZE + 1;
+  }
+
+  public static DataWord[] parseArray(byte[] data) {
+    int len = data.length / WORD_SIZE;
+    DataWord[] words = new DataWord[len];
+    for (int i = 0; i < len; i++) {
+      byte[] bytes = Arrays.copyOfRange(data, i * WORD_SIZE, (i + 1) * WORD_SIZE);
+      words[i] = new DataWord(bytes);
+    }
+    return words;
+  }
+
+  public static boolean equalAddressByteArray(byte[] arr1, byte[] arr2) {
+    if (arr1 == arr2) {
+      return true;
+    }
+    if (arr1 == null || arr2 == null || arr1.length < 20 || arr2.length < 20) {
+      return false;
+    }
+
+    int i = arr1.length - 20;
+    int j = arr2.length - 20;
+
+    for (; i < arr1.length && j < arr2.length; i++, j++) {
+      if (arr1[i] != arr2[j]) {
+        return false;
+      }
+    }
+    return true;
   }
 }

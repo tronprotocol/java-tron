@@ -21,6 +21,7 @@ public class AccountIdIndexStoreTest {
   private static String dbPath = "output_AccountIndexStore_test";
   private static TronApplicationContext context;
   private static AccountIdIndexStore accountIdIndexStore;
+  private static Random random = new Random();
   private static final byte[] ACCOUNT_ADDRESS_ONE = randomBytes(16);
   private static final byte[] ACCOUNT_ADDRESS_TWO = randomBytes(16);
   private static final byte[] ACCOUNT_ADDRESS_THREE = randomBytes(16);
@@ -131,7 +132,7 @@ public class AccountIdIndexStoreTest {
   public static byte[] randomBytes(int length) {
     // generate the random number
     byte[] result = new byte[length];
-    new Random().nextBytes(result);
+    random.nextBytes(result);
     result[0] = Wallet.getAddressPreFixByte();
     return result;
   }

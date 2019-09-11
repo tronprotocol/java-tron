@@ -50,6 +50,9 @@ public class ProposalService {
     ALLOW_PROTO_FILTER_NUM(24), // 1, 24
     ALLOW_ACCOUNT_STATE_ROOT(25), // 1, 25
     ALLOW_TVM_CONSTANTINOPLE(26), // 1, 26
+    ALLOW_TVM_SOLIDITY_059(27), // 1, 27
+    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(28), // 10, 28
+    ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER(29), // 1000, 29
     ALLOW_CHANGE_DELEGATION(30); //1, 27
 
     ProposalType(long code) {
@@ -272,6 +275,42 @@ public class ProposalService {
         }
         break;
       }
+      case ALLOW_TVM_SOLIDITY_059: {
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_SOLIDITY_059] is only allowed to be 1");
+        }
+        if (manager.getDynamicPropertiesStore().getAllowCreationOfContracts() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
+                  + "before [ALLOW_TVM_SOLIDITY_059] can be proposed");
+        }
+        break;
+      }
+      case ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO: {
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (value < 1 || value > 1_000) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [1,1_000]");
+        }
+        break;
+      }
+      case ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER: {
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (value < 1 || value > 10_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [1,10_000]");
+        }
+        break;
+      }
       case ALLOW_CHANGE_DELEGATION: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
           throw new ContractValidateException(BAD_PARAM_ID);
@@ -416,6 +455,21 @@ public class ProposalService {
         case ALLOW_TVM_CONSTANTINOPLE: {
           manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(48);
+          break;
+        }
+        case ALLOW_TVM_SOLIDITY_059: {
+          manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(entry.getValue());
+          break;
+        }
+        case ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO: {
+          long ratio = 24 * 60 * entry.getValue();
+          manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(ratio);
+          manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(
+              manager.getDynamicPropertiesStore().getTotalEnergyLimit() / ratio);
+          break;
+        }
+        case ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER: {
+          manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitMultiplier(entry.getValue());
           break;
         }
         case ALLOW_CHANGE_DELEGATION: {

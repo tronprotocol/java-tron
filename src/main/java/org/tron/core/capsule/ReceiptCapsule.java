@@ -7,6 +7,7 @@ import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
+import org.tron.core.config.Parameter;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -148,6 +149,13 @@ public class ReceiptCapsule {
       this.setEnergyUsage(usage);
     } else {
       energyProcessor.useEnergy(account, accountEnergyLeft, now);
+
+      if(manager.getForkController().pass(Parameter.ForkBlockVersionEnum.VERSION_3_6_5) &&
+              manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
+          long blockEnergyUsage = manager.getDynamicPropertiesStore().getBlockEnergyUsage() + (usage - accountEnergyLeft);
+          manager.getDynamicPropertiesStore().saveBlockEnergyUsage(blockEnergyUsage);
+      }
+
       long sunPerEnergy = Constant.SUN_PER_ENERGY;
       long dynamicEnergyFee = manager.getDynamicPropertiesStore().getEnergyFee();
       if (dynamicEnergyFee > 0) {
