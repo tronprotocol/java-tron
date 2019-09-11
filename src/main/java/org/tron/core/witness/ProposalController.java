@@ -2,13 +2,12 @@ package org.tron.core.witness;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
-import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.config.Parameter;
 import org.tron.core.db.Manager;
+import org.tron.core.services.ProposalService;
 import org.tron.protos.Protocol.Proposal.State;
 
 @Slf4j(topic = "witness")
@@ -96,153 +95,7 @@ public class ProposalController {
   }
 
   public void setDynamicParameters(ProposalCapsule proposalCapsule) {
-    Map<Long, Long> map = proposalCapsule.getInstance().getParametersMap();
-    for (Map.Entry<Long, Long> entry : map.entrySet()) {
-
-      switch (entry.getKey().intValue()) {
-        case (0): {
-          manager.getDynamicPropertiesStore().saveMaintenanceTimeInterval(entry.getValue());
-          break;
-        }
-        case (1): {
-          manager.getDynamicPropertiesStore().saveAccountUpgradeCost(entry.getValue());
-          break;
-        }
-        case (2): {
-          manager.getDynamicPropertiesStore().saveCreateAccountFee(entry.getValue());
-          break;
-        }
-        case (3): {
-          manager.getDynamicPropertiesStore().saveTransactionFee(entry.getValue());
-          break;
-        }
-        case (4): {
-          manager.getDynamicPropertiesStore().saveAssetIssueFee(entry.getValue());
-          break;
-        }
-        case (5): {
-          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(entry.getValue());
-          break;
-        }
-        case (6): {
-          manager.getDynamicPropertiesStore().saveWitnessStandbyAllowance(entry.getValue());
-          break;
-        }
-        case (7): {
-          manager.getDynamicPropertiesStore()
-              .saveCreateNewAccountFeeInSystemContract(entry.getValue());
-          break;
-        }
-        case (8): {
-          manager.getDynamicPropertiesStore().saveCreateNewAccountBandwidthRate(entry.getValue());
-          break;
-        }
-        case (9): {
-          manager.getDynamicPropertiesStore().saveAllowCreationOfContracts(entry.getValue());
-          break;
-        }
-        case (10): {
-          if (manager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == 0) {
-            manager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(entry.getValue());
-          }
-          break;
-        }
-        case (11): {
-          manager.getDynamicPropertiesStore().saveEnergyFee(entry.getValue());
-          break;
-        }
-        case (12): {
-          manager.getDynamicPropertiesStore().saveExchangeCreateFee(entry.getValue());
-          break;
-        }
-        case (13): {
-          manager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTx(entry.getValue());
-          break;
-        }
-        case (14): {
-          manager.getDynamicPropertiesStore().saveAllowUpdateAccountName(entry.getValue());
-          break;
-        }
-        case (15): {
-          manager.getDynamicPropertiesStore().saveAllowSameTokenName(entry.getValue());
-          break;
-        }
-        case (16): {
-          manager.getDynamicPropertiesStore().saveAllowDelegateResource(entry.getValue());
-          break;
-        }
-        case (17): {
-          manager.getDynamicPropertiesStore().saveTotalEnergyLimit(entry.getValue());
-          break;
-        }
-        case (18): {
-          manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(entry.getValue());
-          break;
-        }
-        case (19): {
-          manager.getDynamicPropertiesStore().saveTotalEnergyLimit2(entry.getValue());
-          break;
-        }
-        case (20): {
-          if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 0) {
-            manager.getDynamicPropertiesStore().saveAllowMultiSign(entry.getValue());
-          }
-          break;
-        }
-        case (21): {
-          if (manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
-            manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
-            if (manager.getForkController().pass(Parameter.ForkBlockVersionEnum.VERSION_3_6_5)) {
-              //24 * 60 * 2 . one minute,1/2 total limit.
-              manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(2880);
-              manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(
-                      manager.getDynamicPropertiesStore().getTotalEnergyLimit() / 2880);
-              manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitMultiplier(50);
-            }
-          }
-          break;
-        }
-        case (22): {
-          manager.getDynamicPropertiesStore().saveUpdateAccountPermissionFee(entry.getValue());
-          break;
-        }
-        case (23): {
-          manager.getDynamicPropertiesStore().saveMultiSignFee(entry.getValue());
-          break;
-        }
-        case (24): {
-          manager.getDynamicPropertiesStore().saveAllowProtoFilterNum(entry.getValue());
-          break;
-        }
-        case (25): {
-          manager.getDynamicPropertiesStore().saveAllowAccountStateRoot(entry.getValue());
-          break;
-        }
-        case (26): {
-          manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
-          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(48);
-          break;
-        }
-        case (27): {
-          manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(entry.getValue());
-          break;
-        }
-        case (28): {
-            long ratio = 24 * 60 * entry.getValue();
-            manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(ratio);
-            manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(
-                    manager.getDynamicPropertiesStore().getTotalEnergyLimit() / ratio);
-            break;
-        }
-        case (29): {
-            manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitMultiplier(entry.getValue());
-            break;
-        }
-
-        default:
-          break;
-      }
-    }
+    ProposalService.process(manager, proposalCapsule);
   }
 
 }

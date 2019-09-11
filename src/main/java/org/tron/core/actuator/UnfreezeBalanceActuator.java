@@ -46,6 +46,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     }
     byte[] ownerAddress = unfreezeBalanceContract.getOwnerAddress().toByteArray();
 
+    //
+    dbManager.getDelegationService().withdrawReward(ownerAddress, getDeposit());
+
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
 

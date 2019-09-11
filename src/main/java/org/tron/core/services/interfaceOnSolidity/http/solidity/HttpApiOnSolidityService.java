@@ -8,6 +8,8 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.http.GetBrokerageServlet;
+import org.tron.core.services.http.GetRewardServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidityServlet;
@@ -84,6 +86,10 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private GetBlockByLatestNumOnSolidityServlet getBlockByLatestNumOnSolidityServlet;
   @Autowired
+  private GetBrokerageServlet getBrokerageServlet;
+  @Autowired
+  private GetRewardServlet getRewardServlet;
+  @Autowired
   private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
 
   @Override
@@ -153,6 +159,8 @@ public class HttpApiOnSolidityService implements Service {
               "/walletsolidity/gettransactioncountbyblocknum");
 
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
+      context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
+      context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));

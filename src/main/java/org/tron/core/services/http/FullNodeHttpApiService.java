@@ -166,6 +166,10 @@ public class FullNodeHttpApiService implements Service {
   private SetAccountIdServlet setAccountServlet;
   @Autowired
   private GetAccountByIdServlet getAccountByIdServlet;
+  @Autowired
+  private GetBrokerageServlet getBrokerageServlet;
+  @Autowired
+  private GetRewardServlet getRewardServlet;
 
 
   @Override
@@ -274,6 +278,8 @@ public class FullNodeHttpApiService implements Service {
           "/getdelegatedresourceaccountindex");
       context.addServlet(new ServletHolder(setAccountServlet), "/setaccountid");
       context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
+      context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
+      context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

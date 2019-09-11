@@ -1362,6 +1362,22 @@ public class PrecompiledContracts {
     private static class ValidateSignResult {
       private Boolean res;
       private int nonce;
+
+      public Boolean getRes() {
+        return res;
+      }
+
+      public void setRes(Boolean res) {
+        this.res = res;
+      }
+
+      public int getNonce() {
+        return nonce;
+      }
+
+      public void setNonce(int nonce) {
+        this.nonce = nonce;
+      }
     }
 
     @Override

@@ -242,7 +242,7 @@ public class ProposalCreateActuatorTest {
       fail("Bad chain parameter id");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Bad chain parameter id",
+      Assert.assertEquals("not support code : 31",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -258,7 +258,7 @@ public class ProposalCreateActuatorTest {
       fail("Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]",
+      Assert.assertEquals("Bad chain parameter value,valid range is [0,100000000000000000]",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -351,7 +351,7 @@ public class ProposalCreateActuatorTest {
     paras.put(2L, 200_000L);
     paras.put(3L, 20L);
     paras.put(4L, 2048_000_000L);
-    paras.put(5L, 64_000_000L);
+    paras.put(5L, 1648L);
     paras.put(6L, 64_000_000L);
     paras.put(7L, 64_000_000L);
     paras.put(8L, 64_000_000L);

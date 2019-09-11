@@ -340,8 +340,13 @@ public class WitnessController {
           logger.warn(
               "witnessAccount[" + StringUtil.createReadableString(address) + "] not exists");
         } else {
-          witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+          long vote = witnessCapsule.getVoteCount() + voteCount;
+          witnessCapsule.setVoteCount(vote);
           witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
+          if (manager.getDynamicPropertiesStore().allowChangeDelegation()) {
+            manager.getDelegationStore().setWitnessVote(manager.getDynamicPropertiesStore()
+                .getCurrentCycleNumber() + 1, address.toByteArray(), vote);
+          }
           logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
               witnessCapsule.getVoteCount());
         }
@@ -378,6 +383,16 @@ public class WitnessController {
       logger.info(
           "updateWitness,before:{} ", StringUtil.getAddressStringList(currentWits)
               + ",\nafter:{} " + StringUtil.getAddressStringList(newWits));
+    }
+    //update the delegation cycle
+    if (manager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      long currentCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
+      manager.getDynamicPropertiesStore().saveCurrentCycleNumber(currentCycle + 1);
+      witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
+        manager.getDelegationStore().setBrokerage(currentCycle + 1,
+            witnessCapsule.getAddress().toByteArray(),
+            manager.getDelegationStore().getBrokerage(witnessCapsule.getAddress().toByteArray()));
+      });
     }
   }
 
@@ -434,6 +449,9 @@ public class WitnessController {
   }
 
   private void payStandbyWitness(List<ByteString> list) {
+    if (manager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      return;
+    }
     long voteSum = 0;
     long totalPay = manager.getDynamicPropertiesStore().getWitnessStandbyAllowance();
     for (ByteString b : list) {
