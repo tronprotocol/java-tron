@@ -433,6 +433,13 @@ public class ProposalService {
         case ALLOW_ADAPTIVE_ENERGY: {
           if (manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
             manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
+            if (manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+              //24 * 60 * 2 . one minute,1/2 total limit.
+              manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(2880);
+              manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(
+                  manager.getDynamicPropertiesStore().getTotalEnergyLimit() / 2880);
+              manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitMultiplier(50);
+            }
           }
           break;
         }
