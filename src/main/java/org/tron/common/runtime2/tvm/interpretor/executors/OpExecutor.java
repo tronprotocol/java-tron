@@ -1,14 +1,16 @@
-package org.tron.common.runtime2.tvm.interpretor;
+package org.tron.common.runtime2.tvm.interpretor.executors;
 
 import java.math.BigInteger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
 import org.tron.common.runtime2.tvm.ContractExecutor;
 import org.tron.common.runtime2.tvm.VMConstant;
+import org.tron.common.runtime2.tvm.interpretor.Costs;
+import org.tron.common.runtime2.tvm.interpretor.Op;
 
 public abstract class OpExecutor {
 
-  public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+  public void exec(Op op, ContractExecutor executor) {
   }
 
   ;

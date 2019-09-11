@@ -9,6 +9,9 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime2.tvm.ContractExecutor;
 import org.tron.common.runtime2.tvm.VMConstant;
+import org.tron.common.runtime2.tvm.interpretor.executors.CodeCopyOpExecutor;
+import org.tron.common.runtime2.tvm.interpretor.executors.CodeSizeOpExecutor;
+import org.tron.common.runtime2.tvm.interpretor.executors.OpExecutor;
 import org.tron.common.utils.ByteUtil;
 
 
@@ -16,7 +19,7 @@ public enum Op {
   STOP(0x00, 0, 0,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           //Non consume energy
           executor.setHReturn(ByteUtil.EMPTY_BYTE_ARRAY);
           executor.stop();
@@ -26,7 +29,7 @@ public enum Op {
   ADD(0x01, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -40,7 +43,7 @@ public enum Op {
   MUL(0x02, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -55,7 +58,7 @@ public enum Op {
   SUB(0x03, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -70,7 +73,7 @@ public enum Op {
   DIV(0x04, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -85,7 +88,7 @@ public enum Op {
   SDIV(0x05, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -100,7 +103,7 @@ public enum Op {
   MOD(0x06, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -115,7 +118,7 @@ public enum Op {
   SMOD(0x07, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -130,7 +133,7 @@ public enum Op {
   ADDMOD(0x08, 3, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.MidTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -145,7 +148,7 @@ public enum Op {
   MULMOD(0x09, 3, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.MidTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -160,7 +163,7 @@ public enum Op {
   EXP(0x0a, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
 
           DataWord word1 = executor.stackPop();
           DataWord word2 = executor.stackPop();
@@ -178,7 +181,7 @@ public enum Op {
   SIGNEXTEND(0x0b, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
 
           executor.spendEnergy(OpCode.Tier.LowTier.asInt(), op.name());
 
@@ -194,10 +197,10 @@ public enum Op {
         }
       }
   ),
-  LT(0X10, 2, 1,
+  LT(0x10, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -214,10 +217,10 @@ public enum Op {
         }
       }
   ),
-  GT(0X11, 2, 1,
+  GT(0x11, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -235,10 +238,10 @@ public enum Op {
         }
       }
   ),
-  SLT(0X12, 2, 1,
+  SLT(0x12, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -255,10 +258,10 @@ public enum Op {
         }
       }
   ),
-  SGT(0X13, 2, 1,
+  SGT(0x13, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -276,10 +279,10 @@ public enum Op {
         }
       }
   ),
-  EQ(0X14, 2, 1,
+  EQ(0x14, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -296,10 +299,10 @@ public enum Op {
         }
       }
   ),
-  ISZERO(0X15, 1, 1,
+  ISZERO(0x15, 1, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -314,10 +317,10 @@ public enum Op {
         }
       }
   ),
-  AND(0X16, 2, 1,
+  AND(0x16, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -329,10 +332,10 @@ public enum Op {
         }
       }
   ),
-  OR(0X17, 2, 1,
+  OR(0x17, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -344,10 +347,10 @@ public enum Op {
         }
       }
   ),
-  XOR(0X18, 2, 1,
+  XOR(0x18, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -359,10 +362,10 @@ public enum Op {
         }
       }
   ),
-  NOT(0X19, 1, 1,
+  NOT(0x19, 1, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -372,10 +375,10 @@ public enum Op {
         }
       }
   ),
-  BYTE(0X1a, 2, 1,
+  BYTE(0x1a, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -396,10 +399,10 @@ public enum Op {
         }
       }
   ),
-  SHL(0X1b, 2, 1,
+  SHL(0x1b, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -412,10 +415,10 @@ public enum Op {
         }
       }
   ),
-  SHR(0X1c, 2, 1,
+  SHR(0x1c, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -428,10 +431,10 @@ public enum Op {
         }
       }
   ),
-  SAR(0X1d, 2, 1,
+  SAR(0x1d, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
 
           DataWord word1 = executor.stackPop();
@@ -444,10 +447,10 @@ public enum Op {
         }
       }
   ),
-  SHA3(0X20, 2, 1,
+  SHA3(0x20, 2, 1,
       new OpExecutor() {
         @Override
-        public void exec(Op op, ContractExecutor executor, DataWord adjustedCallEnergy) {
+        public void exec(Op op, ContractExecutor executor) {
           DataWord memOffsetData = executor.stackPop();
           DataWord lengthData = executor.stackPop();
 
@@ -465,6 +468,300 @@ public enum Op {
           DataWord word = new DataWord(encoded);
 
           executor.stackPush(word);
+          executor.step();
+        }
+      }
+  ),
+  ADDRESS(0x30, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+          DataWord address = executor.getContractAddress();
+          address = new DataWord(address.getLast20Bytes());
+
+          executor.stackPush(address);
+          executor.step();
+        }
+      }
+  ),
+  BALANCE(0x31, 1, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.ExtTier.asInt(), op.name());
+          DataWord address = executor.stackPop();
+          DataWord balance = executor.getBalance(address);
+
+          executor.stackPush(balance);
+          executor.step();
+        }
+      }
+  ),
+  ORIGIN(0x32, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+          DataWord originAddress = executor.getOriginAddress();
+          originAddress = new DataWord(originAddress.getLast20Bytes());
+
+          executor.stackPush(originAddress);
+          executor.step();
+        }
+      }
+  ),
+  CALLER(0x33, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+          DataWord callerAddress = executor.getCallerAddress();
+
+          executor.stackPush(callerAddress);
+          executor.step();
+        }
+      }
+  ),
+  CALLVALUE(0x34, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+          DataWord callValue = executor.getCallValue();
+
+          executor.stackPush(callValue);
+          executor.step();
+        }
+      }
+  ),
+  CALLDATALOAD(0x35, 1, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.VeryLowTier.asInt(), op.name());
+          DataWord dataOffs = executor.stackPop();
+          DataWord value = executor.getDataValue(dataOffs);
+
+          executor.stackPush(value);
+          executor.step();
+        }
+      }
+  ),
+  CALLDATASIZE(0x36, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+          DataWord dataSize = executor.getDataSize();
+
+          executor.stackPush(dataSize);
+          executor.step();
+        }
+      }
+  ),
+  CALLDATACOPY(0x37, 3, 0,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+
+          DataWord memOffsetData = executor.stackPop();
+          DataWord dataOffsetData = executor.stackPop();
+          DataWord lengthData = executor.stackPop();
+
+          executor.spendEnergy(
+              calcMemEnergy(executor.getMemory().size(),
+                  memNeeded(memOffsetData, lengthData),
+                  lengthData.longValueSafe(), op),
+              op.name()
+          );
+
+          byte[] msgData = executor.getDataCopy(dataOffsetData, lengthData);
+
+          executor.memorySave(memOffsetData.intValueSafe(), msgData);
+          executor.step();
+        }
+      }
+  ),
+  CODESIZE(0x38, 0, 1, CodeSizeOpExecutor.getInstance()),
+  CODECOPY(0x39, 3, 0, CodeCopyOpExecutor.getInstance()),
+  RETURNDATASIZE(0x3d, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+          DataWord dataSize = executor.getReturnDataBufferSize();
+
+          executor.stackPush(dataSize);
+          executor.step();
+        }
+      }
+  ),
+  RETURNDATACOPY(0x3e, 3, 0,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+
+          DataWord memOffsetData = executor.stackPop();
+          DataWord dataOffsetData = executor.stackPop();
+          DataWord lengthData = executor.stackPop();
+
+          executor.spendEnergy(
+              calcMemEnergy(executor.getMemory().size(),
+                  memNeeded(memOffsetData, lengthData),
+                  lengthData.longValueSafe(), op),
+              op.name()
+          );
+
+          byte[] msgData = executor.getReturnDataBufferData(dataOffsetData, lengthData);
+
+          executor.memorySave(memOffsetData.intValueSafe(), msgData);
+          executor.step();
+        }
+      }
+  ),
+  GASPRICE(0x3a, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+          DataWord energyPrice = new DataWord(0);
+
+          executor.stackPush(energyPrice);
+          executor.step();
+        }
+      }
+  ),
+  EXTCODESIZE(0x3b, 1, 1, CodeSizeOpExecutor.getInstance()),
+  EXTCODECOPY(0x3c, 4, 1, CodeCopyOpExecutor.getInstance()),
+  EXTCODEHASH(0x3f, 1, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(Costs.EXT_CODE_HASH, op.name());
+          DataWord address = executor.stackPop();
+          byte[] codeHash = executor.getCodeHashAt(address);
+          executor.stackPush(codeHash);
+          executor.step();
+        }
+      }
+  ),
+  BLOCKHASH(0x40, 1, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.ExtTier.asInt(), op.name());
+          int blockIndex = executor.stackPop().intValueSafe();
+          DataWord blockHash = executor.getBlockHash(blockIndex);
+
+          executor.stackPush(blockHash);
+          executor.step();
+        }
+      }
+  ),
+  COINBASE(0x41, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+
+          DataWord target = executor.getCoinbase();
+
+          executor.stackPush(target);
+          executor.step();
+        }
+      }
+  ),
+  TIMESTAMP(0x42, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+
+          DataWord target = executor.getTimestamp();
+
+          executor.stackPush(target);
+          executor.step();
+        }
+      }
+  ),
+  NUMBER(0x43, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+
+          DataWord target = executor.getNumber();
+
+          executor.stackPush(target);
+          executor.step();
+        }
+      }
+  ),
+  DIFFICULTY(0x44, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+
+          DataWord target = executor.getDifficulty();
+
+          executor.stackPush(target);
+          executor.step();
+        }
+      }
+  ),
+  GASLIMIT(0x45, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+
+          executor.stackPush(new DataWord(0));
+          executor.step();
+        }
+      }
+  ),
+  POP(0x50, 1, 0,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
+
+          executor.stackPop();
+          executor.step();
+        }
+      }
+  ),
+  MLOAD(0x51, 1, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          DataWord addr = executor.stackPop();
+          DataWord data = executor.memoryLoad(addr);
+
+          executor.spendEnergy(
+              calcMemEnergy(executor.getMemory().size(),
+                  memNeeded(addr, new DataWord(32)), 0, op), op.name());
+
+          executor.stackPush(data);
+          executor.step();
+        }
+      }
+  ),
+  MSTORE(0x52, 2, 0,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          DataWord addr = executor.stackPop();
+          DataWord value = executor.stackPop();
+
+          executor.spendEnergy(
+              calcMemEnergy(executor.getMemory().size(),
+                  memNeeded(addr, new DataWord(32)),
+                  0, op), op.name());
+
+          executor.memorySave(addr, value);
           executor.step();
         }
       }

@@ -12,4 +12,8 @@ public class Costs {
   public static final int SHA3 = 30;
   public static final int SHA3_WORD = 6;
 
+
+  public static final int EXT_CODE_HASH = 400;
+
+
 }
