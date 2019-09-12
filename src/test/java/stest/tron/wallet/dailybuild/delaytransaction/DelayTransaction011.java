@@ -2,7 +2,6 @@ package stest.tron.wallet.dailybuild.delaytransaction;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -15,11 +14,11 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-//import org.tron.protos.Protocol.DeferredTransaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import stest.tron.wallet.common.client.utils.Sha256Hash;
+
+//import org.tron.protos.Protocol.DeferredTransaction;
 
 @Slf4j
 public class DelayTransaction011 {
@@ -94,7 +93,7 @@ public class DelayTransaction011 {
         blockingStubFull);
     PublicMethed.sendcoin(delayAccount2Address,1L,noBandwidthAddress,noBandwidthKey,
         blockingStubFull);
-    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,PublicMethed.queryAccount(
+    Assert.assertTrue(PublicMethed.sendcoin(fromAddress, PublicMethed.queryAccount(
         noBandwidthAddress,blockingStubFull).getBalance() - 3000L,noBandwidthAddress,
         noBandwidthKey,blockingStubFull));
     logger.info("balance is: " +  PublicMethed.queryAccount(noBandwidthAddress,

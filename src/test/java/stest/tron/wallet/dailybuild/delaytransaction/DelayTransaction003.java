@@ -13,18 +13,17 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import stest.tron.wallet.common.client.utils.Sha256Hash;
+
+//import org.tron.protos.Protocol.DeferredTransaction;
 
 @Slf4j
 public class DelayTransaction003 {
@@ -128,7 +127,6 @@ public class DelayTransaction003 {
     final Long receiverAssetBalanceInDelayTransferAsset = PublicMethed
         .getAssetBalanceByAssetId(assetId,receiverassetKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long ownerAssetBalanceAfterTransferAsset = PublicMethed
         .getAssetBalanceByAssetId(assetId,assetOwnerKey,blockingStubFull);
     Long receiverAssetBalanceAfterTransferAsset = PublicMethed
@@ -168,7 +166,6 @@ public class DelayTransaction003 {
     //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,
     // assetOwnerKey,blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long ownerAssetBalanceAfterTransferAsset = PublicMethed
         .getAssetBalanceByAssetId(assetId,assetOwnerKey,blockingStubFull);

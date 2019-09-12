@@ -115,8 +115,7 @@ public class HttpTestClearAbiContract001 {
 
     HttpResponse httpResponse = HttpMethed
         .triggerConstantContract(httpnode, assetOwnerAddress, contractAddress,
-            "testView()",
-            "");
+            "testView()", "",1000000000L);
 
     responseContent = HttpMethed.parseResponseContent(httpResponse);
     HttpMethed.printJsonContent(responseContent);
@@ -162,6 +161,7 @@ public class HttpTestClearAbiContract001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, assetOwnerAddress, fromAddress, assetOwnerKey);
     HttpMethed.disConnect();
   }
 }

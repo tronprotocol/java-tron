@@ -1,40 +1,27 @@
 package stest.tron.wallet.dailybuild.delaytransaction;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.math.BigInteger;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Block;
-//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import stest.tron.wallet.common.client.utils.Sha256Hash;
-import stest.tron.wallet.common.client.utils.TransactionUtils;
+
+//import org.tron.protos.Protocol.DeferredTransaction;
 
 @Slf4j
 public class DelayTransaction001 {
@@ -206,7 +193,6 @@ public class DelayTransaction001 {
     Assert.assertTrue(getTransactionById.get().getRawData().getDeferredStage().getStage() == 0);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     PublicMethed.getDeferredTransactionById(finalTxid,blockingStubFull);
     deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
@@ -336,7 +322,6 @@ public class DelayTransaction001 {
     Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address,
         deplayAccountBeforeBalance - createAccountFee - delayTransactionFee,
         delaySecond,delayAccount3Address, delayAccount3Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Query balance after delay send coin.

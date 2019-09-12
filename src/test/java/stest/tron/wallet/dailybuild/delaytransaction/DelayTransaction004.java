@@ -3,7 +3,6 @@ package stest.tron.wallet.dailybuild.delaytransaction;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -17,13 +16,12 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.SmartContract;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+
+//import org.tron.protos.Protocol.DeferredTransaction;
 
 @Slf4j
 public class DelayTransaction004 {
@@ -113,7 +111,6 @@ public class DelayTransaction004 {
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == oldContractPercent);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     logger.info("newContractPercent: " + smartContract.getConsumeUserResourcePercent());
     Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == newContractPercent);
@@ -155,7 +152,6 @@ public class DelayTransaction004 {
         smartContractOwnerAddress,smartContractOwnerKey,blockingStubFull);
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,smartContractOwnerAddress,
         smartContractOwnerKey,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);

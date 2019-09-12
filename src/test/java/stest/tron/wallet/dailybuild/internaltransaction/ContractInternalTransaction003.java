@@ -105,7 +105,6 @@ public class ContractInternalTransaction003 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName1 = "D";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
@@ -461,7 +460,6 @@ public class ContractInternalTransaction003 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String filePath = "src/test/resources/soliditycode/"
         + "contractInternalTransaction003testInternalTransaction018.sol";
@@ -501,7 +499,6 @@ public class ContractInternalTransaction003 {
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String initParmes = "\"" + Base58.encode58Check(contractAddress1)
         + "\",\"" + Base58.encode58Check(contractAddress2) + "\"";
@@ -509,7 +506,6 @@ public class ContractInternalTransaction003 {
     txid = PublicMethed.triggerContract(contractAddress,
         "test1(address,address)", initParmes, false,
         100000, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -551,6 +547,9 @@ public class ContractInternalTransaction003 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(internalTxsAddress, testKeyForinternalTxsAddress, testNetAccountAddress,
+            blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

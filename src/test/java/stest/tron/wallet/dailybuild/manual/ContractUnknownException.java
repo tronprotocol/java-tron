@@ -142,7 +142,10 @@ public class ContractUnknownException {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     logger.info("afterenergyLimit:" + aftereenergyLimit);
     Assert.assertThat(s, containsString("REVERT opcode executed"));
-
+    PublicMethed.unFreezeBalance(grammarAddress, testKeyForGrammarAddress, 1, grammarAddress,
+        blockingStubFull);
+    PublicMethed.freedResource(grammarAddress, testKeyForGrammarAddress, testNetAccountAddress,
+        blockingStubFull);
   }
 
   @Test(enabled = true, description = "trigger revert method")
@@ -205,6 +208,10 @@ public class ContractUnknownException {
     Assert.assertFalse(energyFee == 1000000000);
 
     Assert.assertTrue(beforeBalance - fee == afterBalance);
+    PublicMethed.unFreezeBalance(grammarAddress2, testKeyForGrammarAddress2, 1, grammarAddress2,
+        blockingStubFull);
+    PublicMethed.freedResource(grammarAddress2, testKeyForGrammarAddress2, testNetAccountAddress,
+        blockingStubFull);
 
   }
 
@@ -264,8 +271,11 @@ public class ContractUnknownException {
     logger.info("afterenergyLimit:" + aftereenergyLimit);
     logger.info("s:" + s);
     Assert.assertThat(s, containsString("Not enough energy for"));
-
     Assert.assertTrue(beforeBalance - fee == afterBalance);
+    PublicMethed.unFreezeBalance(grammarAddress3, testKeyForGrammarAddress3, 1, grammarAddress3,
+        blockingStubFull);
+    PublicMethed.freedResource(grammarAddress3, testKeyForGrammarAddress3, testNetAccountAddress,
+        blockingStubFull);
 
   }
 
@@ -328,8 +338,10 @@ public class ContractUnknownException {
     Assert.assertThat(s, containsString("REVERT opcode executed"));
     Assert.assertTrue(beforeBalance - fee == afterBalance);
     Assert.assertFalse(energyFee == 1000000000);
-
-
+    PublicMethed.unFreezeBalance(grammarAddress4, testKeyForGrammarAddress4, 1, grammarAddress4,
+        blockingStubFull);
+    PublicMethed.freedResource(grammarAddress4, testKeyForGrammarAddress4, testNetAccountAddress,
+        blockingStubFull);
   }
 
   /**

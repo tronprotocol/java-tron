@@ -34,7 +34,6 @@ public class TriggerConstant005 {
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  private ManagedChannel channelSolidity = null;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -42,8 +41,11 @@ public class TriggerConstant005 {
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
 
-
+  private ManagedChannel channelSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+
+  private ManagedChannel channelRealSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubRealSolidity = null;
 
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
@@ -52,6 +54,8 @@ public class TriggerConstant005 {
 
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+  private String realSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
 
   byte[] contractAddress = null;
 
@@ -86,6 +90,11 @@ public class TriggerConstant005 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+    channelRealSolidity = ManagedChannelBuilder.forTarget(realSoliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubRealSolidity = WalletSolidityGrpc.newBlockingStub(channelRealSolidity);
+
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a payable function with ABI")
@@ -103,6 +112,8 @@ public class TriggerConstant005 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
@@ -136,6 +147,31 @@ public class TriggerConstant005 {
     Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));
 
+    TransactionExtention transactionExtention1 = PublicMethed
+        .triggerConstantContractForExtentionOnSolidity(contractAddress,
+            "testPayable()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+    System.out.println("Code = " + transactionExtention1.getResult().getCode());
+    System.out
+        .println("Message = " + transactionExtention1.getResult().getMessage().toStringUtf8());
+
+    Assert.assertThat(transactionExtention1.getResult().getCode().toString(),
+        containsString("CONTRACT_EXE_ERROR"));
+    Assert.assertThat(transactionExtention1.getResult().getMessage().toStringUtf8(),
+        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+
+    TransactionExtention transactionExtention2 = PublicMethed
+        .triggerConstantContractForExtentionOnSolidity(contractAddress,
+            "testPayable()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+    System.out.println("Code = " + transactionExtention2.getResult().getCode());
+    System.out
+        .println("Message = " + transactionExtention2.getResult().getMessage().toStringUtf8());
+
+    Assert.assertThat(transactionExtention2.getResult().getCode().toString(),
+        containsString("CONTRACT_EXE_ERROR"));
+    Assert.assertThat(transactionExtention2.getResult().getMessage().toStringUtf8(),
+        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
   }
 
 
@@ -144,6 +180,9 @@ public class TriggerConstant005 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
+
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

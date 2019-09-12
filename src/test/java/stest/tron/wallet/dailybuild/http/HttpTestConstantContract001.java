@@ -24,6 +24,10 @@ public class HttpTestConstantContract001 {
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(0);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(3);
+  private String realHttpSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
 
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] assetOwnerAddress = ecKey2.getAddress();
@@ -99,8 +103,61 @@ public class HttpTestConstantContract001 {
     String param = param1 + param2;
     logger.info(ByteArray.toHexString(assetOwnerAddress));
     response = HttpMethed.triggerConstantContract(httpnode, assetOwnerAddress, contractAddress,
-      "testPure(uint256,uint256)",param, 1000000000L,  assetOwnerKey);
+      "testPure(uint256,uint256)",param, 1000000000L);
     HttpMethed.waitToProduceOneBlock(httpnode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(!responseContent.getString("transaction").isEmpty());
+    JSONObject transactionObject = HttpMethed.parseStringContent(
+        responseContent.getString("transaction"));
+    Assert.assertTrue(!transactionObject.getString("raw_data").isEmpty());
+    Assert.assertTrue(!transactionObject.getString("raw_data_hex").isEmpty());
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Trigger constant contract from fullnode's solidity by http")
+  public void test4TriggerConstantContractFromSolidity() {
+    String param1 = "000000000000000000000000000000000000000000000000000000000000000"
+        + Integer.toHexString(3);
+    String param2 = "00000000000000000000000000000000000000000000000000000000000000"
+        + Integer.toHexString(30);
+    logger.info(param1);
+    logger.info(param2);
+    String param = param1 + param2;
+    logger.info(ByteArray.toHexString(assetOwnerAddress));
+    response = HttpMethed
+        .triggerConstantContractFromSolidity(httpSoliditynode, assetOwnerAddress, contractAddress,
+        "testPure(uint256,uint256)",param, 1000000000L);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(!responseContent.getString("transaction").isEmpty());
+    JSONObject transactionObject = HttpMethed.parseStringContent(
+        responseContent.getString("transaction"));
+    Assert.assertTrue(!transactionObject.getString("raw_data").isEmpty());
+    Assert.assertTrue(!transactionObject.getString("raw_data_hex").isEmpty());
+  }
+
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Trigger constant contract from real solidity by http")
+  public void test5TriggerConstantContractFromRealSolidity() {
+    String param1 = "000000000000000000000000000000000000000000000000000000000000000"
+        + Integer.toHexString(3);
+    String param2 = "00000000000000000000000000000000000000000000000000000000000000"
+        + Integer.toHexString(30);
+    logger.info(param1);
+    logger.info(param2);
+    String param = param1 + param2;
+    logger.info(ByteArray.toHexString(assetOwnerAddress));
+    response = HttpMethed
+        .triggerConstantContractFromSolidity(realHttpSoliditynode, assetOwnerAddress, contractAddress,
+        "testPure(uint256,uint256)",param, 1000000000L);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, realHttpSoliditynode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(!responseContent.getString("transaction").isEmpty());
@@ -115,6 +172,7 @@ public class HttpTestConstantContract001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, assetOwnerAddress, fromAddress, assetOwnerKey);
     HttpMethed.disConnect();
   }
 }

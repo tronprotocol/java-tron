@@ -234,14 +234,14 @@ public class ShiftCommand001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(10,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(10, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     txid = PublicMethed.triggerContract(contractAddress,
         "shrTest(uint256,uint256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
   /**
@@ -249,6 +249,8 @@ public class ShiftCommand001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(contractAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

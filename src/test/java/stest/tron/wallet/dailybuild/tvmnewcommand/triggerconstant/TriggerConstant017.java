@@ -36,7 +36,6 @@ public class TriggerConstant017 {
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  private ManagedChannel channelSolidity = null;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -44,8 +43,11 @@ public class TriggerConstant017 {
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
 
-
+  private ManagedChannel channelSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+
+  private ManagedChannel channelRealSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubRealSolidity = null;
 
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
@@ -54,6 +56,8 @@ public class TriggerConstant017 {
 
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+  private String realSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
 
   byte[] contractAddress = null;
 
@@ -88,6 +92,11 @@ public class TriggerConstant017 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+    channelRealSolidity = ManagedChannelBuilder.forTarget(realSoliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubRealSolidity = WalletSolidityGrpc.newBlockingStub(channelRealSolidity);
+
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a constant function which is "
@@ -106,6 +115,8 @@ public class TriggerConstant017 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
@@ -135,6 +146,39 @@ public class TriggerConstant017 {
     Assert.assertEquals(1, ByteArray.toLong(ByteArray
         .fromHexString(Hex
             .toHexString(result))));
+
+    TransactionExtention transactionExtention1 = PublicMethed
+        .triggerConstantContractForExtentionOnSolidity(contractAddress,
+            "testPayable()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+    Transaction transaction1 = transactionExtention1.getTransaction();
+
+    byte[] result1 = transactionExtention1.getConstantResult(0).toByteArray();
+    System.out.println("message1:" + transaction1.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention1.getResult().getMessage().toByteArray()));
+    System.out.println("Result1:" + Hex.toHexString(result1));
+
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result1))));
+
+    TransactionExtention transactionExtention2 = PublicMethed
+        .triggerConstantContractForExtentionOnSolidity(contractAddress,
+            "testPayable()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+    Transaction transaction2 = transactionExtention2.getTransaction();
+
+    byte[] result2 = transactionExtention2.getConstantResult(0).toByteArray();
+    System.out.println("message2:" + transaction2.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention2.getResult().getMessage().toByteArray()));
+    System.out.println("Result2:" + Hex.toHexString(result2));
+
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result2))));
+
     String txid = "";
     txid = PublicMethed
         .clearContractAbi(contractAddress, contractExcAddress, contractExcKey, blockingStubFull);
@@ -147,21 +191,53 @@ public class TriggerConstant017 {
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
 
-    TransactionExtention transactionExtention1 = PublicMethed
+    TransactionExtention transactionExtention3 = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
             "testPayable()", "#", false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    Transaction transaction1 = transactionExtention1.getTransaction();
+    Transaction transaction3 = transactionExtention3.getTransaction();
 
-    byte[] result1 = transactionExtention1.getConstantResult(0).toByteArray();
-    System.out.println("message:" + transaction1.getRet(0).getRet());
+    byte[] result3 = transactionExtention3.getConstantResult(0).toByteArray();
+    System.out.println("message3:" + transaction3.getRet(0).getRet());
     System.out.println(":" + ByteArray
-        .toStr(transactionExtention1.getResult().getMessage().toByteArray()));
-    System.out.println("Result:" + Hex.toHexString(result1));
+        .toStr(transactionExtention3.getResult().getMessage().toByteArray()));
+    System.out.println("Result3:" + Hex.toHexString(result3));
 
     Assert.assertEquals(1, ByteArray.toLong(ByteArray
         .fromHexString(Hex
-            .toHexString(result1))));
+            .toHexString(result3))));
+
+    TransactionExtention transactionExtention4 = PublicMethed
+        .triggerConstantContractForExtentionOnSolidity(contractAddress,
+            "testPayable()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+    Transaction transaction4 = transactionExtention4.getTransaction();
+
+    byte[] result4 = transactionExtention4.getConstantResult(0).toByteArray();
+    System.out.println("message4:" + transaction4.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention4.getResult().getMessage().toByteArray()));
+    System.out.println("Result4:" + Hex.toHexString(result4));
+
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result4))));
+
+    TransactionExtention transactionExtention5 = PublicMethed
+        .triggerConstantContractForExtentionOnSolidity(contractAddress,
+            "testPayable()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+    Transaction transaction5 = transactionExtention5.getTransaction();
+
+    byte[] result5 = transactionExtention5.getConstantResult(0).toByteArray();
+    System.out.println("message5:" + transaction5.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention5.getResult().getMessage().toByteArray()));
+    System.out.println("Result5:" + Hex.toHexString(result5));
+
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result5))));
   }
 
 
@@ -170,6 +246,9 @@ public class TriggerConstant017 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
+
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

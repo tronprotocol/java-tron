@@ -15,7 +15,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -104,7 +103,6 @@ public class DelayTransaction007 {
         .getBalance();
     Assert.assertTrue(beforeCreateAccountBalance - balanceInDelay == delayTransactionFee);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("create time is " + PublicMethed.queryAccount(newAccountAddress,blockingStubFull)
         .getCreateTime());
     Assert.assertTrue(PublicMethed.queryAccount(newAccountAddress,blockingStubFull)
@@ -139,7 +137,6 @@ public class DelayTransaction007 {
         doCreateAccountAddress,doCreateAccountKey,blockingStubFull);
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,doCreateAccountAddress,
         doCreateAccountKey,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     final Long afterCreateBalance = PublicMethed.queryAccount(doCreateAccountKey,blockingStubFull)

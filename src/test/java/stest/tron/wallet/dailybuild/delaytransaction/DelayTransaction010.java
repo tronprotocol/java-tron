@@ -2,7 +2,6 @@ package stest.tron.wallet.dailybuild.delaytransaction;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -15,14 +14,11 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-//import org.tron.protos.Protocol.DeferredTransaction;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import stest.tron.wallet.common.client.utils.Sha256Hash;
+
+//import org.tron.protos.Protocol.DeferredTransaction;
 
 @Slf4j
 public class DelayTransaction010 {
@@ -148,10 +144,9 @@ public class DelayTransaction010 {
     //String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction()
     // .getRawData().toByteArray()));
 
-    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,PublicMethed.queryAccount(
+    Assert.assertTrue(PublicMethed.sendcoin(fromAddress, PublicMethed.queryAccount(
         delayFeeAccountAddress, blockingStubFull).getBalance(),delayFeeAccountAddress,
         delayFeeAccountKey,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Assert.assertTrue(PublicMethed.getTransactionById(finalTxid,blockingStubFull)
@@ -191,7 +186,7 @@ public class DelayTransaction010 {
     //DeferredTransaction transaction = deferredTransactionById.get();
     //String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction()
     // .getRawData().toByteArray()));
-    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,PublicMethed.queryAccount(
+    Assert.assertTrue(PublicMethed.sendcoin(fromAddress, PublicMethed.queryAccount(
         delayFeeAccountAddress, blockingStubFull).getBalance(),delayFeeAccountAddress,
         delayFeeAccountKey,blockingStubFull));
     try {
@@ -202,7 +197,6 @@ public class DelayTransaction010 {
     Assert.assertTrue(PublicMethed.sendcoin(delayFeeAccountAddress,10000000L,fromAddress,
         testKey002,blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Assert.assertTrue(PublicMethed.getTransactionById(finalTxid,blockingStubFull)
