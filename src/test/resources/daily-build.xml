@@ -9,5 +9,8 @@
       <package name="stest.tron.wallet.dailybuild.*">
       </package>
     </packages>
+    <classes>
+      <class name="stest.tron.wallet.transfer.ContractTestSendCoin001"></class>
+    </classes>
   </test>
 </suite>
