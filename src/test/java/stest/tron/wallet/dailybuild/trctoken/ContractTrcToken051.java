@@ -136,17 +136,17 @@ public class ContractTrcToken051 {
     logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     Assert
-        .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 2048000000, fromAddress,
+        .assertFalse(PublicMethed.sendcoin(transferTokenContractAddress, 2048000000, fromAddress,
             testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    // devAddress transfer token to userAddress
+    /*// devAddress transfer token to userAddress
     PublicMethed
         .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
             user001Address,
             user001Key,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(user001Address,
         blockingStubFull);

@@ -130,7 +130,7 @@ public class ContractTrcToken012 {
     final String transferTokenTxid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "",
             maxFeeLimit, 0L, 0, 10000,
-            assetAccountId.toStringUtf8(), 100, null, dev001Key,
+            assetAccountId.toStringUtf8(), 200, null, dev001Key,
             dev001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -160,7 +160,7 @@ public class ContractTrcToken012 {
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    Assert.assertTrue(PublicMethed.transferAsset(transferTokenContractAddress,
+    Assert.assertFalse(PublicMethed.transferAsset(transferTokenContractAddress,
         assetAccountId.toByteArray(), 100L, dev001Address, dev001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -169,7 +169,7 @@ public class ContractTrcToken012 {
     logger.info("Contract has AssetId: " + assetAccountId.toStringUtf8() + ", Count: "
         + contractAssetCount);
 
-    Assert.assertEquals(Long.valueOf(100), Long.valueOf(devAssetCountBefore - devAssetCountAfter));
+    Assert.assertEquals(Long.valueOf(200), Long.valueOf(devAssetCountBefore - devAssetCountAfter));
     Assert.assertEquals(Long.valueOf(200), contractAssetCount);
   }
 
