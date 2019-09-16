@@ -76,6 +76,7 @@ import org.tron.core.actuator.ProposalCreateActuator;
 import org.tron.core.actuator.ProposalDeleteActuator;
 import org.tron.core.actuator.VoteWitnessActuator;
 import org.tron.core.actuator.WithdrawBalanceActuator;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -85,6 +86,7 @@ import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 /**
@@ -103,7 +105,8 @@ public class PrecompiledContracts {
   private static final BN128Addition altBN128Add = new BN128Addition();
   private static final BN128Multiplication altBN128Mul = new BN128Multiplication();
   private static final BN128Pairing altBN128Pairing = new BN128Pairing();
-  private static final MultiValidateSign multiValidateSign = new MultiValidateSign();
+  private static final BatchValidateSign batchValidateSign = new BatchValidateSign();
+  private static final ValidateMultiSign validateMultiSign = new ValidateMultiSign();
 //  private static final VoteWitnessNative voteContract = new VoteWitnessNative();
 //  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
 //  private static final UnfreezeBalanceNative unFreezeBalance = new UnfreezeBalanceNative();
@@ -137,8 +140,10 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000000007");
   private static final DataWord altBN128PairingAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000008");
-  private static final DataWord multiValidateSignAddr = new DataWord(
+  private static final DataWord batchValidateSignAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000009");
+  private static final DataWord validateMultiSignAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000000000a");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -170,8 +175,11 @@ public class PrecompiledContracts {
     if (address.equals(altBN128PairingAddr)) {
       return altBN128Pairing;
     }
-    if (VMConfig.allowTvmSolidity059() && address.equals(multiValidateSignAddr)) {
-      return multiValidateSign;
+    if (VMConfig.allowTvmSolidity059() && address.equals(batchValidateSignAddr)) {
+      return batchValidateSign;
+    }
+    if (VMConfig.allowTvmSolidity059() && address.equals(validateMultiSignAddr)) {
+      return validateMultiSign;
     }
 
     return null;
@@ -1328,7 +1336,53 @@ public class PrecompiledContracts {
     }
   }
 
-  public static class MultiValidateSign extends PrecompiledContract {
+  public static class ValidateMultiSign extends PrecompiledContract {
+
+    private static final int ENGERYPERSIGN = 1500;
+    private static final byte[] EMPTYADDR = new byte[DataWord.WORD_SIZE];
+
+    private static List<ByteString> convertToByteString(byte[][] bytesArray) {
+      List<ByteString> ret = new ArrayList<>();
+      for (byte[] bytes : bytesArray) {
+        ret.add(ByteString.copyFrom(bytes));
+      }
+      return ret;
+    }
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      int cnt = (data.length / DataWord.WORD_SIZE - 5) / 6;
+      // one sign 1500, half of ecrecover
+      return (long) (cnt * ENGERYPERSIGN);
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] addr = words[0].getLast20Bytes();
+      int permissonId = words[1].intValueSafe();
+      byte[] hash = words[2].getData();
+      byte[][] signatures = extractBytesArray(
+          words, words[3].intValueSafe() / DataWord.WORD_SIZE, data);
+      AccountCapsule account = this.getDeposit().getAccount(convertToTronAddress(addr));
+      if (account != null && account.getPermissionById(permissonId) != null) {
+        Permission permission = account.getPermissionById(permissonId);
+        try {
+          long weight = TransactionCapsule
+              .checkWeight(permission, convertToByteString(signatures), hash, null);
+          if (weight >= permission.getThreshold()) {
+            return Pair.of(true, DataWord.ONE().getData());
+          }
+        } catch (Exception e) {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+      }
+      return Pair.of(true, DataWord.ZERO().getData());
+    }
+  }
+
+
+  public static class BatchValidateSign extends PrecompiledContract {
     private static final ExecutorService workers;
     private static final int ENGERYPERSIGN = 1500;
     private static final byte[] EMPTYADDR = new byte[DataWord.WORD_SIZE];
@@ -1471,29 +1525,30 @@ public class PrecompiledContracts {
       return DataWord.equalAddressByteArray(address, out);
     }
 
-    private static byte[][] extractBytes32Array(DataWord[] words, int offset) {
-      int len = words[offset].intValueSafe();
-      byte[][] bytes32Array = new byte[len][];
-      for (int i = 0; i < len; i++) {
-        bytes32Array[i] = words[offset + i + 1].getData();
-      }
-      return bytes32Array;
-    }
+  }
 
-    private static byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
-      int len = words[offset].intValueSafe();
-      byte[][] bytesArray = new byte[len][];
-      for (int i = 0; i < len; i++) {
-        int bytesOffset = words[offset + i + 1].intValueSafe() / DataWord.WORD_SIZE;
-        int bytesLen = words[offset + bytesOffset + 1].intValueSafe();
-        bytesArray[i] = extractBytes(data,  (bytesOffset + offset + 2) * DataWord.WORD_SIZE,
-            bytesLen);
-      }
-      return bytesArray;
+  private static byte[][] extractBytes32Array(DataWord[] words, int offset) {
+    int len = words[offset].intValueSafe();
+    byte[][] bytes32Array = new byte[len][];
+    for (int i = 0; i < len; i++) {
+      bytes32Array[i] = words[offset + i + 1].getData();
     }
+    return bytes32Array;
+  }
 
-    private static byte[] extractBytes(byte[] data, int offset, int len) {
-      return Arrays.copyOfRange(data, offset, offset + len);
+  private static byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
+    int len = words[offset].intValueSafe();
+    byte[][] bytesArray = new byte[len][];
+    for (int i = 0; i < len; i++) {
+      int bytesOffset = words[offset + i + 1].intValueSafe() / DataWord.WORD_SIZE;
+      int bytesLen = words[offset + bytesOffset + 1].intValueSafe();
+      bytesArray[i] = extractBytes(data, (bytesOffset + offset + 2) * DataWord.WORD_SIZE,
+          bytesLen);
     }
+    return bytesArray;
+  }
+
+  private static byte[] extractBytes(byte[] data, int offset, int len) {
+    return Arrays.copyOfRange(data, offset, offset + len);
   }
 }
