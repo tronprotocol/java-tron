@@ -130,7 +130,7 @@ public class ContractTrcToken001 {
     String abi = retMap.get("abI").toString();
 
     String tokenId = assetAccountId.toStringUtf8();
-    long tokenValue = 100;
+    long tokenValue = 200;
     long callValue = 5;
 
     final String transferTokenTxid = PublicMethed
@@ -167,7 +167,7 @@ public class ContractTrcToken001 {
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    Assert.assertTrue(PublicMethed.transferAsset(transferTokenContractAddress,
+    Assert.assertFalse(PublicMethed.transferAsset(transferTokenContractAddress,
         assetAccountId.toByteArray(), 100L, dev001Address, dev001Key, blockingStubFull));
 
     Long contractAssetCount = PublicMethed.getAssetIssueValue(transferTokenContractAddress,
@@ -177,7 +177,7 @@ public class ContractTrcToken001 {
 
     Assert.assertEquals(Long.valueOf(tokenValue),
         Long.valueOf(devAssetCountBefore - devAssetCountAfter));
-    Assert.assertEquals(Long.valueOf(100L + tokenValue), contractAssetCount);
+    Assert.assertEquals(Long.valueOf(tokenValue), contractAssetCount);
 
     // get and verify the msg.value and msg.id
     Long transferAssetBefore = PublicMethed
