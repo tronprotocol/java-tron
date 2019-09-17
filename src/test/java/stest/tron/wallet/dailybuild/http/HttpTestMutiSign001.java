@@ -184,42 +184,6 @@ public class HttpTestMutiSign001 {
     Assert.assertFalse(HttpMethed.verificationResult(response));
   }
 
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Add broadcasthex http interface to "
-      + "broadcast hex transaction string")
-  public void test3Broadcasthex() {
-    PublicMethed.printAddress(hexTestKey);
-    String transactionHex = PublicMethed
-        .sendcoinGetTransactionHex(hexTestAddress, 1000L, fromAddress, testKey002,
-            blockingStubFull);
-    String wrongTransactionHex = transactionHex + "wrong";
-    response = HttpMethed.broadcasthex(httpnode, wrongTransactionHex);
-    logger.info("transaction wrong:");
-    Assert.assertFalse(HttpMethed.verificationResult(response));
-
-    //Wrong type of hex
-    response = HttpMethed.broadcasthex(httpnode, transactionHex);
-    Assert.assertTrue(HttpMethed.verificationResult(response));
-
-    //SingleSign for broadcastHex
-    response = HttpMethed.broadcasthex(httpnode, transactionHex);
-    Assert.assertFalse(HttpMethed.verificationResult(response));
-
-    //Mutisign for broadcastHex
-    String mutiSignTransactionHex = PublicMethedForMutiSign
-        .sendcoinGetTransactionHex(hexTestAddress, 999L, ownerAddress, ownerKey, blockingStubFull,
-            permissionKeyString);
-    response = HttpMethed.broadcasthex(httpnode, mutiSignTransactionHex);
-    Assert.assertTrue(HttpMethed.verificationResult(response));
-
-    //Hex is null
-    response = HttpMethed.broadcasthex(httpnode, "");
-    Assert.assertFalse(HttpMethed.verificationResult(response));
-
-
-  }
 
   /**
    * constructor.

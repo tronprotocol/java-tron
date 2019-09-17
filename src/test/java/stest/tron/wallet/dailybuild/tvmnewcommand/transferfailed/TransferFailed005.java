@@ -213,7 +213,7 @@ public class TransferFailed005 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
 
     Assert.assertEquals(infoById.get().getResultValue(), 0);
-    Assert.assertEquals("SUCCESS", infoById.get().getResult().toString());
+    Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
 
     Assert.assertEquals(99L,
         PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance());

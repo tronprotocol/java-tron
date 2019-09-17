@@ -92,7 +92,7 @@ public class Create2Test020 {
   @Test(enabled = true, description = "Deploy Factory contract, create2 with salt type : trcToken")
   public void testTriggerContract() {
     Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(contractExcAddress, 500000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/create2contract22.sol";
@@ -528,9 +528,6 @@ public class Create2Test020 {
   @Test(enabled = true, description = "TriggerContract a constant function created by create2")
   public void testTriggerContract4() {
     Account info;
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
@@ -650,9 +647,6 @@ public class Create2Test020 {
   public void testTriggerContract5() {
 
     Account info;
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
@@ -773,9 +767,6 @@ public class Create2Test020 {
   public void testTriggerContract6() {
 
     Account info;
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractAddress, 1000000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
