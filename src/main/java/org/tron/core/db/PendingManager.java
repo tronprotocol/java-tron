@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace.TimeResultType;
 
@@ -37,6 +38,13 @@ public class PendingManager implements AutoCloseable {
         Thread.currentThread().interrupt();
       }
     }
+
+    if (tmpTransactions.size() > 0 && dbManager.getRepushTransactions().size() == 0) {
+      for (TransactionCapsule tx : tmpTransactions) {
+        logger.info("txid: {}, TimeResultType: {}", Hex.toHexString(tx.getTransactionId().getBytes()), tx.getTrxTrace().getTimeResultType());
+      }
+    }
+
     tmpTransactions.clear();
 
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
