@@ -38,7 +38,7 @@ public class BatchValidateSignContractTest {
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(longData);
     //insert incorrect
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 16; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       if (i % 5 == 0) {
@@ -54,7 +54,7 @@ public class BatchValidateSignContractTest {
     }
     Pair<Boolean, byte[]> ret;
     ret = validateMultiSign(hash, signatures, addresses);
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 16; i++) {
       if (i >= 27) {
         Assert.assertEquals(ret.getValue()[i], 0);
       } else if (i % 5 == 0) {
@@ -68,11 +68,11 @@ public class BatchValidateSignContractTest {
     signatures = new ArrayList<>();
     addresses = new ArrayList<>();
 
-    //test when length >= 32
+    //test when length >= 16
     for (int i = 0; i < 100; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
-      if (i == 30) {
+      if (i == 11) {
         signatures.add(Hex.toHexString(DataWord.ONE().getData()));
       } else {
         signatures.add(Hex.toHexString(sign));
@@ -81,8 +81,8 @@ public class BatchValidateSignContractTest {
     }
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
-    for (int i = 0; i < 32; i++) {
-      if (i == 30) {
+    for (int i = 0; i < 16; i++) {
+      if (i == 11) {
         Assert.assertEquals(ret.getValue()[i], 0);
       } else {
         Assert.assertEquals(ret.getValue()[i], 1);
@@ -98,7 +98,7 @@ public class BatchValidateSignContractTest {
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(longData);
     //insert incorrect every 5 pairs
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 16; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       if (i % 5 == 0) {
@@ -111,8 +111,8 @@ public class BatchValidateSignContractTest {
     }
     Pair<Boolean, byte[]> ret = null;
     ret = validateMultiSign(hash, signatures, addresses);
-    for (int i = 0; i < 27; i++) {
-      if (i >= 27) {
+    for (int i = 0; i < 32; i++) {
+      if (i >= 16) {
         Assert.assertEquals(ret.getValue()[i], 0);
       } else if (i % 5 == 0) {
         Assert.assertEquals(ret.getValue()[i], 0);
@@ -124,7 +124,7 @@ public class BatchValidateSignContractTest {
     // incorrect hash
     byte[] incorrectHash = DataWord.ONE().getData();
     ret = validateMultiSign(incorrectHash, signatures, addresses);
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 16; i++) {
       Assert.assertEquals(ret.getValue()[i], 0);
     }
     // different length
@@ -149,7 +149,7 @@ public class BatchValidateSignContractTest {
     }
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 16; i++) {
       if (i == 13) {
         Assert.assertEquals(ret.getValue()[i], 0);
       } else {
@@ -163,7 +163,7 @@ public class BatchValidateSignContractTest {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     byte[] input = Hex.decode(AbiUtil.parseParameters(METHOD_SIGN, parameters));
     contract.getEnergyForData(input);
-    contract.setVmShouldEndInUs(System.nanoTime() / 1000 + 50 * 1000);
+    contract.setVmShouldEndInUs(System.nanoTime() / 1000 + 500 * 1000);
     Pair<Boolean, byte[]> ret = contract.execute(input);
     logger.info("BytesArray:{}，HexString:{}", Arrays.toString(ret.getValue()),
         Hex.toHexString(ret.getValue()));
