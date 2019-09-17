@@ -1,20 +1,3 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.common.overlay.server;
 
 import com.google.common.cache.Cache;
@@ -37,10 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
-import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 
@@ -212,31 +193,15 @@ public class SyncPool {
     @Override
     public boolean test(NodeHandler handler) {
 
-      if (handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
-          handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort()) {
-        return false;
-      }
-
-      if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
-        return false;
-      }
-
       InetAddress inetAddress = handler.getInetSocketAddress().getAddress();
-      if (channelManager.getRecentlyDisconnected().getIfPresent(inetAddress) != null) {
-        return false;
-      }
-      if (channelManager.getBadPeers().getIfPresent(inetAddress) != null) {
-        return false;
-      }
-      if (channelManager.getConnectionNum(inetAddress) >= maxActivePeersWithSameIp) {
-        return false;
-      }
 
-      if (nodeHandlerCache.getIfPresent(handler) != null) {
-        return false;
-      }
-
-      return true;
+      return !((handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
+          handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort())
+          || (channelManager.getRecentlyDisconnected().getIfPresent(inetAddress) != null)
+          || (channelManager.getBadPeers().getIfPresent(inetAddress) != null)
+          || (channelManager.getConnectionNum(inetAddress) >= maxActivePeersWithSameIp)
+          || (nodesInUse.contains(handler.getNode().getHexId()))
+          || (nodeHandlerCache.getIfPresent(handler) != null));
     }
   }
 
