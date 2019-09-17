@@ -1339,6 +1339,7 @@ public class PrecompiledContracts {
   public static class ValidateMultiSign extends PrecompiledContract {
 
     private static final int ENGERYPERSIGN = 1500;
+    private static final int MAX_SIZE = 5;
 
     private static List<ByteString> convertToByteString(byte[][] bytesArray) {
       List<ByteString> ret = new ArrayList<>();
@@ -1363,6 +1364,11 @@ public class PrecompiledContracts {
       byte[] hash = words[2].getData();
       byte[][] signatures = extractBytesArray(
           words, words[3].intValueSafe() / DataWord.WORD_SIZE, data);
+
+      if (signatures.length > MAX_SIZE) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+
       AccountCapsule account = this.getDeposit().getAccount(convertToTronAddress(addr));
       if (account != null && account.getPermissionById(permissonId) != null) {
         Permission permission = account.getPermissionById(permissonId);
@@ -1372,8 +1378,8 @@ public class PrecompiledContracts {
           if (weight >= permission.getThreshold()) {
             return Pair.of(true, DataWord.ONE().getData());
           }
-        } catch (Exception e) {
-          logger.error("ValidateMultiSign error", e);
+        } catch (Throwable t) {
+          logger.error("ValidateMultiSign error", t);
           return Pair.of(true, DataWord.ZERO().getData());
         }
       }
