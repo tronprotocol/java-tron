@@ -151,7 +151,7 @@ public class NodeManager implements EventHandler {
         .getPort();
   }
 
-  public  NodeHandler getNodeHandler(Node n) {
+  public NodeHandler getNodeHandler(Node n) {
     String key = getKey(n);
     NodeHandler ret = nodeHandlerMap.get(key);
     if (ret == null) {
@@ -232,36 +232,23 @@ public class NodeManager implements EventHandler {
   }
 
   public List<NodeHandler> getNodes(Predicate<NodeHandler> predicate, int limit) {
-    List<NodeHandler> batch = new ArrayList<>();
-    for (NodeHandler nodeHandler : nodeHandlerMap.values()) {
-      if (nodeHandler.getNode().isConnectible()) {
-        nodeHandler.getNode().setReputation(nodeHandler.getNodeStatistics().getReputation());
-        batch.add(nodeHandler);
-      }
-    }
-    batch.sort(Comparator.comparingInt(value -> -value.getNode().getReputation()));
-    ArrayList<NodeHandler> filtered = new ArrayList<>();
-    for (NodeHandler handler : batch) {
+    List<NodeHandler> filtered = new ArrayList<>();
+    for (NodeHandler handler : nodeHandlerMap.values()) {
       if (handler.getNode().isConnectible() && predicate.test(handler)) {
         filtered.add(handler);
       }
     }
-
-    filtered.sort(Comparator.comparingInt((NodeHandler o) -> o.getNodeStatistics().getReputation())
-        .reversed());
-
+    filtered.sort(Comparator.comparingInt(handler -> -handler.getNodeStatistics().getReputation()));
     return CollectionUtils.truncate(filtered, limit);
   }
 
   public List<NodeHandler> dumpActiveNodes() {
     List<NodeHandler> handlers = new ArrayList<>();
-    for (NodeHandler handler :
-        this.nodeHandlerMap.values()) {
+    for (NodeHandler handler : this.nodeHandlerMap.values()) {
       if (isNodeAlive(handler)) {
         handlers.add(handler);
       }
     }
-
     return handlers;
   }
 

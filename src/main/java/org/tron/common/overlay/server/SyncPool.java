@@ -71,7 +71,7 @@ public class SyncPool {
 
   private int maxActiveNodes = args.getNodeMaxActiveNodes();
 
-  private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
+  private int maxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
 
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -228,15 +228,11 @@ public class SyncPool {
       if (channelManager.getBadPeers().getIfPresent(inetAddress) != null) {
         return false;
       }
-      if (channelManager.getConnectionNum(inetAddress) >= getMaxActivePeersWithSameIp) {
+      if (channelManager.getConnectionNum(inetAddress) >= maxActivePeersWithSameIp) {
         return false;
       }
 
       if (nodeHandlerCache.getIfPresent(handler) != null) {
-        return false;
-      }
-
-      if (handler.getNodeStatistics().getReputation() < 100) {
         return false;
       }
 
