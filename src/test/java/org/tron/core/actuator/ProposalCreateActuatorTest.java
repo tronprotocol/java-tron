@@ -351,7 +351,7 @@ public class ProposalCreateActuatorTest {
     paras.put(2L, 200_000L);
     paras.put(3L, 20L);
     paras.put(4L, 2048_000_000L);
-    paras.put(5L, 1648L);
+    paras.put(5L, 16160L);
     paras.put(6L, 64_000_000L);
     paras.put(7L, 64_000_000L);
     paras.put(8L, 64_000_000L);
