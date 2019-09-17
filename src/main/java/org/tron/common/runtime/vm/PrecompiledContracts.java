@@ -1339,7 +1339,6 @@ public class PrecompiledContracts {
   public static class ValidateMultiSign extends PrecompiledContract {
 
     private static final int ENGERYPERSIGN = 1500;
-    private static final byte[] EMPTYADDR = new byte[DataWord.WORD_SIZE];
 
     private static List<ByteString> convertToByteString(byte[][] bytesArray) {
       List<ByteString> ret = new ArrayList<>();
@@ -1351,7 +1350,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      int cnt = (data.length / DataWord.WORD_SIZE - 5) / 6;
+      int cnt = (data.length / DataWord.WORD_SIZE - 5) / 5;
       // one sign 1500, half of ecrecover
       return (long) (cnt * ENGERYPERSIGN);
     }
@@ -1374,6 +1373,7 @@ public class PrecompiledContracts {
             return Pair.of(true, DataWord.ONE().getData());
           }
         } catch (Exception e) {
+          logger.error("ValidateMultiSign error", e);
           return Pair.of(true, DataWord.ZERO().getData());
         }
       }

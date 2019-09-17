@@ -11,15 +11,15 @@ import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.utils.MUtil;
-import org.tron.common.runtime.vm.PrecompiledContracts.MultiValidateSign;
+import org.tron.common.runtime.vm.PrecompiledContracts.BatchValidateSign;
 import org.tron.core.Wallet;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
-public class MultiValidateSignContractTest {
+public class BatchValidateSignContractTest {
 
-  private static final String METHOD_SIGN = "multivalidatesign(bytes32,bytes[],address[])";
-  PrecompiledContracts.MultiValidateSign contract = new MultiValidateSign();
+  private static final String METHOD_SIGN = "batchvalidatesign(bytes32,bytes[],address[])";
+  PrecompiledContracts.BatchValidateSign contract = new BatchValidateSign();
 
   private static final byte[] smellData;
   private static final byte[] longData;
