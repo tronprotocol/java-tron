@@ -335,7 +335,7 @@ public class ContractTestSendCoin001 {
             assetAccountId.toByteArray(), 100L, dev001Address, dev001Key, blockingStubFull);
 
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer trx to smartContract.",
+    Assert.assertEquals("contract validate error : Cannot transfer asset to smartContract.",
         ret.getMessage().toStringUtf8());
     Long contractAssetCount = PublicMethed
         .getAssetIssueValue(testContractAddress,
@@ -501,7 +501,7 @@ public class ContractTestSendCoin001 {
             assetAccountId.toByteArray(), 100L, dev001Address, dev001Key, blockingStubFull);
 
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret1.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer trx to smartContract.",
+    Assert.assertEquals("contract validate error : Cannot transfer asset to smartContract.",
         ret1.getMessage().toStringUtf8());
 
     txid = PublicMethed
@@ -616,7 +616,7 @@ public class ContractTestSendCoin001 {
             assetAccountId.toByteArray(), 100L, dev001Address, dev001Key, blockingStubFull);
 
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer trx to smartContract.",
+    Assert.assertEquals("contract validate error : Cannot transfer asset to smartContract.",
         ret.getMessage().toStringUtf8());
 
     ret1 = PublicMethed
@@ -624,7 +624,7 @@ public class ContractTestSendCoin001 {
             assetAccountId.toByteArray(), 100L, dev001Address, dev001Key, blockingStubFull);
 
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret1.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer trx to smartContract.",
+    Assert.assertEquals("contract validate error : Cannot transfer asset to smartContract.",
         ret1.getMessage().toStringUtf8());
 
   }
