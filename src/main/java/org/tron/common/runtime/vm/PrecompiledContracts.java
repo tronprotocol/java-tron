@@ -29,6 +29,7 @@ import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 
+import ch.qos.logback.core.encoder.ByteArrayUtil;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -1391,7 +1392,6 @@ public class PrecompiledContracts {
   public static class BatchValidateSign extends PrecompiledContract {
     private static final ExecutorService workers;
     private static final int ENGERYPERSIGN = 1500;
-    private static final byte[] EMPTYADDR = new byte[DataWord.WORD_SIZE];
 
     static {
       workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
@@ -1410,7 +1410,7 @@ public class PrecompiledContracts {
       @Override
       public ValidateSignResult call() {
         try {
-          return new ValidateSignResult(validSign(this.signature, this.hash, this.address), nonce);
+          return new ValidateSignResult(validSign(this.signature, this.hash), nonce);
         } finally {
           countDownLatch.countDown();
         }
@@ -1420,24 +1420,8 @@ public class PrecompiledContracts {
     @Data
     @AllArgsConstructor
     private static class ValidateSignResult {
-      private Boolean res;
+      private byte[] res;
       private int nonce;
-
-      public Boolean getRes() {
-        return res;
-      }
-
-      public void setRes(Boolean res) {
-        this.res = res;
-      }
-
-      public int getNonce() {
-        return nonce;
-      }
-
-      public void setNonce(int nonce) {
-        this.nonce = nonce;
-      }
     }
 
     @Override
@@ -1473,7 +1457,7 @@ public class PrecompiledContracts {
       if (isConstantCall()) {
         //for static call not use thread pool to avoid potential effect
         for (int i = 0; i < min; i++) {
-          if (validSign(signatures[i], hash, addresses[i])) {
+          if (DataWord.equalAddressByteArray(addresses[i], validSign(signatures[i], hash))) {
             res[i] = 1;
           }
         }
@@ -1497,22 +1481,22 @@ public class PrecompiledContracts {
 
         for (Future<ValidateSignResult> future : futures) {
           ValidateSignResult result = future.get();
-          if (result.getRes()) {
-            res[result.getNonce()] = 1;
+          int index = result.getNonce();
+          if (DataWord.equalAddressByteArray(result.getRes(), addresses[index])) {
+            res[index] = 1;
           }
         }
       }
       return Pair.of(true, res);
     }
 
-    private static boolean validSign(byte[] sign, byte[] hash, byte[] address) {
+    private static byte[] validSign(byte[] sign, byte[] hash) {
       byte v;
       byte[] r;
       byte[] s;
       byte[] out = null;
-      if (ArrayUtils.isEmpty(sign) || sign.length < 65
-          || DataWord.equalAddressByteArray(EMPTYADDR, address)) {
-        return false;
+      if (ArrayUtils.isEmpty(sign) || sign.length < 65) {
+        return null;
       }
       try {
         r = Arrays.copyOfRange(sign, 0, 32);
@@ -1528,7 +1512,7 @@ public class PrecompiledContracts {
       } catch (Throwable any) {
         logger.info("ECRecover error", any.getMessage());
       }
-      return DataWord.equalAddressByteArray(address, out);
+      return out;//DataWord.equalAddressByteArray(address, out);
     }
 
   }
