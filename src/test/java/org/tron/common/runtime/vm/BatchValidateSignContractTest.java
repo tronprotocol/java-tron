@@ -81,14 +81,7 @@ public class BatchValidateSignContractTest {
     }
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
-    for (int i = 0; i < 16; i++) {
-      if (i == 11) {
-        Assert.assertEquals(ret.getValue()[i], 0);
-      } else {
-        Assert.assertEquals(ret.getValue()[i], 1);
-      }
-    }
-
+    Assert.assertEquals(ret.getValue(), new byte[32]);
   }
 
   @Test
@@ -149,13 +142,8 @@ public class BatchValidateSignContractTest {
     }
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
-    for (int i = 0; i < 16; i++) {
-      if (i == 13) {
-        Assert.assertEquals(ret.getValue()[i], 0);
-      } else {
-        Assert.assertEquals(ret.getValue()[i], 1);
-      }
-    }
+    Assert.assertEquals(ret.getValue(), new byte[32]);
+
 
   }
 

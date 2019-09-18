@@ -164,6 +164,9 @@ public class PrecompiledContracts {
 
   public static abstract class PrecompiledContract {
 
+    protected static final byte[] DATA_FALSE = new byte[WORD_SIZE];
+
+
     public abstract long getEnergyForData(byte[] data);
 
     public abstract Pair<Boolean, byte[]> execute(byte[] data);
@@ -207,7 +210,7 @@ public class PrecompiledContracts {
     private long vmShouldEndInUs;
 
 
-    public long getCPUTimeLeftInNanoSecond() {
+    protected long getCPUTimeLeftInNanoSecond() {
       long left = getVmShouldEndInUs() * Constant.ONE_THOUSAND - System.nanoTime();
       if (left <= 0) {
         throw Program.Exception.notEnoughTime("call");
@@ -215,6 +218,13 @@ public class PrecompiledContracts {
         return left;
       }
     }
+
+    protected byte[] dataOne() {
+      byte[] ret = new byte[WORD_SIZE];
+      ret[31] = 1;
+      return ret;
+    }
+
   }
 
   public static class Identity extends PrecompiledContract {
@@ -643,14 +653,6 @@ public class PrecompiledContracts {
 
     private static final int ENGERYPERSIGN = 1500;
     private static final int MAX_SIZE = 5;
-    private static final byte[] DATA_FALSE = new byte[WORD_SIZE];
-
-
-    private byte[] dataOne() {
-      byte[] ret = new byte[WORD_SIZE];
-      ret[31] = 1;
-      return ret;
-    }
 
 
     @Override
@@ -684,7 +686,7 @@ public class PrecompiledContracts {
             if (ByteArray.matrixContains(executedSignList, sign)) {
               continue;
             }
-            byte[] recoveredAddr = validSign(sign, hash);
+            byte[] recoveredAddr = recoverAddrBySign(sign, hash);
             long weight = TransactionCapsule.getWeight(permission, recoveredAddr);
             if (weight == 0) {
               //incorrect sign
@@ -728,7 +730,7 @@ public class PrecompiledContracts {
       @Override
       public ValidateSignResult call() {
         try {
-          return new ValidateSignResult(validSign(this.signature, this.hash), nonce);
+          return new ValidateSignResult(recoverAddrBySign(this.signature, this.hash), nonce);
         } finally {
           countDownLatch.countDown();
         }
@@ -767,24 +769,24 @@ public class PrecompiledContracts {
       byte[][] addresses = extractBytes32Array(
           words, words[2].intValueSafe() / WORD_SIZE);
       int cnt = signatures.length;
-      if (cnt == 0 || signatures.length != addresses.length) {
-        return Pair.of(true, new byte[WORD_SIZE]);
+      if (cnt == 0 || cnt > MAX_SIZE || signatures.length != addresses.length) {
+        return Pair.of(true, DATA_FALSE);
       }
-      int min = Math.min(cnt, MAX_SIZE);
       byte[] res = new byte[WORD_SIZE];
       if (isConstantCall()) {
         //for static call not use thread pool to avoid potential effect
-        for (int i = 0; i < min; i++) {
-          if (DataWord.equalAddressByteArray(addresses[i], validSign(signatures[i], hash))) {
+        for (int i = 0; i < cnt; i++) {
+          if (DataWord
+              .equalAddressByteArray(addresses[i], recoverAddrBySign(signatures[i], hash))) {
             res[i] = 1;
           }
         }
       } else {
         // add check
-        CountDownLatch countDownLatch = new CountDownLatch(min);
-        List<Future<ValidateSignResult>> futures = new ArrayList<>(min);
+        CountDownLatch countDownLatch = new CountDownLatch(cnt);
+        List<Future<ValidateSignResult>> futures = new ArrayList<>(cnt);
 
-        for (int i = 0; i < min; i++) {
+        for (int i = 0; i < cnt; i++) {
           Future<ValidateSignResult> future = workers
               .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i], i));
           futures.add(future);
@@ -812,7 +814,7 @@ public class PrecompiledContracts {
 
   }
 
-  private static byte[] validSign(byte[] sign, byte[] hash) {
+  private static byte[] recoverAddrBySign(byte[] sign, byte[] hash) {
     byte v;
     byte[] r;
     byte[] s;
