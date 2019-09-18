@@ -44,12 +44,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
-import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
 import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
@@ -89,6 +89,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
+import org.tron.protos.Contract.UpdateBrokerageContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
@@ -484,6 +485,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case AccountPermissionUpdateContract:
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
           break;
+        case UpdateBrokerageContract:
+          owner = contractParameter.unpack(UpdateBrokerageContract.class).getOwnerAddress();
+          break;
         // todo add other contract
         default:
           return null;
@@ -617,6 +621,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         break;
       case AccountPermissionUpdateContract:
         clazz = AccountPermissionUpdateContract.class;
+        break;
+      case UpdateBrokerageContract:
+        clazz = UpdateBrokerageContract.class;
         break;
       // todo add other contract
       default:
