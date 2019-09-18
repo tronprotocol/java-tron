@@ -646,6 +646,13 @@ public class PrecompiledContracts {
     private static final byte[] DATA_FALSE = new byte[WORD_SIZE];
 
 
+    private byte[] dataOne() {
+      byte[] ret = new byte[WORD_SIZE];
+      ret[31] = 1;
+      return ret;
+    }
+
+
     @Override
     public long getEnergyForData(byte[] data) {
       int cnt = (data.length / WORD_SIZE - 5) / 5;
@@ -688,7 +695,7 @@ public class PrecompiledContracts {
           }
 
           if (totalWeight >= permission.getThreshold()) {
-            return Pair.of(true, DataWord.ONE().getData());
+            return Pair.of(true, dataOne());
           }
         } catch (Throwable t) {
           logger.info("ValidateMultiSign error", t);
