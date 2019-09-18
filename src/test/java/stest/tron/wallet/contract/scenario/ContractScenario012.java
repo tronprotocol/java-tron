@@ -81,7 +81,7 @@ public class ContractScenario012 {
     contract012Address = ecKey1.getAddress();
     contract012Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-    Assert.assertTrue(PublicMethed.sendcoin(contract012Address, 2000000000L, fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(contract012Address, 3000000000L, fromAddress,
         testKey002, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract012Address,
         blockingStubFull);
@@ -97,7 +97,7 @@ public class ContractScenario012 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
     String txid = PublicMethed
-        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100,
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 1000000000L, 100,
             null, contract012Key, contract012Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -113,12 +113,31 @@ public class ContractScenario012 {
 
   @Test(enabled = true)
   public void test2TriggerTransactionCoin() {
-    Account account = PublicMethed.queryAccount(contractAddress, blockingStubFull);
+    String filePath = "./src/test/resources/soliditycode/contractScenario012.sol";
+    String contractName = "PayTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0, 100,
+            null, contract012Key, contract012Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
+    byte[] contractAddress1 = infoById.get().getContractAddress().toByteArray();
+    SmartContract smartContract = PublicMethed.getContract(contractAddress1, blockingStubFull);
+    Assert.assertTrue(smartContract.getAbi() != null);
+
+    Account account = PublicMethed.queryAccount(contractAddress1, blockingStubFull);
     logger.info("contract Balance : -- " + account.getBalance());
     receiveAddressParam = "\"" + Base58.encode58Check(fromAddress)
         + "\"";
     //When the contract has no money,transaction coin failed.
-    txid = PublicMethed.triggerContract(contractAddress,
+    txid = PublicMethed.triggerContract(contractAddress1,
         "sendToAddress2(address)", receiveAddressParam, false,
         0, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -139,14 +158,14 @@ public class ContractScenario012 {
     receiverAddress = ecKey2.getAddress();
     receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-    //Send some trx to the contract account.
-    Assert.assertTrue(PublicMethed.sendcoin(contractAddress, 1000000000L, toAddress,
+    //Can't send some trx to the contract account.
+    Assert.assertFalse(PublicMethed.sendcoin(contractAddress, 1000000000L, toAddress,
         testKey003, blockingStubFull));
     Account account = PublicMethed.queryAccount(contractAddress, blockingStubFull);
     logger.info("contract Balance : -- " + account.getBalance());
     receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
-    //In smart contract, you can't create account
+    //In smart contract, you can create account
     txid = PublicMethed.triggerContract(contractAddress,
         "sendToAddress2(address)", receiveAddressParam, false,
         0, 100000000L, contract012Address, contract012Key, blockingStubFull);
@@ -156,7 +175,7 @@ public class ContractScenario012 {
     logger.info("infobyid : --- " + infoById);
     logger.info("result is " + infoById.get().getResultValue());
     logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
     Assert.assertFalse(infoById.get().getContractAddress().isEmpty());

@@ -17,7 +17,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -92,19 +91,12 @@ public class ContractScenario005 {
         .getTransactionInfoById(txid, blockingStubFull);
     logger.info("Txid is " + txid);
     logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
-    byte[] contractAddress = null;
-    contractAddress = infoById.get().getContractAddress().toByteArray();
-    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
-
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
+    Assert.assertEquals(1, infoById.get().getResultValue());
     accountResource = PublicMethed.getAccountResource(contract005Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();
     Assert.assertTrue(energyLimit > 0);
     Assert.assertTrue(energyUsage > 0);
-
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
   }
