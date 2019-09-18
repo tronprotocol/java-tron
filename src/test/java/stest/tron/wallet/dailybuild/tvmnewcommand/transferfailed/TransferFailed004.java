@@ -334,7 +334,7 @@ public class TransferFailed004 {
 
     Account nonexistentAddressAccount = PublicMethed
         .queryAccount(nonexistentAddress1, blockingStubFull1);
-    Assert.assertEquals("1000000", nonexistentAddressAccount.getBalance());
+    Assert.assertEquals(1000000L, nonexistentAddressAccount.getBalance());
   }
 
   @Test(enabled = true, description = "transfer to a suicide Contract Address")
