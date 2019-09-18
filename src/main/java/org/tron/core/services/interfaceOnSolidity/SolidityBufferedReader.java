@@ -10,14 +10,6 @@ public class SolidityBufferedReader extends BufferedReader {
 
     private List<String> lines;
 
-    public SolidityBufferedReader(Reader in, int sz) {
-        super(in, sz);
-    }
-
-    public SolidityBufferedReader(Reader in) {
-        super(in);
-    }
-
     public SolidityBufferedReader(Reader in, List<String> lines) {
         super(in);
         this.lines = lines;
