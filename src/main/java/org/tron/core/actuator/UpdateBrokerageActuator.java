@@ -45,6 +45,10 @@ public class UpdateBrokerageActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (!dbManager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      throw new ContractValidateException(
+          "contract type error,unexpected type [UpdateBrokerageContract]");
+    }
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
