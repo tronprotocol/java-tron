@@ -22,11 +22,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+
+import java.util.concurrent.*;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -42,18 +40,16 @@ public class WalletOnSolidity {
     GRPC
   }
 
-  private ListeningExecutorService httpExecutorService = MoreExecutors.listeningDecorator(
-      Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads(),
-          new ThreadFactoryBuilder().setNameFormat("WalletOnSolidity-HTTP-%d").build()));
-  private ListeningExecutorService rpcExecutorService = MoreExecutors.listeningDecorator(
-      Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads(),
-          new ThreadFactoryBuilder().setNameFormat("WalletOnSolidity-GRPC-%d").build()));
+  private ExecutorService httpExecutorService = Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads(),
+          new ThreadFactoryBuilder().setNameFormat("WalletOnSolidity-HTTP-%d").build());
+  private ExecutorService rpcExecutorService = Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads(),
+          new ThreadFactoryBuilder().setNameFormat("WalletOnSolidity-GRPC-%d").build());
 
   @Autowired
   private Manager dbManager;
 
-  private  <T> T futureGet(ListeningExecutorService service, ApiType type, Callable<T> callable) {
-    ListenableFuture<T> future = service.submit(() -> {
+  private  <T> T futureGet(ExecutorService service, ApiType type, Callable<T> callable) {
+    Future<T> future = service.submit(() -> {
       try {
         dbManager.setMode(false);
         return callable.call();
@@ -73,8 +69,8 @@ public class WalletOnSolidity {
     return null;
   }
 
-  private void futureGet(ListeningExecutorService service, ApiType type, Runnable runnable) {
-    ListenableFuture<?> future = service.submit(() -> {
+  private void futureGet(ExecutorService service, ApiType type, Runnable runnable) {
+    Future<?> future = service.submit(() -> {
       try {
         dbManager.setMode(false);
         runnable.run();
