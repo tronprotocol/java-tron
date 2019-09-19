@@ -1,5 +1,7 @@
 package org.tron.core.services;
 
+import static org.tron.core.config.Parameter.ChainConstant.PRECISION;
+
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProposalCapsule;
@@ -367,8 +369,8 @@ public class ProposalService {
           long value = entry.getValue();
           long payBlockValue = Long.valueOf(String.valueOf(value).substring(0, 2));
           long pay127SrValue = Long.valueOf(String.valueOf(value).substring(2, payBlockLength));
-          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(payBlockValue);
-          manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(pay127SrValue);
+          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(payBlockValue * PRECISION);
+          manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(pay127SrValue * PRECISION);
           break;
         }
         case WITNESS_STANDBY_ALLOWANCE: {
