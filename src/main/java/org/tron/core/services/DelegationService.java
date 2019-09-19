@@ -102,7 +102,7 @@ public class DelegationService {
     //
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
-      manager.getDelegationStore().setBeginCycle(address, endCycle);
+      manager.getDelegationStore().setBeginCycle(address, endCycle + 1);
       return;
     }
     if (beginCycle < endCycle) {
