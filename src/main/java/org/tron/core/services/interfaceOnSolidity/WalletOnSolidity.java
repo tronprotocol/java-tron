@@ -43,10 +43,10 @@ public class WalletOnSolidity {
   }
 
   private ListeningExecutorService httpExecutorService = MoreExecutors.listeningDecorator(
-      Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads()/2,
+      Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads(),
           new ThreadFactoryBuilder().setNameFormat("WalletOnSolidity-HTTP-%d").build()));
   private ListeningExecutorService rpcExecutorService = MoreExecutors.listeningDecorator(
-      Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads()/2,
+      Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads(),
           new ThreadFactoryBuilder().setNameFormat("WalletOnSolidity-GRPC-%d").build()));
 
   @Autowired
@@ -64,12 +64,10 @@ public class WalletOnSolidity {
     });
 
     try {
-      return future.get(20000, TimeUnit.MILLISECONDS);
+      return future.get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException ignored) {
-    } catch (TimeoutException e) {
-      logger.info(type + " futureGet time out");
     }
 
     return null;
@@ -86,12 +84,10 @@ public class WalletOnSolidity {
     });
 
     try {
-      future.get(20000, TimeUnit.MILLISECONDS);
+      future.get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException ignored) {
-    } catch (TimeoutException e) {
-      logger.info(type + " futureGet time out");
     }
   }
 
