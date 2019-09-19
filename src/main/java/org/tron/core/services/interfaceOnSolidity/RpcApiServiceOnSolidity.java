@@ -4,28 +4,12 @@ import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
-import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
-import org.tron.api.GrpcAPI.AssetIssueList;
-import org.tron.api.GrpcAPI.BlockExtention;
-import org.tron.api.GrpcAPI.BlockReference;
-import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.api.GrpcAPI.DelegatedResourceList;
-import org.tron.api.GrpcAPI.DelegatedResourceMessage;
-import org.tron.api.GrpcAPI.EmptyMessage;
-import org.tron.api.GrpcAPI.ExchangeList;
-import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.PaginatedMessage;
-import org.tron.api.GrpcAPI.Return;
+import org.tron.api.GrpcAPI.*;
 import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.api.GrpcAPI.TransactionExtention;
-import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
@@ -36,12 +20,11 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DynamicProperties;
-import org.tron.protos.Protocol.Exchange;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.*;
+
+import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j(topic = "API")
 public class RpcApiServiceOnSolidity implements Service {

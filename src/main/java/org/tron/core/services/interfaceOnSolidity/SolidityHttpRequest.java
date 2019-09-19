@@ -1,11 +1,10 @@
 package org.tron.core.services.interfaceOnSolidity;
 
 import org.eclipse.jetty.server.ServletRequestHttpWrapper;
-import javax.servlet.ServletRequest;
+
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Map;
