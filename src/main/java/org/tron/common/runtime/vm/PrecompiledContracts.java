@@ -683,7 +683,7 @@ public class PrecompiledContracts {
       AccountCapsule account = this.getDeposit().getAccount(convertToTronAddress(addr));
       if (account != null) {
         try {
-          Permission permission = account.getPermissionById(permissonId);
+          Permission permission = account.getPermissionById(permissionId);
           if (permission != null) {
             //calculate weight
             long totalWeight = 0L;
