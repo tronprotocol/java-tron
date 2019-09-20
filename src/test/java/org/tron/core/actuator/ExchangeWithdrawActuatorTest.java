@@ -720,7 +720,7 @@ public class ExchangeWithdrawActuatorTest {
       fail("account[+OWNER_ADDRESS_NOACCOUNT+] does not exist");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
+      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] does not exist",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -761,10 +761,10 @@ public class ExchangeWithdrawActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
+      fail("account[+OWNER_ADDRESS_NOACCOUNT+] does not exist");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
+      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] does not exist",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -807,7 +807,7 @@ public class ExchangeWithdrawActuatorTest {
       fail("Exchange not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Exchange[4] not exists",
+      Assert.assertEquals("Exchange[4] does not exist",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -847,10 +847,10 @@ public class ExchangeWithdrawActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("Exchange not exists");
+      fail("Exchange does not exist");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Exchange[4] not exists",
+      Assert.assertEquals("Exchange[4] does not exist",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -1167,7 +1167,7 @@ public class ExchangeWithdrawActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("withdraw token quant must greater than zero",
+      Assert.assertEquals("withdraw token quantity must be greater than 0",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -1210,7 +1210,7 @@ public class ExchangeWithdrawActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("withdraw token quant must greater than zero",
+      Assert.assertEquals("withdraw token quantity must be greater than 0",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);

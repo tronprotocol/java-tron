@@ -115,7 +115,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     }
     if (!this.contract.is(ExchangeWithdrawContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ExchangeWithdrawContract],real type[" + contract
+          "contract type error, expected type [ExchangeWithdrawContract], real type[" + contract
               .getClass() + "]");
     }
     final ExchangeWithdrawContract contract;
@@ -133,7 +133,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     }
 
     if (!this.dbManager.getAccountStore().has(ownerAddress)) {
-      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
+      throw new ContractValidateException("account[" + readableOwnerAddress + "] does not exist");
     }
 
     AccountCapsule accountCapsule = this.dbManager.getAccountStore().get(ownerAddress);
@@ -147,7 +147,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       exchangeCapsule = dbManager.getExchangeStoreFinal().
           get(ByteArray.fromLong(contract.getExchangeId()));
     } catch (ItemNotFoundException ex) {
-      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");
+      throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] does not exist");
     }
 
     if (!accountCapsule.getAddress().equals(exchangeCapsule.getCreatorAddress())) {
@@ -175,7 +175,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     }
 
     if (tokenQuant <= 0) {
-      throw new ContractValidateException("withdraw token quant must greater than zero");
+      throw new ContractValidateException("withdraw token quantity must be greater than 0");
     }
 
     if (firstTokenBalance == 0 || secondTokenBalance == 0) {
