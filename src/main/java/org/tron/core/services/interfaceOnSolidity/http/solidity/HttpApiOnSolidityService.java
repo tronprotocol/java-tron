@@ -8,7 +8,25 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.interfaceOnSolidity.http.*;
+import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByNameOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueListByNameOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBlockByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLatestNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLimitNextOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBlockByNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetExchangeByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSolidityServlet;
 
 @Slf4j(topic = "API")
 public class HttpApiOnSolidityService implements Service {
