@@ -120,6 +120,9 @@ public class ProposalService {
         break;
       }
       case WITNESS_PAY_PER_BLOCK: {
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+          throw new ContractValidateException(BAD_PARAM_ID);
+        }
         if (String.valueOf(value).length() != payBlockLength) {
           throw new ContractValidateException(
               "This value[WITNESS_PAY_PER_BLOCK] length must be " + payBlockLength);
