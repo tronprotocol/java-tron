@@ -683,29 +683,31 @@ public class PrecompiledContracts {
       AccountCapsule account = this.getDeposit().getAccount(convertToTronAddress(addr));
       if (account != null) {
         try {
-          Permission permission = account.getPermissionById(permissionId);
-          //calculate weight
-          long totalWeight = 0L;
-          List<byte[]> executedSignList = new ArrayList<>();
-          for (byte[] sign : signatures) {
-            if (ByteArray.matrixContains(executedSignList, sign)) {
-              continue;
+          Permission permission = account.getPermissionById(permissonId);
+          if (permission != null) {
+            //calculate weight
+            long totalWeight = 0L;
+            List<byte[]> executedSignList = new ArrayList<>();
+            for (byte[] sign : signatures) {
+              if (ByteArray.matrixContains(executedSignList, sign)) {
+                continue;
+              }
+              byte[] recoveredAddr = recoverAddrBySign(sign, hash);
+              long weight = TransactionCapsule.getWeight(permission, recoveredAddr);
+              if (weight == 0) {
+                //incorrect sign
+                return Pair.of(true, DATA_FALSE);
+              }
+              totalWeight += weight;
+              executedSignList.add(sign);
             }
-            byte[] recoveredAddr = recoverAddrBySign(sign, hash);
-            long weight = TransactionCapsule.getWeight(permission, recoveredAddr);
-            if (weight == 0) {
-              //incorrect sign
-              return Pair.of(true, DATA_FALSE);
-            }
-            totalWeight += weight;
-            executedSignList.add(sign);
-          }
 
-          if (totalWeight >= permission.getThreshold()) {
-            return Pair.of(true, dataOne());
+            if (totalWeight >= permission.getThreshold()) {
+              return Pair.of(true, dataOne());
+            }
           }
         } catch (Throwable t) {
-          logger.info("ValidateMultiSign error", t);
+          logger.info("ValidateMultiSign error:{}", t.getMessage());
         }
       }
       return Pair.of(true, DATA_FALSE);

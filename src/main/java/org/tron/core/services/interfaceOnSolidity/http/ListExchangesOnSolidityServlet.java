@@ -17,11 +17,11 @@ public class ListExchangesOnSolidityServlet
   @Autowired
   private WalletOnSolidity walletOnSolidity;
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    walletOnSolidity.futureGet(() -> super.doPost(request, response));
-  }
-
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     walletOnSolidity.futureGet(() -> super.doGet(request, response));
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    walletOnSolidity.futureGet(() -> super.doPost(request, response));
   }
 }

@@ -917,19 +917,25 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowTvmSolidity059")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
-            .build());
+        .setKey("getAllowTvmSolidity059")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAdaptiveResourceLimitTargetRatio")
-            .setValue(dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitTargetRatio()/(24 * 60))
-            .build());
+        .setKey("getAdaptiveResourceLimitTargetRatio")
+        .setValue(
+            dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitTargetRatio() / (24 * 60))
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAdaptiveResourceLimitMultiplier")
-            .setValue(dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitMultiplier())
-            .build());
+        .setKey("getAdaptiveResourceLimitMultiplier")
+        .setValue(dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitMultiplier())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getChangeDelegation")
+        .setValue(dbManager.getDynamicPropertiesStore().getChangeDelegation())
+        .build());
 
     return builder.build();
   }

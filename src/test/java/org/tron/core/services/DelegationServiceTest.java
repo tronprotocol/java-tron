@@ -5,6 +5,7 @@ import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.application.TronApplicationContext;
@@ -12,6 +13,7 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.Manager;
+import org.tron.protos.Contract.UpdateBrokerageContract;
 
 @Slf4j
 public class DelegationServiceTest {
@@ -84,6 +86,9 @@ public class DelegationServiceTest {
     byte[] sr27 = Wallet.decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     manager.getDelegationStore().setBrokerage(0, sr27, 10);
     manager.getDelegationStore().setBrokerage(1, sr27, 20);
+    manager.getDelegationStore().setWitnessVote(0, sr27, 100000000);
+    manager.getDelegationStore().setWitnessVote(1, sr27, 100000000);
+    manager.getDelegationStore().setWitnessVote(2, sr27, 100000000);
     testPay(0);
     testWithdraw();
   }
@@ -100,6 +105,13 @@ public class DelegationServiceTest {
     System.out
         .println("getBrokerageInfo: " + walletStub.getBrokerageInfo(builder.build()).getNum());
     System.out.println("getRewardInfo: " + walletStub.getRewardInfo(builder.build()).getNum());
+    UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
+    updateBrokerageContract.setOwnerAddress(
+        ByteString.copyFrom(Wallet.decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
+        .setBrokerage(10);
+    TransactionExtention transactionExtention = walletStub
+        .updateBrokerage(updateBrokerageContract.build());
+    System.out.println("UpdateBrokerage: " + transactionExtention);
   }
 
 }

@@ -52,7 +52,7 @@ public class ProposalServiceTest {
     //
     for (ProposalType proposalType : ProposalType.values()) {
       if (proposalType == WITNESS_PAY_PER_BLOCK) {
-        proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 1648).build();
+        proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 16160).build();
       } else {
         proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 1).build();
       }

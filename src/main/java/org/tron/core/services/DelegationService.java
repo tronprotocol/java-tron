@@ -85,8 +85,14 @@ public class DelegationService {
     long endCycle = delegationStore.getEndCycle(address);
     long currentCycle = dynamicPropertiesStore.getCurrentCycleNumber();
     long reward = 0;
-    if (beginCycle == currentCycle || accountCapsule == null) {
+    if (beginCycle > currentCycle || accountCapsule == null) {
       return;
+    }
+    if (beginCycle == currentCycle) {
+      AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
+      if (account != null) {
+        return;
+      }
     }
     //withdraw the latest cycle reward
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
@@ -102,7 +108,7 @@ public class DelegationService {
     //
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
-      manager.getDelegationStore().setBeginCycle(address, endCycle);
+      manager.getDelegationStore().setBeginCycle(address, endCycle + 1);
       return;
     }
     if (beginCycle < endCycle) {
@@ -131,8 +137,11 @@ public class DelegationService {
     long endCycle = delegationStore.getEndCycle(address);
     long currentCycle = dynamicPropertiesStore.getCurrentCycleNumber();
     long reward = 0;
-    if (beginCycle == currentCycle || accountCapsule == null) {
+    if (accountCapsule == null) {
       return 0;
+    }
+    if (beginCycle > currentCycle) {
+      return accountCapsule.getAllowance();
     }
     //withdraw the latest cycle reward
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
@@ -161,8 +170,8 @@ public class DelegationService {
       byte[] srAddress = vote.getVoteAddress().toByteArray();
       long totalReward = manager.getDelegationStore().getReward(cycle, srAddress);
       long totalVote = manager.getDelegationStore().getWitnessVote(cycle, srAddress);
-      if (totalVote == DelegationStore.REMARK) {
-        totalVote = manager.getWitnessStore().get(srAddress).getVoteCount();
+      if (totalVote == DelegationStore.REMARK || totalVote == 0) {
+        continue;
       }
       long userVote = vote.getVoteCount();
       double voteRate = (double) userVote / totalVote;
