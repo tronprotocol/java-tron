@@ -46,11 +46,13 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     }
     byte[] ownerAddress = unfreezeBalanceContract.getOwnerAddress().toByteArray();
 
+    //
+    dbManager.getDelegationService().withdrawReward(ownerAddress, getDeposit());
+
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
 
     long unfreezeBalance = 0L;
-    ;
 
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
@@ -83,10 +85,20 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract)) {
         switch (unfreezeBalanceContract.getResource()) {
           case BANDWIDTH:
-            receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
+            if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1
+                    && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() < unfreezeBalance) {
+              receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
+            } else {
+              receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
+            }
             break;
           case ENERGY:
-            receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
+            if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1
+                    && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() < unfreezeBalance) {
+              receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
+            } else {
+              receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
+            }
             break;
           default:
             //this should never happen
@@ -175,11 +187,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     switch (unfreezeBalanceContract.getResource()) {
       case BANDWIDTH:
         dbManager.getDynamicPropertiesStore()
-            .addTotalNetWeight(-unfreezeBalance / 1000_000L);
+            .addTotalNetWeight(-unfreezeBalance / 1_000_000L);
         break;
       case ENERGY:
         dbManager.getDynamicPropertiesStore()
-            .addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
+            .addTotalEnergyWeight(-unfreezeBalance / 1_000_000L);
         break;
       default:
         //this should never happen
@@ -285,15 +297,17 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       + "]");
             }
           } else {
-            if (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract
-                && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
-                < delegatedResourceCapsule.getFrozenBalanceForBandwidth()) {
-              throw new ContractValidateException(
-                  "AcquiredDelegatedFrozenBalanceForBandwidth[" + receiverCapsule
-                      .getAcquiredDelegatedFrozenBalanceForBandwidth() + "] < delegatedBandwidth["
-                      + delegatedResourceCapsule.getFrozenBalanceForBandwidth()
-                      + "]");
-            }
+              if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() != 1
+                  && receiverCapsule != null
+                  && receiverCapsule.getType() != AccountType.Contract
+                  && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+                      < delegatedResourceCapsule.getFrozenBalanceForBandwidth()) {
+                  throw new ContractValidateException(
+                          "AcquiredDelegatedFrozenBalanceForBandwidth[" + receiverCapsule
+                                  .getAcquiredDelegatedFrozenBalanceForBandwidth() + "] < delegatedBandwidth["
+                                  + delegatedResourceCapsule.getFrozenBalanceForBandwidth()
+                                  + "]");
+              }
           }
 
           if (delegatedResourceCapsule.getExpireTimeForBandwidth() > now) {
@@ -314,14 +328,16 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       "]");
             }
           } else {
-            if (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract
+            if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() != 1
+                && receiverCapsule != null
+                && receiverCapsule.getType() != AccountType.Contract
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
-                < delegatedResourceCapsule.getFrozenBalanceForEnergy()) {
-              throw new ContractValidateException(
-                  "AcquiredDelegatedFrozenBalanceForEnergy[" + receiverCapsule
-                      .getAcquiredDelegatedFrozenBalanceForEnergy() + "] < delegatedEnergy["
-                      + delegatedResourceCapsule.getFrozenBalanceForEnergy() +
-                      "]");
+                    < delegatedResourceCapsule.getFrozenBalanceForEnergy()) {
+                throw new ContractValidateException(
+                        "AcquiredDelegatedFrozenBalanceForEnergy[" + receiverCapsule
+                                .getAcquiredDelegatedFrozenBalanceForEnergy() + "] < delegatedEnergy["
+                                + delegatedResourceCapsule.getFrozenBalanceForEnergy() +
+                                "]");
             }
           }
 

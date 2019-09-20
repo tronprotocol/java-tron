@@ -51,6 +51,10 @@ public class VMConfig {
   @Setter
   private static boolean ALLOW_MULTI_SIGN = false;
 
+  @Setter
+  private static boolean ALLOW_TVM_SOLIDITY_059 = false;
+
+
   private VMConfig() {
   }
 
@@ -88,6 +92,10 @@ public class VMConfig {
     ALLOW_TVM_CONSTANTINOPLE = allow == 1;
   }
 
+  public static void initAllowTvmSolidity059(long allow) {
+    ALLOW_TVM_SOLIDITY_059 = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -104,4 +112,7 @@ public class VMConfig {
     return ALLOW_MULTI_SIGN;
   }
 
+  public static boolean allowTvmSolidity059() {
+    return ALLOW_TVM_SOLIDITY_059;
+  }
 }

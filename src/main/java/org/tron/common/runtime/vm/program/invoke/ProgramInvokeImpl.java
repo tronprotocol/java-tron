@@ -21,12 +21,10 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.storage.Deposit;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.db.BlockStore;
 import org.tron.core.exception.StoreException;
 
 @Slf4j
@@ -57,13 +55,13 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private boolean byTransaction = true;
   private boolean byTestingSuite = false;
   private int callDeep = 0;
-  private boolean isStaticCall = false;
+  private boolean isConstantCall = false;
 
   public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance,
       DataWord callValue, DataWord tokenValue, DataWord tokenId, byte[] msgData,
       DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
       DataWord difficulty,
-      Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite,
+      Deposit deposit, int callDeep, boolean isConstantCall, boolean byTestingSuite,
       long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
     this.address = address;
     this.origin = origin;
@@ -85,7 +83,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
     this.deposit = deposit;
     this.byTransaction = false;
-    this.isStaticCall = isStaticCall;
+    this.isConstantCall = isConstantCall;
     this.byTestingSuite = byTestingSuite;
     this.vmStartInUs = vmStartInUs;
     this.vmShouldEndInUs = vmShouldEndInUs;
@@ -262,8 +260,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean isStaticCall() {
-    return isStaticCall;
+  public boolean isConstantCall() {
+    return isConstantCall;
   }
 
   @Override
@@ -374,8 +372,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setStaticCall() {
-    isStaticCall = true;
+  public void setConstantCall() {
+    isConstantCall = true;
   }
 
   @Override

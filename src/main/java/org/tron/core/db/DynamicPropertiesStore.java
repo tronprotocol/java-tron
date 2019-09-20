@@ -58,6 +58,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] WITNESS_PAY_PER_BLOCK = "WITNESS_PAY_PER_BLOCK".getBytes();
 
+  private static final byte[] WITNESS_127_PAY_PER_BLOCK = "WITNESS_127_PAY_PER_BLOCK".getBytes();
+
   private static final byte[] WITNESS_STANDBY_ALLOWANCE = "WITNESS_STANDBY_ALLOWANCE".getBytes();
 
   private static class DynamicResourceProperties {
@@ -81,6 +83,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
+    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER = "ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER".getBytes();
+    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO = "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO".getBytes();
   }
 
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
@@ -95,7 +99,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE =
       "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
-      .getBytes();
+          .getBytes();
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
 
@@ -164,6 +168,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
 
+  private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
+
   //Used only for protobuf data filter , once，value is 0,1
   private static final byte[] ALLOW_PROTO_FILTER_NUM = "ALLOW_PROTO_FILTER_NUM"
       .getBytes();
@@ -172,6 +178,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
   //Used only for account state root, once，value is {0,1} allow is 1
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
+
+  private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
+  private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -364,6 +373,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAdaptiveResourceLimitTargetRatio();
+    } catch (IllegalArgumentException e) {
+      this.saveAdaptiveResourceLimitTargetRatio(14400);// 24 * 60 * 10,one minute 1/10 total limit
+    }
+
+    try {
       this.getTotalEnergyLimit();
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyLimit(50_000_000_000L);
@@ -500,6 +515,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmConstantinople(Args.getInstance().getAllowTvmConstantinople());
     }
+
+    try {
+      this.getAllowTvmSolidity059();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmSolidity059(Args.getInstance().getAllowTvmSolidity059());
+    }
+
     try {
       this.getAvailableContractType();
     } catch (IllegalArgumentException e) {
@@ -566,6 +588,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyAverageUsage(0);
     }
+
+    try {
+      this.getAdaptiveResourceLimitMultiplier();
+    } catch (IllegalArgumentException e) {
+      this.saveAdaptiveResourceLimitMultiplier(1000);
+    }
+
+
 
     try {
       this.getTotalEnergyAverageTime();
@@ -777,6 +807,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found WITNESS_PAY_PER_BLOCK"));
   }
 
+  public void saveWitness127PayPerBlock(long pay) {
+    logger.debug("WITNESS_127_PAY_PER_BLOCK:" + pay);
+    this.put(WITNESS_127_PAY_PER_BLOCK,
+        new BytesCapsule(ByteArray.fromLong(pay)));
+  }
+
+  public long getWitness127PayPerBlock() {
+    return Optional.ofNullable(getUnchecked(WITNESS_127_PAY_PER_BLOCK))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(16000000L);
+  }
+
   public void saveWitnessStandbyAllowance(long allowance) {
     logger.debug("WITNESS_STANDBY_ALLOWANCE:" + allowance);
     this.put(WITNESS_STANDBY_ALLOWANCE,
@@ -896,18 +939,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_NET_LIMIT"));
   }
 
+  @Deprecated
   public void saveTotalEnergyLimit(long totalEnergyLimit) {
     this.put(DynamicResourceProperties.TOTAL_ENERGY_LIMIT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
 
-    saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+    long ratio = getAdaptiveResourceLimitTargetRatio();
+    saveTotalEnergyTargetLimit(totalEnergyLimit / ratio);
   }
 
   public void saveTotalEnergyLimit2(long totalEnergyLimit) {
     this.put(DynamicResourceProperties.TOTAL_ENERGY_LIMIT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
 
-    saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+    long ratio = getAdaptiveResourceLimitTargetRatio();
+    saveTotalEnergyTargetLimit(totalEnergyLimit / ratio);
     if (getAllowAdaptiveEnergy() == 0) {
       saveTotalEnergyCurrentLimit(totalEnergyLimit);
     }
@@ -959,6 +1005,35 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_AVERAGE_USAGE"));
   }
+
+  public void saveAdaptiveResourceLimitMultiplier(long adaptiveResourceLimitMultiplier) {
+    this.put(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER,
+            new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitMultiplier)));
+  }
+
+  public long getAdaptiveResourceLimitMultiplier() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER"));
+  }
+
+  public void saveAdaptiveResourceLimitTargetRatio(long adaptiveResourceLimitTargetRatio) {
+    this.put(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO,
+            new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitTargetRatio)));
+  }
+
+  public long getAdaptiveResourceLimitTargetRatio() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"));
+  }
+
+
+
 
   public void saveTotalEnergyAverageTime(long totalEnergyAverageTime) {
     this.put(DynamicResourceProperties.TOTAL_ENERGY_AVERAGE_TIME,
@@ -1290,6 +1365,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_TVM_CONSTANTINOPLE"));
   }
 
+
+  public void saveAllowTvmSolidity059(long value) {
+    this.put(ALLOW_TVM_SOLIDITY_059,
+            new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowTvmSolidity059() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_SOLIDITY_059))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_TVM_SOLIDITY_059"));
+  }
+
+
+
   public void saveAvailableContractType(byte[] value) {
     this.put(AVAILABLE_CONTRACT_TYPE,
         new BytesCapsule(value));
@@ -1303,7 +1393,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public void addSystemContractAndSetPermission(int id){
+  public void addSystemContractAndSetPermission(int id) {
     byte[] availableContractType = getAvailableContractType();
     availableContractType[id / 8] |= (1 << id % 8);
     saveAvailableContractType(availableContractType);
@@ -1315,12 +1405,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
 
   public void updateDynamicStoreByConfig() {
-    if(Args.getInstance().getAllowTvmConstantinople() != 0) {
+    if (Args.getInstance().getAllowTvmConstantinople() != 0) {
       saveAllowTvmConstantinople(Args.getInstance().getAllowTvmConstantinople());
       addSystemContractAndSetPermission(48);
     }
   }
-
 
 
   public void saveActiveDefaultOperations(byte[] value) {
@@ -1663,4 +1752,32 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public boolean allowAccountStateRoot() {
     return getAllowAccountStateRoot() == 1;
   }
+
+  public long getCurrentCycleNumber() {
+    return Optional.ofNullable(getUnchecked(CURRENT_CYCLE_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveCurrentCycleNumber(long number) {
+    this.put(CURRENT_CYCLE_NUMBER, new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public void saveChangeDelegation(long number) {
+    this.put(CHANGE_DELEGATION,
+        new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getChangeDelegation() {
+    return Optional.ofNullable(getUnchecked(CHANGE_DELEGATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public boolean allowChangeDelegation() {
+    return getChangeDelegation() == 1;
+  }
+
 }
