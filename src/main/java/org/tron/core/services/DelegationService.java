@@ -134,7 +134,7 @@ public class DelegationService {
     if (accountCapsule == null) {
       return 0;
     }
-    if (beginCycle == currentCycle) {
+    if (beginCycle > currentCycle) {
       return accountCapsule.getAllowance();
     }
     //withdraw the latest cycle reward
