@@ -1896,6 +1896,9 @@ public class Manager {
   public void setMode(boolean mode) {
     revokingStore.setMode(mode);
   }
+  public void declareSolidity() {
+    setMode(false);
+  }
 
   private void startEventSubscribing() {
 
