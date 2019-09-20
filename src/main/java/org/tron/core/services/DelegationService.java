@@ -85,7 +85,7 @@ public class DelegationService {
     long endCycle = delegationStore.getEndCycle(address);
     long currentCycle = dynamicPropertiesStore.getCurrentCycleNumber();
     long reward = 0;
-    if (beginCycle == currentCycle || accountCapsule == null) {
+    if (beginCycle > currentCycle || accountCapsule == null) {
       return;
     }
     //withdraw the latest cycle reward
