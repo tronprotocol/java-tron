@@ -86,6 +86,9 @@ public class DelegationServiceTest {
     byte[] sr27 = Wallet.decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     manager.getDelegationStore().setBrokerage(0, sr27, 10);
     manager.getDelegationStore().setBrokerage(1, sr27, 20);
+    manager.getDelegationStore().setWitnessVote(0, sr27, 100000000);
+    manager.getDelegationStore().setWitnessVote(1, sr27, 100000000);
+    manager.getDelegationStore().setWitnessVote(2, sr27, 100000000);
     testPay(0);
     testWithdraw();
   }
