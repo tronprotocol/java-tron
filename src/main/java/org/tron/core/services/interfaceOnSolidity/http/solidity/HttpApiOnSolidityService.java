@@ -8,8 +8,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.http.GetBrokerageServlet;
-import org.tron.core.services.http.GetRewardServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidityServlet;
@@ -20,12 +18,14 @@ import org.tron.core.services.interfaceOnSolidity.http.GetBlockByIdOnSoliditySer
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLatestNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLimitNextOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBrokerageOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetExchangeByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetRewardOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSolidityServlet;
@@ -86,9 +86,9 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private GetBlockByLatestNumOnSolidityServlet getBlockByLatestNumOnSolidityServlet;
   @Autowired
-  private GetBrokerageServlet getBrokerageServlet;
+  private GetBrokerageOnSolidityServlet getBrokerageServlet;
   @Autowired
-  private GetRewardServlet getRewardServlet;
+  private GetRewardOnSolidityServlet getRewardServlet;
   @Autowired
   private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
 

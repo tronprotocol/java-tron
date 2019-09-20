@@ -88,6 +88,12 @@ public class DelegationService {
     if (beginCycle > currentCycle || accountCapsule == null) {
       return;
     }
+    if (beginCycle == currentCycle) {
+      AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
+      if (account != null) {
+        return;
+      }
+    }
     //withdraw the latest cycle reward
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
