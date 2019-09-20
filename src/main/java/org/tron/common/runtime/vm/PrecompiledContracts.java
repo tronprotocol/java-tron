@@ -666,11 +666,11 @@ public class PrecompiledContracts {
     public Pair<Boolean, byte[]> execute(byte[] rawData) {
       DataWord[] words = DataWord.parseArray(rawData);
       byte[] addr = words[0].getLast20Bytes();
-      int permissonId = words[1].intValueSafe();
+      int permissionId = words[1].intValueSafe();
       byte[] data = words[2].getData();
 
       byte[] combine = ByteUtil
-          .merge(MUtil.convertToTronAddress(addr), ByteArray.fromInt(permissonId), data);
+          .merge(MUtil.convertToTronAddress(addr), ByteArray.fromInt(permissionId), data);
       byte[] hash = Sha256Hash.hash(combine);
 
       byte[][] signatures = extractBytesArray(
@@ -683,7 +683,7 @@ public class PrecompiledContracts {
       AccountCapsule account = this.getDeposit().getAccount(convertToTronAddress(addr));
       if (account != null) {
         try {
-          Permission permission = account.getPermissionById(permissonId);
+          Permission permission = account.getPermissionById(permissionId);
           //calculate weight
           long totalWeight = 0L;
           List<byte[]> executedSignList = new ArrayList<>();
