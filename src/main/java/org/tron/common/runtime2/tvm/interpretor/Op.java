@@ -765,7 +765,26 @@ public enum Op {
           executor.step();
         }
       }
-  );
+  ),
+  MSTORE8(0x52, 2, 0,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          DataWord addr = executor.stackPop();
+          DataWord value = executor.stackPop();
+          byte[] byteVal = {value.getData()[31]};
+
+          executor.spendEnergy(
+              calcMemEnergy(executor.getMemory().size(),
+                  memNeeded(addr, new DataWord(1)),
+                  0, op), op.name());
+
+          executor.memorySave(addr.intValueSafe(), byteVal);
+          executor.step();
+        }
+      }
+  ),
+  ;
 
   private final byte opcode;
   private final int require;
