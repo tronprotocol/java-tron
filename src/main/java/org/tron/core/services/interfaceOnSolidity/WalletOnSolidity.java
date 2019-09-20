@@ -40,13 +40,21 @@ public class WalletOnSolidity {
   private Manager dbManager;
 
   public <T> T futureGet(TronCallable<T> callable) {
-    dbManager.setMode(false);
-    return callable.call();
+    try {
+      dbManager.setMode(false);
+      return callable.call();
+    } finally {
+      dbManager.setMode(true);
+    }
   }
 
   public void futureGet(Runnable runnable) {
-    dbManager.setMode(false);
-    runnable.run();
+    try {
+      dbManager.setMode(false);
+      runnable.run();
+    } finally {
+      dbManager.setMode(true);
+    }
   }
 
   public interface TronCallable<T> extends Callable<T> {
