@@ -55,11 +55,13 @@ import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
@@ -661,13 +663,18 @@ public class PrecompiledContracts {
     }
 
     @Override
-    public Pair<Boolean, byte[]> execute(byte[] data) {
-      DataWord[] words = DataWord.parseArray(data);
+    public Pair<Boolean, byte[]> execute(byte[] rawData) {
+      DataWord[] words = DataWord.parseArray(rawData);
       byte[] addr = words[0].getLast20Bytes();
-      int permissonId = words[1].intValueSafe();
-      byte[] hash = words[2].getData();
+      int permissionId = words[1].intValueSafe();
+      byte[] data = words[2].getData();
+
+      byte[] combine = ByteUtil
+          .merge(MUtil.convertToTronAddress(addr), ByteArray.fromInt(permissionId), data);
+      byte[] hash = Sha256Hash.hash(combine);
+
       byte[][] signatures = extractBytesArray(
-          words, words[3].intValueSafe() / WORD_SIZE, data);
+          words, words[3].intValueSafe() / WORD_SIZE, rawData);
 
       if (signatures.length > MAX_SIZE) {
         return Pair.of(true, DATA_FALSE);
@@ -676,7 +683,7 @@ public class PrecompiledContracts {
       AccountCapsule account = this.getDeposit().getAccount(convertToTronAddress(addr));
       if (account != null) {
         try {
-          Permission permission = account.getPermissionById(permissonId);
+          Permission permission = account.getPermissionById(permissionId);
           if (permission != null) {
             //calculate weight
             long totalWeight = 0L;
@@ -793,8 +800,8 @@ public class PrecompiledContracts {
             .await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
 
         if (!withNoTimeout) {
-          logger.info("MultiValidateSign timeout");
-          throw Program.Exception.notEnoughTime("call MultiValidateSign precompile method");
+          logger.info("BatchValidateSign timeout");
+          throw Program.Exception.notEnoughTime("call BatchValidateSign precompile method");
         }
 
         for (Future<RecoverAddrResult> future : futures) {
