@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
-import org.tron.core.services.interfaceOnSolidity.SolidityHttpRequest;
 import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 
@@ -23,6 +22,6 @@ public class GetPaginatedAssetIssueListOnSolidityServlet
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    walletOnSolidity.futureGet(() -> super.doPost(new SolidityHttpRequest(request), response));
+    walletOnSolidity.futureGet(() -> super.doPost(request, response));
   }
 }

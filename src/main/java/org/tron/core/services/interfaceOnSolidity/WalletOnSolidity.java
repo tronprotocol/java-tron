@@ -36,78 +36,29 @@ import org.tron.core.db.Manager;
 @Slf4j(topic = "API")
 @Component
 public class WalletOnSolidity {
-
-  enum ApiType {
-    HTTP,
-    GRPC
-  }
-
-  private ListeningExecutorService httpExecutorService = MoreExecutors.listeningDecorator(
-      Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads()/2,
-          new ThreadFactoryBuilder().setNameFormat("WalletOnSolidity-HTTP-%d").build()));
-  private ListeningExecutorService rpcExecutorService = MoreExecutors.listeningDecorator(
-      Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads()/2,
-          new ThreadFactoryBuilder().setNameFormat("WalletOnSolidity-GRPC-%d").build()));
-
   @Autowired
   private Manager dbManager;
 
-  private  <T> T futureGet(ListeningExecutorService service, ApiType type, Callable<T> callable) {
-    ListenableFuture<T> future = service.submit(() -> {
-      try {
-        dbManager.setMode(false);
-        return callable.call();
-      } catch (Exception e) {
-        logger.info(type + " futureGet " + e.getMessage());
-        return null;
-      }
-    });
-
+  public <T> T futureGet(TronCallable<T> callable) {
     try {
-      return future.get(20000, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException ignored) {
-    } catch (TimeoutException e) {
-      logger.info(type + " futureGet time out");
+      dbManager.setMode(false);
+      return callable.call();
+    } finally {
+      dbManager.setMode(true);
     }
-
-    return null;
-  }
-
-  private void futureGet(ListeningExecutorService service, ApiType type, Runnable runnable) {
-    ListenableFuture<?> future = service.submit(() -> {
-      try {
-        dbManager.setMode(false);
-        runnable.run();
-      } catch (Exception e) {
-        logger.info(type + " futureGet " + e.getMessage());
-      }
-    });
-
-    try {
-      future.get(20000, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException ignored) {
-    } catch (TimeoutException e) {
-      logger.info(type + " futureGet time out");
-    }
-  }
-
-  public <T> T futureGet(Callable<T> callable) {
-    return futureGet(httpExecutorService, ApiType.HTTP, callable);
   }
 
   public void futureGet(Runnable runnable) {
-    futureGet(httpExecutorService, ApiType.HTTP, runnable);
+    try {
+      dbManager.setMode(false);
+      runnable.run();
+    } finally {
+      dbManager.setMode(true);
+    }
   }
 
-  public <T> T rpcFutureGet(Callable<T> callable) {
-    return futureGet(rpcExecutorService, ApiType.GRPC, callable);
-  }
-
-  public void rpcFutureGet(Runnable runnable) {
-    futureGet(rpcExecutorService, ApiType.GRPC, runnable);
+  public interface TronCallable<T> extends Callable<T> {
+    @Override
+    T call();
   }
 }
