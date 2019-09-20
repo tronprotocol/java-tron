@@ -798,8 +798,8 @@ public class PrecompiledContracts {
             .await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
 
         if (!withNoTimeout) {
-          logger.info("MultiValidateSign timeout");
-          throw Program.Exception.notEnoughTime("call MultiValidateSign precompile method");
+          logger.info("BatchValidateSign timeout");
+          throw Program.Exception.notEnoughTime("call BatchValidateSign precompile method");
         }
 
         for (Future<RecoverAddrResult> future : futures) {
