@@ -33,8 +33,8 @@ public class DelegationService {
       witnessAddressList.add(witnessCapsule.getAddress());
     }
     sortWitness(witnessAddressList);
-    if (witnessAddressList.size() > ChainConstant.MAX_ACTIVE_WITNESS_NUM) {
-      witnessAddressList = witnessAddressList.subList(0, ChainConstant.MAX_ACTIVE_WITNESS_NUM);
+    if (witnessAddressList.size() > ChainConstant.WITNESS_STANDBY_LENGTH) {
+      witnessAddressList = witnessAddressList.subList(0, ChainConstant.WITNESS_STANDBY_LENGTH);
     }
 
     long voteSum = 0;
@@ -176,8 +176,9 @@ public class DelegationService {
       long userVote = vote.getVoteCount();
       double voteRate = (double) userVote / totalVote;
       reward += voteRate * totalReward;
-      logger.debug("computeReward {} {},{},{},{}", Hex.toHexString(srAddress), userVote, totalVote,
-          totalReward, reward);
+      logger.debug("computeReward {} {} {} {},{},{},{}", cycle,
+          Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
+          userVote, totalVote, totalReward, reward);
     }
     return reward;
   }
