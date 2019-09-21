@@ -459,6 +459,22 @@ public class PublicMethed {
    * constructor.
    */
 
+  public static Protocol.Transaction signTransactionWithoutTimestamp(ECKey ecKey,
+      Protocol.Transaction transaction) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    if (ecKey == null || ecKey.getPrivKey() == null) {
+      //logger.warn("Warning: Can't sign,there is no private key !!");
+      return null;
+    }
+    logger.info("Txid in sign is " + ByteArray.toHexString(Sha256Hash.hash(transaction
+        .getRawData().toByteArray())));
+    return TransactionUtils.sign(transaction, ecKey);
+  }
+
+  /**
+   * constructor.
+   */
+
   public static Protocol.Transaction signTransactionForShield(ECKey ecKey,
       Protocol.Transaction transaction) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -4942,4 +4958,36 @@ public class PublicMethed {
     Return ret = transaction.getResult();
     return ret;
   }
+
+  /**
+   * constructor.
+   */
+
+  public static Transaction sendcoinForTransaction(byte[] to, long amount, byte[] owner, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+
+      Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+      ByteString bsTo = ByteString.copyFrom(to);
+      ByteString bsOwner = ByteString.copyFrom(owner);
+      builder.setToAddress(bsTo);
+      builder.setOwnerAddress(bsOwner);
+      builder.setAmount(amount);
+
+      Contract.TransferContract contract = builder.build();
+      TransactionExtention extention = blockingStubFull.createTransaction2(contract);
+      Protocol.Transaction transaction = extention.getTransaction();
+      return transaction;
+  }
+
 }
