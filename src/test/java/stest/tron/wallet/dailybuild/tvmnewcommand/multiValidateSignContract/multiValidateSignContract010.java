@@ -115,19 +115,19 @@ public class multiValidateSignContract010 {
           "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("11111111111111111111111111111111", PublicMethed
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
           .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
     }
   }
 
-  @Test(enabled = true, description = "33 signatures with 1st incorrect signatures test multivalidatesign")
+  @Test(enabled = true, description = "2 signatures with 1st incorrect signatures test multivalidatesign")
   public void test02Incorrect1stSignatures() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 2; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -148,19 +148,19 @@ public class multiValidateSignContract010 {
           "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("01111111111111111111111111111111", PublicMethed
+      Assert.assertEquals("01000000000000000000000000000000", PublicMethed
           .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
     }
   }
 
-  @Test(enabled = true, description = "52 signatures with 1st incorrect address test multivalidatesign")
+  @Test(enabled = true, description = "3 signatures with 1st incorrect address test multivalidatesign")
   public void test03Incorrect1stAddress() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 52; i++) {
+    for (int i = 0; i < 3; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -180,26 +180,26 @@ public class multiValidateSignContract010 {
           "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("01111111111111111111111111111111", PublicMethed
+      Assert.assertEquals("01100000000000000000000000000000", PublicMethed
           .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
     }
   }
 
-  @Test(enabled = true, description = "91 signatures with 15th incorrect signatures test multivalidatesign")
+  @Test(enabled = true, description = "9 signatures with 7th incorrect signatures test multivalidatesign")
   public void test04Incorrect15thSignatures() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 91; i++) {
+    for (int i = 0; i < 9; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
     byte[] sign = new ECKey().sign(Hash.sha3("sdifhsdfihyw888w7".getBytes())).toByteArray();
-    signatures.set(14, Hex.toHexString(sign));
+    signatures.set(6, Hex.toHexString(sign));
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     TransactionExtention transactionExtention = PublicMethed
@@ -213,25 +213,25 @@ public class multiValidateSignContract010 {
           "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("11111111111111011111111111111111", PublicMethed
+      Assert.assertEquals("11111101100000000000000000000000", PublicMethed
           .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
     }
   }
 
-  @Test(enabled = true, description = "66 signatures with 15th-30th incorrect address test multivalidatesign")
+  @Test(enabled = true, description = "5 signatures with 2th-4th incorrect address test multivalidatesign")
   public void test05Incorrect15thTo30thAddress() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 66; i++) {
+    for (int i = 0; i < 5; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
-    for (int i = 14; i < 30; i++) {
+    for (int i = 1; i < 4; i++) {
       addresses.set(i, Wallet.encode58Check(new ECKey().getAddress()));
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
@@ -247,7 +247,7 @@ public class multiValidateSignContract010 {
           "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("11111111111111000000000000000011", PublicMethed
+      Assert.assertEquals("10001000000000000000000000000000", PublicMethed
           .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
@@ -283,7 +283,7 @@ public class multiValidateSignContract010 {
           "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("10111111111111111111111111111110", PublicMethed
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
           .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
@@ -318,7 +318,7 @@ public class multiValidateSignContract010 {
           "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("11111111010111111111111111101110", PublicMethed
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
           .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
