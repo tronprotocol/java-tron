@@ -163,7 +163,8 @@ public class TestValidatemultisign003 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Trigger validatemultisign precompiled contract")
+  @Test(enabled = true, description = "Trigger validatemultisign precompiled contract, "
+      + "with wrong hash bytes")
   public void test002validatemultisign() {
     List<Object> signatures = new ArrayList<>();
 
@@ -185,12 +186,50 @@ public class TestValidatemultisign003 {
         0, "0x" + Hex.toHexString(hash), signatures);
     String argsStr = PublicMethed.parametersString(parameters);
 
+    byte[] inputBytesArray = Hex.decode(AbiUtil.parseMethod(
+        "validatemultisign(address,uint256,bytes32,bytes[])", argsStr, false));
+    String input = ByteArray.toHexString(inputBytesArray);
 
-//    byte[] inputBytesArray = Hex.decode(AbiUtil.parseMethod(
-//        "validatemultisign(address,uint256,bytes32,bytes[])", argsStr, false));
-//    String input = ByteArray.toHexString(inputBytesArray);
-    String input = AbiUtil.parseMethod(
-        "validatemultisign(address,uint256,bytes32,bytes[])", argsStr, false);
+    String methodStr = "testMultiPrecompileContract(bytes)";
+    String TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,
+        AbiUtil.parseParameters(methodStr, Arrays.asList(input)),true,
+        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Optional<TransactionInfo> infoById = null;
+    infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
+    logger.info("infoById" + infoById);
+
+    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+
+  }
+
+  @Test(enabled = true, description = "Trigger validatemultisign precompiled contract, "
+      + "with correct hash bytes")
+  public void test003validatemultisign() {
+    List<Object> signatures = new ArrayList<>();
+
+    ownerKeyString[0] = ownerKey;
+    ownerKeyString[1] = manager1Key;
+
+    Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
+        fromAddress,1L,ownerAddress,ownerKey,blockingStubFull,ownerKeyString);
+    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+
+    byte[] merged = ByteUtil.merge(ownerAddress,ByteArray.fromInt(0),hash);
+    byte[] tosign = Sha256Hash.hash(merged);
+
+    signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
+    signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
+
+
+    List<Object> parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
+        0, "0x" + Hex.toHexString(hash), signatures);
+    String argsStr = PublicMethed.parametersString(parameters);
+
+    String input = AbiUtil.parseParameters(
+        "validatemultisign(address,uint256,bytes32,bytes[])", argsStr);
 
     String methodStr = "testMultiPrecompileContract(bytes)";
     String TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,

@@ -3,6 +3,7 @@ package stest.tron.wallet.committee;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -10,6 +11,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.core.Wallet;
@@ -253,32 +256,27 @@ public class WalletTestCommittee002 {
     //5:WITNESS_PAY_PER_BLOCK,[0,100 000 000 000 000 000]//drop
     //Minimum WitnessPayPerBlock
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-    proposalMap.put(5L, 32016L);
+    proposalMap.put(5L, 0L);
     Assert.assertTrue(PublicMethed.createProposal(witness001Address, witnessKey001,
         proposalMap, blockingStubFull));
 
-    // not 5 nums WitnessPayPerBlock
-    proposalMap.put(5L, 3216L);
-    Assert.assertFalse(PublicMethed.createProposal(witness001Address, witnessKey001,
+    //Maximum WitnessPayPerBlock
+    proposalMap.put(5L, 100000000000000000L);
+    Assert.assertTrue(PublicMethed.createProposal(witness001Address, witnessKey001,
         proposalMap, blockingStubFull));
 
-    //Minimum -32 WitnessPayPerBlock
-    proposalMap.put(5L, -32016L);
-    Assert.assertFalse(PublicMethed.createProposal(witness001Address, witnessKey001,
-        proposalMap, blockingStubFull));
-
-    //Minimum -1 WitnessPayPerBlock
-    proposalMap.put(5L, Long.MIN_VALUE - 1);
+    //Minimum - 1 WitnessPayPerBlock
+    proposalMap.put(5L, -1L);
     Assert.assertFalse(PublicMethed.createProposal(witness001Address, witnessKey001,
         proposalMap, blockingStubFull));
 
     //Maximum + 1 WitnessPayPerBlock
-    proposalMap.put(5L, Long.MAX_VALUE + 1);
+    proposalMap.put(5L, 100000000000000001L);
     Assert.assertFalse(PublicMethed.createProposal(witness001Address, witnessKey001,
         proposalMap, blockingStubFull));
 
     //Non witness account
-    proposalMap.put(5L, 32016L);
+    proposalMap.put(5L, 86400000L);
     Assert.assertFalse(PublicMethed.createProposal(toAddress, testKey003,
         proposalMap, blockingStubFull));
 
