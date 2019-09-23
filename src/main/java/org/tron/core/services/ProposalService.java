@@ -1,7 +1,5 @@
 package org.tron.core.services;
 
-import static org.tron.core.config.Parameter.ChainConstant.PRECISION;
-
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProposalCapsule;
@@ -57,7 +55,7 @@ public class ProposalService {
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(28), // 10, 28
     ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER(29), // 1000, 29
     ALLOW_CHANGE_DELEGATION(30), //1, 30
-    WITNESS_PAY_PER_BLOCK_STANDBY_ALLOWANCE(31); //16160, 31
+    WITNESS_127_PAY_PER_BLOCK(31); //drop, 31
 
     ProposalType(long code) {
       this.code = code;
@@ -324,14 +322,12 @@ public class ProposalService {
         }
         break;
       }
-      case WITNESS_PAY_PER_BLOCK_STANDBY_ALLOWANCE: {
+      case WITNESS_127_PAY_PER_BLOCK: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
-        if (String.valueOf(value).length() != payBlockLength) {
-          throw new ContractValidateException(
-              "This value[WITNESS_PAY_PER_BLOCK_STANDBY_ALLOWANCE] length must be "
-                  + payBlockLength);
+        if (value < 0 || value > LONG_VALUE) {
+          throw new ContractValidateException(LONG_VALUE_ERROR);
         }
         break;
       }
@@ -493,13 +489,8 @@ public class ProposalService {
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(49);
           break;
         }
-        case WITNESS_PAY_PER_BLOCK_STANDBY_ALLOWANCE: {
-          //before 2 is use to pay block and next 3 is use to 127 sr pay
-          long value = entry.getValue();
-          long payBlockValue = Long.valueOf(String.valueOf(value).substring(0, 2));
-          long pay127SrValue = Long.valueOf(String.valueOf(value).substring(2, payBlockLength));
-          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(payBlockValue * PRECISION);
-          manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(pay127SrValue * PRECISION);
+        case WITNESS_127_PAY_PER_BLOCK: {
+          manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(entry.getValue());
           break;
         }
         default:

@@ -27,7 +27,7 @@ public class DelegationServiceTest {
   }
 
   private void testPay(int cycle) {
-    double rate = 0;
+    double rate = 0.2;
     if (cycle == 0) {
       rate = 0.1;
     } else if (cycle == 1) {
@@ -66,7 +66,8 @@ public class DelegationServiceTest {
     accountCapsule.addVotes(ByteString.copyFrom(sr27), 10000000);
     manager.getAccountStore().put(sr1, accountCapsule);
     //
-    long value = delegationService.queryReward(sr1);
+    long allowance = accountCapsule.getAllowance();
+    long value = delegationService.queryReward(sr1) - allowance;
     long reward1 = (long) ((double) manager.getDelegationStore().getReward(0, sr27) / 100000000
         * 10000000);
     long reward2 = (long) ((double) manager.getDelegationStore().getReward(1, sr27) / 100000000
@@ -76,7 +77,7 @@ public class DelegationServiceTest {
     Assert.assertEquals(reward, value);
     delegationService.withdrawReward(sr1, null);
     accountCapsule = manager.getAccountStore().get(sr1);
-    long allowance = accountCapsule.getAllowance();
+    allowance = accountCapsule.getAllowance() - allowance;
     System.out.println("withdrawReward:" + allowance);
     Assert.assertEquals(reward, allowance);
   }

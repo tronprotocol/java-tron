@@ -1,6 +1,6 @@
 package org.tron.core.services;
 
-import static org.tron.core.services.ProposalService.ProposalType.WITNESS_PAY_PER_BLOCK_STANDBY_ALLOWANCE;
+import static org.tron.core.services.ProposalService.ProposalType.WITNESS_127_PAY_PER_BLOCK;
 
 import java.io.File;
 import java.util.HashSet;
@@ -51,7 +51,7 @@ public class ProposalServiceTest {
     Assert.assertFalse(result);
     //
     for (ProposalType proposalType : ProposalType.values()) {
-      if (proposalType == WITNESS_PAY_PER_BLOCK_STANDBY_ALLOWANCE) {
+      if (proposalType == WITNESS_127_PAY_PER_BLOCK) {
         proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 16160).build();
       } else {
         proposal = Proposal.newBuilder().putParameters(proposalType.getCode(), 1).build();
