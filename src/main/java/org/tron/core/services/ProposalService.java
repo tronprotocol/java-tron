@@ -56,7 +56,8 @@ public class ProposalService {
     ALLOW_TVM_SOLIDITY_059(27), // 1, 27
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(28), // 10, 28
     ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER(29), // 1000, 29
-    ALLOW_CHANGE_DELEGATION(30); //1, 27
+    ALLOW_CHANGE_DELEGATION(30), //1, 30
+    WITNESS_PAY_PER_BLOCK_STANDBY_ALLOWANCE(31); //16160, 31
 
     ProposalType(long code) {
       this.code = code;
@@ -111,21 +112,12 @@ public class ProposalService {
       case CREATE_ACCOUNT_FEE:
       case TRANSACTION_FEE:
       case ASSET_ISSUE_FEE:
+      case WITNESS_PAY_PER_BLOCK:
       case WITNESS_STANDBY_ALLOWANCE:
       case CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT:
       case CREATE_NEW_ACCOUNT_BANDWIDTH_RATE: {
         if (value < 0 || value > LONG_VALUE) {
           throw new ContractValidateException(LONG_VALUE_ERROR);
-        }
-        break;
-      }
-      case WITNESS_PAY_PER_BLOCK: {
-        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
-          throw new ContractValidateException(BAD_PARAM_ID);
-        }
-        if (String.valueOf(value).length() != payBlockLength) {
-          throw new ContractValidateException(
-              "This value[WITNESS_PAY_PER_BLOCK] length must be " + payBlockLength);
         }
         break;
       }
@@ -332,6 +324,17 @@ public class ProposalService {
         }
         break;
       }
+      case WITNESS_PAY_PER_BLOCK_STANDBY_ALLOWANCE: {
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+          throw new ContractValidateException(BAD_PARAM_ID);
+        }
+        if (String.valueOf(value).length() != payBlockLength) {
+          throw new ContractValidateException(
+              "This value[WITNESS_PAY_PER_BLOCK_STANDBY_ALLOWANCE] length must be "
+                  + payBlockLength);
+        }
+        break;
+      }
       default:
         break;
     }
@@ -368,12 +371,7 @@ public class ProposalService {
           break;
         }
         case WITNESS_PAY_PER_BLOCK: {
-          //before 2 is use to pay block and next 2 is use to 127 sr pay
-          long value = entry.getValue();
-          long payBlockValue = Long.valueOf(String.valueOf(value).substring(0, 2));
-          long pay127SrValue = Long.valueOf(String.valueOf(value).substring(2, payBlockLength));
-          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(payBlockValue * PRECISION);
-          manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(pay127SrValue * PRECISION);
+          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(entry.getValue());
           break;
         }
         case WITNESS_STANDBY_ALLOWANCE: {
@@ -493,6 +491,15 @@ public class ProposalService {
         case ALLOW_CHANGE_DELEGATION: {
           manager.getDynamicPropertiesStore().saveChangeDelegation(entry.getValue());
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(49);
+          break;
+        }
+        case WITNESS_PAY_PER_BLOCK_STANDBY_ALLOWANCE: {
+          //before 2 is use to pay block and next 3 is use to 127 sr pay
+          long value = entry.getValue();
+          long payBlockValue = Long.valueOf(String.valueOf(value).substring(0, 2));
+          long pay127SrValue = Long.valueOf(String.valueOf(value).substring(2, payBlockLength));
+          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(payBlockValue * PRECISION);
+          manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(pay127SrValue * PRECISION);
           break;
         }
         default:

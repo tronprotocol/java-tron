@@ -937,6 +937,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getChangeDelegation())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getWitness127PayPerBlock")
+        .setValue(dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
+        .build());
+
     return builder.build();
   }
 
