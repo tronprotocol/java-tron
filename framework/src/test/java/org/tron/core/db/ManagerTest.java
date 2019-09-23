@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -47,12 +48,14 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
-public class ManagerTest {
+public class ManagerTest extends BlockGenerate {
 
   private static Manager dbManager;
   private static ConsensusService consensusService;
@@ -69,6 +72,7 @@ public class ManagerTest {
     context = new TronApplicationContext(DefaultConfig.class);
 
     dbManager = context.getBean(Manager.class);
+    setManager(dbManager);
     dposSlot = context.getBean(DposSlot.class);
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
@@ -216,7 +220,7 @@ public class ManagerTest {
     Assert.assertEquals("update add witness size is ", 2, sizeTis - sizePrv);
   }
 
-  //@Test
+  @Test
   public void fork()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
@@ -232,7 +236,10 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.pushBlock(dbManager.generateBlock(System.currentTimeMillis() + 1000));
+
+    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+
+    dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
@@ -287,7 +294,7 @@ public class ManagerTest {
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
   }
 
-  //@Test
+  @Test
   public void doNotSwitch()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
@@ -305,7 +312,9 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.pushBlock(dbManager.generateBlock(System.currentTimeMillis() + 1000));
+
+    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
@@ -388,7 +397,7 @@ public class ManagerTest {
             .getBlockId());
   }
 
-  //@Test
+  @Test
   public void switchBack()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
@@ -404,7 +413,10 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.pushBlock(dbManager.generateBlock(System.currentTimeMillis() + 1000));
+
+    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    dbManager.pushBlock(new BlockCapsule(block));
+
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
     long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
