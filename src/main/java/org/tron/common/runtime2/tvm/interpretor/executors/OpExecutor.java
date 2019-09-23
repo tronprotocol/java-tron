@@ -38,7 +38,7 @@ public abstract class OpExecutor {
     return energyCost;
   }
 
-  private void checkMemorySize(Op op, BigInteger newMemSize) {
+  protected void checkMemorySize(Op op, BigInteger newMemSize) {
     if (newMemSize.compareTo(VMConstant.MEM_LIMIT) > 0) {
       throw memoryOverflow(op.name());
     }

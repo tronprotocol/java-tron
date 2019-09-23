@@ -15,5 +15,14 @@ public class Costs {
 
   public static final int EXT_CODE_HASH = 400;
 
+  public static final int SLOAD = 50;
+  public static final int CLEAR_SSTORE = 5000;
+  public static final int SET_SSTORE = 20000;
+  public static final int RESET_SSTORE = 5000;
+  public static final int REFUND_SSTORE = 15000;
+  public static final int LOG_DATA_ENERGY = 8;
+  public static final int LOG_ENERGY = 375;
+  public static final int LOG_TOPIC_ENERGY = 375;
+
 
 }

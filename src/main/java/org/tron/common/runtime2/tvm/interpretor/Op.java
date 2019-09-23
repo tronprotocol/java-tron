@@ -11,7 +11,11 @@ import org.tron.common.runtime2.tvm.ContractExecutor;
 import org.tron.common.runtime2.tvm.VMConstant;
 import org.tron.common.runtime2.tvm.interpretor.executors.CodeCopyOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.CodeSizeOpExecutor;
+import org.tron.common.runtime2.tvm.interpretor.executors.DupOpExecutor;
+import org.tron.common.runtime2.tvm.interpretor.executors.LogOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.OpExecutor;
+import org.tron.common.runtime2.tvm.interpretor.executors.PushOpExecutor;
+import org.tron.common.runtime2.tvm.interpretor.executors.SwapOpExecutor;
 import org.tron.common.utils.ByteUtil;
 
 
@@ -766,7 +770,7 @@ public enum Op {
         }
       }
   ),
-  MSTORE8(0x52, 2, 0,
+  MSTORE8(0x53, 2, 0,
       new OpExecutor() {
         @Override
         public void exec(Op op, ContractExecutor executor) {
@@ -784,6 +788,213 @@ public enum Op {
         }
       }
   ),
+  SLOAD(0x54, 1, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(Costs.SLOAD, op.name());
+          DataWord key = executor.stackPop();
+          DataWord val = executor.storageLoad(key);
+
+          if (val == null) {
+            val = key.and(DataWord.ZERO);
+          }
+
+          executor.stackPush(val);
+          executor.step();
+        }
+      }
+  ),
+  SSTORE(0x55, 2, 0,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+
+          if (executor.getContractContext().isStatic()) {
+            throw new org.tron.common.runtime.vm.program.Program.StaticCallModificationException();
+          }
+
+          DataWord addr = executor.stackPop();
+          DataWord newValue = executor.stackPop();
+          DataWord oldValue = executor.storageLoad(addr);
+
+          long energyCost = 0L;
+
+          if (oldValue == null && !newValue.isZero()) {
+            // set a new not-zero value
+            energyCost = Costs.SET_SSTORE;
+          } else if (oldValue != null && newValue.isZero()) {
+            // set zero to an old value
+            //no refund in tron
+            //env.futureRefundEnergy(energyCosts.getREFUND_SSTORE());
+            energyCost = Costs.CLEAR_SSTORE;
+          } else {
+            // include:
+            // [1] oldValue == null && newValue == 0
+            // [2] oldValue != null && newValue != 0
+            energyCost = Costs.RESET_SSTORE;
+          }
+          executor.spendEnergy(energyCost, op.name());
+
+          executor.storageSave(addr, newValue);
+          executor.step();
+        }
+      }
+  ),
+  JUMP(0x56, 1, 0,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(Tier.MidTier.asInt(), op.name());
+
+          DataWord pos = executor.stackPop();
+          int nextPC = executor.verifyJumpDest(pos);
+
+          executor.setPC(nextPC);
+        }
+      }
+  ),
+  JUMPI(0x57, 1, 0,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(Tier.MidTier.asInt(), op.name());
+
+          DataWord pos = executor.stackPop();
+          DataWord cond = executor.stackPop();
+
+          if (!cond.isZero()) {
+            int nextPC = executor.verifyJumpDest(pos);
+
+            executor.setPC(nextPC);
+          } else {
+            executor.step();
+          }
+        }
+      }
+  ),
+  PC(0x58, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+
+          executor.spendEnergy(Tier.BaseTier.asInt(), op.name());
+
+          int pc = executor.getPC();
+          DataWord pcWord = new DataWord(pc);
+
+          executor.stackPush(pcWord);
+          executor.step();
+        }
+      }
+  ),
+  MSIZE(0x59, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+
+          executor.spendEnergy(Tier.BaseTier.asInt(), op.name());
+
+          int memSize = executor.getMemSize();
+          DataWord wordMemSize = new DataWord(memSize);
+          executor.stackPush(wordMemSize);
+          executor.step();
+        }
+      }
+  ),
+  GAS(0x5a, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(Tier.BaseTier.asInt(), op.name());
+          DataWord energy = executor.getContractContext().getEnergyLimitLeft();
+
+          executor.stackPush(energy);
+          executor.step();
+        }
+      }
+  ),
+  JUMPDEST(0x5b, 0, 0,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(Tier.SpecialTier.asInt(), op.name());
+          executor.step();
+        }
+      }
+  ),
+  PUSH1(0x60, 0, 1, PushOpExecutor.getInstance()),
+  PUSH2(0x61, 0, 1, PushOpExecutor.getInstance()),
+  PUSH3(0x62, 0, 1, PushOpExecutor.getInstance()),
+  PUSH4(0x63, 0, 1, PushOpExecutor.getInstance()),
+  PUSH5(0x64, 0, 1, PushOpExecutor.getInstance()),
+  PUSH6(0x65, 0, 1, PushOpExecutor.getInstance()),
+  PUSH7(0x66, 0, 1, PushOpExecutor.getInstance()),
+  PUSH8(0x67, 0, 1, PushOpExecutor.getInstance()),
+  PUSH9(0x68, 0, 1, PushOpExecutor.getInstance()),
+  PUSH10(0x69, 0, 1, PushOpExecutor.getInstance()),
+  PUSH11(0x6a, 0, 1, PushOpExecutor.getInstance()),
+  PUSH12(0x6b, 0, 1, PushOpExecutor.getInstance()),
+  PUSH13(0x6c, 0, 1, PushOpExecutor.getInstance()),
+  PUSH14(0x6d, 0, 1, PushOpExecutor.getInstance()),
+  PUSH15(0x6e, 0, 1, PushOpExecutor.getInstance()),
+  PUSH16(0x6f, 0, 1, PushOpExecutor.getInstance()),
+  PUSH17(0x70, 0, 1, PushOpExecutor.getInstance()),
+  PUSH18(0x71, 0, 1, PushOpExecutor.getInstance()),
+  PUSH19(0x72, 0, 1, PushOpExecutor.getInstance()),
+  PUSH20(0x73, 0, 1, PushOpExecutor.getInstance()),
+  PUSH21(0x74, 0, 1, PushOpExecutor.getInstance()),
+  PUSH22(0x75, 0, 1, PushOpExecutor.getInstance()),
+  PUSH23(0x76, 0, 1, PushOpExecutor.getInstance()),
+  PUSH24(0x77, 0, 1, PushOpExecutor.getInstance()),
+  PUSH25(0x78, 0, 1, PushOpExecutor.getInstance()),
+  PUSH26(0x79, 0, 1, PushOpExecutor.getInstance()),
+  PUSH27(0x7a, 0, 1, PushOpExecutor.getInstance()),
+  PUSH28(0x7b, 0, 1, PushOpExecutor.getInstance()),
+  PUSH29(0x7c, 0, 1, PushOpExecutor.getInstance()),
+  PUSH30(0x7d, 0, 1, PushOpExecutor.getInstance()),
+  PUSH31(0x7e, 0, 1, PushOpExecutor.getInstance()),
+  PUSH32(0x7f, 0, 1, PushOpExecutor.getInstance()),
+
+  DUP1(0x80, 1, 2, DupOpExecutor.getInstance()),
+  DUP2(0x81, 2, 3, DupOpExecutor.getInstance()),
+  DUP3(0x82, 3, 4, DupOpExecutor.getInstance()),
+  DUP4(0x83, 4, 5, DupOpExecutor.getInstance()),
+  DUP5(0x84, 5, 6, DupOpExecutor.getInstance()),
+  DUP6(0x85, 6, 7, DupOpExecutor.getInstance()),
+  DUP7(0x86, 7, 8, DupOpExecutor.getInstance()),
+  DUP8(0x87, 8, 9, DupOpExecutor.getInstance()),
+  DUP9(0x88, 9, 10, DupOpExecutor.getInstance()),
+  DUP10(0x89, 10, 11, DupOpExecutor.getInstance()),
+  DUP11(0x8a, 11, 12, DupOpExecutor.getInstance()),
+  DUP12(0x8b, 12, 13, DupOpExecutor.getInstance()),
+  DUP13(0x8c, 13, 14, DupOpExecutor.getInstance()),
+  DUP14(0x8d, 14, 15, DupOpExecutor.getInstance()),
+  DUP15(0x8e, 15, 16, DupOpExecutor.getInstance()),
+  DUP16(0x8f, 16, 17, DupOpExecutor.getInstance()),
+
+  SWAP1(0x80, 2, 2, SwapOpExecutor.getInstance()),
+  SWAP2(0x81, 3, 3, SwapOpExecutor.getInstance()),
+  SWAP3(0x82, 4, 4, SwapOpExecutor.getInstance()),
+  SWAP4(0x83, 5, 5, SwapOpExecutor.getInstance()),
+  SWAP5(0x84, 6, 6, SwapOpExecutor.getInstance()),
+  SWAP6(0x85, 7, 7, SwapOpExecutor.getInstance()),
+  SWAP7(0x86, 8, 8, SwapOpExecutor.getInstance()),
+  SWAP8(0x87, 9, 9, SwapOpExecutor.getInstance()),
+  SWAP9(0x88, 10, 10, SwapOpExecutor.getInstance()),
+  SWAP10(0x89, 11, 11, SwapOpExecutor.getInstance()),
+  SWAP11(0x8a, 12, 12, SwapOpExecutor.getInstance()),
+  SWAP12(0x8b, 13, 13, SwapOpExecutor.getInstance()),
+  SWAP13(0x8c, 14, 14, SwapOpExecutor.getInstance()),
+  SWAP14(0x8d, 15, 15, SwapOpExecutor.getInstance()),
+  SWAP15(0x8e, 16, 16, SwapOpExecutor.getInstance()),
+  SWAP16(0x8f, 17, 17, SwapOpExecutor.getInstance()),
+
+  LOG0(0xa0, 2, 0, LogOpExecutor.getInstance()),
+  LOG1(0xa1, 3, 0, LogOpExecutor.getInstance()),
+  LOG2(0xa2, 4, 0, LogOpExecutor.getInstance()),
+  LOG3(0xa3, 5, 0, LogOpExecutor.getInstance()),
+  LOG4(0xa4, 6, 0, LogOpExecutor.getInstance()),
   ;
 
   private final byte opcode;
@@ -802,6 +1013,11 @@ public enum Op {
     this.callFlags = callFlags.length == 0 ? EnumSet.noneOf(CallFlags.class) :
         EnumSet.copyOf(Arrays.asList(callFlags));
   }
+
+  public byte val() {
+    return opcode;
+  }
+
 
   private enum CallFlags {
     /**
