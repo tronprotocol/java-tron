@@ -13,6 +13,7 @@ import org.tron.core.capsule.BytesCapsule;
 public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public static final long REMARK = -1L;
+  public static final int DEFAULT_BROKERAGE = 20;
 
   @Autowired
   public DelegationStore(@Value("delegation") String dbName) {
@@ -96,7 +97,7 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
   public int getBrokerage(long cycle, byte[] address) {
     BytesCapsule bytesCapsule = get(buildBrokerageKey(cycle, address));
     if (bytesCapsule == null) {
-      return 0;
+      return DEFAULT_BROKERAGE;
     } else {
       return ByteArray.toInt(bytesCapsule.getData());
     }
