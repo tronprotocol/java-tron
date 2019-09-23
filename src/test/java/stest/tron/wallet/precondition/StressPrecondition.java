@@ -154,6 +154,7 @@ public class StressPrecondition {
       logger.info(getChainParameters.get().getChainParameter(i).getKey());
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }
+
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
 
     for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
@@ -167,15 +168,20 @@ public class StressPrecondition {
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(24L, 1L);
       }*/
-/*      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowShieldedTransaction") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
-        logger.info(getChainParameters.get().getChainParameter(i).getKey());
-        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(27L, 1L);
-      }*/
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTvmSolidity059") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(29L, 1L);
+        proposalMap.put(27L, 1L);
+      }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAdaptiveResourceLimitTargetRatio") && getChainParameters.get().getChainParameter(i).getValue() == 10) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(28L, 6L);
+      }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAdaptiveResourceLimitMultiplier") && getChainParameters.get().getChainParameter(i).getValue() == 1000) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(29L, 20L);
       }
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getChangeDelegation") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
