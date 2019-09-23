@@ -22,6 +22,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -351,7 +352,7 @@ public class ProposalCreateActuatorTest {
     paras.put(2L, 200_000L);
     paras.put(3L, 20L);
     paras.put(4L, 2048_000_000L);
-    paras.put(5L, 1648L);
+    paras.put(5L, 16160L);
     paras.put(6L, 64_000_000L);
     paras.put(7L, 64_000_000L);
     paras.put(8L, 64_000_000L);
@@ -360,7 +361,12 @@ public class ProposalCreateActuatorTest {
     paras.put(11L, 64L);
     paras.put(12L, 64L);
     paras.put(13L, 64L);
-
+    byte[] stats = new byte[27];
+    for (int i = 0; i < 27; i++) {
+      stats[i] = 1;
+    }
+    dbManager.getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_3_6_5.getValue(), stats);
     ProposalCreateActuator actuator =
         new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
     ProposalCreateActuator actuatorSecond =

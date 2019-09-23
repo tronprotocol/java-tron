@@ -86,6 +86,7 @@ import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
+import org.tron.protos.Contract.UpdateBrokerageContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteWitnessContract;
@@ -1763,6 +1764,13 @@ public class RpcApiService implements Service {
         responseObserver.onError(e);
       }
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void updateBrokerage(UpdateBrokerageContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UpdateBrokerageContract,
+          responseObserver);
     }
   }
 

@@ -175,7 +175,7 @@ dependencies {
     // http
     compile 'org.eclipse.jetty:jetty-server:9.4.11.v20180605'
     compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
-    compile 'com.alibaba:fastjson:1.2.47'
+    compile 'com.alibaba:fastjson:1.2.60'
     compile group: 'org.apache.httpcomponents', name:'httpasyncclient', version:'4.1.1'
     // end http
 

@@ -1,5 +1,7 @@
 package org.tron.core.services;
 
+import static org.tron.core.config.Parameter.ChainConstant.PRECISION;
+
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProposalCapsule;
@@ -21,6 +23,7 @@ public class ProposalService {
   private static final String LONG_VALUE_ERROR =
       "Bad chain parameter value,valid range is [0," + LONG_VALUE + "]";
   private static final String BAD_PARAM_ID = "Bad chain parameter id";
+  private static final int payBlockLength = 5;
 
   public enum ProposalType {
     MAINTENANCE_TIME_INTERVAL(0), //ms  ,0
@@ -117,8 +120,12 @@ public class ProposalService {
         break;
       }
       case WITNESS_PAY_PER_BLOCK: {
-        if (String.valueOf(value).length() != 4) {
-          throw new ContractValidateException("This value[WITNESS_PAY_PER_BLOCK] length must be 4");
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+          throw new ContractValidateException(BAD_PARAM_ID);
+        }
+        if (String.valueOf(value).length() != payBlockLength) {
+          throw new ContractValidateException(
+              "This value[WITNESS_PAY_PER_BLOCK] length must be " + payBlockLength);
         }
         break;
       }
@@ -364,9 +371,9 @@ public class ProposalService {
           //before 2 is use to pay block and next 2 is use to 127 sr pay
           long value = entry.getValue();
           long payBlockValue = Long.valueOf(String.valueOf(value).substring(0, 2));
-          long pay127SrValue = Long.valueOf(String.valueOf(value).substring(2, 4));
-          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(payBlockValue);
-          manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(pay127SrValue);
+          long pay127SrValue = Long.valueOf(String.valueOf(value).substring(2, payBlockLength));
+          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(payBlockValue * PRECISION);
+          manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(pay127SrValue * PRECISION);
           break;
         }
         case WITNESS_STANDBY_ALLOWANCE: {

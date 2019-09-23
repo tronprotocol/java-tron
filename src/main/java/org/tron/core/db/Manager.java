@@ -1572,6 +1572,7 @@ public class Manager {
     }
 
     block.setResult(transationRetCapsule);
+    payReward(block);
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
       if (block.getNum() == 1) {
@@ -1703,6 +1704,13 @@ public class Manager {
 
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
+    logger.debug("updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
+        witnessCapsule.createReadableString(), block.getNum(), witnessCapsule.getTotalProduced());
+  }
+
+  private void payReward(BlockCapsule block) {
+    WitnessCapsule witnessCapsule = witnessStore.getUnchecked(block.getInstance().getBlockHeader()
+        .getRawData().getWitnessAddress().toByteArray());
     try {
       if (getDynamicPropertiesStore().allowChangeDelegation()) {
         delegationService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
@@ -1715,12 +1723,6 @@ public class Manager {
     } catch (BalanceInsufficientException e) {
       logger.warn(e.getMessage(), e);
     }
-
-    logger.debug(
-        "updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
-        witnessCapsule.createReadableString(),
-        block.getNum(),
-        witnessCapsule.getTotalProduced());
   }
 
   public void updateMaintenanceState(boolean needMaint) {

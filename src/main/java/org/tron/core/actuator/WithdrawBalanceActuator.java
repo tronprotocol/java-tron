@@ -123,8 +123,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
           + latestWithdrawTime + ",less than 24 hours");
     }
 
-    if (accountCapsule.getAllowance() <= 0) {
-      throw new ContractValidateException("witnessAccount does not have any allowance");
+    if (accountCapsule.getAllowance() <= 0 &&
+        dbManager.getDelegationService().queryReward(ownerAddress) <= 0) {
+      throw new ContractValidateException("witnessAccount does not have any reward");
     }
     try {
       LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());

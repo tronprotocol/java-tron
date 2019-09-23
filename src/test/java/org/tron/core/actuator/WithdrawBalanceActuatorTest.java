@@ -229,7 +229,7 @@ public class WithdrawBalanceActuatorTest {
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("witnessAccount does not have any allowance", e.getMessage());
+      Assert.assertEquals("witnessAccount does not have any reward", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

@@ -343,10 +343,6 @@ public class WitnessController {
           long vote = witnessCapsule.getVoteCount() + voteCount;
           witnessCapsule.setVoteCount(vote);
           witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-          if (manager.getDynamicPropertiesStore().allowChangeDelegation()) {
-            manager.getDelegationStore().setWitnessVote(manager.getDynamicPropertiesStore()
-                .getCurrentCycleNumber() + 1, address.toByteArray(), vote);
-          }
           logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
               witnessCapsule.getVoteCount());
         }
@@ -386,12 +382,14 @@ public class WitnessController {
     }
     //update the delegation cycle
     if (manager.getDynamicPropertiesStore().allowChangeDelegation()) {
-      long currentCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
-      manager.getDynamicPropertiesStore().saveCurrentCycleNumber(currentCycle + 1);
+      long nextCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1;
+      manager.getDynamicPropertiesStore().saveCurrentCycleNumber(nextCycle);
       witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
-        manager.getDelegationStore().setBrokerage(currentCycle + 1,
+        manager.getDelegationStore().setBrokerage(nextCycle,
             witnessCapsule.getAddress().toByteArray(),
             manager.getDelegationStore().getBrokerage(witnessCapsule.getAddress().toByteArray()));
+        manager.getDelegationStore().setWitnessVote(nextCycle,
+            witnessCapsule.getAddress().toByteArray(), witnessCapsule.getVoteCount());
       });
     }
   }
