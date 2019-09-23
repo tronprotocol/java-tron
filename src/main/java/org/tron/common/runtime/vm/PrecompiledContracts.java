@@ -676,7 +676,7 @@ public class PrecompiledContracts {
       byte[][] signatures = extractBytesArray(
           words, words[3].intValueSafe() / WORD_SIZE, rawData);
 
-      if (signatures == null || signatures.length > MAX_SIZE) {
+      if (signatures.length == 0 || signatures.length > MAX_SIZE) {
         return Pair.of(true, DATA_FALSE);
       }
 
@@ -825,7 +825,7 @@ public class PrecompiledContracts {
     byte[] s;
     byte[] out = null;
     if (ArrayUtils.isEmpty(sign) || sign.length < 65) {
-      return null;
+      return new byte[0];
     }
     try {
       r = Arrays.copyOfRange(sign, 0, 32);
@@ -841,7 +841,7 @@ public class PrecompiledContracts {
     } catch (Throwable any) {
       logger.info("ECRecover error", any.getMessage());
     }
-    return out;//DataWord.equalAddressByteArray(address, out);
+    return out;
   }
 
   private static byte[][] extractBytes32Array(DataWord[] words, int offset) {
@@ -855,7 +855,7 @@ public class PrecompiledContracts {
 
   private static byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
     if (offset > words.length - 1) {
-      return null;
+      return new byte[0][];
     }
     int len = words[offset].intValueSafe();
     byte[][] bytesArray = new byte[len][];
