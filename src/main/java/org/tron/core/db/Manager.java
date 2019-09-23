@@ -1589,9 +1589,9 @@ public class Manager {
     updateSignedWitness(block);
     updateLatestSolidifiedBlock();
     updateTransHashCache(block);
-    updateMaintenanceState(needMaint);
     updateRecentBlock(block);
     updateDynamicProperties(block);
+    updateMaintenanceState(needMaint);
   }
 
 
