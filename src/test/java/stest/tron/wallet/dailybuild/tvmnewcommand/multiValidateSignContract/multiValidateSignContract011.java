@@ -94,7 +94,7 @@ public class multiValidateSignContract011 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Correct 33 signatures test multivalidatesign")
+  @Test(enabled = true, description = "Correct 17 signatures test multivalidatesign")
   public void test01Correct33Signatures() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -112,7 +112,7 @@ public class multiValidateSignContract011 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 33; i++) {
+    for (int i = 0; i < 17; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -152,7 +152,7 @@ public class multiValidateSignContract011 {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
     if (infoById.get().getResultValue() == 0) {
-      Assert.assertEquals("11111111111111111111111111111111", PublicMethed
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
           .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
@@ -171,7 +171,7 @@ public class multiValidateSignContract011 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "33 signatures with 1st incorrect signatures test multivalidatesign")
+  @Test(enabled = true, description = "14 signatures with 1st incorrect signatures test multivalidatesign")
   public void test02Incorrect1stSignatures() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -189,7 +189,7 @@ public class multiValidateSignContract011 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 33; i++) {
+    for (int i = 0; i < 14; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -207,7 +207,7 @@ public class multiValidateSignContract011 {
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     if (infoById.get().getResultValue() == 0) {
-      Assert.assertEquals("01111111111111111111111111111111", PublicMethed
+      Assert.assertEquals("01111111111111000000000000000000", PublicMethed
           .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
       Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
@@ -244,7 +244,7 @@ public class multiValidateSignContract011 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "52 signatures with 1st incorrect address test multivalidatesign")
+  @Test(enabled = true, description = "8 signatures with 1st incorrect address test multivalidatesign")
   public void test03Incorrect1stAddress() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -262,7 +262,7 @@ public class multiValidateSignContract011 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 52; i++) {
+    for (int i = 0; i < 8; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -279,7 +279,7 @@ public class multiValidateSignContract011 {
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     if (infoById.get().getResultValue() == 0) {
-      Assert.assertEquals("01111111111111111111111111111111", PublicMethed
+      Assert.assertEquals("01111111000000000000000000000000", PublicMethed
           .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
       Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
@@ -316,7 +316,7 @@ public class multiValidateSignContract011 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "91 signatures with 15th incorrect signatures test multivalidatesign")
+  @Test(enabled = true, description = "6 signatures with 3th incorrect signatures test multivalidatesign")
   public void test04Incorrect15thSignatures() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -334,14 +334,14 @@ public class multiValidateSignContract011 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 91; i++) {
+    for (int i = 0; i < 6; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
     byte[] sign = new ECKey().sign(Hash.sha3("sdifhsdfihyw888w7".getBytes())).toByteArray();
-    signatures.set(14, Hex.toHexString(sign));
+    signatures.set(2, Hex.toHexString(sign));
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed.triggerContract(contractAddress,
@@ -352,7 +352,7 @@ public class multiValidateSignContract011 {
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     if (infoById.get().getResultValue() == 0) {
-      Assert.assertEquals("11111111111111011111111111111111", PublicMethed
+      Assert.assertEquals("11011100000000000000000000000000", PublicMethed
           .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
       Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
@@ -389,7 +389,7 @@ public class multiValidateSignContract011 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "66 signatures with 15th-30th incorrect address test multivalidatesign")
+  @Test(enabled = true, description = "11 signatures with 7th-9th incorrect address test multivalidatesign")
   public void test05Incorrect15thTo30thAddress() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -407,13 +407,13 @@ public class multiValidateSignContract011 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 66; i++) {
+    for (int i = 0; i < 11; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
-    for (int i = 14; i < 30; i++) {
+    for (int i = 6; i < 9; i++) {
       addresses.set(i, Wallet.encode58Check(new ECKey().getAddress()));
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
@@ -426,7 +426,7 @@ public class multiValidateSignContract011 {
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     if (infoById.get().getResultValue() == 0) {
-      Assert.assertEquals("11111111111111000000000000000011", PublicMethed
+      Assert.assertEquals("11111100011000000000000000000000", PublicMethed
           .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
     } else {
       Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
@@ -527,7 +527,7 @@ public class multiValidateSignContract011 {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
     if (infoById.get().getResultValue() == 0) {
-      Assert.assertEquals("10111111111111111111111111111110", PublicMethed
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
           .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
@@ -608,7 +608,7 @@ public class multiValidateSignContract011 {
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
     if (infoById.get().getResultValue() == 0) {
-      Assert.assertEquals("11111111010111111111111111101110", PublicMethed
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
           .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
       Assert.assertTrue(afterBalance + fee == beforeBalance);
     } else {
@@ -627,7 +627,7 @@ public class multiValidateSignContract011 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "105 signatures with Incorrect hash test multivalidatesign")
+  @Test(enabled = true, description = "16 signatures with Incorrect hash test multivalidatesign")
   public void test08IncorrectHash() {
     String incorrecttxid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
@@ -650,7 +650,7 @@ public class multiValidateSignContract011 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 105; i++) {
+    for (int i = 0; i < 16; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));

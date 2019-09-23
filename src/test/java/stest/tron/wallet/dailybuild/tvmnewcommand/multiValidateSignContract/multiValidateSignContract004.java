@@ -99,7 +99,7 @@ public class multiValidateSignContract004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "25 signatures and 24 address test multivalidatesign")
+  @Test(enabled = true, description = "10 signatures and 9 address test multivalidatesign")
   public void test01With25SignaturesAnd24Address() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -117,7 +117,7 @@ public class multiValidateSignContract004 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 24; i++) {
+    for (int i = 0; i < 9; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -166,7 +166,7 @@ public class multiValidateSignContract004 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "15 signatures and 16 address test multivalidatesign")
+  @Test(enabled = true, description = "14 signatures and 15 address test multivalidatesign")
   public void test02With15SignaturesAnd16Address() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -184,7 +184,7 @@ public class multiValidateSignContract004 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 14; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -380,7 +380,7 @@ public class multiValidateSignContract004 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "32 signatures and 33 address test multivalidatesign")
+  @Test(enabled = true, description = "16 signatures and 17 address test multivalidatesign")
   public void test05With32SignaturesAnd33Address() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -398,7 +398,7 @@ public class multiValidateSignContract004 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 16; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -452,7 +452,7 @@ public class multiValidateSignContract004 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "33 signatures and 32 address test multivalidatesign")
+  @Test(enabled = true, description = "17 signatures and 16 address test multivalidatesign")
   public void test06With33SignaturesAnd32Address() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -470,7 +470,7 @@ public class multiValidateSignContract004 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 16; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
