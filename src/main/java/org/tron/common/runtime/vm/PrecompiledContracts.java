@@ -676,7 +676,7 @@ public class PrecompiledContracts {
       byte[][] signatures = extractBytesArray(
           words, words[3].intValueSafe() / WORD_SIZE, rawData);
 
-      if (signatures.length > MAX_SIZE) {
+      if (signatures == null || signatures.length > MAX_SIZE) {
         return Pair.of(true, DATA_FALSE);
       }
 
@@ -852,6 +852,9 @@ public class PrecompiledContracts {
   }
 
   private static byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
+    if (offset > words.length - 1) {
+      return null;
+    }
     int len = words[offset].intValueSafe();
     byte[][] bytesArray = new byte[len][];
     for (int i = 0; i < len; i++) {
