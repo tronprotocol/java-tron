@@ -150,36 +150,37 @@ public class StressPrecondition {
     Optional<ChainParameters> getChainParameters = Optional.ofNullable(chainParameters);
     logger.info(Long.toString(getChainParameters.get().getChainParameterCount()));
     for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
+      logger.info("index:" + i);
       logger.info(getChainParameters.get().getChainParameter(i).getKey());
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
 
     for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowProtoFilterNum") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowAdaptiveEnergy") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(21L, 1L);
+      }
+/*      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowProtoFilterNum") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(24L, 1L);
-      }
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowAccountStateRoot") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
-        logger.info(getChainParameters.get().getChainParameter(i).getKey());
-        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(25L, 1L);
-      }
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTvmConstantinople") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
-        logger.info(getChainParameters.get().getChainParameter(i).getKey());
-        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(26L, 1L);
-      }
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowShieldedTransaction") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+      }*/
+/*      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowShieldedTransaction") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(27L, 1L);
-      }
+      }*/
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTvmSolidity059") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(29L, 1L);
+      }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getChangeDelegation") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(30L, 1L);
       }
     }
 
@@ -206,7 +207,7 @@ public class StressPrecondition {
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       PublicMethed.approveProposal(witness005Address, witnessKey005, proposalId,
           true, blockingStubFull);
-      waitProposalApprove(29, blockingStubFull);
+      waitProposalApprove(21, blockingStubFull);
     }
   }
 
