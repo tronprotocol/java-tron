@@ -233,7 +233,7 @@ public class ProposalCreateActuatorTest {
   @Test
   public void invalidPara() {
     HashMap<Long, Long> paras = new HashMap<>();
-    paras.put(31L, 10000L);
+    paras.put(310L, 10000L);
     ProposalCreateActuator actuator =
         new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -243,7 +243,7 @@ public class ProposalCreateActuatorTest {
       fail("Bad chain parameter id");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("not support code : 31",
+      Assert.assertEquals("not support code : 310",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
