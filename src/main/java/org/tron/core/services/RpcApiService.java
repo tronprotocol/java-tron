@@ -136,6 +136,7 @@ public class RpcApiService implements Service {
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
+  public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
   private int port = Args.getInstance().getRpcPort();
   private Server apiServer;
   @Autowired
@@ -237,7 +238,7 @@ public class RpcApiService implements Service {
       trxExtBuilder.setResult(retBuilder);
     } catch (ContractValidateException | VMIllegalException e) {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-          .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
+          .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
       logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
     } catch (RuntimeException e) {
