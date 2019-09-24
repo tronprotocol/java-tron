@@ -76,6 +76,10 @@ public class ActuatorCreator  {
     return INSTANCE;
   }
 
+  public static void init(StoreFactory storeFactory) {
+    INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
+  }
+
 
   private ActuatorCreator(StoreFactory storeFactory) {
     try {

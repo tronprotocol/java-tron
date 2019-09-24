@@ -64,6 +64,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.consensus.Consensus;
 import org.tron.core.Constant;
+import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -507,6 +508,7 @@ public class Manager {
     }
     //initStoreFactory
     prepareStroeFactory();
+    ActuatorCreator.init(StoreFactory.getInstance());
   }
 
   public BlockId getGenesisBlockId() {
