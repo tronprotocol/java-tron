@@ -21,7 +21,6 @@ public class ProposalService {
   private static final String LONG_VALUE_ERROR =
       "Bad chain parameter value,valid range is [0," + LONG_VALUE + "]";
   private static final String BAD_PARAM_ID = "Bad chain parameter id";
-  private static final int payBlockLength = 5;
 
   public enum ProposalType {
     MAINTENANCE_TIME_INTERVAL(0), //ms  ,0
