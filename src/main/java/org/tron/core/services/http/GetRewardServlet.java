@@ -28,7 +28,7 @@ public class GetRewardServlet extends HttpServlet {
       if (address != null) {
         value = manager.getDelegationService().queryReward(address);
       }
-      response.getWriter().println(value);
+      response.getWriter().println("{\"reward\": " + value + "}");
     } catch (Exception e) {
       logger.error("", e);
       try {

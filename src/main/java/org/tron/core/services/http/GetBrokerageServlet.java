@@ -29,7 +29,7 @@ public class GetBrokerageServlet extends HttpServlet {
       if (address != null) {
         value = manager.getDelegationStore().getBrokerage(cycle, address);
       }
-      response.getWriter().println(value);
+      response.getWriter().println("{\"brokerage\": " + value + "}");
     } catch (Exception e) {
       logger.error("", e);
       try {
