@@ -123,7 +123,7 @@ public class ContractTrcToken075 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
     String tokenId = assetAccountId.toStringUtf8();
-    long tokenValue = 100;
+    long tokenValue = 200;
     long callValue = 5;
 
     String transferTokenTxid = PublicMethed
@@ -158,7 +158,7 @@ public class ContractTrcToken075 {
     logger.info("after AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountAfter: "
         + devAssetCountAfter);
 
-    Assert.assertTrue(PublicMethed.transferAsset(transferTokenContractAddress,
+    Assert.assertFalse(PublicMethed.transferAsset(transferTokenContractAddress,
         assetAccountId.toByteArray(), 100L, dev001Address, dev001Key, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -169,7 +169,7 @@ public class ContractTrcToken075 {
 
     Assert.assertEquals(Long.valueOf(tokenValue),
         Long.valueOf(devAssetCountBefore - devAssetCountAfter));
-    Assert.assertEquals(Long.valueOf(100L + tokenValue), contractAssetCount);
+    Assert.assertEquals(Long.valueOf(tokenValue), contractAssetCount);
 
     // get and verify the msg.value and msg.id
 

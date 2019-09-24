@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.spongycastle.util.encoders.Hex;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -22,18 +23,20 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class TriggerConstant005 {
+public class TriggerConstant027 {
 
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
+  private ManagedChannel channelSolidity = null;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -41,11 +44,8 @@ public class TriggerConstant005 {
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
 
-  private ManagedChannel channelSolidity = null;
-  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
 
-  private ManagedChannel channelRealSolidity = null;
-  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubRealSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
 
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
@@ -54,8 +54,6 @@ public class TriggerConstant005 {
 
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
-  private String realSoliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("solidityNode.ip.list").get(1);
 
   byte[] contractAddress = null;
 
@@ -90,33 +88,27 @@ public class TriggerConstant005 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    channelRealSolidity = ManagedChannelBuilder.forTarget(realSoliditynode)
-        .usePlaintext(true)
-        .build();
-    blockingStubRealSolidity = WalletSolidityGrpc.newBlockingStub(channelRealSolidity);
-
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a payable function with ABI")
+  @Test(enabled = false, description = "TriggerConstantContract a view method without ABI,"
+      + "method has revert()")
   public void testTriggerConstantContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant001.sol";
+    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
     String contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+    contractAddress = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
+    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
     Account info;
@@ -132,46 +124,28 @@ public class TriggerConstant005 {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String txid = "";
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
-            "testPayable()", "#", false,
+            "testView()", "#", false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
-    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
-        containsString("CONTRACT_EXE_ERROR"));
-    Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Transaction transaction = transactionExtention.getTransaction();
 
-    TransactionExtention transactionExtention1 = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddress,
-            "testPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
-    System.out.println("Code = " + transactionExtention1.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention1.getResult().getMessage().toStringUtf8());
+    byte[] result = transactionExtention.getConstantResult(0).toByteArray();
+    System.out.println("message:" + transaction.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertThat(transactionExtention1.getResult().getCode().toString(),
-        containsString("CONTRACT_EXE_ERROR"));
-    Assert.assertThat(transactionExtention1.getResult().getMessage().toStringUtf8(),
-        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Assert
+        .assertThat(transaction.getRet(0).getRet().toString(),
+            containsString("FAILED"));
+    Assert
+        .assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
+            containsString("REVERT opcode executed"));
 
-    TransactionExtention transactionExtention2 = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddress,
-            "testPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
-    System.out.println("Code = " + transactionExtention2.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention2.getResult().getMessage().toStringUtf8());
 
-    Assert.assertThat(transactionExtention2.getResult().getCode().toString(),
-        containsString("CONTRACT_EXE_ERROR"));
-    Assert.assertThat(transactionExtention2.getResult().getMessage().toStringUtf8(),
-        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
   }
 
 

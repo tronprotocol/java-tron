@@ -473,7 +473,7 @@ public class ContractTrcToken043 {
         ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Assert.assertTrue(PublicMethed
+    Assert.assertFalse(PublicMethed
         .sendcoin(transferTokenContractAddress, 5000000, fromAddress, testKey002,
             blockingStubFull));
     Assert.assertTrue(PublicMethed
