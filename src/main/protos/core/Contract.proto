@@ -335,3 +335,8 @@ message ShieldedTransferContract {
   int64 to_amount = 7; // the amount to transparent to_address
 }
 // end shielded transaction
+
+message UpdateBrokerageContract {
+  bytes owner_address = 1;
+  int32 brokerage = 2; // 1 mean 1%
+}

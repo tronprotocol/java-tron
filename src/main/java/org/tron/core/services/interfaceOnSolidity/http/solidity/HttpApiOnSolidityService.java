@@ -18,6 +18,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetBlockByIdOnSoliditySer
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLatestNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLimitNextOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetBlockByNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBrokerageOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetExchangeByIdOnSolidityServlet;
@@ -25,6 +26,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetMerkleTreeVoucherInfoO
 import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetRewardOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.IsSpendOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
@@ -32,6 +34,7 @@ import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSoliditySe
 import org.tron.core.services.interfaceOnSolidity.http.ScanAndMarkNoteByIvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByIvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByOvkOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.TriggerConstantContractOnSolidityServlet;
 
 @Slf4j(topic = "API")
 public class HttpApiOnSolidityService implements Service {
@@ -97,6 +100,12 @@ public class HttpApiOnSolidityService implements Service {
   private ScanNoteByOvkOnSolidityServlet scanNoteByOvkOnSolidityServlet;
   @Autowired
   private IsSpendOnSolidityServlet isSpendOnSolidityServlet;
+  @Autowired
+  private GetBrokerageOnSolidityServlet getBrokerageServlet;
+  @Autowired
+  private GetRewardOnSolidityServlet getRewardServlet;
+  @Autowired
+  private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
 
   @Override
   public void init() {
@@ -153,13 +162,15 @@ public class HttpApiOnSolidityService implements Service {
       context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnSolidityServlet),
           "/walletsolidity/getmerkletreevoucherinfo");
       context.addServlet(new ServletHolder(scanAndMarkNoteByIvkOnSolidityServlet),
-              "/walletsolidity/scanandmarknotebyivk");
+          "/walletsolidity/scanandmarknotebyivk");
       context.addServlet(new ServletHolder(scanNoteByIvkOnSolidityServlet),
-              "/walletsolidity/scannotebyivk");
+          "/walletsolidity/scannotebyivk");
       context.addServlet(new ServletHolder(scanNoteByOvkOnSolidityServlet),
-              "/walletsolidity/scannotebyovk");
+          "/walletsolidity/scannotebyovk");
       context.addServlet(new ServletHolder(isSpendOnSolidityServlet),
-              "/walletsolidity/isspend");
+          "/walletsolidity/isspend");
+      context.addServlet(new ServletHolder(triggerConstantContractOnSolidityServlet),
+          "/walletsolidity/triggerconstantcontract");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),
@@ -173,6 +184,8 @@ public class HttpApiOnSolidityService implements Service {
               "/walletsolidity/gettransactioncountbyblocknum");
 
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
+      context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
+      context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));

@@ -191,7 +191,8 @@ public class NodeHandler {
     if (!nodeManager.getTable().getNode().equals(node)) {
       sendPong(msg.getTimestamp());
     }
-    if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
+    node.setP2pVersion(msg.getVersion());
+    if (!node.isConnectible()) {
       changeState(State.NonActive);
     } else if (state.equals(State.NonActive) || state.equals(State.Dead)) {
       changeState(State.Discovered);
@@ -204,7 +205,8 @@ public class NodeHandler {
       getNodeStatistics().discoverMessageLatency.add(System.currentTimeMillis() - pingSent);
       getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
       node.setId(msg.getFrom().getId());
-      if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
+      node.setP2pVersion(msg.getVersion());
+      if (!node.isConnectible()) {
         changeState(State.NonActive);
       } else {
         changeState(State.Alive);

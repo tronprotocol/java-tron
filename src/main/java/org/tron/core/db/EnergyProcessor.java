@@ -67,7 +67,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
     result = Math.min(
         Math.max(result, totalEnergyLimit),
-        totalEnergyLimit * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER
+        totalEnergyLimit * dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitMultiplier()
     );
 
     dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
@@ -102,6 +102,7 @@ public class EnergyProcessor extends ResourceProcessor {
     accountCapsule.setEnergyUsage(newEnergyUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
     accountCapsule.setLatestConsumeTimeForEnergy(latestConsumeTime);
+
 
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 

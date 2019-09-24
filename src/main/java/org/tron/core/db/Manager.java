@@ -106,6 +106,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.services.DelegationService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
@@ -121,6 +122,9 @@ import org.tron.protos.Protocol.TransactionInfo;
 public class Manager {
 
   // db store
+  @Getter
+  @Autowired
+  private DelegationStore delegationStore;
   @Autowired
   private AccountStore accountStore;
   @Autowired
@@ -259,6 +263,10 @@ public class Manager {
   @Autowired
   private TrieService trieService;
   private Set<String> ownerAddressSet = new HashSet<>();
+
+  @Getter
+  @Autowired
+  private DelegationService delegationService;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -472,6 +480,7 @@ public class Manager {
   @PostConstruct
   public void init() {
     Message.setManager(this);
+    delegationService.setManager(this);
     accountStateCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
@@ -1665,6 +1674,7 @@ public class Manager {
     }
     merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
     block.setResult(transationRetCapsule);
+    payReward(block);
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
       if (block.getNum() == 1) {
@@ -1681,9 +1691,9 @@ public class Manager {
     updateSignedWitness(block);
     updateLatestSolidifiedBlock();
     updateTransHashCache(block);
-    updateMaintenanceState(needMaint);
     updateRecentBlock(block);
     updateDynamicProperties(block);
+    updateMaintenanceState(needMaint);
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1795,18 +1805,25 @@ public class Manager {
 
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
+    logger.debug("updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
+        witnessCapsule.createReadableString(), block.getNum(), witnessCapsule.getTotalProduced());
+  }
+
+  private void payReward(BlockCapsule block) {
+    WitnessCapsule witnessCapsule = witnessStore.getUnchecked(block.getInstance().getBlockHeader()
+        .getRawData().getWitnessAddress().toByteArray());
     try {
-      adjustAllowance(witnessCapsule.getAddress().toByteArray(),
-          getDynamicPropertiesStore().getWitnessPayPerBlock());
+      if (getDynamicPropertiesStore().allowChangeDelegation()) {
+        delegationService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
+            getDynamicPropertiesStore().getWitnessPayPerBlock());
+        delegationService.payStandbyWitness();
+      } else {
+        adjustAllowance(witnessCapsule.getAddress().toByteArray(),
+            getDynamicPropertiesStore().getWitnessPayPerBlock());
+      }
     } catch (BalanceInsufficientException e) {
       logger.warn(e.getMessage(), e);
     }
-
-    logger.debug(
-        "updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
-        witnessCapsule.createReadableString(),
-        block.getNum(),
-        witnessCapsule.getTotalProduced());
   }
 
   public void updateMaintenanceState(boolean needMaint) {

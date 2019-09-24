@@ -273,6 +273,7 @@ message Transaction {
       UpdateEnergyLimitContract = 45;
       AccountPermissionUpdateContract = 46;
       ClearABIContract = 48;
+      UpdateBrokerageContract = 49;
       ShieldedTransferContract = 51;
     }
     ContractType type = 1;
