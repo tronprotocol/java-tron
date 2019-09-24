@@ -158,8 +158,6 @@ public class RpcApiService implements Service {
   @Getter
   private WalletSolidityApi walletSolidityApi = new WalletSolidityApi();
 
-  private static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
-
   @Override
   public void init() {
 
@@ -1770,7 +1768,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("ContractValidateException: {}", e.getMessage());
+        logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (RuntimeException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -2012,7 +2010,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -2040,7 +2038,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
