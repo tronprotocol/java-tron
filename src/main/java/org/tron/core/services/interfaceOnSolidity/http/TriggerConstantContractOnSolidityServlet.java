@@ -1,18 +1,18 @@
 package org.tron.core.services.interfaceOnSolidity.http;
 
+import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.services.http.GetExchangeByIdServlet;
+import org.tron.core.services.http.TriggerConstantContractServlet;
 import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 
 @Component
 @Slf4j(topic = "API")
-public class GetExchangeByIdOnSolidityServlet
-    extends GetExchangeByIdServlet {
+public class TriggerConstantContractOnSolidityServlet extends TriggerConstantContractServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;
@@ -22,6 +22,12 @@ public class GetExchangeByIdOnSolidityServlet
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    walletOnSolidity.futureGet(() -> super.doPost(request, response));
+    walletOnSolidity.futureGet(() -> {
+      try {
+        super.doPost(request, response);
+      } catch (IOException e) {
+        logger.error("TriggerConstantContractOnSolidityServlet Exception", e);
+      }
+    });
   }
 }

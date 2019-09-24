@@ -40,6 +40,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
 
+    dbManager.getDelegationService().withdrawReward(withdrawBalanceContract.getOwnerAddress()
+        .toByteArray(), getDeposit());
+
     AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? dbManager.getAccountStore().
         get(withdrawBalanceContract.getOwnerAddress().toByteArray())
         : getDeposit().getAccount(withdrawBalanceContract.getOwnerAddress().toByteArray());
@@ -100,10 +103,6 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-    if (!dbManager.getWitnessStore().has(ownerAddress)) {
-      throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] is not a witnessAccount");
-    }
 
     boolean isGP = Args.getInstance().getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
         Arrays.equals(ownerAddress, witness.getAddress()));
@@ -124,8 +123,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
           + latestWithdrawTime + ",less than 24 hours");
     }
 
-    if (accountCapsule.getAllowance() <= 0) {
-      throw new ContractValidateException("witnessAccount does not have any allowance");
+    if (accountCapsule.getAllowance() <= 0 &&
+        dbManager.getDelegationService().queryReward(ownerAddress) <= 0) {
+      throw new ContractValidateException("witnessAccount does not have any reward");
     }
     try {
       LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());

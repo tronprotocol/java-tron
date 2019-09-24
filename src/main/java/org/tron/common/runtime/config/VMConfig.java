@@ -115,5 +115,4 @@ public class VMConfig {
   public static boolean allowTvmSolidity059() {
     return ALLOW_TVM_SOLIDITY_059;
   }
-
 }
