@@ -1468,13 +1468,13 @@ public class Manager {
       energyProcessor.updateAdaptiveTotalEnergyLimit();
     }
 
-    if (!consensus.applyBlock(block.getInstance())) {
-      throw new BadBlockException("consensus apply block failed");
-    }
-
-    if (dynamicPropertiesStore.getStateFlag() == 1) {
+    if (dynamicPropertiesStore.getNextMaintenanceTime() <= block.getTimeStamp()) {
       proposalController.processProposals();
       forkController.reset();
+    }
+
+    if (!consensus.applyBlock(block.getInstance())) {
+      throw new BadBlockException("consensus apply block failed");
     }
 
     updateTransHashCache(block);

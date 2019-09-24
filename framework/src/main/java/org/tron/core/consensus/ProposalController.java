@@ -58,9 +58,7 @@ public class ProposalController {
         continue;
       }
 
-      long nextMaintenanceTime = manager.getDynamicPropertiesStore().getNextMaintenanceTime();
-      long maintenanceTime = manager.getDynamicPropertiesStore().getMaintenanceTimeInterval();
-      long currentTime = nextMaintenanceTime - maintenanceTime;
+      long currentTime = manager.getDynamicPropertiesStore().getNextMaintenanceTime();
       if (proposalCapsule.hasExpired(currentTime)) {
         processProposal(proposalCapsule);
         proposalNum--;
