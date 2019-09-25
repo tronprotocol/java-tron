@@ -1,6 +1,8 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,9 +46,17 @@ public class GetBrokerageServlet extends HttpServlet {
     doGet(request, response);
   }
 
-  private byte[] getAddress(HttpServletRequest request) {
+  private byte[] getAddress(HttpServletRequest request) throws Exception {
     byte[] address = null;
-    String addressStr = request.getParameter("address");
+    String addressParam = "address";
+    String addressStr = request.getParameter(addressParam);
+    if (StringUtils.isBlank(addressStr)) {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
+      JSONObject jsonObject = JSONObject.parseObject(input);
+      addressStr = jsonObject.getString(addressParam);
+    }
     if (StringUtils.isNotBlank(addressStr)) {
       if (StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
         address = Hex.decode(addressStr);
