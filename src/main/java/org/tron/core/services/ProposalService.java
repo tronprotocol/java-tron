@@ -54,7 +54,9 @@ public class ProposalService {
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(28), // 10, 28
     ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER(29), // 1000, 29
     ALLOW_CHANGE_DELEGATION(30), //1, 30
-    WITNESS_127_PAY_PER_BLOCK(31); //drop, 31
+    WITNESS_127_PAY_PER_BLOCK(31), //drop, 31
+    ALLOW_SHIELDED_TRANSACTION(32), // 32
+    SHIELDED_TRANSACTION_FEE(33); // 33
 
     ProposalType(long code) {
       this.code = code;
@@ -330,6 +332,31 @@ public class ProposalService {
         }
         break;
       }
+      case ALLOW_SHIELDED_TRANSACTION: {
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_SHIELDED_TRANSACTION]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_SHIELDED_TRANSACTION] is only allowed to be 1");
+        }
+        break;
+      }
+      case SHIELDED_TRANSACTION_FEE: {
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          throw new ContractValidateException("Bad chain parameter id [SHIELD_TRANSACTION_FEE]");
+        }
+        if (!manager.getDynamicPropertiesStore().supportShieldedTransaction()) {
+          throw new ContractValidateException(
+              "Shielded Transaction is not activated,Can't set Shielded Transaction fee");
+        }
+        if (value < 0 || value > 10_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad SHIELD_TRANSACTION_FEE parameter value,valid range is [0,10_000_000_000L]");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -490,6 +517,17 @@ public class ProposalService {
         }
         case WITNESS_127_PAY_PER_BLOCK: {
           manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(entry.getValue());
+          break;
+        }
+        case ALLOW_SHIELDED_TRANSACTION: {
+          if (manager.getDynamicPropertiesStore().getAllowShieldedTransaction() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(entry.getValue());
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(51);
+          }
+          break;
+        }
+        case SHIELDED_TRANSACTION_FEE: {
+          manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
           break;
         }
         default:
