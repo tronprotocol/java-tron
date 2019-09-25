@@ -580,7 +580,7 @@ public enum OpCode {
   /**
    * (0xf0) Create a new account with associated code
    */
-  CREATE(0xf0, 3, 1, OpCode.Tier.SpecialTier),   //       [in_size] [in_offs] [gas_val] CREATE
+  CREATE(0xf0, 0xf5, 1, OpCode.Tier.SpecialTier),   //       [in_size] [in_offs] [gas_val] CREATE
   /**
    * (cxf1) Message-call into an account
    */

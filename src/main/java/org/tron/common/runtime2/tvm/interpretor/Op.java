@@ -12,10 +12,12 @@ import org.tron.common.runtime2.tvm.VMConstant;
 import org.tron.common.runtime2.tvm.interpretor.executors.CallOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.CodeCopyOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.CodeSizeOpExecutor;
+import org.tron.common.runtime2.tvm.interpretor.executors.CreateOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.DupOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.LogOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.OpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.PushOpExecutor;
+import org.tron.common.runtime2.tvm.interpretor.executors.RetOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.SwapOpExecutor;
 import org.tron.common.utils.ByteUtil;
 
@@ -1002,6 +1004,86 @@ public enum Op {
   CALLTOKEN(0xd0, 8, 1, CallOpExecutor.getInstance()),
   DELEGATECALL(0xf4, 6, 1, CallOpExecutor.getInstance()),
   STATICCALL(0xfa, 6, 1, CallOpExecutor.getInstance()),
+
+  TOKENBALANCE(0xd1, 2, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(Costs.BALANCE, op.name());
+          DataWord tokenId = executor.stackPop();
+          DataWord address = executor.stackPop();
+          DataWord tokenBalance = executor.getTokenBalance(address, tokenId);
+          executor.stackPush(tokenBalance);
+
+          executor.step();
+        }
+      }
+  ),
+  CALLTOKENVALUE(0xd2, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(Tier.BaseTier.asInt(), op.name());
+          DataWord tokenValue = executor.getTokenValue();
+          executor.stackPush(tokenValue);
+          executor.step();
+
+          executor.step();
+        }
+      }
+  ),
+  CALLTOKENID(0xd3, 0, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(Tier.BaseTier.asInt(), op.name());
+          DataWord callTokenId = executor.getTokenId();
+          executor.stackPush(callTokenId);
+          executor.step();
+
+          executor.step();
+        }
+      }
+  ),
+  ISCONTRACT(0xd4, 1, 1,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          executor.spendEnergy(Costs.BALANCE, op.name());
+          DataWord address = executor.stackPop();
+          DataWord isContract = executor.isContract(address);
+
+          executor.stackPush(isContract);
+          executor.step();
+        }
+      }
+  ),
+  CREATE(0xf0, 3, 1, CreateOpExecutor.getInstance()),
+  CREATE2(0xf5, 4, 1, CreateOpExecutor.getInstance()),
+  RETURN(0xf3, 2, 0, RetOpExecutor.getInstance()),
+  REVERT(0xfd, 2, 0, RetOpExecutor.getInstance()),
+  SUICIDE(0xff, 1, 0,
+      new OpExecutor() {
+        @Override
+        public void exec(Op op, ContractExecutor executor) {
+          DataWord address = executor.stackPop();
+          long energyCost = Costs.SUICIDE;
+          if (executor.isDeadAccount(address)
+              && !executor.getBalance(executor.getContractAddress()).isZero()) {
+            energyCost += Costs.NEW_ACCT_SUICIDE;
+          }
+
+          if (executor.getContractContext().isStatic()) {
+            throw new org.tron.common.runtime.vm.program.Program.StaticCallModificationException();
+          }
+          executor.suicide(address);
+          executor.getContractContext().getProgramResult()
+              .addTouchAccount(address.getLast20Bytes());
+
+          executor.stop();
+        }
+      }
+  )
   ;
 
   private final byte opcode;

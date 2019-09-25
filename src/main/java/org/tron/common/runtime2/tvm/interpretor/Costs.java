@@ -29,5 +29,11 @@ public class Costs {
   public static final int VT_CALL = 9000;  //value transfer call
   public static final int STIPEND_CALL = 2300;
 
+  public static final int BALANCE = 20;
+  public static final int CREATE = 32000;
+  public static final int STOP = 0;
+  public static final int SUICIDE = 0;
+  public static final int NEW_ACCT_SUICIDE = 0;
+
 
 }
