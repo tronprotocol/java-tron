@@ -17,6 +17,8 @@
  */
 package org.tron.common.runtime.vm;
 
+import org.tron.common.runtime2.tvm.interpretor.Op;
+
 /**
  * A wrapper for a message call from a contract to another account. This can either be a normal
  * CALL, CALLCODE, DELEGATECALL or POST call.
@@ -80,6 +82,14 @@ public class MessageCall {
     this(type, energy, codeAddress, endowment, inDataOffs, inDataSize, tokenId, isTokenTransferMsg);
     this.outDataOffs = outDataOffs;
     this.outDataSize = outDataSize;
+  }
+
+  public MessageCall(Op type, DataWord energy, DataWord codeAddress,
+      DataWord endowment, DataWord inDataOffs, DataWord inDataSize,
+      DataWord outDataOffs, DataWord outDataSize, DataWord tokenId, boolean isTokenTransferMsg) {
+    this(OpCode.code(type.val()), energy, codeAddress,
+        endowment, inDataOffs, inDataSize,
+        outDataOffs, outDataSize, tokenId, isTokenTransferMsg);
   }
 
   public OpCode getType() {

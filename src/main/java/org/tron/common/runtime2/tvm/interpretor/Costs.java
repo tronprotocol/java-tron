@@ -24,5 +24,10 @@ public class Costs {
   public static final int LOG_ENERGY = 375;
   public static final int LOG_TOPIC_ENERGY = 375;
 
+  public static final int CALL = 40;
+  public static final int NEW_ACCT_CALL = 25000;  //new account call
+  public static final int VT_CALL = 9000;  //value transfer call
+  public static final int STIPEND_CALL = 2300;
+
 
 }

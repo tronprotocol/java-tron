@@ -31,7 +31,8 @@ public class LogOpExecutor extends OpExecutor {
     DataWord address = executor.getContractAddress();
     DataWord memStart = stack.pop();
     DataWord dataSize = stack.pop();
-    BigInteger dataCost = dataSize.value()
+    //is it nessary?
+/*    BigInteger dataCost = dataSize.value()
         .multiply(BigInteger.valueOf(Costs.LOG_DATA_ENERGY));
 
     if (executor.getContractContext().getEnergyLimitLeft().value().compareTo(dataCost) < 0) {
@@ -40,15 +41,16 @@ public class LogOpExecutor extends OpExecutor {
           op.name(),
           dataCost.longValueExact(),
           executor.getContractContext().getEnergyLimitLeft().longValueSafe());
-    }
+    }*/
+    BigInteger memNeeded = memNeeded(memStart, dataSize);
     long energyCost = Costs.LOG_ENERGY
         + Costs.LOG_TOPIC_ENERGY * nTopics
         + Costs.LOG_DATA_ENERGY * dataSize.longValue()
         + calcMemEnergy(executor.getMemory().size(),
-        memNeeded(memStart, dataSize), 0, op);
+        memNeeded, 0, op);
 
     executor.spendEnergy(energyCost, op.name());
-    checkMemorySize(op, memNeeded(memStart, dataSize));
+    checkMemorySize(op, memNeeded);
 
     List<DataWord> topics = new ArrayList<>();
     for (int i = 0; i < nTopics; ++i) {
@@ -57,6 +59,7 @@ public class LogOpExecutor extends OpExecutor {
     }
 
     byte[] data = executor.memoryChunk(memStart.intValueSafe(), dataSize.intValueSafe());
+
     LogInfo logInfo =
         new LogInfo(address.getLast20Bytes(), topics, data);
 

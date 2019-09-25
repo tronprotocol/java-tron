@@ -9,6 +9,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime2.tvm.ContractExecutor;
 import org.tron.common.runtime2.tvm.VMConstant;
+import org.tron.common.runtime2.tvm.interpretor.executors.CallOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.CodeCopyOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.CodeSizeOpExecutor;
 import org.tron.common.runtime2.tvm.interpretor.executors.DupOpExecutor;
@@ -995,6 +996,12 @@ public enum Op {
   LOG2(0xa2, 4, 0, LogOpExecutor.getInstance()),
   LOG3(0xa3, 5, 0, LogOpExecutor.getInstance()),
   LOG4(0xa4, 6, 0, LogOpExecutor.getInstance()),
+
+  CALL(0xf1, 7, 1, CallOpExecutor.getInstance()),
+  CALLCODE(0xf2, 7, 1, CallOpExecutor.getInstance()),
+  CALLTOKEN(0xd0, 8, 1, CallOpExecutor.getInstance()),
+  DELEGATECALL(0xf4, 6, 1, CallOpExecutor.getInstance()),
+  STATICCALL(0xfa, 6, 1, CallOpExecutor.getInstance()),
   ;
 
   private final byte opcode;
