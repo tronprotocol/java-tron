@@ -91,6 +91,7 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
@@ -123,6 +124,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.Parameter.ChainConstant;
+import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
@@ -152,6 +154,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -2259,28 +2262,20 @@ public class Wallet {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
-        StoreFactory.getInstance(), false,
+        StoreFactory.getInstance(), true,
         false);
+    VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
+    VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
+    VMConfig.initAllowTvmTransferTrc10(
+        dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
+    VMConfig.initAllowTvmConstantinople(
+        dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
+    VMConfig
+        .initAllowTvmSolidity059(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
     VMActuator vmActuator = new VMActuator(true);
     vmActuator.validate(context);
     vmActuator.execute(context);
 
-/*    ActuatorRuntime runtime = new RuntimeImpl(trxCap.getInstance(),
-        new BlockCapsule(headBlock), deposit,
-        new ProgramInvokeFactoryImpl(), true);
-    VMConfig.initVmHardFork();
-    VMConfig.initAllowTvmTransferTrc10(
-        dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
-    VMConfig.initAllowMultiSign(
-        dbManager.getDynamicPropertiesStore().getAllowMultiSign());
-    VMConfig.initAllowTvmConstantinople(
-        dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
-    VMConfig.initAllowTvmSolidity059(
-        dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
-    runtime.execute();
-    runtime.go();
-    runtime.finalization();*/
-    // TODO exception
     ProgramResult result = context.getProgramResult();
     if (result.getException() != null) {
       RuntimeException e = result.getException();

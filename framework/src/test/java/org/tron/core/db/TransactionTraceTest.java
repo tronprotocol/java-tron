@@ -40,6 +40,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
@@ -98,8 +99,8 @@ public class TransactionTraceTest {
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(100_000L);
-
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
+    VMConfig.initVmHardFork(false);
 
   }
 
