@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.multiValidateSignContract;
+package stest.tron.wallet.dailybuild.tvmnewcommand.batchValidateSignContract;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.annotations.AfterClass;
@@ -27,8 +28,7 @@ import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-
-public class multiValidateSignContract005 {
+public class batchValidateSignContract003 {
 
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
@@ -53,6 +53,7 @@ public class multiValidateSignContract005 {
 
   byte[] contractAddress = null;
 
+
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
   String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -67,7 +68,6 @@ public class multiValidateSignContract005 {
   /**
    * constructor.
    */
-
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
@@ -79,13 +79,12 @@ public class multiValidateSignContract005 {
         .usePlaintext(true)
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-
     txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
             testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
+    String filePath = "src/test/resources/soliditycode/batchvalidatesign001.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -97,22 +96,25 @@ public class multiValidateSignContract005 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Hash is empty test multivalidatesign")
-  public void test01HashIsEmpty() {
+  @Test(enabled = true, description = "13 signatures and 12 address test pure multivalidatesign")
+  public void test01With25SignaturesAnd24Address() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 12; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
-    List<Object> parameters = Arrays.asList("0x" + "", signatures, addresses);
-    String input = PublicMethed.parametersString(parameters);
+    byte[] sign = new ECKey().sign(Hash.sha3("sdifhsdfihyw888w7".getBytes())).toByteArray();
+    signatures.add(Hex.toHexString(sign));
+    List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
+    String input = parametersString(parameters);
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddress, "testPure(bytes32,bytes[],address[])",
-            input, false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "testPure(bytes32,bytes[],address[])", input, false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
@@ -127,21 +129,55 @@ public class multiValidateSignContract005 {
     }
   }
 
-  @Test(enabled = true, description = "Address is empty test multivalidatesign")
-  public void test02AddressIsEmpty() {
+  @Test(enabled = true, description = "7 signatures and 8 address test pure multivalidatesign")
+  public void test02With15SignaturesAnd16Address() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 7; i++) {
+      ECKey key = new ECKey();
+      byte[] sign = key.sign(hash).toByteArray();
+      signatures.add(Hex.toHexString(sign));
+      addresses.add(Wallet.encode58Check(key.getAddress()));
+    }
+    addresses.add(Wallet.encode58Check(new ECKey().getAddress()));
+    List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
+    String input = parametersString(parameters);
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testPure(bytes32,bytes[],address[])", input, false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+
+    logger.info("transactionExtention:" + transactionExtention);
+    if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
+      Assert.assertEquals(
+          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
+          transactionExtention.getResult().getMessage().toStringUtf8());
+    } else {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
+      Assert.assertEquals("SUCESS",
+          transactionExtention.getTransaction().getRet(0).getRet().toString());
+    }
+  }
+
+  @Test(enabled = true, description = "150 signatures and 1 address test pure multivalidatesign")
+  public void test03With150SignaturesAnd1Address() {
+    List<Object> signatures = new ArrayList<>();
+    List<Object> addresses = new ArrayList<>();
+    byte[] hash = Hash.sha3(txid.getBytes());
+    for (int i = 0; i < 150; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
     }
+    addresses.add(Wallet.encode58Check(new ECKey().getAddress()));
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
-    String input = PublicMethed.parametersString(parameters);
+    String input = parametersString(parameters);
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddress, "testPure(bytes32,bytes[],address[])",
-            input, false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "testPure(bytes32,bytes[],address[])", input, false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
@@ -156,21 +192,23 @@ public class multiValidateSignContract005 {
     }
   }
 
-  @Test(enabled = true, description = "Signatures is empty test multivalidatesign")
-  public void test03SignaturesIsEmpty() {
+  @Test(enabled = true, description = "1 signatures and 160 address test pure multivalidatesign")
+  public void test04With1SignaturesAnd160Address() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 160; i++) {
       ECKey key = new ECKey();
-      byte[] sign = key.sign(hash).toByteArray();
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
+    byte[] sign = new ECKey().sign(Hash.sha3("sdifhsdfihyw888w7".getBytes())).toByteArray();
+    signatures.add(Hex.toHexString(sign));
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
-    String input = PublicMethed.parametersString(parameters);
+    String input = parametersString(parameters);
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddress, "testPure(bytes32,bytes[],address[])",
-            input, false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "testPure(bytes32,bytes[],address[])", input, false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
@@ -185,16 +223,24 @@ public class multiValidateSignContract005 {
     }
   }
 
-  @Test(enabled = true, description = "Signatures and addresses are empty test multivalidatesign")
-  public void test04SignaturesAndAddressesAreEmpty() {
+  @Test(enabled = true, description = "16 signatures and 17 address test pure multivalidatesign")
+  public void test05With32SignaturesAnd33Address() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
+    for (int i = 0; i < 16; i++) {
+      ECKey key = new ECKey();
+      byte[] sign = key.sign(hash).toByteArray();
+      signatures.add(Hex.toHexString(sign));
+      addresses.add(Wallet.encode58Check(key.getAddress()));
+    }
+    addresses.add(Wallet.encode58Check(new ECKey().getAddress()));
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
-    String input = PublicMethed.parametersString(parameters);
+    String input = parametersString(parameters);
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddress, "testPure(bytes32,bytes[],address[])",
-            input, false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "testPure(bytes32,bytes[],address[])", input, false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
@@ -209,16 +255,25 @@ public class multiValidateSignContract005 {
     }
   }
 
-  @Test(enabled = true, description = "All empty test multivalidatesign")
-  public void test05AllEmpty() {
+  @Test(enabled = true, description = "17 signatures and 16 address test pure multivalidatesign")
+  public void test06With33SignaturesAnd32Address() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    List<Object> parameters = Arrays.asList("0x" + "", signatures, addresses);
-    String input = PublicMethed.parametersString(parameters);
+    for (int i = 0; i < 16; i++) {
+      ECKey key = new ECKey();
+      byte[] sign = key.sign(hash).toByteArray();
+      signatures.add(Hex.toHexString(sign));
+      addresses.add(Wallet.encode58Check(key.getAddress()));
+    }
+    byte[] sign = new ECKey().sign(Hash.sha3("sdifhsdfihyw888w7".getBytes())).toByteArray();
+    signatures.add(Hex.toHexString(sign));
+    List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
+    String input = parametersString(parameters);
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddress, "testPure(bytes32,bytes[],address[])",
-            input, false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "testPure(bytes32,bytes[],address[])", input, false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
@@ -249,5 +304,27 @@ public class multiValidateSignContract005 {
     if (channelFull1 != null) {
       channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
+  }
+
+  private String parametersString(List<Object> parameters) {
+    String[] inputArr = new String[parameters.size()];
+    int i = 0;
+    for (Object parameter : parameters) {
+      if (parameter instanceof List) {
+        StringBuilder sb = new StringBuilder();
+        for (Object item : (List) parameter) {
+          if (sb.length() != 0) {
+            sb.append(",");
+          }
+          sb.append("\"").append(item).append("\"");
+        }
+        inputArr[i++] = "[" + sb.toString() + "]";
+      } else {
+        inputArr[i++] =
+            (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
+      }
+    }
+    String input = StringUtils.join(inputArr, ',');
+    return input;
   }
 }

@@ -1032,6 +1032,27 @@ public class Wallet {
             .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
             .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAdaptiveResourceLimitTargetRatio")
+        .setValue(
+            dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitTargetRatio() / (24 * 60))
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAdaptiveResourceLimitMultiplier")
+        .setValue(dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitMultiplier())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getChangeDelegation")
+        .setValue(dbManager.getDynamicPropertiesStore().getChangeDelegation())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getWitness127PayPerBlock")
+        .setValue(dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
+        .build());
+
     return builder.build();
   }
 

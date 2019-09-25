@@ -48,7 +48,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   private byte[] ownerAddress = Hex.decode("cd2a3d9f938e13cd947ec05abc7fe734df8dd826");
   private final byte[] contractAddress = Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
 
-  private boolean isStaticCall;
+  private boolean isConstantCall;
 
   public ProgramInvokeMockImpl(byte[] msgDataRaw) {
     this();
@@ -224,8 +224,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean isStaticCall() {
-    return isStaticCall;
+  public boolean isConstantCall() {
+    return isConstantCall;
   }
 
   @Override
@@ -243,8 +243,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setStaticCall() {
-    isStaticCall = true;
+  public void setConstantCall() {
+    isConstantCall = true;
   }
 
   @Override

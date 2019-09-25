@@ -480,6 +480,7 @@ public class UnfreezeBalanceActuatorTest {
     Assert.assertEquals(10, receiver.getAcquiredDelegatedFrozenBalanceForBandwidth());
 
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(0);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(0);
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -491,6 +492,7 @@ public class UnfreezeBalanceActuatorTest {
     }
 
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -757,6 +759,7 @@ public class UnfreezeBalanceActuatorTest {
 
 
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(0);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(0);
     dbManager.getAccountStore().delete(receiver.createDbKey());
     receiver = new AccountCapsule(receiver.getAddress(), ByteString.EMPTY, AccountType.Normal);
     receiver.setAcquiredDelegatedFrozenBalanceForEnergy(10L);
@@ -775,6 +778,7 @@ public class UnfreezeBalanceActuatorTest {
     }
 
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
 
     try {
       actuator.validate();

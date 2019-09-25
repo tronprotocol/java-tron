@@ -1,10 +1,6 @@
 package org.tron.core.services.http.solidity;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -12,10 +8,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
-import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.http.GetAccountByIdServlet;
 import org.tron.core.services.http.GetAccountServlet;
@@ -27,6 +20,7 @@ import org.tron.core.services.http.GetBlockByIdServlet;
 import org.tron.core.services.http.GetBlockByLatestNumServlet;
 import org.tron.core.services.http.GetBlockByLimitNextServlet;
 import org.tron.core.services.http.GetBlockByNumServlet;
+import org.tron.core.services.http.GetBrokerageServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
 import org.tron.core.services.http.GetDelegatedResourceServlet;
 import org.tron.core.services.http.GetExchangeByIdServlet;
@@ -34,6 +28,7 @@ import org.tron.core.services.http.GetMerkleTreeVoucherInfoServlet;
 import org.tron.core.services.http.GetNodeInfoServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
+import org.tron.core.services.http.GetRewardServlet;
 import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
 import org.tron.core.services.http.IsSpendServlet;
 import org.tron.core.services.http.ListExchangesServlet;
@@ -41,6 +36,7 @@ import org.tron.core.services.http.ListWitnessesServlet;
 import org.tron.core.services.http.ScanAndMarkNoteByIvkServlet;
 import org.tron.core.services.http.ScanNoteByIvkServlet;
 import org.tron.core.services.http.ScanNoteByOvkServlet;
+import org.tron.core.services.http.TriggerConstantContractServlet;
 
 
 @Component
@@ -110,6 +106,12 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private IsSpendServlet isSpendServlet;
 
+  @Autowired
+  private GetBrokerageServlet getBrokerageServlet;
+  @Autowired
+  private GetRewardServlet getRewardServlet;
+  @Autowired
+  private TriggerConstantContractServlet triggerConstantContractServlet;
 
   @Override
   public void init() {
@@ -165,13 +167,13 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
           "/walletsolidity/getmerkletreevoucherinfo");
       context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
-              "/walletsolidity/scanandmarknotebyivk");
+          "/walletsolidity/scanandmarknotebyivk");
       context.addServlet(new ServletHolder(scanNoteByIvkServlet),
-              "/walletsolidity/scannotebyivk");
+          "/walletsolidity/scannotebyivk");
       context.addServlet(new ServletHolder(scanNoteByOvkServlet),
-              "/walletsolidity/scannotebyovk");
+          "/walletsolidity/scannotebyovk");
       context.addServlet(new ServletHolder(isSpendServlet),
-              "/walletsolidity/isspend");
+          "/walletsolidity/isspend");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),
@@ -183,6 +185,8 @@ public class SolidityNodeHttpApiService implements Service {
       context
           .addServlet(new ServletHolder(getTransactionCountByBlockNumServlet),
               "/walletsolidity/gettransactioncountbyblocknum");
+      context.addServlet(new ServletHolder(triggerConstantContractServlet),
+          "/walletsolidity/triggerconstantcontract");
 
       // for extension api
       if (args.isWalletExtensionApi()) {
@@ -194,6 +198,8 @@ public class SolidityNodeHttpApiService implements Service {
       }
 
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/wallet/getnodeinfo");
+      context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
+      context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));

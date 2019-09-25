@@ -140,18 +140,11 @@ public class ContractTrcToken038 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert
-        .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 1000000000L, fromAddress,
+        .assertFalse(PublicMethed.sendcoin(transferTokenContractAddress, 1000000000L, fromAddress,
             testKey002, blockingStubFull));
     Assert
-        .assertTrue(PublicMethed.sendcoin(btestAddress, 1000000000L, fromAddress,
+        .assertFalse(PublicMethed.sendcoin(btestAddress, 1000000000L, fromAddress,
             testKey002, blockingStubFull));
-    // devAddress transfer token to userAddress
-    PublicMethed
-        .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
-            dev001Address,
-            dev001Key,
-            blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);

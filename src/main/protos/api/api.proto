@@ -630,6 +630,16 @@ service Wallet {
   rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
   };
 
+  rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc UpdateBrokerage (UpdateBrokerageContract) returns (TransactionExtention) {
+
+  };
+
   // for shiededTransaction
   rpc CreateShieldedTransaction (PrivateParameters) returns (TransactionExtention) {
   };
@@ -831,6 +841,16 @@ service WalletSolidity {
 
   rpc IsSpend (NoteParameters) returns (SpendResult) {
   }
+
+  rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
+  }
+
 };
 
 service WalletExtension {

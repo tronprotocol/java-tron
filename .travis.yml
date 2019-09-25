@@ -34,7 +34,7 @@ matrix:
 
 
 after_success:
-  - "bash <(curl -s https://codecov.io/bash) -t 060bb400-c6fe-4d5f-a6c8-427105c746ac -s build/reports/jacoco/"
+  - "bash <(curl -s https://codecov.io/bash) -t $codecov_token_key -s build/reports/jacoco/"
 
 skip_build:
   - README.md：

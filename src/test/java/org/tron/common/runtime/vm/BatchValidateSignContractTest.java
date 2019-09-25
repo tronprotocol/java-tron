@@ -11,15 +11,15 @@ import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.utils.MUtil;
-import org.tron.common.runtime.vm.PrecompiledContracts.MultiValidateSign;
+import org.tron.common.runtime.vm.PrecompiledContracts.BatchValidateSign;
 import org.tron.core.Wallet;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
-public class MultiValidateSignContractTest {
+public class BatchValidateSignContractTest {
 
-  private static final String METHOD_SIGN = "multivalidatesign(bytes32,bytes[],address[])";
-  PrecompiledContracts.MultiValidateSign contract = new MultiValidateSign();
+  private static final String METHOD_SIGN = "batchvalidatesign(bytes32,bytes[],address[])";
+  PrecompiledContracts.BatchValidateSign contract = new BatchValidateSign();
 
   private static final byte[] smellData;
   private static final byte[] longData;
@@ -33,12 +33,12 @@ public class MultiValidateSignContractTest {
 
   @Test
   void staticCallTest() {
-    contract.setStaticCall(true);
+    contract.setConstantCall(true);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(longData);
     //insert incorrect
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 16; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       if (i % 5 == 0) {
@@ -54,7 +54,7 @@ public class MultiValidateSignContractTest {
     }
     Pair<Boolean, byte[]> ret;
     ret = validateMultiSign(hash, signatures, addresses);
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 16; i++) {
       if (i >= 27) {
         Assert.assertEquals(ret.getValue()[i], 0);
       } else if (i % 5 == 0) {
@@ -68,11 +68,11 @@ public class MultiValidateSignContractTest {
     signatures = new ArrayList<>();
     addresses = new ArrayList<>();
 
-    //test when length >= 32
+    //test when length >= 16
     for (int i = 0; i < 100; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
-      if (i == 30) {
+      if (i == 11) {
         signatures.add(Hex.toHexString(DataWord.ONE().getData()));
       } else {
         signatures.add(Hex.toHexString(sign));
@@ -81,37 +81,31 @@ public class MultiValidateSignContractTest {
     }
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
-    for (int i = 0; i < 32; i++) {
-      if (i == 30) {
-        Assert.assertEquals(ret.getValue()[i], 0);
-      } else {
-        Assert.assertEquals(ret.getValue()[i], 1);
-      }
-    }
-
+    Assert.assertEquals(ret.getValue(), new byte[32]);
   }
 
   @Test
   void correctionTest() {
-    contract.setStaticCall(false);
+    contract.setConstantCall(false);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(longData);
     //insert incorrect every 5 pairs
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 16; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       if (i % 5 == 0) {
+        addresses.add(Wallet.encode58Check(MUtil.convertToTronAddress(new byte[20])));
         signatures.add(Hex.toHexString(DataWord.ONE().getData()));
       } else {
+        addresses.add(Wallet.encode58Check(key.getAddress()));
         signatures.add(Hex.toHexString(sign));
       }
-      addresses.add(Wallet.encode58Check(key.getAddress()));
     }
     Pair<Boolean, byte[]> ret = null;
     ret = validateMultiSign(hash, signatures, addresses);
-    for (int i = 0; i < 27; i++) {
-      if (i >= 27) {
+    for (int i = 0; i < 32; i++) {
+      if (i >= 16) {
         Assert.assertEquals(ret.getValue()[i], 0);
       } else if (i % 5 == 0) {
         Assert.assertEquals(ret.getValue()[i], 0);
@@ -123,7 +117,7 @@ public class MultiValidateSignContractTest {
     // incorrect hash
     byte[] incorrectHash = DataWord.ONE().getData();
     ret = validateMultiSign(incorrectHash, signatures, addresses);
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 16; i++) {
       Assert.assertEquals(ret.getValue()[i], 0);
     }
     // different length
@@ -148,13 +142,8 @@ public class MultiValidateSignContractTest {
     }
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
-    for (int i = 0; i < 32; i++) {
-      if (i == 13) {
-        Assert.assertEquals(ret.getValue()[i], 0);
-      } else {
-        Assert.assertEquals(ret.getValue()[i], 1);
-      }
-    }
+    Assert.assertEquals(ret.getValue(), new byte[32]);
+
 
   }
 
@@ -162,7 +151,7 @@ public class MultiValidateSignContractTest {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     byte[] input = Hex.decode(AbiUtil.parseParameters(METHOD_SIGN, parameters));
     contract.getEnergyForData(input);
-    contract.setVmShouldEndInUs(System.nanoTime() / 1000 + 50 * 1000);
+    contract.setVmShouldEndInUs(System.nanoTime() / 1000 + 500 * 1000);
     Pair<Boolean, byte[]> ret = contract.execute(input);
     logger.info("BytesArray:{}，HexString:{}", Arrays.toString(ret.getValue()),
         Hex.toHexString(ret.getValue()));
