@@ -12,6 +12,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
@@ -112,9 +113,10 @@ public class StressPrecondition {
   private String oldAddress;
   private String newAddress;
   private String newContractAddress;
-  private String fullnode = stest.tron.wallet.common.client.Configuration.getByPath("stress.conf")
-      .getStringList("fullnode.ip.list")
-      .get(0);
+  //private String fullnode = stest.tron.wallet.common.client.Configuration.getByPath("stress.conf")
+    //  .getStringList("fullnode.ip.list")
+      //.get(0);
+  private String fullnode = "101.200.46.37:50052";
   ByteString assetIssueId;
   Optional<ExchangeList> listExchange;
   byte[] commonContractAddress1;
@@ -155,6 +157,7 @@ public class StressPrecondition {
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }
 
+    System.exit(1);
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
 
     for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
@@ -171,12 +174,12 @@ public class StressPrecondition {
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTvmSolidity059") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(27L, 1L);
+        proposalMap.put(32L, 1L);
       }
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getAdaptiveResourceLimitTargetRatio") && getChainParameters.get().getChainParameter(i).getValue() == 10) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(28L, 6L);
+        proposalMap.put(33L, 6L);
       }
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getAdaptiveResourceLimitMultiplier") && getChainParameters.get().getChainParameter(i).getValue() == 1000) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
