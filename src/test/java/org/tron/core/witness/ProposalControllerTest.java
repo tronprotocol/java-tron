@@ -98,9 +98,9 @@ public class ProposalControllerTest {
     Assert.assertEquals(50_000_000_000L/2880,dynamicPropertiesStore.getTotalEnergyTargetLimit());
     Assert.assertEquals(50,dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
 
-    //proposal 28
+    //proposal 33
     parameters.clear();
-    parameters.put(28L,100L);
+    parameters.put(33L,100L);
     proposalCapsule.setParameters(parameters);
 
     proposalController.setDynamicParameters(proposalCapsule);
