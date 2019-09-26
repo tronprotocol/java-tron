@@ -5,6 +5,9 @@ import static org.tron.common.crypto.Hash.sha3;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime2.tvm.ContractExecutor;
@@ -1087,9 +1090,23 @@ public enum Op {
   ;
 
   private final byte opcode;
-  private final int require;
+
+    public int require() {
+        return require;
+    }
+
+    public int ret() {
+        return ret;
+    }
+
+    private final int require;
   private final int ret;
-  private final OpExecutor opExecutor;
+
+    public OpExecutor getOpExecutor() {
+        return opExecutor;
+    }
+
+    private final OpExecutor opExecutor;
   private final EnumSet<CallFlags> callFlags;
 
 
@@ -1107,6 +1124,17 @@ public enum Op {
     return opcode;
   }
 
+    private static final Op[] intToTypeMap = new Op[256];
+
+    static {
+        for (Op type : Op.values()) {
+            intToTypeMap[type.opcode & 0xFF] = type;
+        }
+    }
+
+    public static Op code(byte code) {
+        return intToTypeMap[code & 0xFF];
+    }
 
   private enum CallFlags {
     /**
