@@ -817,6 +817,7 @@ service WalletSolidity {
     };
   }
 
+
   rpc GetMerkleTreeVoucherInfo (OutputPointInfo) returns (IncrementalMerkleVoucherInfo) {
   }
 
@@ -831,6 +832,11 @@ service WalletSolidity {
 
   rpc IsSpend (NoteParameters) returns (SpendResult) {
   }
+  
+  rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
+  }
+
+
 };
 
 service WalletExtension {
