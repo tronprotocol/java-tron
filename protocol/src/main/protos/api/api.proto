@@ -2,17 +2,9 @@ syntax = "proto3";
 package protocol;
 
 import "core/Tron.proto";
+import "core/Contract.proto";
 import "google/api/annotations.proto";
 
-import "core/contract/asset_issue_contract.proto";
-import "core/contract/account_contract.proto";
-import "core/contract/witness_contract.proto";
-import "core/contract/balance_contract.proto";
-import "core/contract/proposal_contract.proto";
-import "core/contract/storage_contract.proto";
-import "core/contract/exchange_contract.proto";
-import "core/contract/smart_contract.proto";
-import "core/contract/shield_contract.proto";
 
 option java_package = "org.tron.api"; //Specify the name of the package that generated the Java file
 option java_outer_classname = "GrpcAPI"; //Specify the class name of the generated Java file
@@ -638,6 +630,16 @@ service Wallet {
   rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
   };
 
+  rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc UpdateBrokerage (UpdateBrokerageContract) returns (TransactionExtention) {
+
+  };
+
   // for shiededTransaction
   rpc CreateShieldedTransaction (PrivateParameters) returns (TransactionExtention) {
   };
@@ -839,6 +841,16 @@ service WalletSolidity {
 
   rpc IsSpend (NoteParameters) returns (SpendResult) {
   }
+
+  rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
+  }
+
 };
 
 service WalletExtension {

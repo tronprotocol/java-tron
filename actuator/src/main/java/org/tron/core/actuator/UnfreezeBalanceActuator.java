@@ -10,21 +10,17 @@ import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DelegatedResourceAccountIndexStore;
-import org.tron.core.store.DelegatedResourceStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.VotesStore;
+import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
@@ -33,9 +29,8 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j(topic = "actuator")
 public class UnfreezeBalanceActuator extends AbstractActuator {
 
-  UnfreezeBalanceActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicStore, DelegatedResourceStore delegatedResourceStore,
-      DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore, VotesStore votesStore) {
-    super(contract, accountStore, dynamicStore, delegatedResourceStore, delegatedResourceAccountIndexStore, votesStore);
+  UnfreezeBalanceActuator(Any contract, Manager dbManager) {
+    super(contract, dbManager);
   }
 
   @Override
@@ -51,7 +46,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     }
     byte[] ownerAddress = unfreezeBalanceContract.getOwnerAddress().toByteArray();
 
-    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    //
+    dbManager.getDelegationService().withdrawReward(ownerAddress, getDeposit());
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
 
     long unfreezeBalance = 0L;
@@ -59,11 +57,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
     //otherwise,unfreeze delegated frozen balance provided this account.
-    if (!ArrayUtils.isEmpty(receiverAddress) && dynamicStore.supportDR()) {
+    if (!ArrayUtils.isEmpty(receiverAddress) && dbManager.getDynamicPropertiesStore().supportDR()) {
       byte[] key = DelegatedResourceCapsule
           .createDbKey(unfreezeBalanceContract.getOwnerAddress().toByteArray(),
               unfreezeBalanceContract.getReceiverAddress().toByteArray());
-      DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore
+      DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
           .get(key);
 
       switch (unfreezeBalanceContract.getResource()) {
@@ -82,20 +80,21 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           break;
       }
 
-      AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
-      if (dynamicStore.getAllowTvmConstantinople() == 0 ||
+      AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
+      if (dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople() == 0 ||
           (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract)) {
         switch (unfreezeBalanceContract.getResource()) {
           case BANDWIDTH:
-            if (dynamicStore.supportShieldedTransaction()
-                && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() < unfreezeBalance) {
+            if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1
+                && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+                < unfreezeBalance) {
               receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
             } else {
               receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
             }
             break;
           case ENERGY:
-            if (dynamicStore.supportShieldedTransaction()
+            if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() < unfreezeBalance) {
               receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
             } else {
@@ -106,44 +105,46 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             //this should never happen
             break;
         }
-        accountStore.put(receiverCapsule.createDbKey(), receiverCapsule);
+        dbManager.getAccountStore().put(receiverCapsule.createDbKey(), receiverCapsule);
       }
 
       accountCapsule.setBalance(oldBalance + unfreezeBalance);
 
       if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() == 0
           && delegatedResourceCapsule.getFrozenBalanceForEnergy() == 0) {
-        delegatedResourceStore.delete(key);
+        dbManager.getDelegatedResourceStore().delete(key);
 
         //modify DelegatedResourceAccountIndexStore
         {
-          DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
+          DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = dbManager
+              .getDelegatedResourceAccountIndexStore()
               .get(ownerAddress);
           if (delegatedResourceAccountIndexCapsule != null) {
             List<ByteString> toAccountsList = new ArrayList<>(delegatedResourceAccountIndexCapsule
                 .getToAccountsList());
             toAccountsList.remove(ByteString.copyFrom(receiverAddress));
             delegatedResourceAccountIndexCapsule.setAllToAccounts(toAccountsList);
-            delegatedResourceAccountIndexStore
+            dbManager.getDelegatedResourceAccountIndexStore()
                 .put(ownerAddress, delegatedResourceAccountIndexCapsule);
           }
         }
 
         {
-          DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = delegatedResourceAccountIndexStore
+          DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = dbManager
+              .getDelegatedResourceAccountIndexStore()
               .get(receiverAddress);
           if (delegatedResourceAccountIndexCapsule != null) {
             List<ByteString> fromAccountsList = new ArrayList<>(delegatedResourceAccountIndexCapsule
                 .getFromAccountsList());
             fromAccountsList.remove(ByteString.copyFrom(ownerAddress));
             delegatedResourceAccountIndexCapsule.setAllFromAccounts(fromAccountsList);
-           delegatedResourceAccountIndexStore
+            dbManager.getDelegatedResourceAccountIndexStore()
                 .put(receiverAddress, delegatedResourceAccountIndexCapsule);
           }
         }
 
       } else {
-        delegatedResourceStore.put(key, delegatedResourceCapsule);
+        dbManager.getDelegatedResourceStore().put(key, delegatedResourceCapsule);
       }
     } else {
       switch (unfreezeBalanceContract.getResource()) {
@@ -152,7 +153,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           List<Frozen> frozenList = Lists.newArrayList();
           frozenList.addAll(accountCapsule.getFrozenList());
           Iterator<Frozen> iterator = frozenList.iterator();
-          long now = dynamicStore.getLatestBlockHeaderTimestamp();
+          long now = dbManager.getHeadBlockTimeStamp();
           while (iterator.hasNext()) {
             Frozen next = iterator.next();
             if (next.getExpireTime() <= now) {
@@ -186,11 +187,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
     switch (unfreezeBalanceContract.getResource()) {
       case BANDWIDTH:
-        dynamicStore
+        dbManager.getDynamicPropertiesStore()
             .addTotalNetWeight(-unfreezeBalance / 1_000_000L);
         break;
       case ENERGY:
-        dynamicStore
+        dbManager.getDynamicPropertiesStore()
             .addTotalEnergyWeight(-unfreezeBalance / 1_000_000L);
         break;
       default:
@@ -199,18 +200,18 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     }
 
     VotesCapsule votesCapsule;
-    if (!votesStore.has(ownerAddress)) {
+    if (!dbManager.getVotesStore().has(ownerAddress)) {
       votesCapsule = new VotesCapsule(unfreezeBalanceContract.getOwnerAddress(),
           accountCapsule.getVotesList());
     } else {
-      votesCapsule = votesStore.get(ownerAddress);
+      votesCapsule = dbManager.getVotesStore().get(ownerAddress);
     }
     accountCapsule.clearVotes();
     votesCapsule.clearNewVotes();
 
-    accountStore.put(ownerAddress, accountCapsule);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    votesStore.put(ownerAddress, votesCapsule);
+    dbManager.getVotesStore().put(ownerAddress, votesCapsule);
 
     ret.setUnfreezeAmount(unfreezeBalance);
     ret.setStatus(fee, code.SUCESS);
@@ -223,8 +224,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+    if (this.dbManager == null) {
+      throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(UnfreezeBalanceContract.class)) {
       throw new ContractValidateException(
@@ -239,32 +240,32 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = unfreezeBalanceContract.getOwnerAddress().toByteArray();
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
-    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           "Account[" + readableOwnerAddress + "] not exists");
     }
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    long now = dbManager.getHeadBlockTimeStamp();
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
     //otherwise,unfreeze delegated frozen balance provided this account.
-    if (!ArrayUtils.isEmpty(receiverAddress) && dynamicStore.supportDR()) {
+    if (!ArrayUtils.isEmpty(receiverAddress) && dbManager.getDynamicPropertiesStore().supportDR()) {
       if (Arrays.equals(receiverAddress, ownerAddress)) {
         throw new ContractValidateException(
             "receiverAddress must not be the same as ownerAddress");
       }
 
-      if (!Commons.addressValid(receiverAddress)) {
+      if (!Wallet.addressValid(receiverAddress)) {
         throw new ContractValidateException("Invalid receiverAddress");
       }
 
-      AccountCapsule receiverCapsule = accountStore.get(receiverAddress);
-      if (dynamicStore.getAllowTvmConstantinople() == 0
+      AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
+      if (dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople() == 0
           && receiverCapsule == null) {
         String readableReceiverAddress = StringUtil.createReadableString(receiverAddress);
         throw new ContractValidateException(
@@ -274,7 +275,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       byte[] key = DelegatedResourceCapsule
           .createDbKey(unfreezeBalanceContract.getOwnerAddress().toByteArray(),
               unfreezeBalanceContract.getReceiverAddress().toByteArray());
-      DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore
+      DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
           .get(key);
       if (delegatedResourceCapsule == null) {
         throw new ContractValidateException(
@@ -287,7 +288,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             throw new ContractValidateException("no delegatedFrozenBalance(BANDWIDTH)");
           }
 
-          if (dynamicStore.getAllowTvmConstantinople() == 0) {
+          if (dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople() == 0) {
             if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
                 < delegatedResourceCapsule.getFrozenBalanceForBandwidth()) {
               throw new ContractValidateException(
@@ -297,7 +298,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       + "]");
             }
           } else {
-            if (!dynamicStore.supportShieldedTransaction()
+            if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() != 1
                 && receiverCapsule != null
                 && receiverCapsule.getType() != AccountType.Contract
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
@@ -318,7 +319,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           if (delegatedResourceCapsule.getFrozenBalanceForEnergy() <= 0) {
             throw new ContractValidateException("no delegateFrozenBalance(Energy)");
           }
-          if (dynamicStore.getAllowTvmConstantinople() == 0) {
+          if (dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople() == 0) {
             if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
                 < delegatedResourceCapsule.getFrozenBalanceForEnergy()) {
               throw new ContractValidateException(
@@ -328,7 +329,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       "]");
             }
           } else {
-            if (!dynamicStore.supportShieldedTransaction()
+            if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() != 1
                 && receiverCapsule != null
                 && receiverCapsule.getType() != AccountType.Contract
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
@@ -341,7 +342,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             }
           }
 
-          if (delegatedResourceCapsule.getExpireTimeForEnergy(dynamicStore) > now) {
+          if (delegatedResourceCapsule.getExpireTimeForEnergy(dbManager) > now) {
             throw new ContractValidateException("It's not time to unfreeze.");
           }
           break;

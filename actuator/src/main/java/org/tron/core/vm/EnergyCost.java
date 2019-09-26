@@ -1,4 +1,4 @@
-package org.tron.core.vm;
+package org.tron.common.runtime.vm;
 
 
 public class EnergyCost {
@@ -275,6 +275,7 @@ public class EnergyCost {
   public int getEXT_CODE_HASH() {
     return EXT_CODE_HASH;
   }
+
 
   private static EnergyCost instance = null;
 

@@ -18,7 +18,6 @@
 
 package org.tron.core;
 
-import static org.tron.common.utils.Commons.addressPreFixByte;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
@@ -82,29 +81,28 @@ import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.ForkController;
-import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
-import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
-import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorCreator;
-import org.tron.core.actuator.VMActuator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -122,13 +120,14 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
-import org.tron.core.config.args.Parameter.ChainConstant;
-import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
+import org.tron.core.db.AccountIdIndexStore;
+import org.tron.core.db.AccountStore;
 import org.tron.core.db.BandwidthProcessor;
+import org.tron.core.db.ContractStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
-import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -149,12 +148,6 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.store.AccountIdIndexStore;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.StoreFactory;
-import org.tron.core.utils.TransactionUtil;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -162,9 +155,22 @@ import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.KeyIo;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
+import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.IncrementalMerkleTree;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.Contract.OutputPoint;
+import org.tron.protos.Contract.OutputPointInfo;
+import org.tron.protos.Contract.PedersenHash;
+import org.tron.protos.Contract.ReceiveDescription;
+import org.tron.protos.Contract.ShieldedTransferContract;
+import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -173,26 +179,15 @@ import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Proposal;
+import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.SmartContract.ABI;
+import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionSign;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
-import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.contract.ShieldContract.OutputPoint;
-import org.tron.protos.contract.ShieldContract.OutputPointInfo;
-import org.tron.protos.contract.ShieldContract.PedersenHash;
-import org.tron.protos.contract.ShieldContract.ReceiveDescription;
-import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j
 @Component
@@ -209,6 +204,7 @@ public class Wallet {
   @Autowired
   private NodeManager nodeManager;
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
+  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
 
@@ -264,7 +260,27 @@ public class Wallet {
   }
 
   public static void setAddressPreFixByte(byte addressPreFixByte) {
-    Commons.addressPreFixByte = addressPreFixByte;
+    Wallet.addressPreFixByte = addressPreFixByte;
+  }
+
+  public static boolean addressValid(byte[] address) {
+    if (ArrayUtils.isEmpty(address)) {
+      logger.warn("Warning: Address is empty !!");
+      return false;
+    }
+    if (address.length != Constant.ADDRESS_SIZE / 2) {
+      logger.warn(
+          "Warning: Address length need " + Constant.ADDRESS_SIZE + " but " + address.length
+              + " !!");
+      return false;
+    }
+    if (address[0] != addressPreFixByte) {
+      logger.warn("Warning: Address need prefix with " + addressPreFixByte + " but "
+          + address[0] + " !!");
+      return false;
+    }
+    //Other rule;
+    return true;
   }
 
   public static String encode58Check(byte[] input) {
@@ -274,6 +290,24 @@ public class Wallet {
     System.arraycopy(input, 0, inputCheck, 0, input.length);
     System.arraycopy(hash1, 0, inputCheck, input.length, 4);
     return Base58.encode(inputCheck);
+  }
+
+  private static byte[] decode58Check(String input) {
+    byte[] decodeCheck = Base58.decode(input);
+    if (decodeCheck.length <= 4) {
+      return null;
+    }
+    byte[] decodeData = new byte[decodeCheck.length - 4];
+    System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
+    byte[] hash0 = Sha256Hash.hash(decodeData);
+    byte[] hash1 = Sha256Hash.hash(hash0);
+    if (hash1[0] == decodeCheck[decodeData.length] &&
+        hash1[1] == decodeCheck[decodeData.length + 1] &&
+        hash1[2] == decodeCheck[decodeData.length + 2] &&
+        hash1[3] == decodeCheck[decodeData.length + 3]) {
+      return decodeData;
+    }
+    return null;
   }
 
   public static byte[] generateContractAddress(Transaction trx) {
@@ -320,10 +354,27 @@ public class Wallet {
 
   public static byte[] tryDecodeFromBase58Check(String address) {
     try {
-      return Commons.decodeFromBase58Check(address);
+      return Wallet.decodeFromBase58Check(address);
     } catch (Exception ex) {
       return null;
     }
+  }
+
+  public static byte[] decodeFromBase58Check(String addressBase58) {
+    if (StringUtils.isEmpty(addressBase58)) {
+      logger.warn("Warning: Address is empty !!");
+      return null;
+    }
+    byte[] address = decode58Check(addressBase58);
+    if (address == null) {
+      return null;
+    }
+
+    if (!addressValid(address)) {
+      return null;
+    }
+
+    return address;
   }
 
 //  public ShieldAddress generateShieldAddress() {
@@ -353,8 +404,7 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
     energyProcessor.updateUsage(accountCapsule);
 
     long genesisTimeStamp = dbManager.getGenesisBlock().getTimeStamp();
@@ -383,8 +433,7 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
     energyProcessor.updateUsage(accountCapsule);
 
     return accountCapsule.getInstance();
@@ -433,7 +482,7 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
     if (contractType != ContractType.CreateSmartContract
         && contractType != ContractType.TriggerSmartContract) {
-      List<Actuator> actList = ActuatorCreator.getINSTANCE().createActuator(trx);
+      List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
       for (Actuator act : actList) {
         act.validate();
       }
@@ -498,6 +547,12 @@ public class Wallet {
 
       if (dbManager.isTooManyPending()) {
         logger.warn("Broadcast transaction {} failed, too many pending.", trx.getTransactionId());
+        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
+      }
+
+      if (dbManager.isGeneratingBlock()) {
+        logger
+            .warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
@@ -778,8 +833,7 @@ public class Wallet {
 
   public ExchangeList getExchangeList() {
     ExchangeList.Builder builder = ExchangeList.newBuilder();
-    List<ExchangeCapsule> exchangeCapsuleList = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).getAllExchanges();
+    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStoreFinal().getAllExchanges();
 
     exchangeCapsuleList
         .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
@@ -978,6 +1032,27 @@ public class Wallet {
             .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
             .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAdaptiveResourceLimitTargetRatio")
+        .setValue(
+            dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitTargetRatio() / (24 * 60))
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAdaptiveResourceLimitMultiplier")
+        .setValue(dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitMultiplier())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getChangeDelegation")
+        .setValue(dbManager.getDynamicPropertiesStore().getChangeDelegation())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getWitness127PayPerBlock")
+        .setValue(dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
+        .build());
+
     return builder.build();
   }
 
@@ -989,8 +1064,7 @@ public class Wallet {
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
-    Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).getAllAssetIssues()
+    dbManager.getAssetIssueStoreFinal().getAllAssetIssues()
         .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
@@ -1001,8 +1075,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
     List<AssetIssueCapsule> assetIssueList =
-        Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).getAssetIssuesPaginated(offset, limit);
+        dbManager.getAssetIssueStoreFinal().getAssetIssuesPaginated(offset, limit);
 
     if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
@@ -1018,8 +1091,7 @@ public class Wallet {
     }
 
     List<AssetIssueCapsule> assetIssueCapsuleList =
-        Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).getAllAssetIssues();
+        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
 
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
@@ -1092,8 +1164,7 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
     energyProcessor.updateUsage(accountCapsule);
 
     long netLimit = processor
@@ -1206,8 +1277,7 @@ public class Wallet {
     }
 
     List<AssetIssueCapsule> assetIssueCapsuleList =
-        Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).getAllAssetIssues();
+        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
 
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
@@ -1332,8 +1402,7 @@ public class Wallet {
     }
     ExchangeCapsule exchangeCapsule = null;
     try {
-      exchangeCapsule = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
-          dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).get(exchangeId.toByteArray());
+      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1450,7 +1519,7 @@ public class Wallet {
           }
 
         } else {
-          for (ReceiveDescription receiveDescription :
+          for (org.tron.protos.Contract.ReceiveDescription receiveDescription :
               zkContract.getReceiveDescriptionList()) {
             PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
             cmCapsule.setContent(receiveDescription.getNoteCommitment());
@@ -1501,7 +1570,7 @@ public class Wallet {
           ShieldedTransferContract zkContract = contract1.getParameter()
               .unpack(ShieldedTransferContract.class);
 
-          for (ReceiveDescription receiveDescription :
+          for (org.tron.protos.Contract.ReceiveDescription receiveDescription :
               zkContract.getReceiveDescriptionList()) {
 
             PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
@@ -1539,7 +1608,7 @@ public class Wallet {
           ShieldedTransferContract zkContract = contract1.getParameter()
               .unpack(ShieldedTransferContract.class);
 
-          for (ReceiveDescription receiveDescription :
+          for (org.tron.protos.Contract.ReceiveDescription receiveDescription :
               zkContract.getReceiveDescriptionList()) {
 
             PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
@@ -1565,7 +1634,7 @@ public class Wallet {
       throw new BadItemException("request.OutPointsCount must be range in【1，10】");
     }
 
-    for (OutputPoint outputPoint : request.getOutPointsList()) {
+    for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
 
       if (outputPoint.getHash() == null) {
         throw new BadItemException("outPoint.getHash() == null");
@@ -1589,7 +1658,7 @@ public class Wallet {
     IncrementalMerkleVoucherInfo.Builder result = IncrementalMerkleVoucherInfo.newBuilder();
 
     long largeBlockNum = 0;
-    for (OutputPoint outputPoint : request.getOutPointsList()) {
+    for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
       Long blockNum1 = getBlockNumber(outputPoint);
       if (blockNum1 > largeBlockNum) {
         largeBlockNum = blockNum1;
@@ -1600,7 +1669,7 @@ public class Wallet {
     int opIndex = 0;
 
     List<IncrementalMerkleVoucherContainer> witnessList = Lists.newArrayList();
-    for (OutputPoint outputPoint : request.getOutPointsList()) {
+    for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
       Long blockNum1 = getBlockNumber(outputPoint);
       logger.debug("blockNum:" + blockNum1 + ",opIndex:" + opIndex++);
       if (blockNum1 + 100 < largeBlockNum) {
@@ -2157,8 +2226,8 @@ public class Wallet {
       throw new ContractValidateException("Not a shielded transaction");
     }
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-    byte[] transactionHash = TransactionUtil
-        .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
+    byte[] transactionHash = TransactionCapsule
+        .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(transactionHash)).build();
   }
 
@@ -2261,39 +2330,41 @@ public class Wallet {
     } else {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
-    TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
-        StoreFactory.getInstance(), true,
-        false);
-    VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
-    VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
+
+    Runtime runtime = new RuntimeImpl(trxCap.getInstance(),
+        new BlockCapsule(headBlock), deposit,
+        new ProgramInvokeFactoryImpl(), true);
+    VMConfig.initVmHardFork();
     VMConfig.initAllowTvmTransferTrc10(
         dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
+    VMConfig.initAllowMultiSign(
+        dbManager.getDynamicPropertiesStore().getAllowMultiSign());
     VMConfig.initAllowTvmConstantinople(
         dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
-    VMConfig
-        .initAllowTvmSolidity059(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
-    VMActuator vmActuator = new VMActuator(true);
-    vmActuator.validate(context);
-    vmActuator.execute(context);
-
-    ProgramResult result = context.getProgramResult();
-    if (result.getException() != null) {
-      RuntimeException e = result.getException();
+    VMConfig.initAllowTvmSolidity059(
+        dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
+    runtime.execute();
+    runtime.go();
+    runtime.finalization();
+    // TODO exception
+    if (runtime.getResult().getException() != null) {
+      RuntimeException e = runtime.getResult().getException();
       logger.warn("Constant call has error {}", e.getMessage());
       throw e;
     }
 
+    ProgramResult result = runtime.getResult();
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
     ret.setStatus(0, code.SUCESS);
-    if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
+    if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
       retBuilder
-          .setMessage(ByteString.copyFromUtf8(result.getRuntimeError()))
+          .setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError()))
           .build();
     }
-    if (result.isRevert()) {
+    if (runtime.getResult().isRevert()) {
       ret.setStatus(0, code.FAILED);
       retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed"))
           .build();
@@ -2432,8 +2503,7 @@ public class Wallet {
         .asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
       try {
-        return Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
-            dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).get(key);
+        return dbManager.getExchangeStoreFinal().get(key);
       } catch (Exception ex) {
         return null;
       }
@@ -2604,7 +2674,8 @@ public class Wallet {
         }
         ShieldedTransferContract stContract = null;
         try {
-          stContract = c.getParameter().unpack(ShieldedTransferContract.class);
+          stContract = c.getParameter().unpack(
+              org.tron.protos.Contract.ShieldedTransferContract.class);
         } catch (InvalidProtocolBufferException e) {
           throw new RuntimeException(
               "unpack ShieldedTransferContract failed.");

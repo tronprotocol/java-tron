@@ -1,6 +1,6 @@
 package org.tron.common.storage;
 
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
@@ -8,11 +8,12 @@ import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -23,24 +24,19 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.CodeStore;
+import org.tron.core.db.ContractStore;
+import org.tron.core.db.DelegatedResourceStore;
+import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
+import org.tron.core.db.ProposalStore;
 import org.tron.core.db.TransactionStore;
+import org.tron.core.db.VotesStore;
+import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.CodeStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DelegatedResourceStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ProposalStore;
-import org.tron.core.store.VotesStore;
-import org.tron.core.store.WitnessStore;
-import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.program.Storage;
-import org.tron.core.vm.repository.Key;
-import org.tron.core.vm.repository.Type;
-import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
@@ -81,6 +77,18 @@ public class DepositImpl implements Deposit {
   @Override
   public Manager getDbManager() {
     return dbManager;
+  }
+
+  @Override
+  public AccountCapsule createNormalAccount(byte[] address) {
+    boolean withDefaultPermission =
+        dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1;
+    Key key = new Key(address);
+    AccountCapsule account = new AccountCapsule(ByteString.copyFrom(address), AccountType.Normal,
+        dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
+
+    accountCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
+    return account;
   }
 
   private BlockStore getBlockStore() {
@@ -364,8 +372,7 @@ public class DepositImpl implements Deposit {
     if (this.parent != null) {
       assetIssueCapsule = parent.getAssetIssue(tokenIdWithoutLeadingZero);
     } else {
-      assetIssueCapsule = Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-          dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).get(tokenIdWithoutLeadingZero);
+      assetIssueCapsule = this.dbManager.getAssetIssueStoreFinal().get(tokenIdWithoutLeadingZero);
     }
     if (assetIssueCapsule != null) {
       assetIssueCache.put(key, Value.create(assetIssueCapsule.getData()));
@@ -432,10 +439,9 @@ public class DepositImpl implements Deposit {
               + " insufficient balance");
     }
     if (value >= 0) {
-      accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
+      accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, this.dbManager);
     } else {
-      accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value,
-          this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
+      accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value, this.dbManager);
     }
 //    accountCapsule.getAssetMap().put(new String(tokenIdWithoutLeadingZero), Math.addExact(balance, value));
     Key key = Key.create(address);

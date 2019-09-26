@@ -16,8 +16,13 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core.vm;
+package org.tron.common.runtime.vm;
 
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.common.runtime.vm.DataWord.WORD_SIZE;
+import static org.tron.common.utils.BIUtil.addSafely;
+import static org.tron.common.utils.BIUtil.isLessThan;
+import static org.tron.common.utils.BIUtil.isZero;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.ByteUtil.bytesToBigInteger;
 import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
@@ -37,10 +42,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.zksnark.BN128;
@@ -49,16 +54,19 @@ import org.tron.common.crypto.zksnark.BN128G1;
 import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
-import org.tron.common.runtime.ProgramResult;
-import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.utils.MUtil;
+import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.program.Program;
-import org.tron.core.vm.repository.Repository;
-import org.tron.core.vm.utils.MUtil;
-
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.protos.Protocol.Permission;
 
 /**
  * @author Roman Mandeleil
@@ -76,22 +84,9 @@ public class PrecompiledContracts {
   private static final BN128Addition altBN128Add = new BN128Addition();
   private static final BN128Multiplication altBN128Mul = new BN128Multiplication();
   private static final BN128Pairing altBN128Pairing = new BN128Pairing();
-  private static final MultiValidateSign multiValidateSign = new MultiValidateSign();
-//  private static final VoteWitnessNative voteContract = new VoteWitnessNative();
-//  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
-//  private static final UnfreezeBalanceNative unFreezeBalance = new UnfreezeBalanceNative();
-//  private static final WithdrawBalanceNative withdrawBalance = new WithdrawBalanceNative();
-//  private static final ProposalApproveNative proposalApprove = new ProposalApproveNative();
-//  private static final ProposalCreateNative proposalCreate = new ProposalCreateNative();
-//  private static final ProposalDeleteNative proposalDelete = new ProposalDeleteNative();
-//  private static final ConvertFromTronBytesAddressNative convertFromTronBytesAddress = new ConvertFromTronBytesAddressNative();
-//  private static final ConvertFromTronBase58AddressNative convertFromTronBase58Address = new ConvertFromTronBase58AddressNative();
-//  private static final TransferAssetNative transferAsset = new TransferAssetNative();
-//  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
 
-  private static final ECKey addressCheckECKey = new ECKey();
-  private static final String addressCheckECKeyAddress = MUtil
-      .encode58Check(addressCheckECKey.getAddress());
+  private static final BatchValidateSign batchValidateSign = new BatchValidateSign();
+  private static final ValidateMultiSign validateMultiSign = new ValidateMultiSign();
 
 
   private static final DataWord ecRecoverAddr = new DataWord(
@@ -110,8 +105,10 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000000007");
   private static final DataWord altBN128PairingAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000008");
-  private static final DataWord multiValidateSignAddr = new DataWord(
+  private static final DataWord batchValidateSignAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000009");
+  private static final DataWord validateMultiSignAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000000000a");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -143,8 +140,11 @@ public class PrecompiledContracts {
     if (address.equals(altBN128PairingAddr)) {
       return altBN128Pairing;
     }
-    if (VMConfig.allowTvmSolidity059() && address.equals(multiValidateSignAddr)) {
-      return multiValidateSign;
+    if (VMConfig.allowTvmSolidity059() && address.equals(batchValidateSignAddr)) {
+      return batchValidateSign;
+    }
+    if (VMConfig.allowTvmSolidity059() && address.equals(validateMultiSignAddr)) {
+      return validateMultiSign;
     }
 
     return null;
@@ -165,6 +165,9 @@ public class PrecompiledContracts {
 
   public static abstract class PrecompiledContract {
 
+    protected static final byte[] DATA_FALSE = new byte[WORD_SIZE];
+
+
     public abstract long getEnergyForData(byte[] data);
 
     public abstract Pair<Boolean, byte[]> execute(byte[] data);
@@ -175,7 +178,7 @@ public class PrecompiledContracts {
       this.callerAddress = callerAddress.clone();
     }
 
-    public void setRepository(Repository deposit) {
+    public void setDeposit(Deposit deposit) {
       this.deposit = deposit;
     }
 
@@ -183,7 +186,7 @@ public class PrecompiledContracts {
       this.result = result;
     }
 
-    private Repository deposit;
+    private Deposit deposit;
 
     private ProgramResult result;
 
@@ -191,7 +194,7 @@ public class PrecompiledContracts {
       return callerAddress.clone();
     }
 
-    public Repository getRepository() {
+    public Deposit getDeposit() {
       return deposit;
     }
 
@@ -201,14 +204,14 @@ public class PrecompiledContracts {
 
     @Setter
     @Getter
-    private boolean isStaticCall;
+    private boolean isConstantCall;
 
     @Getter
     @Setter
     private long vmShouldEndInUs;
 
 
-    public long getCPUTimeLeftInUs() {
+    protected long getCPUTimeLeftInNanoSecond() {
       long left = getVmShouldEndInUs() * Constant.ONE_THOUSAND - System.nanoTime();
       if (left <= 0) {
         throw Program.Exception.notEnoughTime("call");
@@ -216,6 +219,13 @@ public class PrecompiledContracts {
         return left;
       }
     }
+
+    protected byte[] dataOne() {
+      byte[] ret = new byte[WORD_SIZE];
+      ret[31] = 1;
+      return ret;
+    }
+
   }
 
   public static class Identity extends PrecompiledContract {
@@ -368,7 +378,7 @@ public class PrecompiledContracts {
       int expLen = parseLen(data, 1);
       int modLen = parseLen(data, 2);
 
-      byte[] expHighBytes = parseBytes(data, BIUtil.addSafely(ARGS_OFFSET, baseLen), Math.min(expLen, 32));
+      byte[] expHighBytes = parseBytes(data, addSafely(ARGS_OFFSET, baseLen), Math.min(expLen, 32));
 
       long multComplexity = getMultComplexity(Math.max(baseLen, modLen));
       long adjExpLen = getAdjustedExponentLength(expHighBytes, expLen);
@@ -378,7 +388,7 @@ public class PrecompiledContracts {
           .multiply(BigInteger.valueOf(Math.max(adjExpLen, 1)))
           .divide(GQUAD_DIVISOR);
 
-      return BIUtil.isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValueExact()
+      return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValueExact()
           : Long.MAX_VALUE;
     }
 
@@ -394,11 +404,11 @@ public class PrecompiledContracts {
       int modLen = parseLen(data, 2);
 
       BigInteger base = parseArg(data, ARGS_OFFSET, baseLen);
-      BigInteger exp = parseArg(data, BIUtil.addSafely(ARGS_OFFSET, baseLen), expLen);
-      BigInteger mod = parseArg(data, BIUtil.addSafely(BIUtil.addSafely(ARGS_OFFSET, baseLen), expLen), modLen);
+      BigInteger exp = parseArg(data, addSafely(ARGS_OFFSET, baseLen), expLen);
+      BigInteger mod = parseArg(data, addSafely(addSafely(ARGS_OFFSET, baseLen), expLen), modLen);
 
       // check if modulus is zero
-      if (BIUtil.isZero(mod)) {
+      if (isZero(mod)) {
         return Pair.of(true, EMPTY_BYTE_ARRAY);
       }
 
@@ -639,31 +649,94 @@ public class PrecompiledContracts {
   }
 
 
+  public static class ValidateMultiSign extends PrecompiledContract {
 
-  public static class MultiValidateSign extends PrecompiledContract {
+    private static final int ENGERYPERSIGN = 1500;
+    private static final int MAX_SIZE = 5;
+
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      int cnt = (data.length / WORD_SIZE - 5) / 5;
+      // one sign 1500, half of ecrecover
+      return (long) (cnt * ENGERYPERSIGN);
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] rawData) {
+      DataWord[] words = DataWord.parseArray(rawData);
+      byte[] addr = words[0].getLast20Bytes();
+      int permissionId = words[1].intValueSafe();
+      byte[] data = words[2].getData();
+
+      byte[] combine = ByteUtil
+          .merge(MUtil.convertToTronAddress(addr), ByteArray.fromInt(permissionId), data);
+      byte[] hash = Sha256Hash.hash(combine);
+
+      byte[][] signatures = extractBytesArray(
+          words, words[3].intValueSafe() / WORD_SIZE, rawData);
+
+      if (signatures.length == 0 || signatures.length > MAX_SIZE) {
+        return Pair.of(true, DATA_FALSE);
+      }
+
+      AccountCapsule account = this.getDeposit().getAccount(convertToTronAddress(addr));
+      if (account != null) {
+        try {
+          Permission permission = account.getPermissionById(permissionId);
+          if (permission != null) {
+            //calculate weight
+            long totalWeight = 0L;
+            List<byte[]> executedSignList = new ArrayList<>();
+            for (byte[] sign : signatures) {
+              if (ByteArray.matrixContains(executedSignList, sign)) {
+                continue;
+              }
+              byte[] recoveredAddr = recoverAddrBySign(sign, hash);
+              long weight = TransactionCapsule.getWeight(permission, recoveredAddr);
+              if (weight == 0) {
+                //incorrect sign
+                return Pair.of(true, DATA_FALSE);
+              }
+              totalWeight += weight;
+              executedSignList.add(sign);
+            }
+
+            if (totalWeight >= permission.getThreshold()) {
+              return Pair.of(true, dataOne());
+            }
+          }
+        } catch (Throwable t) {
+          logger.info("ValidateMultiSign error:{}", t.getMessage());
+        }
+      }
+      return Pair.of(true, DATA_FALSE);
+    }
+  }
+
+
+  public static class BatchValidateSign extends PrecompiledContract {
+
     private static final ExecutorService workers;
     private static final int ENGERYPERSIGN = 1500;
-    private static final byte[] ZEROADDR = MUtil.allZero32TronAddress();
-    private static final byte[] EMPTYADDR = new byte[DataWord.WORD_SIZE];
+    private static final int MAX_SIZE = 16;
 
     static {
       workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
     }
 
-    @Data
     @AllArgsConstructor
-    private static class ValidateSignTask implements Callable<ValidateSignResult> {
+    private static class RecoverAddrTask implements Callable<RecoverAddrResult> {
 
       private CountDownLatch countDownLatch;
       private byte[] hash;
       private byte[] signature;
-      private byte[] address;
       private int nonce;
 
       @Override
-      public ValidateSignResult call() {
+      public RecoverAddrResult call() {
         try {
-          return new ValidateSignResult(validSign(this.signature, this.hash, this.address), nonce);
+          return new RecoverAddrResult(recoverAddrBySign(this.signature, this.hash), nonce);
         } finally {
           countDownLatch.countDown();
         }
@@ -671,23 +744,15 @@ public class PrecompiledContracts {
     }
 
     @AllArgsConstructor
-    private static class ValidateSignResult {
+    private static class RecoverAddrResult {
 
-      private Boolean res;
+      private byte[] addr;
       private int nonce;
-
-      public Boolean getRes() {
-        return res;
-      }
-
-      public int getNonce() {
-        return nonce;
-      }
     }
 
     @Override
     public long getEnergyForData(byte[] data) {
-      int cnt = (data.length / DataWord.WORD_SIZE - 5) / 6;
+      int cnt = (data.length / WORD_SIZE - 5) / 6;
       // one sign 1500, half of ecrecover
       return (long) (cnt * ENGERYPERSIGN);
     }
@@ -697,7 +762,7 @@ public class PrecompiledContracts {
       try {
         return doExecute(data);
       } catch (Throwable t) {
-        return Pair.of(true, new byte[DataWord.WORD_SIZE]);
+        return Pair.of(true, new byte[WORD_SIZE]);
       }
     }
 
@@ -706,99 +771,105 @@ public class PrecompiledContracts {
       DataWord[] words = DataWord.parseArray(data);
       byte[] hash = words[0].getData();
       byte[][] signatures = extractBytesArray(
-          words, words[1].intValueSafe() / DataWord.WORD_SIZE, data);
+          words, words[1].intValueSafe() / WORD_SIZE, data);
       byte[][] addresses = extractBytes32Array(
-          words, words[2].intValueSafe() / DataWord.WORD_SIZE);
+          words, words[2].intValueSafe() / WORD_SIZE);
       int cnt = signatures.length;
-      if (cnt == 0 || signatures.length != addresses.length) {
-        return Pair.of(true, new byte[DataWord.WORD_SIZE]);
+      if (cnt == 0 || cnt > MAX_SIZE || signatures.length != addresses.length) {
+        return Pair.of(true, DATA_FALSE);
       }
-      int min = Math.min(cnt, DataWord.WORD_SIZE);
-      byte[] res = new byte[DataWord.WORD_SIZE];
-      if (isStaticCall()) {
+      byte[] res = new byte[WORD_SIZE];
+      if (isConstantCall()) {
         //for static call not use thread pool to avoid potential effect
-        for (int i = 0; i < min; i++) {
-          if (validSign(signatures[i], hash, addresses[i])) {
+        for (int i = 0; i < cnt; i++) {
+          if (DataWord
+              .equalAddressByteArray(addresses[i], recoverAddrBySign(signatures[i], hash))) {
             res[i] = 1;
           }
         }
       } else {
         // add check
-        CountDownLatch countDownLatch = new CountDownLatch(min);
-        List<Future<ValidateSignResult>> futures = new ArrayList<>(min);
+        CountDownLatch countDownLatch = new CountDownLatch(cnt);
+        List<Future<RecoverAddrResult>> futures = new ArrayList<>(cnt);
 
-        for (int i = 0; i < min; i++) {
-          Future<ValidateSignResult> future = workers
-              .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i], i));
+        for (int i = 0; i < cnt; i++) {
+          Future<RecoverAddrResult> future = workers
+              .submit(new RecoverAddrTask(countDownLatch, hash, signatures[i], i));
           futures.add(future);
         }
-        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInUs(), TimeUnit.NANOSECONDS);
+        boolean withNoTimeout = countDownLatch
+            .await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
 
         if (!withNoTimeout) {
-          logger.info("MultiValidateSign timeout");
-          throw Program.Exception.notEnoughTime("call MultiValidateSign precompile method");
+          logger.info("BatchValidateSign timeout");
+          throw Program.Exception.notEnoughTime("call BatchValidateSign precompile method");
         }
 
-        for (Future<ValidateSignResult> future : futures) {
-          ValidateSignResult result = future.get();
-          if (result.getRes()) {
-            res[result.getNonce()] = 1;
+        for (Future<RecoverAddrResult> future : futures) {
+          RecoverAddrResult result = future.get();
+          int index = result.nonce;
+          if (DataWord.equalAddressByteArray(result.addr, addresses[index])) {
+            res[index] = 1;
           }
         }
       }
       return Pair.of(true, res);
     }
 
-    private static boolean validSign(byte[] sign, byte[] hash, byte[] address) {
-      byte v;
-      byte[] r;
-      byte[] s;
-      DataWord out = null;
-      if (sign.length < 65 || Arrays.equals(ZEROADDR, address)
-          || Arrays.equals(EMPTYADDR, address)) {
-        return false;
-      }
-      try {
-        r = Arrays.copyOfRange(sign, 0, 32);
-        s = Arrays.copyOfRange(sign, 32, 64);
-        v = sign[64];
-        if (v < 27) {
-          v += 27;
-        }
-        ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
-        if (signature.validateComponents()) {
-          out = new DataWord(ECKey.signatureToAddress(hash, signature));
-        }
-      } catch (Throwable any) {
-        logger.info("ECRecover error", any.getMessage());
-      }
-      return out != null && Arrays.equals(new DataWord(address).getLast20Bytes(),
-          out.getLast20Bytes());
-    }
 
-    private static byte[][] extractBytes32Array(DataWord[] words, int offset) {
-      int len = words[offset].intValueSafe();
-      byte[][] bytes32Array = new byte[len][];
-      for (int i = 0; i < len; i++) {
-        bytes32Array[i] = words[offset + i + 1].getData();
-      }
-      return bytes32Array;
-    }
-
-    private static byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
-      int len = words[offset].intValueSafe();
-      byte[][] bytesArray = new byte[len][];
-      for (int i = 0; i < len; i++) {
-        int bytesOffset = words[offset + i + 1].intValueSafe() / DataWord.WORD_SIZE;
-        int bytesLen = words[offset + bytesOffset + 1].intValueSafe();
-        bytesArray[i] = extractBytes(data,  (bytesOffset + offset + 2) * DataWord.WORD_SIZE,
-            bytesLen);
-      }
-      return bytesArray;
-    }
-
-    private static byte[] extractBytes(byte[] data, int offset, int len) {
-      return Arrays.copyOfRange(data, offset, offset + len);
-    }
   }
+
+  private static byte[] recoverAddrBySign(byte[] sign, byte[] hash) {
+    byte v;
+    byte[] r;
+    byte[] s;
+    byte[] out = null;
+    if (ArrayUtils.isEmpty(sign) || sign.length < 65) {
+      return new byte[0];
+    }
+    try {
+      r = Arrays.copyOfRange(sign, 0, 32);
+      s = Arrays.copyOfRange(sign, 32, 64);
+      v = sign[64];
+      if (v < 27) {
+        v += 27;
+      }
+      ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
+      if (signature.validateComponents()) {
+        out = ECKey.signatureToAddress(hash, signature);
+      }
+    } catch (Throwable any) {
+      logger.info("ECRecover error", any.getMessage());
+    }
+    return out;
+  }
+
+  private static byte[][] extractBytes32Array(DataWord[] words, int offset) {
+    int len = words[offset].intValueSafe();
+    byte[][] bytes32Array = new byte[len][];
+    for (int i = 0; i < len; i++) {
+      bytes32Array[i] = words[offset + i + 1].getData();
+    }
+    return bytes32Array;
+  }
+
+  private static byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
+    if (offset > words.length - 1) {
+      return new byte[0][];
+    }
+    int len = words[offset].intValueSafe();
+    byte[][] bytesArray = new byte[len][];
+    for (int i = 0; i < len; i++) {
+      int bytesOffset = words[offset + i + 1].intValueSafe() / WORD_SIZE;
+      int bytesLen = words[offset + bytesOffset + 1].intValueSafe();
+      bytesArray[i] = extractBytes(data, (bytesOffset + offset + 2) * WORD_SIZE,
+          bytesLen);
+    }
+    return bytesArray;
+  }
+
+  private static byte[] extractBytes(byte[] data, int offset, int len) {
+    return Arrays.copyOfRange(data, offset, offset + len);
+  }
+
 }

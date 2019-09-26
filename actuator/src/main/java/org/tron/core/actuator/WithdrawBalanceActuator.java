@@ -7,25 +7,24 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.WitnessStore;
+import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
 public class WithdrawBalanceActuator extends AbstractActuator {
 
-  WithdrawBalanceActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicPropertiesStore, WitnessStore witnessStore) {
-    super(contract,accountStore, dynamicPropertiesStore, witnessStore);
+  WithdrawBalanceActuator(Any contract, Manager dbManager) {
+    super(contract, dbManager);
   }
 
 
@@ -41,18 +40,27 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
 
-    AccountCapsule accountCapsule = accountStore.
-        get(withdrawBalanceContract.getOwnerAddress().toByteArray());
+    dbManager.getDelegationService().withdrawReward(withdrawBalanceContract.getOwnerAddress()
+        .toByteArray(), getDeposit());
+
+    AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? dbManager.getAccountStore().
+        get(withdrawBalanceContract.getOwnerAddress().toByteArray())
+        : getDeposit().getAccount(withdrawBalanceContract.getOwnerAddress().toByteArray());
     long oldBalance = accountCapsule.getBalance();
     long allowance = accountCapsule.getAllowance();
 
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    long now = dbManager.getHeadBlockTimeStamp();
     accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
         .setBalance(oldBalance + allowance)
         .setAllowance(0L)
         .setLatestWithdrawTime(now)
         .build());
-    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    if (Objects.isNull(getDeposit())) {
+      dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    } else {
+      // cache
+      deposit.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
+    }
 
     ret.setWithdrawAmount(allowance);
     ret.setStatus(fee, code.SUCESS);
@@ -65,8 +73,8 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+    if (dbManager == null && (getDeposit() == null || getDeposit().getDbManager() == null)) {
+      throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(WithdrawBalanceContract.class)) {
       throw new ContractValidateException(
@@ -81,12 +89,13 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = withdrawBalanceContract.getOwnerAddress().toByteArray();
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
     AccountCapsule accountCapsule =
-        accountStore.get(ownerAddress);
+        Objects.isNull(getDeposit()) ? dbManager.getAccountStore().get(ownerAddress)
+            : getDeposit().getAccount(ownerAddress);
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -94,12 +103,8 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-    if (!witnessStore.has(ownerAddress)) {
-      throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] is not a witnessAccount");
-    }
 
-    boolean isGP = DBConfig.getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
+    boolean isGP = Args.getInstance().getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
         Arrays.equals(ownerAddress, witness.getAddress()));
     if (isGP) {
       throw new ContractValidateException(
@@ -108,16 +113,19 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
-    long now = dynamicStore.getLatestBlockHeaderTimestamp();
-    long witnessAllowanceFrozenTime = dynamicStore.getWitnessAllowanceFrozenTime() * 86_400_000L;
+    long now = dbManager.getHeadBlockTimeStamp();
+    long witnessAllowanceFrozenTime = Objects.isNull(getDeposit()) ?
+        dbManager.getDynamicPropertiesStore().getWitnessAllowanceFrozenTime() * 86_400_000L :
+        getDeposit().getWitnessAllowanceFrozenTime() * 86_400_000L;
 
     if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
       throw new ContractValidateException("The last withdraw time is "
           + latestWithdrawTime + ",less than 24 hours");
     }
 
-    if (accountCapsule.getAllowance() <= 0) {
-      throw new ContractValidateException("witnessAccount does not have any allowance");
+    if (accountCapsule.getAllowance() <= 0 &&
+        dbManager.getDelegationService().queryReward(ownerAddress) <= 0) {
+      throw new ContractValidateException("witnessAccount does not have any reward");
     }
     try {
       LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());

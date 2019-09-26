@@ -25,7 +25,6 @@ import org.tron.common.net.udp.message.discover.FindNodeMessage;
 import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
-import org.tron.common.overlay.discover.RefreshTask;
 import org.tron.common.overlay.discover.node.NodeHandler.State;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.common.overlay.discover.table.NodeTable;
@@ -66,7 +65,7 @@ public class NodeManager implements EventHandler {
     this.dbManager = dbManager;
     discoveryEnabled = args.isNodeDiscoveryEnable();
 
-    homeNode = new Node(RefreshTask.getNodeId(), args.getNodeExternalIp(),
+    homeNode = new Node(Node.getNodeId(), args.getNodeExternalIp(),
         args.getNodeListenPort());
 
     for (String boot : args.getSeedNode().getIpList()) {
@@ -74,7 +73,6 @@ public class NodeManager implements EventHandler {
     }
 
     logger.info("homeNode : {}", homeNode);
-    logger.info("bootNodes : size= {}", bootNodes.size());
 
     table = new NodeTable(homeNode);
 
@@ -153,7 +151,7 @@ public class NodeManager implements EventHandler {
         .getPort();
   }
 
-  public  NodeHandler getNodeHandler(Node n) {
+  public NodeHandler getNodeHandler(Node n) {
     String key = getKey(n);
     NodeHandler ret = nodeHandlerMap.get(key);
     if (ret == null) {
@@ -234,28 +232,23 @@ public class NodeManager implements EventHandler {
   }
 
   public List<NodeHandler> getNodes(Predicate<NodeHandler> predicate, int limit) {
-    ArrayList<NodeHandler> filtered = new ArrayList<>();
+    List<NodeHandler> filtered = new ArrayList<>();
     for (NodeHandler handler : nodeHandlerMap.values()) {
       if (handler.getNode().isConnectible() && predicate.test(handler)) {
         filtered.add(handler);
       }
     }
-
-    filtered.sort(Comparator.comparingInt((NodeHandler o) -> o.getNodeStatistics().getReputation())
-        .reversed());
-
+    filtered.sort(Comparator.comparingInt(handler -> -handler.getNodeStatistics().getReputation()));
     return CollectionUtils.truncate(filtered, limit);
   }
 
   public List<NodeHandler> dumpActiveNodes() {
     List<NodeHandler> handlers = new ArrayList<>();
-    for (NodeHandler handler :
-        this.nodeHandlerMap.values()) {
+    for (NodeHandler handler : this.nodeHandlerMap.values()) {
       if (isNodeAlive(handler)) {
         handlers.add(handler);
       }
     }
-
     return handlers;
   }
 

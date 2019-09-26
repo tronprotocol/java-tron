@@ -1,3 +1,18 @@
+package org.tron.common.utils;
+
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.spongycastle.util.encoders.Hex;
+
 /*
  * Copyright (c) [2016] [ <ether.camp> ]
  * This file is part of the ethereumJ library.
@@ -15,20 +30,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-
-package org.tron.common.utils;
-
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.math.BigInteger;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
-
 @Slf4j(topic = "utils")
 public class ByteArray {
 
@@ -123,5 +124,14 @@ public class ByteArray {
 
   public static boolean isEmpty(byte[] input) {
     return input == null || input.length == 0;
+  }
+
+  public static boolean matrixContains(List<byte[]> source, byte[] obj) {
+    for (byte[] sobj : source) {
+      if (Arrays.equals(sobj, obj)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
