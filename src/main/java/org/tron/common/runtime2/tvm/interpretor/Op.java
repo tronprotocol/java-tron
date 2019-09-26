@@ -643,7 +643,7 @@ public enum Op {
       }
   ),
   EXTCODESIZE(0x3b, 1, 1, CodeSizeOpExecutor.getInstance()),
-  EXTCODECOPY(0x3c, 4, 1, CodeCopyOpExecutor.getInstance()),
+  EXTCODECOPY(0x3c, 4, 0, CodeCopyOpExecutor.getInstance()),
   EXTCODEHASH(0x3f, 1, 1,
       new OpExecutor() {
         @Override
@@ -860,11 +860,11 @@ public enum Op {
         }
       }
   ),
-  JUMPI(0x57, 1, 0,
+  JUMPI(0x57, 2, 0,
       new OpExecutor() {
         @Override
         public void exec(Op op, ContractExecutor executor) {
-          executor.spendEnergy(Tier.MidTier.asInt(), op.name());
+          executor.spendEnergy(Tier.HighTier.asInt(), op.name());
 
           DataWord pos = executor.stackPop();
           DataWord cond = executor.stackPop();
@@ -979,22 +979,22 @@ public enum Op {
   DUP15(0x8e, 15, 16, DupOpExecutor.getInstance()),
   DUP16(0x8f, 16, 17, DupOpExecutor.getInstance()),
 
-  SWAP1(0x80, 2, 2, SwapOpExecutor.getInstance()),
-  SWAP2(0x81, 3, 3, SwapOpExecutor.getInstance()),
-  SWAP3(0x82, 4, 4, SwapOpExecutor.getInstance()),
-  SWAP4(0x83, 5, 5, SwapOpExecutor.getInstance()),
-  SWAP5(0x84, 6, 6, SwapOpExecutor.getInstance()),
-  SWAP6(0x85, 7, 7, SwapOpExecutor.getInstance()),
-  SWAP7(0x86, 8, 8, SwapOpExecutor.getInstance()),
-  SWAP8(0x87, 9, 9, SwapOpExecutor.getInstance()),
-  SWAP9(0x88, 10, 10, SwapOpExecutor.getInstance()),
-  SWAP10(0x89, 11, 11, SwapOpExecutor.getInstance()),
-  SWAP11(0x8a, 12, 12, SwapOpExecutor.getInstance()),
-  SWAP12(0x8b, 13, 13, SwapOpExecutor.getInstance()),
-  SWAP13(0x8c, 14, 14, SwapOpExecutor.getInstance()),
-  SWAP14(0x8d, 15, 15, SwapOpExecutor.getInstance()),
-  SWAP15(0x8e, 16, 16, SwapOpExecutor.getInstance()),
-  SWAP16(0x8f, 17, 17, SwapOpExecutor.getInstance()),
+  SWAP1(0x90, 2, 2, SwapOpExecutor.getInstance()),
+  SWAP2(0x91, 3, 3, SwapOpExecutor.getInstance()),
+  SWAP3(0x92, 4, 4, SwapOpExecutor.getInstance()),
+  SWAP4(0x93, 5, 5, SwapOpExecutor.getInstance()),
+  SWAP5(0x94, 6, 6, SwapOpExecutor.getInstance()),
+  SWAP6(0x95, 7, 7, SwapOpExecutor.getInstance()),
+  SWAP7(0x96, 8, 8, SwapOpExecutor.getInstance()),
+  SWAP8(0x97, 9, 9, SwapOpExecutor.getInstance()),
+  SWAP9(0x98, 10, 10, SwapOpExecutor.getInstance()),
+  SWAP10(0x99, 11, 11, SwapOpExecutor.getInstance()),
+  SWAP11(0x9a, 12, 12, SwapOpExecutor.getInstance()),
+  SWAP12(0x9b, 13, 13, SwapOpExecutor.getInstance()),
+  SWAP13(0x9c, 14, 14, SwapOpExecutor.getInstance()),
+  SWAP14(0x9d, 15, 15, SwapOpExecutor.getInstance()),
+  SWAP15(0x9e, 16, 16, SwapOpExecutor.getInstance()),
+  SWAP16(0x9f, 17, 17, SwapOpExecutor.getInstance()),
 
   LOG0(0xa0, 2, 0, LogOpExecutor.getInstance()),
   LOG1(0xa1, 3, 0, LogOpExecutor.getInstance()),
@@ -1031,7 +1031,6 @@ public enum Op {
           executor.stackPush(tokenValue);
           executor.step();
 
-          executor.step();
         }
       }
   ),
@@ -1042,8 +1041,6 @@ public enum Op {
           executor.spendEnergy(Tier.BaseTier.asInt(), op.name());
           DataWord callTokenId = executor.getTokenId();
           executor.stackPush(callTokenId);
-          executor.step();
-
           executor.step();
         }
       }

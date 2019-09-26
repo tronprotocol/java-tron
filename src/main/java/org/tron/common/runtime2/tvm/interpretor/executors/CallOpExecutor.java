@@ -34,7 +34,9 @@ public class CallOpExecutor extends OpExecutor {
       value = DataWord.ZERO.clone();
     }
     if (op == Op.CALL || op == Op.CALLTOKEN) {
-      energyCost += Costs.NEW_ACCT_CALL;
+      if (executor.isDeadAccount(codeAddress) && !value.isZero()) {
+        energyCost += Costs.NEW_ACCT_CALL;
+      }
     }
     if (!value.isZero()) {
       energyCost += Costs.VT_CALL;
@@ -57,13 +59,16 @@ public class CallOpExecutor extends OpExecutor {
 
     energyCost += calcMemEnergy(oldMemSize, in.max(out), 0, op);
 
-    executor.spendEnergy(energyCost, op.name());
 
     executor.memoryExpand(outDataOffs, outDataSize);
     DataWord getEnergyLimitLeft = executor.getContractContext().getEnergyLimitLeft().clone();
     getEnergyLimitLeft.sub(new DataWord(energyCost));
 
     DataWord adjustedCallEnergy = executor.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
+
+    energyCost += adjustedCallEnergy.longValueSafe();
+    executor.spendEnergy(energyCost, op.name());
+
 
     if (executor.getContractContext().isStatic()
         && (op == Op.CALL || op == Op.CALLTOKEN) && !value.isZero()) {

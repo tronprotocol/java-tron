@@ -58,6 +58,8 @@ public class Interpreter2 {
       //step
       op.getOpExecutor().exec(op,env);
       env.setPreviouslyExecutedOp(op.val());
+      logger.info("exec:{},stack:{},pc:{},energy:{}",op.name(),env.getStack().size(),env.getPC(),env.getContractContext().getProgramResult().getEnergyUsed());
+
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
       if (!(e instanceof org.tron.common.runtime.vm.program.Program.TransferException)) {
