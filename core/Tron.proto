@@ -177,11 +177,11 @@ message Permission {
     Active = 2;
   }
   PermissionType type = 1;
-  int32 id = 2;     //Owner id=0, Witness id=1, Active id start by 2
+  int32 id = 2; //Owner id=0, Witness id=1, Active id start by 2
   string permission_name = 3;
   int64 threshold = 4;
   int32 parent_id = 5;
-  bytes operations = 6;   //1 bit 1 contract
+  bytes operations = 6; //1 bit 1 contract
   repeated Key keys = 7;
 }
 
@@ -273,6 +273,7 @@ message Transaction {
       UpdateEnergyLimitContract = 45;
       AccountPermissionUpdateContract = 46;
       ClearABIContract = 48;
+      ShieldedTransferContract = 51;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -314,6 +315,7 @@ message Transaction {
     int64 exchange_inject_another_amount = 19;
     int64 exchange_withdraw_another_amount = 20;
     int64 exchange_id = 21;
+    int64 shielded_transaction_fee = 22;
   }
 
   message raw {
@@ -367,6 +369,13 @@ message TransactionInfo {
   int64 exchange_inject_another_amount = 19;
   int64 exchange_withdraw_another_amount = 20;
   int64 exchange_id = 21;
+  int64 shielded_transaction_fee = 22;
+}
+
+message TransactionRet {
+  int64 blockNumber = 1;
+  int64 blockTimeStamp = 2;
+  repeated TransactionInfo transactioninfo = 3;
 }
 
 message Transactions {
