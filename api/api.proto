@@ -685,6 +685,16 @@ service Wallet {
   rpc CreateShieldNullifier (NfParameters) returns (BytesMessage) {
   };
   // end for shiededTransaction
+
+  rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc UpdateBrokerage (UpdateBrokerageContract) returns (TransactionExtention) {
+
+  };
 };
 
 service WalletSolidity {
@@ -836,6 +846,11 @@ service WalletSolidity {
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
+  rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
+  };
 
 };
 
