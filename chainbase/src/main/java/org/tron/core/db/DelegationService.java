@@ -1,4 +1,4 @@
-package org.tron.core.services;
+package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -9,14 +9,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
-import org.tron.common.storage.Deposit;
+import org.tron.common.util.Utils;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.db.DelegationStore;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.Vote;
@@ -29,7 +29,13 @@ public class DelegationService {
   private WitnessStore witnessStore;
 
   @Setter
+  private DelegationStore delegationStore;
+
+  @Setter
   private DynamicPropertiesStore dynamicPropertiesStore;
+
+  @Setter
+  private AccountStore accountStore;
 
   public void payStandbyWitness() {
     List<ByteString> witnessAddressList = new ArrayList<>();
@@ -64,27 +70,19 @@ public class DelegationService {
 
   private void payReward(byte[] witnessAddress, long value) {
     long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
-    int brokerage = manager.getDelegationStore().getBrokerage(cycle, witnessAddress);
+    int brokerage = delegationStore.getBrokerage(cycle, witnessAddress);
     double brokerageRate = (double) brokerage / 100;
     long brokerageAmount = (long) (brokerageRate * value);
     value -= brokerageAmount;
-    manager.getDelegationStore().addReward(cycle, witnessAddress, value);
+    delegationStore.addReward(cycle, witnessAddress, value);
     adjustAllowance(witnessAddress, brokerageAmount);
   }
 
-  public void withdrawReward(byte[] address, Deposit deposit) {
-    if (!manager.getDynamicPropertiesStore().allowChangeDelegation()) {
+  public void withdrawReward(byte[] address) {
+    if (!dynamicPropertiesStore.allowChangeDelegation()) {
       return;
     }
-    AccountStore accountStore = manager.getAccountStore();
-    DelegationStore delegationStore = manager.getDelegationStore();
-    DynamicPropertiesStore dynamicPropertiesStore = manager.getDynamicPropertiesStore();
-    AccountCapsule accountCapsule;
-    if (deposit == null) {
-      accountCapsule = accountStore.get(address);
-    } else {
-      accountCapsule = deposit.getAccount(address);
-    }
+    AccountCapsule accountCapsule = accountStore.get(address);
     long beginCycle = delegationStore.getBeginCycle(address);
     long endCycle = delegationStore.getEndCycle(address);
     long currentCycle = dynamicPropertiesStore.getCurrentCycleNumber();
@@ -112,7 +110,7 @@ public class DelegationService {
     //
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
-      manager.getDelegationStore().setBeginCycle(address, endCycle + 1);
+      delegationStore.setBeginCycle(address, endCycle + 1);
       return;
     }
     if (beginCycle < endCycle) {
@@ -130,12 +128,10 @@ public class DelegationService {
   }
 
   public long queryReward(byte[] address) {
-    if (!manager.getDynamicPropertiesStore().allowChangeDelegation()) {
+    if (!dynamicPropertiesStore.allowChangeDelegation()) {
       return 0;
     }
-    AccountStore accountStore = manager.getAccountStore();
-    DelegationStore delegationStore = manager.getDelegationStore();
-    DynamicPropertiesStore dynamicPropertiesStore = manager.getDynamicPropertiesStore();
+
     AccountCapsule accountCapsule = accountStore.get(address);
     long beginCycle = delegationStore.getBeginCycle(address);
     long endCycle = delegationStore.getEndCycle(address);
@@ -172,8 +168,8 @@ public class DelegationService {
     long reward = 0;
     for (Vote vote : accountCapsule.getVotesList()) {
       byte[] srAddress = vote.getVoteAddress().toByteArray();
-      long totalReward = manager.getDelegationStore().getReward(cycle, srAddress);
-      long totalVote = manager.getDelegationStore().getWitnessVote(cycle, srAddress);
+      long totalReward = delegationStore.getReward(cycle, srAddress);
+      long totalVote = delegationStore.getWitnessVote(cycle, srAddress);
       if (totalVote == DelegationStore.REMARK || totalVote == 0) {
         continue;
       }
@@ -188,7 +184,7 @@ public class DelegationService {
   }
 
   public WitnessCapsule getWitnesseByAddress(ByteString address) {
-    return this.manager.getWitnessStore().get(address.toByteArray());
+    return witnessStore.get(address.toByteArray());
   }
 
   private void adjustAllowance(byte[] address, long amount) {
@@ -196,10 +192,26 @@ public class DelegationService {
       if (amount <= 0) {
         return;
       }
-      manager.adjustAllowance(address, amount);
+      adjustAllowance(accountStore, address, amount);
     } catch (BalanceInsufficientException e) {
       logger.error("withdrawReward error: {},{}", Hex.toHexString(address), address, e);
     }
+  }
+
+  public void adjustAllowance(AccountStore accountStore, byte[] accountAddress, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = accountStore.getUnchecked(accountAddress);
+    long allowance = account.getAllowance();
+    if (amount == 0) {
+      return;
+    }
+
+    if (amount < 0 && allowance < -amount) {
+      throw new BalanceInsufficientException(
+          StringUtil.createReadableString(accountAddress) + " insufficient balance");
+    }
+    account.setAllowance(allowance + amount);
+    accountStore.put(account.createDbKey(), account);
   }
 
   private void sortWitness(List<ByteString> list) {

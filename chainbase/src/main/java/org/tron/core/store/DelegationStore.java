@@ -1,4 +1,4 @@
-package org.tron.core.db;
+package org.tron.core.store;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.db.TronStoreWithRevoking;
 
 @Component
 public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {

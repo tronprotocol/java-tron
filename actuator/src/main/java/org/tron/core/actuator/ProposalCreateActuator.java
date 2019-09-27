@@ -21,6 +21,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.WitnessStore;
+import org.tron.core.utils.ProposalUtil;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 
@@ -116,7 +117,7 @@ public class ProposalCreateActuator extends AbstractActuator {
   }
 
   private void validateValue(Map.Entry<Long, Long> entry) throws ContractValidateException {
-    ProposalService.validator(dbManager, entry.getKey(), entry.getValue());
+    ProposalUtil.validator(dynamicStore, forkUtils, entry.getKey(), entry.getValue());
   }
 
   @Override

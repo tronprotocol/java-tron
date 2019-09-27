@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import org.tron.common.utils.ForkUtils;
 import org.tron.common.zksnark.MerkleContainer;
+import org.tron.core.db.DelegationService;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -43,6 +44,7 @@ public abstract class AbstractActuator implements Actuator {
   protected NullifierStore nullifierStore;
   protected ZKProofStore proofStore;
   protected MerkleContainer merkleContainer;
+  protected DelegationService delegationService;
 
   AbstractActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicStore) {
     this.contract = contract;
@@ -63,13 +65,14 @@ public abstract class AbstractActuator implements Actuator {
   }
 
   AbstractActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicStore, DelegatedResourceStore delegatedResourceStore,
-      DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore, VotesStore votesStore) {
+      DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore, VotesStore votesStore, DelegationService delegationService) {
     this.contract = contract;
     this.accountStore = accountStore;
     this.dynamicStore = dynamicStore;
     this.delegatedResourceStore = delegatedResourceStore;
     this.delegatedResourceAccountIndexStore = delegatedResourceAccountIndexStore;
     this.votesStore = votesStore;
+    this.delegationService = delegationService;
   }
 
   AbstractActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore,  VotesStore votesStore, DynamicPropertiesStore dynamicPropertiesStore) {

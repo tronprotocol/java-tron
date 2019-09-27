@@ -747,24 +747,6 @@ public class Manager {
     accountStore.put(account.getAddress().toByteArray(), account);
   }
 
-
-  public void adjustAllowance(byte[] accountAddress, long amount)
-      throws BalanceInsufficientException {
-    AccountCapsule account = getAccountStore().getUnchecked(accountAddress);
-    long allowance = account.getAllowance();
-    if (amount == 0) {
-      return;
-    }
-
-    if (amount < 0 && allowance < -amount) {
-      throw new BalanceInsufficientException(
-          StringUtil.createReadableString(accountAddress) + " insufficient balance");
-    }
-    account.setAllowance(allowance + amount);
-    this.getAccountStore().put(account.createDbKey(), account);
-  }
-
-
   public void adjustTotalShieldedPoolValue(long valueBalance) throws BalanceInsufficientException {
     long totalShieldedPoolValue = Math
         .subtractExact(getDynamicPropertiesStore().getTotalShieldedPoolValue(), valueBalance);
