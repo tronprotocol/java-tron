@@ -10,14 +10,14 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 
 @Slf4j(topic = "actuator")
 public class UpdateAssetActuator extends AbstractActuator {
@@ -45,7 +45,8 @@ public class UpdateAssetActuator extends AbstractActuator {
 
       AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
 
-      assetIssueCapsuleV2 = assetIssueV2Store.get(accountCapsule.getAssetIssuedID().toByteArray());
+      AssetIssueStore assetIssueStoreV2 = assetIssueV2Store;
+      assetIssueCapsuleV2 = assetIssueStoreV2.get(accountCapsule.getAssetIssuedID().toByteArray());
 
       assetIssueCapsuleV2.setFreeAssetNetLimit(newLimit);
       assetIssueCapsuleV2.setPublicFreeAssetNetLimit(newPublicLimit);
@@ -61,7 +62,7 @@ public class UpdateAssetActuator extends AbstractActuator {
 
         assetIssueStore
             .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-        assetIssueV2Store
+       assetIssueStoreV2
             .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
       } else {
         assetIssueV2Store
