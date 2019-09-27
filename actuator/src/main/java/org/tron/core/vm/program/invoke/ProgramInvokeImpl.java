@@ -15,17 +15,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.runtime.vm.program.invoke;
+package org.tron.core.vm.program.invoke;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
-import org.tron.common.storage.Deposit;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.exception.StoreException;
+import org.tron.core.vm.repository.Repository;
 
 @Slf4j
 public class ProgramInvokeImpl implements ProgramInvoke {
@@ -51,7 +48,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private final DataWord timestamp;
   private final DataWord number;
 
-  private Deposit deposit;
+  private Repository deposit;
   private boolean byTransaction = true;
   private boolean byTestingSuite = false;
   private int callDeep = 0;
@@ -61,7 +58,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
       DataWord callValue, DataWord tokenValue, DataWord tokenId, byte[] msgData,
       DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
       DataWord difficulty,
-      Deposit deposit, int callDeep, boolean isConstantCall, boolean byTestingSuite,
+      Repository deposit, int callDeep, boolean isConstantCall, boolean byTestingSuite,
       long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
     this.address = address;
     this.origin = origin;
@@ -93,7 +90,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
       long callValue, long tokenValue, long tokenId, byte[] msgData,
-      byte[] lastHash, byte[] coinbase, long timestamp, long number, Deposit deposit,
+      byte[] lastHash, byte[] coinbase, long timestamp, long number, Repository deposit,
       long vmStartInUs, long vmShouldEndInUs, boolean byTestingSuite, long energyLimit) {
     this(address, origin, caller, balance, callValue, tokenValue, tokenId, msgData, lastHash,
         coinbase,
@@ -104,7 +101,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
       long callValue, long tokenValue, long tokenId, byte[] msgData, byte[] lastHash,
       byte[] coinbase, long timestamp,
-      long number, Deposit deposit, long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
+      long number, Repository deposit, long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
 
     // Transaction env
     this.address = new DataWord(address);
@@ -255,7 +252,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     return vmShouldEndInUs;
   }
 
-  public Deposit getDeposit() {
+  public Repository getDeposit() {
     return deposit;
   }
 
@@ -376,13 +373,5 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     isConstantCall = true;
   }
 
-  @Override
-  public BlockCapsule getBlockByNum(int index) {
-    try {
-      return deposit.getDbManager().getBlockByNum(index);
-    } catch (StoreException e) {
-      throw new IllegalOperationException("cannot find block num");
-    }
-  }
 
 }

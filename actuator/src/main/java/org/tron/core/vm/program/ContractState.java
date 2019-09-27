@@ -17,21 +17,22 @@
  */
 package org.tron.core.vm.program;
 
+
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.VotesCapsule;
-import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.listener.ProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
+import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
-import org.tron.protos.Protocol;
+import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol.AccountType;
 
 public class ContractState implements Repository, ProgramListenerAware {
@@ -46,14 +47,33 @@ public class ContractState implements Repository, ProgramListenerAware {
     this.repository = programInvoke.getDeposit();
   }
 
-
   @Override
   public void setProgramListener(ProgramListener listener) {
     this.programListener = listener;
   }
 
   @Override
-  public AccountCapsule createAccount(byte[] addr, Protocol.AccountType type) {
+  public AssetIssueCapsule getAssetIssue(byte[] tokenId) {
+    return repository.getAssetIssue(tokenId);
+  }
+
+  @Override
+  public AssetIssueV2Store getAssetIssueV2Store() {
+    return repository.getAssetIssueV2Store();
+  }
+
+  @Override
+  public AssetIssueStore getAssetIssueStore() {
+    return repository.getAssetIssueStore();
+  }
+
+  @Override
+  public DynamicPropertiesStore getDynamicPropertiesStore() {
+    return repository.getDynamicPropertiesStore();
+  }
+
+  @Override
+  public AccountCapsule createAccount(byte[] addr, AccountType type) {
     return repository.createAccount(addr, type);
   }
 
@@ -69,7 +89,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
 
-  @Override
   public BytesCapsule getDynamic(byte[] bytesKey) {
     return repository.getDynamic(bytesKey);
   }
@@ -136,6 +155,15 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.addBalance(addr, value);
   }
 
+  @Override
+  public Repository newRepositoryChild() {
+    return repository.newRepositoryChild();
+  }
+
+  @Override
+  public void setParent(Repository repository) {
+    this.repository.setParent(repository);
+  }
 
   @Override
   public void commit() {
@@ -143,16 +171,36 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putAccount(Key key, Value value) {
+    repository.putAccount(key, value);
+  }
+
+  @Override
+  public void putCode(Key key, Value value) {
+    repository.putCode(key, value);
+  }
+
+
+  @Override
+  public void putContract(Key key, Value value) {
+    repository.putContract(key, value);
+  }
+
+
+  public void putStorage(Key key, Storage cache) {
+    repository.putStorage(key, cache);
+  }
+
+
+  @Override
   public Storage getStorage(byte[] address) {
     return repository.getStorage(address);
   }
-
 
   @Override
   public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
     this.repository.putAccountValue(address, accountCapsule);
   }
-
 
   @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
@@ -165,14 +213,28 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public AssetIssueCapsule getAssetIssue(byte[] tokenId) {
-    return repository.getAssetIssue(tokenId);
+  public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
+    return repository.getAccountLeftEnergyFromFreeze(accountCapsule);
   }
 
+  @Override
+  public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
+    return repository.calculateGlobalEnergyLimit(accountCapsule);
+  }
 
   @Override
   public byte[] getBlackHoleAddress() {
     return repository.getBlackHoleAddress();
+  }
+
+  @Override
+  public BlockCapsule getBlockByNum(long num) {
+    return repository.getBlockByNum(num);
+  }
+
+  @Override
+  public AccountCapsule createNormalAccount(byte[] address) {
+    return repository.createNormalAccount(address);
   }
 
 }

@@ -15,11 +15,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.runtime.vm.program.invoke;
+package org.tron.core.vm.program.invoke;
+
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.storage.Deposit;
-import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.vm.repository.Repository;
 
 /**
@@ -74,5 +73,4 @@ public interface ProgramInvoke {
 
   void setConstantCall();
 
-  BlockCapsule getBlockByNum(int index);
 }

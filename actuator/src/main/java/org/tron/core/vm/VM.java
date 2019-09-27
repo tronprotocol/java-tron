@@ -1,21 +1,21 @@
-package org.tron.common.runtime.vm;
+package org.tron.core.vm;
 
-import static org.tron.common.crypto.Hash.sha3;
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-import static org.tron.common.runtime.vm.OpCode.CALL;
-import static org.tron.common.runtime.vm.OpCode.CALLTOKEN;
-import static org.tron.common.runtime.vm.OpCode.CALLTOKENID;
-import static org.tron.common.runtime.vm.OpCode.CALLTOKENVALUE;
-import static org.tron.common.runtime.vm.OpCode.CREATE2;
-import static org.tron.common.runtime.vm.OpCode.EXTCODEHASH;
-import static org.tron.common.runtime.vm.OpCode.ISCONTRACT;
-import static org.tron.common.runtime.vm.OpCode.PUSH1;
-import static org.tron.common.runtime.vm.OpCode.REVERT;
-import static org.tron.common.runtime.vm.OpCode.SAR;
-import static org.tron.common.runtime.vm.OpCode.SHL;
-import static org.tron.common.runtime.vm.OpCode.SHR;
-import static org.tron.common.runtime.vm.OpCode.TOKENBALANCE;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.common.utils.Hash.sha3;
+import static org.tron.core.vm.OpCode.CALL;
+import static org.tron.core.vm.OpCode.CALLTOKEN;
+import static org.tron.core.vm.OpCode.CALLTOKENID;
+import static org.tron.core.vm.OpCode.CALLTOKENVALUE;
+import static org.tron.core.vm.OpCode.CREATE2;
+import static org.tron.core.vm.OpCode.EXTCODEHASH;
+import static org.tron.core.vm.OpCode.ISCONTRACT;
+import static org.tron.core.vm.OpCode.PUSH1;
+import static org.tron.core.vm.OpCode.REVERT;
+import static org.tron.core.vm.OpCode.SAR;
+import static org.tron.core.vm.OpCode.SHL;
+import static org.tron.core.vm.OpCode.SHR;
+import static org.tron.core.vm.OpCode.TOKENBALANCE;
+import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -23,13 +23,15 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
-import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
-import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
-import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
-import org.tron.common.runtime.vm.program.Program.TransferException;
-import org.tron.common.runtime.vm.program.Stack;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.LogInfo;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Program.JVMStackOverFlowException;
+import org.tron.core.vm.program.Program.OutOfEnergyException;
+import org.tron.core.vm.program.Program.OutOfTimeException;
+import org.tron.core.vm.program.Program.TransferException;
+import org.tron.core.vm.program.Stack;
 
 @Slf4j(topic = "VM")
 public class VM {
@@ -1427,6 +1429,7 @@ public class VM {
         default:
           break;
       }
+
       program.setPreviouslyExecutedOp(op.val());
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
