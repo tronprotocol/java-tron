@@ -15,6 +15,7 @@
 
 package org.tron.core.capsule;
 
+import static org.tron.common.utils.WalletUtil.checkPermissionOprations;
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 import static org.tron.protos.Contract.AssetIssueContract;
 import static org.tron.protos.Contract.VoteAssetContract;
@@ -56,8 +57,11 @@ import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
+import org.tron.common.util.Utils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountStore;
@@ -69,6 +73,8 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
@@ -676,9 +682,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public static boolean validateSignature(Transaction transaction,
-      byte[] hash, Manager manager)
+      byte[] hash, AccountStore accountStore, DynamicPropertiesStore dynamicPropertiesStore)
       throws PermissionException, SignatureException, SignatureFormatException {
-    AccountStore accountStore = manager.getAccountStore();
     Transaction.Contract contract = transaction.getRawData().getContractList().get(0);
     int permissionId = contract.getPermissionId();
     byte[] owner = getOwner(contract);
@@ -690,7 +695,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
       if (permissionId == 2) {
         permission = AccountCapsule
-            .createDefaultActivePermission(ByteString.copyFrom(owner), manager);
+            .createDefaultActivePermission(ByteString.copyFrom(owner), dynamicPropertiesStore);
       }
     } else {
       permission = account.getPermissionById(permissionId);
@@ -703,7 +708,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!Wallet.checkPermissionOprations(permission, contract)) {
+      if (!checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
@@ -800,7 +805,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!Wallet.checkPermissionOprations(permission, contract)) {
+      if (!checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
@@ -811,14 +816,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),
           approveList);
       if (approveList.contains(ByteString.copyFrom(address))) {
-        throw new PermissionException(Wallet.encode58Check(address) + " had signed!");
+        throw new PermissionException(WalletUtil.encode58Check(address) + " had signed!");
       }
     }
 
     long weight = getWeight(permission, address);
     if (weight == 0) {
       throw new PermissionException(
-          ByteArray.toHexString(privateKey) + "'s address is " + Wallet
+          ByteArray.toHexString(privateKey) + "'s address is " + WalletUtil
               .encode58Check(address) + " but it is not contained of permission.");
     }
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
@@ -829,7 +834,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * validate signature
    */
-  public boolean validatePubSignature(Manager manager)
+  public boolean validatePubSignature(DynamicPropertiesStore dynamicPropertiesStore)
       throws ValidateSignatureException {
     if (isVerified) {
       return true;
@@ -838,7 +843,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         || this.transaction.getRawData().getContractCount() <= 0) {
       throw new ValidateSignatureException("miss sig or contract");
     }
-    if (this.transaction.getSignatureCount() > manager.getDynamicPropertiesStore()
+    if (this.transaction.getSignatureCount() > dynamicPropertiesStore
         .getTotalSignNum()) {
       throw new ValidateSignatureException("too many signatures");
     }
@@ -846,7 +851,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     byte[] hash = this.getRawHash().getBytes();
 
     try {
-      if (!validateSignature(this.transaction, hash, manager)) {
+      if (!validateSignature(this.transaction, hash, dynamicPropertiesStore)) {
         isVerified = false;
         throw new ValidateSignatureException("sig error");
       }

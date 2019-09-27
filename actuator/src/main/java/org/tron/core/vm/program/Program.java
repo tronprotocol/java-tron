@@ -47,6 +47,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
+import org.tron.common.runtime.InternalTransaction;
+import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
@@ -76,6 +78,16 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
+import org.tron.core.vm.program.Memory;
+import org.tron.core.vm.program.ProgramPrecompile;
+import org.tron.core.vm.program.Stack;
+import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
+import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.core.vm.program.listener.CompositeProgramListener;
+import org.tron.core.vm.program.listener.ProgramListenerAware;
+import org.tron.core.vm.program.listener.ProgramStorageChangeListener;
+import org.tron.core.vm.trace.ProgramTrace;
+import org.tron.core.vm.trace.ProgramTraceListener;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.SmartContract;
@@ -113,7 +125,7 @@ public class Program {
 
   private Stack stack;
   private Memory memory;
-  private ContractState contractState;
+  private org.tron.common.runtime.vm.program.ContractState contractState;
   private byte[] returnDataBuffer;
 
   private ProgramResult result = new ProgramResult();

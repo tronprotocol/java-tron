@@ -15,15 +15,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.runtime.vm.program;
+package org.tron.core.vm.program;
 
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
-import org.tron.common.runtime.vm.program.listener.ProgramListener;
-import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.Key;
-import org.tron.common.storage.Value;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -33,31 +28,24 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.db.Manager;
+import org.tron.core.vm.program.listener.ProgramListener;
+import org.tron.core.vm.program.listener.ProgramListenerAware;
+import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
-public class ContractState implements Deposit, ProgramListenerAware {
+public class ContractState implements Repository, ProgramListenerAware {
 
-  private Deposit deposit;
+  private Repository repository;
   // contract address
   private final DataWord address;
   private ProgramListener programListener;
 
   ContractState(ProgramInvoke programInvoke) {
     this.address = programInvoke.getContractAddress();
-    this.deposit = programInvoke.getDeposit();
+    this.repository = programInvoke.getDeposit();
   }
 
-  @Override
-  public Manager getDbManager() {
-    return deposit.getDbManager();
-  }
-
-  @Override
-  public AccountCapsule createNormalAccount(byte[] address) {
-    return deposit.createNormalAccount(address);
-  }
 
   @Override
   public void setProgramListener(ProgramListener listener) {
@@ -66,73 +54,59 @@ public class ContractState implements Deposit, ProgramListenerAware {
 
   @Override
   public AccountCapsule createAccount(byte[] addr, Protocol.AccountType type) {
-    return deposit.createAccount(addr, type);
+    return repository.createAccount(addr, type);
   }
 
   @Override
   public AccountCapsule createAccount(byte[] address, String accountName, AccountType type) {
-    return deposit.createAccount(address, accountName, type);
+    return repository.createAccount(address, accountName, type);
   }
 
 
   @Override
   public AccountCapsule getAccount(byte[] addr) {
-    return deposit.getAccount(addr);
+    return repository.getAccount(addr);
   }
 
-  @Override
-  public WitnessCapsule getWitness(byte[] address) {
-    return deposit.getWitness(address);
-  }
-
-  @Override
-  public VotesCapsule getVotesCapsule(byte[] address) {
-    return deposit.getVotesCapsule(address);
-  }
-
-  @Override
-  public ProposalCapsule getProposalCapsule(byte[] id) {
-    return deposit.getProposalCapsule(id);
-  }
 
   @Override
   public BytesCapsule getDynamic(byte[] bytesKey) {
-    return deposit.getDynamic(bytesKey);
+    return repository.getDynamic(bytesKey);
   }
 
   @Override
   public void deleteContract(byte[] address) {
-    deposit.deleteContract(address);
+    repository.deleteContract(address);
   }
 
   @Override
   public void createContract(byte[] codeHash, ContractCapsule contractCapsule) {
-    deposit.createContract(codeHash, contractCapsule);
+    repository.createContract(codeHash, contractCapsule);
   }
 
   @Override
   public ContractCapsule getContract(byte[] codeHash) {
-    return deposit.getContract(codeHash);
+    return repository.getContract(codeHash);
   }
 
   @Override
   public void updateContract(byte[] address, ContractCapsule contractCapsule) {
-    deposit.updateContract(address, contractCapsule);
+    repository.updateContract(address, contractCapsule);
   }
 
   @Override
   public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
-    deposit.updateAccount(address, accountCapsule);
+    repository.updateAccount(address, accountCapsule);
   }
 
   @Override
   public void saveCode(byte[] address, byte[] code) {
-    deposit.saveCode(address, code);
+    repository.saveCode(address, code);
   }
 
   @Override
   public byte[] getCode(byte[] address) {
-    return deposit.getCode(address);
+    return repository.getCode(address);
   }
 
   @Override
@@ -140,7 +114,7 @@ public class ContractState implements Deposit, ProgramListenerAware {
     if (canListenTrace(addr)) {
       programListener.onStoragePut(key, value);
     }
-    deposit.putStorageValue(addr, key, value);
+    repository.putStorageValue(addr, key, value);
   }
 
   private boolean canListenTrace(byte[] address) {
@@ -149,157 +123,56 @@ public class ContractState implements Deposit, ProgramListenerAware {
 
   @Override
   public DataWord getStorageValue(byte[] addr, DataWord key) {
-    return deposit.getStorageValue(addr, key);
+    return repository.getStorageValue(addr, key);
   }
 
   @Override
   public long getBalance(byte[] addr) {
-    return deposit.getBalance(addr);
+    return repository.getBalance(addr);
   }
 
   @Override
   public long addBalance(byte[] addr, long value) {
-    return deposit.addBalance(addr, value);
+    return repository.addBalance(addr, value);
   }
 
-  @Override
-  public Deposit newDepositChild() {
-    return deposit.newDepositChild();
-  }
 
   @Override
   public void commit() {
-    deposit.commit();
+    repository.commit();
   }
 
   @Override
   public Storage getStorage(byte[] address) {
-    return deposit.getStorage(address);
+    return repository.getStorage(address);
   }
 
-  @Override
-  public void putAccount(Key key, Value value) {
-    deposit.putAccount(key, value);
-  }
-
-  @Override
-  public void putTransaction(Key key, Value value) {
-    deposit.putTransaction(key, value);
-  }
-
-  @Override
-  public void putBlock(Key key, Value value) {
-    deposit.putBlock(key, value);
-  }
-
-  @Override
-  public void putWitness(Key key, Value value) {
-    deposit.putWitness(key, value);
-  }
-
-  @Override
-  public void putCode(Key key, Value value) {
-    deposit.putCode(key, value);
-  }
-
-  @Override
-  public void putContract(Key key, Value value) {
-    deposit.putContract(key, value);
-  }
-
-  @Override
-  public void putStorage(Key key, Storage cache) {
-    deposit.putStorage(key, cache);
-  }
-
-  @Override
-  public void putVotes(Key key, Value value) {
-    deposit.putVotes(key, value);
-  }
-
-  @Override
-  public void putProposal(Key key, Value value) {
-    deposit.putProposal(key, value);
-  }
-
-  @Override
-  public void putDynamicProperties(Key key, Value value) {
-    deposit.putDynamicProperties(key, value);
-  }
-
-  @Override
-  public void setParent(Deposit deposit) {
-    this.deposit.setParent(deposit);
-  }
-
-  @Override
-  public TransactionCapsule getTransaction(byte[] trxHash) {
-    return this.deposit.getTransaction(trxHash);
-  }
 
   @Override
   public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
-    this.deposit.putAccountValue(address, accountCapsule);
+    this.repository.putAccountValue(address, accountCapsule);
   }
 
-  @Override
-  public void putVoteValue(byte[] address, VotesCapsule votesCapsule) {
-    this.deposit.putVoteValue(address, votesCapsule);
-  }
-
-  @Override
-  public void putProposalValue(byte[] address, ProposalCapsule proposalCapsule) {
-    deposit.putProposalValue(address, proposalCapsule);
-  }
-
-  @Override
-  public void putDynamicPropertiesWithLatestProposalNum(long num) {
-    deposit.putDynamicPropertiesWithLatestProposalNum(num);
-  }
-
-  @Override
-  public long getLatestProposalNum() {
-    return deposit.getLatestProposalNum();
-  }
-
-  @Override
-  public long getWitnessAllowanceFrozenTime() {
-    return deposit.getWitnessAllowanceFrozenTime();
-  }
-
-  @Override
-  public long getMaintenanceTimeInterval() {
-    return deposit.getMaintenanceTimeInterval();
-  }
-
-  @Override
-  public long getNextMaintenanceTime() {
-    return deposit.getNextMaintenanceTime();
-  }
 
   @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
-    return deposit.addTokenBalance(address, tokenId, value);
+    return repository.addTokenBalance(address, tokenId, value);
   }
 
   @Override
   public long getTokenBalance(byte[] address, byte[] tokenId) {
-    return deposit.getTokenBalance(address, tokenId);
+    return repository.getTokenBalance(address, tokenId);
   }
 
   @Override
   public AssetIssueCapsule getAssetIssue(byte[] tokenId) {
-    return deposit.getAssetIssue(tokenId);
+    return repository.getAssetIssue(tokenId);
   }
 
-  @Override
-  public BlockCapsule getBlock(byte[] blockHash) {
-    return this.deposit.getBlock(blockHash);
-  }
 
   @Override
   public byte[] getBlackHoleAddress() {
-    return deposit.getBlackHoleAddress();
+    return repository.getBlackHoleAddress();
   }
 
 }

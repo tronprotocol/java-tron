@@ -61,6 +61,7 @@ import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
+import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -75,6 +76,7 @@ import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
+import org.tron.core.consensus.WitnessController;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
@@ -107,10 +109,28 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.services.DelegationService;
-import org.tron.core.services.WitnessService;
+import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountIndexStore;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.CodeStore;
+import org.tron.core.store.ContractStore;
+import org.tron.core.store.DelegatedResourceAccountIndexStore;
+import org.tron.core.store.DelegatedResourceStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.ExchangeStore;
+import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.core.store.NullifierStore;
+import org.tron.core.store.ProposalStore;
+import org.tron.core.store.StorageRowStore;
+import org.tron.core.store.TreeBlockIndexStore;
+import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessScheduleStore;
+import org.tron.core.store.WitnessStore;
+import org.tron.core.store.ZKProofStore;
 import org.tron.core.witness.ProposalController;
-import org.tron.core.witness.WitnessController;
-import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -212,10 +232,6 @@ public class Manager {
   @Getter
   @Setter
   private String netType;
-
-  @Getter
-  @Setter
-  private WitnessService witnessService;
 
   @Getter
   @Setter
@@ -337,7 +353,7 @@ public class Manager {
     if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
       ExchangeCapsule exchangeCapsuleV2 = new ExchangeCapsule(exchangeCapsule.getData());
-      exchangeCapsuleV2.resetTokenWithID(this);
+      exchangeCapsuleV2.resetTokenWithID(this.getAssetIssueStore(), this.dynamicPropertiesStore);
       getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
     } else {
       getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
@@ -479,7 +495,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
-    Message.setManager(this);
+    Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
     delegationService.setManager(this);
     accountStateCallBack.setManager(this);
     trieService.setManager(this);
@@ -487,7 +503,7 @@ public class Manager {
     revokingStore.check();
     this.setWitnessController(WitnessController.createInstance(this));
     this.setProposalController(ProposalController.createInstance(this));
-    this.setMerkleContainer(merkleContainer.createInstance(this));
+    this.setMerkleContainer(merkleContainer.createInstance(this.getMerkleTreeIndexStore(), ));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
@@ -722,11 +738,13 @@ public class Manager {
   public void adjustAssetBalanceV2(AccountCapsule account, String AssetID, long amount)
       throws BalanceInsufficientException {
     if (amount < 0) {
-      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, this)) {
+      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount,
+          this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
         throw new BalanceInsufficientException("reduceAssetAmount failed !");
       }
     } else if (amount > 0 &&
-        !account.addAssetAmountV2(AssetID.getBytes(), amount, this)) {
+        !account.addAssetAmountV2(AssetID.getBytes(), amount,
+            this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
       throw new BalanceInsufficientException("addAssetAmount failed !");
     }
     accountStore.put(account.getAddress().toByteArray(), account);
