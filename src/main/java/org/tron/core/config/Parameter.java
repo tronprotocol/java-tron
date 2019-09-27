@@ -23,7 +23,7 @@ public class Parameter {
     public static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
     public static final int MAX_VOTE_NUMBER = 30;
     public static final int MAX_FROZEN_NUMBER = 1;
-    public static final int BLOCK_VERSION = 9;
+    public static final int BLOCK_VERSION = 15;
   }
 
   public class NodeConstant {
@@ -85,7 +85,7 @@ public class Parameter {
     VERSION_3_5(7),
     VERSION_3_6(8),
     VERSION_3_6_5(9),
-    VERSION_4_0(10);
+    VERSION_4_0(15);
 
     @Getter
     private int value;
