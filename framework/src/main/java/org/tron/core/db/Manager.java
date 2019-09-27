@@ -132,9 +132,6 @@ import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
 import org.tron.core.witness.ProposalController;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.TransactionInfo;
 
 
 @Slf4j(topic = "DB")

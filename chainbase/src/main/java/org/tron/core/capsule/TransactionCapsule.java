@@ -16,12 +16,8 @@
 package org.tron.core.capsule;
 
 import static org.tron.common.utils.WalletUtil.checkPermissionOprations;
+import static org.tron.common.utils.WalletUtil.encode58Check;
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
-import static org.tron.protos.Contract.AssetIssueContract;
-import static org.tron.protos.Contract.VoteAssetContract;
-import static org.tron.protos.Contract.VoteWitnessContract;
-import static org.tron.protos.Contract.WitnessCreateContract;
-import static org.tron.protos.Contract.WitnessUpdateContract;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -47,25 +43,13 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
-import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
-import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
-import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
-import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
-import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
-import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
-import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
-import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.util.Utils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.Wallet;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.AccountStore;
-import org.tron.core.db.Manager;
+import org.tron.core.db.TransactionContext;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractValidateException;
@@ -75,48 +59,54 @@ import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.ClearABIContract;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Contract.ExchangeCreateContract;
-import org.tron.protos.Contract.ExchangeInjectContract;
-import org.tron.protos.Contract.ExchangeTransactionContract;
-import org.tron.protos.Contract.ExchangeWithdrawContract;
-import org.tron.protos.Contract.FreezeBalanceContract;
-import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.ProposalApproveContract;
-import org.tron.protos.Contract.ProposalCreateContract;
-import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Contract.SetAccountIdContract;
-import org.tron.protos.Contract.ShieldedTransferContract;
-import org.tron.protos.Contract.SpendDescription;
-import org.tron.protos.Contract.TransferAssetContract;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Contract.UnfreezeAssetContract;
-import org.tron.protos.Contract.UnfreezeBalanceContract;
-import org.tron.protos.Contract.UpdateAssetContract;
-import org.tron.protos.Contract.UpdateBrokerageContract;
-import org.tron.protos.Contract.UpdateEnergyLimitContract;
-import org.tron.protos.Contract.UpdateSettingContract;
-import org.tron.protos.Contract.WithdrawBalanceContract;
+import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.Transaction.raw;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
+import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
+import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.protos.contract.ShieldContract.SpendDescription;
+import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
+import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
+import org.tron.protos.contract.VoteAssetContractOuterClass.VoteAssetContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
 @Slf4j(topic = "capsule")
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private static final ExecutorService executorService = Executors
-      .newFixedThreadPool(Args.getInstance().getValidContractProtoThreadNum());
+      .newFixedThreadPool(DBConfig.getValidContractProtoThreadNum());
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
@@ -261,11 +251,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
-            ByteArray.toHexString(sig.toByteArray()) + " is signed by " + Wallet
-                .encode58Check(address) + " but it is not contained of permission.");
+            ByteArray.toHexString(sig.toByteArray()) + " is signed by " + encode58Check(address) + " but it is not contained of permission.");
       }
       if (addMap.containsKey(base64)) {
-        throw new PermissionException(Wallet.encode58Check(address) + " has signed twice!");
+        throw new PermissionException(encode58Check(address) + " has signed twice!");
       }
       addMap.put(base64, weight);
       if (approveList != null) {
@@ -374,10 +363,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
           break;
         case CreateSmartContract:
-          owner = contractParameter.unpack(Contract.CreateSmartContract.class).getOwnerAddress();
+          owner = contractParameter.unpack(CreateSmartContract.class).getOwnerAddress();
           break;
         case TriggerSmartContract:
-          owner = contractParameter.unpack(Contract.TriggerSmartContract.class).getOwnerAddress();
+          owner = contractParameter.unpack(TriggerSmartContract.class).getOwnerAddress();
           break;
         case UpdateAssetContract:
           owner = contractParameter.unpack(UpdateAssetContract.class).getOwnerAddress();
@@ -532,10 +521,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         clazz = WithdrawBalanceContract.class;
         break;
       case CreateSmartContract:
-        clazz = Contract.CreateSmartContract.class;
+        clazz = CreateSmartContract.class;
         break;
       case TriggerSmartContract:
-        clazz = Contract.TriggerSmartContract.class;
+        clazz = TriggerSmartContract.class;
         break;
       case UpdateAssetContract:
         clazz = UpdateAssetContract.class;
@@ -816,15 +805,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),
           approveList);
       if (approveList.contains(ByteString.copyFrom(address))) {
-        throw new PermissionException(WalletUtil.encode58Check(address) + " had signed!");
+        throw new PermissionException(encode58Check(address) + " had signed!");
       }
     }
 
     long weight = getWeight(permission, address);
     if (weight == 0) {
       throw new PermissionException(
-          ByteArray.toHexString(privateKey) + "'s address is " + WalletUtil
-              .encode58Check(address) + " but it is not contained of permission.");
+          ByteArray.toHexString(privateKey) + "'s address is " + encode58Check(address) + " but it is not contained of permission.");
     }
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
@@ -834,7 +822,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * validate signature
    */
-  public boolean validatePubSignature(DynamicPropertiesStore dynamicPropertiesStore)
+  public boolean validatePubSignature(AccountStore accountStore, DynamicPropertiesStore dynamicPropertiesStore)
       throws ValidateSignatureException {
     if (isVerified) {
       return true;
@@ -851,7 +839,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     byte[] hash = this.getRawHash().getBytes();
 
     try {
-      if (!validateSignature(this.transaction, hash, dynamicPropertiesStore)) {
+      if (!validateSignature(this.transaction, hash, accountStore, dynamicPropertiesStore)) {
         isVerified = false;
         throw new ValidateSignatureException("sig error");
       }
@@ -872,18 +860,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * validate signature
    */
-  public boolean validateSignature(Manager manager) throws ValidateSignatureException {
+  public boolean validateSignature(AccountStore accountStore, DynamicPropertiesStore dynamicPropertiesStore) throws ValidateSignatureException {
     if (isVerified == true) {
       return true;
     }
     //Do not support multi contracts in one transaction
     Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
     if (contract.getType() != ContractType.ShieldedTransferContract) {
-      validatePubSignature(manager);
+      validatePubSignature(accountStore, dynamicPropertiesStore);
     } else {  //ShieldedTransfer
       byte[] owner = getOwner(contract);
       if (!ArrayUtils.isEmpty(owner)) { //transfer from transparent address
-        validatePubSignature(manager);
+        validatePubSignature(accountStore, dynamicPropertiesStore);
       } else { //transfer from shielded address
         if (this.transaction.getSignatureCount() > 0) {
           throw new ValidateSignatureException("there should be no signatures signed by "
@@ -974,58 +962,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return toStringBuff.toString();
   }
 
-  public void setResult(Runtime runtime) {
-    RuntimeException exception = runtime.getResult().getException();
-    if (Objects.isNull(exception) && StringUtils
-        .isEmpty(runtime.getRuntimeError()) && !runtime.getResult().isRevert()) {
-      this.setResultCode(contractResult.SUCCESS);
-      return;
-    }
-    if (runtime.getResult().isRevert()) {
-      this.setResultCode(contractResult.REVERT);
-      return;
-    }
-    if (exception instanceof IllegalOperationException) {
-      this.setResultCode(contractResult.ILLEGAL_OPERATION);
-      return;
-    }
-    if (exception instanceof OutOfEnergyException) {
-      this.setResultCode(contractResult.OUT_OF_ENERGY);
-      return;
-    }
-    if (exception instanceof BadJumpDestinationException) {
-      this.setResultCode(contractResult.BAD_JUMP_DESTINATION);
-      return;
-    }
-    if (exception instanceof OutOfTimeException) {
-      this.setResultCode(contractResult.OUT_OF_TIME);
-      return;
-    }
-    if (exception instanceof OutOfMemoryException) {
-      this.setResultCode(contractResult.OUT_OF_MEMORY);
-      return;
-    }
-    if (exception instanceof PrecompiledContractException) {
-      this.setResultCode(contractResult.PRECOMPILED_CONTRACT);
-      return;
-    }
-    if (exception instanceof StackTooSmallException) {
-      this.setResultCode(contractResult.STACK_TOO_SMALL);
-      return;
-    }
-    if (exception instanceof StackTooLargeException) {
-      this.setResultCode(contractResult.STACK_TOO_LARGE);
-      return;
-    }
-    if (exception instanceof JVMStackOverFlowException) {
-      this.setResultCode(contractResult.JVM_STACK_OVER_FLOW);
-      return;
-    }
-    if (exception instanceof Program.TransferException) {
-      this.setResultCode(contractResult.TRANSFER_FAILED);
-      return;
-    }
-    this.setResultCode(contractResult.UNKNOWN);
+  public void setResult(TransactionContext context) {
+    this.setResultCode(context.getProgramResult().getResultCode());
   }
 
   public void setResultCode(contractResult code) {

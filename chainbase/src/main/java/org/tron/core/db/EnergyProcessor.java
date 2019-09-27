@@ -1,25 +1,29 @@
 package org.tron.core.db;
 
 import static java.lang.Long.max;
+import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.DBConfig;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account.AccountResource;
 
 @Slf4j(topic = "DB")
 public class EnergyProcessor extends ResourceProcessor {
 
-  public EnergyProcessor(Manager manager) {
-    super(manager);
+  public EnergyProcessor(DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore) {
+    super(dynamicPropertiesStore, accountStore);
   }
 
   @Override
   public void updateUsage(AccountCapsule accountCapsule) {
-    long now = dbManager.getWitnessController().getHeadSlot();
+    long now = getHeadSlot();
     updateUsage(accountCapsule, now);
   }
 
@@ -33,26 +37,26 @@ public class EnergyProcessor extends ResourceProcessor {
   }
 
   public void updateTotalEnergyAverageUsage() {
-    long now = dbManager.getWitnessController().getHeadSlot();
-    long blockEnergyUsage = dbManager.getDynamicPropertiesStore().getBlockEnergyUsage();
-    long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
+    long now = getHeadSlot();
+    long blockEnergyUsage = dynamicPropertiesStore.getBlockEnergyUsage();
+    long totalEnergyAverageUsage = dynamicPropertiesStore
         .getTotalEnergyAverageUsage();
-    long totalEnergyAverageTime = dbManager.getDynamicPropertiesStore().getTotalEnergyAverageTime();
+    long totalEnergyAverageTime = dynamicPropertiesStore.getTotalEnergyAverageTime();
 
     long newPublicEnergyAverageUsage = increase(totalEnergyAverageUsage, blockEnergyUsage,
         totalEnergyAverageTime, now, averageWindowSize);
 
-    dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(newPublicEnergyAverageUsage);
-    dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
+    dynamicPropertiesStore.saveTotalEnergyAverageUsage(newPublicEnergyAverageUsage);
+    dynamicPropertiesStore.saveTotalEnergyAverageTime(now);
   }
 
   public void updateAdaptiveTotalEnergyLimit() {
-    long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
+    long totalEnergyAverageUsage = dynamicPropertiesStore
         .getTotalEnergyAverageUsage();
-    long targetTotalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit();
-    long totalEnergyCurrentLimit = dbManager.getDynamicPropertiesStore()
+    long targetTotalEnergyLimit = dynamicPropertiesStore.getTotalEnergyTargetLimit();
+    long totalEnergyCurrentLimit = dynamicPropertiesStore
         .getTotalEnergyCurrentLimit();
-    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyLimit();
+    long totalEnergyLimit = dynamicPropertiesStore.getTotalEnergyLimit();
 
     long result;
     if (totalEnergyAverageUsage > targetTotalEnergyLimit) {
@@ -67,10 +71,10 @@ public class EnergyProcessor extends ResourceProcessor {
 
     result = Math.min(
         Math.max(result, totalEnergyLimit),
-        totalEnergyLimit * dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitMultiplier()
+        totalEnergyLimit * AdaptiveResourceLimitConstants.LIMIT_MULTIPLIER
     );
 
-    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(result);
+    dynamicPropertiesStore.saveTotalEnergyCurrentLimit(result);
     logger.debug(
         "adjust totalEnergyCurrentLimit, old[" + totalEnergyCurrentLimit + "], new[" + result
             + "]");
@@ -97,18 +101,17 @@ public class EnergyProcessor extends ResourceProcessor {
     }
 
     latestConsumeTime = now;
-    long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+    long latestOperationTime = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     newEnergyUsage = increase(newEnergyUsage, energy, latestConsumeTime, now);
     accountCapsule.setEnergyUsage(newEnergyUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
     accountCapsule.setLatestConsumeTimeForEnergy(latestConsumeTime);
 
+    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
 
-    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-
-    if (dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
-      long blockEnergyUsage = dbManager.getDynamicPropertiesStore().getBlockEnergyUsage() + energy;
-      dbManager.getDynamicPropertiesStore().saveBlockEnergyUsage(blockEnergyUsage);
+    if (dynamicPropertiesStore.getAllowAdaptiveEnergy() == 1) {
+      long blockEnergyUsage = dynamicPropertiesStore.getBlockEnergyUsage() + energy;
+      dynamicPropertiesStore.saveBlockEnergyUsage(blockEnergyUsage);
     }
 
     return true;
@@ -122,8 +125,8 @@ public class EnergyProcessor extends ResourceProcessor {
     }
 
     long energyWeight = frozeBalance / 1_000_000L;
-    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
-    long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
+    long totalEnergyLimit = dynamicPropertiesStore.getTotalEnergyCurrentLimit();
+    long totalEnergyWeight = dynamicPropertiesStore.getTotalEnergyWeight();
 
     assert totalEnergyWeight > 0;
 
@@ -131,9 +134,7 @@ public class EnergyProcessor extends ResourceProcessor {
   }
 
   public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
-
-    long now = dbManager.getWitnessController().getHeadSlot();
-
+    long now = getHeadSlot();
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
     long energyLimit = calculateGlobalEnergyLimit(accountCapsule);
@@ -142,6 +143,18 @@ public class EnergyProcessor extends ResourceProcessor {
 
     return max(energyLimit - newEnergyUsage, 0); // us
   }
+
+  private long getHeadSlot() {
+    return getHeadSlot(dynamicPropertiesStore);
+  }
+
+
+  public static long getHeadSlot(DynamicPropertiesStore dynamicPropertiesStore) {
+    return (dynamicPropertiesStore.getLatestBlockHeaderTimestamp() -
+        Long.parseLong(DBConfig.getGenesisBlock().getTimestamp()))
+        / BLOCK_PRODUCED_INTERVAL;
+  }
+
 
 }
 
