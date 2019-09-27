@@ -15,12 +15,9 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.runtime.config;
+package org.tron.core.vm.config;
 
 import lombok.Setter;
-import org.tron.common.utils.ForkController;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
-import org.tron.core.config.args.Args;
 
 /**
  * For developer only
@@ -31,16 +28,13 @@ public class VMConfig {
 
   public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
 
-  private boolean vmTraceCompressed = false;
-  private boolean vmTrace = Args.getInstance().isVmTrace();
+  private static boolean vmTraceCompressed = false;
 
-  //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT
+  @Setter
+  private static boolean vmTrace = false;
+
   @Setter
   private static boolean ENERGY_LIMIT_HARD_FORK = false;
-
-//  @Getter
-//  @Setter
-//  private static boolean VERSION_3_5_HARD_FORK = false;
 
   @Setter
   private static boolean ALLOW_TVM_TRANSFER_TRC10 = false;
@@ -67,17 +61,16 @@ public class VMConfig {
     return SystemPropertiesInstance.INSTANCE;
   }
 
-  public boolean vmTrace() {
+  public static boolean vmTrace() {
     return vmTrace;
   }
 
-  public boolean vmTraceCompressed() {
+  public static boolean vmTraceCompressed() {
     return vmTraceCompressed;
   }
 
-  public static void initVmHardFork() {
-    ENERGY_LIMIT_HARD_FORK = ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT);
-    //VERSION_3_5_HARD_FORK = ForkController.instance().pass(ForkBlockVersionEnum.VERSION_3_5);
+  public static void initVmHardFork(boolean pass) {
+    ENERGY_LIMIT_HARD_FORK = pass;
   }
 
   public static void initAllowMultiSign(long allow) {
@@ -115,4 +108,5 @@ public class VMConfig {
   public static boolean allowTvmSolidity059() {
     return ALLOW_TVM_SOLIDITY_059;
   }
+
 }

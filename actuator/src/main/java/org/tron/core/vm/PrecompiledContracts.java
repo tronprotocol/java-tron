@@ -16,9 +16,8 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.runtime.vm;
+package org.tron.core.vm;
 
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.vm.DataWord.WORD_SIZE;
 import static org.tron.common.utils.BIUtil.addSafely;
 import static org.tron.common.utils.BIUtil.isLessThan;
@@ -29,6 +28,7 @@ import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
 import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -54,18 +54,17 @@ import org.tron.common.crypto.zksnark.BN128G1;
 import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
-import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.utils.MUtil;
-import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.storage.Deposit;
+import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.Program;
+import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol.Permission;
 
 /**
@@ -178,7 +177,7 @@ public class PrecompiledContracts {
       this.callerAddress = callerAddress.clone();
     }
 
-    public void setDeposit(Deposit deposit) {
+    public void setRepository(Repository deposit) {
       this.deposit = deposit;
     }
 
@@ -186,7 +185,7 @@ public class PrecompiledContracts {
       this.result = result;
     }
 
-    private Deposit deposit;
+    private Repository deposit;
 
     private ProgramResult result;
 
@@ -194,7 +193,7 @@ public class PrecompiledContracts {
       return callerAddress.clone();
     }
 
-    public Deposit getDeposit() {
+    public Repository getDeposit() {
       return deposit;
     }
 
@@ -212,7 +211,7 @@ public class PrecompiledContracts {
 
 
     protected long getCPUTimeLeftInNanoSecond() {
-      long left = getVmShouldEndInUs() * Constant.ONE_THOUSAND - System.nanoTime();
+      long left = getVmShouldEndInUs() * VMConstant.ONE_THOUSAND - System.nanoTime();
       if (left <= 0) {
         throw Program.Exception.notEnoughTime("call");
       } else {
@@ -670,7 +669,7 @@ public class PrecompiledContracts {
       byte[] data = words[2].getData();
 
       byte[] combine = ByteUtil
-          .merge(MUtil.convertToTronAddress(addr), ByteArray.fromInt(permissionId), data);
+          .merge(convertToTronAddress(addr), ByteArray.fromInt(permissionId), data);
       byte[] hash = Sha256Hash.hash(combine);
 
       byte[][] signatures = extractBytesArray(

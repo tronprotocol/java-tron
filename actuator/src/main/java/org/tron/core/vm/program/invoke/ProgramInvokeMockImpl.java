@@ -16,22 +16,19 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.runtime.vm.program.invoke;
+package org.tron.core.vm.program.invoke;
 
 import com.google.protobuf.ByteString;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
-import org.tron.core.capsule.BlockCapsule;
+import org.tron.common.utils.Hash;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.exception.StoreException;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
 
 /**
@@ -44,7 +41,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   private byte[] msgData;
 
-  private DepositImpl deposit;
+  private Repository deposit;
   private byte[] ownerAddress = Hex.decode("cd2a3d9f938e13cd947ec05abc7fe734df8dd826");
   private final byte[] contractAddress = Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
 
@@ -59,7 +56,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   public ProgramInvokeMockImpl() {
 
-    this.deposit = DepositImpl.createRoot(null);
+    this.deposit = RepositoryImpl.createRoot(null);
     this.deposit.createAccount(ownerAddress, Protocol.AccountType.Normal);
 
     this.deposit.createAccount(contractAddress, Protocol.AccountType.Contract);
@@ -247,14 +244,6 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     isConstantCall = true;
   }
 
-  @Override
-  public BlockCapsule getBlockByNum(int index) {
-    try {
-      return deposit.getDbManager().getBlockByNum(index);
-    } catch (StoreException e) {
-      throw new IllegalOperationException("cannot find block num");
-    }
-  }
 
   @Override
   public boolean byTestingSuite() {
@@ -262,7 +251,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public Deposit getDeposit() {
+  public Repository getDeposit() {
     return this.deposit;
   }
 

@@ -1,4 +1,4 @@
-package org.tron.core.config;
+package org.tron.core.config.args;
 
 import lombok.Getter;
 
@@ -96,10 +96,6 @@ public class Parameter {
   }
 
 }
-package org.tron.core.config;
-
-    import lombok.Getter;
-
 public class Parameter {
 
   public class ChainConstant {

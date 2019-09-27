@@ -16,7 +16,7 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.runtime.vm.program;
+package org.tron.core.vm.program;
 
 import static java.lang.StrictMath.min;
 import static java.lang.String.format;
@@ -25,11 +25,6 @@ import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-import static org.tron.common.runtime.utils.MUtil.transfer;
-import static org.tron.common.runtime.utils.MUtil.transferAllToken;
-import static org.tron.common.utils.BIUtil.isPositive;
-import static org.tron.common.utils.BIUtil.toBI;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 
 import com.google.protobuf.ByteString;
@@ -46,52 +41,42 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.EnergyCost;
-import org.tron.common.runtime.vm.MessageCall;
-import org.tron.common.runtime.vm.OpCode;
-import org.tron.common.runtime.vm.PrecompiledContracts;
-import org.tron.common.runtime.vm.VM;
-import org.tron.common.runtime.vm.VMConstant;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
-import org.tron.common.runtime.vm.program.listener.CompositeProgramListener;
-import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
-import org.tron.common.runtime.vm.program.listener.ProgramStorageChangeListener;
-import org.tron.common.runtime.vm.trace.ProgramTrace;
-import org.tron.common.runtime.vm.trace.ProgramTraceListener;
-import org.tron.common.storage.Deposit;
+import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.Utils;
-import org.tron.core.Wallet;
-import org.tron.core.actuator.TransferActuator;
-import org.tron.core.actuator.TransferAssetActuator;
+import org.tron.common.utils.Hash;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
-import org.tron.core.vm.program.Memory;
-import org.tron.core.vm.program.ProgramPrecompile;
-import org.tron.core.vm.program.Stack;
+import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.MessageCall;
+import org.tron.core.vm.OpCode;
+import org.tron.core.vm.PrecompiledContracts;
+import org.tron.core.vm.VM;
+import org.tron.core.vm.VMConstant;
+import org.tron.core.vm.VMUtils;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.core.vm.program.listener.CompositeProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
 import org.tron.core.vm.program.listener.ProgramStorageChangeListener;
+import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.trace.ProgramTrace;
 import org.tron.core.vm.trace.ProgramTraceListener;
+import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.SmartContract;
-import org.tron.protos.Protocol.SmartContract.Builder;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
 /**
  * @author Roman Mandeleil
@@ -108,8 +93,6 @@ public class Program {
       "validateForSmartContract failure:%s";
   private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
 
-  private BlockCapsule blockCap;
-
   private long nonce;
   private byte[] rootTransactionId;
 
@@ -125,7 +108,7 @@ public class Program {
 
   private Stack stack;
   private Memory memory;
-  private org.tron.common.runtime.vm.program.ContractState contractState;
+  private ContractState contractState;
   private byte[] returnDataBuffer;
 
   private ProgramResult result = new ProgramResult();
@@ -146,15 +129,14 @@ public class Program {
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction) {
-    this(ops, programInvoke, internalTransaction, VMConfig.getInstance(), null);
+    this(ops, programInvoke, internalTransaction, VMConfig.getInstance());
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction,
-      VMConfig config, BlockCapsule blockCap) {
+      VMConfig config) {
     this.config = config;
     this.invoke = programInvoke;
     this.internalTransaction = internalTransaction;
-    this.blockCap = blockCap;
     this.ops = nullToEmpty(ops);
 
     traceListener = new ProgramTraceListener(config.vmTrace());
@@ -404,8 +386,8 @@ public class Program {
 
   public void suicide(DataWord obtainerAddress) {
 
-    byte[] owner = convertToTronAddress(getContractAddress().getLast20Bytes());
-    byte[] obtainer = convertToTronAddress(obtainerAddress.getLast20Bytes());
+    byte[] owner = MUtil.convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] obtainer = MUtil.convertToTronAddress(obtainerAddress.getLast20Bytes());
     long balance = getContractState().getBalance(owner);
 
     if (logger.isDebugEnabled()) {
@@ -425,14 +407,14 @@ public class Program {
       byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
       if (VMConfig.allowTvmTransferTrc10()) {
         getContractState().addBalance(blackHoleAddress, balance);
-        transferAllToken(getContractState(), owner, blackHoleAddress);
+        MUtil.transferAllToken(getContractState(), owner, blackHoleAddress);
       }
     } else {
       createAccountIfNotExist(getContractState(), obtainer);
       try {
-        transfer(getContractState(), owner, obtainer, balance);
+        MUtil.transfer(getContractState(), owner, obtainer, balance);
         if (VMConfig.allowTvmTransferTrc10()) {
-          transferAllToken(getContractState(), owner, obtainer);
+          MUtil.transferAllToken(getContractState(), owner, obtainer);
         }
       } catch (ContractValidateException e) {
         if (VMConfig.allowTvmConstantinople()) {
@@ -445,7 +427,7 @@ public class Program {
     getResult().addDeleteAccount(this.getContractAddress());
   }
 
-  public Deposit getContractState() {
+  public Repository getContractState() {
     return this.contractState;
   }
 
@@ -460,7 +442,7 @@ public class Program {
     // [1] FETCH THE CODE FROM THE MEMORY
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
-    byte[] newAddress = Wallet
+    byte[] newAddress = WalletUtil
         .generateContractAddress(rootTransactionId, nonce);
 
     createContractImpl(value, programCode, newAddress, false);
@@ -468,7 +450,7 @@ public class Program {
 
   private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress,
       boolean isCreate2) {
-    byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    byte[] senderAddress = MUtil.convertToTronAddress(this.getContractAddress().getLast20Bytes());
 
     if (logger.isDebugEnabled()) {
       logger.debug("creating a new contract inside contract run: [{}]",
@@ -488,7 +470,7 @@ public class Program {
       contractAlreadyExists =
           contractAlreadyExists && isContractExist(existingAccount, getContractState());
     }
-    Deposit deposit = getContractState().newDepositChild();
+    Repository deposit = getContractState().newRepositoryChild();
     if (VMConfig.allowTvmConstantinople()) {
       if (existingAccount == null) {
         deposit.createAccount(newAddress, "CreatedByContract",
@@ -526,7 +508,7 @@ public class Program {
     long newBalance = 0L;
     if (!byTestingSuite() && endowment > 0) {
       try {
-        TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
+        VMUtils.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
       } catch (ContractValidateException e) {
         // TODO: unreachable exception
         throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
@@ -558,7 +540,7 @@ public class Program {
               .toHexString(newAddress)));
     } else if (isNotEmpty(programCode)) {
       VM vm = new VM(config);
-      Program program = new Program(programCode, programInvoke, internalTx, config, this.blockCap);
+      Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
       vm.play(program);
       createResult = program.getResult();
@@ -623,7 +605,7 @@ public class Program {
       refundEnergy(refundEnergy, "remain energy from the internal call");
       if (logger.isDebugEnabled()) {
         logger.debug("The remaining energy is refunded, account: [{}], energy: [{}] ",
-            Hex.toHexString(convertToTronAddress(getContractAddress().getLast20Bytes())),
+            Hex.toHexString(MUtil.convertToTronAddress(getContractAddress().getLast20Bytes())),
             refundEnergy);
       }
     }
@@ -649,8 +631,8 @@ public class Program {
     byte[] data = memoryChunk(msg.getInDataOffs().intValue(), msg.getInDataSize().intValue());
 
     // FETCH THE SAVED STORAGE
-    byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
-    byte[] senderAddress = convertToTronAddress(getContractAddress().getLast20Bytes());
+    byte[] codeAddress = MUtil.convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
+    byte[] senderAddress = MUtil.convertToTronAddress(getContractAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     if (logger.isDebugEnabled()) {
@@ -660,7 +642,7 @@ public class Program {
           msg.getOutDataSize().longValue());
     }
 
-    Deposit deposit = getContractState().newDepositChild();
+    Repository deposit = getContractState().newRepositoryChild();
 
     // 2.1 PERFORM THE VALUE (endowment) PART
     long endowment;
@@ -717,7 +699,7 @@ public class Program {
       createAccountIfNotExist(deposit, contextAddress);
       if (!isTokenTransfer) {
         try {
-          TransferActuator
+          VMUtils
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
@@ -730,7 +712,7 @@ public class Program {
         contextBalance = deposit.addBalance(contextAddress, endowment);
       } else {
         try {
-          TransferAssetActuator.validateForSmartContract(deposit, senderAddress, contextAddress,
+          VMUtils.validateForSmartContract(deposit, senderAddress, contextAddress,
               tokenId, endowment);
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
@@ -766,8 +748,7 @@ public class Program {
           contextBalance, data, deposit, msg.getType().callIsStatic() || isConstantCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
-      Program program = new Program(programCode, programInvoke, internalTx, config,
-          this.blockCap);
+      Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
       vm.play(program);
       callResult = program.getResult();
@@ -818,8 +799,9 @@ public class Program {
 
     // 5. REFUND THE REMAIN ENERGY
     if (callResult != null) {
-      BigInteger refundEnergy = msg.getEnergy().value().subtract(toBI(callResult.getEnergyUsed()));
-      if (isPositive(refundEnergy)) {
+      BigInteger refundEnergy = msg.getEnergy().value()
+          .subtract(BIUtil.toBI(callResult.getEnergyUsed()));
+      if (BIUtil.isPositive(refundEnergy)) {
         refundEnergy(refundEnergy.longValueExact(), "remaining energy from the internal call");
         if (logger.isDebugEnabled()) {
           logger.debug("The remaining energy refunded, account: [{}], energy: [{}] ",
@@ -851,10 +833,11 @@ public class Program {
   }
 
   public void checkCPUTimeLimit(String opName) {
-    if (Args.getInstance().isDebug()) {
+
+    if (DBConfig.isDebug()) {
       return;
     }
-    if (Args.getInstance().isSolidityNode()) {
+    if (DBConfig.isSolidityNode()) {
       return;
     }
     long vmNowInUs = System.nanoTime() / 1000;
@@ -862,7 +845,7 @@ public class Program {
       logger.info(
           "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
               + "vm now time in us: {}, vm start time in us: {}",
-          Args.getInstance().getMinTimeRatio(), Args.getInstance().getMaxTimeRatio(),
+          DBConfig.getMinTimeRatio(), DBConfig.getMaxTimeRatio(),
           getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }
@@ -892,7 +875,7 @@ public class Program {
     DataWord keyWord = word1.clone();
     DataWord valWord = word2.clone();
     getContractState()
-        .putStorageValue(convertToTronAddress(getContractAddress().getLast20Bytes()), keyWord,
+        .putStorageValue(MUtil.convertToTronAddress(getContractAddress().getLast20Bytes()), keyWord,
             valWord);
   }
 
@@ -901,12 +884,12 @@ public class Program {
   }
 
   public byte[] getCodeAt(DataWord address) {
-    byte[] code = invoke.getDeposit().getCode(convertToTronAddress(address.getLast20Bytes()));
+    byte[] code = invoke.getDeposit().getCode(MUtil.convertToTronAddress(address.getLast20Bytes()));
     return nullToEmpty(code);
   }
 
   public byte[] getCodeHashAt(DataWord address) {
-    byte[] tronAddr = convertToTronAddress(address.getLast20Bytes());
+    byte[] tronAddr = MUtil.convertToTronAddress(address.getLast20Bytes());
     AccountCapsule account = getContractState().getAccount(tronAddr);
     if (account != null) {
       ContractCapsule contract = getContractState().getContract(tronAddr);
@@ -936,7 +919,7 @@ public class Program {
     if (index < this.getNumber().longValue()
         && index >= Math.max(256, this.getNumber().longValue()) - 256) {
 
-      BlockCapsule blockCapsule = this.invoke.getBlockByNum(index);
+      BlockCapsule blockCapsule = contractState.getBlockByNum(index);
 
       if (Objects.nonNull(blockCapsule)) {
         return new DataWord(blockCapsule.getBlockId().getBytes());
@@ -950,13 +933,14 @@ public class Program {
   }
 
   public DataWord getBalance(DataWord address) {
-    long balance = getContractState().getBalance(convertToTronAddress(address.getLast20Bytes()));
+    long balance = getContractState()
+        .getBalance(MUtil.convertToTronAddress(address.getLast20Bytes()));
     return new DataWord(balance);
   }
 
   public DataWord isContract(DataWord address) {
     ContractCapsule contract = getContractState()
-        .getContract(convertToTronAddress(address.getLast20Bytes()));
+        .getContract(MUtil.convertToTronAddress(address.getLast20Bytes()));
     return contract != null ? new DataWord(1) : new DataWord(0);
   }
 
@@ -1019,13 +1003,15 @@ public class Program {
 
   public DataWord storageLoad(DataWord key) {
     DataWord ret = getContractState()
-        .getStorageValue(convertToTronAddress(getContractAddress().getLast20Bytes()), key.clone());
+        .getStorageValue(MUtil.convertToTronAddress(getContractAddress().getLast20Bytes()),
+            key.clone());
     return ret == null ? null : ret.clone();
   }
 
   public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
     checkTokenIdInTokenBalance(tokenId);
-    long ret = getContractState().getTokenBalance(convertToTronAddress(address.getLast20Bytes()),
+    long ret = getContractState()
+        .getTokenBalance(MUtil.convertToTronAddress(address.getLast20Bytes()),
         String.valueOf(tokenId.longValue()).getBytes());
     return ret == 0 ? new DataWord(0) : new DataWord(ret);
   }
@@ -1191,7 +1177,7 @@ public class Program {
   static String formatBinData(byte[] binData, int startPC) {
     StringBuilder ret = new StringBuilder();
     for (int i = 0; i < binData.length; i += 16) {
-      ret.append(Utils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
+      ret.append(VMUtils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
       ret.append(Hex.toHexString(binData, i, min(16, binData.length - i))).append('\n');
     }
     return ret.toString();
@@ -1228,7 +1214,7 @@ public class Program {
         }
       }
 
-      sb.append(Utils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
+      sb.append(VMUtils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
 
       if (op == null) {
         sb.append("<UNKNOWN>: ").append(0xFF & opCode).append("\n");
@@ -1259,10 +1245,10 @@ public class Program {
   }
 
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
-    byte[] senderAddress = convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    byte[] senderAddress = MUtil.convertToTronAddress(this.getCallerAddress().getLast20Bytes());
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
-    byte[] contractAddress = Wallet
+    byte[] contractAddress = WalletUtil
         .generateContractAddress2(senderAddress, salt.getData(), programCode);
     createContractImpl(value, programCode, contractAddress, true);
   }
@@ -1401,10 +1387,10 @@ public class Program {
       return;
     }
 
-    Deposit deposit = getContractState().newDepositChild();
+    Repository deposit = getContractState().newRepositoryChild();
 
-    byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
-    byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
+    byte[] senderAddress = MUtil.convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    byte[] codeAddress = MUtil.convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
     byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     long endowment = msg.getEndowment().value().longValueExact();
@@ -1434,14 +1420,14 @@ public class Program {
         && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
       if (!isTokenTransfer) {
         try {
-          transfer(deposit, senderAddress, contextAddress,
+          MUtil.transfer(deposit, senderAddress, contextAddress,
               msg.getEndowment().value().longValueExact());
         } catch (ContractValidateException e) {
           throw new BytecodeExecutionException("transfer failure");
         }
       } else {
         try {
-          TransferAssetActuator
+          VMUtils
               .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
         } catch (ContractValidateException e) {
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
@@ -1459,10 +1445,10 @@ public class Program {
       this.stackPushZero();
     } else {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
-      contract.setCallerAddress(convertToTronAddress(msg.getType().callIsDelegate()
+      contract.setCallerAddress(MUtil.convertToTronAddress(msg.getType().callIsDelegate()
           ? getCallerAddress().getLast20Bytes() : getContractAddress().getLast20Bytes()));
       // this is the depositImpl, not contractState as above
-      contract.setDeposit(deposit);
+      contract.setRepository(deposit);
       contract.setResult(this.result);
       contract.setConstantCall(isConstantCall());
       contract.setVmShouldEndInUs(getVmShouldEndInUs());
@@ -1790,11 +1776,11 @@ public class Program {
     return this.invoke.getVmStartInUs();
   }
 
-  private boolean isContractExist(AccountCapsule existingAddr, Deposit deposit) {
+  private boolean isContractExist(AccountCapsule existingAddr, Repository deposit) {
     return deposit.getContract(existingAddr.getAddress().toByteArray()) != null;
   }
 
-  private void createAccountIfNotExist(Deposit deposit, byte[] contextAddress) {
+  private void createAccountIfNotExist(Repository deposit, byte[] contextAddress) {
     if (VMConfig.allowTvmSolidity059()) {
       //after solidity059 proposal , allow contract transfer trc10 or trx to non-exist address(would create one)
       AccountCapsule sender = deposit.getAccount(contextAddress);

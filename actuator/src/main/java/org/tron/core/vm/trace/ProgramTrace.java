@@ -27,8 +27,8 @@ import java.util.List;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.OpCode;
-import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.invoke.ProgramInvoke;
 
 public class ProgramTrace {
 

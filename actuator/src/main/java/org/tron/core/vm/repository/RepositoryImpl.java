@@ -1,7 +1,7 @@
 package org.tron.core.vm.repository;
 
 import static java.lang.Long.max;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
@@ -21,7 +21,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.config.args.Parameter;
+import org.tron.core.config.Parameter;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.KhaosDatabase;
@@ -42,6 +42,7 @@ import org.tron.core.vm.program.Program.IllegalOperationException;
 import org.tron.core.vm.program.Storage;
 import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
 
 @Slf4j(topic = "Repository")
 public class RepositoryImpl implements Repository {
@@ -50,7 +51,7 @@ public class RepositoryImpl implements Repository {
   private long precision = Parameter.ChainConstant.PRECISION;
   ;
   private long windowSize = Parameter.ChainConstant.WINDOW_SIZE_MS /
-      Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+      BLOCK_PRODUCED_INTERVAL;
 
   private StoreFactory storeFactory;
   @Getter
@@ -614,5 +615,17 @@ public class RepositoryImpl implements Repository {
     return this.blockIndexStore.get(num);
   }
 
+  @Override
+  public AccountCapsule createNormalAccount(byte[] address) {
+    boolean withDefaultPermission =
+        getDynamicPropertiesStore().getAllowMultiSign() == 1;
+    Key key = new Key(address);
+    AccountCapsule account = new AccountCapsule(ByteString.copyFrom(address), AccountType.Normal,
+        getDynamicPropertiesStore().getLatestBlockHeaderTimestamp(), withDefaultPermission,
+        getDynamicPropertiesStore());
+
+    accountCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
+    return account;
+  }
 
 }
