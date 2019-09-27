@@ -3,7 +3,7 @@ package org.tron.core.net.messagehandler;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import javafx.util.Pair;
+import org.tron.common.utils.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.core.capsule.BlockCapsule.BlockId;
