@@ -21,6 +21,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.InternalTransaction.ExecutorType;
+import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
