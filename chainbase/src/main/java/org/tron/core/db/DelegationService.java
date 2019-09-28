@@ -37,6 +37,14 @@ public class DelegationService {
   @Setter
   private AccountStore accountStore;
 
+  public void initStore(WitnessStore witnessStore, DelegationStore delegationStore,
+      DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore) {
+    this.witnessStore = witnessStore;
+    this.delegationStore = delegationStore;
+    this.dynamicPropertiesStore = dynamicPropertiesStore;
+    this.accountStore = accountStore;
+  }
+
   public void payStandbyWitness() {
     List<ByteString> witnessAddressList = new ArrayList<>();
     for (WitnessCapsule witnessCapsule : witnessStore.getAllWitnesses()) {

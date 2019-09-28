@@ -75,12 +75,14 @@ public abstract class AbstractActuator implements Actuator {
     this.delegationService = delegationService;
   }
 
-  AbstractActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore,  VotesStore votesStore, DynamicPropertiesStore dynamicPropertiesStore) {
+  AbstractActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore,  VotesStore votesStore,
+      DynamicPropertiesStore dynamicPropertiesStore, DelegationService delegationService) {
     this.contract = contract;
     this.accountStore = accountStore;
     this.witnessStore = witnessStore;
     this.votesStore = votesStore;
     this.dynamicStore = dynamicPropertiesStore;
+    this.delegationService = delegationService;
   }
 
 
@@ -143,6 +145,14 @@ public abstract class AbstractActuator implements Actuator {
     this.accountStore = accountStore;
     this.dynamicStore = dynamicPropertiesStore;
     this.witnessStore = witnessStore;
+  }
+
+  AbstractActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicPropertiesStore, WitnessStore witnessStore, DelegationService delegationService) {
+    this.contract = contract;
+    this.accountStore = accountStore;
+    this.dynamicStore = dynamicPropertiesStore;
+    this.witnessStore = witnessStore;
+    this.delegationService = delegationService;
   }
 
   AbstractActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore) {

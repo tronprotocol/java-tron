@@ -55,7 +55,7 @@ import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -108,7 +108,6 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
-import org.tron.core.services.DelegationService;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -118,6 +117,7 @@ import org.tron.core.store.CodeStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
+import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
@@ -125,13 +125,18 @@ import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.store.TreeBlockIndexStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.witness.ProposalController;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.TransactionInfo;
 
 
 @Slf4j(topic = "DB")
@@ -493,14 +498,14 @@ public class Manager {
   @PostConstruct
   public void init() {
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
-    delegationService.setManager(this);
+    delegationService.initStore(this.witnessStore, this.delegationStore, this.dynamicPropertiesStore, this.accountStore);
     accountStateCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
     revokingStore.check();
     this.setWitnessController(WitnessController.createInstance(this));
     this.setProposalController(ProposalController.createInstance(this));
-    this.setMerkleContainer(merkleContainer.createInstance(this.getMerkleTreeIndexStore(), ));
+    this.setMerkleContainer(merkleContainer.createInstance(this.merkleTreeStore, this.merkleTreeIndexStore));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
@@ -832,7 +837,7 @@ public class Manager {
     }
 
     try {
-      if (!trx.validateSignature(this)) {
+      if (!trx.validateSignature(this.accountStore, this.dynamicPropertiesStore)) {
         throw new ValidateSignatureException("trans sig validate failed");
       }
 
@@ -1057,7 +1062,7 @@ public class Manager {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
-        if (!block.validateSignature(this)) {
+        if (!block.validateSignature(this.dynamicPropertiesStore, this.accountStore)) {
           logger.warn("The signature is not validated.");
           throw new BadBlockException("The signature is not validated");
         }
@@ -1076,10 +1081,6 @@ public class Manager {
           .count() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
         throw new BadBlockException(
             "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
-      }
-
-      if (witnessService != null) {
-        witnessService.checkDupWitness(block);
       }
 
       BlockCapsule newBlock = this.khaosDb.push(block);
@@ -1310,11 +1311,11 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature(this)) {
+    if (!trxCap.validateSignature(this.accountStore, this.dynamicPropertiesStore)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    TransactionTrace trace = new TransactionTrace(trxCap, this);
+    TransactionTrace trace =  new TransactionTrace(trxCap, StoreFactory.getInstance(), new RuntimeImpl(this));
     trxCap.setTrxTrace(trace);
 
     consumeBandwidth(trxCap, trace);

@@ -459,7 +459,7 @@ public class VMActuator implements Actuator2 {
               tokenValue, tokenId, blockCap.getInstance(), repository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
       if (isStaticCall) {
-        programInvoke.setStaticCall();
+        programInvoke.setConstantCall();
       }
       this.vm = new VM();
       rootInternalTransaction = new InternalTransaction(trx, trxType);

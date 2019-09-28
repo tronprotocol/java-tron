@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
+import static org.tron.core.config.args.Parameter.ChainConstant.MAX_VOTE_NUMBER;
 
 import com.google.common.math.LongMath;
 import com.google.protobuf.Any;
@@ -11,30 +12,31 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Iterator;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.db.AccountStore;
-import org.tron.core.db.Manager;
-import org.tron.core.db.VotesStore;
-import org.tron.core.db.WitnessStore;
+import org.tron.core.db.DelegationService;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.VoteWitnessContract.Vote;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 
 @Slf4j(topic = "actuator")
 public class VoteWitnessActuator extends AbstractActuator {
 
 
-  VoteWitnessActuator(Any contract, Manager dbManager) {
-    super(contract, dbManager);
+  VoteWitnessActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore,
+      VotesStore votesStore, DynamicPropertiesStore dynamicPropertiesStore, DelegationService delegationService) {
+    super(contract, accountStore, witnessStore, votesStore, dynamicPropertiesStore, delegationService);
   }
 
   @Override
@@ -42,7 +44,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     long fee = calcFee();
     try {
       VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
-      countVoteAccount(voteContract, getDeposit());
+      countVoteAccount(voteContract);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -57,8 +59,8 @@ public class VoteWitnessActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dbManager == null && (getDeposit() == null || getDeposit().getDbManager() == null)) {
-      throw new ContractValidateException("No dbManager!");
+    if (accountStore == null || dynamicStore == null) {
+      throw new ContractValidateException("No account store or dynamic store!");
     }
     if (!this.contract.is(VoteWitnessContract.class)) {
       throw new ContractValidateException(
@@ -72,20 +74,17 @@ public class VoteWitnessActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+    if (!Commons.addressValid(contract.getOwnerAddress().toByteArray())) {
       throw new ContractValidateException("Invalid address");
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-    AccountStore accountStore = dbManager.getAccountStore();
-    WitnessStore witnessStore = dbManager.getWitnessStore();
-
     if (contract.getVotesCount() == 0) {
       throw new ContractValidateException(
           "VoteNumber must more than 0");
     }
-    int maxVoteNumber = ChainConstant.MAX_VOTE_NUMBER;
+    int maxVoteNumber = MAX_VOTE_NUMBER;
     if (contract.getVotesCount() > maxVoteNumber) {
       throw new ContractValidateException(
           "VoteNumber more than maxVoteNumber " + maxVoteNumber);
@@ -96,7 +95,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       while (iterator.hasNext()) {
         Vote vote = iterator.next();
         byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
-        if (!Wallet.addressValid(witnessCandidate)) {
+        if (!Commons.addressValid(witnessCandidate)) {
           throw new ContractValidateException("Invalid vote address!");
         }
         long voteCount = vote.getVoteCount();
@@ -104,30 +103,18 @@ public class VoteWitnessActuator extends AbstractActuator {
           throw new ContractValidateException("vote count must be greater than 0");
         }
         String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
-        if (!Objects.isNull(getDeposit())) {
-          if (Objects.isNull(getDeposit().getAccount(witnessCandidate))) {
-            throw new ContractValidateException(
-                ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
-          }
-        } else if (!accountStore.has(witnessCandidate)) {
+        if (!accountStore.has(witnessCandidate)) {
           throw new ContractValidateException(
               ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }
-        if (!Objects.isNull(getDeposit())) {
-          if (Objects.isNull(getDeposit().getWitness(witnessCandidate))) {
-            throw new ContractValidateException(
-                WITNESS_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
-          }
-        } else if (!witnessStore.has(witnessCandidate)) {
+        if (!witnessStore.has(witnessCandidate)) {
           throw new ContractValidateException(
               WITNESS_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }
         sum = LongMath.checkedAdd(sum, vote.getVoteCount());
       }
 
-      AccountCapsule accountCapsule =
-          (Objects.isNull(getDeposit())) ? accountStore.get(ownerAddress)
-              : getDeposit().getAccount(ownerAddress);
+      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
       if (accountCapsule == null) {
         throw new ContractValidateException(
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
@@ -149,28 +136,17 @@ public class VoteWitnessActuator extends AbstractActuator {
     return true;
   }
 
-  private void countVoteAccount(VoteWitnessContract voteContract, Deposit deposit) {
+  private void countVoteAccount(VoteWitnessContract voteContract) {
     byte[] ownerAddress = voteContract.getOwnerAddress().toByteArray();
 
     VotesCapsule votesCapsule;
-    VotesStore votesStore = dbManager.getVotesStore();
-    AccountStore accountStore = dbManager.getAccountStore();
 
     //
-    dbManager.getDelegationService().withdrawReward(ownerAddress, getDeposit());
+    delegationService.withdrawReward(ownerAddress);
 
-    AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? accountStore.get(ownerAddress)
-        : getDeposit().getAccount(ownerAddress);
+    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
-    if (!Objects.isNull(getDeposit())) {
-      VotesCapsule vCapsule = getDeposit().getVotesCapsule(ownerAddress);
-      if (Objects.isNull(vCapsule)) {
-        votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
-            accountCapsule.getVotesList());
-      } else {
-        votesCapsule = vCapsule;
-      }
-    } else if (!votesStore.has(ownerAddress)) {
+    if (!votesStore.has(ownerAddress)) {
       votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
           accountCapsule.getVotesList());
     } else {
@@ -188,15 +164,8 @@ public class VoteWitnessActuator extends AbstractActuator {
       accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
     });
 
-    if (Objects.isNull(deposit)) {
-      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-      votesStore.put(ownerAddress, votesCapsule);
-    } else {
-      // cache
-      deposit.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
-      deposit.putVoteValue(ownerAddress, votesCapsule);
-    }
-
+    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    votesStore.put(ownerAddress, votesCapsule);
   }
 
   @Override
