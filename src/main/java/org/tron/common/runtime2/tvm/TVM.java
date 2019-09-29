@@ -18,6 +18,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfoTriggerParser;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program.BytecodeExecutionException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime2.IVM;
 import org.tron.common.runtime2.config.VMConfig;
@@ -113,7 +114,18 @@ public class TVM implements IVM {
       logger.info("v2:");
       logger.info(program_2.getOpHistory().stream().collect(Collectors.joining("\n")));
 
-      throw new BytecodeExecutionException("Interpretor v1 v2 NOT SAME ! ");
+      logger.info("attention v1 res:{},v2 res:{}",program.getProgramResult().getRuntimeError(),program_2.getProgramResult().getRuntimeError());
+
+      if(
+          (program.getProgramResult().getException()!=null && program.getProgramResult().getException() instanceof OutOfTimeException)
+          ||
+              (program_2.getProgramResult().getException()!=null && program_2.getProgramResult().getException() instanceof OutOfTimeException)
+      ){
+        logger.info("v1 v2 not same but is out of time ");
+
+      }else {
+        throw new BytecodeExecutionException("Interpretor v1 v2 NOT SAME ! ");
+      }
 
     }
 
