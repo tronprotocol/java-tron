@@ -79,7 +79,7 @@ public class VMActuator implements Actuator2 {
 
   @Getter
   @Setter
-  private boolean isStaticCall = false;
+  private boolean isConstanCall = false;
 
   @Setter
   private boolean enableEventLinstener;
@@ -87,8 +87,8 @@ public class VMActuator implements Actuator2 {
   private LogInfoTriggerParser logInfoTriggerParser;
 
 
-  public VMActuator(boolean isStaticCall) {
-    this.isStaticCall = isStaticCall;
+  public VMActuator(boolean isConstanCall) {
+    this.isConstanCall = isConstanCall;
     programInvokeFactory = new ProgramInvokeFactoryImpl();
   }
 
@@ -110,7 +110,7 @@ public class VMActuator implements Actuator2 {
       this.blockCap = new BlockCapsule(Block.newBuilder().build());
       this.executorType = ExecutorType.ET_PRE_TYPE;
     }
-    if (isStaticCall) {
+    if (isConstanCall) {
       this.executorType = ExecutorType.ET_PRE_TYPE;
     }
 
@@ -149,12 +149,16 @@ public class VMActuator implements Actuator2 {
         vm.play(program);
         result = program.getResult();
 
-        if (isStaticCall) {
+        if (isConstanCall) {
           long callValue = TransactionUtil.getCallValue(trx.getRawData().getContract(0));
           long callTokenValue = TransactionUtil
               .getCallTokenValue(trx.getRawData().getContract(0));
           if (callValue > 0 || callTokenValue > 0) {
             result.setRuntimeError("constant cannot set call value or call token value.");
+            result.rejectInternalTransactions();
+          }
+          if (result.getException() != null) {
+            result.setRuntimeError(result.getException().getMessage());
             result.rejectInternalTransactions();
           }
           return;
