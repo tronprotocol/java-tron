@@ -24,11 +24,6 @@ public class LogOpExecutor extends OpExecutor {
     return INSTANCE;
   }
 
-  public static void main(String[] args) {
-    System.out.println(calcMemEnergy(288, memNeeded(new DataWord(Hex.decode("0000000000000000000000000000000000000000000000000000000000000120")), new DataWord(32)), 0 ,Op.MLOAD));
-
-  }
-
 
   @Override
   public void exec(Op op, ContractExecutor executor) {

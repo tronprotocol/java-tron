@@ -1203,9 +1203,6 @@ public class Interpreter {
     }
   }
 
-  public static void main(String[] args) {
-    System.out.println(calcMemEnergy(EnergyCost.getInstance(),288, memNeeded(new DataWord(Hex.decode("0000000000000000000000000000000000000000000000000000000000000120")), new DataWord(32)), 0 ,OpCode.MLOAD));
-  }
 
   private static long calcMemEnergy(EnergyCost energyCosts, long oldMemSize, BigInteger newMemSize,
                              long copySize, OpCode op) {
