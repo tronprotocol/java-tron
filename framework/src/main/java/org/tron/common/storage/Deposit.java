@@ -1,7 +1,7 @@
 package org.tron.common.storage;
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.program.Storage;
+import org.tron.common.utils.Value;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -11,8 +11,10 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.args.Storage;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Key;
 
 public interface Deposit {
 

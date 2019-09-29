@@ -79,6 +79,7 @@ import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
+import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.consensus.WitnessController;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
@@ -1324,7 +1325,7 @@ public class Manager {
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
 
-    VMConfig.initVmHardFork();
+    VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
     VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
@@ -1354,7 +1355,7 @@ public class Manager {
 
     trace.finalization();
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
-      trxCap.setResult(trace.getRuntime());
+      trxCap.setResult(trace.getTransactionContext());
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
@@ -1429,11 +1430,6 @@ public class Manager {
     //
     accountStateCallBack.preExecute(blockCapsule);
 
-    if (needCheckWitnessPermission && !witnessService.
-        validateWitnessPermission(witnessCapsule.getAddress())) {
-      logger.warn("Witness permission is wrong");
-      return null;
-    }
     TransactionRetCapsule transationRetCapsule =
         new TransactionRetCapsule(blockCapsule);
 
@@ -1819,7 +1815,7 @@ public class Manager {
             getDynamicPropertiesStore().getWitnessPayPerBlock());
         delegationService.payStandbyWitness();
       } else {
-        adjustAllowance(witnessCapsule.getAddress().toByteArray(),
+        delegationService.adjustAllowance(accountStore, witnessCapsule.getAddress().toByteArray(),
             getDynamicPropertiesStore().getWitnessPayPerBlock());
       }
     } catch (BalanceInsufficientException e) {
@@ -1962,7 +1958,7 @@ public class Manager {
     @Override
     public Boolean call() throws ValidateSignatureException {
       try {
-        trx.validateSignature(manager);
+        trx.validateSignature(manager.accountStore, manager.dynamicPropertiesStore);
       } catch (ValidateSignatureException e) {
         throw e;
       } finally {

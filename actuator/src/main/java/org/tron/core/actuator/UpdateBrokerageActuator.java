@@ -5,21 +5,25 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.core.Wallet;
+import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.UpdateBrokerageContract;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DelegationStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 
 @Slf4j(topic = "actuator")
 public class UpdateBrokerageActuator extends AbstractActuator {
 
-  UpdateBrokerageActuator(Any contract, Manager dbManager) {
-    super(contract, dbManager);
+  UpdateBrokerageActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore,
+      DynamicPropertiesStore dynamicPropertiesStore, DelegationStore delegationStore) {
+    super(contract, accountStore, witnessStore, dynamicPropertiesStore, delegationStore);
   }
 
   @Override
@@ -37,7 +41,7 @@ public class UpdateBrokerageActuator extends AbstractActuator {
     byte[] ownerAddress = updateBrokerageContract.getOwnerAddress().toByteArray();
     int brokerage = updateBrokerageContract.getBrokerage();
 
-    dbManager.getDelegationStore().setBrokerage(ownerAddress, brokerage);
+    delegationStore.setBrokerage(ownerAddress, brokerage);
     ret.setStatus(fee, code.SUCESS);
 
     return true;
@@ -45,15 +49,15 @@ public class UpdateBrokerageActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!dbManager.getDynamicPropertiesStore().allowChangeDelegation()) {
+    if (!dynamicStore.allowChangeDelegation()) {
       throw new ContractValidateException(
           "contract type error,unexpected type [UpdateBrokerageContract]");
     }
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (this.dbManager == null) {
-      throw new ContractValidateException("No dbManager!");
+    if (accountStore == null || dynamicStore == null) {
+      throw new ContractValidateException("No account store or dynamic store!");
     }
     if (!this.contract.is(UpdateBrokerageContract.class)) {
       throw new ContractValidateException(
@@ -70,7 +74,7 @@ public class UpdateBrokerageActuator extends AbstractActuator {
     byte[] ownerAddress = updateBrokerageContract.getOwnerAddress().toByteArray();
     int brokerage = updateBrokerageContract.getBrokerage();
 
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 
@@ -78,12 +82,12 @@ public class UpdateBrokerageActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid brokerage");
     }
 
-    WitnessCapsule witnessCapsule = dbManager.getWitnessStore().get(ownerAddress);
+    WitnessCapsule witnessCapsule = witnessStore.get(ownerAddress);
     if (witnessCapsule == null) {
       throw new ContractValidateException("Not exist witness:" + Hex.toHexString(ownerAddress));
     }
 
-    AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);
+    AccountCapsule account = accountStore.get(ownerAddress);
     if (account == null) {
       throw new ContractValidateException("Account has not existed");
     }

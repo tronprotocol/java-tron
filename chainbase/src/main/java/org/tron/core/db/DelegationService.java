@@ -195,7 +195,7 @@ public class DelegationService {
     return witnessStore.get(address.toByteArray());
   }
 
-  private void adjustAllowance(byte[] address, long amount) {
+  public void adjustAllowance(byte[] address, long amount) {
     try {
       if (amount <= 0) {
         return;

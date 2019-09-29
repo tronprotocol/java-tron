@@ -444,7 +444,7 @@ public class VMActuator implements Actuator2 {
       }
       AccountCapsule caller = repository.getAccount(callerAddress);
       long energyLimit;
-      if (isStaticCall) {
+      if (isConstanCall) {
         energyLimit = VMConstant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
         AccountCapsule creator = repository
@@ -462,7 +462,7 @@ public class VMActuator implements Actuator2 {
           .createProgramInvoke(TrxType.TRX_CONTRACT_CALL_TYPE, executorType, trx,
               tokenValue, tokenId, blockCap.getInstance(), repository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
-      if (isStaticCall) {
+      if (isConstanCall) {
         programInvoke.setConstantCall();
       }
       this.vm = new VM();

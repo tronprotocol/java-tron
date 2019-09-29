@@ -12,6 +12,7 @@ import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
+import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
@@ -45,11 +46,21 @@ public abstract class AbstractActuator implements Actuator {
   protected ZKProofStore proofStore;
   protected MerkleContainer merkleContainer;
   protected DelegationService delegationService;
+  protected DelegationStore delegationStore;
 
   AbstractActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicStore) {
     this.contract = contract;
     this.accountStore = accountStore;
     this.dynamicStore = dynamicStore;
+  }
+
+  AbstractActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore,
+  DynamicPropertiesStore dynamicPropertiesStore, DelegationStore delegationStore) {
+    this.contract = contract;
+    this.accountStore = accountStore;
+    this.witnessStore = witnessStore;
+    this.dynamicStore = dynamicPropertiesStore;
+    this.delegationStore = delegationStore;
   }
 
   AbstractActuator(Any contract, AccountStore accountStore, AssetIssueStore assetIssueStore,
