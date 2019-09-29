@@ -54,8 +54,6 @@ public class VMConfigLoader {
     } else {
       cachedVmConfig.setSwitchVm2(false);
     }
-    cachedVmConfig.setSwitchVm2(true);
-
     return cachedVmConfig;
   }
 
