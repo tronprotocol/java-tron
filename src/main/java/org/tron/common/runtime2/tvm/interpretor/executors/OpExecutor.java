@@ -1,6 +1,8 @@
 package org.tron.common.runtime2.tvm.interpretor.executors;
 
 import java.math.BigInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
 import org.tron.common.runtime2.tvm.ContractExecutor;
@@ -10,12 +12,14 @@ import org.tron.common.runtime2.tvm.interpretor.Op;
 
 public abstract class OpExecutor {
 
+  protected static final Logger logger = LoggerFactory.getLogger("VM2");
+
   public void exec(Op op, ContractExecutor executor) {
   }
 
   ;
 
-  public long calcMemEnergy(long oldMemSize, BigInteger newMemSize,
+  public static long calcMemEnergy(long oldMemSize, BigInteger newMemSize,
       long copySize, Op op) {
     long energyCost = 0;
 
@@ -38,7 +42,7 @@ public abstract class OpExecutor {
     return energyCost;
   }
 
-  protected void checkMemorySize(Op op, BigInteger newMemSize) {
+  protected static void checkMemorySize(Op op, BigInteger newMemSize) {
     if (newMemSize.compareTo(VMConstant.MEM_LIMIT) > 0) {
       throw memoryOverflow(op.name());
     }
@@ -52,7 +56,7 @@ public abstract class OpExecutor {
    * @param size number of bytes needed
    * @return offset + size, unless size is 0. In that case memNeeded is also 0.
    */
-  protected BigInteger memNeeded(DataWord offset, DataWord size) {
+  protected static BigInteger memNeeded(DataWord offset, DataWord size) {
     return size.isZero() ? BigInteger.ZERO : offset.value().add(size.value());
   }
 

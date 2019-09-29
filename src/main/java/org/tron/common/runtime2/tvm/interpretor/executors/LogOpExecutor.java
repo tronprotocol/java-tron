@@ -4,6 +4,7 @@ package org.tron.common.runtime2.tvm.interpretor.executors;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.OpCode;
@@ -21,6 +22,11 @@ public class LogOpExecutor extends OpExecutor {
 
   public static LogOpExecutor getInstance() {
     return INSTANCE;
+  }
+
+  public static void main(String[] args) {
+    System.out.println(calcMemEnergy(288, memNeeded(new DataWord(Hex.decode("0000000000000000000000000000000000000000000000000000000000000120")), new DataWord(32)), 0 ,Op.MLOAD));
+
   }
 
 

@@ -17,7 +17,9 @@
  */
 package org.tron.common.runtime.vm.program;
 
+import java.util.EmptyStackException;
 import java.util.Objects;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.listener.ProgramListener;
 import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
@@ -85,5 +87,14 @@ public class Stack extends java.util.Stack<DataWord> implements ProgramListenerA
   @Override
   public int hashCode() {
     return Objects.hash(super.hashCode(), programListener);
+  }
+
+  public synchronized String safepeek() {
+    int     len = size();
+
+    if (len == 0)
+      return "";
+
+    return Hex.toHexString(elementAt(len - 1).getData());
   }
 }

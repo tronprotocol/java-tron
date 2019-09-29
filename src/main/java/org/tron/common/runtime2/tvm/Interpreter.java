@@ -20,6 +20,7 @@ import org.tron.common.runtime.vm.MessageCall;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.program.Stack;
+import org.tron.common.runtime2.tvm.interpretor.Op;
 
 
 @Slf4j(topic = "VM2")
@@ -65,7 +66,8 @@ public class Interpreter {
       //step
       exec(env, op, callEnergy);
       env.setPreviouslyExecutedOp(op.val());
-      logger.info("exec:{},stack:{},pc:{},energy:{}",op.name(),env.getStack().size(),env.getPC(),env.getContractContext().getProgramResult().getEnergyUsed());
+      String hint = "exec:"+op.name()+" stack:"+env.getStack().size()+" mem:"+env.getMemory().size()+" pc:"+env.getPC()+" stacktop:"+env.getStack().safepeek()+" ene:"+env.getContractContext().getProgramResult().getEnergyUsed();
+      env.getContractContext().addOpHistory(hint);
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
       if (!(e instanceof org.tron.common.runtime.vm.program.Program.TransferException)) {
@@ -909,13 +911,17 @@ public class Interpreter {
         DataWord key = env.stackPop();
         DataWord val = env.storageLoad(key);
 
-        if (logger.isDebugEnabled()) {
-          hint = "key: " + key + " value: " + val;
-        }
+        hint = "key: " + key + " value: " + val;
+
+        //logger.info(hint);
 
         if (val == null) {
           val = key.and(DataWord.ZERO);
         }
+
+        hint = "final val: " +val;
+        //logger.info(hint);
+
 
         env.stackPush(val);
         env.step();
@@ -1197,8 +1203,11 @@ public class Interpreter {
     }
   }
 
+  public static void main(String[] args) {
+    System.out.println(calcMemEnergy(EnergyCost.getInstance(),288, memNeeded(new DataWord(Hex.decode("0000000000000000000000000000000000000000000000000000000000000120")), new DataWord(32)), 0 ,OpCode.MLOAD));
+  }
 
-  private long calcMemEnergy(EnergyCost energyCosts, long oldMemSize, BigInteger newMemSize,
+  private static long calcMemEnergy(EnergyCost energyCosts, long oldMemSize, BigInteger newMemSize,
                              long copySize, OpCode op) {
     long energyCost = 0;
 
@@ -1234,7 +1243,7 @@ public class Interpreter {
     return size.isZero() ? BigInteger.ZERO : offset.value().add(size.value());
   }
 
-  private void checkMemorySize(OpCode op, BigInteger newMemSize) {
+  private static void checkMemorySize(OpCode op, BigInteger newMemSize) {
     if (newMemSize.compareTo(VMConstant.MEM_LIMIT) > 0) {
       throw org.tron.common.runtime.vm.program.Program.Exception.memoryOverflow(op);
     }

@@ -527,7 +527,12 @@ public enum Op {
         public void exec(Op op, ContractExecutor executor) {
           executor.spendEnergy(OpCode.Tier.BaseTier.asInt(), op.name());
           DataWord callerAddress = executor.getCallerAddress();
+          /**
+           since we use 21 bytes address instead of 20 as etherum, we need to make sure
+           the address length in vm is matching with 20
+           */
 
+          callerAddress = new DataWord(callerAddress.getLast20Bytes());
           executor.stackPush(callerAddress);
           executor.step();
         }
@@ -748,12 +753,12 @@ public enum Op {
         @Override
         public void exec(Op op, ContractExecutor executor) {
           DataWord addr = executor.stackPop();
-          DataWord data = executor.memoryLoad(addr);
-
           executor.spendEnergy(
               calcMemEnergy(executor.getMemory().size(),
                   memNeeded(addr, new DataWord(32)), 0, op), op.name());
 
+
+          DataWord data = executor.memoryLoad(addr);
           executor.stackPush(data);
           executor.step();
         }
@@ -801,10 +806,15 @@ public enum Op {
           executor.spendEnergy(Costs.SLOAD, op.name());
           DataWord key = executor.stackPop();
           DataWord val = executor.storageLoad(key);
+          String hint = "key: " + key + " value: " + val;
 
+          //logger.info(hint);
           if (val == null) {
             val = key.and(DataWord.ZERO);
           }
+          hint = "final val: " +val;
+          //logger.info(hint);
+
 
           executor.stackPush(val);
           executor.step();

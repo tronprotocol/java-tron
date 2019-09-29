@@ -69,6 +69,16 @@ public class ContractExecutor {
   private long nonce;
   private byte[] returnDataBuffer;
 
+  private boolean enableInterpreter2 =false;
+
+  public boolean isEnableInterpreter2() {
+    return enableInterpreter2;
+  }
+
+  public ContractExecutor setEnableInterpreter2(boolean enableInterpreter2) {
+    this.enableInterpreter2 = enableInterpreter2;
+    return this;
+  }
 
   public DataWord getContractAddress() {
     return new DataWord(contractContext.getContractAddress());
@@ -155,8 +165,13 @@ public class ContractExecutor {
       preStaticCheck();
       //transfer assets
       transferAssets();
-      //processCode
-      Interpreter.getInstance().play(this);
+      if(enableInterpreter2){
+        //processCode
+        Interpreter2.getInstance().play(this);
+      }else {
+        Interpreter.getInstance().play(this);
+      }
+
       //save code for create
       postProcess();
     } catch (StackOverflowError soe) {
@@ -579,7 +594,7 @@ public class ContractExecutor {
           contractContext.getVmShouldEndInUs(), vmNowInUs, contractContext.getVmStartInUs());
       throw notEnoughTime(opName);
     }
-
+    return;
   }
 
 

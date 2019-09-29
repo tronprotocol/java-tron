@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -16,10 +17,12 @@ import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfoTriggerParser;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.runtime.vm.program.Program.BytecodeExecutionException;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime2.IVM;
 import org.tron.common.runtime2.config.VMConfig;
 import org.tron.common.storage.Deposit;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
@@ -87,10 +90,33 @@ public class TVM implements IVM {
   public void execute() throws ContractValidateException, VMIllegalException {
     //Validate and getBaseProgram
     ContractContext program = preValidateAndGetBaseProgram(isStatic);
+    ContractContext program_2 = preValidateAndGetBaseProgram(isStatic);
+    Deposit childDepo =  DepositImpl.createRoot(deposit.getDbManager());
+
     //setup program environment and play
     ContractExecutor env = ContractExecutor
-        .createEnvironment(deposit, program, vmConfig)
+        .createEnvironment(deposit, program, vmConfig).setEnableInterpreter2(true)
         .execute();
+    //only for debug use
+    ContractExecutor env_v2 = ContractExecutor
+        .createEnvironment(childDepo, program_2, vmConfig).setEnableInterpreter2(false)
+        .execute();
+
+    //compare these
+    if(program.getProgramResult().isRevert() == program_2.getProgramResult().isRevert()
+    &&program.getProgramResult().getEnergyUsed() == program_2.getProgramResult().getEnergyUsed()){
+      //do nothing for now
+    }else {
+      logger.info("v1:");
+      logger.info(program.getOpHistory().stream().collect(Collectors.joining("\n")));
+
+      logger.info("v2:");
+      logger.info(program_2.getOpHistory().stream().collect(Collectors.joining("\n")));
+
+      throw new BytecodeExecutionException("Interpretor v1 v2 NOT SAME ! ");
+
+    }
+
     //process result
     processResult(env, isStatic);
   }

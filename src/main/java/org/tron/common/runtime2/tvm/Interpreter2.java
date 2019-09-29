@@ -58,7 +58,8 @@ public class Interpreter2 {
       //step
       op.getOpExecutor().exec(op,env);
       env.setPreviouslyExecutedOp(op.val());
-      logger.info("exec:{},stack:{},pc:{},energy:{}",op.name(),env.getStack().size(),env.getPC(),env.getContractContext().getProgramResult().getEnergyUsed());
+      String hint = "exec:"+op.name()+" stack:"+env.getStack().size()+" mem:"+env.getMemory().size()+" pc:"+env.getPC()+" stacktop:"+env.getStack().safepeek()+" ene:"+env.getContractContext().getProgramResult().getEnergyUsed();
+      env.getContractContext().addOpHistory(hint);
 
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());

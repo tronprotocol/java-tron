@@ -2,7 +2,9 @@ package org.tron.common.runtime2.tvm;
 
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -84,6 +86,14 @@ public class ContractContext {
   private VMConfig vmConfig;
 
   private CallInfo callInfo = new CallInfo();
+
+  List<String> opHistory = new ArrayList<>();
+
+
+
+  public void addOpHistory(String s){
+    opHistory.add(s);
+  }
 
   public void setOps(byte[] ops) {
     this.ops = nullToEmpty(ops);
