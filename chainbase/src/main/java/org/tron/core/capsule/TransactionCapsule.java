@@ -17,7 +17,6 @@ package org.tron.core.capsule;
 
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 import static org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import static org.tron.protos.contract.VoteAssetContractOuterClass.VoteAssetContract;
 import static org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import static org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 import static org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
@@ -25,6 +24,7 @@ import static org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Internal;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
@@ -45,9 +45,11 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
@@ -66,36 +68,19 @@ import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
-import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
-import org.tron.protos.contract.AccountContract.SetAccountIdContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
-import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
-import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
-import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
-import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
-import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
-import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
 
 @Slf4j(topic = "capsule")
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private static final ExecutorService executorService = Executors
       .newFixedThreadPool(DBConfig.getValidContractProtoThreadNum());
+  private static final String OWNER_ADDRESS = "ownerAddress_";
 
   private Transaction transaction;
   @Setter
@@ -262,106 +247,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     try {
       Any contractParameter = contract.getParameter();
       switch (contract.getType()) {
-        case AccountCreateContract:
-          owner = contractParameter.unpack(AccountCreateContract.class).getOwnerAddress();
-          break;
-        case TransferContract:
-          owner = contractParameter.unpack(TransferContract.class).getOwnerAddress();
-          break;
-        case TransferAssetContract:
-          owner = contractParameter.unpack(TransferAssetContract.class).getOwnerAddress();
-          break;
-        case VoteAssetContract:
-          owner = contractParameter.unpack(VoteAssetContract.class).getOwnerAddress();
-          break;
-        case VoteWitnessContract:
-          owner = contractParameter.unpack(VoteWitnessContract.class).getOwnerAddress();
-          break;
-        case WitnessCreateContract:
-          owner = contractParameter.unpack(WitnessCreateContract.class).getOwnerAddress();
-          break;
-        case AssetIssueContract:
-          owner = contractParameter.unpack(AssetIssueContract.class).getOwnerAddress();
-          break;
-        case WitnessUpdateContract:
-          owner = contractParameter.unpack(WitnessUpdateContract.class).getOwnerAddress();
-          break;
-        case ParticipateAssetIssueContract:
-          owner = contractParameter.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
-          break;
-        case AccountUpdateContract:
-          owner = contractParameter.unpack(AccountUpdateContract.class).getOwnerAddress();
-          break;
-        case FreezeBalanceContract:
-          owner = contractParameter.unpack(FreezeBalanceContract.class).getOwnerAddress();
-          break;
-        case UnfreezeBalanceContract:
-          owner = contractParameter.unpack(UnfreezeBalanceContract.class).getOwnerAddress();
-          break;
-        case UnfreezeAssetContract:
-          owner = contractParameter.unpack(UnfreezeAssetContract.class).getOwnerAddress();
-          break;
-        case WithdrawBalanceContract:
-          owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
-          break;
-        case CreateSmartContract:
-          owner = contractParameter.unpack(CreateSmartContract.class).getOwnerAddress();
-          break;
-        case TriggerSmartContract:
-          owner = contractParameter.unpack(TriggerSmartContract.class).getOwnerAddress();
-          break;
-        case UpdateAssetContract:
-          owner = contractParameter.unpack(UpdateAssetContract.class).getOwnerAddress();
-          break;
-        case ProposalCreateContract:
-          owner = contractParameter.unpack(ProposalCreateContract.class).getOwnerAddress();
-          break;
-        case ProposalApproveContract:
-          owner = contractParameter.unpack(ProposalApproveContract.class).getOwnerAddress();
-          break;
-        case ProposalDeleteContract:
-          owner = contractParameter.unpack(ProposalDeleteContract.class).getOwnerAddress();
-          break;
-        case SetAccountIdContract:
-          owner = contractParameter.unpack(SetAccountIdContract.class).getOwnerAddress();
-          break;
-        //case BuyStorageContract:
-        //  owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-        //  break;
-        //case BuyStorageBytesContract:
-        //  owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
-        //  break;
-        //case SellStorageContract:
-        //  owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
-        //  break;
-        case UpdateSettingContract:
-          owner = contractParameter.unpack(UpdateSettingContract.class)
-              .getOwnerAddress();
-          break;
-        case UpdateEnergyLimitContract:
-          owner = contractParameter.unpack(UpdateEnergyLimitContract.class)
-              .getOwnerAddress();
-          break;
-        case ClearABIContract:
-          owner = contractParameter.unpack(ClearABIContract.class)
-              .getOwnerAddress();
-          break;
-        case ExchangeCreateContract:
-          owner = contractParameter.unpack(ExchangeCreateContract.class).getOwnerAddress();
-          break;
-        case ExchangeInjectContract:
-          owner = contractParameter.unpack(ExchangeInjectContract.class).getOwnerAddress();
-          break;
-        case ExchangeWithdrawContract:
-          owner = contractParameter.unpack(ExchangeWithdrawContract.class).getOwnerAddress();
-          break;
-        case ExchangeTransactionContract:
-          owner = contractParameter.unpack(ExchangeTransactionContract.class).getOwnerAddress();
-          break;
-        case AccountPermissionUpdateContract:
-          owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
-          break;
-        case ShieldedTransferContract:
+        case ShieldedTransferContract: {
           ShieldedTransferContract shieldedTransferContract = contractParameter
               .unpack(ShieldedTransferContract.class);
           if (!shieldedTransferContract.getTransparentFromAddress().isEmpty()) {
@@ -370,9 +256,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             return null;
           }
           break;
+        }
         // todo add other contract
-        default:
-          return null;
+        default: {
+          long start = System.currentTimeMillis();
+          Class<? extends GeneratedMessageV3> clazz = TransactionFactory
+              .getContract(contract.getType());
+          if (clazz == null) {
+            logger.error("not exist {}", contract.getType());
+            return null;
+          }
+          GeneratedMessageV3 generatedMessageV3 = contractParameter.unpack(clazz);
+          owner = ReflectUtils.getFieldValue(generatedMessageV3, OWNER_ADDRESS);
+          if (owner == null) {
+            logger.error("not exist [{}] field,{}", OWNER_ADDRESS, clazz);
+            return null;
+          }
+          logger.info("getOwner spend time : {}", (System.currentTimeMillis() - start));
+          break;
+        }
       }
       return owner.toByteArray();
     } catch (Exception ex) {
@@ -415,112 +317,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public static void validContractProto(Transaction.Contract contract)
       throws InvalidProtocolBufferException, P2pException {
     Any contractParameter = contract.getParameter();
-    Class clazz = null;
-    switch (contract.getType()) {
-      case AccountCreateContract:
-        clazz = AccountCreateContract.class;
-        break;
-      case TransferContract:
-        clazz = TransferContract.class;
-        break;
-      case TransferAssetContract:
-        clazz = TransferAssetContract.class;
-        break;
-      case VoteAssetContract:
-        clazz = VoteAssetContract.class;
-        break;
-      case VoteWitnessContract:
-        clazz = VoteWitnessContract.class;
-        break;
-      case WitnessCreateContract:
-        clazz = WitnessCreateContract.class;
-        break;
-      case AssetIssueContract:
-        clazz = AssetIssueContract.class;
-        break;
-      case WitnessUpdateContract:
-        clazz = WitnessUpdateContract.class;
-        break;
-      case ParticipateAssetIssueContract:
-        clazz = ParticipateAssetIssueContract.class;
-        break;
-      case AccountUpdateContract:
-        clazz = AccountUpdateContract.class;
-        break;
-      case FreezeBalanceContract:
-        clazz = FreezeBalanceContract.class;
-        break;
-      case UnfreezeBalanceContract:
-        clazz = UnfreezeBalanceContract.class;
-        break;
-      case UnfreezeAssetContract:
-        clazz = UnfreezeAssetContract.class;
-        break;
-      case WithdrawBalanceContract:
-        clazz = WithdrawBalanceContract.class;
-        break;
-      case CreateSmartContract:
-        clazz = CreateSmartContract.class;
-        break;
-      case TriggerSmartContract:
-        clazz = TriggerSmartContract.class;
-        break;
-      case UpdateAssetContract:
-        clazz = UpdateAssetContract.class;
-        break;
-      case ProposalCreateContract:
-        clazz = ProposalCreateContract.class;
-        break;
-      case ProposalApproveContract:
-        clazz = ProposalApproveContract.class;
-        break;
-      case ProposalDeleteContract:
-        clazz = ProposalDeleteContract.class;
-        break;
-      case SetAccountIdContract:
-        clazz = SetAccountIdContract.class;
-        break;
-      case UpdateSettingContract:
-        clazz = UpdateSettingContract.class;
-        break;
-      case UpdateEnergyLimitContract:
-        clazz = UpdateEnergyLimitContract.class;
-        break;
-      case ClearABIContract:
-        clazz = ClearABIContract.class;
-        break;
-      case ExchangeCreateContract:
-        clazz = ExchangeCreateContract.class;
-        break;
-      case ExchangeInjectContract:
-        clazz = ExchangeInjectContract.class;
-        break;
-      case ExchangeWithdrawContract:
-        clazz = ExchangeWithdrawContract.class;
-        break;
-      case ExchangeTransactionContract:
-        clazz = ExchangeTransactionContract.class;
-        break;
-      case AccountPermissionUpdateContract:
-        clazz = AccountPermissionUpdateContract.class;
-        break;
-      case ShieldedTransferContract:
-        clazz = ShieldedTransferContract.class;
-        break;
-      // todo add other contract
-      default:
-        break;
-    }
+    Class clazz = TransactionFactory.getContract(contract.getType());
     if (clazz == null) {
       throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
     }
     com.google.protobuf.Message src = contractParameter.unpack(clazz);
     com.google.protobuf.Message contractMessage = parse(clazz,
         Message.getCodedInputStream(src.toByteArray()));
-
-    //    if (!src.equals(contractMessage)) {
-    //      throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
-    //    }
 
     Message.compareBytes(src.toByteArray(), contractMessage.toByteArray());
   }
