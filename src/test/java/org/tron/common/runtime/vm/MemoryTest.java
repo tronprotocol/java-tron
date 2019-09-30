@@ -22,7 +22,6 @@ import static java.lang.Math.ceil;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
-
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;

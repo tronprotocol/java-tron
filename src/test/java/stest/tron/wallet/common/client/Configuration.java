@@ -2,7 +2,6 @@ package stest.tron.wallet.common.client;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.io.File;

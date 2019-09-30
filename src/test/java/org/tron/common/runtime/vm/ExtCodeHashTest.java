@@ -38,12 +38,25 @@ public class ExtCodeHashTest extends VMTestBase {
 
   @Test
   public void testExtCodeHash()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
     VMConfig.initAllowTvmConstantinople(1);
     String contractName = "TestExtCodeHash";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"_addr\",\"type\":\"uint256\"}],\"name\":\"getCodeHashByUint\",\"outputs\":[{\"name\":\"_hash\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_addr\",\"type\":\"address\"}],\"name\":\"getCodeHashByAddr\",\"outputs\":[{\"name\":\"_hash\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]";
-    String factoryCode = "608060405234801561001057600080fd5b5061010d806100206000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c80637b77fd191460375780637d5e422d146076575b600080fd5b606060048036036020811015604b57600080fd5b810190808035906020019092919050505060cb565b6040518082815260200191505060405180910390f35b60b560048036036020811015608a57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919050505060d6565b6040518082815260200191505060405180910390f35b6000813f9050919050565b6000813f905091905056fea165627a7a723058200f30933f006db4e1adeee12c030b87e720dad3cb169769159fc56ec25d9af66f0029";
+    String ABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"_addr\",\"type\":\"uint256\"}],"
+        + "\"name\":\"getCodeHashByUint\",\"outputs\":[{\"name\":\"_hash\",\"type\":\"bytes32\""
+        + "}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\""
+        + ":true,\"inputs\":[{\"name\":\"_addr\",\"type\":\"address\"}],\"name\":\""
+        + "getCodeHashByAddr\",\"outputs\":[{\"name\":\"_hash\",\"type\":\"bytes32\"}],\"payable"
+        + "\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]";
+    String factoryCode = "608060405234801561001057600080fd5b5061010d806100206000396000f3fe60806040"
+        + "52348015600f57600080fd5b506004361060325760003560e01c80637b77fd191460375780637d5e422d146"
+        + "076575b600080fd5b606060048036036020811015604b57600080fd5b810190808035906020019092919050"
+        + "505060cb565b6040518082815260200191505060405180910390f35b60b560048036036020811015608a576"
+        + "00080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050"
+        + "60d6565b6040518082815260200191505060405180910390f35b6000813f9050919050565b6000813f90509"
+        + "1905056fea165627a7a723058200f30933f006db4e1adeee12c030b87e720dad3cb169769159fc56ec25d9a"
+        + "f66f0029";
     long value = 0;
     long fee = 100000000;
     long consumeUserResourcePercent = 0;

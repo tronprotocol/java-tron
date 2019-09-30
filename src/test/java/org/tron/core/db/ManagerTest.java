@@ -86,7 +86,12 @@ public class ManagerTest {
 
   @Test
   public void setBlockReference()
-      throws ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadBlockException, ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException {
+      throws ContractExeException, UnLinkedBlockException, ValidateScheduleException,
+      BadBlockException, ContractValidateException, ValidateSignatureException, BadItemException,
+      ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException,
+      NonCommonBlockException, ReceiptCheckErrException, VMIllegalException,
+      TooBigTransactionResultException, ZksnarkException {
 
     BlockCapsule blockCapsule = new BlockCapsule(1,
         Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()), 1, ByteString.copyFrom(ECKey
@@ -178,7 +183,12 @@ public class ManagerTest {
 
   @Test
   public void fork()
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadItemException, ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, BadItemException, ItemNotFoundException,
+      HeaderNotFound, AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, DupTransactionException, BadBlockException, TaposException,
+      BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException,
+      VMIllegalException, TooBigTransactionResultException, ZksnarkException {
     Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -231,7 +241,12 @@ public class ManagerTest {
 
   @Test
   public void doNotSwitch()
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadItemException, ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, BadItemException, ItemNotFoundException,
+      HeaderNotFound, AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, DupTransactionException, BadBlockException, TaposException,
+      BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException,
+      VMIllegalException, TooBigTransactionResultException, ZksnarkException {
     Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -309,7 +324,12 @@ public class ManagerTest {
 
   @Test
   public void testLastHeadBlockIsMaintenance()
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadItemException, ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, BadItemException, ItemNotFoundException,
+      HeaderNotFound, AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, DupTransactionException, BadBlockException, TaposException,
+      BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException,
+      VMIllegalException, TooBigTransactionResultException {
     Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -331,7 +351,12 @@ public class ManagerTest {
 
   @Test
   public void switchBack()
-      throws ValidateSignatureException, ContractValidateException, ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadItemException, ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException {
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, BadItemException, ItemNotFoundException,
+      HeaderNotFound, AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, DupTransactionException, BadBlockException, TaposException,
+      BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException,
+      VMIllegalException, TooBigTransactionResultException, ZksnarkException {
     Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");

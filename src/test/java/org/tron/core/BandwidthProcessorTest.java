@@ -190,7 +190,8 @@ public class BandwidthProcessorTest {
     transferAssetContract = transferAssetContract.toBuilder()
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(NOT_EXISTS_ADDRESS))).build();
 
-    org.tron.protos.Protocol.Transaction.Contract contract = org.tron.protos.Protocol.Transaction.Contract
+    org.tron.protos.Protocol.Transaction.Contract contract =
+        org.tron.protos.Protocol.Transaction.Contract
         .newBuilder().setType(Protocol.Transaction.Contract.ContractType.TransferAssetContract)
         .setParameter(Any.pack(transferAssetContract)).build();
 
@@ -248,13 +249,13 @@ public class BandwidthProcessorTest {
     dbManager.consumeBandwidth(trx, trace);
     ownerCapsuleNew = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
 
-    Assert.assertEquals(61L + 122 + (dbManager.getDynamicPropertiesStore().supportVM() ?
-        Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0), ownerCapsuleNew.getFreeNetUsage());
+    Assert.assertEquals(61L + 122 + (dbManager.getDynamicPropertiesStore().supportVM()
+        ? Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0), ownerCapsuleNew.getFreeNetUsage());
     Assert.assertEquals(508897012L,
         ownerCapsuleNew.getLatestConsumeFreeTime()); // 508882612L + 28800L/2
     Assert.assertEquals(1526691038000L, ownerCapsuleNew.getLatestOperationTime());
-    Assert.assertEquals(61L + 122L + (dbManager.getDynamicPropertiesStore().supportVM() ?
-            Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0),
+    Assert.assertEquals(61L + 122L + (dbManager.getDynamicPropertiesStore().supportVM()
+            ? Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0),
         dbManager.getDynamicPropertiesStore().getPublicNetUsage());
     Assert.assertEquals(508897012L, dbManager.getDynamicPropertiesStore().getPublicNetTime());
     Assert.assertEquals(0L, ret.getFee());
@@ -310,13 +311,13 @@ public class BandwidthProcessorTest {
     Assert.assertEquals(508897012L, assetCapsuleNew.getLatestConsumeTime());
     Assert.assertEquals(1526691038000L, ownerCapsuleNew.getLatestOperationTime());
     Assert.assertEquals(508897012L, ownerCapsuleNew.getLatestAssetOperationTime(ASSET_NAME));
-    Assert.assertEquals(61L + 122L + (dbManager.getDynamicPropertiesStore().supportVM() ?
-            Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0),
+    Assert.assertEquals(61L + 122L + (dbManager.getDynamicPropertiesStore().supportVM()
+            ? Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0),
         ownerCapsuleNew.getFreeAssetNetUsage(ASSET_NAME));
-    Assert.assertEquals(61L + 122L + (dbManager.getDynamicPropertiesStore().supportVM() ?
-        Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0), ownerCapsuleNew.getFreeAssetNetUsageV2("1"));
-    Assert.assertEquals(61L + 122L + (dbManager.getDynamicPropertiesStore().supportVM() ?
-        Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0), assetCapsuleNew.getNetUsage());
+    Assert.assertEquals(61L + 122L + (dbManager.getDynamicPropertiesStore().supportVM()
+        ? Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0), ownerCapsuleNew.getFreeAssetNetUsageV2("1"));
+    Assert.assertEquals(61L + 122L + (dbManager.getDynamicPropertiesStore().supportVM()
+        ? Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0), assetCapsuleNew.getNetUsage());
     Assert.assertEquals(0L, ret.getFee());
 
   }
@@ -369,11 +370,11 @@ public class BandwidthProcessorTest {
     Assert.assertEquals(508897012L, issuerCapsuleNew.getLatestConsumeTime());
     Assert.assertEquals(1526691038000L, ownerCapsuleNew.getLatestOperationTime());
     Assert.assertEquals(508897012L, ownerCapsuleNew.getLatestAssetOperationTimeV2(ASSET_NAME_V2));
-    Assert.assertEquals(56L + 113L + (dbManager.getDynamicPropertiesStore().supportVM() ?
-            Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0),
+    Assert.assertEquals(56L + 113L + (dbManager.getDynamicPropertiesStore().supportVM()
+            ? Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0),
         ownerCapsuleNew.getFreeAssetNetUsageV2(ASSET_NAME_V2));
-    Assert.assertEquals(56L + 113L + (dbManager.getDynamicPropertiesStore().supportVM() ?
-        Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0), issuerCapsuleNew.getNetUsage());
+    Assert.assertEquals(56L + 113L + (dbManager.getDynamicPropertiesStore().supportVM()
+        ? Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0), issuerCapsuleNew.getNetUsage());
     Assert.assertEquals(0L, ret.getFee());
 
   }
@@ -416,8 +417,8 @@ public class BandwidthProcessorTest {
 
     ownerCapsuleNew = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
 
-    Assert.assertEquals(61L + 122L + (dbManager.getDynamicPropertiesStore().supportVM() ?
-        Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0), ownerCapsuleNew.getNetUsage());
+    Assert.assertEquals(61L + 122L + (dbManager.getDynamicPropertiesStore().supportVM()
+        ? Constant.MAX_RESULT_SIZE_IN_TX / 2 * 3 : 0), ownerCapsuleNew.getNetUsage());
     Assert.assertEquals(1526691038000L, ownerCapsuleNew.getLatestOperationTime());
     Assert.assertEquals(508897012L, ownerCapsuleNew.getLatestConsumeTime());
     Assert.assertEquals(0L, ret.getFee());

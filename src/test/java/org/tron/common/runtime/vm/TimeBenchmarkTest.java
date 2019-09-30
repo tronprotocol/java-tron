@@ -89,15 +89,33 @@ public class TimeBenchmarkTest {
 
   @Test
   public void timeBenchmark()
-      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException,
+      VMIllegalException {
     long value = 0;
     long feeLimit = 200_000_000L; // sun
     long consumeUserResourcePercent = 100;
 
     String contractName = "timeBenchmark";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],\"name\":\"fibonacciNotify\",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],\"name\":\"fibonacci\",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"input\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"result\",\"type\":\"uint256\"}],\"name\":\"Notify\",\"type\":\"event\"}]";
-    String code = "608060405234801561001057600080fd5b506101ba806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633c7fdc701461005157806361047ff414610092575b600080fd5b34801561005d57600080fd5b5061007c600480360381019080803590602001909291905050506100d3565b6040518082815260200191505060405180910390f35b34801561009e57600080fd5b506100bd60048036038101908080359060200190929190505050610124565b6040518082815260200191505060405180910390f35b60006100de82610124565b90507f71e71a8458267085d5ab16980fd5f114d2d37f232479c245d523ce8d23ca40ed8282604051808381526020018281526020019250505060405180910390a1919050565b60008060008060008086141561013d5760009450610185565b600186141561014f5760019450610185565b600093506001925060009150600290505b85811115156101815782840191508293508192508080600101915050610160565b8194505b505050509190505600a165627a7a72305820637e163344c180cd57f4b3a01b07a5267ad54811a5a2858b5d67330a2724ee680029";
+    String ABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],"
+        + "\"name\":\"fibonacciNotify\",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],"
+        + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant"
+        + "\":true,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],\"name\":\"fibonacci\""
+        + ",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],\"payable\":false,"
+        + "\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":"
+        + "[{\"indexed\":false,\"name\":\"input\",\"type\":\"uint256\"},{\"indexed\":false,\"name"
+        + "\":\"result\",\"type\":\"uint256\"}],\"name\":\"Notify\",\"type\":\"event\"}]";
+    String code = "608060405234801561001057600080fd5b506101ba806100206000396000f300608060405260043"
+        + "61061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffff"
+        + "ffff1680633c7fdc701461005157806361047ff414610092575b600080fd5b34801561005d57600080fd5b5"
+        + "061007c600480360381019080803590602001909291905050506100d3565b60405180828152602001915050"
+        + "60405180910390f35b34801561009e57600080fd5b506100bd6004803603810190808035906020019092919"
+        + "0505050610124565b6040518082815260200191505060405180910390f35b60006100de82610124565b9050"
+        + "7f71e71a8458267085d5ab16980fd5f114d2d37f232479c245d523ce8d23ca40ed828260405180838152602"
+        + "0018281526020019250505060405180910390a1919050565b60008060008060008086141561013d57600094"
+        + "50610185565b600186141561014f5760019450610185565b600093506001925060009150600290505b85811"
+        + "115156101815782840191508293508192508080600101915050610160565b8194505b505050509190505600"
+        + "a165627a7a72305820637e163344c180cd57f4b3a01b07a5267ad54811a5a2858b5d67330a2724ee680029";
     String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils

@@ -177,7 +177,8 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
   }
 
   private byte[] createContract()
-      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException, ContractExeException, VMIllegalException {
+      throws ContractValidateException, AccountResourceInsufficientException,
+      TooBigTransactionResultException, ContractExeException, VMIllegalException {
     AccountCapsule owner = dbManager.getAccountStore()
         .get(Wallet.decodeFromBase58Check(OwnerAddress));
     long energy = owner.getEnergyUsage();

@@ -35,7 +35,8 @@ public class deployMainGateway {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] depositAddress = ecKey1.getAddress();
   String testKeyFordeposit = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  private String testDepositTrx = "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb7";
+  private String testDepositTrx =
+      "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb7";
   private byte[] testDepositAddress = PublicMethed.getFinalAddress(testDepositTrx);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");

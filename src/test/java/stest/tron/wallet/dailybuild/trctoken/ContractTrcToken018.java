@@ -2,7 +2,6 @@ package stest.tron.wallet.dailybuild.trctoken;
 
 import static org.tron.protos.Protocol.TransactionInfo.code.SUCESS;
 
-
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

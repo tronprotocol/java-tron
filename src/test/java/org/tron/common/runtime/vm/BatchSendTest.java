@@ -109,7 +109,8 @@ public class BatchSendTest {
    */
   @Test
   public void TransferTokenTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     //  1. Deploy*/
     byte[] contractAddress = deployTransferContract();
     deposit.commit();
@@ -129,7 +130,8 @@ public class BatchSendTest {
     params.add(200);
     byte[] input = Hex.decode(AbiUtil.parseMethod(selectorStr, params));
 
-    //  2. Test trigger with tokenValue and tokenId, also test internal transaction transferToken function */
+    //  2. Test trigger with tokenValue and tokenId,
+    //  also test internal transaction transferToken function */
     long triggerCallValue = 0;
     long feeLimit = 100000000;
     long tokenValue = 0;
@@ -148,7 +150,8 @@ public class BatchSendTest {
   }
 
   private byte[] deployTransferContract()
-      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+      throws ContractExeException, ReceiptCheckErrException,
+      ContractValidateException, VMIllegalException {
     String contractName = "TestTransferTo";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[]";
@@ -160,8 +163,8 @@ public class BatchSendTest {
         + "d0565b005b6100c661016e565b60405173ffffffffffffffffffffffffffffffffffffffff87169084156108"
         + "fc029085906000818181858888f1505060405173ffffffffffffffffffffffffffffffffffffffff89169350"
         + "85156108fc0292508591506000818181858888f1505060405173ffffffffffffffffffffffffffffffffffff"
-        + "ffff8816935084156108fc0292508491506000818181858888f15050505050505050505050565b56fea165627"
-        + "a7a72305820cc2d598d1b3f968bbdc7825ce83d22dad48192f4bf95bda7f9e4ddf61669ba830029";
+        + "ffff8816935084156108fc0292508491506000818181858888f15050505050505050505050565b56fea1656"
+        + "27a7a72305820cc2d598d1b3f968bbdc7825ce83d22dad48192f4bf95bda7f9e4ddf61669ba830029";
 
     long value = 1000;
     long feeLimit = 100000000;

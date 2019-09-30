@@ -145,7 +145,8 @@ public class PublicMethed {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply
+      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          Contract.AssetIssueContract.FrozenSupply
           .newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
@@ -200,7 +201,8 @@ public class PublicMethed {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply
+      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          Contract.AssetIssueContract.FrozenSupply
           .newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
@@ -255,7 +257,8 @@ public class PublicMethed {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply
+      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          Contract.AssetIssueContract.FrozenSupply
           .newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
@@ -312,7 +315,8 @@ public class PublicMethed {
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
       //builder.setPublicFreeAssetNetUsage();
       //builder.setPublicLatestFreeNetTime();
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract.FrozenSupply
+      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          Contract.AssetIssueContract.FrozenSupply
           .newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
@@ -3842,7 +3846,8 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.AccountPermissionUpdateContract.Builder builder = Contract.AccountPermissionUpdateContract
+    Contract.AccountPermissionUpdateContract.Builder builder =
+        Contract.AccountPermissionUpdateContract
         .newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
@@ -4269,7 +4274,8 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.AccountPermissionUpdateContract.Builder builder = Contract.AccountPermissionUpdateContract
+    Contract.AccountPermissionUpdateContract.Builder builder =
+        Contract.AccountPermissionUpdateContract
         .newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);

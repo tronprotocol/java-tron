@@ -131,7 +131,8 @@ public class TransferToAccountTest {
    */
   @Test
   public void TransferTokenTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
     //  1. Test deploy with tokenValue and tokenId */
     long id = createAsset("testToken1");
     byte[] contractAddress = deployTransferContract(id);
@@ -146,7 +147,8 @@ public class TransferToAccountTest {
     byte[] input = Hex.decode(AbiUtil.parseMethod(selectorStr,
         "\"" + Wallet.encode58Check(Hex.decode(TRANSFER_TO)) + "\"" + "," + id + ",9"));
 
-    //  2. Test trigger with tokenValue and tokenId, also test internal transaction transferToken function */
+    //  2. Test trigger with tokenValue and tokenId,
+    //  also test internal transaction transferToken function */
     long triggerCallValue = 100;
     long feeLimit = 100000000;
     long tokenValue = 8;
@@ -261,11 +263,23 @@ public class TransferToAccountTest {
   }
 
   private byte[] deployTransferContract(long id)
-      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException,
+      VMIllegalException {
     String contractName = "TestTransferTo";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[]";
-    String code = "60806040526101cf806100136000396000f3fe608060405260043610610050577c010000000000000000000000000000000000000000000000000000000060003504632ccb1b3081146100555780634cd2270c14610090578063d4d6422614610098575b600080fd5b61008e6004803603604081101561006b57600080fd5b5073ffffffffffffffffffffffffffffffffffffffff81351690602001356100d7565b005b61008e61011f565b61008e600480360360608110156100ae57600080fd5b5073ffffffffffffffffffffffffffffffffffffffff8135169060208101359060400135610121565b60405173ffffffffffffffffffffffffffffffffffffffff83169082156108fc029083906000818181858888f1935050505015801561011a573d6000803e3d6000fd5b505050565b565b73ffffffffffffffffffffffffffffffffffffffff831681156108fc0282848015801561014d57600080fd5b50806780000000000000001115801561016557600080fd5b5080620f42401015801561017857600080fd5b50604051600081818185878a8ad094505050505015801561019d573d6000803e3d6000fd5b5050505056fea165627a7a723058202eab0934f57baf17ec1ddb6649b416e35d7cb846482d1232ca229258e83d22af0029";
+    String code = "60806040526101cf806100136000396000f3fe608060405260043610610050577c0100000000000"
+        + "00000000000000000000000000000000000000000000060003504632ccb1b3081146100555780634cd2270c"
+        + "14610090578063d4d6422614610098575b600080fd5b61008e6004803603604081101561006b57600080fd5"
+        + "b5073ffffffffffffffffffffffffffffffffffffffff81351690602001356100d7565b005b61008e61011f"
+        + "565b61008e600480360360608110156100ae57600080fd5b5073fffffffffffffffffffffffffffffffffff"
+        + "fffff8135169060208101359060400135610121565b60405173ffffffffffffffffffffffffffffffffffff"
+        + "ffff83169082156108fc029083906000818181858888f1935050505015801561011a573d6000803e3d6000f"
+        + "d5b505050565b565b73ffffffffffffffffffffffffffffffffffffffff831681156108fc02828480158015"
+        + "61014d57600080fd5b50806780000000000000001115801561016557600080fd5b5080620f4240101580156"
+        + "1017857600080fd5b50604051600081818185878a8ad094505050505015801561019d573d6000803e3d6000"
+        + "fd5b5050505056fea165627a7a723058202eab0934f57baf17ec1ddb6649b416e35d7cb846482d1232ca229"
+        + "258e83d22af0029";
 
     long value = 1000;
     long feeLimit = 100000000;

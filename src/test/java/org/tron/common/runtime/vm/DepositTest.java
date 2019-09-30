@@ -97,7 +97,8 @@ public class DepositTest {
   @Test
   @Ignore
   public void loopCallTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     this.manager.getDynamicPropertiesStore()
@@ -140,7 +141,8 @@ public class DepositTest {
     // <bAddress>,1,2
     //
     String params1 = Hex.toHexString(new DataWord(bAddress).getData())
-        + "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002";
+        + "000000000000000000000000000000000000000000000000000000000000000100000000000000000000000"
+        + "00000000000000000000000000000000000000002";
     System.err.println(params1);
 
     byte[] triggerData = TvmTestUtils
@@ -172,7 +174,8 @@ public class DepositTest {
     // callBcallA(address,uint256,uint256)
     // <bAddress>,100,1000
     String params2 = Hex.toHexString(new DataWord(bAddress).getData())
-        + "000000000000000000000000000000000000000000000000000000000000006400000000000000000000000000000000000000000000000000000000000003e8";
+        + "000000000000000000000000000000000000000000000000000000000000006400000000000000000000000"
+        + "000000000000000000000000000000000000003e8";
     triggerData = TvmTestUtils.parseAbi("callBcallA(address,uint256,uint256)", params2);
     result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), aAddress, triggerData, 0,
@@ -194,7 +197,8 @@ public class DepositTest {
 
   @Test
   public void loopCallTestOldVersion()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 0);
     this.manager.getDynamicPropertiesStore()
@@ -236,7 +240,8 @@ public class DepositTest {
     // <bAddress>,1,2
     //
     String params1 = Hex.toHexString(new DataWord(bAddress).getData())
-        + "00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002";
+        + "000000000000000000000000000000000000000000000000000000000000000100000000000000000000000"
+        + "00000000000000000000000000000000000000002";
 
     byte[] triggerData = TvmTestUtils
         .parseAbi("callBcallARevert(address,uint256,uint256)", params1);
@@ -267,7 +272,8 @@ public class DepositTest {
     // callBcallA(address,uint256,uint256)
     // <bAddress>,100,1000
     String params2 = Hex.toHexString(new DataWord(bAddress).getData())
-        + "000000000000000000000000000000000000000000000000000000000000006400000000000000000000000000000000000000000000000000000000000003e8";
+        + "000000000000000000000000000000000000000000000000000000000000006400000000000000000000000"
+        + "000000000000000000000000000000000000003e8";
     triggerData = TvmTestUtils.parseAbi("callBcallA(address,uint256,uint256)", params2);
     result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), aAddress, triggerData, 0,

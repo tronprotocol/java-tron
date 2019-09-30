@@ -2,7 +2,6 @@ package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
 
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -450,10 +449,11 @@ public class ExchangeWithdrawActuatorTest {
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsule2.getCreatorAddress());
       Assert.assertEquals(exchangeId, exchangeCapsule2.getID());
       Assert.assertEquals(1000000, exchangeCapsule2.getCreateTime());
-//      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsule2.getFirstTokenId()));
-//      Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsule2.getFirstTokenId()));
+      //Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(),
+      //    exchangeCapsule2.getFirstTokenId()));
+      //Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsule2.getFirstTokenId()));
       Assert.assertEquals(0L, exchangeCapsule2.getFirstTokenBalance());
-//      Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsule2.getSecondTokenId()));
+      //Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsule2.getSecondTokenId()));
       Assert.assertEquals(0L, exchangeCapsule2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);

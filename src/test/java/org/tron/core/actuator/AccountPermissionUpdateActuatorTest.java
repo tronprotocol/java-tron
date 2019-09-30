@@ -2,7 +2,6 @@ package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
 
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -862,8 +861,10 @@ public class AccountPermissionUpdateActuatorTest {
     // note: The aim of this test case is to show how the current codes work.
     // The default value is 7fff1fc0037e0000000000000000000000000000000000000000000000000000,
     // and it should call the addSystemContractAndSetPermission to add new contract type
-    // When you add a new contact, you can add its to contractType, as  '|| contractType = ContractType.XXX',
-    // and you will get the value from the output, then update the value to checkAvailableContractType
+    // When you add a new contact, you can add its to contractType,
+    // as  '|| contractType = ContractType.XXX',
+    // and you will get the value from the output,
+    // then update the value to checkAvailableContractType
     // and checkActiveDefaultOperations
     String validContractType = "7fff1fc0037e0800000000000000000000000000000000000000000000000000";
 
@@ -872,7 +873,7 @@ public class AccountPermissionUpdateActuatorTest {
       if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
           || contractType == ContractType.ClearABIContract
           || contractType == ContractType.UpdateBrokerageContract
-        //    || contractType == ContractType.CancelDeferredTransactionContract
+      //    || contractType == ContractType.CancelDeferredTransactionContract
       ) {
         continue;
       }
@@ -900,7 +901,7 @@ public class AccountPermissionUpdateActuatorTest {
           || contractType == ContractType.AccountPermissionUpdateContract
           || contractType == ContractType.ClearABIContract
           || contractType == ContractType.UpdateBrokerageContract
-        //    || contractType == ContractType.CancelDeferredTransactionContract
+      //||contractType == ContractType.CancelDeferredTransactionContract
       ) {
         continue;
       }

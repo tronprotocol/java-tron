@@ -89,8 +89,8 @@ public class MerkleTreeTest {
     JSONArray path_tests = readFile("merkle_path_sapling.json");
     JSONArray commitment_tests = readFile("merkle_commitments_sapling.json");
     int path_i = 0;
-//    MerkleContainer merkleContainer = new MerkleContainer();
-//    merkleContainer.getCurrentMerkle();
+    // MerkleContainer merkleContainer = new MerkleContainer();
+    // merkleContainer.getCurrentMerkle();
     IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeCapsule()
         .toMerkleTreeContainer();
     tree.toVoucher().setDEPTH(4);
@@ -135,7 +135,7 @@ public class MerkleTreeTest {
       Assert.assertEquals(root_tests.getString(i), PedersenHash2String(tree.root()));
 
       // Check serialization of tree
-//      expect_ser_test_vector(ser_tests[i], tree, tree);
+      // expect_ser_test_vector(ser_tests[i], tree, tree);
 
       boolean first = true; // The first witness can never form a path
       for (IncrementalMerkleVoucherCapsule wit : witnesses) {

@@ -3,7 +3,6 @@ package org.tron.common.runtime.vm;
 import static junit.framework.TestCase.fail;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -160,7 +159,8 @@ public class PrecompiledContractsTest {
 
   //@Test
   public void voteWitnessNativeTest()
-      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, ContractValidateException, ContractExeException {
+      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException,
+      InstantiationException, ContractValidateException, ContractExeException {
     PrecompiledContract contract = createPrecompiledContract(voteContractAddr, OWNER_ADDRESS);
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     byte[] witnessAddressBytes = new byte[32];
@@ -305,9 +305,13 @@ public class PrecompiledContractsTest {
 
   @Test
   public void convertFromTronBytesAddressNativeTest() {
-    //    PrecompiledContract contract = createPrecompiledContract(convertFromTronBytesAddressAddr, WITNESS_ADDRESS);
-    //    byte[] solidityAddress = contract.execute(new DataWord(WITNESS_ADDRESS).getData()).getRight();
-    //    Assert.assertArrayEquals(solidityAddress,new DataWord(Hex.decode(WITNESS_ADDRESS_BASE)).getData());
+    /*
+    PrecompiledContract contract = createPrecompiledContract(convertFromTronBytesAddressAddr,
+    WITNESS_ADDRESS);
+    byte[] solidityAddress = contract.execute(new DataWord(WITNESS_ADDRESS).getData()).getRight();
+    Assert.assertArrayEquals(solidityAddress,new DataWord(Hex.decode(WITNESS_ADDRESS_BASE))
+      .getData());
+    */
   }
 
   //@Test

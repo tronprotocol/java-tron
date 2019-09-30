@@ -7,7 +7,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-
 import java.math.BigInteger;
 import java.security.KeyPairGenerator;
 import java.security.Security;

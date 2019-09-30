@@ -258,7 +258,8 @@ public class WalletTestAccount013 {
     Assert.assertTrue(PublicMethed.unFreezeBalance(account013Address, testKeyForAccount013, 0,
         account4DelegatedResourceAddress, blockingStubFull));
     //check DelegatedResourceAccountIndex of Account4
-    Optional<Protocol.DelegatedResourceAccountIndex> delegatedResourceIndexResult1AfterUnfreeze = PublicMethed
+    Optional<Protocol.DelegatedResourceAccountIndex> delegatedResourceIndexResult1AfterUnfreeze =
+        PublicMethed
         .getDelegatedResourceAccountIndex(account4DelegatedResourceAddress, blockingStubFull);
     //result of From list is empty
     Assert.assertTrue(

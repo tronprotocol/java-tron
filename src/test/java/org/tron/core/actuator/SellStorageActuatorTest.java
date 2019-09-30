@@ -230,66 +230,66 @@ public class SellStorageActuatorTest {
     }
   }
 
-//  @Test
-//  public void testSellStorageTax() {
-//    long currentPool = dbManager.getDynamicPropertiesStore().getTotalStoragePool();
-//    long currentReserved = dbManager.getDynamicPropertiesStore().getTotalStorageReserved();
-//    Assert.assertEquals(currentPool, 100_000_000_000000L);
-//    Assert.assertEquals(currentReserved, 128L * 1024 * 1024 * 1024);
-//
-//    long quant = 2_000_000_000_000L; // 2 million trx
-//    BuyStorageActuator buyStorageactuator = new BuyStorageActuator(
-//        getBuyContract(OWNER_ADDRESS, quant), dbManager);
-//    TransactionResultCapsule ret = new TransactionResultCapsule();
-//    try {
-//      buyStorageactuator.validate();
-//      buyStorageactuator.execute(ret);
-//      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-//      AccountCapsule owner =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-//
-//      Assert.assertEquals(owner.getBalance(), initBalance - quant
-//          - ChainConstant.TRANSFER_FEE);
-//      Assert.assertEquals(2694881440L, owner.getStorageLimit());
-//      Assert.assertEquals(currentReserved - 2694881440L,
-//          dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
-//      Assert.assertEquals(currentPool + quant,
-//          dbManager.getDynamicPropertiesStore().getTotalStoragePool());
-//    } catch (ContractValidateException e) {
-//      Assert.assertFalse(e instanceof ContractValidateException);
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
-//
-//    dbManager.getDynamicPropertiesStore()
-//        .saveLatestBlockHeaderTimestamp(365 * 24 * 3600 * 1000L);
-//    long bytes = 2694881440L - 269488144L;
-//    SellStorageActuator sellStorageActuator = new SellStorageActuator(
-//        getContract(OWNER_ADDRESS, bytes), dbManager);
-//    TransactionResultCapsule ret2 = new TransactionResultCapsule();
-//    try {
-//      sellStorageActuator.validate();
-//      sellStorageActuator.execute(ret);
-//      Assert.assertEquals(ret2.getInstance().getRet(), code.SUCESS);
-//      AccountCapsule owner =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-//
-//      Assert.assertEquals(owner.getBalance(), 9999796407185160L);
-//      Assert.assertEquals(0, owner.getStorageLimit());
-//      long tax = 10_000_000_000_000_000L + 100_000_000_000_000L
-//          - 9999796407185160L - 100000000000550L; // == 203592814290L
-//      Assert.assertEquals(currentReserved,
-//          dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
-//      Assert.assertEquals(100000000000550L,
-//          dbManager.getDynamicPropertiesStore().getTotalStoragePool());
-//      Assert.assertEquals(tax,
-//          dbManager.getDynamicPropertiesStore().getTotalStorageTax());
-//    } catch (ContractValidateException e) {
-//      Assert.assertFalse(e instanceof ContractValidateException);
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
-//  }
+  /*@Test
+  public void testSellStorageTax() {
+    long currentPool = dbManager.getDynamicPropertiesStore().getTotalStoragePool();
+    long currentReserved = dbManager.getDynamicPropertiesStore().getTotalStorageReserved();
+    Assert.assertEquals(currentPool, 100_000_000_000000L);
+    Assert.assertEquals(currentReserved, 128L * 1024 * 1024 * 1024);
+
+    long quant = 2_000_000_000_000L; // 2 million trx
+    BuyStorageActuator buyStorageactuator = new BuyStorageActuator(
+        getBuyContract(OWNER_ADDRESS, quant), dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      buyStorageactuator.validate();
+      buyStorageactuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+
+      Assert.assertEquals(owner.getBalance(), initBalance - quant
+          - ChainConstant.TRANSFER_FEE);
+      Assert.assertEquals(2694881440L, owner.getStorageLimit());
+      Assert.assertEquals(currentReserved - 2694881440L,
+          dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
+      Assert.assertEquals(currentPool + quant,
+          dbManager.getDynamicPropertiesStore().getTotalStoragePool());
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+
+    dbManager.getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(365 * 24 * 3600 * 1000L);
+    long bytes = 2694881440L - 269488144L;
+    SellStorageActuator sellStorageActuator = new SellStorageActuator(
+        getContract(OWNER_ADDRESS, bytes), dbManager);
+    TransactionResultCapsule ret2 = new TransactionResultCapsule();
+    try {
+      sellStorageActuator.validate();
+      sellStorageActuator.execute(ret);
+      Assert.assertEquals(ret2.getInstance().getRet(), code.SUCESS);
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+
+      Assert.assertEquals(owner.getBalance(), 9999796407185160L);
+      Assert.assertEquals(0, owner.getStorageLimit());
+      long tax = 10_000_000_000_000_000L + 100_000_000_000_000L
+          - 9999796407185160L - 100000000000550L; // == 203592814290L
+      Assert.assertEquals(currentReserved,
+          dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
+      Assert.assertEquals(100000000000550L,
+          dbManager.getDynamicPropertiesStore().getTotalStoragePool());
+      Assert.assertEquals(tax,
+          dbManager.getDynamicPropertiesStore().getTotalStorageTax());
+    } catch (ContractValidateException e) {
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }*/
 
   @Test
   public void sellLessThanZero() {

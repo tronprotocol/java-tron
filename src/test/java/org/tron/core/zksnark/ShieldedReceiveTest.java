@@ -1491,7 +1491,8 @@ public class ShieldedReceiveTest {
           newContract
               .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
-          //newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+          //newContract.setTransparentFromAddress(shieldedTransferContract
+          // .getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
           for (SpendDescription spendDescription : shieldedTransferContract
               .getSpendDescriptionList()) {
@@ -1521,14 +1522,17 @@ public class ShieldedReceiveTest {
           newContract
               .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-          //for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+          //for (SpendDescription spendDescription : shieldedTransferContract
+          //    .getSpendDescriptionList()) {
           //  newContract
-          //          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+          //          .addSpendDescription(spendDescription.toBuilder()
+          //              .clearSpendAuthoritySignature().build());
           //}
           break;
         case RECEIVE_DESCRIPTION:
           newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-          //newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+          //newContract.addAllReceiveDescription(shieldedTransferContract
+          // .getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
               .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
@@ -2130,7 +2134,11 @@ public class ShieldedReceiveTest {
 
   @Test
   public void testMemoTooLong()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException, TaposException, TransactionExpirationException, ReceiptCheckErrException, DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException, ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
+      throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException, TaposException, TransactionExpirationException,
+      ReceiptCheckErrException, DupTransactionException, VMIllegalException,
+      ValidateSignatureException, BadItemException, ContractExeException,
+      AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     librustzcashInitZksnarkParams();
@@ -2208,7 +2216,11 @@ public class ShieldedReceiveTest {
 
   @Test
   public void testMemoNotEnough()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException, TaposException, TransactionExpirationException, ReceiptCheckErrException, DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException, ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
+      throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException, TaposException, TransactionExpirationException,
+      ReceiptCheckErrException, DupTransactionException, VMIllegalException,
+      ValidateSignatureException, BadItemException, ContractExeException,
+      AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     librustzcashInitZksnarkParams();
@@ -2289,7 +2301,13 @@ public class ShieldedReceiveTest {
    */
   @Test
   public void pushSameSkAndScanAndSpend()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException, TaposException, TransactionExpirationException, ReceiptCheckErrException, DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException, ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException, UnLinkedBlockException, ValidateScheduleException, ItemNotFoundException, InterruptedException {
+      throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException, TaposException, TransactionExpirationException,
+      ReceiptCheckErrException, DupTransactionException, VMIllegalException,
+      ValidateSignatureException, BadItemException, ContractExeException,
+      AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException,
+      UnLinkedBlockException, ValidateScheduleException, ItemNotFoundException,
+      InterruptedException {
 
     byte[] privateKey = ByteArray
         .fromHexString("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57");
@@ -2420,7 +2438,8 @@ public class ShieldedReceiveTest {
 
   @Test
   public void decodePaymentAddressIgnoreCase() {
-    String addressLower = "ztron1975m0wyg8f30cgf2l5fgndhzqzkzgkgnxge8cwx2wr7m3q7chsuwewh2e6u24yykum0hq8ue99u";
+    String addressLower =
+        "ztron1975m0wyg8f30cgf2l5fgndhzqzkzgkgnxge8cwx2wr7m3q7chsuwewh2e6u24yykum0hq8ue99u";
     String addressUpper = addressLower.toUpperCase();
 
     PaymentAddress paymentAddress1 = KeyIo.decodePaymentAddress(addressLower);
@@ -2443,13 +2462,17 @@ public class ShieldedReceiveTest {
         receiveNote2.getNote().getPaymentAddress());
   }
 
-  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM}
+  public enum TestColumn {
+    CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM
+  }
 
   public enum TestSignMissingColumn {
     FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION, RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT
   }
 
-  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF}
+  public enum TestReceiveMissingColumn {
+    CV, CM, EPK, C_ENC, C_OUT, ZKPROOF
+  }
 
   @AllArgsConstructor
   class TransactionHash {

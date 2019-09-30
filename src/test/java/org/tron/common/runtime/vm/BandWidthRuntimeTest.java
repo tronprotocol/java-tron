@@ -210,15 +210,26 @@ public class BandWidthRuntimeTest {
   }
 
   private byte[] createContract()
-      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException, ContractExeException, VMIllegalException {
+      throws ContractValidateException, AccountResourceInsufficientException,
+      TooBigTransactionResultException, ContractExeException, VMIllegalException {
     AccountCapsule owner = dbManager.getAccountStore()
         .get(Wallet.decodeFromBase58Check(OwnerAddress));
     long energy = owner.getEnergyUsage();
     long balance = owner.getBalance();
 
     String contractName = "foriContract";
-    String code = "608060405234801561001057600080fd5b50610105806100206000396000f3006080604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680637bb98a6814604e578063866edb47146076575b600080fd5b348015605957600080fd5b50606060a0565b6040518082815260200191505060405180910390f35b348015608157600080fd5b50609e6004803603810190808035906020019092919050505060a6565b005b60005481565b60008090505b8181101560d55760008081548092919060010191905055600081905550808060010191505060ac565b50505600a165627a7a72305820f4020a69fb8504d7db776726b19e5101c3216413d7ab8e91a11c4f55f772caed0029";
-    String abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"receiver\",\"type\":\"uint256\"}],\"name\":\"setCoin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+    String code = "608060405234801561001057600080fd5b50610105806100206000396000f300608060405260043"
+        + "6106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffff"
+        + "ff1680637bb98a6814604e578063866edb47146076575b600080fd5b348015605957600080fd5b50606060a"
+        + "0565b6040518082815260200191505060405180910390f35b348015608157600080fd5b50609e6004803603"
+        + "810190808035906020019092919050505060a6565b005b60005481565b60008090505b8181101560d557600"
+        + "08081548092919060010191905055600081905550808060010191505060ac565b50505600a165627a7a7230"
+        + "5820f4020a69fb8504d7db776726b19e5101c3216413d7ab8e91a11c4f55f772caed0029";
+    String abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"balances\",\"outputs\":[{\"name\":"
+        + "\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\""
+        + "function\"},{\"constant\":false,\"inputs\":[{\"name\":\"receiver\",\"type\":\"uint256\""
+        + "}],\"name\":\"setCoin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\""
+        + "nonpayable\",\"type\":\"function\"}]";
     CreateSmartContract smartContract = TvmTestUtils
         .createSmartContract(Wallet.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0,
             100);

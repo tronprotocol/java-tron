@@ -34,17 +34,17 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class WithdrawBalanceActuatorTest {
 
-  private static Manager dbManager;
   private static final String dbPath = "output_withdraw_balance_test";
-  private static TronApplicationContext context;
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000L;
   private static final long allowance = 32_000_000L;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ACCOUNT_INVALID =
@@ -82,20 +82,15 @@ public class WithdrawBalanceActuatorTest {
    */
   @Before
   public void createAccountCapsule() {
-    AccountCapsule ownerCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8("owner"),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-            AccountType.Normal,
-            initBalance);
+    AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+        initBalance);
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
   }
 
   private Any getContract(String ownerAddress) {
-    return Any.pack(
-        Contract.WithdrawBalanceContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
-            .build());
+    return Any.pack(Contract.WithdrawBalanceContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress))).build());
   }
 
   @Test
@@ -112,20 +107,20 @@ public class WithdrawBalanceActuatorTest {
     Assert.assertEquals(accountCapsule.getAllowance(), allowance);
     Assert.assertEquals(accountCapsule.getLatestWithdrawTime(), 0);
 
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address),
-        100, "http://baidu.com");
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://baidu.com");
     dbManager.getWitnessStore().put(address, witnessCapsule);
 
-    WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
-        getContract(OWNER_ADDRESS), dbManager);
+    WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(getContract(OWNER_ADDRESS),
+        dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), initBalance + allowance);
       Assert.assertEquals(owner.getAllowance(), 0);
@@ -172,8 +167,7 @@ public class WithdrawBalanceActuatorTest {
       fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists",
-          e.getMessage());
+      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -181,13 +175,13 @@ public class WithdrawBalanceActuatorTest {
 
   @Test
   public void notWitness() {
-//    long now = System.currentTimeMillis();
-//    AccountCapsule accountCapsule = dbManager.getAccountStore()
-//        .get(ByteArray.fromHexString(OWNER_ADDRESS));
-//    accountCapsule.setFrozen(1_000_000_000L, now);
-//    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
-        getContract(OWNER_ADDRESS), dbManager);
+    /*long now = System.currentTimeMillis();
+    AccountCapsule accountCapsule = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule.setFrozen(1_000_000_000L, now);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);*/
+    WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(getContract(OWNER_ADDRESS),
+        dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -197,8 +191,8 @@ public class WithdrawBalanceActuatorTest {
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Account[" + OWNER_ADDRESS + "] is not a witnessAccount",
-//          e.getMessage());
+      //Assert.assertEquals("Account[" + OWNER_ADDRESS + "] is not a witnessAccount",
+      //    e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -214,12 +208,12 @@ public class WithdrawBalanceActuatorTest {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
     Assert.assertEquals(accountCapsule.getAllowance(), 0);
 
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address),
-        100, "http://baidu.com");
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://baidu.com");
     dbManager.getWitnessStore().put(address, witnessCapsule);
 
-    WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
-        getContract(OWNER_ADDRESS), dbManager);
+    WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(getContract(OWNER_ADDRESS),
+        dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -239,12 +233,8 @@ public class WithdrawBalanceActuatorTest {
   public void isGR() {
     Witness w = Args.getInstance().getGenesisBlock().getWitnesses().get(0);
     byte[] address = w.getAddress();
-    AccountCapsule grCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8("gr"),
-            ByteString.copyFrom(address),
-            AccountType.Normal,
-            initBalance);
+    AccountCapsule grCapsule = new AccountCapsule(ByteString.copyFromUtf8("gr"),
+        ByteString.copyFrom(address), AccountType.Normal, initBalance);
     dbManager.getAccountStore().put(grCapsule.createDbKey(), grCapsule);
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
@@ -257,8 +247,8 @@ public class WithdrawBalanceActuatorTest {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
     Assert.assertEquals(accountCapsule.getAllowance(), allowance);
 
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address),
-        100, "http://google.com");
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://google.com");
 
     dbManager.getAccountStore().put(address, accountCapsule);
     dbManager.getWitnessStore().put(address, witnessCapsule);
@@ -299,14 +289,14 @@ public class WithdrawBalanceActuatorTest {
     Assert.assertEquals(accountCapsule.getAllowance(), allowance);
     Assert.assertEquals(accountCapsule.getLatestWithdrawTime(), now);
 
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address),
-        100, "http://baidu.com");
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://baidu.com");
 
     dbManager.getAccountStore().put(address, accountCapsule);
     dbManager.getWitnessStore().put(address, witnessCapsule);
 
-    WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
-        getContract(OWNER_ADDRESS), dbManager);
+    WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(getContract(OWNER_ADDRESS),
+        dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -316,8 +306,8 @@ public class WithdrawBalanceActuatorTest {
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("The last withdraw time is "
-          + now + ",less than 24 hours", e.getMessage());
+      Assert
+          .assertEquals("The last withdraw time is " + now + ",less than 24 hours", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

@@ -17,7 +17,6 @@ package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
 
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -1156,7 +1155,8 @@ public class TransferAssetActuatorTest {
 
   @Test
   /**
-   * SameTokenName close,Asset name length must between 1 to 32 and can not contain space and other unreadable character, and can not contain chinese characters.
+   * SameTokenName close,Asset name length must between 1 to 32 and can not contain space and
+   * other unreadable character, and can not contain chinese characters.
    */
 
   //asset name validation which is unnecessary has been removed!
@@ -1180,57 +1180,58 @@ public class TransferAssetActuatorTest {
 
     //Too long name, throw exception. Max long is 32.
     String assetName = "testname0123456789abcdefghijgklmo";
-//    actuator = new TransferAssetActuator(getContract(100L, assetName),
-//        dbManager);
-//    try {
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertTrue(false);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid assetName", e.getMessage());
-//      AccountCapsule toAccount =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-//      Assert.assertTrue(
-//          isNullOrZero(toAccount.getAssetMap().get(assetName)));
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
+    /*actuator = new TransferAssetActuator(getContract(100L, assetName),
+        dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid assetName", e.getMessage());
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertTrue(
+          isNullOrZero(toAccount.getAssetMap().get(assetName)));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
 
-    //Contain space, throw exception. Every character need readable .
-//    assetName = "t e";
-//    actuator = new TransferAssetActuator(getContract(100L, assetName), dbManager);
-//    try {
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertTrue(false);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid assetName", e.getMessage());
-//      AccountCapsule toAccount =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-//      Assert.assertTrue(
-//          isNullOrZero(toAccount.getAssetMap().get(assetName)));
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
+    Contain space, throw exception. Every character need readable .
+    assetName = "t e";
+    actuator = new TransferAssetActuator(getContract(100L, assetName), dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid assetName", e.getMessage());
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertTrue(
+          isNullOrZero(toAccount.getAssetMap().get(assetName)));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
 
-    //Contain chinese character, throw exception.
-//    actuator = new TransferAssetActuator(getContract(100L, ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))), dbManager);
-//    try {
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertTrue(false);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid assetName", e.getMessage());
-//      AccountCapsule toAccount =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-//      Assert.assertTrue(
-//          isNullOrZero(toAccount.getAssetMap().get(assetName)));
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
+    Contain chinese character, throw exception.
+    actuator = new TransferAssetActuator(getContract(100L,
+    ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))), dbManager);
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Invalid assetName", e.getMessage());
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      Assert.assertTrue(
+          isNullOrZero(toAccount.getAssetMap().get(assetName)));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }*/
 
     // 32 byte readable character just ok.
     assetName = "testname0123456789abcdefghijgklm";
@@ -1278,7 +1279,8 @@ public class TransferAssetActuatorTest {
    */
   @Test
   public void transferToContractAddress()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException, BalanceInsufficientException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException, BalanceInsufficientException {
     dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
     createAssertSameTokenNameActive();
     VMConfig.initAllowMultiSign(1);
@@ -1298,8 +1300,8 @@ public class TransferAssetActuatorTest {
         + "d0565b005b6100c661016e565b60405173ffffffffffffffffffffffffffffffffffffffff87169084156108"
         + "fc029085906000818181858888f1505060405173ffffffffffffffffffffffffffffffffffffffff89169350"
         + "85156108fc0292508591506000818181858888f1505060405173ffffffffffffffffffffffffffffffffffff"
-        + "ffff8816935084156108fc0292508491506000818181858888f15050505050505050505050565b56fea165627"
-        + "a7a72305820cc2d598d1b3f968bbdc7825ce83d22dad48192f4bf95bda7f9e4ddf61669ba830029";
+        + "ffff8816935084156108fc0292508491506000818181858888f15050505050505050505050565b56fea16562"
+        + "7a7a72305820cc2d598d1b3f968bbdc7825ce83d22dad48192f4bf95bda7f9e4ddf61669ba830029";
 
     long value = 1;
     long feeLimit = 1000000000L;

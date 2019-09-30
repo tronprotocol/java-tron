@@ -124,6 +124,21 @@ public class ParticipateAssetIssueActuatorTest {
         .build());
   }
 
+  private Any getContract(long count, String assetName) {
+    return Any.pack(Contract.ParticipateAssetIssueContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+        .setAssetName(ByteString.copyFrom(ByteArray.fromString(assetName))).setAmount(count)
+        .build());
+  }
+
+  private Any getContract(long count, ByteString assetName) {
+    return Any.pack(Contract.ParticipateAssetIssueContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+        .setAssetName(assetName).setAmount(count).build());
+  }
+
   private Any getContractWithOwner(long count, String ownerAddress) {
     String assertName = ASSET_NAME;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
@@ -149,21 +164,6 @@ public class ParticipateAssetIssueActuatorTest {
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toAddress)))
         .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName))).setAmount(count)
         .build());
-  }
-
-  private Any getContract(long count, String assetName) {
-    return Any.pack(Contract.ParticipateAssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
-        .setAssetName(ByteString.copyFrom(ByteArray.fromString(assetName))).setAmount(count)
-        .build());
-  }
-
-  private Any getContract(long count, ByteString assetName) {
-    return Any.pack(Contract.ParticipateAssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
-        .setAssetName(assetName).setAmount(count).build());
   }
 
   private void initAssetIssue(long startTimestmp, long endTimestmp) {
@@ -838,7 +838,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   /**
    * SameTokenName close, Participate to self, will throw exception.
-   */ public void sameTokenNameCloseParticipateAssetSelf() {
+   */
+  public void sameTokenNameCloseParticipateAssetSelf() {
     initAssetIssueWithOwner(
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
@@ -871,7 +872,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   /**
    * SameTokenName open, Participate to self, will throw exception.
-   */ public void sameTokenNameOpenParticipateAssetSelf() {
+   * */
+  public void sameTokenNameOpenParticipateAssetSelf() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     initAssetIssueWithOwner(
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
@@ -907,7 +909,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   /**
    * SameTokenName close, Participate to the third party that not the issuer, will throw exception.
-   */ public void sameTokenNameCloseParticipateAssetToThird() {
+   */
+  public void sameTokenNameCloseParticipateAssetToThird() {
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
@@ -938,7 +941,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   /**
    * SameTokenName open, Participate to the third party that not the issuer, will throw exception.
-   */ public void sameTokenNameOpenParticipateAssetToThird() {
+   */
+  public void sameTokenNameOpenParticipateAssetToThird() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
@@ -971,7 +975,8 @@ public class ParticipateAssetIssueActuatorTest {
 
   @Test
   /*
-   * Asset name length must between 1 to 32 and can not contain space and other unreadable character, and can not contain chinese characters.
+   * Asset name length must between 1 to 32 and can not contain space and
+   * other unreadable character, and can not contain chinese characters.
    */
 
   //asset name validation which is unnecessary has been removed!
@@ -1361,7 +1366,8 @@ public class ParticipateAssetIssueActuatorTest {
     //LONG_MAX = 9223372036854775807L = 0x7fffffffffffffff
     //4294967298 * 2147483647 = 9223372036854775806 = 0x7ffffffffffffffe
     //8589934596 * 2147483647 = 4294967298 * 2147483647 *2 = 0xfffffffffffffffc = -4
-    //8589934597 * 2147483647 = 8589934596 * 2147483647 + 2147483647 = -4 + 2147483647 = 2147483643  vs 9223372036854775806*2 + 2147483647
+    //8589934597 * 2147483647 = 8589934596 * 2147483647 + 2147483647 = -4 + 2147483647 = 2147483643
+    // vs 9223372036854775806*2 + 2147483647
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1404,7 +1410,8 @@ public class ParticipateAssetIssueActuatorTest {
     //LONG_MAX = 9223372036854775807L = 0x7fffffffffffffff
     //4294967298 * 2147483647 = 9223372036854775806 = 0x7ffffffffffffffe
     //8589934596 * 2147483647 = 4294967298 * 2147483647 *2 = 0xfffffffffffffffc = -4
-    //8589934597 * 2147483647 = 8589934596 * 2147483647 + 2147483647 = -4 + 2147483647 = 2147483643  vs 9223372036854775806*2 + 2147483647
+    //8589934597 * 2147483647 = 8589934596 * 2147483647 + 2147483647 = -4 + 2147483647 = 2147483643
+    // vs 9223372036854775806*2 + 2147483647
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

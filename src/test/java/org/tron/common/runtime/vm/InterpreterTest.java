@@ -17,7 +17,6 @@ package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertTrue;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;

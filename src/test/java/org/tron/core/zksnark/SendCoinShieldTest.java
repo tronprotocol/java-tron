@@ -453,12 +453,16 @@ public class SendCoinShieldTest {
 
   @Test
   public void pushShieldedTransactionAndDecryptWithIvk()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException, TaposException, TransactionExpirationException, ReceiptCheckErrException, DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException, ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
+      throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException, TaposException, TransactionExpirationException,
+      ReceiptCheckErrException, DupTransactionException, VMIllegalException,
+      ValidateSignatureException, BadItemException, ContractExeException,
+      AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     // generate spend proof
@@ -536,12 +540,16 @@ public class SendCoinShieldTest {
 
   @Test
   public void pushShieldedTransactionAndDecryptWithOvk()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException, TaposException, TransactionExpirationException, ReceiptCheckErrException, DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException, ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
+      throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException, TaposException, TransactionExpirationException,
+      ReceiptCheckErrException, DupTransactionException, VMIllegalException,
+      ValidateSignatureException, BadItemException, ContractExeException,
+      AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     // generate spend proof
@@ -626,7 +634,7 @@ public class SendCoinShieldTest {
     // generate spend proof
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
@@ -721,12 +729,16 @@ public class SendCoinShieldTest {
 
   @Test
   public void pushShieldedTransaction()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException, TaposException, TransactionExpirationException, ReceiptCheckErrException, DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException, ContractExeException, AccountResourceInsufficientException, ZksnarkException {
+      throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException,
+      TaposException, TransactionExpirationException, ReceiptCheckErrException,
+      DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException,
+      ContractExeException, AccountResourceInsufficientException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
@@ -951,20 +963,20 @@ public class SendCoinShieldTest {
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
     builder.addSpend(expsk1, note1, anchor, voucher);
 
-//    SpendingKey sk2 = SpendingKey.random();
-//    ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
-//    PaymentAddress address2 = sk2.defaultAddress();
-//    Note note2 = new Note(address2, 100 * 1000000);
-//    PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
-//    compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
-//    PedersenHash a2 = compressCapsule2.getInstance();
-//    tree.append(a2);
-//    IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
-//    byte[] anchor2 = voucher2.root().getContent().toByteArray();
-//    dbManager
-//        .getMerkleContainer()
-//        .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
-//    builder.addSpend(expsk2, note2, anchor2, voucher2);
+    /*SpendingKey sk2 = SpendingKey.random();
+    ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
+    PaymentAddress address2 = sk2.defaultAddress();
+    Note note2 = new Note(address2, 100 * 1000000);
+    PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
+    compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
+    PedersenHash a2 = compressCapsule2.getInstance();
+    tree.append(a2);
+    IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
+    byte[] anchor2 = voucher2.root().getContent().toByteArray();
+    dbManager
+        .getMerkleContainer()
+        .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
+    builder.addSpend(expsk2, note2, anchor2, voucher2);*/
 
     // generate output proof
     SpendingKey spendingKey = SpendingKey.random();
@@ -1057,7 +1069,7 @@ public class SendCoinShieldTest {
 
       TransactionCapsule transactionCap = builder.build();
 
-//   100_000_000L + 0L !=  200_000_000L + 10_000_000L + 10_000_000L
+      //100_000_000L + 0L !=  200_000_000L + 10_000_000L + 10_000_000L
       try {
         executeTx(transactionCap);
         Assert.fail();
@@ -1274,7 +1286,7 @@ public class SendCoinShieldTest {
       transactionCap1.setBlockNum(2);
       txList.add(transactionCap1);
 
-//   220_000_000L + 0L =  200_000_000L + 10_000_000L + 10_000_000L
+      //220_000_000L + 0L =  200_000_000L + 10_000_000L + 10_000_000L
 
     }
 
@@ -1313,7 +1325,7 @@ public class SendCoinShieldTest {
       transactionCap1.setBlockNum(3);
       txList.add(transactionCap1);
 
-//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
+      // 0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
     }
 
     System.out.println("TxList size:" + txList.size());
@@ -1398,7 +1410,7 @@ public class SendCoinShieldTest {
         System.out.println("Done");
       }
 
-//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
+      // 0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
     }
   }
 
@@ -1457,7 +1469,7 @@ public class SendCoinShieldTest {
         }
         System.out.println("Done");
       }
-//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
+      // 0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
     }
   }
 
@@ -1509,8 +1521,8 @@ public class SendCoinShieldTest {
     PaymentAddress address = sk.defaultAddress();
 
     Note note = new Note(address, 4010 * 1000000L);
-//    note.r =  ByteArray
-//        .fromHexString("0xe7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb6");
+    //note.r =  ByteArray
+    //    .fromHexString("0xe7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb6");
 
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
@@ -1636,7 +1648,7 @@ public class SendCoinShieldTest {
   public void TestDefaultBuilder() throws Exception {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     TransactionCapsule transactionCapsule = generateDefaultBuilder(builder);
@@ -1695,7 +1707,11 @@ public class SendCoinShieldTest {
           //The format is correct, but it does not belong to this
           // note value ,fake : 200_000_000,real:20_000_000
           byte[] fakeProof = ByteArray.fromHexString(
-              "0ac001af7f0059cdfec9eed3900b3a4b25ace3cdeb7e962929be9432e51b222be6d7b885d5393c0d373c5b3dbc19210f94e7de831750c5d3a545bbe3732b4d87e4b4350c29519cbebdabd599db9e685f37af2440abc29b3c11cc1dc6712582f74fe06506182e9202b20467017c53fb6d744cd6e08b6428d0e0607688b67876036d2e30617fe020b1fd33ce96cda898e679f44f9715d5681ee0e42f419d7af4d438240fee7b6519e525f452d2ac56b1fb7cd12e9fb0b39caf6f84918b76fa5d46");
+              "0ac001af7f0059cdfec9eed3900b3a4b25ace3cdeb7e962929be9432e51b222be6d7b885d5393"
+                  + "c0d373c5b3dbc19210f94e7de831750c5d3a545bbe3732b4d87e4b4350c29519cbebdabd599db"
+                  + "9e685f37af2440abc29b3c11cc1dc6712582f74fe06506182e9202b20467017c53fb6d744cd6e"
+                  + "08b6428d0e0607688b67876036d2e30617fe020b1fd33ce96cda898e679f44f9715d5681ee0e4"
+                  + "2f419d7af4d438240fee7b6519e525f452d2ac56b1fb7cd12e9fb0b39caf6f84918b76fa5d46");
           System.out.println("zkproof:" + ByteArray
               .toHexString(spendDescriptionCapsule.getZkproof().toByteArray()));
 

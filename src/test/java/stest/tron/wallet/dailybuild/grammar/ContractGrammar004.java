@@ -9,7 +9,6 @@ import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT_
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.STACK_TOO_LARGE_VALUE;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.STACK_TOO_SMALL_VALUE;
 
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -328,7 +327,8 @@ public class ContractGrammar004 {
   @Test(enabled = true, description = "ContractResult is REVERT")
   public void test6Grammar006() {
 
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest1TestRequireContract.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontest1TestRequireContract.sol";
     String contractName = "TestThrowsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

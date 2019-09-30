@@ -56,7 +56,8 @@ public class TransferFailedEnergyTest extends VMTestBase {
           nonexistentTarget.transfer(10);
       }
 
-      function testTransferTokenNonexistentTarget(address payable nonexistentTarget, trcToken tokenId) payable public {
+      function testTransferTokenNonexistentTarget(address payable nonexistentTarget,
+       trcToken tokenId) payable public {
           require(address(this).balance >= 10);
           nonexistentTarget.transferToken(10, tokenId);
       }
@@ -133,7 +134,8 @@ public class TransferFailedEnergyTest extends VMTestBase {
           nonexistentTarget.transfer(10);
       }
 
-      function testTransferTokenNonexistentTarget(address nonexistentTarget, trcToken tokenId) payable public {
+      function testTransferTokenNonexistentTarget(address nonexistentTarget,
+       trcToken tokenId) payable public {
           require(address(this).balance >= 10);
           nonexistentTarget.transferToken(10, tokenId);
       }
@@ -208,7 +210,8 @@ public class TransferFailedEnergyTest extends VMTestBase {
 
   @Test
   public void testTransferFailedAfterAllowTvmConstantinopl()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(0);
@@ -285,7 +288,8 @@ public class TransferFailedEnergyTest extends VMTestBase {
   }
 
   private void checkResult(TestCase testCase, byte[] factoryAddress)
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
     String hexInput = AbiUtil.parseMethod(testCase.getMethod(), testCase.getParams());
     long fee = 100000000;
     long allEnergy = 1000000;

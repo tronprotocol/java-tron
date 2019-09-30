@@ -12,7 +12,8 @@ public class DisconnectMessageTest extends com.google.protobuf.GeneratedMessageV
   private static final long serialVersionUID = 0L;
   // @@protoc_insertion_point(class_scope:protocol.DisconnectMessage)
   private static final DisconnectMessageTest DEFAULT_INSTANCE;
-  private static final com.google.protobuf.Parser<DisconnectMessageTest> PARSER = new com.google.protobuf.AbstractParser<DisconnectMessageTest>() {
+  private static final com.google.protobuf.Parser<DisconnectMessageTest> PARSER =
+      new com.google.protobuf.AbstractParser<DisconnectMessageTest>() {
     public DisconnectMessageTest parsePartialFrom(com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -28,9 +29,11 @@ public class DisconnectMessageTest extends com.google.protobuf.GeneratedMessageV
   private int name_;
   private byte memoizedIsInitialized = -1;
   // Use DisconnectMessage.newBuilder() to construct.
+
   private DisconnectMessageTest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
+
   public DisconnectMessageTest() {
     reason_ = 4;
     name_ = 2;
@@ -94,7 +97,8 @@ public class DisconnectMessageTest extends com.google.protobuf.GeneratedMessageV
     return this.unknownFields;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  internalGetFieldAccessorTable() {
     return null;
   }
 

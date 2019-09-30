@@ -3,7 +3,6 @@ package org.tron.common.runtime;
 import static org.tron.common.runtime.TvmTestUtils.generateDeploySmartContractAndGetTransaction;
 import static org.tron.common.runtime.TvmTestUtils.generateTriggerSmartContractAndGetTransaction;
 
-
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -174,7 +173,8 @@ public class RuntimeImplTest {
 
   @Test
   public void getCallerAndCreatorEnergyLimit2With0PercentTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
 
     long value = 0;
     long feeLimit = 1_000_000_000L; // sun
@@ -217,7 +217,8 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit1);
 
     long creatorFrozenBalance = 1_000_000_000L;
@@ -231,20 +232,23 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit2 = 10_005_000L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit2);
 
     value = 3_500_000_000L;
     long expectEnergyLimit3 = 5_005_000L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit3);
 
     value = 10L;
     feeLimit = 5_000_000_000L;
     long expectEnergyLimit4 = 40_004_999L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit4);
 
     long callerFrozenBalance = 1_000_000_000L;
@@ -257,14 +261,16 @@ public class RuntimeImplTest {
     feeLimit = 5_000_000_000L;
     long expectEnergyLimit5 = 30_014_999L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit5);
 
   }
 
   @Test
   public void getCallerAndCreatorEnergyLimit2With40PercentTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
 
     long value = 0;
     long feeLimit = 1_000_000_000L; // sun
@@ -307,7 +313,8 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit1);
 
     long creatorFrozenBalance = 1_000_000_000L;
@@ -321,20 +328,23 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit2 = 10_005_000L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit2);
 
     value = 3_999_950_000L;
     long expectEnergyLimit3 = 1_250L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit3);
 
   }
 
   @Test
   public void getCallerAndCreatorEnergyLimit2With100PercentTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
 
     long value = 0;
     long feeLimit = 1_000_000_000L; // sun
@@ -377,7 +387,8 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit1);
 
     long creatorFrozenBalance = 1_000_000_000L;
@@ -391,13 +402,15 @@ public class RuntimeImplTest {
     value = 0L;
     long expectEnergyLimit2 = 10_000_000L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit2);
 
     value = 3_999_950_000L;
     long expectEnergyLimit3 = 500L;
     Assert.assertEquals(runtimeImpl
-            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit, value),
+            .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount,
+                contract, feeLimit, value),
         expectEnergyLimit3);
 
   }

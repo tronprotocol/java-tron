@@ -71,7 +71,8 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
 
   @Test
   public void testCreate2()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     String contractName = "Factory_0";

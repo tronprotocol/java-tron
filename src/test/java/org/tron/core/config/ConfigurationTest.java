@@ -19,7 +19,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-
 import com.typesafe.config.Config;
 import java.lang.reflect.Field;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +36,8 @@ public class ConfigurationTest {
 
   @Before
   public void resetSingleton()
-      throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+      throws SecurityException, NoSuchFieldException, IllegalArgumentException,
+      IllegalAccessException {
     Field instance = Configuration.class.getDeclaredField("config");
     instance.setAccessible(true);
     instance.set(null, null);

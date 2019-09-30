@@ -2,7 +2,6 @@ package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
 
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -393,8 +392,9 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     String localDescription =
         "abchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuv"
-            + "wxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghij"
-            + "klmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyz";
+            + "wxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijkl"
+            + "mnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzab"
+            + "chefghijklmnopqrstuvwxyz";
 
     UpdateAssetActuator actuator = new UpdateAssetActuator(
         getContract(OWNER_ADDRESS, localDescription, URL, 500L, 8000L), dbManager);
