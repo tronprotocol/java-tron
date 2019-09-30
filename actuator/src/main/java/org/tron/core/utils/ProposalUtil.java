@@ -11,10 +11,10 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 
 public class ProposalUtil {
-  private static final long LONG_VALUE = 100_000_000_000_000_000L;
+  protected static final long LONG_VALUE = 100_000_000_000_000_000L;
   private static final String LONG_VALUE_ERROR =
       "Bad chain parameter value,valid range is [0," + LONG_VALUE + "]";
-  private static final String BAD_PARAM_ID = "Bad chain parameter id";
+  protected static final String BAD_PARAM_ID = "Bad chain parameter id";
 
   public enum ProposalType {
     MAINTENANCE_TIME_INTERVAL(0), //ms  ,0
