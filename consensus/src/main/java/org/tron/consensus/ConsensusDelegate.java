@@ -132,4 +132,8 @@ public class ConsensusDelegate {
   public void applyBlock(boolean flag) {
     dynamicPropertiesStore.applyBlock(flag);
   }
+
+  public boolean allowChangeDelegation() {
+    return dynamicPropertiesStore.allowChangeDelegation();
+  }
 }

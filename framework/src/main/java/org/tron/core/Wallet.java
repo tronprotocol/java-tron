@@ -553,12 +553,6 @@ public class Wallet {
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
-      if (dbManager.isGeneratingBlock()) {
-        logger
-            .warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
-      }
-
       if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
         logger.warn("Broadcast transaction {} failed, is already exist.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
