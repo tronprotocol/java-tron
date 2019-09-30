@@ -1,35 +1,43 @@
 package org.tron.core.net;
 
 import com.google.protobuf.Message;
-import com.google.protobuf.Message.Builder;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.DisconnectMessageOrBuilder;
 
-public class DisconnectMessageTest extends
-    com.google.protobuf.GeneratedMessageV3 implements
+public class DisconnectMessageTest extends com.google.protobuf.GeneratedMessageV3 implements
     // @@protoc_insertion_point(message_implements:protocol.DisconnectMessage)
     DisconnectMessageOrBuilder {
 
+  public static final int REASON_FIELD_NUMBER = 1;
+  public static final int NAME_FIELD_NUMBER = 2;
   private static final long serialVersionUID = 0L;
+  // @@protoc_insertion_point(class_scope:protocol.DisconnectMessage)
+  private static final DisconnectMessageTest DEFAULT_INSTANCE;
+  private static final com.google.protobuf.Parser<DisconnectMessageTest> PARSER = new com.google.protobuf.AbstractParser<DisconnectMessageTest>() {
+    public DisconnectMessageTest parsePartialFrom(com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return new DisconnectMessageTest(input, extensionRegistry);
+    }
+  };
 
+  static {
+    DEFAULT_INSTANCE = new DisconnectMessageTest();
+  }
+
+  private int reason_;
+  private int name_;
+  private byte memoizedIsInitialized = -1;
   // Use DisconnectMessage.newBuilder() to construct.
   private DisconnectMessageTest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-
   public DisconnectMessageTest() {
     reason_ = 4;
     name_ = 2;
   }
 
-  @java.lang.Override
-  public final com.google.protobuf.UnknownFieldSet
-  getUnknownFields() {
-    return this.unknownFields;
-  }
 
-  private DisconnectMessageTest(
-      com.google.protobuf.CodedInputStream input,
+  private DisconnectMessageTest(com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     this();
@@ -37,8 +45,8 @@ public class DisconnectMessageTest extends
       throw new java.lang.NullPointerException();
     }
     int mutable_bitField0_ = 0;
-    com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-        com.google.protobuf.UnknownFieldSet.newBuilder();
+    com.google.protobuf.UnknownFieldSet.Builder unknownFields = com.google.protobuf.UnknownFieldSet
+        .newBuilder();
     try {
       boolean done = false;
       while (!done) {
@@ -62,29 +70,33 @@ public class DisconnectMessageTest extends
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
       throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
-      throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+      throw new com.google.protobuf.InvalidProtocolBufferException(e).setUnfinishedMessage(this);
     } finally {
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
     }
   }
 
-  public static final com.google.protobuf.Descriptors.Descriptor
-  getDescriptor() {
+  public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
     return null;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-  internalGetFieldAccessorTable() {
-    return null;
+  public static DisconnectMessageTest getDefaultInstance() {
+    return DEFAULT_INSTANCE;
   }
 
-  public static final int REASON_FIELD_NUMBER = 1;
-  public static final int NAME_FIELD_NUMBER = 2;
-  private int reason_;
-  private int name_;
+  public static com.google.protobuf.Parser<DisconnectMessageTest> parser() {
+    return PARSER;
+  }
 
+  @java.lang.Override
+  public final com.google.protobuf.UnknownFieldSet getUnknownFields() {
+    return this.unknownFields;
+  }
+
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable internalGetFieldAccessorTable() {
+    return null;
+  }
 
   /**
    * <code>.protocol.ReasonCode reason = 1;</code>
@@ -93,7 +105,9 @@ public class DisconnectMessageTest extends
     return reason_;
   }
 
-  public int getNameValue() {return  name_;}
+  public int getNameValue() {
+    return name_;
+  }
 
   /**
    * <code>.protocol.ReasonCode reason = 1;</code>
@@ -105,12 +119,9 @@ public class DisconnectMessageTest extends
   }
 
   public org.tron.protos.Protocol.ReasonCode getName() {
-    org.tron.protos.Protocol.ReasonCode result = org.tron.protos.Protocol.ReasonCode
-        .valueOf(name_);
+    org.tron.protos.Protocol.ReasonCode result = org.tron.protos.Protocol.ReasonCode.valueOf(name_);
     return result == null ? org.tron.protos.Protocol.ReasonCode.UNRECOGNIZED : result;
   }
-
-  private byte memoizedIsInitialized = -1;
 
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -125,8 +136,7 @@ public class DisconnectMessageTest extends
     return true;
   }
 
-  public void writeTo(com.google.protobuf.CodedOutputStream output)
-      throws java.io.IOException {
+  public void writeTo(com.google.protobuf.CodedOutputStream output) throws java.io.IOException {
     if (reason_ != org.tron.protos.Protocol.ReasonCode.REQUESTED.getNumber()) {
       output.writeEnum(1, reason_);
     }
@@ -144,12 +154,10 @@ public class DisconnectMessageTest extends
 
     size = 0;
     if (reason_ != org.tron.protos.Protocol.ReasonCode.REQUESTED.getNumber()) {
-      size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(1, reason_);
+      size += com.google.protobuf.CodedOutputStream.computeEnumSize(1, reason_);
     }
     if (name_ != org.tron.protos.Protocol.ReasonCode.REQUESTED.getNumber()) {
-      size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(1, name_);
+      size += com.google.protobuf.CodedOutputStream.computeEnumSize(1, name_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -169,32 +177,6 @@ public class DisconnectMessageTest extends
   @Override
   public Message.Builder toBuilder() {
     return null;
-  }
-
-
-  // @@protoc_insertion_point(class_scope:protocol.DisconnectMessage)
-  private static final DisconnectMessageTest DEFAULT_INSTANCE;
-
-  static {
-    DEFAULT_INSTANCE = new DisconnectMessageTest();
-  }
-
-  public static DisconnectMessageTest getDefaultInstance() {
-    return DEFAULT_INSTANCE;
-  }
-
-  private static final com.google.protobuf.Parser<DisconnectMessageTest>
-      PARSER = new com.google.protobuf.AbstractParser<DisconnectMessageTest>() {
-    public DisconnectMessageTest parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return new DisconnectMessageTest(input, extensionRegistry);
-    }
-  };
-
-  public static com.google.protobuf.Parser<DisconnectMessageTest> parser() {
-    return PARSER;
   }
 
   @java.lang.Override

@@ -6,10 +6,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+import org.testng.Assert;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.testng.Assert;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -26,16 +26,16 @@ import org.tron.protos.Protocol.AccountType;
 @Slf4j
 public class InheritanceTest {
 
+  private static final String dbPath = "output_InheritanceTest";
+  private static final String OWNER_ADDRESS;
   private static Runtime runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;
   private static DepositImpl deposit;
-  private static final String dbPath = "output_InheritanceTest";
-  private static final String OWNER_ADDRESS;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -52,6 +52,21 @@ public class InheritanceTest {
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
   }
 
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
 
   /**
    * pragma solidity ^0.4.19;
@@ -88,17 +103,16 @@ public class InheritanceTest {
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
 
-    byte[] contractAddress = TvmTestUtils.deployContractWholeProcessReturnContractAddress(
-        contractName, callerAddress, ABI, code, value, fee, consumeUserResourcePercent, null,
-        deposit, null);
+    byte[] contractAddress = TvmTestUtils
+        .deployContractWholeProcessReturnContractAddress(contractName, callerAddress, ABI, code,
+            value, fee, consumeUserResourcePercent, null, deposit, null);
 
 
     /* =================================== CALL getName() return child value =================================== */
     byte[] triggerData1 = TvmTestUtils.parseAbi("getName()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(callerAddress, contractAddress,
-            triggerData1,
-            0, 1000000, deposit, null);
+            triggerData1, 0, 1000000, deposit, null);
 
     //0x20 => pointer position, 0x3 => size,  626172 => "bar"
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
@@ -110,8 +124,7 @@ public class InheritanceTest {
     byte[] triggerData2 = TvmTestUtils.parseAbi("getNumber()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(callerAddress, contractAddress,
-            triggerData2,
-            0, 1000000, deposit, null);
+            triggerData2, 0, 1000000, deposit, null);
 
     //0x64 =>100
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
@@ -121,29 +134,11 @@ public class InheritanceTest {
     byte[] triggerData3 = TvmTestUtils.parseAbi("getId()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(callerAddress, contractAddress,
-            triggerData3,
-            0, 1000000, deposit, null);
+            triggerData3, 0, 1000000, deposit, null);
 
     //0x64 =>100
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         "000000000000000000000000000000000000000000000000000000000000000a");
-  }
-
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
 }

@@ -17,18 +17,19 @@ package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertTrue;
 
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.TrxType;
+import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeMockImpl;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeMockImpl;
 
 @Slf4j
 public class InterpreterTest {
@@ -39,6 +40,11 @@ public class InterpreterTest {
   @BeforeClass
   public static void init() {
     Args.getInstance().setDebug(true);
+  }
+
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
   }
 
   @Test
@@ -142,10 +148,5 @@ public class InterpreterTest {
     }
 
     assertTrue(result);
-  }
-
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
   }
 }

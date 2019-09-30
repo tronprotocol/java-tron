@@ -96,8 +96,9 @@ public class StorageTest extends VMTestBase {
     long consumeUserResourcePercent = 0;
 
     // deploy contract
-    Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName, address, ABI, code, value, fee, consumeUserResourcePercent, null);
+    Transaction trx = TvmTestUtils
+        .generateDeploySmartContractAndGetTransaction(contractName, address, ABI, code, value, fee,
+            consumeUserResourcePercent, null);
     byte[] contractAddress = Wallet.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
@@ -109,8 +110,8 @@ public class StorageTest extends VMTestBase {
     String params2 = "0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000033132330000000000000000000000000000000000000000000000000000000000";
     byte[] triggerData = TvmTestUtils.parseAbi("testPut(uint256,string)", params1);
     TVMTestResult result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, fee, manager, null);
 
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
@@ -118,8 +119,8 @@ public class StorageTest extends VMTestBase {
     // testPut(uint256,string) 1,"abc"
     triggerData = TvmTestUtils.parseAbi("testPut(uint256,string)", params1);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, fee, manager, null);
 
     Assert.assertNull(result.getRuntime().getRuntimeError());
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10855);
@@ -129,8 +130,8 @@ public class StorageTest extends VMTestBase {
 
     triggerData = TvmTestUtils.parseAbi("testPut(uint256,string)", params2);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, fee, manager, null);
 
     Assert.assertNull(result.getRuntime().getRuntimeError());
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 10855);
@@ -140,8 +141,8 @@ public class StorageTest extends VMTestBase {
     triggerData = TvmTestUtils.parseAbi("testDelete(uint256)",
         "0000000000000000000000000000000000000000000000000000000000000001");
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
     Assert.assertNull(result.getRuntime().getResult().getException());
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), 5389);

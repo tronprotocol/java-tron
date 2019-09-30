@@ -37,11 +37,6 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 @Slf4j
 public class BatchSendTest {
 
-  private static Runtime runtime;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Application appT;
-  private static DepositImpl deposit;
   private static final String dbPath = "output_BatchSendTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
@@ -53,10 +48,15 @@ public class BatchSendTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static Runtime runtime;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
+  private static Application appT;
+  private static DepositImpl deposit;
   private static AccountCapsule ownerCapsule;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -66,11 +66,8 @@ public class BatchSendTest {
     deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     deposit.addBalance(Hex.decode(TRANSFER_TO), 10);
     deposit.commit();
-    ownerCapsule =
-        new AccountCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-            ByteString.copyFromUtf8("owner"),
-            AccountType.AssetIssue);
+    ownerCapsule = new AccountCapsule(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        ByteString.copyFromUtf8("owner"), AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
@@ -81,6 +78,21 @@ public class BatchSendTest {
     VMConfig.initAllowTvmSolidity059(1);
   }
 
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
 
   /**
    * pragma solidity ^0.5.4;
@@ -115,8 +127,7 @@ public class BatchSendTest {
     params.add(100);
     params.add(1100);
     params.add(200);
-    byte[] input = Hex.decode(AbiUtil
-        .parseMethod(selectorStr, params));
+    byte[] input = Hex.decode(AbiUtil.parseMethod(selectorStr, params));
 
     //  2. Test trigger with tokenValue and tokenId, also test internal transaction transferToken function */
     long triggerCallValue = 0;
@@ -124,8 +135,7 @@ public class BatchSendTest {
     long tokenValue = 0;
     Transaction transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
-            input,
-            triggerCallValue, feeLimit, tokenValue, 0);
+            input, triggerCallValue, feeLimit, tokenValue, 0);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
     Assert.assertNull(runtime.getRuntimeError());
     //send success, create account
@@ -137,13 +147,11 @@ public class BatchSendTest {
 
   }
 
-
   private byte[] deployTransferContract()
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "TestTransferTo";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI =
-        "[]";
+    String ABI = "[]";
     String code = "608060405261019c806100136000396000f3fe608060405260043610610045577c0100000000000"
         + "00000000000000000000000000000000000000000000060003504632a205edf811461004a5780634cd2270c"
         + "146100c8575b600080fd5b34801561005657600080fd5b50d3801561006357600080fd5b50d2801561007057"
@@ -163,25 +171,7 @@ public class BatchSendTest {
 
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId, deposit, null);
     return contractAddress;
-  }
-
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 }

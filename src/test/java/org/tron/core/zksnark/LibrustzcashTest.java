@@ -10,6 +10,7 @@ import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendProo
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendSig;
 import static org.tron.common.zksnark.JLibsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
 
+
 import com.google.protobuf.ByteString;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import java.io.File;
@@ -32,7 +33,6 @@ import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.JLibsodium;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
-import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.MerkleHashParams;
@@ -73,16 +73,8 @@ public class LibrustzcashTest {
   private static Wallet wallet;
 
   static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
-            "-w",
-            "--debug"
-        },
-        "config-test-mainnet.conf"
-    );
+    Args.setParam(new String[] {"--output-directory", dbPath, "--storage-db-directory", dbDirectory,
+        "--storage-index-directory", indexDirectory, "-w", "--debug"}, "config-test-mainnet.conf");
 
     context = new TronApplicationContext(DefaultConfig.class);
   }
@@ -102,6 +94,34 @@ public class LibrustzcashTest {
 
   private static int randomInt(int minInt, int maxInt) {
     return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
+  }
+
+  public static void test(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
+    byte[] block = new byte[128];
+
+    System.arraycopy(ovk, 0, block, 0, 32);
+    System.arraycopy(cv, 0, block, 32, 32);
+    System.arraycopy(cm, 0, block, 64, 32);
+    System.arraycopy(epk, 0, block, 96, 32);
+
+    byte[] personalization = new byte[32];
+    byte[] aa = "Zcash_Derive_ock".getBytes();
+    System.arraycopy(aa, 0, personalization, 0, aa.length);
+    Assert.assertTrue(
+        JLibsodium.cryptoGenerichashBlack2bSaltPersonal(K, 32, block, 128, null, 0, // No key.
+            null,    // No salt.
+            personalization) == 0);
+
+    byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
+
+    Assert.assertTrue(JLibsodium
+        .cryptoAeadChacha20poly1305IetfDecrypt(new byte[1024], null, null, new byte[1024], 1024,
+            null, 0, cipher_nonce, K) != 0);
+  }
+
+  public static void librustzcashInitZksnarkParams() {
+
+    FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
   @Test
@@ -184,51 +204,16 @@ public class LibrustzcashTest {
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
   }
 
-  public static void test(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
-    byte[] block = new byte[128];
-
-    System.arraycopy(ovk, 0, block, 0, 32);
-    System.arraycopy(cv, 0, block, 32, 32);
-    System.arraycopy(cm, 0, block, 64, 32);
-    System.arraycopy(epk, 0, block, 96, 32);
-
-    byte[] personalization = new byte[32];
-    byte[] aa = "Zcash_Derive_ock".getBytes();
-    System.arraycopy(aa, 0, personalization, 0, aa.length);
-    Assert.assertTrue(JLibsodium.cryptoGenerichashBlack2bSaltPersonal(K, 32,
-        block, 128,
-        null, 0, // No key.
-        null,    // No salt.
-        personalization) == 0);
-
-    byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
-
-    Assert.assertTrue(JLibsodium.cryptoAeadChacha20poly1305IetfDecrypt(
-        new byte[1024], null,
-        null,
-        new byte[1024], 1024,
-        null,
-        0,
-        cipher_nonce, K) != 0);
-  }
-
-  static public void librustzcashInitZksnarkParams() {
-
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
-  }
-
   public long benchmarkCreateSpend() throws ZksnarkException {
 
     long ctx = librustzcashSaplingProvingCtxInit();
 
     byte[] ak = HexBin.decode("2021c369f4b901cc4f37d80eac2d676aa41beb2a2d835d5120005714bc687657");
-    byte[] nsk = HexBin
-        .decode("48ea637742229ee87b8ebffd435b27469bee46ecb7732a6e3fb27939d442c006");
+    byte[] nsk = HexBin.decode("48ea637742229ee87b8ebffd435b27469bee46ecb7732a6e3fb27939d442c006");
 
     byte[] d = HexBin.decode("5aafbda15b790d38637017");
     long value = 10 * 1000000;
-    byte[] rcm = HexBin
-        .decode("26328c28c46fb3c3a5e0648e5fc6b312a93f9fa93b5275cf79d4f71a30cd4d00");
+    byte[] rcm = HexBin.decode("26328c28c46fb3c3a5e0648e5fc6b312a93f9fa93b5275cf79d4f71a30cd4d00");
     byte[] alpha = HexBin
         .decode("994f6f29a8205747c510406e331d2a49faa1b517e630a4c55d9fe3856a9e030b");
     byte[] anchor = HexBin
@@ -241,17 +226,9 @@ public class LibrustzcashTest {
 
     long start = System.currentTimeMillis();
     boolean ret;
-    ret = librustzcashSaplingSpendProof(new SpendProofParams(ctx, ak,
-        nsk,
-        d,
-        rcm,
-        alpha,
-        value,
-        anchor,
-        voucherPath,
-        cv,
-        rk,
-        zkproof));
+    ret = librustzcashSaplingSpendProof(
+        new SpendProofParams(ctx, ak, nsk, d, rcm, alpha, value, anchor, voucherPath, cv, rk,
+            zkproof));
 
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ret);
@@ -274,30 +251,25 @@ public class LibrustzcashTest {
     int availableProcessors = Runtime.getRuntime().availableProcessors();
     logger.info("availableProcessors:" + availableProcessors);
 
-    ExecutorService generatePool =
-        Executors.newFixedThreadPool(
-            availableProcessors,
-            new ThreadFactory() {
-              @Override
-              public Thread newThread(Runnable r) {
-                return new Thread(r, "generate-transaction");
-              }
-            });
+    ExecutorService generatePool = Executors
+        .newFixedThreadPool(availableProcessors, new ThreadFactory() {
+          @Override
+          public Thread newThread(Runnable r) {
+            return new Thread(r, "generate-transaction");
+          }
+        });
 
     long startGenerate = System.currentTimeMillis();
-    LongStream.range(0L, count)
-        .forEach(
-            l -> {
-              generatePool.execute(
-                  () -> {
-                    try {
-                      benchmarkCreateSpend();
-                    } catch (Exception ex) {
-                      ex.printStackTrace();
-                      logger.error("", ex);
-                    }
-                  });
-            });
+    LongStream.range(0L, count).forEach(l -> {
+      generatePool.execute(() -> {
+        try {
+          benchmarkCreateSpend();
+        } catch (Exception ex) {
+          ex.printStackTrace();
+          logger.error("", ex);
+        }
+      });
+    });
 
     countDownLatch.await();
 
@@ -346,8 +318,8 @@ public class LibrustzcashTest {
     Note note = new Note(address, value);
     byte[] cm = note.cm();
 
-    IncrementalMerkleTreeContainer tree =
-        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     compressCapsule1.setContent(ByteString.copyFrom(cm));
     PedersenHash a = compressCapsule1.getInstance();
@@ -428,14 +400,8 @@ public class LibrustzcashTest {
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
     boolean result = JLibrustzcash.librustzcashSaplingOutputProof(
-        new OutputProofParams(ctx,
-            encryptor.getEsk(),
-            note.getD().getData(),
-            note.getPkD(),
-            note.getRcm(),
-            note.getValue(),
-            cv,
-            zkProof));
+        new OutputProofParams(ctx, encryptor.getEsk(), note.getD().getData(), note.getPkD(),
+            note.getRcm(), note.getValue(), cv, zkProof));
 
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
@@ -486,8 +452,8 @@ public class LibrustzcashTest {
 
     long ctx = librustzcashSaplingProvingCtxInit();
 
-    CheckOutputParams checkOutputParams = CheckOutputParams.decode(ctx,
-        ByteArray.fromHexString(spend));
+    CheckOutputParams checkOutputParams = CheckOutputParams
+        .decode(ctx, ByteArray.fromHexString(spend));
 
     boolean result = JLibrustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
 

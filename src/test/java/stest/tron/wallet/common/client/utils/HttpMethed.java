@@ -437,8 +437,8 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse exchangeCreate(String httpNode, byte[] ownerAddress,
-      String firstTokenId, Long firstTokenBalance,
-      String secondTokenId, Long secondTokenBalance, String fromKey) {
+      String firstTokenId, Long firstTokenBalance, String secondTokenId, Long secondTokenBalance,
+      String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/exchangecreate";
       JsonObject userBaseObj2 = new JsonObject();
@@ -572,8 +572,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse transferAsset(String httpNode, byte[] ownerAddress,
-      byte[] toAddress, String assetIssueById, Long amount, String fromKey) {
+  public static HttpResponse transferAsset(String httpNode, byte[] ownerAddress, byte[] toAddress,
+      String assetIssueById, Long amount, String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/transferasset";
       JsonObject userBaseObj2 = new JsonObject();
@@ -597,10 +597,9 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse deployContract(String httpNode, String name, String abi,
-      String bytecode,
-      Long bandwidthLimit, Long feeLimit, Integer consumeUserResourcePercent,
-      Long originEnergyLimit,
-      Long callValue, Integer tokenId, Long tokenValue, byte[] ownerAddress, String fromKey) {
+      String bytecode, Long bandwidthLimit, Long feeLimit, Integer consumeUserResourcePercent,
+      Long originEnergyLimit, Long callValue, Integer tokenId, Long tokenValue, byte[] ownerAddress,
+      String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/deploycontract";
       JsonObject userBaseObj2 = new JsonObject();
@@ -634,10 +633,9 @@ public class HttpMethed {
    * constructor.
    */
   public static String deployContractGetTxid(String httpNode, String name, String abi,
-      String bytecode,
-      Long bandwidthLimit, Long feeLimit, Integer consumeUserResourcePercent,
-      Long originEnergyLimit,
-      Long callValue, Integer tokenId, Long tokenValue, byte[] ownerAddress, String fromKey) {
+      String bytecode, Long bandwidthLimit, Long feeLimit, Integer consumeUserResourcePercent,
+      Long originEnergyLimit, Long callValue, Integer tokenId, Long tokenValue, byte[] ownerAddress,
+      String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/deploycontract";
       JsonObject userBaseObj2 = new JsonObject();
@@ -731,8 +729,8 @@ public class HttpMethed {
       transactionString = EntityUtils.toString(response.getEntity());
       logger.info(transactionString);
 
-      transactionSignString = gettransactionsign(httpNode, parseStringContent(transactionString)
-          .getString("transaction"), fromKey);
+      transactionSignString = gettransactionsign(httpNode,
+          parseStringContent(transactionString).getString("transaction"), fromKey);
       logger.info(transactionSignString);
       response = broadcastTransaction(httpNode, transactionSignString);
     } catch (Exception e) {
@@ -773,8 +771,7 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse triggerConstantContract(String httpNode, byte[] ownerAddress,
-      String contractAddress,
-      String functionSelector, String parameter) {
+      String contractAddress, String functionSelector, String parameter) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/triggerconstantcontract";
       JsonObject userBaseObj2 = new JsonObject();
@@ -861,18 +858,17 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse freezeBalance(String httpNode, byte[] ownerAddress,
-      Long frozenBalance, Integer frozenDuration, Integer resourceCode, String fromKey) {
-    return freezeBalance(httpNode, ownerAddress, frozenBalance, frozenDuration, resourceCode,
-        null, fromKey);
+  public static HttpResponse freezeBalance(String httpNode, byte[] ownerAddress, Long frozenBalance,
+      Integer frozenDuration, Integer resourceCode, String fromKey) {
+    return freezeBalance(httpNode, ownerAddress, frozenBalance, frozenDuration, resourceCode, null,
+        fromKey);
   }
 
   /**
    * constructor.
    */
-  public static HttpResponse freezeBalance(String httpNode, byte[] ownerAddress,
-      Long frozenBalance, Integer frozenDuration, Integer resourceCode, byte[] receiverAddress,
-      String fromKey) {
+  public static HttpResponse freezeBalance(String httpNode, byte[] ownerAddress, Long frozenBalance,
+      Integer frozenDuration, Integer resourceCode, byte[] receiverAddress, String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/freezebalance";
       JsonObject userBaseObj2 = new JsonObject();
@@ -964,8 +960,8 @@ public class HttpMethed {
   public static HttpResponse broadcastTransaction(String httpNode, String transactionSignString) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/broadcasttransaction";
-      httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
-          connectionTimeout);
+      httpClient.getParams()
+          .setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
       httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
       httppost = new HttpPost(requestUrl);
       httppost.setHeader("Content-type", "application/json; charset=utf-8");
@@ -1098,7 +1094,6 @@ public class HttpMethed {
   }
 
 
-
   /**
    * constructor.
    */
@@ -1139,8 +1134,8 @@ public class HttpMethed {
   public static HttpResponse getSignWeight(String httpNode, String transactionSignString) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getsignweight";
-      httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
-          connectionTimeout);
+      httpClient.getParams()
+          .setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
       httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
       httppost = new HttpPost(requestUrl);
       httppost.setHeader("Content-type", "application/json; charset=utf-8");
@@ -1168,8 +1163,8 @@ public class HttpMethed {
       String transactionSignString) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getapprovedlist";
-      httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
-          connectionTimeout);
+      httpClient.getParams()
+          .setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
       httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
       httppost = new HttpPost(requestUrl);
       httppost.setHeader("Content-type", "application/json; charset=utf-8");
@@ -1483,7 +1478,6 @@ public class HttpMethed {
   }
 
 
-
   /**
    * constructor.
    */
@@ -1739,8 +1733,8 @@ public class HttpMethed {
     while (nextBlockNum <= currentBlockNum + 1 && times++ <= 10) {
       response = HttpMethed.getNowBlock(httpNode);
       responseContent = HttpMethed.parseResponseContent(response);
-      responseContent = HttpMethed.parseStringContent(responseContent.get("block_header")
-          .toString());
+      responseContent = HttpMethed
+          .parseStringContent(responseContent.get("block_header").toString());
       responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
       nextBlockNum = Integer.parseInt(responseContent.get("number").toString());
       try {
@@ -1765,8 +1759,8 @@ public class HttpMethed {
     while (nextBlockNum <= currentBlockNum && times++ <= 3) {
       response = HttpMethed.getNowBlockFromSolidity(httpSolidityNode);
       responseContent = HttpMethed.parseResponseContent(response);
-      responseContent = HttpMethed.parseStringContent(responseContent.get("block_header")
-          .toString());
+      responseContent = HttpMethed
+          .parseStringContent(responseContent.get("block_header").toString());
       responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
       nextBlockNum = Integer.parseInt(responseContent.get("number").toString());
       try {
@@ -1959,8 +1953,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getDelegatedResource(
-      String httpNode, byte[] fromAddress, byte[] toAddress) {
+  public static HttpResponse getDelegatedResource(String httpNode, byte[] fromAddress,
+      byte[] toAddress) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getdelegatedresource";
       JsonObject userBaseObj2 = new JsonObject();
@@ -1978,8 +1972,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getDelegatedResourceFromSolidity(
-      String httpSolidityNode, byte[] fromAddress, byte[] toAddress) {
+  public static HttpResponse getDelegatedResourceFromSolidity(String httpSolidityNode,
+      byte[] fromAddress, byte[] toAddress) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getdelegatedresource";
       JsonObject userBaseObj2 = new JsonObject();
@@ -2043,8 +2037,8 @@ public class HttpMethed {
    */
   public static HttpResponse createConnect(String url, JsonObject requestBody) {
     try {
-      httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
-          connectionTimeout);
+      httpClient.getParams()
+          .setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
       httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
       httppost = new HttpPost(url);
       httppost.setHeader("Content-type", "application/json; charset=utf-8");
@@ -2074,8 +2068,8 @@ public class HttpMethed {
       Long end = 0L;
       Long duration = 0L;
       while (times-- > 0) {
-        httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
-            connectionTimeout);
+        httpClient.getParams()
+            .setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
         httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
         httppost = new HttpPost(url);
         httppost.setHeader("Content-type", "application/json; charset=utf-8");
@@ -2104,17 +2098,16 @@ public class HttpMethed {
   }
 
 
-
   /**
    * constructor.
    */
   public static HttpResponse createConnect1(String url, JSONObject requestBody) {
     try {
-      httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
-          connectionTimeout);
+      httpClient.getParams()
+          .setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
       httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
-      httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
-          connectionTimeout * 10000);
+      httpClient.getParams()
+          .setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout * 10000);
       httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout * 10000);
       httppost = new HttpPost(url);
       httppost.setHeader("Content-type", "application/json; charset=utf-8");
@@ -2627,8 +2620,8 @@ public class HttpMethed {
    * constructor.
    */
   public static List<GrpcAPI.Note> addShieldOutputList(String httpNode,
-      List<GrpcAPI.Note> shieldOutList, String shieldToAddress,
-      String toAmountString, String menoString) {
+      List<GrpcAPI.Note> shieldOutList, String shieldToAddress, String toAmountString,
+      String menoString) {
     String shieldAddress = shieldToAddress;
     String amountString = toAmountString;
     if (menoString.equals("null")) {
@@ -2794,10 +2787,8 @@ public class HttpMethed {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getmerkletreevoucherinfo";
       JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
-      jsonObjectWarp
-          .put("out_points", Lists.newArrayList(new JSONObjectWarp()
-              .put("hash", hash)
-              .put("index", index)))
+      jsonObjectWarp.put("out_points",
+          Lists.newArrayList(new JSONObjectWarp().put("hash", hash).put("index", index)))
           .put("block_num", blockNum);
       String jsonStr = jsonObjectWarp.toJSONString();
       JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
@@ -2819,10 +2810,8 @@ public class HttpMethed {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getmerkletreevoucherinfo";
       JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
-      jsonObjectWarp
-          .put("out_points", Lists.newArrayList(new JSONObjectWarp()
-              .put("hash", hash)
-              .put("index", index)))
+      jsonObjectWarp.put("out_points",
+          Lists.newArrayList(new JSONObjectWarp().put("hash", hash).put("index", index)))
           .put("block_num", blockNum);
       String jsonStr = jsonObjectWarp.toJSONString();
       JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
@@ -2840,10 +2829,9 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse sendShieldCoin(String httpNode, byte[] publicZenTokenOwnerAddress,
-      long fromAmount, ShieldAddressInfo shieldAddressInfo,
-      ShieldNoteInfo noteTx, List<GrpcAPI.Note> shieldOutputList,
-      byte[] publicZenTokenToAddress,
-      long toAmount, String zenTokenOwnerKey) {
+      long fromAmount, ShieldAddressInfo shieldAddressInfo, ShieldNoteInfo noteTx,
+      List<GrpcAPI.Note> shieldOutputList, byte[] publicZenTokenToAddress, long toAmount,
+      String zenTokenOwnerKey) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/createshieldedtransaction";
 
@@ -2868,17 +2856,13 @@ public class HttpMethed {
         JSONArray vouchers = responseContent.getJSONArray("vouchers");
         JSONArray paths = responseContent.getJSONArray("paths");
 
-        List shieldedSpends = Lists.newArrayList(
-            new JSONObjectWarp()
-                .put("note", new JSONObjectWarp()
-                    .put("value", noteTx.getValue())
-                    .put("payment_address", noteTx.getPaymentAddress())
-                    .put("rcm", ByteArray.toHexString(noteTx.getR()))
-                    .put("memo", ByteArray.toHexString(noteTx.getMemo())))
-                .put("alpha", ByteArray.toHexString(org.tron.core.zen.note.Note.generateR()))
-                .put("voucher", Lists.newArrayList(vouchers))
-                .put("path", Lists.newArrayList(paths))
-        );
+        List shieldedSpends = Lists.newArrayList(new JSONObjectWarp().put("note",
+            new JSONObjectWarp().put("value", noteTx.getValue())
+                .put("payment_address", noteTx.getPaymentAddress())
+                .put("rcm", ByteArray.toHexString(noteTx.getR()))
+                .put("memo", ByteArray.toHexString(noteTx.getMemo())))
+            .put("alpha", ByteArray.toHexString(org.tron.core.zen.note.Note.generateR()))
+            .put("voucher", Lists.newArrayList(vouchers)).put("path", Lists.newArrayList(paths)));
 
         map.put("shielded_spends", shieldedSpends);
       } else {
@@ -2949,12 +2933,10 @@ public class HttpMethed {
       responseContent = HttpMethed.parseResponseContent(response);
       jsonObjectWarp.put("nk", responseContent.getString("value"));
 
-      jsonObjectWarp.put("note", new JSONObjectWarp()
-          .put("value", noteTx.getValue())
+      jsonObjectWarp.put("note", new JSONObjectWarp().put("value", noteTx.getValue())
           .put("payment_address", noteTx.getPaymentAddress())
           .put("rcm", ByteArray.toHexString(noteTx.getR()))
-          .put("memo", ByteArray.toHexString(noteTx.getMemo())))
-          .put("txid", noteTx.getTrxId());
+          .put("memo", ByteArray.toHexString(noteTx.getMemo()))).put("txid", noteTx.getTrxId());
 
       String jsonStr = jsonObjectWarp.toJSONString();
       JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
@@ -2999,12 +2981,10 @@ public class HttpMethed {
       responseContent = HttpMethed.parseResponseContent(response);
       jsonObjectWarp.put("nk", responseContent.getString("value"));
 
-      jsonObjectWarp.put("note", new JSONObjectWarp()
-          .put("value", noteTx.getValue())
+      jsonObjectWarp.put("note", new JSONObjectWarp().put("value", noteTx.getValue())
           .put("payment_address", noteTx.getPaymentAddress())
           .put("rcm", ByteArray.toHexString(noteTx.getR()))
-          .put("memo", ByteArray.toHexString(noteTx.getMemo())))
-          .put("txid", noteTx.getTrxId());
+          .put("memo", ByteArray.toHexString(noteTx.getMemo()))).put("txid", noteTx.getTrxId());
 
       String jsonStr = jsonObjectWarp.toJSONString();
       JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
@@ -3063,13 +3043,10 @@ public class HttpMethed {
           String noteTxs = jsonArray.get(i).toString();
           String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
           noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
-          noteTx
-              .setPaymentAddress(
-                  HttpMethed.parseStringContent(noteString).getString("payment_address"));
-          noteTx
-              .setR(
-                  ByteArray
-                      .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+          noteTx.setPaymentAddress(
+              HttpMethed.parseStringContent(noteString).getString("payment_address"));
+          noteTx.setR(
+              ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
           noteTx.setMemo(
               ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
           noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
@@ -3120,13 +3097,10 @@ public class HttpMethed {
         String noteTxs = jsonArray.get(i).toString();
         String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
         noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
-        noteTx
-            .setPaymentAddress(
-                HttpMethed.parseStringContent(noteString).getString("payment_address"));
-        noteTx
-            .setR(
-                ByteArray
-                    .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+        noteTx.setPaymentAddress(
+            HttpMethed.parseStringContent(noteString).getString("payment_address"));
+        noteTx.setR(
+            ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
         noteTx.setMemo(
             ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
         noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
@@ -3192,13 +3166,10 @@ public class HttpMethed {
         String noteTxs = jsonArray.get(i).toString();
         String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
         noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
-        noteTx
-            .setPaymentAddress(
-                HttpMethed.parseStringContent(noteString).getString("payment_address"));
-        noteTx
-            .setR(
-                ByteArray
-                    .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+        noteTx.setPaymentAddress(
+            HttpMethed.parseStringContent(noteString).getString("payment_address"));
+        noteTx.setR(
+            ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
         noteTx.setMemo(
             ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
         noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
@@ -3265,13 +3236,10 @@ public class HttpMethed {
         String noteTxs = jsonArray.get(i).toString();
         String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
         noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
-        noteTx
-            .setPaymentAddress(
-                HttpMethed.parseStringContent(noteString).getString("payment_address"));
-        noteTx
-            .setR(
-                ByteArray
-                    .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+        noteTx.setPaymentAddress(
+            HttpMethed.parseStringContent(noteString).getString("payment_address"));
+        noteTx.setR(
+            ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
         noteTx.setMemo(
             ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
         noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
@@ -3322,13 +3290,10 @@ public class HttpMethed {
         String noteTxs = jsonArray.get(i).toString();
         String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
         noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
-        noteTx
-            .setPaymentAddress(
-                HttpMethed.parseStringContent(noteString).getString("payment_address"));
-        noteTx
-            .setR(
-                ByteArray
-                    .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+        noteTx.setPaymentAddress(
+            HttpMethed.parseStringContent(noteString).getString("payment_address"));
+        noteTx.setR(
+            ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
         noteTx.setMemo(
             ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
         noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
@@ -3378,13 +3343,10 @@ public class HttpMethed {
         String noteTxs = jsonArray.get(0).toString();
         String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
         noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
-        noteTx
-            .setPaymentAddress(
-                HttpMethed.parseStringContent(noteString).getString("payment_address"));
-        noteTx
-            .setR(
-                ByteArray
-                    .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+        noteTx.setPaymentAddress(
+            HttpMethed.parseStringContent(noteString).getString("payment_address"));
+        noteTx.setR(
+            ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
         noteTx.setMemo(
             ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
         noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
@@ -3403,10 +3365,8 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse sendShieldCoinWithoutAsk(String httpNode, String httpSolidityNode,
-      byte[] publicZenTokenOwnerAddress,
-      long fromAmount, ShieldAddressInfo shieldAddressInfo,
-      ShieldNoteInfo noteTx, List<GrpcAPI.Note> shieldOutputList,
-      byte[] publicZenTokenToAddress,
+      byte[] publicZenTokenOwnerAddress, long fromAmount, ShieldAddressInfo shieldAddressInfo,
+      ShieldNoteInfo noteTx, List<GrpcAPI.Note> shieldOutputList, byte[] publicZenTokenToAddress,
       long toAmount, String zenTokenOwnerKey) {
     try {
       String requestUrl =
@@ -3442,17 +3402,13 @@ public class HttpMethed {
         JSONArray paths = HttpMethed.responseContent.getJSONArray("paths");
         alpha = org.tron.core.zen.note.Note.generateR();
 
-        List shieldedSpends = Lists.newArrayList(
-            new JSONObjectWarp()
-                .put("note", new JSONObjectWarp()
-                    .put("value", noteTx.getValue())
-                    .put("payment_address", noteTx.getPaymentAddress())
-                    .put("rcm", ByteArray.toHexString(noteTx.getR()))
-                    .put("memo", ByteArray.toHexString(noteTx.getMemo())))
-                .put("alpha", ByteArray.toHexString(alpha))
-                .put("voucher", Lists.newArrayList(vouchers))
-                .put("path", Lists.newArrayList(paths))
-        );
+        List shieldedSpends = Lists.newArrayList(new JSONObjectWarp().put("note",
+            new JSONObjectWarp().put("value", noteTx.getValue())
+                .put("payment_address", noteTx.getPaymentAddress())
+                .put("rcm", ByteArray.toHexString(noteTx.getR()))
+                .put("memo", ByteArray.toHexString(noteTx.getMemo())))
+            .put("alpha", ByteArray.toHexString(alpha)).put("voucher", Lists.newArrayList(vouchers))
+            .put("path", Lists.newArrayList(paths)));
 
         map.put("shielded_spends", shieldedSpends);
       } else {
@@ -3497,10 +3453,8 @@ public class HttpMethed {
         String hash = responseContent.getString("value");
 
         String spendauthsigUrl = "http://" + httpNode + "/wallet/createspendauthsig";
-        JSONObjectWarp spendauthsigJson = new JSONObjectWarp()
-            .put("ask", ask)
-            .put("alpha", ByteArray.toHexString(alpha))
-            .put("tx_hash", hash);
+        JSONObjectWarp spendauthsigJson = new JSONObjectWarp().put("ask", ask)
+            .put("alpha", ByteArray.toHexString(alpha)).put("tx_hash", hash);
         String spendauthsigStr = spendauthsigJson.toJSONString();
         JsonObject spendauthsigObj = new JsonParser().parse(spendauthsigStr).getAsJsonObject();
         logger.info("spendauthsigObj:" + spendauthsigObj.toString());
@@ -3510,10 +3464,9 @@ public class HttpMethed {
         String spendauthsig = responseContent.getString("value");
 
         JSONObject jsonObject = HttpMethed.parseStringContent(transactionString);
-        jsonObject.getJSONObject("raw_data").getJSONArray("contract")
-            .getJSONObject(0).getJSONObject("parameter").getJSONObject("value")
-            .getJSONArray("spend_description").getJSONObject(0)
-            .put("spend_authority_signature", spendauthsig);
+        jsonObject.getJSONObject("raw_data").getJSONArray("contract").getJSONObject(0)
+            .getJSONObject("parameter").getJSONObject("value").getJSONArray("spend_description")
+            .getJSONObject(0).put("spend_authority_signature", spendauthsig);
         transactionString = jsonObject.toString();
         logger.info("transactionString2:" + transactionString);
       }
@@ -3536,9 +3489,9 @@ public class HttpMethed {
   public static void freedResource(String httpNode, byte[] fromAddress, byte[] toAddress,
       String fromKey) {
     long balance = HttpMethed.getBalance(httpNode, fromAddress);
-//    System.out.println("剩余资源：" + balance);
+    //System.out.println("剩余资源：" + balance);
     sendCoin(httpNode, fromAddress, toAddress, balance - 50000, fromKey);
     balance = HttpMethed.getBalance(httpNode, fromAddress);
-//    System.out.println("之后资源：" + balance);
+    //System.out.println("之后资源：" + balance);
   }
 }

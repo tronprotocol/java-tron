@@ -41,7 +41,7 @@ public class EnergyWhenSendAndTransferTest {
    */
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -94,8 +94,7 @@ public class EnergyWhenSendAndTransferTest {
     long feeLimit = 1000_000_000L; // sun
     long consumeUserResourcePercent = 100;
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    TVMTestResult result = deployCallValueTestContract(value, feeLimit,
-        consumeUserResourcePercent);
+    TVMTestResult result = deployCallValueTestContract(value, feeLimit, consumeUserResourcePercent);
 
     long expectEnergyUsageTotal = 174639;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -107,8 +106,8 @@ public class EnergyWhenSendAndTransferTest {
     /* =================================== CALL simpleCall() =================================== */
     byte[] triggerData = TvmTestUtils.parseAbi("simpleCall()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 7370;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -118,15 +117,14 @@ public class EnergyWhenSendAndTransferTest {
     /* =================================== CALL complexCall() =================================== */
     triggerData = TvmTestUtils.parseAbi("complexCall()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal3 = 9459;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal3);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
-        totalBalance - value
-            - (expectEnergyUsageTotal + expectEnergyUsageTotal2 + expectEnergyUsageTotal3) * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - value
+        - (expectEnergyUsageTotal + expectEnergyUsageTotal2 + expectEnergyUsageTotal3) * 100);
   }
 
   // solidity for sendTest and transferTest
@@ -183,8 +181,8 @@ public class EnergyWhenSendAndTransferTest {
     /* =================================== CALL doSend() =================================== */
     byte[] triggerData = TvmTestUtils.parseAbi("doSend()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 7025;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -217,8 +215,8 @@ public class EnergyWhenSendAndTransferTest {
     /* =================================== CALL doSend() =================================== */
     byte[] triggerData = TvmTestUtils.parseAbi("doTransfer()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 7030;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -239,10 +237,8 @@ public class EnergyWhenSendAndTransferTest {
     String libraryAddressPair = null;
 
     return TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
   }
 
   public TVMTestResult deploySendAndTransferTestContract(long value, long feeLimit,
@@ -255,10 +251,8 @@ public class EnergyWhenSendAndTransferTest {
     String libraryAddressPair = null;
 
     return TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
   }
 
   /**

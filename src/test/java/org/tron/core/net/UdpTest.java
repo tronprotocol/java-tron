@@ -23,8 +23,8 @@ public class UdpTest {
 
   private NodeManager nodeManager;
   private int port = Args.getInstance().getNodeListenPort();
-//  private volatile boolean finishFlag = false;
-//  private long timeOut = 30_000;
+  //private volatile boolean finishFlag = false;
+  //private long timeOut = 30_000;
 
   public UdpTest(TronApplicationContext context) {
     nodeManager = context.getBean(NodeManager.class);

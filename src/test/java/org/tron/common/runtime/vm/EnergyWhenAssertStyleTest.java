@@ -48,7 +48,7 @@ public class EnergyWhenAssertStyleTest {
    */
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -98,10 +98,8 @@ public class EnergyWhenAssertStyleTest {
     String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
 
     long expectEnergyUsageTotal = 39487;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -111,8 +109,8 @@ public class EnergyWhenAssertStyleTest {
 
     byte[] triggerData = TvmTestUtils.parseAbi("testOutOfIndex()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -149,10 +147,8 @@ public class EnergyWhenAssertStyleTest {
     String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
 
     long expectEnergyUsageTotal = 31875;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -162,8 +158,8 @@ public class EnergyWhenAssertStyleTest {
 
     byte[] triggerData = TvmTestUtils.parseAbi("testbytesN()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -199,10 +195,8 @@ public class EnergyWhenAssertStyleTest {
     String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
 
     long expectEnergyUsageTotal = 27875;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -212,8 +206,8 @@ public class EnergyWhenAssertStyleTest {
 
     byte[] triggerData = TvmTestUtils.parseAbi("testDivZero()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -250,10 +244,8 @@ public class EnergyWhenAssertStyleTest {
     String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
 
     long expectEnergyUsageTotal = 28475;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -263,8 +255,8 @@ public class EnergyWhenAssertStyleTest {
 
     byte[] triggerData = TvmTestUtils.parseAbi("testShiftByNegative()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -302,10 +294,8 @@ public class EnergyWhenAssertStyleTest {
     String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
 
     long expectEnergyUsageTotal = 27475;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -315,8 +305,8 @@ public class EnergyWhenAssertStyleTest {
 
     byte[] triggerData = TvmTestUtils.parseAbi("testEnumType()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -352,10 +342,8 @@ public class EnergyWhenAssertStyleTest {
     String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
 
     long expectEnergyUsageTotal = 30475;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -365,8 +353,8 @@ public class EnergyWhenAssertStyleTest {
 
     byte[] triggerData = TvmTestUtils.parseAbi("testFunctionPointer()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -402,10 +390,8 @@ public class EnergyWhenAssertStyleTest {
     String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
 
     long expectEnergyUsageTotal = 26675;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -415,8 +401,8 @@ public class EnergyWhenAssertStyleTest {
 
     byte[] triggerData = TvmTestUtils.parseAbi("testAssert()", null);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -457,10 +443,8 @@ public class EnergyWhenAssertStyleTest {
     String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
 
     long expectEnergyUsageTotal = 89214;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -474,8 +458,8 @@ public class EnergyWhenAssertStyleTest {
 
     byte[] triggerData = TvmTestUtils.parseAbi("voteForSingleWitness(address,uint256)", params);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
@@ -511,10 +495,8 @@ public class EnergyWhenAssertStyleTest {
     String libraryAddressPair = null;
 
     TVMTestResult result = TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
 
     long expectEnergyUsageTotal = 40487;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
@@ -524,14 +506,14 @@ public class EnergyWhenAssertStyleTest {
     String params = "0000000000000000000000000000000000000000000000000000000000000001";
     byte[] triggerData = TvmTestUtils.parseAbi("testMem(uint256)", params);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            contractAddress, triggerData, 0, feeLimit, dbManager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), false);
-    Assert.assertTrue(
-        result.getRuntime().getResult().getException() instanceof OutOfMemoryException);
+    Assert
+        .assertTrue(result.getRuntime().getResult().getException() instanceof OutOfMemoryException);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }

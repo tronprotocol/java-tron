@@ -38,17 +38,17 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class ProgramResultTest {
 
+  private static final String dbPath = "output_InternalTransactionComplexTest";
+  private static final String OWNER_ADDRESS;
+  private static final String TRANSFER_TO;
   private static Runtime runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;
   private static DepositImpl deposit;
-  private static final String dbPath = "output_InternalTransactionComplexTest";
-  private static final String OWNER_ADDRESS;
-  private static final String TRANSFER_TO;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug", "--support-constant"},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
@@ -68,6 +68,22 @@ public class ProgramResultTest {
     deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     deposit.addBalance(Hex.decode(TRANSFER_TO), 0);
     deposit.commit();
+  }
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   /**
@@ -97,8 +113,7 @@ public class ProgramResultTest {
     byte[] triggerData1 = TvmTestUtils.parseAbi("create()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractAAddress, triggerData1,
-            0, 100000000, deposit, null);
+            contractAAddress, triggerData1, 0, 100000000, deposit, null);
     List<InternalTransaction> internalTransactionsList = runtime.getResult()
         .getInternalTransactions();
     // 15 internalTransactions in total
@@ -108,8 +123,8 @@ public class ProgramResultTest {
         internalTransaction -> hashList.add(Hex.toHexString(internalTransaction.getHash())));
     // No dup
     List<String> dupHash = hashList.stream()
-        .collect(Collectors.toMap(e -> e, e -> 1, (a, b) -> a + b)).
-            entrySet().stream().filter(entry -> entry.getValue() > 1).map(entry -> entry.getKey())
+        .collect(Collectors.toMap(e -> e, e -> 1, (a, b) -> a + b)).entrySet().stream()
+        .filter(entry -> entry.getValue() > 1).map(entry -> entry.getKey())
         .collect(Collectors.toList());
     Assert.assertEquals(dupHash.size(), 0);
   }
@@ -132,8 +147,7 @@ public class ProgramResultTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, null, deposit, null);
   }
 
   private byte[] deployContractAAndGetItsAddress(byte[] calledContractAddress)
@@ -207,10 +221,8 @@ public class ProgramResultTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, null, deposit, null);
   }
-
 
   /**
    * pragma solidity ^0.4.24;
@@ -232,12 +244,11 @@ public class ProgramResultTest {
     byte[] aContract = deployA();
     //false
     String params =
-        Hex.toHexString(new DataWord(new DataWord(cContract).getLast20Bytes()).getData()) +
-            "0000000000000000000000000000000000000000000000000000000000000000";
+        Hex.toHexString(new DataWord(new DataWord(cContract).getLast20Bytes()).getData())
+            + "0000000000000000000000000000000000000000000000000000000000000000";
 
     // ======================================= Test Success =======================================
-    byte[] triggerData1 = TvmTestUtils.parseAbi("transfer(address,bool)",
-        params);
+    byte[] triggerData1 = TvmTestUtils.parseAbi("transfer(address,bool)", params);
     Transaction trx1 = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
             triggerData1, 0, 100000000);
@@ -278,10 +289,9 @@ public class ProgramResultTest {
 
     // ======================================= Test Fail =======================================
     // set revert == true
-    params = Hex.toHexString(new DataWord(new DataWord(cContract).getLast20Bytes()).getData()) +
-        "0000000000000000000000000000000000000000000000000000000000000001";
-    byte[] triggerData2 = TvmTestUtils.parseAbi("transfer(address,bool)",
-        params);
+    params = Hex.toHexString(new DataWord(new DataWord(cContract).getLast20Bytes()).getData())
+        + "0000000000000000000000000000000000000000000000000000000000000001";
+    byte[] triggerData2 = TvmTestUtils.parseAbi("transfer(address,bool)", params);
     Transaction trx2 = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
             triggerData2, 0, 100000000);
@@ -323,7 +333,6 @@ public class ProgramResultTest {
     checkTransactionInfo(traceFailed, trx2, null, internalTransactionsListFail);
   }
 
-
   private byte[] deployC()
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "C";
@@ -338,8 +347,7 @@ public class ProgramResultTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, null, deposit, null);
   }
 
   private byte[] deployA()
@@ -379,10 +387,8 @@ public class ProgramResultTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, null, deposit, null);
   }
-
 
   /**
    * pragma solidity ^0.4.24;
@@ -399,8 +405,7 @@ public class ProgramResultTest {
         .toHexString(new DataWord(new DataWord(TRANSFER_TO).getLast20Bytes()).getData());
 
     // ======================================= Test Suicide =======================================
-    byte[] triggerData1 = TvmTestUtils.parseAbi("suicide(address)",
-        params);
+    byte[] triggerData1 = TvmTestUtils.parseAbi("suicide(address)", params);
     Transaction trx = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), suicideContract,
             triggerData1, 0, 100000000);
@@ -441,8 +446,7 @@ public class ProgramResultTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, null, deposit, null);
   }
 
   public void checkTransactionInfo(TransactionTrace trace, Transaction trx, BlockCapsule block,
@@ -470,22 +474,6 @@ public class ProgramResultTest {
       // for now only one callValue. will be change to list in future.
       Assert.assertEquals(callValueInfoListFromProtocol.get(0).getCallValue(),
           internalTransactionsList.get(i).getValue());
-    }
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
     }
   }
 

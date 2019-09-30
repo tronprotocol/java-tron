@@ -27,16 +27,16 @@ import org.tron.protos.Protocol.AccountType;
 @Slf4j
 public class InternalTransactionComplexTest {
 
+  private static final String dbPath = "output_InternalTransactionComplexTest";
+  private static final String OWNER_ADDRESS;
   private static Runtime runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;
   private static DepositImpl deposit;
-  private static final String dbPath = "output_InternalTransactionComplexTest";
-  private static final String OWNER_ADDRESS;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug", "--support-constant"},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
@@ -52,6 +52,22 @@ public class InternalTransactionComplexTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+  }
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   /**
@@ -84,15 +100,13 @@ public class InternalTransactionComplexTest {
     byte[] triggerData1 = TvmTestUtils.parseAbi("makeTheCall()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            callerContractAddress, triggerData1,
-            0, 100000000, deposit, null);
+            callerContractAddress, triggerData1, 0, 100000000, deposit, null);
 
     /* =================================== CALL testCallbackReturns_ to check data =================================== */
     byte[] triggerData2 = TvmTestUtils.parseAbi("testCallbackReturns_()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            callerContractAddress, triggerData2,
-            0, 100000000, deposit, null);
+            callerContractAddress, triggerData2, 0, 100000000, deposit, null);
 
     // bool true => 0000000000000000000000000000000000000000000000000000000000000001,
     // uint256 314159 =>000000000000000000000000000000000000000000000000000000000004cb2f,
@@ -104,7 +118,6 @@ public class InternalTransactionComplexTest {
 
 
   }
-
 
   // Just for the caller/called example above
   private byte[] deployCalledContractandGetItsAddress()
@@ -127,8 +140,7 @@ public class InternalTransactionComplexTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, null, deposit, null);
   }
 
   // Just for the caller/called example above
@@ -161,25 +173,7 @@ public class InternalTransactionComplexTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null,
-            deposit, null);
-  }
-
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
+            feeLimit, consumeUserResourcePercent, null, deposit, null);
   }
 
 }

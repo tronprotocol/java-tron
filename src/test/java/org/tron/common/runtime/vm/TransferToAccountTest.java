@@ -41,11 +41,6 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 @Slf4j
 public class TransferToAccountTest {
 
-  private static Runtime runtime;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Application appT;
-  private static DepositImpl deposit;
   private static final String dbPath = "output_TransferToAccountTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
@@ -57,10 +52,15 @@ public class TransferToAccountTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static Runtime runtime;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
+  private static Application appT;
+  private static DepositImpl deposit;
   private static AccountCapsule ownerCapsule;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -70,15 +70,27 @@ public class TransferToAccountTest {
     deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     deposit.addBalance(Hex.decode(TRANSFER_TO), 10);
     deposit.commit();
-    ownerCapsule =
-        new AccountCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-            ByteString.copyFromUtf8("owner"),
-            AccountType.AssetIssue);
+    ownerCapsule = new AccountCapsule(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        ByteString.copyFromUtf8("owner"), AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
   }
 
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
 
   private long createAsset(String tokenName) {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
@@ -87,20 +99,13 @@ public class TransferToAccountTest {
     VMConfig.initAllowTvmSolidity059(1);
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
-    AssetIssueContract assetIssueContract =
-        AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setName(ByteString.copyFrom(ByteArray.fromString(tokenName)))
-            .setId(Long.toString(id))
-            .setTotalSupply(TOTAL_SUPPLY)
-            .setTrxNum(TRX_NUM)
-            .setNum(NUM)
-            .setStartTime(START_TIME)
-            .setEndTime(END_TIME)
-            .setVoteScore(VOTE_SCORE)
-            .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
-            .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
-            .build();
+    AssetIssueContract assetIssueContract = AssetIssueContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setName(ByteString.copyFrom(ByteArray.fromString(tokenName))).setId(Long.toString(id))
+        .setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM).setStartTime(START_TIME)
+        .setEndTime(END_TIME).setVoteScore(VOTE_SCORE)
+        .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+        .setUrl(ByteString.copyFrom(ByteArray.fromString(URL))).build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
@@ -108,7 +113,6 @@ public class TransferToAccountTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     return id;
   }
-
 
   /**
    * pragma solidity ^0.5.4;
@@ -139,9 +143,8 @@ public class TransferToAccountTest {
 
     String selectorStr = "transferTokenTo(address,trcToken,uint256)";
 
-    byte[] input = Hex.decode(AbiUtil
-        .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(Hex.decode(TRANSFER_TO)) + "\"" + "," + id + ",9"));
+    byte[] input = Hex.decode(AbiUtil.parseMethod(selectorStr,
+        "\"" + Wallet.encode58Check(Hex.decode(TRANSFER_TO)) + "\"" + "," + id + ",9"));
 
     //  2. Test trigger with tokenValue and tokenId, also test internal transaction transferToken function */
     long triggerCallValue = 100;
@@ -149,8 +152,7 @@ public class TransferToAccountTest {
     long tokenValue = 8;
     Transaction transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
-            input,
-            triggerCallValue, feeLimit, tokenValue, id);
+            input, triggerCallValue, feeLimit, tokenValue, id);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
     Assert.assertNull(runtime.getRuntimeError());
@@ -163,13 +165,11 @@ public class TransferToAccountTest {
 
     // 3.Test transferToken To Non-exist address
     ECKey ecKey = new ECKey(Utils.getRandom());
-    input = Hex.decode(AbiUtil
-        .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(ecKey.getAddress()) + "\"" + "," + id + ",9"));
+    input = Hex.decode(AbiUtil.parseMethod(selectorStr,
+        "\"" + Wallet.encode58Check(ecKey.getAddress()) + "\"" + "," + id + ",9"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
-            input,
-            triggerCallValue, feeLimit, tokenValue, id);
+            input, triggerCallValue, feeLimit, tokenValue, id);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
     Assert.assertNull(runtime.getRuntimeError());
@@ -177,8 +177,8 @@ public class TransferToAccountTest {
         dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
             .longValue());
     Assert.assertEquals(9,
-        dbManager.getAccountStore().get(ecKey.getAddress()).getAssetMapV2()
-            .get(String.valueOf(id)).longValue());
+        dbManager.getAccountStore().get(ecKey.getAddress()).getAssetMapV2().get(String.valueOf(id))
+            .longValue());
     long energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
     //4.Test Energy
     Assert.assertEquals(energyCostWhenNonExist - energyCostWhenExist,
@@ -186,13 +186,11 @@ public class TransferToAccountTest {
     //5. Test transfer Trx with exsit account
 
     selectorStr = "transferTo(address,uint256)";
-    input = Hex.decode(AbiUtil
-        .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(Hex.decode(TRANSFER_TO)) + "\"" + ",9"));
+    input = Hex.decode(AbiUtil.parseMethod(selectorStr,
+        "\"" + Wallet.encode58Check(Hex.decode(TRANSFER_TO)) + "\"" + ",9"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
-            input,
-            triggerCallValue, feeLimit, 0, 0);
+            input, triggerCallValue, feeLimit, 0, 0);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(19, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance());
@@ -202,12 +200,10 @@ public class TransferToAccountTest {
     selectorStr = "transferTo(address,uint256)";
     ecKey = new ECKey(Utils.getRandom());
     input = Hex.decode(AbiUtil
-        .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(ecKey.getAddress()) + "\"" + ",9"));
+        .parseMethod(selectorStr, "\"" + Wallet.encode58Check(ecKey.getAddress()) + "\"" + ",9"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
-            input,
-            triggerCallValue, feeLimit, 0, 0);
+            input, triggerCallValue, feeLimit, 0, 0);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(9, dbManager.getAccountStore().get(ecKey.getAddress()).getBalance());
@@ -220,12 +216,10 @@ public class TransferToAccountTest {
     //8.test transfer to itself
     selectorStr = "transferTo(address,uint256)";
     input = Hex.decode(AbiUtil
-        .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(contractAddress) + "\"" + ",9"));
+        .parseMethod(selectorStr, "\"" + Wallet.encode58Check(contractAddress) + "\"" + ",9"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
-            input,
-            triggerCallValue, feeLimit, 0, 0);
+            input, triggerCallValue, feeLimit, 0, 0);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
     Assert.assertTrue(runtime.getRuntimeError().contains("failed"));
 
@@ -233,15 +227,14 @@ public class TransferToAccountTest {
 
     selectorStr = "transferTokenTo(address,trcToken,uint256)";
     ecKey = new ECKey(Utils.getRandom());
-    String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc" +
-        Hex.toHexString(new DataWord(id).getData()) +
-        "0000000000000000000000000000000011111111111111111111111111111111";
+    String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc" + Hex
+        .toHexString(new DataWord(id).getData())
+        + "0000000000000000000000000000000011111111111111111111111111111111";
     byte[] triggerData = TvmTestUtils.parseAbi(selectorStr, params);
 
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
-            triggerData,
-            triggerCallValue, feeLimit, tokenValue, id);
+            triggerData, triggerCallValue, feeLimit, tokenValue, id);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
     Assert.assertEquals("endowment out of long range", runtime.getRuntimeError());
@@ -250,16 +243,13 @@ public class TransferToAccountTest {
     selectorStr = "transferTo(address,uint256)";
     ecKey = new ECKey(Utils.getRandom());
     input = Hex.decode(AbiUtil
-        .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(ecKey.getAddress()) + "\"" + ",1"));
+        .parseMethod(selectorStr, "\"" + Wallet.encode58Check(ecKey.getAddress()) + "\"" + ",1"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
-            input,
-            0, feeLimit, 0, 0);
+            input, 0, feeLimit, 0, 0);
     deposit = DepositImpl.createRoot(dbManager);
     RuntimeImpl runtimeImpl = new RuntimeImpl(transaction,
-        new BlockCapsule(Block.newBuilder().build()), deposit,
-        new ProgramInvokeFactoryImpl(),
+        new BlockCapsule(Block.newBuilder().build()), deposit, new ProgramInvokeFactoryImpl(),
         true);
     runtimeImpl.execute();
     runtimeImpl.go();
@@ -270,13 +260,11 @@ public class TransferToAccountTest {
 
   }
 
-
   private byte[] deployTransferContract(long id)
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "TestTransferTo";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI =
-        "[]";
+    String ABI = "[]";
     String code = "60806040526101cf806100136000396000f3fe608060405260043610610050577c010000000000000000000000000000000000000000000000000000000060003504632ccb1b3081146100555780634cd2270c14610090578063d4d6422614610098575b600080fd5b61008e6004803603604081101561006b57600080fd5b5073ffffffffffffffffffffffffffffffffffffffff81351690602001356100d7565b005b61008e61011f565b61008e600480360360608110156100ae57600080fd5b5073ffffffffffffffffffffffffffffffffffffffff8135169060208101359060400135610121565b60405173ffffffffffffffffffffffffffffffffffffffff83169082156108fc029083906000818181858888f1935050505015801561011a573d6000803e3d6000fd5b505050565b565b73ffffffffffffffffffffffffffffffffffffffff831681156108fc0282848015801561014d57600080fd5b50806780000000000000001115801561016557600080fd5b5080620f42401015801561017857600080fd5b50604051600081818185878a8ad094505050505015801561019d573d6000803e3d6000fd5b5050505056fea165627a7a723058202eab0934f57baf17ec1ddb6649b416e35d7cb846482d1232ca229258e83d22af0029";
 
     long value = 1000;
@@ -287,25 +275,7 @@ public class TransferToAccountTest {
 
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId, deposit, null);
     return contractAddress;
-  }
-
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 }

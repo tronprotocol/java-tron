@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
 
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -37,8 +38,6 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 public class ExchangeTransactionActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static final String dbPath = "output_ExchangeTransaction_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
   private static final String OWNER_ADDRESS_FIRST;
@@ -48,9 +47,11 @@ public class ExchangeTransactionActuatorTest {
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
+  private static TronApplicationContext context;
+  private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -89,18 +90,14 @@ public class ExchangeTransactionActuatorTest {
    */
   @Before
   public void initTest() {
-    AccountCapsule ownerAccountFirstCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8(ACCOUNT_NAME_FIRST),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
-            AccountType.Normal,
-            10000_000_000L);
-    AccountCapsule ownerAccountSecondCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
-            AccountType.Normal,
-            20000_000_000L);
+    AccountCapsule ownerAccountFirstCapsule = new AccountCapsule(
+        ByteString.copyFromUtf8(ACCOUNT_NAME_FIRST),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)), AccountType.Normal,
+        10000_000_000L);
+    AccountCapsule ownerAccountSecondCapsule = new AccountCapsule(
+        ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)), AccountType.Normal,
+        20000_000_000L);
 
     dbManager.getAccountStore()
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
@@ -112,69 +109,46 @@ public class ExchangeTransactionActuatorTest {
     dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
   }
 
-  private Any getContract(String address, long exchangeId, String tokenId,
-      long quant, long expected) {
-    return Any.pack(
-        Contract.ExchangeTransactionContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
-            .setExchangeId(exchangeId)
-            .setTokenId(ByteString.copyFrom(tokenId.getBytes()))
-            .setQuant(quant)
-            .setExpected(expected)
-            .build());
+  private Any getContract(String address, long exchangeId, String tokenId, long quant,
+      long expected) {
+    return Any.pack(Contract.ExchangeTransactionContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
+        .setExchangeId(exchangeId).setTokenId(ByteString.copyFrom(tokenId.getBytes()))
+        .setQuant(quant).setExpected(expected).build());
   }
 
   private void InitExchangeBeforeSameTokenNameActive() {
     AssetIssueCapsule assetIssueCapsule1 = new AssetIssueCapsule(
-        AssetIssueContract.newBuilder()
-            .setName(ByteString.copyFrom("abc".getBytes()))
-            .setId(String.valueOf(1L))
-            .build());
+        AssetIssueContract.newBuilder().setName(ByteString.copyFrom("abc".getBytes()))
+            .setId(String.valueOf(1L)).build());
     AssetIssueCapsule assetIssueCapsule2 = new AssetIssueCapsule(
-        AssetIssueContract.newBuilder()
-            .setName(ByteString.copyFrom("def".getBytes()))
-            .setId(String.valueOf(2L))
-            .build());
+        AssetIssueContract.newBuilder().setName(ByteString.copyFrom("def".getBytes()))
+            .setId(String.valueOf(2L)).build());
     dbManager.getAssetIssueStore().put(assetIssueCapsule1.createDbKey(), assetIssueCapsule1);
     dbManager.getAssetIssueStore().put(assetIssueCapsule2.createDbKey(), assetIssueCapsule2);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule1.createDbV2Key(), assetIssueCapsule1);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
 
     //V1
-    ExchangeCapsule exchangeCapsule =
-        new ExchangeCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
-            1,
-            1000000,
-            "_".getBytes(),
-            "abc".getBytes());
+    ExchangeCapsule exchangeCapsule = new ExchangeCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)), 1, 1000000,
+        "_".getBytes(), "abc".getBytes());
     exchangeCapsule.setBalance(1_000_000_000_000L, 10_000_000L); // 1M TRX == 10M abc
-    ExchangeCapsule exchangeCapsule2 =
-        new ExchangeCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
-            2,
-            1000000,
-            "abc".getBytes(),
-            "def".getBytes());
+    ExchangeCapsule exchangeCapsule2 = new ExchangeCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)), 2, 1000000,
+        "abc".getBytes(), "def".getBytes());
     exchangeCapsule2.setBalance(100000000L, 200000000L);
     dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     dbManager.getExchangeStore().put(exchangeCapsule2.createDbKey(), exchangeCapsule2);
     //V2
-    ExchangeCapsule exchangeCapsule3 =
-        new ExchangeCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
-            1,
-            1000000,
-            "_".getBytes(),
-            "1".getBytes());
+    ExchangeCapsule exchangeCapsule3 = new ExchangeCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)), 1, 1000000,
+        "_".getBytes(), "1".getBytes());
     exchangeCapsule3.setBalance(1_000_000_000_000L, 10_000_000L); // 1M TRX == 10M abc
-    ExchangeCapsule exchangeCapsule4 =
-        new ExchangeCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
-            2,
-            1000000,
-            "1".getBytes(),   //abc's Id
-            "2".getBytes()); //def's Id
+    ExchangeCapsule exchangeCapsule4 = new ExchangeCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)), 2, 1000000,
+        "1".getBytes(),   //abc's Id
+        "2".getBytes()); //def's Id
     exchangeCapsule4.setBalance(100000000L, 200000000L);
     dbManager.getExchangeV2Store().put(exchangeCapsule3.createDbKey(), exchangeCapsule3);
     dbManager.getExchangeV2Store().put(exchangeCapsule4.createDbKey(), exchangeCapsule4);
@@ -182,36 +156,21 @@ public class ExchangeTransactionActuatorTest {
 
   private void InitExchangeSameTokenNameActive() {
     AssetIssueCapsule assetIssueCapsule1 = new AssetIssueCapsule(
-        AssetIssueContract.newBuilder()
-            .setName(ByteString.copyFrom("123".getBytes()))
-            .setId(String.valueOf(1L))
-            .build());
-    AssetIssueCapsule assetIssueCapsule2 =
-        new AssetIssueCapsule(
-            AssetIssueContract.newBuilder()
-                .setName(ByteString.copyFrom("456".getBytes()))
-                .setId(String.valueOf(2))
-                .build());
-    dbManager.getAssetIssueV2Store().put(assetIssueCapsule1.createDbV2Key(),
-        assetIssueCapsule1);
-    dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.createDbV2Key(),
-        assetIssueCapsule2);
+        AssetIssueContract.newBuilder().setName(ByteString.copyFrom("123".getBytes()))
+            .setId(String.valueOf(1L)).build());
+    AssetIssueCapsule assetIssueCapsule2 = new AssetIssueCapsule(
+        AssetIssueContract.newBuilder().setName(ByteString.copyFrom("456".getBytes()))
+            .setId(String.valueOf(2)).build());
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule1.createDbV2Key(), assetIssueCapsule1);
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
 
-    ExchangeCapsule exchangeCapsule =
-        new ExchangeCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
-            1,
-            1000000,
-            "_".getBytes(),
-            "123".getBytes());
+    ExchangeCapsule exchangeCapsule = new ExchangeCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)), 1, 1000000,
+        "_".getBytes(), "123".getBytes());
     exchangeCapsule.setBalance(1_000_000_000_000L, 10_000_000L); // 1M TRX == 10M abc
-    ExchangeCapsule exchangeCapsule2 =
-        new ExchangeCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
-            2,
-            1000000,
-            "123".getBytes(),
-            "456".getBytes());
+    ExchangeCapsule exchangeCapsule2 = new ExchangeCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)), 2, 1000000,
+        "123".getBytes(), "456".getBytes());
     exchangeCapsule2.setBalance(100000000L, 200000000L);
     dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     dbManager.getExchangeV2Store().put(exchangeCapsule2.createDbKey(), exchangeCapsule2);
@@ -234,9 +193,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get("def"));
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -266,8 +224,8 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertEquals("abc", ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
       Assert.assertEquals(9999001L, exchangeCapsule.getSecondTokenBalance());
       //V2
-      ExchangeCapsule exchangeCapsule2 =
-          dbManager.getExchangeV2Store().get(ByteArray.fromLong(exchangeId));
+      ExchangeCapsule exchangeCapsule2 = dbManager.getExchangeV2Store()
+          .get(ByteArray.fromLong(exchangeId));
       Assert.assertNotNull(exchangeCapsule2);
       Assert.assertEquals(exchangeId, exchangeCapsule2.getID());
       Assert.assertEquals(1000000, exchangeCapsule2.getCreateTime());
@@ -311,9 +269,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get("def"));
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
 
@@ -344,8 +301,8 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertNotEquals(firstTokenBalance + quant, exchangeCapsule.getFirstTokenBalance());
       Assert.assertNotEquals(9999001L, exchangeCapsule.getSecondTokenBalance());
       //V2
-      ExchangeCapsule exchangeCapsule2 =
-          dbManager.getExchangeV2Store().get(ByteArray.fromLong(exchangeId));
+      ExchangeCapsule exchangeCapsule2 = dbManager.getExchangeV2Store()
+          .get(ByteArray.fromLong(exchangeId));
       Assert.assertNotNull(exchangeCapsule2);
       Assert.assertEquals(exchangeId, exchangeCapsule2.getID());
       Assert.assertEquals(1000000, exchangeCapsule2.getCreateTime());
@@ -389,9 +346,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get("456"));
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -466,9 +422,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -498,15 +453,15 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertEquals("def", ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
       Assert.assertEquals(199998001L, exchangeCapsule.getSecondTokenBalance());
       //V2
-      ExchangeCapsule exchangeCapsule2 =
-          dbManager.getExchangeStore().get(ByteArray.fromLong(exchangeId));
+      ExchangeCapsule exchangeCapsule2 = dbManager.getExchangeStore()
+          .get(ByteArray.fromLong(exchangeId));
       Assert.assertNotNull(exchangeCapsule2);
       Assert.assertEquals(exchangeId, exchangeCapsule2.getID());
       Assert.assertEquals(1000000, exchangeCapsule2.getCreateTime());
-//      Assert.assertTrue(Arrays.equals(tokenId.getBytes(), exchangeCapsule2.getFirstTokenId()));
-//      Assert.assertEquals(tokenId, ByteArray.toStr(exchangeCapsule2.getFirstTokenId()));
+      //Assert.assertTrue(Arrays.equals(tokenId.getBytes(), exchangeCapsule2.getFirstTokenId()));
+      //Assert.assertEquals(tokenId, ByteArray.toStr(exchangeCapsule2.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance + quant, exchangeCapsule2.getFirstTokenBalance());
-//      Assert.assertEquals("def", ByteArray.toStr(exchangeCapsule2.getSecondTokenId()));
+      //Assert.assertEquals("def", ByteArray.toStr(exchangeCapsule2.getSecondTokenId()));
       Assert.assertEquals(199998001L, exchangeCapsule2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
@@ -549,9 +504,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -624,9 +578,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_INVALID, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_INVALID, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -667,9 +620,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_INVALID, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_INVALID, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -710,9 +662,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_NOACCOUNT, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_NOACCOUNT, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -721,8 +672,7 @@ public class ExchangeTransactionActuatorTest {
       fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
-          e.getMessage());
+      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -754,9 +704,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_NOACCOUNT, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_NOACCOUNT, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -765,8 +714,7 @@ public class ExchangeTransactionActuatorTest {
       fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
-          e.getMessage());
+      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -797,9 +745,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -808,8 +755,7 @@ public class ExchangeTransactionActuatorTest {
       fail("Exchange not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Exchange[3] not exists",
-          e.getMessage());
+      Assert.assertEquals("Exchange[3] not exists", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -840,9 +786,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -851,8 +796,7 @@ public class ExchangeTransactionActuatorTest {
       fail("Exchange not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Exchange[3] not exists",
-          e.getMessage());
+      Assert.assertEquals("Exchange[3] not exists", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -883,9 +827,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -894,8 +837,7 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token is not in exchange",
-          e.getMessage());
+      Assert.assertEquals("token is not in exchange", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -926,9 +868,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -937,8 +878,7 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token is not in exchange",
-          e.getMessage());
+      Assert.assertEquals("token is not in exchange", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -969,9 +909,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -985,8 +924,8 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Token balance in exchange is equal with 0,"
-              + "the exchange has been closed",
+      Assert.assertEquals(
+          "Token balance in exchange is equal with 0," + "the exchange has been closed",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -1020,9 +959,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1036,8 +974,8 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Token balance in exchange is equal with 0,"
-              + "the exchange has been closed",
+      Assert.assertEquals(
+          "Token balance in exchange is equal with 0," + "the exchange has been closed",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
@@ -1071,9 +1009,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1082,8 +1019,7 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token quant must greater than zero",
-          e.getMessage());
+      Assert.assertEquals("token quant must greater than zero", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1114,9 +1050,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1125,8 +1060,7 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token quant must greater than zero",
-          e.getMessage());
+      Assert.assertEquals("token quant must greater than zero", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1157,9 +1091,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1168,8 +1101,7 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token balance must less than 1000000000000000",
-          e.getMessage());
+      Assert.assertEquals("token balance must less than 1000000000000000", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1200,9 +1132,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1211,8 +1142,7 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token balance must less than 1000000000000000",
-          e.getMessage());
+      Assert.assertEquals("token balance must less than 1000000000000000", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1242,9 +1172,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1253,8 +1182,7 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("balance is not enough",
-          e.getMessage());
+      Assert.assertEquals("balance is not enough", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1284,9 +1212,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1295,8 +1222,7 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("balance is not enough",
-          e.getMessage());
+      Assert.assertEquals("balance is not enough", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1327,9 +1253,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1338,8 +1263,7 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token balance is not enough",
-          e.getMessage());
+      Assert.assertEquals("token balance is not enough", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1370,9 +1294,8 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1381,8 +1304,7 @@ public class ExchangeTransactionActuatorTest {
       fail();
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token balance is not enough",
-          e.getMessage());
+      Assert.assertEquals("token balance is not enough", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1422,9 +1344,8 @@ public class ExchangeTransactionActuatorTest {
       fail();
     }
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, expected + 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, expected + 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1433,8 +1354,7 @@ public class ExchangeTransactionActuatorTest {
       fail("should not run here");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token required must greater than expected",
-          e.getMessage());
+      Assert.assertEquals("token required must greater than expected", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1474,9 +1394,8 @@ public class ExchangeTransactionActuatorTest {
       fail();
     }
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, expected + 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, expected + 1), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -1485,8 +1404,7 @@ public class ExchangeTransactionActuatorTest {
       fail("should not run here");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token required must greater than expected",
-          e.getMessage());
+      Assert.assertEquals("token required must greater than expected", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1510,33 +1428,29 @@ public class ExchangeTransactionActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     //token id is not a valid number
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, "abc", quant, 1),
-        dbManager);
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, "abc", quant, 1), dbManager);
     try {
       actuator.validate();
       actuator.execute(ret);
       fail("should not run here");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token id is not a valid number",
-          e.getMessage());
+      Assert.assertEquals("token id is not a valid number", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
 
     //token expected must greater than zero
-    actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, "_", quant, 0),
-        dbManager);
+    actuator = new ExchangeTransactionActuator(
+        getContract(OWNER_ADDRESS_SECOND, exchangeId, "_", quant, 0), dbManager);
     try {
       actuator.validate();
       actuator.execute(ret);
       fail("should not run here");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token expected must greater than zero",
-          e.getMessage());
+      Assert.assertEquals("token expected must greater than zero", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {

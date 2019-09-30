@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.tvmnewcommand.triggerconstant;
 
 import static org.hamcrest.core.StringContains.containsString;
 
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -36,38 +37,29 @@ public class TriggerConstant001 {
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
+  byte[] contractAddressNoAbi = null;
+  byte[] contractAddressWithAbi = null;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] contractExcAddress = ecKey1.getAddress();
+  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-
   private ManagedChannel channelSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
   private ManagedChannel channelRealSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubRealSolidity = null;
-
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
-
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
   private String realSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(1);
-
-  byte[] contractAddressNoAbi = null;
-  byte[] contractAddressWithAbi = null;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contractExcAddress = ecKey1.getAddress();
-  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
 
   @BeforeSuite
   public void beforeSuite() {
@@ -82,22 +74,15 @@ public class TriggerConstant001 {
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-        .usePlaintext(true)
-        .build();
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1).usePlaintext(true).build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
-    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
-        .build();
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode).usePlaintext(true).build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
-    channelRealSolidity = ManagedChannelBuilder.forTarget(realSoliditynode)
-        .usePlaintext(true)
+    channelRealSolidity = ManagedChannelBuilder.forTarget(realSoliditynode).usePlaintext(true)
         .build();
     blockingStubRealSolidity = WalletSolidityGrpc.newBlockingStub(channelRealSolidity);
 
@@ -112,22 +97,22 @@ public class TriggerConstant001 {
       String code = retMap.get("byteCode").toString();
       final String abi = retMap.get("abI").toString();
 
-      contractAddressNoAbi = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-          0L, 100, null, contractExcKey,
-          contractExcAddress, blockingStubFull);
+      contractAddressNoAbi = PublicMethed
+          .deployContract(contractName, "[]", code, "", maxFeeLimit, 0L, 100, null, contractExcKey,
+              contractExcAddress, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      SmartContract smartContract = PublicMethed.getContract(
-          contractAddressNoAbi, blockingStubFull);
+      SmartContract smartContract = PublicMethed
+          .getContract(contractAddressNoAbi, blockingStubFull);
       Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
       Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
       Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
 
-      contractAddressWithAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-          0L, 100, null, contractExcKey,
-          contractExcAddress, blockingStubFull);
+      contractAddressWithAbi = PublicMethed
+          .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100, null, contractExcKey,
+              contractExcAddress, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      SmartContract smartContract2 = PublicMethed.getContract(
-          contractAddressWithAbi, blockingStubFull);
+      SmartContract smartContract2 = PublicMethed
+          .getContract(contractAddressWithAbi, blockingStubFull);
       Assert.assertFalse(smartContract2.getAbi().toString().isEmpty());
       Assert.assertTrue(smartContract2.getName().equalsIgnoreCase(contractName));
       Assert.assertFalse(smartContract2.getBytecode().toString().isEmpty());
@@ -141,243 +126,206 @@ public class TriggerConstant001 {
     String txid = "";
 
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddressNoAbi,
-            "testPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddressNoAbi, "testPayable()", "#", false, 0,
+            0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
-    Assert
-        .assertThat(transactionExtention.getResult().getCode().toString(),
-            containsString("CONTRACT_EXE_ERROR"));
-    Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-            containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
+        containsString("CONTRACT_EXE_ERROR"));
+    Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a payable function without ABI on solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a payable function"
+      + " without ABI on solidity")
   public void test01TriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testPayable()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
-    Assert
-        .assertThat(transactionExtention.getResult().getCode().toString(),
-            containsString("CONTRACT_EXE_ERROR"));
-    Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-            containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
+        containsString("CONTRACT_EXE_ERROR"));
+    Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a payable function without ABI on real solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a payable function"
+      + " without ABI on real solidity")
   public void test01TriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testPayable()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
-    Assert
-        .assertThat(transactionExtention.getResult().getCode().toString(),
-            containsString("CONTRACT_EXE_ERROR"));
-    Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-            containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
+        containsString("CONTRACT_EXE_ERROR"));
+    Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a non-payable function without ABI")
+  @Test(enabled = true, description = "TriggerConstantContract a non-payable function"
+      + " without ABI")
   public void test02TriggerConstantContract() {
 
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddressNoAbi,
-            "testNoPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddressNoAbi, "testNoPayable()", "#", false, 0,
+            0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
-    Assert
-        .assertThat(transactionExtention.getResult().getCode().toString(),
-            containsString("CONTRACT_EXE_ERROR"));
-    Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-            containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
+        containsString("CONTRACT_EXE_ERROR"));
+    Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a non-payable function without ABI on solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a non-payable function"
+      + " without ABI on solidity")
   public void test02TriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testNoPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testNoPayable()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
-    Assert
-        .assertThat(transactionExtention.getResult().getCode().toString(),
-            containsString("CONTRACT_EXE_ERROR"));
-    Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-            containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
+        containsString("CONTRACT_EXE_ERROR"));
+    Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a non-payable function without ABI on real solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a non-payable function"
+      + " without ABI on real solidity")
   public void test02TriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testNoPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testNoPayable()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
-    Assert
-        .assertThat(transactionExtention.getResult().getCode().toString(),
-            containsString("CONTRACT_EXE_ERROR"));
-    Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-            containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
+        containsString("CONTRACT_EXE_ERROR"));
+    Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a view function without ABI")
   public void test03TriggerConstantContract() {
 
-
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddressNoAbi,
-            "testView()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddressNoAbi, "testView()", "#", false, 0, 0,
+            "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a view function without ABI on solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a view function"
+      + " without ABI on solidity")
   public void test03TriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testView()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testView()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a view function without ABI on real solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a view function"
+      + " without ABI on real solidity")
   public void test03TriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testView()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testView()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a pure function without ABI")
   public void test04TriggerConstantContract() {
 
-
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddressNoAbi,
-            "testPure()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddressNoAbi, "testPure()", "#", false, 0, 0,
+            "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
 
 
   }
 
 
-  @Test(enabled = true, description = "TriggerConstantContract a pure function without ABI on solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a pure function"
+      + " without ABI on solidity")
   public void test04TriggerConstantContractOnSolidity() {
 
-
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testPure()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testPure()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
 
 
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a pure function without ABI on real solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a pure function"
+      + " without ABI on real solidity")
   public void test04TriggerConstantContractOnRealSolidity() {
 
-
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testPure()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testPure()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
 
 
   }
@@ -386,12 +334,10 @@ public class TriggerConstant001 {
   public void test05TriggerConstantContract() {
 
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddressNoAbi,
-            "testPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddressNoAbi, "testPayable()", "#", false, 0,
+            0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_EXE_ERROR"));
@@ -402,15 +348,14 @@ public class TriggerConstant001 {
 
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a payable function with ABI on solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a payable function"
+      + " with ABI on solidity")
   public void test05TriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testPayable()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_EXE_ERROR"));
@@ -419,15 +364,14 @@ public class TriggerConstant001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a payable function with ABI on real solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a payable function"
+      + " with ABI on real solidity")
   public void test05TriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testPayable()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_EXE_ERROR"));
@@ -439,14 +383,11 @@ public class TriggerConstant001 {
   @Test(enabled = true, description = "TriggerConstantContract a non-payable function with ABI")
   public void test06TriggerConstantContract() {
 
-
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddressWithAbi,
-            "testNoPayable()", "#", false,
+        .triggerConstantContractForExtention(contractAddressWithAbi, "testNoPayable()", "#", false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_EXE_ERROR"));
@@ -457,15 +398,14 @@ public class TriggerConstant001 {
 
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a non-payable function with ABI on solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a non-payable function"
+      + " with ABI on solidity")
   public void test06TriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testNoPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testNoPayable()",
+            "#", false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_EXE_ERROR"));
@@ -474,15 +414,14 @@ public class TriggerConstant001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a non-payable function with ABI on real solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a non-payable function"
+      + " with ABI on real solidity")
   public void test06TriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testNoPayable()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testNoPayable()",
+            "#", false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
     System.out.println("Code = " + transactionExtention.getResult().getCode());
-    System.out
-        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_EXE_ERROR"));
@@ -495,135 +434,120 @@ public class TriggerConstant001 {
   public void test07TriggerConstantContract() {
 
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddressWithAbi,
-            "testView()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddressWithAbi, "testView()", "#", false, 0, 0,
+            "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
 
 
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a view function with ABI on solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a view function"
+      + " with ABI on solidity")
   public void test07TriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testView()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testView()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a view function with ABI on real solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a view function"
+      + " with ABI on real solidity")
   public void test07TriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testView()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testView()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a pure function with ABI")
   public void test08TriggerConstantContract() {
 
-
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddressWithAbi,
-            "testPure()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddressWithAbi, "testPure()", "#", false, 0, 0,
+            "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
 
 
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a pure function with ABI on solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a pure function"
+      + " with ABI on solidity")
   public void test08TriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testPure()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testPure()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a pure function with ABI on real solidity")
+  @Test(enabled = true, description = "TriggerConstantContract a pure function"
+      + " with ABI on real solidity")
   public void test08TriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testPure()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testPure()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
   }
 
   @Test(enabled = true, description = "TriggerContract a payable function without ABI")
   public void test09TriggerContract() {
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfo = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
@@ -636,9 +560,8 @@ public class TriggerConstant001 {
     String txid = "";
 
     txid = PublicMethed
-        .triggerContract(contractAddressNoAbi,
-            "testPayable()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContract(contractAddressNoAbi, "testPayable()", "#", false, 0, maxFeeLimit, "0", 0,
+            contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -656,8 +579,8 @@ public class TriggerConstant001 {
     logger.info("energyUsageTotal:" + energyUsageTotal);
 
     Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
@@ -683,8 +606,8 @@ public class TriggerConstant001 {
   public void test10TriggerContract() {
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfo = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
@@ -697,9 +620,8 @@ public class TriggerConstant001 {
     String txid = "";
 
     txid = PublicMethed
-        .triggerContract(contractAddressNoAbi,
-            "testNoPayable()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContract(contractAddressNoAbi, "testNoPayable()", "#", false, 0, maxFeeLimit, "0",
+            0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -717,8 +639,8 @@ public class TriggerConstant001 {
     logger.info("energyUsageTotal:" + energyUsageTotal);
 
     Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
@@ -745,8 +667,8 @@ public class TriggerConstant001 {
 
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfo = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
@@ -759,9 +681,8 @@ public class TriggerConstant001 {
     String txid = "";
 
     txid = PublicMethed
-        .triggerContract(contractAddressNoAbi,
-            "testView()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContract(contractAddressNoAbi, "testView()", "#", false, 0, maxFeeLimit, "0", 0,
+            contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -779,8 +700,8 @@ public class TriggerConstant001 {
     logger.info("energyUsageTotal:" + energyUsageTotal);
 
     Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
@@ -807,8 +728,8 @@ public class TriggerConstant001 {
 
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfo = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
@@ -821,9 +742,8 @@ public class TriggerConstant001 {
     String txid = "";
 
     txid = PublicMethed
-        .triggerContract(contractAddressNoAbi,
-            "testPure()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContract(contractAddressNoAbi, "testPure()", "#", false, 0, maxFeeLimit, "0", 0,
+            contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -841,8 +761,8 @@ public class TriggerConstant001 {
     logger.info("energyUsageTotal:" + energyUsageTotal);
 
     Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
@@ -868,21 +788,18 @@ public class TriggerConstant001 {
   public void test18TriggerContract() {
 
     TransactionExtention transactionExtention = PublicMethed
-        .triggerContractForExtention(contractAddressWithAbi,
-            "testPure()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractForExtention(contractAddressWithAbi, "testPure()", "#", false, 0,
+            maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
 
   }
 
@@ -891,8 +808,8 @@ public class TriggerConstant001 {
 
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfo = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
@@ -904,9 +821,8 @@ public class TriggerConstant001 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
     txid = PublicMethed
-        .triggerContract(contractAddressWithAbi,
-            "testPayable()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContract(contractAddressWithAbi, "testPayable()", "#", false, 0, maxFeeLimit, "0",
+            0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -924,8 +840,8 @@ public class TriggerConstant001 {
     logger.info("energyUsageTotal:" + energyUsageTotal);
 
     Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
@@ -950,8 +866,8 @@ public class TriggerConstant001 {
   public void test20TriggerContract() {
     Account info;
 
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfo = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
@@ -963,9 +879,8 @@ public class TriggerConstant001 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
     txid = PublicMethed
-        .triggerContract(contractAddressNoAbi,
-            "testNoPayable()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContract(contractAddressNoAbi, "testNoPayable()", "#", false, 0, maxFeeLimit, "0",
+            0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -983,8 +898,8 @@ public class TriggerConstant001 {
     logger.info("energyUsageTotal:" + energyUsageTotal);
 
     Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
+    AccountResourceMessage resourceInfoafter = PublicMethed
+        .getAccountResource(contractExcAddress, blockingStubFull);
     Long afterBalance = infoafter.getBalance();
     Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
     Long afterNetUsed = resourceInfoafter.getNetUsed();
@@ -1009,88 +924,75 @@ public class TriggerConstant001 {
   public void test21TriggerConstantContract() {
 
     TransactionExtention transactionExtention = PublicMethed
-        .triggerContractForExtention(contractAddressWithAbi,
-            "testView()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractForExtention(contractAddressWithAbi, "testView()", "#", false, 0,
+            maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
 
   }
 
   @Test(enabled = true, description = "TriggerContract a view function with ABI on solidity")
   public void test21TriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testView()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testView()", "#",
+            false, 0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey,
+            blockingStubSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
   }
 
   @Test(enabled = true, description = "TriggerContract a view function with ABI on real solidity")
   public void test21TriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testView()", "#", false,
-            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testView()", "#",
+            false, 0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey,
+            blockingStubRealSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert.assertEquals(1, ByteArray.toLong(ByteArray
-        .fromHexString(Hex
-            .toHexString(result))));
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray.fromHexString(Hex.toHexString(result))));
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a view method with ABI ,method has "
       + "revert()")
   public void test24TriggerConstantContract() {
 
-
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddressWithAbi,
-            "testView2()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddressWithAbi, "testView2()", "#", false, 0,
+            0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
 
-    Assert
-        .assertThat(transaction.getRet(0).getRet().toString(),
-            containsString("FAILED"));
-    Assert
-        .assertThat(ByteArray
-                .toStr(transactionExtention.getResult().getMessage().toByteArray()),
-            containsString("REVERT opcode executed"));
+    Assert.assertThat(transaction.getRet(0).getRet().toString(), containsString("FAILED"));
+    Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
+        containsString("REVERT opcode executed"));
 
 
   }
@@ -1099,48 +1001,38 @@ public class TriggerConstant001 {
       + "revert() on solidity")
   public void test24TriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testView2()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testView2()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
 
-    Assert
-        .assertThat(transaction.getRet(0).getRet().toString(),
-            containsString("FAILED"));
-    Assert
-        .assertThat(ByteArray
-                .toStr(transactionExtention.getResult().getMessage().toByteArray()),
-            containsString("REVERT opcode executed"));
+    Assert.assertThat(transaction.getRet(0).getRet().toString(), containsString("FAILED"));
+    Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
+        containsString("REVERT opcode executed"));
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a view method with ABI ,method has "
       + "revert() on real solidity")
   public void test24TriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testView2()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testView2()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
 
-    Assert
-        .assertThat(transaction.getRet(0).getRet().toString(),
-            containsString("FAILED"));
-    Assert
-        .assertThat(ByteArray
-                .toStr(transactionExtention.getResult().getMessage().toByteArray()),
-            containsString("REVERT opcode executed"));
+    Assert.assertThat(transaction.getRet(0).getRet().toString(), containsString("FAILED"));
+    Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
+        containsString("REVERT opcode executed"));
   }
 
   @Test(enabled = true, description = "TriggerContract a view method with ABI ,method has "
@@ -1148,19 +1040,17 @@ public class TriggerConstant001 {
   public void test25TriggerConstantContract() {
 
     TransactionExtention transactionExtention = PublicMethed
-        .triggerContractForExtention(contractAddressWithAbi,
-            "testView2()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractForExtention(contractAddressWithAbi, "testView2()", "#", false, 0, 0, "0",
+            0, contractExcAddress, contractExcKey, blockingStubFull);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
 
-    Assert.assertThat(transaction.getRet(0).getRet().toString(),
-        containsString("FAILED"));
+    Assert.assertThat(transaction.getRet(0).getRet().toString(), containsString("FAILED"));
     Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
         containsString("REVERT opcode executed"));
   }
@@ -1169,19 +1059,17 @@ public class TriggerConstant001 {
       + "revert() on solidity")
   public void test25TriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testView2()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testView2()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
 
-    Assert.assertThat(transaction.getRet(0).getRet().toString(),
-        containsString("FAILED"));
+    Assert.assertThat(transaction.getRet(0).getRet().toString(), containsString("FAILED"));
     Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
         containsString("REVERT opcode executed"));
   }
@@ -1190,19 +1078,17 @@ public class TriggerConstant001 {
       + "revert() on real solidity")
   public void test25TriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi,
-            "testView2()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressWithAbi, "testView2()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
 
-    Assert.assertThat(transaction.getRet(0).getRet().toString(),
-        containsString("FAILED"));
+    Assert.assertThat(transaction.getRet(0).getRet().toString(), containsString("FAILED"));
     Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
         containsString("REVERT opcode executed"));
   }
@@ -1211,26 +1097,21 @@ public class TriggerConstant001 {
       + "revert()")
   public void testTriggerConstantContract() {
 
-
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddressNoAbi,
-            "testView2()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddressNoAbi, "testView2()", "#", false, 0, 0,
+            "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert
-        .assertThat(transaction.getRet(0).getRet().toString(),
-            containsString("FAILED"));
-    Assert
-        .assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
-            containsString("REVERT opcode executed"));
+    Assert.assertThat(transaction.getRet(0).getRet().toString(), containsString("FAILED"));
+    Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
+        containsString("REVERT opcode executed"));
 
 
   }
@@ -1239,48 +1120,40 @@ public class TriggerConstant001 {
       + "revert() on solidity")
   public void testTriggerConstantContractOnSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testView2()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testView2()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert
-        .assertThat(transaction.getRet(0).getRet().toString(),
-            containsString("FAILED"));
-    Assert
-        .assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
-            containsString("REVERT opcode executed"));
+    Assert.assertThat(transaction.getRet(0).getRet().toString(), containsString("FAILED"));
+    Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
+        containsString("REVERT opcode executed"));
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a view method without ABI,method has"
       + "revert() on real solidity")
   public void testTriggerConstantContractOnRealSolidity() {
     TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi,
-            "testView2()", "#", false,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+        .triggerConstantContractForExtentionOnSolidity(contractAddressNoAbi, "testView2()", "#",
+            false, 0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
 
     Transaction transaction = transactionExtention.getTransaction();
 
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
     System.out.println("message:" + transaction.getRet(0).getRet());
-    System.out.println(":" + ByteArray
-        .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+    System.out.println(
+        ":" + ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()));
     System.out.println("Result:" + Hex.toHexString(result));
 
-    Assert
-        .assertThat(transaction.getRet(0).getRet().toString(),
-            containsString("FAILED"));
-    Assert
-        .assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
-            containsString("REVERT opcode executed"));
+    Assert.assertThat(transaction.getRet(0).getRet().toString(), containsString("FAILED"));
+    Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
+        containsString("REVERT opcode executed"));
   }
 
   /**

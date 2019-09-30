@@ -42,7 +42,7 @@ public class InternalTransactionCallTest {
   @Before
   public void init() {
     Args.clearParam();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--support-constant", "--debug"},
+    Args.setParam(new String[] {"--output-directory", dbPath, "--support-constant", "--debug"},
         Constant.TEST_CONF);
 
     context = new TronApplicationContext(DefaultConfig.class);
@@ -91,15 +91,13 @@ public class InternalTransactionCallTest {
             + "0000000000000000000000000000000000000000000000000000000000000003";
     byte[] triggerData = TvmTestUtils.parseAbi("callTest(address,uint256)", params);
     TvmTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-        contractAAddress, triggerData,
-        0, 1000000000, deposit, null);
+        contractAAddress, triggerData, 0, 1000000000, deposit, null);
 
     /* =================================== CALL numberForB() to check A's numberForB =================================== */
     byte[] triggerData2 = TvmTestUtils.parseAbi("numberForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractAAddress, triggerData2,
-            0, 1000000000, deposit, null);
+            contractAAddress, triggerData2, 0, 1000000000, deposit, null);
     // A should not be changed
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -108,8 +106,7 @@ public class InternalTransactionCallTest {
     byte[] triggerData3 = TvmTestUtils.parseAbi("senderForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractAAddress, triggerData3,
-            0, 1000000000, deposit, null);
+            contractAAddress, triggerData3, 0, 1000000000, deposit, null);
     // A should be changed
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -118,8 +115,7 @@ public class InternalTransactionCallTest {
     byte[] triggerData4 = TvmTestUtils.parseAbi("numberForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractBAddress, triggerData4,
-            0, 1000000000, deposit, null);
+            contractBAddress, triggerData4, 0, 1000000000, deposit, null);
     // B's numberForB should be changed to 3
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         "0000000000000000000000000000000000000000000000000000000000000003");
@@ -128,8 +124,7 @@ public class InternalTransactionCallTest {
     byte[] triggerData5 = TvmTestUtils.parseAbi("senderForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractBAddress, triggerData5,
-            0, 1000000000, deposit, null);
+            contractBAddress, triggerData5, 0, 1000000000, deposit, null);
     // B 's senderForB should be A
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         Hex.toHexString(new DataWord(new DataWord(contractAAddress).getLast20Bytes()).getData()));
@@ -151,15 +146,13 @@ public class InternalTransactionCallTest {
             + "0000000000000000000000000000000000000000000000000000000000000003";
     byte[] triggerData = TvmTestUtils.parseAbi("delegatecallTest(address,uint256)", params);
     TvmTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-        contractAAddress, triggerData,
-        0, 1000000000, deposit, null);
+        contractAAddress, triggerData, 0, 1000000000, deposit, null);
 
     /* =================================== CALL numberForB() to check A's numberForB =================================== */
     byte[] triggerData2 = TvmTestUtils.parseAbi("numberForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractAAddress, triggerData2,
-            0, 1000000000, deposit, null);
+            contractAAddress, triggerData2, 0, 1000000000, deposit, null);
     // A should be changed to 3
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         "0000000000000000000000000000000000000000000000000000000000000003");
@@ -168,8 +161,7 @@ public class InternalTransactionCallTest {
     byte[] triggerData3 = TvmTestUtils.parseAbi("senderForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractAAddress, triggerData3,
-            0, 1000000000, deposit, null);
+            contractAAddress, triggerData3, 0, 1000000000, deposit, null);
     // A's senderForB should be changed to caller's contract Address (OWNER_ADDRESS)
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         Hex.toHexString(new DataWord(new DataWord(OWNER_ADDRESS).getLast20Bytes()).getData()));
@@ -178,8 +170,7 @@ public class InternalTransactionCallTest {
     byte[] triggerData4 = TvmTestUtils.parseAbi("numberForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractBAddress, triggerData4,
-            0, 1000000000, deposit, null);
+            contractBAddress, triggerData4, 0, 1000000000, deposit, null);
     // B's numberForB should not be changed
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -188,8 +179,7 @@ public class InternalTransactionCallTest {
     byte[] triggerData5 = TvmTestUtils.parseAbi("senderForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractBAddress, triggerData5,
-            0, 1000000000, deposit, null);
+            contractBAddress, triggerData5, 0, 1000000000, deposit, null);
     // B 's senderForB should not be changed
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -212,15 +202,13 @@ public class InternalTransactionCallTest {
             + "0000000000000000000000000000000000000000000000000000000000000003";
     byte[] triggerData = TvmTestUtils.parseAbi("callcodeTest(address,uint256)", params);
     TvmTestUtils.triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-        contractAAddress, triggerData,
-        0, 1000000000, deposit, null);
+        contractAAddress, triggerData, 0, 1000000000, deposit, null);
 
     /* =================================== CALL numberForB() to check A's numberForB =================================== */
     byte[] triggerData2 = TvmTestUtils.parseAbi("numberForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractAAddress, triggerData2,
-            0, 1000000000, deposit, null);
+            contractAAddress, triggerData2, 0, 1000000000, deposit, null);
     // A should be changed to 3
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         "0000000000000000000000000000000000000000000000000000000000000003");
@@ -229,8 +217,7 @@ public class InternalTransactionCallTest {
     byte[] triggerData3 = TvmTestUtils.parseAbi("senderForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractAAddress, triggerData3,
-            0, 1000000000, deposit, null);
+            contractAAddress, triggerData3, 0, 1000000000, deposit, null);
     // A's senderForB should be changed to A's contract Address
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         Hex.toHexString(new DataWord(new DataWord(contractAAddress).getLast20Bytes()).getData()));
@@ -239,8 +226,7 @@ public class InternalTransactionCallTest {
     byte[] triggerData4 = TvmTestUtils.parseAbi("numberForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractBAddress, triggerData4,
-            0, 1000000000, deposit, null);
+            contractBAddress, triggerData4, 0, 1000000000, deposit, null);
     // B's numberForB should not be changed
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -249,8 +235,7 @@ public class InternalTransactionCallTest {
     byte[] triggerData5 = TvmTestUtils.parseAbi("senderForB()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            contractBAddress, triggerData5,
-            0, 1000000000, deposit, null);
+            contractBAddress, triggerData5, 0, 1000000000, deposit, null);
     // B 's senderForB should not be changed
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -298,8 +283,7 @@ public class InternalTransactionCallTest {
 
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, libraryAddressPair, deposit, null);
     return contractAddress;
   }
 
@@ -330,8 +314,7 @@ public class InternalTransactionCallTest {
 
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, libraryAddressPair, deposit, null);
     return contractAddress;
   }
 

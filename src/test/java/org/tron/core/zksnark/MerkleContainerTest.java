@@ -45,7 +45,7 @@ public class MerkleContainerTest {
 
 
   static {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
@@ -172,13 +172,12 @@ public class MerkleContainerTest {
         .build();
     ReceiveDescription receiveDescription2 = ReceiveDescription.newBuilder().setNoteCommitment(cm2)
         .build();
-    ShieldedTransferContract contract = ShieldedTransferContract.newBuilder().
-        addReceiveDescription(receiveDescription1).
-        addReceiveDescription(receiveDescription2).build();
+    ShieldedTransferContract contract = ShieldedTransferContract.newBuilder()
+        .addReceiveDescription(receiveDescription1).addReceiveDescription(receiveDescription2)
+        .build();
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(ContractType.ShieldedTransferContract)
-            .setParameter(
-                Any.pack(contract)).build());
+            .setParameter(Any.pack(contract)).build());
     Transaction transaction = Transaction.newBuilder().setRawData(transactionBuilder.build())
         .build();
     return transaction;
@@ -209,8 +208,8 @@ public class MerkleContainerTest {
         String cm3 = "30a0d08406b9e3693ee4c062bd1e6816f95bf14f5a13aafa1d57942c6c1d4250";
         String cm4 = "12fc3e7298eb327a88abcc406fbe595e45dddd9b4209803b2e0baa3a8663ecaa";
         Transaction transaction2 = createTransaction(cm3, cm4);
-        Block block = Block.newBuilder().addTransactions(0, transaction).
-            addTransactions(1, transaction2).build();
+        Block block = Block.newBuilder().addTransactions(0, transaction)
+            .addTransactions(1, transaction2).build();
         Sha256Hash blockKey = Sha256Hash.of(ByteArray.fromLong(blockNum));
         BlockId blockId = new BlockId(blockKey, blockNum);
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
@@ -218,12 +217,10 @@ public class MerkleContainerTest {
 
         TransactionCapsule transactionCapsule1 = new TransactionCapsule(transaction);
         transactionCapsule1.setBlockNum(blockNum);
-        System.out.println(
-            "blockNum:100,txId(1):" + ByteArray.toHexString(transactionCapsule1
-                .getTransactionId().getBytes()));
+        System.out.println("blockNum:100,txId(1):" + ByteArray
+            .toHexString(transactionCapsule1.getTransactionId().getBytes()));
         dbManager.getTransactionStore()
-            .put(transactionCapsule1.getTransactionId().getBytes(),
-                transactionCapsule1);
+            .put(transactionCapsule1.getTransactionId().getBytes(), transactionCapsule1);
 
         PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
         compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm1)));
@@ -277,8 +274,8 @@ public class MerkleContainerTest {
         String cm3 = "0830165f36a69e416d51cc09cc5668692dee35d98539d3317999fdf87d8fcac7";
         String cm4 = "02372c746664e0898576972ca6d0500c7c8ec42f144622349d133b06e837faf0";
         Transaction transaction2 = createTransaction(cm3, cm4);
-        Block block = Block.newBuilder().addTransactions(0, transaction).
-            addTransactions(1, transaction2).build();
+        Block block = Block.newBuilder().addTransactions(0, transaction)
+            .addTransactions(1, transaction2).build();
         Sha256Hash blockKey = Sha256Hash.of(ByteArray.fromLong(blockNum));
         BlockId blockId = new BlockId(blockKey, blockNum);
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
@@ -287,12 +284,10 @@ public class MerkleContainerTest {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction2);
         transactionCapsule.setBlockNum(blockNum);
 
-        System.out.println(
-            "blockNum:102,txId(2):" + ByteArray.toHexString(transactionCapsule
-                .getTransactionId().getBytes()));
+        System.out.println("blockNum:102,txId(2):" + ByteArray
+            .toHexString(transactionCapsule.getTransactionId().getBytes()));
         dbManager.getTransactionStore()
-            .put(transactionCapsule.getTransactionId().getBytes(),
-                transactionCapsule);
+            .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
 
         PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
         compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm1)));
@@ -347,25 +342,27 @@ public class MerkleContainerTest {
         .fromHexString("59051fde6f2e47306f17fca57a4aab3c12d948b7980fd4163c93520b69a7b982"));
     OutputPoint outputPoint1 = OutputPoint.newBuilder().setHash(txId1).setIndex(0).build();
     //blockNum:103,txNum:2
-    ByteString txId2 = ByteString.copyFrom(ByteArray.
-        fromHexString("7f8726373dcddf40409ace76b904369848f0a6d89ba5db851ed9515a80b52f34"));
+    ByteString txId2 = ByteString.copyFrom(ByteArray
+        .fromHexString("7f8726373dcddf40409ace76b904369848f0a6d89ba5db851ed9515a80b52f34"));
     OutputPoint outputPoint2 = OutputPoint.newBuilder().setHash(txId2).setIndex(0).build();
     int number = 0;
-    OutputPointInfo outputPointInfo = OutputPointInfo.newBuilder().addOutPoints(outputPoint1).
-        addOutPoints(outputPoint2).setBlockNum(number).build();
+    OutputPointInfo outputPointInfo = OutputPointInfo.newBuilder().addOutPoints(outputPoint1)
+        .addOutPoints(outputPoint2).setBlockNum(number).build();
     //  Args.getInstance().setAllowShieldedTransaction(1);
     Wallet wallet = context.getBean(Wallet.class);
     IncrementalMerkleVoucherInfo merkleTreeWitnessInfo = wallet
         .getMerkleTreeVoucherInfo(outputPointInfo);
 
-//    Assert.assertEquals(txId1, merkleTreeWitnessInfo.getWitness1().getOutputPoint().getHash());
+    //Assert.assertEquals(txId1, merkleTreeWitnessInfo.getWitness1().getOutputPoint().getHash());
     Assert.assertEquals(0, merkleTreeWitnessInfo.getVouchers(0).getOutputPoint().getIndex());
-//    Assert
-//        .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness1()).
-//            toMerkleVoucherContainer().size());
-//    Assert
-//        .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness2()).
-//            toMerkleVoucherContainer().size());
+    //Assert
+    //    .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness1
+    //    ()).
+    //        toMerkleVoucherContainer().size());
+    //Assert
+    //    .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness2
+    //    ()).
+    //        toMerkleVoucherContainer().size());
 
     IncrementalMerkleVoucherCapsule capsule1 = new IncrementalMerkleVoucherCapsule(
         merkleTreeWitnessInfo.getVouchers(0));
@@ -375,14 +372,11 @@ public class MerkleContainerTest {
         merkleTreeWitnessInfo.getVouchers(1));
     capsule2.toMerkleVoucherContainer().printSize();
 
-    System.out
-        .println("kkkkkk" + ByteArray
-            .toHexString(merkleTreeWitnessInfo.getVouchers(0).getRt().toByteArray()));
-    Assert
-        .assertEquals(
-            ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(0).getRt().toByteArray()),
-            ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(1).getRt().toByteArray())
-        );
+    System.out.println("kkkkkk" + ByteArray
+        .toHexString(merkleTreeWitnessInfo.getVouchers(0).getRt().toByteArray()));
+    Assert.assertEquals(
+        ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(0).getRt().toByteArray()),
+        ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(1).getRt().toByteArray()));
 
   }
 

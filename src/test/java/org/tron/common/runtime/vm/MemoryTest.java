@@ -15,24 +15,37 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.runtime.vm;
 
 import static java.lang.Math.ceil;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
+
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.Assert;
-import org.tron.common.runtime.vm.program.Memory;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+import org.testng.Assert;
+import org.tron.common.runtime.vm.program.Memory;
 
 @Slf4j
 public class MemoryTest {
 
   private static final int WORD_SIZE = 32;
   private static final int CHUNK_SIZE = 1024;
+
+  private static void checkMemoryExtend(int dataSize) {
+    Memory memory = new Memory();
+    memory.extend(0, dataSize);
+    Assert.assertEquals(calcSize(dataSize, CHUNK_SIZE), memory.internalSize());
+    Assert.assertEquals(calcSize(dataSize, WORD_SIZE), memory.size());
+  }
+
+  private static int calcSize(int dataSize, int chunkSize) {
+    return (int) ceil((double) dataSize / chunkSize) * chunkSize;
+  }
 
   @Test
   public void testExtend() {
@@ -44,17 +57,6 @@ public class MemoryTest {
     checkMemoryExtend(CHUNK_SIZE);
     checkMemoryExtend(CHUNK_SIZE + 1);
     checkMemoryExtend(2000);
-  }
-
-  private static void checkMemoryExtend(int dataSize) {
-    Memory memory = new Memory();
-    memory.extend(0, dataSize);
-    Assert.assertEquals(calcSize(dataSize, CHUNK_SIZE), memory.internalSize());
-    Assert.assertEquals(calcSize(dataSize, WORD_SIZE), memory.size());
-  }
-
-  private static int calcSize(int dataSize, int chunkSize) {
-    return (int) ceil((double) dataSize / chunkSize) * chunkSize;
   }
 
   @Test
@@ -357,11 +359,8 @@ public class MemoryTest {
 
     byte[] data = memoryBuffer.read(0, 64);
 
-    assertArrayEquals(
-        Hex.decode("0101010101010101010101010101010101010101010101010101010101010101" +
-            "0202020202020202020202020202020202020202020202020202020202020202"),
-        data
-    );
+    assertArrayEquals(Hex.decode("0101010101010101010101010101010101010101010101010101010101010101"
+        + "0202020202020202020202020202020202020202020202020202020202020202"), data);
 
     Assert.assertEquals(64, memoryBuffer.size());
   }
@@ -379,11 +378,8 @@ public class MemoryTest {
 
     byte[] data = memoryBuffer.read(0, 64);
 
-    assertArrayEquals(
-        Hex.decode("0101010101010101010101010101010101010101010101010101010101010101" +
-            "0000000000000000000000000000000000000000000000000000000000000000"),
-        data
-    );
+    assertArrayEquals(Hex.decode("0101010101010101010101010101010101010101010101010101010101010101"
+        + "0000000000000000000000000000000000000000000000000000000000000000"), data);
 
     Assert.assertEquals(64, memoryBuffer.size());
   }

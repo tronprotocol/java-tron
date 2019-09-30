@@ -40,16 +40,8 @@ public class MerkleTreeTest {
   private static Wallet wallet;
 
   static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
-            "-w",
-            "--debug"
-        },
-        "config-test-mainnet.conf"
-    );
+    Args.setParam(new String[] {"--output-directory", dbPath, "--storage-db-directory", dbDirectory,
+        "--storage-index-directory", indexDirectory, "-w", "--debug"}, "config-test-mainnet.conf");
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
@@ -77,11 +69,9 @@ public class MerkleTreeTest {
   private JSONArray readFile(String fileName) throws Exception {
     String file1 = SendCoinShieldTest.class.getClassLoader()
         .getResource("json" + File.separator + fileName).getFile();
-    List<String> readLines = Files.readLines(new File(file1),
-        Charsets.UTF_8);
+    List<String> readLines = Files.readLines(new File(file1), Charsets.UTF_8);
 
-    JSONArray array = JSONArray
-        .parseArray(readLines.stream().reduce((s, s2) -> s + s2).get());
+    JSONArray array = JSONArray.parseArray(readLines.stream().reduce((s, s2) -> s + s2).get());
 
     return array;
   }
@@ -104,7 +94,7 @@ public class MerkleTreeTest {
     IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeCapsule()
         .toMerkleTreeContainer();
     tree.toVoucher().setDEPTH(4);
-    System.out.println("tree depth is "+ IncrementalMerkleVoucherContainer.getDEPTH());
+    System.out.println("tree depth is " + IncrementalMerkleVoucherContainer.getDEPTH());
 
     // The root of the tree at this point is expected to be the root of the
     // empty tree.
@@ -142,8 +132,7 @@ public class MerkleTreeTest {
           PedersenHash2String(tree.last()));
       //todo:
       // Check tree root consistency
-      Assert.assertEquals(root_tests.getString(i),
-          PedersenHash2String(tree.root()));
+      Assert.assertEquals(root_tests.getString(i), PedersenHash2String(tree.root()));
 
       // Check serialization of tree
 //      expect_ser_test_vector(ser_tests[i], tree, tree);
@@ -169,8 +158,7 @@ public class MerkleTreeTest {
           MerklePath path = wit.toMerkleVoucherContainer().path();
           Assert.assertEquals(path_tests.getString(path_i++), ByteArray.toHexString(path.encode()));
         }
-        Assert.assertEquals(
-            PedersenHash2String(wit.toMerkleVoucherContainer().root()),
+        Assert.assertEquals(PedersenHash2String(wit.toMerkleVoucherContainer().root()),
             PedersenHash2String(tree.root()));
         first = false;
       }

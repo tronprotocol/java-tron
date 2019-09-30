@@ -1,11 +1,12 @@
 package org.tron.core.db;
 
-import org.junit.Test;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class BlockFilledSlotsTest {
 
