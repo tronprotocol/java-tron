@@ -19,6 +19,9 @@ public class IncentiveManager {
   private ConsensusDelegate consensusDelegate;
 
   public void applyBlock(Block block) {
+    if (consensusDelegate.allowChangeDelegation()) {
+      return;
+    }
     byte[] witness = block.getBlockHeader().getRawData().getWitnessAddress().toByteArray();
     AccountCapsule account = consensusDelegate.getAccount(witness);
     account.setAllowance(account.getAllowance() + consensusDelegate.getWitnessPayPerBlock());
@@ -26,6 +29,9 @@ public class IncentiveManager {
   }
 
   public void reward(List<ByteString> witnesses) {
+    if (consensusDelegate.allowChangeDelegation()) {
+      return;
+    }
     if (witnesses.size() > WITNESS_STANDBY_LENGTH) {
       witnesses = witnesses.subList(0, WITNESS_STANDBY_LENGTH);
     }

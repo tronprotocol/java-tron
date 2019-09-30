@@ -7,7 +7,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.services.ProposalService;
 import org.tron.protos.Protocol.Proposal.State;
 
 @Slf4j(topic = "witness")
