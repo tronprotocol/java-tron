@@ -355,20 +355,4 @@ public class ProposalUtil {
         break;
     }
   }
-
-  public void adjustAllowance(AccountStore accountStore, byte[] accountAddress, long amount)
-      throws BalanceInsufficientException {
-    AccountCapsule account = accountStore.getUnchecked(accountAddress);
-    long allowance = account.getAllowance();
-    if (amount == 0) {
-      return;
-    }
-
-    if (amount < 0 && allowance < -amount) {
-      throw new BalanceInsufficientException(
-          StringUtil.createReadableString(accountAddress) + " insufficient balance");
-    }
-    account.setAllowance(allowance + amount);
-    accountStore.put(account.createDbKey(), account);
-  }
 }

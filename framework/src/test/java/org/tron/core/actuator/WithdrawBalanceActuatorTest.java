@@ -27,9 +27,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.WitnessStore;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -107,7 +104,7 @@ public class WithdrawBalanceActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
     try {
-      dbManager.adjustAllowance(address, allowance);
+      dbManager.getDelegationService().adjustAllowance(dbManager.getAccountStore(), address, allowance);
     } catch (BalanceInsufficientException e) {
       fail("BalanceInsufficientException");
     }
@@ -121,7 +118,7 @@ public class WithdrawBalanceActuatorTest {
 
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
         getContract(OWNER_ADDRESS), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore(), dbManager.getDelegationService());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -147,7 +144,7 @@ public class WithdrawBalanceActuatorTest {
   public void invalidOwnerAddress() {
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
         getContract(OWNER_ADDRESS_INVALID), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore(), dbManager.getDelegationService());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -171,7 +168,7 @@ public class WithdrawBalanceActuatorTest {
   public void invalidOwnerAccount() {
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
         getContract(OWNER_ACCOUNT_INVALID),dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore(), dbManager.getDelegationService());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -197,7 +194,7 @@ public class WithdrawBalanceActuatorTest {
 //    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
         getContract(OWNER_ADDRESS), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore(), dbManager.getDelegationService());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -231,7 +228,7 @@ public class WithdrawBalanceActuatorTest {
 
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
         getContract(OWNER_ADDRESS), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore(), dbManager.getDelegationService());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -263,7 +260,7 @@ public class WithdrawBalanceActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
     try {
-      dbManager.adjustAllowance(address, allowance);
+      dbManager.getDelegationService().adjustAllowance(dbManager.getAccountStore(), address, allowance);
     } catch (BalanceInsufficientException e) {
       fail("BalanceInsufficientException");
     }
@@ -278,7 +275,7 @@ public class WithdrawBalanceActuatorTest {
 
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
         getContract(ByteArray.toHexString(address)), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore(), dbManager.getDelegationService());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Assert.assertTrue(dbManager.getWitnessStore().has(address));
@@ -305,7 +302,7 @@ public class WithdrawBalanceActuatorTest {
 
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
     try {
-      dbManager.adjustAllowance(address, allowance);
+      dbManager.getDelegationService().adjustAllowance(dbManager.getAccountStore(), address, allowance);
     } catch (BalanceInsufficientException e) {
       fail("BalanceInsufficientException");
     }
@@ -322,7 +319,7 @@ public class WithdrawBalanceActuatorTest {
 
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator(
         getContract(OWNER_ADDRESS),dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+        dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore(), dbManager.getDelegationService());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
