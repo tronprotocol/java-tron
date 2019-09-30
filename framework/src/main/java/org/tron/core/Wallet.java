@@ -88,12 +88,11 @@ import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
@@ -106,6 +105,7 @@ import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -123,11 +123,12 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
+import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -151,8 +152,8 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -2328,40 +2329,40 @@ public class Wallet {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
 
-    Runtime runtime = new RuntimeImpl(trxCap.getInstance(),
-        new BlockCapsule(headBlock), deposit,
-        new ProgramInvokeFactoryImpl(), true);
-    VMConfig.initVmHardFork();
+    TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
+        StoreFactory.getInstance(), true,
+        false);
+    VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
+    VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(
         dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
-    VMConfig.initAllowMultiSign(
-        dbManager.getDynamicPropertiesStore().getAllowMultiSign());
     VMConfig.initAllowTvmConstantinople(
         dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
-    VMConfig.initAllowTvmSolidity059(
-        dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
-    runtime.execute();
-    runtime.go();
-    runtime.finalization();
-    // TODO exception
-    if (runtime.getResult().getException() != null) {
-      RuntimeException e = runtime.getResult().getException();
+    VMConfig
+        .initAllowTvmSolidity059(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
+    VMActuator vmActuator = new VMActuator(true);
+
+    vmActuator.validate(context);
+    vmActuator.execute(context);
+
+    ProgramResult result = context.getProgramResult();
+    if (result.getException() != null) {
+      RuntimeException e = result.getException();
       logger.warn("Constant call has error {}", e.getMessage());
       throw e;
     }
 
-    ProgramResult result = runtime.getResult();
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
     ret.setStatus(0, code.SUCESS);
-    if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
+    if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
       retBuilder
-          .setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError()))
+          .setMessage(ByteString.copyFromUtf8(result.getRuntimeError()))
           .build();
     }
-    if (runtime.getResult().isRevert()) {
+    if (result.isRevert()) {
       ret.setStatus(0, code.FAILED);
       retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed"))
           .build();
