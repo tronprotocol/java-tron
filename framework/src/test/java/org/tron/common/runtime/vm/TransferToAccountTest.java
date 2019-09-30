@@ -32,10 +32,14 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
