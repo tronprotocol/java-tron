@@ -58,14 +58,13 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.Constant;
+import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -556,6 +555,10 @@ public class Manager {
       triggerCapsuleProcessThread.start();
     }
 
+    //initStoreFactory
+    prepareStoreFactory();
+    //initActuatorCreator
+    ActuatorCreator.init();
   }
 
   public BlockId getGenesisBlockId() {
@@ -2104,5 +2107,32 @@ public class Manager {
         }
       }
     }
+  }
+
+  private void prepareStoreFactory() {
+    StoreFactory.getInstance().setAccountStore(accountStore)
+        .setAccountIdIndexStore(accountIdIndexStore)
+        .setAccountIndexStore(accountIndexStore)
+        .setDynamicPropertiesStore(dynamicPropertiesStore)
+        .setAssetIssueStore(assetIssueStore)
+        .setContractStore(contractStore)
+        .setAssetIssueV2Store(assetIssueV2Store)
+        .setWitnessStore(witnessStore)
+        .setVotesStore(votesStore)
+        .setProofStore(proofStore)
+        .setNullifierStore(nullifierStore)
+        .setDelegatedResourceAccountIndexStore(delegatedResourceAccountIndexStore)
+        .setDelegatedResourceStore(delegatedResourceStore)
+        .setExchangeStore(exchangeStore)
+        .setExchangeV2Store(exchangeV2Store)
+        .setProposalStore(proposalStore)
+        .setCodeStore(codeStore)
+        .setStorageRowStore(storageRowStore)
+        .setBlockStore(blockStore)
+        .setKhaosDb(khaosDb)
+        .setBlockIndexStore(blockIndexStore)
+        .setMerkleContainer(merkleContainer)
+        .setDelegationService(delegationService);
+    ;
   }
 }

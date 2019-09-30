@@ -5,6 +5,7 @@ import java.util.Map;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
 import org.tron.core.exception.TypeMismatchNamingException;
 
@@ -157,6 +158,11 @@ public class StoreFactory {
 
     public StoreFactory setMerkleContainer(MerkleContainer merkleContainer) {
         add(merkleContainer);
+        return this;
+    }
+
+    public StoreFactory setDelegationService(DelegationService delegationService) {
+        add(delegationService);
         return this;
     }
 
