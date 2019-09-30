@@ -63,7 +63,9 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.consensus.Consensus;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
+import org.tron.core.actuator.AbstractActuator;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -132,6 +134,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
+import org.tron.core.utils.ServiceRegister;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -277,6 +280,10 @@ public class Manager {
 
   @Autowired
   private Consensus consensus;
+
+  @Autowired
+  @Getter
+  private ChainBaseManager chainBaseManager;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -465,6 +472,7 @@ public class Manager {
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
+    chainBaseManager.setMerkleContainer(getMerkleContainer());
 
     this.initGenesis();
     try {
@@ -510,6 +518,7 @@ public class Manager {
     //initStoreFactory
     prepareStroeFactory();
     ActuatorCreator.init(StoreFactory.getInstance());
+    ServiceRegister.registerActuator();
   }
 
   public BlockId getGenesisBlockId() {
@@ -518,6 +527,10 @@ public class Manager {
 
   public BlockCapsule getGenesisBlock() {
     return genesisBlock;
+  }
+
+  private void initActuator() {
+    Class<? super AbstractActuator> clazz = AbstractActuator.class.getSuperclass();
   }
 
   /**
@@ -1716,7 +1729,8 @@ public class Manager {
   private void postBlockTrigger(final BlockCapsule newBlock) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
       BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
-      blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(dynamicPropertiesStore.getLatestSolidifiedBlockNum());
+      blockLogTriggerCapsule
+          .setLatestSolidifiedBlockNumber(dynamicPropertiesStore.getLatestSolidifiedBlockNum());
       boolean result = triggerCapsuleQueue.offer(blockLogTriggerCapsule);
       if (!result) {
         logger.info("too many trigger, lost block trigger: {}", newBlock.getBlockId());
@@ -1766,7 +1780,8 @@ public class Manager {
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
         ContractTriggerCapsule contractEventTriggerCapsule = new ContractTriggerCapsule(trigger);
         contractEventTriggerCapsule.getContractTrigger().setRemoved(remove);
-        contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(dynamicPropertiesStore.getLatestSolidifiedBlockNum());
+        contractEventTriggerCapsule
+            .setLatestSolidifiedBlockNumber(dynamicPropertiesStore.getLatestSolidifiedBlockNum());
         if (!triggerCapsuleQueue.offer(contractEventTriggerCapsule)) {
           logger
               .info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
@@ -1818,6 +1833,7 @@ public class Manager {
         .setBlockStore(blockStore)
         .setKhaosDb(khaosDb)
         .setBlockIndexStore(blockIndexStore)
-        .setMerkleContainer(merkleContainer);;
+        .setMerkleContainer(merkleContainer)
+        .setChainBaseManager(chainBaseManager);
   }
 }

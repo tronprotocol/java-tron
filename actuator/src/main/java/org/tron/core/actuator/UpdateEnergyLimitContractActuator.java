@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -13,26 +12,25 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
-import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 
 @Slf4j(topic = "actuator")
 public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
-  UpdateEnergyLimitContractActuator(Any contract, AccountStore accountStore,
-      ContractStore contractStore, DynamicPropertiesStore dynamicPropertiesStore) {
-    super(contract, accountStore, contractStore, dynamicPropertiesStore);
+  public UpdateEnergyLimitContractActuator() {
+    super(ContractType.UpdateEnergyLimitContract, UpdateEnergyLimitContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    ContractStore contractStore = chainBaseManager.getContractStore();
     try {
-      UpdateEnergyLimitContract usContract = contract
-          .unpack(UpdateEnergyLimitContract.class);
+      UpdateEnergyLimitContract usContract = any.unpack(UpdateEnergyLimitContract.class);
       long newOriginEnergyLimit = usContract.getOriginEnergyLimit();
       byte[] contractAddress = usContract.getContractAddress().toByteArray();
       ContractCapsule deployedContract = contractStore.get(contractAddress);
@@ -56,13 +54,15 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
       throw new ContractValidateException(
           "contract type error,unexpected type [UpdateEnergyLimitContract]");
     }
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(UpdateEnergyLimitContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    ContractStore contractStore = chainBaseManager.getContractStore();
+    if (!this.any.is(UpdateEnergyLimitContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [UpdateEnergyLimitContract],real type["
               + contract
@@ -70,7 +70,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     }
     final UpdateEnergyLimitContract contract;
     try {
-      contract = this.contract.unpack(UpdateEnergyLimitContract.class);
+      contract = this.any.unpack(UpdateEnergyLimitContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -80,7 +80,6 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
@@ -115,7 +114,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(UpdateEnergyLimitContract.class).getOwnerAddress();
+    return any.unpack(UpdateEnergyLimitContract.class).getOwnerAddress();
   }
 
   @Override

@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -11,33 +10,37 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
 
 @Slf4j(topic = "actuator")
 public class CreateAccountActuator extends AbstractActuator {
 
-  CreateAccountActuator(Any contract, DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore) {
-    super(contract, accountStore, dynamicPropertiesStore);
+  public CreateAccountActuator() {
+    super(ContractType.AccountCreateContract, AccountCreateContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
     long fee = calcFee();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     try {
-      AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
+      AccountCreateContract accountCreateContract = any.unpack(AccountCreateContract.class);
       boolean withDefaultPermission =
           dynamicStore.getAllowMultiSign() == 1;
       AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
           dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
 
-     accountStore
+      accountStore
           .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
 
-      Commons.adjustBalance(accountStore, accountCreateContract.getOwnerAddress().toByteArray(), -fee);
+      Commons
+          .adjustBalance(accountStore, accountCreateContract.getOwnerAddress().toByteArray(), -fee);
       // Add to blackhole address
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
 
@@ -57,20 +60,21 @@ public class CreateAccountActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dynamicStore == null || accountStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or contract store!");
     }
-    if (!contract.is(AccountCreateContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    if (!any.is(AccountCreateContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [AccountCreateContract],real type[" + contract
+          "contract type error,expected type [AccountCreateContract],real type[" + any
               .getClass() + "]");
     }
     final AccountCreateContract contract;
     try {
-      contract = this.contract.unpack(AccountCreateContract.class);
+      contract = this.any.unpack(AccountCreateContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -114,11 +118,11 @@ public class CreateAccountActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(AccountCreateContract.class).getOwnerAddress();
+    return any.unpack(AccountCreateContract.class).getOwnerAddress();
   }
 
   @Override
   public long calcFee() {
-    return dynamicStore.getCreateNewAccountFeeInSystemContract();
+    return chainBaseManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
   }
 }

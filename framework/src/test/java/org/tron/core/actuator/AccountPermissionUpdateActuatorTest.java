@@ -27,16 +27,14 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
-import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
-import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
 
 @Slf4j
 public class AccountPermissionUpdateActuatorTest {
@@ -167,7 +165,8 @@ public class AccountPermissionUpdateActuatorTest {
   private Any getContract(String ownerAddress) {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(ownerAddress));
     Permission owner = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission active = AccountCapsule.createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
+    Permission active = AccountCapsule
+        .createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
 
     AccountPermissionUpdateContract contract =
         AccountPermissionUpdateContract.newBuilder()
@@ -250,7 +249,8 @@ public class AccountPermissionUpdateActuatorTest {
     AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
+    Permission activePermission = AccountCapsule
+        .createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
 
     Assert.assertEquals(owner.getInstance().getActivePermissionCount(), 1);
     Permission ownerPermission1 = owner.getInstance().getOwnerPermission();
@@ -302,9 +302,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -330,9 +330,8 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void nullContract() {
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(null,
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(null);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -345,9 +344,8 @@ public class AccountPermissionUpdateActuatorTest {
   @Test
   public void invalidContract() {
     Any invalidContract = getInvalidContract();
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(invalidContract,
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(invalidContract);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -361,9 +359,9 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void invalidOwnerAddress() {
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(OWNER_ADDRESS_INVALID),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_INVALID));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "invalidate ownerAddress", "invalidate ownerAddress");
@@ -371,9 +369,9 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void nullAccount() {
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(OWNER_ADDRESS_NOACCOUNT),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_NOACCOUNT));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -391,10 +389,9 @@ public class AccountPermissionUpdateActuatorTest {
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, null, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, null, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "owner permission is missed",
@@ -406,10 +403,9 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, null, null),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, null));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -428,10 +424,9 @@ public class AccountPermissionUpdateActuatorTest {
       activeList.add(activePermission);
     }
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, null, null),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, null));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -449,10 +444,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, witnessPermission, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -470,10 +464,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "witness permission is missed",
@@ -492,9 +485,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -514,10 +507,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "active permission type is error",
@@ -536,10 +528,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, witnessPermission, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -561,9 +552,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -593,9 +584,10 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -617,9 +609,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -649,9 +641,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -666,7 +658,8 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
+    Permission activePermission = AccountCapsule
+        .createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
     Permission witnessPermission =
         Permission.newBuilder().setType(PermissionType.Witness).setPermissionName("active")
             .setThreshold(1).setParentId(0).build();
@@ -674,10 +667,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, witnessPermission, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -709,10 +701,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, witnessPermission, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -743,10 +734,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, witnessPermission, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -772,9 +762,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -800,9 +790,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -829,9 +819,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -859,9 +849,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -893,9 +883,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -920,9 +910,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -949,9 +939,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -980,9 +970,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -1008,9 +998,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -1038,9 +1028,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -1068,9 +1058,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -1100,10 +1090,9 @@ public class AccountPermissionUpdateActuatorTest {
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
-    AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(address, ownerPermission, witnessPermission, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -1127,8 +1116,8 @@ public class AccountPermissionUpdateActuatorTest {
     for (ContractType contractType : ContractType.values()) {
       if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
           || contractType == ContractType.ClearABIContract
-          //|| contractType == ContractType.CancelDeferredTransactionContract
-      ) {
+        //|| contractType == ContractType.CancelDeferredTransactionContract
+          ) {
         continue;
       }
       int id = contractType.getNumber();
@@ -1154,8 +1143,8 @@ public class AccountPermissionUpdateActuatorTest {
       if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
           || contractType == ContractType.AccountPermissionUpdateContract
           || contractType == ContractType.ClearABIContract
-          //|| contractType == ContractType.CancelDeferredTransactionContract
-      ) {
+        //|| contractType == ContractType.CancelDeferredTransactionContract
+          ) {
         continue;
       }
       int id = contractType.getNumber();

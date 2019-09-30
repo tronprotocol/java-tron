@@ -1,7 +1,6 @@
 package org.tron.core.actuator;
 
 import com.google.common.collect.Lists;
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
@@ -19,7 +18,6 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -28,22 +26,29 @@ import org.tron.core.store.VotesStore;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 
 @Slf4j(topic = "actuator")
 public class UnfreezeBalanceActuator extends AbstractActuator {
 
-  UnfreezeBalanceActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicStore, DelegatedResourceStore delegatedResourceStore,
-      DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore, VotesStore votesStore) {
-    super(contract, accountStore, dynamicStore, delegatedResourceStore, delegatedResourceAccountIndexStore, votesStore);
+  public UnfreezeBalanceActuator() {
+    super(ContractType.UnfreezeBalanceContract, UnfreezeBalanceContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     final UnfreezeBalanceContract unfreezeBalanceContract;
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
+    DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
+        .getDelegatedResourceAccountIndexStore();
+    VotesStore votesStore = chainBaseManager.getVotesStore();
     try {
-      unfreezeBalanceContract = contract.unpack(UnfreezeBalanceContract.class);
+      unfreezeBalanceContract = any.unpack(UnfreezeBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -88,7 +93,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         switch (unfreezeBalanceContract.getResource()) {
           case BANDWIDTH:
             if (dynamicStore.supportShieldedTransaction()
-                && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() < unfreezeBalance) {
+                && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
+                < unfreezeBalance) {
               receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
             } else {
               receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
@@ -137,7 +143,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                 .getFromAccountsList());
             fromAccountsList.remove(ByteString.copyFrom(ownerAddress));
             delegatedResourceAccountIndexCapsule.setAllFromAccounts(fromAccountsList);
-           delegatedResourceAccountIndexStore
+            delegatedResourceAccountIndexStore
                 .put(receiverAddress, delegatedResourceAccountIndexCapsule);
           }
         }
@@ -220,20 +226,23 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(UnfreezeBalanceContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
+    if (!this.any.is(UnfreezeBalanceContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UnfreezeBalanceContract],real type[" + contract
+          "contract type error,expected type [UnfreezeBalanceContract],real type[" + any
               .getClass() + "]");
     }
     final UnfreezeBalanceContract unfreezeBalanceContract;
     try {
-      unfreezeBalanceContract = this.contract.unpack(UnfreezeBalanceContract.class);
+      unfreezeBalanceContract = this.any.unpack(UnfreezeBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -386,7 +395,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(UnfreezeBalanceContract.class).getOwnerAddress();
+    return any.unpack(UnfreezeBalanceContract.class).getOwnerAddress();
   }
 
   @Override

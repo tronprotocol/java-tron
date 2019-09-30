@@ -4,14 +4,12 @@ import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
-import org.tron.common.utils.ForkUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -20,48 +18,45 @@ import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ProposalStore;
-import org.tron.core.store.WitnessStore;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 
 @Slf4j(topic = "actuator")
 public class ProposalCreateActuator extends AbstractActuator {
 
-  ProposalCreateActuator(Any contract, AccountStore accountStore, ProposalStore proposalStore, WitnessStore witnessStore,
-      DynamicPropertiesStore dynamicPropertiesStore, ForkUtils forkUtils) {
-    super(contract, accountStore, proposalStore, witnessStore,
-        dynamicPropertiesStore, forkUtils);
+  public ProposalCreateActuator() {
+    super(ContractType.ProposalCreateContract, ProposalCreateContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+
     try {
-      final ProposalCreateContract proposalCreateContract = this.contract
+      final ProposalCreateContract proposalCreateContract = this.any
           .unpack(ProposalCreateContract.class);
-      long id = dynamicStore.getLatestProposalNum() + 1;
+      long id = chainBaseManager.getDynamicPropertiesStore().getLatestProposalNum() + 1;
       ProposalCapsule proposalCapsule =
           new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
 
       proposalCapsule.setParameters(proposalCreateContract.getParametersMap());
 
-      long now = dynamicStore.getLatestBlockHeaderTimestamp();
-      long maintenanceTimeInterval = dynamicStore.getMaintenanceTimeInterval();
+      long now = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+      long maintenanceTimeInterval = chainBaseManager.getDynamicPropertiesStore()
+          .getMaintenanceTimeInterval();
       proposalCapsule.setCreateTime(now);
 
       long currentMaintenanceTime =
-          dynamicStore.getNextMaintenanceTime();
+          chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
       long now3 = now + DBConfig.getProposalExpireTime();
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
           currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;
       proposalCapsule.setExpirationTime(expirationTime);
 
-      proposalStore.put(proposalCapsule.createDbKey(), proposalCapsule);
-      dynamicStore.saveLatestProposalNum(id);
+      chainBaseManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+      chainBaseManager.getDynamicPropertiesStore().saveLatestProposalNum(id);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
@@ -74,20 +69,17 @@ public class ProposalCreateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
-    }
-    if (!this.contract.is(ProposalCreateContract.class)) {
+    if (!this.any.is(ProposalCreateContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [ProposalCreateContract],real type[" + contract
               .getClass() + "]");
     }
     final ProposalCreateContract contract;
     try {
-      contract = this.contract.unpack(ProposalCreateContract.class);
+      contract = this.any.unpack(ProposalCreateContract.class);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
     }
@@ -99,12 +91,12 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!accountStore.has(ownerAddress)) {
+    if (!chainBaseManager.getAccountStore().has(ownerAddress)) {
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
-    if (!witnessStore.has(ownerAddress)) {
+    if (!chainBaseManager.getWitnessStore().has(ownerAddress)) {
       throw new ContractValidateException(
           WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
@@ -155,7 +147,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (10): {
-        if (dynamicStore.getRemoveThePowerOfTheGr() == -1) {
+        if (chainBaseManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == -1) {
           throw new ContractValidateException(
               "This proposal has been executed before and is only allowed to be executed once");
         }
@@ -198,7 +190,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (17): { // deprecated
-          if (!forkUtils.pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+        if (!forkUtils.pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
         if (forkUtils.pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
@@ -215,7 +207,7 @@ public class ProposalCreateActuator extends AbstractActuator {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1");
         }
-        if (dynamicStore.getAllowSameTokenName() == 0) {
+        if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
           throw new ContractValidateException("[ALLOW_SAME_TOKEN_NAME] proposal must be approved "
               + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed");
         }
@@ -300,7 +292,7 @@ public class ProposalCreateActuator extends AbstractActuator {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_CONSTANTINOPLE] is only allowed to be 1");
         }
-        if (dynamicStore.getAllowTvmTransferTrc10() == 0) {
+        if (chainBaseManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10() == 0) {
           throw new ContractValidateException(
               "[ALLOW_TVM_TRANSFER_TRC10] proposal must be approved "
                   + "before [ALLOW_TVM_CONSTANTINOPLE] can be proposed");
@@ -322,7 +314,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
           throw new ContractValidateException("Bad chain parameter id [SHIELD_TRANSACTION_FEE]");
         }
-        if (!dynamicStore.supportShieldedTransaction()) {
+        if (!chainBaseManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
           throw new ContractValidateException(
               "Shielded Transaction is not activated,Can't set Shielded Transaction fee");
         }
@@ -340,7 +332,7 @@ public class ProposalCreateActuator extends AbstractActuator {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_SOLIDITY_059] is only allowed to be 1");
         }
-        if (dynamicStore.getAllowCreationOfContracts() == 0) {
+        if (chainBaseManager.getDynamicPropertiesStore().getAllowCreationOfContracts() == 0) {
           throw new ContractValidateException(
               "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
                   + "before [ALLOW_TVM_SOLIDITY_059] can be proposed");
@@ -354,7 +346,7 @@ public class ProposalCreateActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(ProposalCreateContract.class).getOwnerAddress();
+    return any.unpack(ProposalCreateContract.class).getOwnerAddress();
   }
 
   @Override

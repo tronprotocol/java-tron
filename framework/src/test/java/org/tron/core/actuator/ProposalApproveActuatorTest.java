@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.ForkUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -29,10 +28,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ProposalStore;
-import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -127,10 +122,10 @@ public class ProposalApproveActuatorTest {
     dbManager.getProposalStore().delete(ByteArray.fromLong(2));
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(0L, 6 * 27 * 1000L);
-    ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
-            dbManager.getProposalStore(), dbManager.getWitnessStore(),
-            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+    ProposalCreateActuator actuator = new ProposalCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setForkUtils(dbManager.getForkController())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);
@@ -181,9 +176,9 @@ public class ProposalApproveActuatorTest {
     long id = 1;
 
     // isAddApproval == true
-    ProposalApproveActuator actuator = new ProposalApproveActuator(
-        getContract(OWNER_ADDRESS_FIRST, id, true), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalApproveActuator actuator = new ProposalApproveActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, id, true));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
@@ -214,9 +209,9 @@ public class ProposalApproveActuatorTest {
     }
 
     // isAddApproval == false
-    ProposalApproveActuator actuator2 = new ProposalApproveActuator(
-        getContract(OWNER_ADDRESS_FIRST, 1, false), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalApproveActuator actuator2 = new ProposalApproveActuator();
+    actuator2.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, 1, false));
 
     TransactionResultCapsule ret2 = new TransactionResultCapsule();
     try {
@@ -253,9 +248,9 @@ public class ProposalApproveActuatorTest {
     long id = 1;
 
     // isAddApproval == true
-    ProposalApproveActuator actuator = new ProposalApproveActuator(
-        getContract(OWNER_ADDRESS_INVALID, id, true), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalApproveActuator actuator = new ProposalApproveActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_INVALID, id, true));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
@@ -287,9 +282,9 @@ public class ProposalApproveActuatorTest {
     long id = 1;
 
     // isAddApproval == true
-    ProposalApproveActuator actuator = new ProposalApproveActuator(
-        getContract(OWNER_ADDRESS_NOACCOUNT, id, true), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalApproveActuator actuator = new ProposalApproveActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_NOACCOUNT, id, true));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
@@ -322,9 +317,9 @@ public class ProposalApproveActuatorTest {
     long id = 1;
 
     // isAddApproval == true
-    ProposalApproveActuator actuator = new ProposalApproveActuator(
-        getContract(OWNER_ADDRESS_SECOND, id, true), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalApproveActuator actuator = new ProposalApproveActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_SECOND, id, true));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
@@ -357,9 +352,9 @@ public class ProposalApproveActuatorTest {
     long id = 2;
 
     // isAddApproval == true
-    ProposalApproveActuator actuator = new ProposalApproveActuator(
-        getContract(OWNER_ADDRESS_FIRST, id, true), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalApproveActuator actuator = new ProposalApproveActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, id, true));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -383,9 +378,9 @@ public class ProposalApproveActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000100);
     long id = 1;
 
-    ProposalApproveActuator actuator = new ProposalApproveActuator(
-        getContract(OWNER_ADDRESS_FIRST, id, true), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalApproveActuator actuator = new ProposalApproveActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, id, true));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
@@ -424,9 +419,9 @@ public class ProposalApproveActuatorTest {
     long id = 1;
 
     // isAddApproval == true
-    ProposalApproveActuator actuator = new ProposalApproveActuator(
-        getContract(OWNER_ADDRESS_FIRST, id, true), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalApproveActuator actuator = new ProposalApproveActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, id, true));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -451,9 +446,9 @@ public class ProposalApproveActuatorTest {
     long id = 1;
 
     // isAddApproval == true
-    ProposalApproveActuator actuator = new ProposalApproveActuator(
-        getContract(OWNER_ADDRESS_FIRST, id, true), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalApproveActuator actuator = new ProposalApproveActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, id, true));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
@@ -489,9 +484,9 @@ public class ProposalApproveActuatorTest {
     long id = 1;
 
     // isAddApproval == true
-    ProposalApproveActuator actuator = new ProposalApproveActuator(
-        getContract(OWNER_ADDRESS_FIRST, id, false), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalApproveActuator actuator = new ProposalApproveActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, id, false));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     String readableOwnerAddress = StringUtil.createReadableString(

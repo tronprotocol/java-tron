@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -14,35 +13,40 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 
 @Slf4j(topic = "actuator")
 public class ExchangeTransactionActuator extends AbstractActuator {
 
-  ExchangeTransactionActuator(final Any contract, AccountStore accountStore,AssetIssueStore assetIssueStore,  DynamicPropertiesStore dynamicStore,
-    ExchangeStore exchangeStore, ExchangeV2Store exchangeV2Store) {
-    super(contract, accountStore, assetIssueStore, dynamicStore,
-        exchangeStore, exchangeV2Store);
+  public ExchangeTransactionActuator() {
+    super(ContractType.ExchangeTransactionContract, ExchangeTransactionContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    ExchangeStore exchangeStore = chainBaseManager.getExchangeStore();
+    ExchangeV2Store exchangeV2Store = chainBaseManager.getExchangeV2Store();
+    AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     try {
-      final ExchangeTransactionContract exchangeTransactionContract = this.contract
+      final ExchangeTransactionContract exchangeTransactionContract = this.any
           .unpack(ExchangeTransactionContract.class);
       AccountCapsule accountCapsule = accountStore
           .get(exchangeTransactionContract.getOwnerAddress().toByteArray());
 
-      ExchangeCapsule exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
-          get(ByteArray.fromLong(exchangeTransactionContract.getExchangeId()));
+      ExchangeCapsule exchangeCapsule = Commons
+          .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
+              get(ByteArray.fromLong(exchangeTransactionContract.getExchangeId()));
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
@@ -71,12 +75,14 @@ public class ExchangeTransactionActuator extends AbstractActuator {
       if (Arrays.equals(anotherTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
-        accountCapsule.addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
+        accountCapsule
+            .addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
       }
 
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
 
-      Commons.putExchangeCapsule(exchangeCapsule, dynamicStore, exchangeStore, exchangeV2Store, assetIssueStore);
+      Commons.putExchangeCapsule(exchangeCapsule, dynamicStore, exchangeStore, exchangeV2Store,
+          assetIssueStore);
 
       ret.setExchangeReceivedAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
@@ -95,20 +101,24 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dynamicStore == null || accountStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(ExchangeTransactionContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    ExchangeStore exchangeStore = chainBaseManager.getExchangeStore();
+    ExchangeV2Store exchangeV2Store = chainBaseManager.getExchangeV2Store();
+    if (!this.any.is(ExchangeTransactionContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ExchangeTransactionContract],real type[" + contract
+          "contract type error,expected type [ExchangeTransactionContract],real type[" + any
               .getClass() + "]");
     }
     final ExchangeTransactionContract contract;
     try {
-      contract = this.contract.unpack(ExchangeTransactionContract.class);
+      contract = this.any.unpack(ExchangeTransactionContract.class);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
     }
@@ -198,7 +208,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(ExchangeTransactionContract.class).getOwnerAddress();
+    return any.unpack(ExchangeTransactionContract.class).getOwnerAddress();
   }
 
   @Override

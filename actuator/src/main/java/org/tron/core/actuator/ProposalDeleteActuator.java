@@ -4,7 +4,6 @@ import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.PROPOSAL_EXCEPTION_STR;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -16,25 +15,27 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.protos.Protocol.Proposal.State;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
 
 @Slf4j(topic = "actuator")
 public class ProposalDeleteActuator extends AbstractActuator {
 
-  ProposalDeleteActuator(Any contract, AccountStore accountStore, ProposalStore proposalStore, DynamicPropertiesStore dynamicPropertiesStore) {
-    super(contract, accountStore, proposalStore, dynamicPropertiesStore);
+  public ProposalDeleteActuator() {
+    super(ContractType.ProposalDeleteContract, ProposalDeleteContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    ProposalStore proposalStore = chainBaseManager.getProposalStore();
     try {
-      final ProposalDeleteContract proposalDeleteContract = this.contract
+      final ProposalDeleteContract proposalDeleteContract = this.any
           .unpack(ProposalDeleteContract.class);
       ProposalCapsule proposalCapsule = proposalStore.
           get(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
@@ -56,20 +57,23 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(ProposalDeleteContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    ProposalStore proposalStore = chainBaseManager.getProposalStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    if (!this.any.is(ProposalDeleteContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ProposalDeleteContract],real type[" + contract
+          "contract type error,expected type [ProposalDeleteContract],real type[" + any
               .getClass() + "]");
     }
     final ProposalDeleteContract contract;
     try {
-      contract = this.contract.unpack(ProposalDeleteContract.class);
+      contract = this.any.unpack(ProposalDeleteContract.class);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
     }
@@ -95,7 +99,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
     ProposalCapsule proposalCapsule;
     try {
-      proposalCapsule =  proposalStore.
+      proposalCapsule = proposalStore.
           get(ByteArray.fromLong(contract.getProposalId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
@@ -121,7 +125,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(ProposalDeleteContract.class).getOwnerAddress();
+    return any.unpack(ProposalDeleteContract.class).getOwnerAddress();
   }
 
   @Override

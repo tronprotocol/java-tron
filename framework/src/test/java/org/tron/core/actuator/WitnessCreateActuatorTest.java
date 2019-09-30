@@ -24,12 +24,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.WitnessStore;
-import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 
 @Slf4j
 
@@ -122,9 +119,9 @@ public class WitnessCreateActuatorTest {
    */
   @Test
   public void firstCreateWitness() {
-    WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_FIRST, URL), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+    WitnessCreateActuator actuator = new WitnessCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, URL));
     AccountCapsule accountCapsule = dbManager.getAccountStore()
         .get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -150,9 +147,9 @@ public class WitnessCreateActuatorTest {
    */
   @Test
   public void secondCreateAccount() {
-    WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_SECOND, URL), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+    WitnessCreateActuator actuator = new WitnessCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_SECOND, URL));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -171,9 +168,9 @@ public class WitnessCreateActuatorTest {
    */
   @Test
   public void InvalidAddress() {
-    WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_INVALID, URL), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+    WitnessCreateActuator actuator = new WitnessCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_INVALID, URL));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -195,9 +192,9 @@ public class WitnessCreateActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     //Url cannot empty
     try {
-      WitnessCreateActuator actuator = new WitnessCreateActuator(
-          getContract(OWNER_ADDRESS_FIRST, ByteString.EMPTY), dbManager.getAccountStore(),
-          dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+      WitnessCreateActuator actuator = new WitnessCreateActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager())
+          .setAny(getContract(OWNER_ADDRESS_FIRST, ByteString.EMPTY));
       actuator.validate();
       actuator.execute(ret);
       fail("Invalid url");
@@ -212,9 +209,9 @@ public class WitnessCreateActuatorTest {
     String url256Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     //Url length can not greater than 256
     try {
-      WitnessCreateActuator actuator = new WitnessCreateActuator(
-          getContract(OWNER_ADDRESS_FIRST, ByteString.copyFromUtf8(url256Bytes + "0")),
-          dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+      WitnessCreateActuator actuator = new WitnessCreateActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager())
+          .setAny(getContract(OWNER_ADDRESS_FIRST, ByteString.copyFromUtf8(url256Bytes + "0")));
       actuator.validate();
       actuator.execute(ret);
       fail("Invalid url");
@@ -227,9 +224,9 @@ public class WitnessCreateActuatorTest {
 
     // 1 byte url is ok.
     try {
-      WitnessCreateActuator actuator = new WitnessCreateActuator(
-          getContract(OWNER_ADDRESS_FIRST, "0"), dbManager.getAccountStore(),
-          dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+      WitnessCreateActuator actuator = new WitnessCreateActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager())
+          .setAny(getContract(OWNER_ADDRESS_FIRST, "0"));
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
@@ -247,9 +244,9 @@ public class WitnessCreateActuatorTest {
     dbManager.getWitnessStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
     // 256 bytes url is ok.
     try {
-      WitnessCreateActuator actuator = new WitnessCreateActuator(
-          getContract(OWNER_ADDRESS_FIRST, url256Bytes), dbManager.getAccountStore(),
-          dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+      WitnessCreateActuator actuator = new WitnessCreateActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager())
+          .setAny(getContract(OWNER_ADDRESS_FIRST, url256Bytes));
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
@@ -271,9 +268,9 @@ public class WitnessCreateActuatorTest {
    */
   @Test
   public void noAccount() {
-    WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_NOACCOUNT, URL), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+    WitnessCreateActuator actuator = new WitnessCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_NOACCOUNT, URL));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -302,9 +299,9 @@ public class WitnessCreateActuatorTest {
 
     dbManager.getAccountStore()
         .put(balanceNotSufficientCapsule.getAddress().toByteArray(), balanceNotSufficientCapsule);
-    WitnessCreateActuator actuator =
-        new WitnessCreateActuator(getContract(OWNER_ADDRESS_BALANCENOTSUFFIENT, URL),
-            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(), dbManager.getWitnessStore());
+    WitnessCreateActuator actuator = new WitnessCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_BALANCENOTSUFFIENT, URL));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

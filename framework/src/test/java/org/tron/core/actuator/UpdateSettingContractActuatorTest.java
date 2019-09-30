@@ -25,11 +25,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.ContractStore;
+import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
-import org.tron.protos.Protocol;
 
 
 @Slf4j
@@ -128,9 +126,9 @@ public class UpdateSettingContractActuatorTest {
   @Test
   public void successUpdateSettingContract() {
     UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+        new UpdateSettingContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -153,9 +151,9 @@ public class UpdateSettingContractActuatorTest {
   @Test
   public void invalidAddress() {
     UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS, TARGET_PERCENT),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+        new UpdateSettingContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS, TARGET_PERCENT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -174,9 +172,9 @@ public class UpdateSettingContractActuatorTest {
   @Test
   public void noExistAccount() {
     UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS, TARGET_PERCENT),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+        new UpdateSettingContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS, TARGET_PERCENT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -195,9 +193,9 @@ public class UpdateSettingContractActuatorTest {
   @Test
   public void invalidResourcePercent() {
     UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, INVALID_PERCENT),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+        new UpdateSettingContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, INVALID_PERCENT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -216,9 +214,9 @@ public class UpdateSettingContractActuatorTest {
   @Test
   public void noExistContract() {
     UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS, TARGET_PERCENT),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+        new UpdateSettingContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS, TARGET_PERCENT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -237,9 +235,9 @@ public class UpdateSettingContractActuatorTest {
   @Test
   public void callerNotContractOwner() {
     UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+        new UpdateSettingContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -260,14 +258,14 @@ public class UpdateSettingContractActuatorTest {
   @Test
   public void twiceUpdateSettingContract() {
     UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager.getAccountStore(),
-            dbManager.getContractStore());
+        new UpdateSettingContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT));
 
     UpdateSettingContractActuator secondActuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, 90L),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+        new UpdateSettingContractActuator();
+    secondActuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, 90L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

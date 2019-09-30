@@ -24,14 +24,10 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 
 public class ParticipateAssetIssueActuatorTest {
 
@@ -307,10 +303,8 @@ public class ParticipateAssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(1000L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1000L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -350,10 +344,8 @@ public class ParticipateAssetIssueActuatorTest {
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(1000L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -391,10 +383,8 @@ public class ParticipateAssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(1000L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -431,10 +421,8 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameCloseAssetIssueTimeRight() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.getMillis());
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(1000L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -466,10 +454,8 @@ public class ParticipateAssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.getMillis());
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(1000L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -502,10 +488,8 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameCloseAssetIssueTimeLeft() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.getMillis());
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(1000L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -537,10 +521,8 @@ public class ParticipateAssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.getMillis());
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(1000L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -573,10 +555,8 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameCloseExchangeDevisibleTest() {
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(999L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()); //no problem
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(); //no problem
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(999L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -607,10 +587,8 @@ public class ParticipateAssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(999L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()); //no problem
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(); //no problem
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(999L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -641,10 +619,8 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameCloseNegativeAmountTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(-999L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(-999L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -677,10 +653,8 @@ public class ParticipateAssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(-999L), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(-999L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -715,10 +689,8 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameCloseZeroAmountTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(0), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(0));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -751,10 +723,8 @@ public class ParticipateAssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
-    ParticipateAssetIssueActuator actuator =
-        new ParticipateAssetIssueActuator(getContract(0), dbManager.getAccountStore(),
-            dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(0));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -790,11 +760,9 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameCloseNoExitOwnerTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContractWithOwner(101, NOT_EXIT_ADDRESS),
-        dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractWithOwner(101, NOT_EXIT_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -828,11 +796,9 @@ public class ParticipateAssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContractWithOwner(101, NOT_EXIT_ADDRESS),
-        dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractWithOwner(101, NOT_EXIT_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -868,11 +834,9 @@ public class ParticipateAssetIssueActuatorTest {
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
         NOT_EXIT_ADDRESS);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContractWithTo(101, NOT_EXIT_ADDRESS),
-        dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractWithTo(101, NOT_EXIT_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -908,11 +872,9 @@ public class ParticipateAssetIssueActuatorTest {
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
         NOT_EXIT_ADDRESS);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContractWithTo(101, NOT_EXIT_ADDRESS),
-        dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractWithTo(101, NOT_EXIT_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -948,11 +910,9 @@ public class ParticipateAssetIssueActuatorTest {
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
         OWNER_ADDRESS);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContractWithTo(101, OWNER_ADDRESS),
-        dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractWithTo(101, OWNER_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -987,11 +947,9 @@ public class ParticipateAssetIssueActuatorTest {
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
         OWNER_ADDRESS);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContractWithTo(101, OWNER_ADDRESS),
-        dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractWithTo(101, OWNER_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1025,10 +983,9 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameCloseParticipateAssetToThird() {
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContractWithTo(101, THIRD_ADDRESS), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractWithTo(101, THIRD_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1061,10 +1018,9 @@ public class ParticipateAssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContractWithTo(101, THIRD_ADDRESS), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractWithTo(101, THIRD_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1100,10 +1056,9 @@ public class ParticipateAssetIssueActuatorTest {
   public void assetNameTest() {
     //Empty name, throw exception
     ByteString emptyName = ByteString.EMPTY;
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContract(1000L, emptyName), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(1000L, emptyName));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1123,9 +1078,9 @@ public class ParticipateAssetIssueActuatorTest {
     assetName = "testname0123456789abcdefghijgklm";
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000, assetName);
-    actuator = new ParticipateAssetIssueActuator(getContract(1000L, assetName), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(1000L, assetName));
 
     try {
       actuator.validate();
@@ -1151,9 +1106,9 @@ public class ParticipateAssetIssueActuatorTest {
     assetName = "t";
     initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000, assetName);
-    actuator = new ParticipateAssetIssueActuator(getContract(1000L, assetName), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(1000L, assetName));
 
     try {
       actuator.validate();
@@ -1187,10 +1142,8 @@ public class ParticipateAssetIssueActuatorTest {
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContract(101),
-        dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(101));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1228,10 +1181,8 @@ public class ParticipateAssetIssueActuatorTest {
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContract(101),
-        dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(101));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1269,10 +1220,8 @@ public class ParticipateAssetIssueActuatorTest {
     toAccount.reduceAssetAmount(ByteString.copyFromUtf8(ASSET_NAME).toByteArray(),
         TOTAL_SUPPLY - 10000);
     dbManager.getAccountStore().put(toAccount.getAddress().toByteArray(), toAccount);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContract(1),
-        dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1311,12 +1260,11 @@ public class ParticipateAssetIssueActuatorTest {
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum();
 
     toAccount.reduceAssetAmountV2(ByteString.copyFromUtf8(String.valueOf(id)).toByteArray(),
-        TOTAL_SUPPLY - 10000, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+        TOTAL_SUPPLY - 10000, dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(toAccount.getAddress().toByteArray(), toAccount);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContract(1),
-        dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1349,10 +1297,10 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameCloseNoneExistAssetTest() {
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContract(1, "TTTTTTTTTTTT"),
-        dbManager.getAccountStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(1, "TTTTTTTTTTTT"));
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1385,10 +1333,9 @@ public class ParticipateAssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     DateTime now = DateTime.now();
     initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContract(1, "TTTTTTTTTTTT"),
-        dbManager.getAccountStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(1, "TTTTTTTTTTTT"));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1426,10 +1373,8 @@ public class ParticipateAssetIssueActuatorTest {
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.addAsset(ASSET_NAME.getBytes(), Long.MAX_VALUE);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContract(1L),
-        dbManager.getAccountStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1L));
 
     //NUM = 2147483647;
     //ASSET_BLANCE = Long.MAX_VALUE + 2147483647/2
@@ -1470,10 +1415,8 @@ public class ParticipateAssetIssueActuatorTest {
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     owner.addAssetV2(ByteString.copyFromUtf8(String.valueOf(id)).toByteArray(), Long.MAX_VALUE);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContract(1L),
-        dbManager.getAccountStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1L));
 
     //NUM = 2147483647;
     //ASSET_BLANCE = Long.MAX_VALUE + 2147483647/2
@@ -1513,10 +1456,8 @@ public class ParticipateAssetIssueActuatorTest {
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100000000000000L);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContract(8589934597L),
-        dbManager.getAccountStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(8589934597L));
 
     //NUM = 2147483647;
     //LONG_MAX = 9223372036854775807L = 0x7fffffffffffffff
@@ -1560,10 +1501,8 @@ public class ParticipateAssetIssueActuatorTest {
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100000000000000L);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContract(8589934597L),
-        dbManager.getAccountStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(8589934597L));
 
     //NUM = 2147483647;
     //LONG_MAX = 9223372036854775807L = 0x7fffffffffffffff
@@ -1628,9 +1567,8 @@ public class ParticipateAssetIssueActuatorTest {
     owner.setBalance(100000000000000L);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
 
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(getContract(1),
-        dbManager.getAccountStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1683,10 +1621,9 @@ public class ParticipateAssetIssueActuatorTest {
     owner.setBalance(100000000000000L);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
 
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(
-        getContractWithTo(1, TO_ADDRESS_2),
-        dbManager.getAccountStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContractWithTo(1, TO_ADDRESS_2));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1717,8 +1654,8 @@ public class ParticipateAssetIssueActuatorTest {
             .setAmount(1000)
             .build());
 
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(any,  dbManager.getAccountStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1748,8 +1685,8 @@ public class ParticipateAssetIssueActuatorTest {
             .setAmount(1000)
             .build());
 
-    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(any,  dbManager.getAccountStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

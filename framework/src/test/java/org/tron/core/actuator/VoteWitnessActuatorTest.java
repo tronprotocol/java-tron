@@ -27,12 +27,12 @@ import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
-import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class VoteWitnessActuatorTest {
@@ -143,13 +143,12 @@ public class VoteWitnessActuatorTest {
   public void voteWitness() {
     long frozenBalance = 1_000_000_000_000L;
     long duration = 3;
-    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator(
-        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
-        dbManager.getDelegatedResourceAccountIndexStore());
-    VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L), dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator();
+    freezeBalanceActuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, frozenBalance, duration));
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();
@@ -179,10 +178,9 @@ public class VoteWitnessActuatorTest {
    */
   @Test
   public void InvalidAddress() {
-    VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(ADDRESS_INVALID, WITNESS_ADDRESS, 1L),
-            dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ADDRESS_INVALID, WITNESS_ADDRESS, 1L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -207,10 +205,9 @@ public class VoteWitnessActuatorTest {
    */
   @Test
   public void noAccount() {
-    VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS_NOACCOUNT, 1L),
-            dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS_NOACCOUNT, 1L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -245,10 +242,9 @@ public class VoteWitnessActuatorTest {
             300L);
     dbManager.getAccountStore()
         .put(accountSecondCapsule.getAddress().toByteArray(), accountSecondCapsule);
-    VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS_NOACCOUNT, 1L),
-            dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS_NOACCOUNT, 1L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -281,10 +277,9 @@ public class VoteWitnessActuatorTest {
             300L);
     dbManager.getAccountStore()
         .put(accountSecondCapsule.getAddress().toByteArray(), accountSecondCapsule);
-    VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS, ADDRESS_INVALID, 1L),
-            dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, ADDRESS_INVALID, 1L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -311,14 +306,13 @@ public class VoteWitnessActuatorTest {
   public void voteCountTest() {
     long frozenBalance = 1_000_000_000_000L;
     long duration = 3;
-    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator(
-        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
-        dbManager.getDelegatedResourceAccountIndexStore());
+    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator();
+    freezeBalanceActuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, frozenBalance, duration));
     //0 votes
-    VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 0L), dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 0L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();
@@ -337,8 +331,9 @@ public class VoteWitnessActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
     //-1 votes
-    actuator = new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, -1L), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, -1L));
     ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();
@@ -365,15 +360,13 @@ public class VoteWitnessActuatorTest {
   public void voteCountsTest() {
     long frozenBalance = 1_000_000_000_000L;
     long duration = 3;
-    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator(
-        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
-        dbManager.getDelegatedResourceAccountIndexStore());
+    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator();
+    freezeBalanceActuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, frozenBalance, duration));
 
-    VoteWitnessActuator actuator = new VoteWitnessActuator(
-        getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 0),
-        dbManager.getAccountStore(), dbManager.getWitnessStore(),
-        dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 0));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();
@@ -392,9 +385,9 @@ public class VoteWitnessActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
 
-    actuator = new VoteWitnessActuator(getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 31),
-        dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 31));
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -418,14 +411,12 @@ public class VoteWitnessActuatorTest {
   public void vote1WitnssOneMoreTiems() {
     long frozenBalance = 1_000_000_000_000L;
     long duration = 3;
-    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator(
-        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
-        dbManager.getDelegatedResourceAccountIndexStore());
-    VoteWitnessActuator actuator = new VoteWitnessActuator(
-        getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 30),
-        dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator();
+    freezeBalanceActuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, frozenBalance, duration));
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 30));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();
@@ -450,10 +441,9 @@ public class VoteWitnessActuatorTest {
    */
   @Test
   public void noOwnerAccount() {
-    VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS_NOACCOUNT, WITNESS_ADDRESS, 1L),
-            dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_NOACCOUNT, WITNESS_ADDRESS, 1L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -485,11 +475,9 @@ public class VoteWitnessActuatorTest {
             500L);
     dbManager.getAccountStore()
         .put(balanceNotSufficientCapsule.getAddress().toByteArray(), balanceNotSufficientCapsule);
-    VoteWitnessActuator actuator =
-        new VoteWitnessActuator(
-            getContract(OWNER_ADDRESS_BALANCENOTSUFFICIENT, WITNESS_ADDRESS, 1L),
-            dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_BALANCENOTSUFFICIENT, WITNESS_ADDRESS, 1L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -519,16 +507,15 @@ public class VoteWitnessActuatorTest {
   public void voteWitnessTwice() {
     long frozenBalance = 7_000_000_000_000L;
     long duration = 3;
-    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator(
-        getContract(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
-        dbManager.getDelegatedResourceAccountIndexStore());
-    VoteWitnessActuator actuator =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L), dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
-    VoteWitnessActuator actuatorTwice =
-        new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 3L), dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+    FreezeBalanceActuator freezeBalanceActuator = new FreezeBalanceActuator();
+    freezeBalanceActuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, frozenBalance, duration));
+    VoteWitnessActuator actuator = new VoteWitnessActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L));
+    VoteWitnessActuator actuatorTwice = new VoteWitnessActuator();
+    actuatorTwice.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 3L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();

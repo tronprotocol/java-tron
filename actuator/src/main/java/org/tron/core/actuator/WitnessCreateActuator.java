@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -12,25 +11,26 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 
 @Slf4j(topic = "actuator")
 public class WitnessCreateActuator extends AbstractActuator {
 
-  WitnessCreateActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicPropertiesStore, WitnessStore witnessStore) {
-    super(contract, accountStore, dynamicPropertiesStore, witnessStore);
+  public WitnessCreateActuator() {
+    super(ContractType.WitnessCreateContract, WitnessCreateContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      final WitnessCreateContract witnessCreateContract = this.contract
+      final WitnessCreateContract witnessCreateContract = this.any
           .unpack(WitnessCreateContract.class);
       this.createWitness(witnessCreateContract);
       ret.setStatus(fee, code.SUCESS);
@@ -48,20 +48,23 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(WitnessCreateContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    WitnessStore witnessStore = chainBaseManager.getWitnessStore();
+    if (!this.any.is(WitnessCreateContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [WitnessCreateContract],real type[" + contract
+          "contract type error,expected type [WitnessCreateContract],real type[" + any
               .getClass() + "]");
     }
     final WitnessCreateContract contract;
     try {
-      contract = this.contract.unpack(WitnessCreateContract.class);
+      contract = this.any.unpack(WitnessCreateContract.class);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
     }
@@ -101,16 +104,19 @@ public class WitnessCreateActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(WitnessCreateContract.class).getOwnerAddress();
+    return any.unpack(WitnessCreateContract.class).getOwnerAddress();
   }
 
   @Override
   public long calcFee() {
-    return dynamicStore.getAccountUpgradeCost();
+    return chainBaseManager.getDynamicPropertiesStore().getAccountUpgradeCost();
   }
 
   private void createWitness(final WitnessCreateContract witnessCreateContract)
       throws BalanceInsufficientException {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    WitnessStore witnessStore = chainBaseManager.getWitnessStore();
     //Create Witness by witnessCreateContract
     final WitnessCapsule witnessCapsule = new WitnessCapsule(
         witnessCreateContract.getOwnerAddress(),
@@ -127,7 +133,8 @@ public class WitnessCreateActuator extends AbstractActuator {
     }
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
     long cost = dynamicStore.getAccountUpgradeCost();
-    Commons.adjustBalance(accountStore, witnessCreateContract.getOwnerAddress().toByteArray(), -cost);
+    Commons
+        .adjustBalance(accountStore, witnessCreateContract.getOwnerAddress().toByteArray(), -cost);
 
     Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), +cost);
 

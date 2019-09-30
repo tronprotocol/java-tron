@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -12,24 +11,26 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.vm.config.VMConfig;
-import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 
 @Slf4j(topic = "actuator")
 public class ClearABIContractActuator extends AbstractActuator {
 
-  ClearABIContractActuator(Any contract, AccountStore accountStore, ContractStore contractStore) {
-    super(contract, accountStore, contractStore);
+  public ClearABIContractActuator() {
+    super(ContractType.ClearABIContract, ClearABIContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    ContractStore contractStore = chainBaseManager.getContractStore();
     try {
-      ClearABIContract usContract = contract.unpack(ClearABIContract.class);
+      ClearABIContract usContract = any.unpack(ClearABIContract.class);
 
       byte[] contractAddress = usContract.getContractAddress().toByteArray();
       ContractCapsule deployedContract = contractStore.get(contractAddress);
@@ -53,21 +54,22 @@ public class ClearABIContractActuator extends AbstractActuator {
           "contract type error,unexpected type [ClearABIContract]");
     }
 
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || contractStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or contract store!");
     }
-    if (!this.contract.is(ClearABIContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    ContractStore contractStore = chainBaseManager.getContractStore();
+    if (!this.any.is(ClearABIContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [ClearABIContract],real type["
-              + contract
-              .getClass() + "]");
+              + any.getClass() + "]");
     }
     final ClearABIContract contract;
     try {
-      contract = this.contract.unpack(ClearABIContract.class);
+      contract = this.any.unpack(ClearABIContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -105,7 +107,7 @@ public class ClearABIContractActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(ClearABIContract.class).getOwnerAddress();
+    return any.unpack(ClearABIContract.class).getOwnerAddress();
   }
 
   @Override

@@ -15,7 +15,6 @@
 
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -27,28 +26,32 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 
 @Slf4j(topic = "actuator")
 public class ParticipateAssetIssueActuator extends AbstractActuator {
 
-  ParticipateAssetIssueActuator(Any contract, AccountStore accountStore,  DynamicPropertiesStore dynamicPropertiesStore,
-      AssetIssueStore assetIssueStore, AssetIssueV2Store assetIssueV2Store) {
-    super(contract, accountStore, dynamicPropertiesStore, assetIssueStore, assetIssueV2Store);
+  public ParticipateAssetIssueActuator() {
+    super(ContractType.ParticipateAssetIssueContract, ParticipateAssetIssueContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
+    AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     try {
       final ParticipateAssetIssueContract participateAssetIssueContract =
-          contract.unpack(ParticipateAssetIssueContract.class);
+          any.unpack(ParticipateAssetIssueContract.class);
       long cost = participateAssetIssueContract.getAmount();
 
       //subtract from owner address
@@ -61,7 +64,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       //calculate the exchange amount
       AssetIssueCapsule assetIssueCapsule;
-      assetIssueCapsule = Commons.getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store).get(key);
+      assetIssueCapsule = Commons
+          .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store).get(key);
 
       long exchangeAmount = Math.multiplyExact(cost, assetIssueCapsule.getNum());
       exchangeAmount = Math.floorDiv(exchangeAmount, assetIssueCapsule.getTrxNum());
@@ -94,22 +98,26 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dynamicStore == null || accountStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(ParticipateAssetIssueContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
+    AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
+    if (!this.any.is(ParticipateAssetIssueContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ParticipateAssetIssueContract],real type[" + contract
+          "contract type error,expected type [ParticipateAssetIssueContract],real type[" + any
               .getClass() + "]");
     }
 
     final ParticipateAssetIssueContract participateAssetIssueContract;
     try {
       participateAssetIssueContract =
-          this.contract.unpack(ParticipateAssetIssueContract.class);
+          this.any.unpack(ParticipateAssetIssueContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -151,7 +159,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       //Whether have the mapping
       AssetIssueCapsule assetIssueCapsule;
-      assetIssueCapsule = Commons.getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store).get(assetName);
+      assetIssueCapsule = Commons
+          .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store).get(assetName);
       if (assetIssueCapsule == null) {
         throw new ContractValidateException("No asset named " + ByteArray.toStr(assetName));
       }
@@ -194,7 +203,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return this.contract.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
+    return this.any.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
   }
 
   @Override

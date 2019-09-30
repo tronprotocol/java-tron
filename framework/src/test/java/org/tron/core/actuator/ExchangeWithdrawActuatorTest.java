@@ -28,15 +28,10 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ExchangeStore;
-import org.tron.core.store.ExchangeV2Store;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 
 @Slf4j
 
@@ -279,10 +274,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetMap.get(firstTokenId));
     Assert.assertEquals(null, assetMap.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -354,10 +348,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetMap.get(firstTokenId));
     Assert.assertEquals(null, assetMap.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, String.valueOf(1), firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, String.valueOf(1), firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
@@ -429,10 +422,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(firstTokenId));
     Assert.assertEquals(null, assetV2Map.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -496,10 +488,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -571,10 +562,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -638,10 +628,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetMap.get(firstTokenId));
     Assert.assertEquals(null, assetMap.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_INVALID, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_INVALID, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -682,10 +671,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(firstTokenId));
     Assert.assertEquals(null, assetV2Map.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_INVALID, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_INVALID, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -727,10 +715,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetMap.get(firstTokenId));
     Assert.assertEquals(null, assetMap.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_NOACCOUNT, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_NOACCOUNT, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -773,10 +760,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(firstTokenId));
     Assert.assertEquals(null, assetV2Map.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_NOACCOUNT, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_NOACCOUNT, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -818,10 +804,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetMap.get(firstTokenId));
     Assert.assertEquals(null, assetMap.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -863,10 +848,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(firstTokenId));
     Assert.assertEquals(null, assetV2Map.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -908,10 +892,9 @@ public class ExchangeWithdrawActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -949,15 +932,16 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), firstTokenQuant, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
-    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), firstTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -999,10 +983,9 @@ public class ExchangeWithdrawActuatorTest {
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1044,10 +1027,9 @@ public class ExchangeWithdrawActuatorTest {
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1089,10 +1071,9 @@ public class ExchangeWithdrawActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1137,15 +1118,16 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), firstTokenQuant, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
-    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), firstTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1195,10 +1177,9 @@ public class ExchangeWithdrawActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1235,15 +1216,17 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), 1000L, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
-    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule
+        .addAssetAmountV2(firstTokenId.getBytes(), 1000L, dbManager.getDynamicPropertiesStore(),
+            dbManager.getAssetIssueStore());
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1285,10 +1268,9 @@ public class ExchangeWithdrawActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1325,15 +1307,17 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), 1000L, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
-    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule
+        .addAssetAmountV2(firstTokenId.getBytes(), 1000L, dbManager.getDynamicPropertiesStore(),
+            dbManager.getAssetIssueStore());
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1366,10 +1350,9 @@ public class ExchangeWithdrawActuatorTest {
     String firstTokenId = "abc";
     long quant = 9991L;
     String secondTokenId = "def";
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1386,10 +1369,9 @@ public class ExchangeWithdrawActuatorTest {
     }
 
     quant = 10001;
-    actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant));
 
     ret = new TransactionResultCapsule();
 
@@ -1423,10 +1405,9 @@ public class ExchangeWithdrawActuatorTest {
     String firstTokenId = "123";
     long quant = 9991L;
     String secondTokenId = "456";
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1443,10 +1424,9 @@ public class ExchangeWithdrawActuatorTest {
     }
 
     quant = 10001;
-    actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant));
 
     ret = new TransactionResultCapsule();
 
@@ -1480,10 +1460,9 @@ public class ExchangeWithdrawActuatorTest {
     String firstTokenId = "abc";
     long quant = 1L;
     String secondTokenId = "def";
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, quant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, quant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1500,10 +1479,9 @@ public class ExchangeWithdrawActuatorTest {
     }
 
     quant = 11;
-    actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant));
 
     ret = new TransactionResultCapsule();
 
@@ -1537,10 +1515,9 @@ public class ExchangeWithdrawActuatorTest {
     String firstTokenId = "123";
     long quant = 1L;
     String secondTokenId = "456";
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, quant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, quant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1557,10 +1534,9 @@ public class ExchangeWithdrawActuatorTest {
     }
 
     quant = 11;
-    actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, quant));
 
     ret = new TransactionResultCapsule();
 
@@ -1603,10 +1579,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetMap.get(firstTokenId));
     Assert.assertEquals(null, assetMap.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1648,10 +1623,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(firstTokenId));
     Assert.assertEquals(null, assetV2Map.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1692,10 +1666,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1736,10 +1709,9 @@ public class ExchangeWithdrawActuatorTest {
     Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(secondTokenId));
 
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1772,10 +1744,9 @@ public class ExchangeWithdrawActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     //token id is not a valid number
-    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, "abc", 1000),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, "abc", 1000));
 
     try {
       actuator.validate();

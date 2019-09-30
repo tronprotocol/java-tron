@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -12,24 +11,25 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
 
 @Slf4j(topic = "actuator")
 public class UpdateSettingContractActuator extends AbstractActuator {
 
-  UpdateSettingContractActuator(Any contract, AccountStore accountStore, ContractStore contractStore) {
-    super(contract, accountStore, contractStore);
+  public UpdateSettingContractActuator() {
+    super(ContractType.UpdateSettingContract, UpdateSettingContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    ContractStore contractStore = chainBaseManager.getContractStore();
     try {
-      UpdateSettingContract usContract = contract
-          .unpack(UpdateSettingContract.class);
+      UpdateSettingContract usContract = any.unpack(UpdateSettingContract.class);
       long newPercent = usContract.getConsumeUserResourcePercent();
       byte[] contractAddress = usContract.getContractAddress().toByteArray();
       ContractCapsule deployedContract = contractStore.get(contractAddress);
@@ -49,21 +49,21 @@ public class UpdateSettingContractActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || contractStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or contract store!");
     }
-    if (!this.contract.is(UpdateSettingContract.class)) {
-      throw new ContractValidateException(
-          "contract type error,expected type [UpdateSettingContract],real type["
-              + contract
-              .getClass() + "]");
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    ContractStore contractStore = chainBaseManager.getContractStore();
+    if (!this.any.is(UpdateSettingContract.class)) {
+      throw new ContractValidateException("contract type error,expected type "
+          + "[UpdateSettingContract],real type[" + any.getClass() + "]");
     }
     final UpdateSettingContract contract;
     try {
-      contract = this.contract.unpack(UpdateSettingContract.class);
+      contract = this.any.unpack(UpdateSettingContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -73,7 +73,6 @@ public class UpdateSettingContractActuator extends AbstractActuator {
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
@@ -108,7 +107,7 @@ public class UpdateSettingContractActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(UpdateSettingContract.class).getOwnerAddress();
+    return any.unpack(UpdateSettingContract.class).getOwnerAddress();
   }
 
   @Override
