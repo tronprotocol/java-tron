@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
+import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -390,6 +391,11 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> repushTransactions;
 
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+
+  public long getHeadSlot() {
+    return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
+        .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
+  }
 
   // for test only
   public List<ByteString> getWitnesses() {
