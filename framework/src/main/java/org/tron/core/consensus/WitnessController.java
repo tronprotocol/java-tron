@@ -1,5 +1,7 @@
 package org.tron.core.consensus;
 
+import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -30,6 +32,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.store.VotesStore;
 
 @Slf4j(topic = "witness")
 public class WitnessController {
@@ -99,7 +102,7 @@ public class WitnessController {
     }
     logger
         .debug("nextFirstSlotTime:[{}],when[{}]", new DateTime(firstSlotTime), new DateTime(when));
-    return (when - firstSlotTime) / ChainConstant.BLOCK_PRODUCED_INTERVAL + 1;
+    return (when - firstSlotTime) / BLOCK_PRODUCED_INTERVAL + 1;
   }
 
   public BlockCapsule getGenesisBlock() {
