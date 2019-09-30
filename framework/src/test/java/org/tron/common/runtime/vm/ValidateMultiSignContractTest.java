@@ -26,7 +26,10 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.PrecompiledContracts.ValidateMultiSign;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
@@ -168,9 +171,9 @@ public class ValidateMultiSignContractTest {
     List<Object> parameters = Arrays
         .asList(address, permissionId, "0x" + Hex.toHexString(hash), signatures);
     byte[] input = Hex.decode(AbiUtil.parseParameters(METHOD_SIGN, parameters));
-    Deposit deposit = DepositImpl.createRoot(dbManager);
+    Repository deposit = RepositoryImpl.createRoot(StoreFactory.getInstance());
     logger.info("energy for data:{}", contract.getEnergyForData(input));
-    contract.setDeposit(deposit);
+    contract.setRepository(deposit);
 
     Pair<Boolean, byte[]> ret = contract.execute(input);
 
