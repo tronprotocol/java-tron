@@ -46,10 +46,11 @@ import org.tron.core.Wallet;
 import org.tron.core.exception.CancelException;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.SpendingKey;
-import org.tron.protos.contract.AccountContract.SetAccountIdContract;
-import org.tron.protos.contract.AccountContract.AccountCreateContract;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
-import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
+import org.tron.protos.Contract;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
+import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -5251,5 +5252,41 @@ public class PublicMethedForMutiSign {
     return true;
   }
 
+  /**
+   * constructor.
+   */
 
+  public static Transaction sendcoinGetTransaction(byte[] to, long amount, byte[] owner,
+      String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
+
+    TransferContract.Builder builder = TransferContract.newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsOwner = ByteString.copyFrom(owner);
+    builder.setToAddress(bsTo);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    TransferContract contract = builder.build();
+    Transaction transaction = blockingStubFull.createTransaction(contract);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction ==null");
+      return null;
+    }
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return transaction;
+
+  }
 }

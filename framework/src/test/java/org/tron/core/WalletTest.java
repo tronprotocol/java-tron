@@ -52,6 +52,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
+import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol;
@@ -496,7 +497,7 @@ public class WalletTest {
 
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
 
-    Arrays.stream(ChainParameters.values()).forEach(parameters -> {
+    Arrays.stream(ProposalType.values()).forEach(parameters -> {
       String methodName = Wallet.makeUpperCamelMethod(parameters.name());
       try {
         builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()

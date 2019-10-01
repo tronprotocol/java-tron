@@ -25,6 +25,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
 //import org.tron.protos.Protocol.DeferredStage;
+import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.*;
@@ -59,7 +60,7 @@ public class TransactionUtils {
       switch (contract.getType()) {
         case AccountCreateContract:
           owner = contract.getParameter()
-              .unpack(AccountContract.AccountCreateContract.class).getOwnerAddress();
+              .unpack(AccountCreateContract.class).getOwnerAddress();
           break;
         case TransferContract:
           owner = contract.getParameter().unpack(BalanceContract.TransferContract.class)

@@ -19,12 +19,12 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.contract.AccountContract;
 import org.tron.protos.contract.BalanceContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -805,10 +805,10 @@ public class MultiSign36 {
         .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    AccountContract.AccountPermissionUpdateContract.Builder builder =
-        AccountContract.AccountPermissionUpdateContract.newBuilder();
+    AccountPermissionUpdateContract.Builder builder =
+        AccountPermissionUpdateContract.newBuilder();
 
-    AccountContract.AccountPermissionUpdateContract contract = builder.build();
+    AccountPermissionUpdateContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.accountPermissionUpdate(contract);
     Transaction transaction = transactionExtention.getTransaction();
     dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
