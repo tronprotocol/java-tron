@@ -1,6 +1,7 @@
 package org.tron.common.utils;
 
 import static org.tron.common.utils.Hash.sha3omit12;
+import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,6 @@ import org.tron.protos.Protocol.DynamicProperties;
 
 @Slf4j(topic = "Commons")
 public class Commons {
-  public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
   public static final int ADDRESS_SIZE = 42;
 
   public static byte addressPreFixByte = ADD_PRE_FIX_BYTE_MAINNET;
@@ -62,6 +62,7 @@ public class Commons {
               + " !!");
       return false;
     }
+
     if (address[0] != addressPreFixByte) {
       logger.warn("Warning: Address need prefix with " + addressPreFixByte + " but "
           + address[0] + " !!");

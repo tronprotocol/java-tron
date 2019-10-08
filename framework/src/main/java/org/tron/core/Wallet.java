@@ -19,7 +19,8 @@
 package org.tron.core;
 
 import static org.tron.common.utils.Commons.ADDRESS_SIZE;
-import static org.tron.common.utils.Commons.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.common.utils.Commons.addressPreFixByte;
+import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
@@ -92,6 +93,7 @@ import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
@@ -208,7 +210,6 @@ public class Wallet {
   @Autowired
   private NodeManager nodeManager;
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
-  private static byte addressPreFixByte = ADD_PRE_FIX_BYTE_MAINNET;
 
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
 
@@ -264,7 +265,7 @@ public class Wallet {
   }
 
   public static void setAddressPreFixByte(byte addressPreFixByte) {
-    Wallet.addressPreFixByte = addressPreFixByte;
+    Commons.addressPreFixByte = addressPreFixByte;
   }
 
   public static boolean addressValid(byte[] address) {

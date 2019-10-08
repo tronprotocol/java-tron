@@ -3,6 +3,7 @@ package org.tron.core.config.args;
 import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.consensus.base.Constant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
+import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -605,7 +606,7 @@ public class Args {
       Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
     } else {
-      Wallet.setAddressPreFixByte(Commons.ADD_PRE_FIX_BYTE_MAINNET);
+      Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
     }
 
