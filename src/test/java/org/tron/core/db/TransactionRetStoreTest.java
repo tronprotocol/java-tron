@@ -19,6 +19,8 @@ import org.tron.protos.Protocol.Transaction;
 
 public class TransactionRetStoreTest {
 
+  private static final byte[] transactionId = TransactionStoreTest.randomBytes(32);
+  private static final byte[] blockNum = ByteArray.fromLong(1);
   private static String dbPath = "output_TransactionRetStore_test";
   private static String dbDirectory = "db_TransactionRetStore_test";
   private static String indexDirectory = "index_TransactionRetStore_test";
@@ -26,18 +28,10 @@ public class TransactionRetStoreTest {
   private static TransactionRetStore transactionRetStore;
   private static Transaction transaction;
   private static TransactionStore transactionStore;
-  private static final byte[] transactionId = TransactionStoreTest.randomBytes(32);
-  private static final byte[] blockNum = ByteArray.fromLong(1);
 
   static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory
-        },
-        Constant.TEST_CONF
-    );
+    Args.setParam(new String[] {"--output-directory", dbPath, "--storage-db-directory", dbDirectory,
+        "--storage-index-directory", indexDirectory}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
@@ -84,8 +78,10 @@ public class TransactionRetStoreTest {
 
     TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule();
     transactionRetCapsule.addTransactionInfo(transactionInfoCapsule.getInstance());
-    Assert.assertNull("put transaction info error", transactionRetStore.getUnchecked(transactionInfoCapsule.getId()));
+    Assert.assertNull("put transaction info error",
+        transactionRetStore.getUnchecked(transactionInfoCapsule.getId()));
     transactionRetStore.put(transactionInfoCapsule.getId(), transactionRetCapsule);
-    Assert.assertNotNull("get transaction info error", transactionRetStore.getUnchecked(transactionInfoCapsule.getId()));
+    Assert.assertNotNull("get transaction info error",
+        transactionRetStore.getUnchecked(transactionInfoCapsule.getId()));
   }
 }

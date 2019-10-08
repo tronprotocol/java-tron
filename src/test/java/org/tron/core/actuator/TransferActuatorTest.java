@@ -38,9 +38,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class TransferActuatorTest {
 
-  private static Manager dbManager;
   private static final String dbPath = "output_transfer_test";
-  private static TronApplicationContext context;
   private static final String OWNER_ADDRESS;
   private static final String TO_ADDRESS;
   private static final long AMOUNT = 100;
@@ -51,9 +49,11 @@ public class TransferActuatorTest {
   private static final String OWNER_ACCOUNT_INVALID;
   private static final String OWNER_NO_BALANCE;
   private static final String To_ACCOUNT_INVALID;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -70,8 +70,7 @@ public class TransferActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
-        Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     //    Args.setParam(new String[]{"--output-directory", dbPath},
     //        "config-junit.conf");
     //    dbManager = new Manager();
@@ -97,51 +96,37 @@ public class TransferActuatorTest {
    */
   @Before
   public void createCapsule() {
-    AccountCapsule ownerCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8("owner"),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-            AccountType.Normal,
-            OWNER_BALANCE);
-    AccountCapsule toAccountCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8("toAccount"),
-            ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
-            AccountType.Normal,
-            TO_BALANCE);
+    AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+        OWNER_BALANCE);
+    AccountCapsule toAccountCapsule = new AccountCapsule(ByteString.copyFromUtf8("toAccount"),
+        ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, TO_BALANCE);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
   private Any getContract(long count) {
     long nowTime = new Date().getTime();
-    return Any.pack(
-        Contract.TransferContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
-            .setAmount(count)
-            .build());
+    return Any.pack(Contract.TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS))).setAmount(count)
+        .build());
   }
 
 
   private Any getContract(long count, byte[] address) {
     long nowTime = new Date().getTime();
-    return Any.pack(
-        Contract.TransferContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setToAddress(ByteString.copyFrom(address))
-            .setAmount(count)
-            .build());
+    return Any.pack(Contract.TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setToAddress(ByteString.copyFrom(address)).setAmount(count).build());
   }
 
 
   private Any getContract(long count, String owneraddress, String toaddress) {
-    return Any.pack(
-        Contract.TransferContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(owneraddress)))
-            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toaddress)))
-            .setAmount(count)
-            .build());
+    return Any.pack(Contract.TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(owneraddress)))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toaddress))).setAmount(count)
+        .build());
   }
 
   @Test
@@ -152,10 +137,10 @@ public class TransferActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - AMOUNT - ChainConstant.TRANSFER_FEE);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + AMOUNT);
@@ -176,10 +161,10 @@ public class TransferActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), 0);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + OWNER_BALANCE);
@@ -330,8 +315,7 @@ public class TransferActuatorTest {
       Assert.assertTrue(null == noExitAccount);
       actuator.validate();
       actuator.execute(ret);
-      noExitAccount = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(To_ACCOUNT_INVALID));
+      noExitAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(To_ACCOUNT_INVALID));
       Assert.assertFalse(null == noExitAccount);    //Had created.
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -339,8 +323,7 @@ public class TransferActuatorTest {
           .get(ByteArray.fromHexString(TO_ADDRESS));
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 1_000_000L);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
-      noExitAccount = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(To_ACCOUNT_INVALID));
+      noExitAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(To_ACCOUNT_INVALID));
       Assert.assertEquals(noExitAccount.getBalance(), 1_000_000L);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -422,18 +405,11 @@ public class TransferActuatorTest {
 
   @Test
   public void insufficientFee() {
-    AccountCapsule ownerCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8("owner"),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_NO_BALANCE)),
-            AccountType.Normal,
-            -10000L);
-    AccountCapsule toAccountCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8("toAccount"),
-            ByteString.copyFrom(ByteArray.fromHexString(To_ACCOUNT_INVALID)),
-            AccountType.Normal,
-            100L);
+    AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_NO_BALANCE)), AccountType.Normal,
+        -10000L);
+    AccountCapsule toAccountCapsule = new AccountCapsule(ByteString.copyFromUtf8("toAccount"),
+        ByteString.copyFrom(ByteArray.fromHexString(To_ACCOUNT_INVALID)), AccountType.Normal, 100L);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
 
@@ -463,12 +439,12 @@ public class TransferActuatorTest {
 
   @Test
   public void transferToSmartContractAddress()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException, BalanceInsufficientException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException, BalanceInsufficientException {
     dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
     String contractName = "testContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI =
-        "[]";
+    String ABI = "[]";
     String codes = "608060405261019c806100136000396000f3fe608060405260043610610045577c0100000000000"
         + "00000000000000000000000000000000000000000000060003504632a205edf811461004a5780634cd2270c"
         + "146100c8575b600080fd5b34801561005657600080fd5b50d3801561006357600080fd5b50d2801561007057"
@@ -477,8 +453,8 @@ public class TransferActuatorTest {
         + "d0565b005b6100c661016e565b60405173ffffffffffffffffffffffffffffffffffffffff87169084156108"
         + "fc029085906000818181858888f1505060405173ffffffffffffffffffffffffffffffffffffffff89169350"
         + "85156108fc0292508591506000818181858888f1505060405173ffffffffffffffffffffffffffffffffffff"
-        + "ffff8816935084156108fc0292508491506000818181858888f15050505050505050505050565b56fea165627"
-        + "a7a72305820cc2d598d1b3f968bbdc7825ce83d22dad48192f4bf95bda7f9e4ddf61669ba830029";
+        + "ffff8816935084156108fc0292508491506000818181858888f15050505050505050505050565b56fea16562"
+        + "7a7a72305820cc2d598d1b3f968bbdc7825ce83d22dad48192f4bf95bda7f9e4ddf61669ba830029";
 
     long value = 1;
     long feeLimit = 100000000;
@@ -486,20 +462,18 @@ public class TransferActuatorTest {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, codes, value,
-            feeLimit, consumeUserResourcePercent, null, 0, 0,
-            deposit, null);
+            feeLimit, consumeUserResourcePercent, null, 0, 0, deposit, null);
 
-    TransferActuator actuator = new TransferActuator(
-        getContract(1, contractAddress), dbManager);
+    TransferActuator actuator = new TransferActuator(getContract(1, contractAddress), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AccountCapsule toAccount =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(TO_ADDRESS));
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e.getMessage().contains("Cannot transfer"));

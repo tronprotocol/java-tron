@@ -38,8 +38,8 @@ public class MappingFixTest {
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(1);
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(1);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -61,14 +61,11 @@ public class MappingFixTest {
   @BeforeClass(enabled = true)
   public void beforeClass() {
 
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     PublicMethed.printAddress(dev001Key);
   }
-
 
   // after solidity version 0.5.4.
   // Tron Solidity compiler is no longer compatible with Ethereum
@@ -76,15 +73,15 @@ public class MappingFixTest {
 
   @Test(enabled = true, description = "Deploy contract")
   public void test01DeployContract() {
-    Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1000_000_000L, fromAddress,
-        testKey002, blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 100_000_000L,
-        0, 0, ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .sendcoin(dev001Address, 1000_000_000L, fromAddress, testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 100_000_000L, 0, 0,
+        ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //before deploy, check account resource
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
-        blockingStubFull);
+    AccountResourceMessage accountResource = PublicMethed
+        .getAccountResource(dev001Address, blockingStubFull);
     Protocol.Account info = PublicMethed.queryAccount(dev001Key, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = accountResource.getEnergyUsed();
@@ -102,10 +99,8 @@ public class MappingFixTest {
     String abi = retMap.get("abI").toString();
 
     final String txid = PublicMethed
-        .deployContractAndGetTransactionInfoById(contractName, abi, code, "",
-            maxFeeLimit, 0L, 0, 10000,
-            "0", 0, null, dev001Key,
-            dev001Address, blockingStubFull);
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 0,
+            10000, "0", 0, null, dev001Key, dev001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;
@@ -120,16 +115,15 @@ public class MappingFixTest {
     logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
 
     contractAddress = infoById.get().getContractAddress().toByteArray();
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,
-        blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
   }
 
   @Test(enabled = true, description = "Trigger contract,set balances[msg.sender]")
   public void test02TriggerContract() {
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
-        blockingStubFull);
+    AccountResourceMessage accountResource = PublicMethed
+        .getAccountResource(dev001Address, blockingStubFull);
     Protocol.Account info = PublicMethed.queryAccount(dev001Key, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = accountResource.getEnergyUsed();
@@ -140,11 +134,11 @@ public class MappingFixTest {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-
     String methodStr = "update(uint256)";
     String argStr = "123";
-    String TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,argStr,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    String TriggerTxid = PublicMethed
+        .triggerContract(contractAddress, methodStr, argStr, false, 0, maxFeeLimit, dev001Address,
+            dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;
@@ -156,21 +150,20 @@ public class MappingFixTest {
     TransactionInfo transactionInfo = infoById.get();
     logger.info("infoById" + infoById);
 
-    String ContractResult =
-        ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray());
-    String tmpAddress =
-        Base58.encode58Check(ByteArray.fromHexString("41"+ContractResult.substring(24)));
+    String ContractResult = ByteArray
+        .toHexString(infoById.get().getContractResult(0).toByteArray());
+    String tmpAddress = Base58
+        .encode58Check(ByteArray.fromHexString("41" + ContractResult.substring(24)));
     Assert.assertEquals(WalletClient.encode58Check(dev001Address), tmpAddress);
 
     logger.info("EnergyUsageTotal: " + transactionInfo.getReceipt().getEnergyUsageTotal());
     logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
 
-
     methodStr = "balances(address)";
-    argStr = "\"" + WalletClient.encode58Check(dev001Address) +"\"";
+    argStr = "\"" + WalletClient.encode58Check(dev001Address) + "\"";
     TransactionExtention return1 = PublicMethed
-        .triggerContractForExtention(contractAddress,methodStr,argStr,false,
-        0,maxFeeLimit,"0",0L,dev001Address,dev001Key,blockingStubFull);
+        .triggerContractForExtention(contractAddress, methodStr, argStr, false, 0, maxFeeLimit, "0",
+            0L, dev001Address, dev001Key, blockingStubFull);
     logger.info("return1: " + return1);
     logger.info(Hex.toHexString(return1.getConstantResult(0).toByteArray()));
     int ContractRestult = ByteArray.toInt(return1.getConstantResult(0).toByteArray());
@@ -182,8 +175,7 @@ public class MappingFixTest {
   @AfterClass
   public void shutdown() throws InterruptedException {
     long balance = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
-    PublicMethed.sendcoin(fromAddress, balance, dev001Address, dev001Key,
-        blockingStubFull);
+    PublicMethed.sendcoin(fromAddress, balance, dev001Address, dev001Key, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
