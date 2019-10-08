@@ -28,7 +28,6 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -103,7 +102,9 @@ public class DepositTest {
     Arrays.fill(stats, (byte) 1);
     this.manager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
-    VMConfig.initVmHardFork(true);
+    this.manager.getDynamicPropertiesStore()
+        .saveLatestBlockHeaderNumber(DBConfig.getBlockNumForEneryLimit() + 1);
+
     String contractA = "A";
     String contractB = "B";
     byte[] address = Hex.decode(OWNER_ADDRESS);

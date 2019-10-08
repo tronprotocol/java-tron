@@ -11,6 +11,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.DepositImpl;
@@ -19,21 +20,22 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
-import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import stest.tron.wallet.common.client.utils.AbiUtil;
@@ -82,9 +84,10 @@ public class TransferToAccountTest {
 
   private long createAsset(String tokenName) {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    VMConfig.initAllowTvmTransferTrc10(1);
-    VMConfig.initAllowTvmConstantinople(1);
-    VMConfig.initAllowTvmSolidity059(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
+
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
     AssetIssueContract assetIssueContract =
@@ -256,12 +259,20 @@ public class TransferToAccountTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
             0, feeLimit, 0, 0);
-    deposit = DepositImpl.createRoot(dbManager);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
+    TransactionContext context = new TransactionContext(new BlockCapsule(),
+        new TransactionCapsule(transaction),
+        StoreFactory.getInstance(), true,
+        false);
 
+    VMActuator vmActuator = new VMActuator(true);
+
+    vmActuator.validate(context);
+    vmActuator.execute(context);
+
+    ProgramResult result = context.getProgramResult();
 
     Assert.assertEquals("Attempt to call a state modifying opcode inside STATICCALL",
-            runtime.getRuntimeError());
+        result.getRuntimeError());
 
 
   }
