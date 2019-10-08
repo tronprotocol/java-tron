@@ -12,10 +12,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -32,10 +29,13 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
@@ -257,15 +257,11 @@ public class TransferToAccountTest {
             input,
             0, feeLimit, 0, 0);
     deposit = DepositImpl.createRoot(dbManager);
-    RuntimeImpl runtimeImpl = new RuntimeImpl(transaction,
-        new BlockCapsule(Block.newBuilder().build()), deposit,
-        new ProgramInvokeFactoryImpl(),
-        true);
-    runtimeImpl.execute();
-    runtimeImpl.go();
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
+
 
     Assert.assertEquals("Attempt to call a state modifying opcode inside STATICCALL",
-        runtimeImpl.getRuntimeError());
+            runtime.getRuntimeError());
 
 
   }

@@ -1,7 +1,6 @@
 package org.tron.common.storage;
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.Value;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -11,20 +10,19 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.args.Storage;
 import org.tron.core.db.Manager;
-import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Key;
+import org.tron.core.vm.program.Storage;
+import org.tron.core.vm.repository.Key;
+import org.tron.core.vm.repository.Value;
+import org.tron.protos.Protocol;
 
 public interface Deposit {
 
   Manager getDbManager();
 
-  AccountCapsule createNormalAccount(byte[] address);
+  AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
 
-  AccountCapsule createAccount(byte[] address, AccountType type);
-
-  AccountCapsule createAccount(byte[] address, String accountName, AccountType type);
+  AccountCapsule createAccount(byte[] address, String accountName, Protocol.AccountType type);
 
   AccountCapsule getAccount(byte[] address);
 
@@ -114,4 +112,8 @@ public interface Deposit {
 
   byte[] getBlackHoleAddress();
 
+  public AccountCapsule createNormalAccount(byte[] address);
+
+
 }
+

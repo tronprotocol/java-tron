@@ -1,5 +1,7 @@
 package org.tron.core.services;
 
+import static stest.tron.wallet.common.client.Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
+
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +14,9 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.db.DelegationService;
 import org.tron.core.db.Manager;
-import org.tron.protos.Contract.UpdateBrokerageContract;
+import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 
 @Slf4j
 public class DelegationServiceTest {
@@ -34,7 +37,7 @@ public class DelegationServiceTest {
       rate = 0.2;
     }
     delegationService.payStandbyWitness();
-    Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
+    Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
     byte[] sr1 = Wallet.decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     long value = manager.getDelegationStore().getReward(cycle, sr1);
     long tmp = 0;
@@ -75,7 +78,7 @@ public class DelegationServiceTest {
     long reward = reward1 + reward2;
     System.out.println("testWithdraw:" + value + ", reward:" + reward);
     Assert.assertEquals(reward, value);
-    delegationService.withdrawReward(sr1, null);
+    delegationService.withdrawReward(sr1);
     accountCapsule = manager.getAccountStore().get(sr1);
     allowance = accountCapsule.getAllowance() - allowance;
     System.out.println("withdrawReward:" + allowance);
