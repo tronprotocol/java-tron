@@ -80,10 +80,10 @@ public class ContractScenario014 {
     PublicMethed.printAddress(contract014Key);
     PublicMethed.printAddress(receiverKey);
 
-    Assert.assertTrue(PublicMethed.sendcoin(contract014Address, 5000000000000L, fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(contract014Address, 50_000_000_000L, fromAddress,
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed
-        .freezeBalanceGetEnergy(contract014Address, 1000000000000L, 0, 1, priKey014,
+        .freezeBalanceGetEnergy(contract014Address, 10_000_000_000L, 0, 1, priKey014,
             blockingStubFull));
 
     logger.info("contract014Address : == " + contract014Key);
