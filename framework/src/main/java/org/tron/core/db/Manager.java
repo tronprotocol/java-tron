@@ -134,7 +134,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
-import org.tron.core.utils.ServiceRegister;
+import org.tron.core.utils.TransactionRegister;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -518,7 +518,7 @@ public class Manager {
     //initStoreFactory
     prepareStroeFactory();
     ActuatorCreator.init(StoreFactory.getInstance());
-    ServiceRegister.registerActuator();
+    TransactionRegister.registerActuator();
   }
 
   public BlockId getGenesisBlockId() {

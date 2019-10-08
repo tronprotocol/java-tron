@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
 import org.tron.core.actuator.AbstractActuator;
 
-@Slf4j(topic = "ServiceRegister")
-public class ServiceRegister {
+@Slf4j(topic = "TransactionRegister")
+public class TransactionRegister {
 
   public static void registerActuator() {
     Reflections reflections = new Reflections("org.tron");
