@@ -99,10 +99,6 @@ import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
-
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -114,6 +110,10 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionSign;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.AccountContract.SetAccountIdContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
@@ -1177,7 +1177,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void updateAccount(Contract.AccountUpdateContract request,
+    public void updateAccount(AccountUpdateContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
@@ -1191,7 +1191,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void setAccountId(Contract.SetAccountIdContract request,
+    public void setAccountId(SetAccountIdContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
@@ -1205,7 +1205,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void updateAccount2(Contract.AccountUpdateContract request,
+    public void updateAccount2(AccountUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.AccountUpdateContract, responseObserver);
     }

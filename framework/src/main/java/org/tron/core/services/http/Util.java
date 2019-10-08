@@ -29,12 +29,13 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.JsonFormat.ParseException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Contract.AccountPermissionUpdateContract;
-import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.AccountContract.SetAccountIdContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
@@ -312,8 +313,8 @@ public class Util {
                 selfType));
             break;
           case SetAccountIdContract:
-            Contract.SetAccountIdContract setAccountIdContract =
-                contractParameter.unpack(Contract.SetAccountIdContract.class);
+            SetAccountIdContract setAccountIdContract =
+                contractParameter.unpack(SetAccountIdContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(setAccountIdContract,
                 selfType));
             break;
@@ -558,7 +559,7 @@ public class Util {
             any = Any.pack(deleteContractBuilder.build());
             break;
           case "SetAccountIdContract":
-            Contract.SetAccountIdContract.Builder setAccountid = Contract.SetAccountIdContract
+            SetAccountIdContract.Builder setAccountid = SetAccountIdContract
                 .newBuilder();
             JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 setAccountid, selfType);

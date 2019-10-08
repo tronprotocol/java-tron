@@ -13,8 +13,8 @@ import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 
 @Slf4j(topic = "actuator")
 public class UpdateAccountActuator extends AbstractActuator {

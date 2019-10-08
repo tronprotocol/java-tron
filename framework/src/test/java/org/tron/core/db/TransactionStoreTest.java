@@ -24,7 +24,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;

@@ -25,10 +25,10 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
 //import org.tron.protos.Protocol.DeferredStage;
-import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.*;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
 
 
 public class TransactionUtils {

@@ -21,12 +21,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountIdIndexStore;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 
 @Slf4j
 public class UpdateAccountActuatorTest {

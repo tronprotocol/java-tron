@@ -27,14 +27,14 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
 
 @Slf4j
 public class AccountPermissionUpdateActuatorTest {
@@ -149,7 +149,7 @@ public class AccountPermissionUpdateActuatorTest {
     Permission owner = AccountCapsule.createDefaultOwnerPermission(address);
     Permission active = AccountCapsule.createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
 
-    Contract.AccountPermissionUpdateContract contract = Contract.AccountPermissionUpdateContract
+    AccountPermissionUpdateContract contract = AccountPermissionUpdateContract
         .newBuilder().setOwnerAddress(address).setOwner(owner).addActives(active).build();
     return Any.pack(contract);
   }
@@ -174,7 +174,7 @@ public class AccountPermissionUpdateActuatorTest {
    * return a PermissionAddKeyContract as an invalid contract
    */
   private Any getInvalidContract() {
-    return Any.pack(Contract.AccountCreateContract.newBuilder().build());
+    return Any.pack(AccountCreateContract.newBuilder().build());
   }
 
   private void addDefaultPermission() {
