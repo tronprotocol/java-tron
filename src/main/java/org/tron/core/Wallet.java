@@ -521,6 +521,7 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+    String errorMessage = "Broadcast transaction {} failed, {}.";
     try {
       Message message = new TransactionMessage(signaturedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
@@ -570,47 +571,47 @@ public class Wallet {
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
           .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("AccountResourceInsufficient error"))
           .build();
     } catch (DupTransactionException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("dup transaction"))
           .build();
     } catch (TaposException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
           .setMessage(ByteString.copyFromUtf8("Tapos check error"))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8("other error : " + e.getMessage()))
           .build();
