@@ -29,7 +29,6 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
@@ -75,10 +74,11 @@ public class BatchSendTest {
     ownerCapsule.setBalance(1000_1000_1000L);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    VMConfig.initAllowMultiSign(1);
-    VMConfig.initAllowTvmTransferTrc10(1);
-    VMConfig.initAllowTvmConstantinople(1);
-    VMConfig.initAllowTvmSolidity059(1);
+    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
+
   }
 
 
