@@ -21,6 +21,8 @@ import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.store.DelegationStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
 import org.tron.protos.Protocol.Block;
 
@@ -113,6 +115,18 @@ public class MaintenanceManager {
     logger.info("Update witness success. \nbefore: {} \nafter: {}",
         StringUtil.getAddressStringList(currentWits),
         StringUtil.getAddressStringList(newWits));
+
+    DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
+    DelegationStore delegationStore = consensusDelegate.getDelegationStore();
+    if (dynamicPropertiesStore.allowChangeDelegation()) {
+      long nextCycle = dynamicPropertiesStore.getCurrentCycleNumber() + 1;
+      dynamicPropertiesStore.saveCurrentCycleNumber(nextCycle);
+      consensusDelegate.getAllWitnesses().forEach(witness -> {
+        delegationStore.setBrokerage(nextCycle, witness.createDbKey(),
+            delegationStore.getBrokerage(witness.createDbKey()));
+        delegationStore.setWitnessVote(nextCycle, witness.createDbKey(), witness.getVoteCount());
+      });
+    }
   }
 
   private Map<ByteString, Long> countVote(VotesStore votesStore) {

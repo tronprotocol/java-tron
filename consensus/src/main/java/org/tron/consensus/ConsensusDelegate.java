@@ -9,6 +9,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
@@ -22,6 +23,9 @@ public class ConsensusDelegate {
   private DynamicPropertiesStore dynamicPropertiesStore;
 
   @Autowired
+  private DelegationStore delegationStore;
+
+  @Autowired
   private AccountStore accountStore;
 
   @Autowired
@@ -32,6 +36,14 @@ public class ConsensusDelegate {
 
   @Autowired
   private VotesStore votesStore;
+
+  public DynamicPropertiesStore getDynamicPropertiesStore() {
+    return dynamicPropertiesStore;
+  }
+
+  public DelegationStore getDelegationStore() {
+    return delegationStore;
+  }
 
   public VotesStore getVotesStore() {
     return votesStore;
