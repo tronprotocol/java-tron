@@ -340,7 +340,8 @@ public class WitnessController {
           logger.warn(
               "witnessAccount[" + StringUtil.createReadableString(address) + "] not exists");
         } else {
-          witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
+          long vote = witnessCapsule.getVoteCount() + voteCount;
+          witnessCapsule.setVoteCount(vote);
           witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
           logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
               witnessCapsule.getVoteCount());
@@ -378,6 +379,18 @@ public class WitnessController {
       logger.info(
           "updateWitness,before:{} ", StringUtil.getAddressStringList(currentWits)
               + ",\nafter:{} " + StringUtil.getAddressStringList(newWits));
+    }
+    //update the delegation cycle
+    if (manager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      long nextCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1;
+      manager.getDynamicPropertiesStore().saveCurrentCycleNumber(nextCycle);
+      witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
+        manager.getDelegationStore().setBrokerage(nextCycle,
+            witnessCapsule.getAddress().toByteArray(),
+            manager.getDelegationStore().getBrokerage(witnessCapsule.getAddress().toByteArray()));
+        manager.getDelegationStore().setWitnessVote(nextCycle,
+            witnessCapsule.getAddress().toByteArray(), witnessCapsule.getVoteCount());
+      });
     }
   }
 
@@ -434,6 +447,9 @@ public class WitnessController {
   }
 
   private void payStandbyWitness(List<ByteString> list) {
+    if (manager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      return;
+    }
     long voteSum = 0;
     long totalPay = manager.getDynamicPropertiesStore().getWitnessStandbyAllowance();
     for (ByteString b : list) {

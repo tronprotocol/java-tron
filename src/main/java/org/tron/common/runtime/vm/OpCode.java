@@ -575,6 +575,8 @@ public enum OpCode {
 
   CALLTOKENID(0xd3, 0, 1, OpCode.Tier.BaseTier),
 
+  ISCONTRACT(0xd4, 1, 1, OpCode.Tier.ExtTier),
+
   /**
    * (0xf0) Create a new account with associated code
    */

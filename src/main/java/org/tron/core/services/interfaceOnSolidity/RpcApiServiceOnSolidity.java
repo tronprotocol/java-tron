@@ -35,6 +35,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
+import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -327,6 +328,16 @@ public class RpcApiServiceOnSolidity implements Service {
     }
 
     @Override
+    public void triggerConstantContract(Contract.TriggerSmartContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .triggerConstantContract(request, responseObserver)
+      );
+    }
+
+
+    @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<AddressPrKeyPairMessage> responseObserver) {
       ECKey ecKey = new ECKey(Utils.getRandom());
@@ -339,6 +350,22 @@ public class RpcApiServiceOnSolidity implements Service {
       builder.setPrivateKey(priKeyStr);
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getRewardInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getRewardInfo(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getBrokerageInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getBrokerageInfo(request, responseObserver)
+      );
     }
   }
 

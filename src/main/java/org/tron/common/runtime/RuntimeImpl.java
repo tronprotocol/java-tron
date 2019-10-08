@@ -92,7 +92,7 @@ public class RuntimeImpl implements Runtime {
 
   @Getter
   @Setter
-  private boolean isStaticCall = false;
+  private boolean isConstantCall = false;
 
   @Setter
   private boolean enableEventLinstener;
@@ -136,9 +136,9 @@ public class RuntimeImpl implements Runtime {
    * For constant trx with latest blockCap.
    */
   public RuntimeImpl(Transaction tx, BlockCapsule block, DepositImpl deposit,
-      ProgramInvokeFactory programInvokeFactory, boolean isStaticCall) {
+      ProgramInvokeFactory programInvokeFactory, boolean isConstantCall) {
     this(tx, block, deposit, programInvokeFactory);
-    this.isStaticCall = isStaticCall;
+    this.isConstantCall = isConstantCall;
   }
 
   private RuntimeImpl(Transaction tx, BlockCapsule block, DepositImpl deposit,
@@ -546,7 +546,7 @@ public class RuntimeImpl implements Runtime {
       }
       AccountCapsule caller = this.deposit.getAccount(callerAddress);
       long energyLimit;
-      if (isStaticCall) {
+      if (isConstantCall) {
         energyLimit = Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
         AccountCapsule creator = this.deposit
@@ -564,8 +564,8 @@ public class RuntimeImpl implements Runtime {
           .createProgramInvoke(TrxType.TRX_CONTRACT_CALL_TYPE, executorType, trx,
               tokenValue, tokenId, blockCap.getInstance(), deposit, vmStartInUs,
               vmShouldEndInUs, energyLimit);
-      if (isStaticCall) {
-        programInvoke.setStaticCall();
+      if (isConstantCall) {
+        programInvoke.setConstantCall();
       }
       this.vm = new VM(config);
       rootInternalTransaction = new InternalTransaction(trx, trxType);
@@ -616,12 +616,16 @@ public class RuntimeImpl implements Runtime {
         vm.play(program);
         result = program.getResult();
 
-        if (isStaticCall) {
+        if (isConstantCall) {
           long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           long callTokenValue = TransactionCapsule
               .getCallTokenValue(trx.getRawData().getContract(0));
           if (callValue > 0 || callTokenValue > 0) {
             runtimeError = "constant cannot set call value or call token value.";
+            result.rejectInternalTransactions();
+          }
+          if (result.getException() != null) {
+            runtimeError = result.getException().getMessage();
             result.rejectInternalTransactions();
           }
           return;
@@ -702,7 +706,9 @@ public class RuntimeImpl implements Runtime {
       }
       logger.info("runtime result is :{}", result.getException().getMessage());
     }
-    trace.setBill(result.getEnergyUsed());
+    if (!isConstantCall) {
+      trace.setBill(result.getEnergyUsed());
+    }
   }
 
   private static long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,

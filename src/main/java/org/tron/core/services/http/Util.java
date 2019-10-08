@@ -6,12 +6,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.math.BigDecimal;
 import java.security.InvalidParameterException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
-
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.util.StringUtil;
 import org.pf4j.util.StringUtils;
@@ -374,6 +372,13 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(clearABIContract, selfType));
             break;
+          case UpdateBrokerageContract: {
+            Contract.UpdateBrokerageContract updateBrokerageContract = contractParameter
+                .unpack(Contract.UpdateBrokerageContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(updateBrokerageContract, selfType));
+            break;
+          }
           // todo add other contract
           default:
         }
@@ -615,6 +620,14 @@ public class Util {
                 selfType);
             any = Any.pack(clearABIContract.build());
             break;
+          case "UpdateBrokerageContract": {
+            Contract.UpdateBrokerageContract.Builder builder =
+                Contract.UpdateBrokerageContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(), builder,
+                selfType);
+            any = Any.pack(builder.build());
+            break;
+          }
           // todo add other contract
           default:
         }

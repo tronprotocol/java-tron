@@ -24,6 +24,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -120,4 +122,16 @@ public class ByteArray {
     System.arraycopy(input, start, result, 0, end - start);
     return result;
   }
+
+
+  public static boolean matrixContains(List<byte[]> source, byte[] obj) {
+    for (byte[] sobj : source) {
+      if (Arrays.equals(sobj, obj)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
 }
