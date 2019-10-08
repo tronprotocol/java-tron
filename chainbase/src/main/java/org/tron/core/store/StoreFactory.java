@@ -6,6 +6,7 @@ import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
 import org.tron.core.exception.TypeMismatchNamingException;
 
@@ -16,6 +17,12 @@ public class StoreFactory {
   private Map<String, Object> stores;
 
   private ChainBaseManager chainBaseManager;
+
+  public StoreFactory setDelegationService(DelegationService delegationService) {
+    add(delegationService);
+    return this;
+  }
+
 
   public StoreFactory() {
     stores = new HashMap<>();

@@ -79,7 +79,7 @@ public class VMActuator implements Actuator2 {
 
   @Getter
   @Setter
-  private boolean isStaticCall = false;
+  private boolean isConstanCall = false;
 
   @Setter
   private boolean enableEventLinstener;
@@ -87,8 +87,8 @@ public class VMActuator implements Actuator2 {
   private LogInfoTriggerParser logInfoTriggerParser;
 
 
-  public VMActuator(boolean isStaticCall) {
-    this.isStaticCall = isStaticCall;
+  public VMActuator(boolean isConstanCall) {
+    this.isConstanCall = isConstanCall;
     programInvokeFactory = new ProgramInvokeFactoryImpl();
   }
 
@@ -110,7 +110,7 @@ public class VMActuator implements Actuator2 {
       this.blockCap = new BlockCapsule(Block.newBuilder().build());
       this.executorType = ExecutorType.ET_PRE_TYPE;
     }
-    if (isStaticCall) {
+    if (isConstanCall) {
       this.executorType = ExecutorType.ET_PRE_TYPE;
     }
 
@@ -149,7 +149,7 @@ public class VMActuator implements Actuator2 {
         vm.play(program);
         result = program.getResult();
 
-        if (isStaticCall) {
+        if (isConstanCall) {
           long callValue = TransactionUtil.getCallValue(trx.getRawData().getContract(0));
           long callTokenValue = TransactionUtil
               .getCallTokenValue(trx.getRawData().getContract(0));
@@ -157,6 +157,11 @@ public class VMActuator implements Actuator2 {
             result.setRuntimeError("constant cannot set call value or call token value.");
             result.rejectInternalTransactions();
           }
+          if (result.getException() != null) {
+            result.setRuntimeError(result.getException().getMessage());
+            result.rejectInternalTransactions();
+          }
+          context.setProgramResult(result);
           return;
         }
 
@@ -440,7 +445,7 @@ public class VMActuator implements Actuator2 {
       }
       AccountCapsule caller = repository.getAccount(callerAddress);
       long energyLimit;
-      if (isStaticCall) {
+      if (isConstanCall) {
         energyLimit = VMConstant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
         AccountCapsule creator = repository
@@ -458,8 +463,8 @@ public class VMActuator implements Actuator2 {
           .createProgramInvoke(TrxType.TRX_CONTRACT_CALL_TYPE, executorType, trx,
               tokenValue, tokenId, blockCap.getInstance(), repository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
-      if (isStaticCall) {
-        programInvoke.setStaticCall();
+      if (isConstanCall) {
+        programInvoke.setConstantCall();
       }
       this.vm = new VM();
       rootInternalTransaction = new InternalTransaction(trx, trxType);

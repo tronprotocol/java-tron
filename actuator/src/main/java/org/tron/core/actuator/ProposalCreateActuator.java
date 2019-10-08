@@ -13,11 +13,9 @@ import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.args.Parameter.ChainParameters;
-import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
-import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.utils.ProposalUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
@@ -72,9 +70,12 @@ public class ProposalCreateActuator extends AbstractActuator {
     if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
+    if (chainBaseManager == null) {
+      throw new ContractValidateException("No dbManager!");
+    }
     if (!this.any.is(ProposalCreateContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ProposalCreateContract],real type[" + contract
+          "contract type error,expected type [ProposalCreateContract],real type[" + any
               .getClass() + "]");
     }
     final ProposalCreateContract contract;
@@ -106,9 +107,6 @@ public class ProposalCreateActuator extends AbstractActuator {
     }
 
     for (Map.Entry<Long, Long> entry : contract.getParametersMap().entrySet()) {
-      if (!validKey(entry.getKey())) {
-        throw new ContractValidateException("Bad chain parameter id");
-      }
       validateValue(entry);
     }
 
@@ -116,232 +114,8 @@ public class ProposalCreateActuator extends AbstractActuator {
   }
 
   private void validateValue(Map.Entry<Long, Long> entry) throws ContractValidateException {
-
-    switch (entry.getKey().intValue()) {
-      case (0): {
-        if (entry.getValue() < 3 * 27 * 1000 || entry.getValue() > 24 * 3600 * 1000) {
-          throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [3 * 27 * 1000,24 * 3600 * 1000]");
-        }
-        return;
-      }
-      case (1):
-      case (2):
-      case (3):
-      case (4):
-      case (5):
-      case (6):
-      case (7):
-      case (8): {
-        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
-        }
-        break;
-      }
-      case (9): {
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_CREATION_OF_CONTRACTS] is only allowed to be 1");
-        }
-        break;
-      }
-      case (10): {
-        if (chainBaseManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == -1) {
-          throw new ContractValidateException(
-              "This proposal has been executed before and is only allowed to be executed once");
-        }
-
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1");
-        }
-        break;
-      }
-      case (11):
-        break;
-      case (12):
-        break;
-      case (13):
-        if (entry.getValue() < 10 || entry.getValue() > 100) {
-          throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [10,100]");
-        }
-        break;
-      case (14): {
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_UPDATE_ACCOUNT_NAME] is only allowed to be 1");
-        }
-        break;
-      }
-      case (15): {
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_SAME_TOKEN_NAME] is only allowed to be 1");
-        }
-        break;
-      }
-      case (16): {
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1");
-        }
-        break;
-      }
-      case (17): { // deprecated
-        if (!forkUtils.pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
-          throw new ContractValidateException("Bad chain parameter id");
-        }
-        if (forkUtils.pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
-          throw new ContractValidateException("Bad chain parameter id");
-        }
-        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
-        }
-        break;
-      }
-      case (18): {
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1");
-        }
-        if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-          throw new ContractValidateException("[ALLOW_SAME_TOKEN_NAME] proposal must be approved "
-              + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed");
-        }
-        break;
-      }
-      case (19): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
-          throw new ContractValidateException("Bad chain parameter id");
-        }
-        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
-        }
-        break;
-      }
-      case (20): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_5)) {
-          throw new ContractValidateException("Bad chain parameter id: ALLOW_MULTI_SIGN");
-        }
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_MULTI_SIGN] is only allowed to be 1");
-        }
-        break;
-      }
-      case (21): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_5)) {
-          throw new ContractValidateException("Bad chain parameter id: ALLOW_ADAPTIVE_ENERGY");
-        }
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_ADAPTIVE_ENERGY] is only allowed to be 1");
-        }
-        break;
-      }
-      case (22): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_5)) {
-          throw new ContractValidateException(
-              "Bad chain parameter id: UPDATE_ACCOUNT_PERMISSION_FEE");
-        }
-        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [0,100_000_000_000L]");
-        }
-        break;
-      }
-      case (23): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_5)) {
-          throw new ContractValidateException("Bad chain parameter id: MULTI_SIGN_FEE");
-        }
-        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [0,100_000_000_000L]");
-        }
-        break;
-      }
-      case (24): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6)) {
-          throw new ContractValidateException("Bad chain parameter id");
-        }
-        if (entry.getValue() != 1 && entry.getValue() != 0) {
-          throw new ContractValidateException(
-              "This value[ALLOW_PROTO_FILTER_NUM] is only allowed to be 1 or 0");
-        }
-        break;
-      }
-      case (25): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6)) {
-          throw new ContractValidateException("Bad chain parameter id");
-        }
-        if (entry.getValue() != 1 && entry.getValue() != 0) {
-          throw new ContractValidateException(
-              "This value[ALLOW_ACCOUNT_STATE_ROOT] is only allowed to be 1 or 0");
-        }
-        break;
-      }
-      case (26): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6)) {
-          throw new ContractValidateException("Bad chain parameter id");
-        }
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_TVM_CONSTANTINOPLE] is only allowed to be 1");
-        }
-        if (chainBaseManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10() == 0) {
-          throw new ContractValidateException(
-              "[ALLOW_TVM_TRANSFER_TRC10] proposal must be approved "
-                  + "before [ALLOW_TVM_CONSTANTINOPLE] can be proposed");
-        }
-        break;
-      }
-      case (27): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
-          throw new ContractValidateException(
-              "Bad chain parameter id [ALLOW_SHIELDED_TRANSACTION]");
-        }
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_SHIELDED_TRANSACTION] is only allowed to be 1");
-        }
-        break;
-      }
-      case (28): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
-          throw new ContractValidateException("Bad chain parameter id [SHIELD_TRANSACTION_FEE]");
-        }
-        if (!chainBaseManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
-          throw new ContractValidateException(
-              "Shielded Transaction is not activated,Can't set Shielded Transaction fee");
-        }
-        if (entry.getValue() < 0 || entry.getValue() > 10_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad SHIELD_TRANSACTION_FEE parameter value,valid range is [0,10_000_000_000L]");
-        }
-        break;
-      }
-      case (29): {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
-          throw new ContractValidateException("Bad chain parameter id");
-        }
-        if (entry.getValue() != 1) {
-          throw new ContractValidateException(
-              "This value[ALLOW_TVM_SOLIDITY_059] is only allowed to be 1");
-        }
-        if (chainBaseManager.getDynamicPropertiesStore().getAllowCreationOfContracts() == 0) {
-          throw new ContractValidateException(
-              "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
-                  + "before [ALLOW_TVM_SOLIDITY_059] can be proposed");
-        }
-        break;
-      }
-      default:
-        break;
-    }
+    ProposalUtil.validator(chainBaseManager.getDynamicPropertiesStore(), forkUtils, entry.getKey(),
+        entry.getValue());
   }
 
   @Override
@@ -352,10 +126,6 @@ public class ProposalCreateActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     return 0;
-  }
-
-  private boolean validKey(long idx) {
-    return idx >= 0 && idx < ChainParameters.values().length;
   }
 
 }

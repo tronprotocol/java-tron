@@ -30,7 +30,8 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.exception.CancelException;
 import org.tron.keystore.CipherException;
-import org.tron.protos.contract.AccountContract;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
@@ -305,7 +306,7 @@ public class WalletClient {
    */
 
   public boolean updateAccount(byte[] addressBytes, byte[] accountNameBytes) {
-    AccountContract.AccountUpdateContract contract = createAccountUpdateContract(accountNameBytes,
+    AccountUpdateContract contract = createAccountUpdateContract(accountNameBytes,
         addressBytes);
     Transaction transaction = rpcCli.createTransaction(contract);
 
@@ -372,7 +373,7 @@ public class WalletClient {
    */
 
   public static Transaction updateAccountTransaction(byte[] addressBytes, byte[] accountNameBytes) {
-    AccountContract.AccountUpdateContract contract = createAccountUpdateContract(accountNameBytes,
+    AccountUpdateContract contract = createAccountUpdateContract(accountNameBytes,
         addressBytes);
     return rpcCli.createTransaction(contract);
   }
@@ -517,9 +518,9 @@ public class WalletClient {
    * constructor.
    */
 
-  public static AccountContract.AccountCreateContract createAccountCreateContract(byte[] owner,
+  public static AccountCreateContract createAccountCreateContract(byte[] owner,
                                                                                   byte[] address) {
-    AccountContract.AccountCreateContract.Builder builder = AccountContract.AccountCreateContract.newBuilder();
+    AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setAccountAddress(ByteString.copyFrom(address));
     return builder.build();
@@ -529,9 +530,9 @@ public class WalletClient {
    * constructor.
    */
 
-  public static AccountContract.AccountCreateContract createAccountCreateContract(
+  public static AccountCreateContract createAccountCreateContract(
       AccountType accountType, byte[] accountName, byte[] address) {
-    AccountContract.AccountCreateContract.Builder builder = AccountContract.AccountCreateContract.newBuilder();
+    AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
     ByteString bsaAdress = ByteString.copyFrom(address);
     ByteString bsAccountName = ByteString.copyFrom(accountName);
     builder.setType(accountType);
@@ -561,7 +562,7 @@ public class WalletClient {
    */
 
   public static Transaction createAccountTransaction(byte[] owner, byte[] address) {
-    AccountContract.AccountCreateContract contract = createAccountCreateContract(owner, address);
+    AccountCreateContract contract = createAccountCreateContract(owner, address);
     return rpcCli.createAccount(contract);
   }
 
@@ -569,9 +570,9 @@ public class WalletClient {
    * constructor.
    */
 
-  public static AccountContract.AccountUpdateContract createAccountUpdateContract(byte[] accountName,
+  public static AccountUpdateContract createAccountUpdateContract(byte[] accountName,
                                                                                   byte[] address) {
-    AccountContract.AccountUpdateContract.Builder builder = AccountContract.AccountUpdateContract.newBuilder();
+    AccountUpdateContract.Builder builder = AccountUpdateContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(address);
     ByteString bsAccountName = ByteString.copyFrom(accountName);
 

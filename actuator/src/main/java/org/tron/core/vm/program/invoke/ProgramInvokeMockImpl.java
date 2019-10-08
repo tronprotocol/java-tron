@@ -45,7 +45,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   private byte[] ownerAddress = Hex.decode("cd2a3d9f938e13cd947ec05abc7fe734df8dd826");
   private final byte[] contractAddress = Hex.decode("471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
 
-  private boolean isStaticCall;
+  private boolean isConstantCall;
 
   public ProgramInvokeMockImpl(byte[] msgDataRaw) {
     this();
@@ -61,14 +61,14 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
     this.deposit.createAccount(contractAddress, Protocol.AccountType.Contract);
     this.deposit.createContract(contractAddress,
-            new ContractCapsule(SmartContract.newBuilder().setContractAddress(
-                    ByteString.copyFrom(contractAddress)).build()));
+        new ContractCapsule(SmartContract.newBuilder().setContractAddress(
+            ByteString.copyFrom(contractAddress)).build()));
     this.deposit.saveCode(contractAddress,
-            Hex.decode("385E60076000396000605f556014600054601e60"
-                    + "205463abcddcba6040545b51602001600a525451"
-                    + "6040016014525451606001601e52545160800160"
-                    + "28525460a052546016604860003960166000f260"
-                    + "00603f556103e75660005460005360200235"));
+        Hex.decode("385E60076000396000605f556014600054601e60"
+            + "205463abcddcba6040545b51602001600a525451"
+            + "6040016014525451606001601e52545160800160"
+            + "28525460a052546016604860003960166000f260"
+            + "00603f556103e75660005460005360200235"));
   }
 
   public ProgramInvokeMockImpl(boolean defaults) {
@@ -188,7 +188,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   @Override
   public DataWord getPrevHash() {
     byte[] prevHash = Hex
-            .decode("961CB117ABA86D1E596854015A1483323F18883C2D745B0BC03E87F146D2BB1C");
+        .decode("961CB117ABA86D1E596854015A1483323F18883C2D745B0BC03E87F146D2BB1C");
     return new DataWord(prevHash);
   }
 
@@ -221,8 +221,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean isStaticCall() {
-    return isStaticCall;
+  public boolean isConstantCall() {
+    return isConstantCall;
   }
 
   @Override
@@ -240,8 +240,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setStaticCall() {
-    isStaticCall = true;
+  public void setConstantCall() {
+    isConstantCall = true;
   }
 
 

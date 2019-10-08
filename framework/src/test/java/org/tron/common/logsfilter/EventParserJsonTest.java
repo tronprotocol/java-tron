@@ -1,5 +1,7 @@
 package org.tron.common.logsfilter;
 
+import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import java.util.LinkedList;
@@ -18,7 +20,7 @@ public class EventParserJsonTest {
   @Test
   public synchronized void testEventParser() {
 
-    Wallet.setAddressPreFixByte(Commons.ADD_PRE_FIX_BYTE_MAINNET);
+    Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
 
     String eventSign = "eventBytesL(address,bytes,bytes32,uint256,string)";
 

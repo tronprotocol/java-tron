@@ -232,4 +232,9 @@ public class ContractState implements Repository, ProgramListenerAware {
     return repository.getBlockByNum(num);
   }
 
+  @Override
+  public AccountCapsule createNormalAccount(byte[] address) {
+    return repository.createNormalAccount(address);
+  }
+
 }

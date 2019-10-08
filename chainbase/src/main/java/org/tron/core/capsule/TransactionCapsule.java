@@ -15,11 +15,9 @@
 
 package org.tron.core.capsule;
 
+import static org.tron.common.utils.WalletUtil.checkPermissionOprations;
+import static org.tron.common.utils.WalletUtil.encode58Check;
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
-import static org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import static org.tron.protos.contract.WitnessContract.VoteWitnessContract;
-import static org.tron.protos.contract.WitnessContract.WitnessCreateContract;
-import static org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -47,12 +45,11 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
@@ -68,12 +65,17 @@ import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.protos.contract.ShieldContract.SpendDescription;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
 @Slf4j(topic = "capsule")
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
@@ -226,11 +228,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
-            ByteArray.toHexString(sig.toByteArray()) + " is signed by " + StringUtil
-                .encode58Check(address) + " but it is not contained of permission.");
+            ByteArray.toHexString(sig.toByteArray()) + " is signed by " + encode58Check(address)
+                + " but it is not contained of permission.");
       }
       if (addMap.containsKey(base64)) {
-        throw new PermissionException(StringUtil.encode58Check(address) + " has signed twice!");
+        throw new PermissionException(encode58Check(address) + " has signed twice!");
       }
       addMap.put(base64, weight);
       if (approveList != null) {
@@ -239,6 +241,55 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       currentWeight += weight;
     }
     return currentWeight;
+  }
+
+  //make sure that contractType is validated before
+  //No exception will be thrown here
+  public static byte[] getShieldTransactionHashIgnoreTypeException(TransactionCapsule tx) {
+    try {
+      return hashShieldTransaction(tx);
+    } catch (ContractValidateException | InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+    }
+    return null;
+  }
+
+  public static byte[] hashShieldTransaction(TransactionCapsule tx)
+      throws ContractValidateException, InvalidProtocolBufferException {
+    Any contractParameter = tx.getInstance().getRawData().getContract(0).getParameter();
+    if (!contractParameter.is(ShieldedTransferContract.class)) {
+      throw new ContractValidateException(
+          "contract type error,expected type [ShieldedTransferContract],real type["
+              + contractParameter
+              .getClass() + "]");
+    }
+
+    ShieldedTransferContract shieldedTransferContract = contractParameter
+        .unpack(ShieldedTransferContract.class);
+    ShieldedTransferContract.Builder newContract = ShieldedTransferContract.newBuilder();
+    newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+    newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+    newContract.setToAmount(shieldedTransferContract.getToAmount());
+    newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+    newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+    for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+      newContract
+          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+    }
+
+    Transaction.raw.Builder rawBuilder = tx.getInstance().toBuilder()
+        .getRawDataBuilder()
+        .clearContract()
+        .addContract(
+            Transaction.Contract.newBuilder().setType(ContractType.ShieldedTransferContract)
+                .setParameter(
+                    Any.pack(newContract.build())).build());
+
+    Transaction transaction = tx.getInstance().toBuilder().clearRawData()
+        .setRawData(rawBuilder).build();
+
+    return Sha256Hash.of(transaction.getRawData().toByteArray())
+        .getBytes();
   }
 
   // todo mv this static function to capsule util
@@ -436,7 +487,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!WalletUtil.checkPermissionOprations(permission, contract)) {
+      if (!checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
@@ -533,7 +584,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!WalletUtil.checkPermissionOprations(permission, contract)) {
+      if (!checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
@@ -544,15 +595,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),
           approveList);
       if (approveList.contains(ByteString.copyFrom(address))) {
-        throw new PermissionException(StringUtil.encode58Check(address) + " had signed!");
+        throw new PermissionException(encode58Check(address) + " had signed!");
       }
     }
 
     long weight = getWeight(permission, address);
     if (weight == 0) {
       throw new PermissionException(
-          ByteArray.toHexString(privateKey) + "'s address is " + StringUtil
-              .encode58Check(address) + " but it is not contained of permission.");
+          ByteArray.toHexString(privateKey) + "'s address is " + encode58Check(address)
+              + " but it is not contained of permission.");
     }
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());

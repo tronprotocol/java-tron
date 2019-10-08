@@ -80,10 +80,10 @@ public class ContractScenario014 {
     PublicMethed.printAddress(contract014Key);
     PublicMethed.printAddress(receiverKey);
 
-    Assert.assertTrue(PublicMethed.sendcoin(contract014Address, 5000000000000L, fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(contract014Address, 50_000_000_000L, fromAddress,
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed
-        .freezeBalanceGetEnergy(contract014Address, 1000000000000L, 0, 1, priKey014,
+        .freezeBalanceGetEnergy(contract014Address, 10_000_000_000L, 0, 1, priKey014,
             blockingStubFull));
 
     logger.info("contract014Address : == " + contract014Key);
@@ -95,7 +95,7 @@ public class ContractScenario014 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
-        maxFeeLimit, 0L, 100, null, contract014Key, contract014Address, blockingStubFull);
+        maxFeeLimit, 1000000L, 100, null, contract014Key, contract014Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
@@ -112,7 +112,7 @@ public class ContractScenario014 {
     String parame = "\"" + Base58.encode58Check(contractAddress1) + "\"";
 
     txid = PublicMethed.deployContractWithConstantParame(contractName, abi1, code1,
-        "constructor(address)", parame, "", maxFeeLimit, 0L, 100, null,
+        "constructor(address)", parame, "", maxFeeLimit, 1000000L, 100, null,
         contract014Key, contract014Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -129,20 +129,14 @@ public class ContractScenario014 {
     parame = "\"" + Base58.encode58Check(contractAddress2) + "\"";
 
     txid = PublicMethed.deployContractWithConstantParame(contractName, abi2, code2,
-        "constructor(address)", parame, "", maxFeeLimit, 0L, 100, null,
+        "constructor(address)", parame, "", maxFeeLimit, 1000000L, 100, null,
         contract014Key, contract014Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     contractAddress3 = infoById.get().getContractAddress().toByteArray();
 
-    Assert.assertTrue(PublicMethed.sendcoin(contractAddress1, 1000000L, fromAddress, testKey002,
-        blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(receiverAddress, 1000000L, fromAddress, testKey002,
-        blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(contractAddress2, 1000000L, fromAddress, testKey002,
-        blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(contractAddress3, 1000000L, fromAddress, testKey002,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Test contract2 trigger contract1 to test call function

@@ -15,6 +15,7 @@ import static org.tron.core.vm.OpCode.SAR;
 import static org.tron.core.vm.OpCode.SHL;
 import static org.tron.core.vm.OpCode.SHR;
 import static org.tron.core.vm.OpCode.TOKENBALANCE;
+import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -31,7 +32,6 @@ import org.tron.core.vm.program.Program.OutOfEnergyException;
 import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.program.Program.TransferException;
 import org.tron.core.vm.program.Stack;
-import org.tron.core.vm.utils.MUtil;
 
 @Slf4j(topic = "VM")
 public class VM {
@@ -1076,7 +1076,7 @@ public class VM {
         case LOG3:
         case LOG4: {
 
-          if (program.isStaticCall()) {
+          if (program.isConstantCall()) {
             throw new Program.StaticCallModificationException();
           }
           DataWord address = program.getContractAddress();
@@ -1154,7 +1154,7 @@ public class VM {
         }
         break;
         case SSTORE: {
-          if (program.isStaticCall()) {
+          if (program.isConstantCall()) {
             throw new Program.StaticCallModificationException();
           }
 
@@ -1285,7 +1285,7 @@ public class VM {
         }
         break;
         case CREATE: {
-          if (program.isStaticCall()) {
+          if (program.isConstantCall()) {
             throw new Program.StaticCallModificationException();
           }
           DataWord value = program.stackPop();
@@ -1297,7 +1297,7 @@ public class VM {
         }
         break;
         case CREATE2: {
-          if (program.isStaticCall()) {
+          if (program.isConstantCall()) {
             throw new Program.StaticCallModificationException();
           }
           DataWord value = program.stackPop();
@@ -1332,7 +1332,7 @@ public class VM {
             value = DataWord.ZERO;
           }
 
-          if (program.isStaticCall() && (op == CALL || op == CALLTOKEN) && !value.isZero()) {
+          if (program.isConstantCall() && (op == CALL || op == CALLTOKEN) && !value.isZero()) {
             throw new Program.StaticCallModificationException();
           }
 
@@ -1411,7 +1411,7 @@ public class VM {
           break;
         }
         case SUICIDE: {
-          if (program.isStaticCall()) {
+          if (program.isConstantCall()) {
             throw new Program.StaticCallModificationException();
           }
 
@@ -1472,7 +1472,7 @@ public class VM {
   }
 
   private boolean isDeadAccount(Program program, DataWord address) {
-    return program.getContractState().getAccount(MUtil.convertToTronAddress(address.getLast20Bytes()))
+    return program.getContractState().getAccount(convertToTronAddress(address.getLast20Bytes()))
         == null;
   }
 

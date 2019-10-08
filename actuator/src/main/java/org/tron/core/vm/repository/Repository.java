@@ -82,5 +82,6 @@ public interface Repository {
 
     public BlockCapsule getBlockByNum(final long num);
 
+    public AccountCapsule createNormalAccount(byte[] address);
 
 }

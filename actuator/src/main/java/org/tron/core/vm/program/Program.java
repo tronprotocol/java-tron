@@ -410,6 +410,7 @@ public class Program {
         MUtil.transferAllToken(getContractState(), owner, blackHoleAddress);
       }
     } else {
+      createAccountIfNotExist(getContractState(), obtainer);
       try {
         MUtil.transfer(getContractState(), owner, obtainer, balance);
         if (VMConfig.allowTvmTransferTrc10()) {
@@ -695,6 +696,7 @@ public class Program {
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
+      createAccountIfNotExist(deposit, contextAddress);
       if (!isTokenTransfer) {
         try {
           VMUtils
@@ -743,7 +745,7 @@ public class Program {
           !isTokenTransfer ? callValue : new DataWord(0),
           !isTokenTransfer ? new DataWord(0) : callValue,
           !isTokenTransfer ? new DataWord(0) : msg.getTokenId(),
-          contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
+          contextBalance, data, deposit, msg.getType().callIsStatic() || isConstantCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config);
@@ -797,7 +799,8 @@ public class Program {
 
     // 5. REFUND THE REMAIN ENERGY
     if (callResult != null) {
-      BigInteger refundEnergy = msg.getEnergy().value().subtract(BIUtil.toBI(callResult.getEnergyUsed()));
+      BigInteger refundEnergy = msg.getEnergy().value()
+          .subtract(BIUtil.toBI(callResult.getEnergyUsed()));
       if (BIUtil.isPositive(refundEnergy)) {
         refundEnergy(refundEnergy.longValueExact(), "remaining energy from the internal call");
         if (logger.isDebugEnabled()) {
@@ -930,7 +933,8 @@ public class Program {
   }
 
   public DataWord getBalance(DataWord address) {
-    long balance = getContractState().getBalance(MUtil.convertToTronAddress(address.getLast20Bytes()));
+    long balance = getContractState()
+        .getBalance(MUtil.convertToTronAddress(address.getLast20Bytes()));
     return new DataWord(balance);
   }
 
@@ -999,13 +1003,15 @@ public class Program {
 
   public DataWord storageLoad(DataWord key) {
     DataWord ret = getContractState()
-        .getStorageValue(MUtil.convertToTronAddress(getContractAddress().getLast20Bytes()), key.clone());
+        .getStorageValue(MUtil.convertToTronAddress(getContractAddress().getLast20Bytes()),
+            key.clone());
     return ret == null ? null : ret.clone();
   }
 
   public DataWord getTokenBalance(DataWord address, DataWord tokenId) {
     checkTokenIdInTokenBalance(tokenId);
-    long ret = getContractState().getTokenBalance(MUtil.convertToTronAddress(address.getLast20Bytes()),
+    long ret = getContractState()
+        .getTokenBalance(MUtil.convertToTronAddress(address.getLast20Bytes()),
         String.valueOf(tokenId.longValue()).getBytes());
     return ret == 0 ? new DataWord(0) : new DataWord(ret);
   }
@@ -1038,8 +1044,8 @@ public class Program {
     return invoke.getDifficulty().clone();
   }
 
-  public boolean isStaticCall() {
-    return invoke.isStaticCall();
+  public boolean isConstantCall() {
+    return invoke.isConstantCall();
   }
 
   public ProgramResult getResult() {
@@ -1444,7 +1450,7 @@ public class Program {
       // this is the depositImpl, not contractState as above
       contract.setRepository(deposit);
       contract.setResult(this.result);
-      contract.setStaticCall(isStaticCall());
+      contract.setConstantCall(isConstantCall());
       contract.setVmShouldEndInUs(getVmShouldEndInUs());
       Pair<Boolean, byte[]> out = contract.execute(data);
 
@@ -1772,5 +1778,15 @@ public class Program {
 
   private boolean isContractExist(AccountCapsule existingAddr, Repository deposit) {
     return deposit.getContract(existingAddr.getAddress().toByteArray()) != null;
+  }
+
+  private void createAccountIfNotExist(Repository deposit, byte[] contextAddress) {
+    if (VMConfig.allowTvmSolidity059()) {
+      //after solidity059 proposal , allow contract transfer trc10 or trx to non-exist address(would create one)
+      AccountCapsule sender = deposit.getAccount(contextAddress);
+      if (sender == null) {
+        deposit.createNormalAccount(contextAddress);
+      }
+    }
   }
 }

@@ -202,35 +202,6 @@ public class PrecompiledContractsTest {
     Assert.assertEquals(true, result);
   }
 
-  //@Test
-  public void withdrawBalanceNativeTest() {
-    PrecompiledContract contract = createPrecompiledContract(withdrawBalanceAddr, WITNESS_ADDRESS);
-
-    long now = System.currentTimeMillis();
-    Repository deposit = RepositoryImpl.createRoot(StoreFactory.getInstance());
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
-    byte[] address = ByteArray.fromHexString(WITNESS_ADDRESS);
-    try {
-      dbManager.adjustAllowance(address, allowance);
-    } catch (BalanceInsufficientException e) {
-      fail("BalanceInsufficientException");
-    }
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    Assert.assertEquals(allowance, accountCapsule.getAllowance());
-    Assert.assertEquals(0, accountCapsule.getLatestWithdrawTime());
-
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address),
-        100, "http://baidu.com");
-    dbManager.getWitnessStore().put(address, witnessCapsule);
-    contract.setRepository(deposit);
-    contract.execute(new byte[0]);
-    deposit.commit();
-    AccountCapsule witnessAccount =
-        dbManager.getAccountStore().get(ByteArray.fromHexString(WITNESS_ADDRESS));
-    Assert.assertEquals(initBalance + allowance, witnessAccount.getBalance());
-    Assert.assertEquals(0, witnessAccount.getAllowance());
-    Assert.assertNotEquals(0, witnessAccount.getLatestWithdrawTime());
-  }
 
 
   //@Test

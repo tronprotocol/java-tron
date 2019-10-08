@@ -12,11 +12,11 @@ import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.db.DelegationService;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
@@ -28,13 +28,13 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     super(ContractType.WithdrawBalanceContract, WithdrawBalanceContract.class);
   }
 
-
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     final WithdrawBalanceContract withdrawBalanceContract;
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    DelegationService delegationService = chainBaseManager.getDelegationService();
     try {
       withdrawBalanceContract = any.unpack(WithdrawBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
@@ -42,6 +42,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
+
+    delegationService.withdrawReward(withdrawBalanceContract.getOwnerAddress()
+        .toByteArray());
 
     AccountCapsule accountCapsule = accountStore.
         get(withdrawBalanceContract.getOwnerAddress().toByteArray());
@@ -55,7 +58,6 @@ public class WithdrawBalanceActuator extends AbstractActuator {
         .setLatestWithdrawTime(now)
         .build());
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-
     ret.setWithdrawAmount(allowance);
     ret.setStatus(fee, code.SUCESS);
 
@@ -72,7 +74,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    WitnessStore witnessStore = chainBaseManager.getWitnessStore();
+    DelegationService delegationService = chainBaseManager.getDelegationService();
     if (!this.any.is(WithdrawBalanceContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [WithdrawBalanceContract],real type[" + any
@@ -90,8 +92,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    AccountCapsule accountCapsule =
-        accountStore.get(ownerAddress);
+    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -99,10 +100,6 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
-    if (!witnessStore.has(ownerAddress)) {
-      throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] is not a witnessAccount");
-    }
 
     boolean isGP = DBConfig.getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
         Arrays.equals(ownerAddress, witness.getAddress()));
@@ -121,8 +118,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
           + latestWithdrawTime + ",less than 24 hours");
     }
 
-    if (accountCapsule.getAllowance() <= 0) {
-      throw new ContractValidateException("witnessAccount does not have any allowance");
+    if (accountCapsule.getAllowance() <= 0 &&
+        delegationService.queryReward(ownerAddress) <= 0) {
+      throw new ContractValidateException("witnessAccount does not have any reward");
     }
     try {
       LongMath.checkedAdd(accountCapsule.getBalance(), accountCapsule.getAllowance());

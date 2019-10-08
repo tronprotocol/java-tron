@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.DelegationService;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -16,6 +17,7 @@ import org.tron.core.store.CodeStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
+import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
@@ -103,5 +105,13 @@ public class ChainBaseManager {
   @Getter
   @Setter
   private MerkleContainer merkleContainer;
+
+  @Getter
+  @Setter
+  private DelegationService delegationService;
+
+  @Autowired
+  @Getter
+  private DelegationStore delegationStore;
 
 }

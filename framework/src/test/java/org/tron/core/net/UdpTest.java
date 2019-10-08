@@ -14,7 +14,6 @@ import org.tron.common.net.udp.message.discover.FindNodeMessage;
 import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
 import org.tron.common.net.udp.message.discover.PongMessage;
-import org.tron.common.overlay.discover.RefreshTask;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.core.config.args.Args;
@@ -24,8 +23,8 @@ public class UdpTest {
 
   private NodeManager nodeManager;
   private int port = Args.getInstance().getNodeListenPort();
-//  private volatile boolean finishFlag = false;
-//  private long timeOut = 30_000;
+  //private volatile boolean finishFlag = false;
+  //private long timeOut = 30_000;
 
   public UdpTest(TronApplicationContext context) {
     nodeManager = context.getBean(NodeManager.class);
@@ -69,7 +68,7 @@ public class UdpTest {
     DatagramPacket pingPacket = new DatagramPacket(pingMessage.getSendData(),
         pingMessage.getSendData().length, server, port);
 
-    FindNodeMessage findNodeMessage = new FindNodeMessage(from, RefreshTask.getNodeId());
+    FindNodeMessage findNodeMessage = new FindNodeMessage(from, Node.getNodeId());
     DatagramPacket findNodePacket = new DatagramPacket(findNodeMessage.getSendData(),
         findNodeMessage.getSendData().length, server, port);
 
@@ -122,7 +121,7 @@ public class UdpTest {
 
     socket.close();
 
-//    finishFlag = true;
+    //finishFlag = true;
   }
 }
 

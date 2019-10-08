@@ -15,6 +15,7 @@ import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.ForkUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
@@ -65,6 +66,8 @@ public class TransactionTrace {
 
   private Runtime runtime;
 
+  private ForkUtils forkUtils;
+
   @Getter
   private TransactionContext transactionContext;
 
@@ -112,6 +115,8 @@ public class TransactionTrace {
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.energyProcessor = new EnergyProcessor(dynamicPropertiesStore, accountStore);
     this.runtime = runtime;
+    this.forkUtils = new ForkUtils();
+    forkUtils.init(dynamicPropertiesStore);
   }
 
   private boolean needVM() {
@@ -235,7 +240,7 @@ public class TransactionTrace {
     AccountCapsule origin = accountStore.get(originAccount);
     AccountCapsule caller = accountStore.get(callerAccount);
     receipt.payEnergyBill(
-        dynamicPropertiesStore, accountStore,
+        dynamicPropertiesStore, accountStore, forkUtils,
         origin,
         caller,
         percent, originEnergyLimit,

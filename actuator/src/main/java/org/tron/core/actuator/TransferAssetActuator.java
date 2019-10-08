@@ -174,6 +174,12 @@ public class TransferAssetActuator extends AbstractActuator {
 
     AccountCapsule toAccount = accountStore.get(toAddress);
     if (toAccount != null) {
+      //after TvmSolidity059 proposal, send trx to smartContract by actuator is not allowed.
+      if (dynamicStore.getAllowTvmSolidity059() == 1
+          && toAccount.getType() == AccountType.Contract) {
+        throw new ContractValidateException("Cannot transfer asset to smartContract.");
+      }
+
       if (dynamicStore.getAllowSameTokenName() == 0) {
         assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(assetName));
       } else {

@@ -1,6 +1,6 @@
 package org.tron.common.logsfilter;
 
-import static org.tron.common.utils.Commons.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
 import java.util.LinkedList;
 import java.util.List;

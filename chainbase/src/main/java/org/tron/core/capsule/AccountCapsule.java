@@ -25,8 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.contract.AccountContract.AccountCreateContract;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Builder;
@@ -36,6 +34,8 @@ import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Vote;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 
 @Slf4j(topic = "capsule")
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
@@ -91,7 +91,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore) {
     if (withDefaultPermission) {
       Permission owner = createDefaultOwnerPermission(contract.getAccountAddress());
-      Permission active = createDefaultActivePermission(contract.getAccountAddress(), dynamicPropertiesStore);
+      Permission active = createDefaultActivePermission(contract.getAccountAddress(),
+          dynamicPropertiesStore);
 
       this.account = Account.newBuilder()
           .setType(contract.getType())
@@ -213,7 +214,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
 
-  private static ByteString getActiveDefaultOperations(DynamicPropertiesStore dynamicPropertiesStore) {
+  private static ByteString getActiveDefaultOperations(
+      DynamicPropertiesStore dynamicPropertiesStore) {
     return ByteString.copyFrom(dynamicPropertiesStore.getActiveDefaultOperations());
   }
 
@@ -233,7 +235,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return owner.build();
   }
 
-  public static Permission createDefaultActivePermission(ByteString address,  DynamicPropertiesStore dynamicPropertiesStore) {
+  public static Permission createDefaultActivePermission(ByteString address,
+      DynamicPropertiesStore dynamicPropertiesStore) {
     Key.Builder key = Key.newBuilder();
     key.setAddress(address);
     key.setWeight(1);
@@ -469,7 +472,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
 
-  public boolean assetBalanceEnoughV2(byte[] key, long amount, DynamicPropertiesStore dynamicPropertiesStore) {
+  public boolean assetBalanceEnoughV2(byte[] key, long amount,
+      DynamicPropertiesStore dynamicPropertiesStore) {
     Map<String, Long> assetMap;
     String nameKey;
     Long currentAmount;
@@ -506,7 +510,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * reduce asset amount.
    */
-  public boolean reduceAssetAmountV2(byte[] key, long amount, DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
+  public boolean reduceAssetAmountV2(byte[] key, long amount,
+      DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
@@ -556,7 +561,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * add asset amount.
    */
-  public boolean addAssetAmountV2(byte[] key, long amount, DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
+  public boolean addAssetAmountV2(byte[] key, long amount,
+      DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();

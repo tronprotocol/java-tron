@@ -52,14 +52,14 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private boolean byTransaction = true;
   private boolean byTestingSuite = false;
   private int callDeep = 0;
-  private boolean isStaticCall = false;
+  private boolean isConstantCall = false;
 
   public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance,
-                           DataWord callValue, DataWord tokenValue, DataWord tokenId, byte[] msgData,
-                           DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
-                           DataWord difficulty,
-                           Repository deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite,
-                           long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
+      DataWord callValue, DataWord tokenValue, DataWord tokenId, byte[] msgData,
+      DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
+      DataWord difficulty,
+      Repository deposit, int callDeep, boolean isConstantCall, boolean byTestingSuite,
+      long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
     this.address = address;
     this.origin = origin;
     this.caller = caller;
@@ -80,7 +80,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
     this.deposit = deposit;
     this.byTransaction = false;
-    this.isStaticCall = isStaticCall;
+    this.isConstantCall = isConstantCall;
     this.byTestingSuite = byTestingSuite;
     this.vmStartInUs = vmStartInUs;
     this.vmShouldEndInUs = vmShouldEndInUs;
@@ -89,19 +89,19 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-                           long callValue, long tokenValue, long tokenId, byte[] msgData,
-                           byte[] lastHash, byte[] coinbase, long timestamp, long number, Repository deposit,
-                           long vmStartInUs, long vmShouldEndInUs, boolean byTestingSuite, long energyLimit) {
+      long callValue, long tokenValue, long tokenId, byte[] msgData,
+      byte[] lastHash, byte[] coinbase, long timestamp, long number, Repository deposit,
+      long vmStartInUs, long vmShouldEndInUs, boolean byTestingSuite, long energyLimit) {
     this(address, origin, caller, balance, callValue, tokenValue, tokenId, msgData, lastHash,
-            coinbase,
-            timestamp, number, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
+        coinbase,
+        timestamp, number, deposit, vmStartInUs, vmShouldEndInUs, energyLimit);
     this.byTestingSuite = byTestingSuite;
   }
 
   public ProgramInvokeImpl(byte[] address, byte[] origin, byte[] caller, long balance,
-                           long callValue, long tokenValue, long tokenId, byte[] msgData, byte[] lastHash,
-                           byte[] coinbase, long timestamp,
-                           long number, Repository deposit, long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
+      long callValue, long tokenValue, long tokenId, byte[] msgData, byte[] lastHash,
+      byte[] coinbase, long timestamp,
+      long number, Repository deposit, long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
 
     // Transaction env
     this.address = new DataWord(address);
@@ -177,7 +177,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     int size = 32; // maximum datavalue size
 
     if (msgData == null || index >= msgData.length
-            || tempIndex.compareTo(MAX_MSG_DATA) > 0) {
+        || tempIndex.compareTo(MAX_MSG_DATA) > 0) {
       return new DataWord();
     }
     if (index + size > msgData.length) {
@@ -257,8 +257,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean isStaticCall() {
-    return isStaticCall;
+  public boolean isConstantCall() {
+    return isConstantCall;
   }
 
   @Override
@@ -330,38 +330,38 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   @Override
   public int hashCode() {
     return new Integer(Boolean.valueOf(byTestingSuite).hashCode()
-            + Boolean.valueOf(byTransaction).hashCode()
-            + address.hashCode()
-            + balance.hashCode()
-            + callValue.hashCode()
-            + caller.hashCode()
-            + coinbase.hashCode()
-            + Arrays.hashCode(msgData)
-            + number.hashCode()
-            + origin.hashCode()
-            + prevHash.hashCode()
-            + deposit.hashCode()
-            + timestamp.hashCode()
+        + Boolean.valueOf(byTransaction).hashCode()
+        + address.hashCode()
+        + balance.hashCode()
+        + callValue.hashCode()
+        + caller.hashCode()
+        + coinbase.hashCode()
+        + Arrays.hashCode(msgData)
+        + number.hashCode()
+        + origin.hashCode()
+        + prevHash.hashCode()
+        + deposit.hashCode()
+        + timestamp.hashCode()
     ).hashCode();
   }
 
   @Override
   public String toString() {
     return "ProgramInvokeImpl{" +
-            "address=" + address +
-            ", origin=" + origin +
-            ", caller=" + caller +
-            ", balance=" + balance +
-            ", callValue=" + callValue +
-            ", msgData=" + Arrays.toString(msgData) +
-            ", prevHash=" + prevHash +
-            ", coinbase=" + coinbase +
-            ", timestamp=" + timestamp +
-            ", number=" + number +
-            ", byTransaction=" + byTransaction +
-            ", byTestingSuite=" + byTestingSuite +
-            ", callDeep=" + callDeep +
-            '}';
+        "address=" + address +
+        ", origin=" + origin +
+        ", caller=" + caller +
+        ", balance=" + balance +
+        ", callValue=" + callValue +
+        ", msgData=" + Arrays.toString(msgData) +
+        ", prevHash=" + prevHash +
+        ", coinbase=" + coinbase +
+        ", timestamp=" + timestamp +
+        ", number=" + number +
+        ", byTransaction=" + byTransaction +
+        ", byTestingSuite=" + byTestingSuite +
+        ", callDeep=" + callDeep +
+        '}';
   }
 
   public long getEnergyLimit() {
@@ -369,10 +369,9 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setStaticCall() {
-    isStaticCall = true;
+  public void setConstantCall() {
+    isConstantCall = true;
   }
-
 
 
 }

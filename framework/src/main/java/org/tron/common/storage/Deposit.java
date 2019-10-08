@@ -112,4 +112,8 @@ public interface Deposit {
 
   byte[] getBlackHoleAddress();
 
+  public AccountCapsule createNormalAccount(byte[] address);
+
+
 }
+

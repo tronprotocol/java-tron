@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -7,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.args.Parameter.ChainConstant;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -108,6 +109,7 @@ public class TransferActuator extends AbstractActuator {
     }
 
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+
     if (ownerAccount == null) {
       throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
     }
@@ -123,6 +125,12 @@ public class TransferActuator extends AbstractActuator {
       if (toAccount == null) {
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
+      //after TvmSolidity059 proposal, send trx to smartContract by actuator is not allowed.
+      if (dynamicStore.getAllowTvmSolidity059() == 1
+          && toAccount != null
+          && toAccount.getType() == AccountType.Contract) {
+        throw new ContractValidateException("Cannot transfer trx to smartContract.");
+      }
 
       if (balance < Math.addExact(amount, fee)) {
         throw new ContractValidateException(
@@ -130,7 +138,7 @@ public class TransferActuator extends AbstractActuator {
       }
 
       if (toAccount != null) {
-        long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
+        Math.addExact(toAccount.getBalance(), amount);
       }
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
@@ -147,7 +155,7 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return ChainConstant.TRANSFER_FEE;
+    return TRANSFER_FEE;
   }
 
 }

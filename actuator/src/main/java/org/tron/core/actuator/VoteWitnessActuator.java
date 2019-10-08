@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
+import static org.tron.core.config.args.Parameter.ChainConstant.MAX_VOTE_NUMBER;
 
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
@@ -15,7 +16,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
-import org.tron.core.config.args.Parameter.ChainConstant;
+import org.tron.core.db.DelegationService;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
@@ -81,7 +82,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       throw new ContractValidateException(
           "VoteNumber must more than 0");
     }
-    int maxVoteNumber = ChainConstant.MAX_VOTE_NUMBER;
+    int maxVoteNumber = MAX_VOTE_NUMBER;
     if (contract.getVotesCount() > maxVoteNumber) {
       throw new ContractValidateException(
           "VoteNumber more than maxVoteNumber " + maxVoteNumber);
@@ -111,8 +112,7 @@ public class VoteWitnessActuator extends AbstractActuator {
         sum = LongMath.checkedAdd(sum, vote.getVoteCount());
       }
 
-      AccountCapsule accountCapsule =
-          accountStore.get(ownerAddress);
+      AccountCapsule accountCapsule = accountStore.get(ownerAddress);
       if (accountCapsule == null) {
         throw new ContractValidateException(
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
@@ -137,9 +137,14 @@ public class VoteWitnessActuator extends AbstractActuator {
   private void countVoteAccount(VoteWitnessContract voteContract) {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     VotesStore votesStore = chainBaseManager.getVotesStore();
+    DelegationService delegationService = chainBaseManager.getDelegationService();
     byte[] ownerAddress = voteContract.getOwnerAddress().toByteArray();
 
     VotesCapsule votesCapsule;
+
+    //
+    delegationService.withdrawReward(ownerAddress);
+
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
     if (!votesStore.has(ownerAddress)) {
@@ -162,7 +167,6 @@ public class VoteWitnessActuator extends AbstractActuator {
 
     accountStore.put(accountCapsule.createDbKey(), accountCapsule);
     votesStore.put(ownerAddress, votesCapsule);
-
   }
 
   @Override

@@ -19,6 +19,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.core.vm.EnergyCost;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -120,16 +121,18 @@ public class TransferFailed003 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     assetAccountId = PublicMethed.queryAccount(contractExcAddress, blockingStubFull)
         .getAssetIssuedID();
-    Assert.assertTrue(PublicMethed.transferAsset(contractAddress,
-        assetAccountId.toByteArray(), 100L, contractExcAddress, contractExcKey,
-        blockingStubFull));
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, 1000000000L,
+        assetAccountId.toStringUtf8(), 100L, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    //Assert.assertTrue(PublicMethed.transferAsset(contractAddress,
+    //    assetAccountId.toByteArray(), 100L, contractExcAddress, contractExcKey,
+    //    blockingStubFull));
+    //PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account info;
 
@@ -339,22 +342,68 @@ public class TransferFailed003 {
     logger.info("testNetAccountCountAfter:" + testNetAccountCountAfter);
     logger.info("contractAccountCountAfter:" + contractAccountCountAfter);
 
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertEquals(contractResult.TRANSFER_FAILED, infoById.get().getReceipt().getResult());
-    Assert.assertEquals(
-        "transfer trc10 failed: Validate InternalTransfer error, no ToAccount."
-            + " And not allowed to create account in smart contract.",
-        ByteArray.toStr(infoById.get().getResMessage().toByteArray()));
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
     Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertEquals(testNetAccountCountBefore, testNetAccountCountAfter);
-    Assert.assertEquals(contractAccountCountBefore, contractAccountCountAfter);
+    Assert.assertEquals(contractAccountCountBefore - 1, contractAccountCountAfter.longValue());
 
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
     Assert.assertNotEquals(10000000, energyUsageTotal);
 
+    Long nonexistentAddressAccount = PublicMethed
+        .getAssetIssueValue(nonexistentAddress, assetAccountId, blockingStubFull1);
+    Assert.assertEquals(1L, nonexistentAddressAccount.longValue());
 
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testTransferTokenNonexistentTarget(uint256,address,trcToken)", num, false,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infoById:" + infoById);
+    fee = infoById.get().getFee();
+    netUsed = infoById.get().getReceipt().getNetUsage();
+    energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    netFee = infoById.get().getReceipt().getNetFee();
+    long energyUsageTotal2 = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal2);
+
+    infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull1);
+    afterBalance = infoafter.getBalance();
+    afterEnergyUsed = resourceInfoafter.getEnergyUsed();
+    afterNetUsed = resourceInfoafter.getNetUsed();
+    afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
+    testNetAccountCountAfter = PublicMethed
+        .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
+    contractAccountCountAfter = PublicMethed
+        .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
+    logger.info("afterBalance:" + afterBalance);
+    logger.info("afterEnergyUsed:" + afterEnergyUsed);
+    logger.info("afterNetUsed:" + afterNetUsed);
+    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
+    logger.info("testNetAccountCountAfter:" + testNetAccountCountAfter);
+    logger.info("contractAccountCountAfter:" + contractAccountCountAfter);
+
+    Assert.assertEquals(0, infoById.get().getResultValue());
+
+    Assert.assertEquals(testNetAccountCountBefore, testNetAccountCountAfter);
+    Assert.assertEquals(contractAccountCountBefore - 2, contractAccountCountAfter.longValue());
+
+    Assert.assertEquals(energyUsageTotal,
+        energyUsageTotal2 + EnergyCost.getInstance().getNEW_ACCT_CALL());
+
+    nonexistentAddressAccount = PublicMethed
+        .getAssetIssueValue(nonexistentAddress, assetAccountId, blockingStubFull1);
+    Assert.assertEquals(2L, nonexistentAddressAccount.longValue());
   }
 
 
@@ -676,7 +725,84 @@ public class TransferFailed003 {
 
   }
 
+  @Test(enabled = true, description = "TransferToken to nonexistent target, but revert")
+  public void test9TransferTokenNonexistentTargetRevert() {
+    Account info;
 
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    Long testNetAccountCountBefore = PublicMethed
+        .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
+    Long contractAccountCountBefore = PublicMethed
+        .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+    logger.info("testNetAccountCountBefore:" + testNetAccountCountBefore);
+    logger.info("contractAccountCountBefore:" + contractAccountCountBefore);
+    String txid = "";
+    ECKey ecKey2 = new ECKey(Utils.getRandom());
+    byte[] nonexistentAddress = ecKey2.getAddress();
+    String num =
+        "\"1" + "\",\"" + Base58.encode58Check(nonexistentAddress) + "\",\"" + assetAccountId
+            .toStringUtf8() + "\"";
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testTransferTokenRevert(uint256,address,trcToken)", num, false,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infoById:" + infoById);
+    Long fee = infoById.get().getFee();
+    Long netUsed = infoById.get().getReceipt().getNetUsage();
+    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    Long netFee = infoById.get().getReceipt().getNetFee();
+    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull1);
+    Long afterBalance = infoafter.getBalance();
+    Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
+    Long afterNetUsed = resourceInfoafter.getNetUsed();
+    Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
+    Long testNetAccountCountAfter = PublicMethed
+        .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
+    Long contractAccountCountAfter = PublicMethed
+        .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
+    logger.info("afterBalance:" + afterBalance);
+    logger.info("afterEnergyUsed:" + afterEnergyUsed);
+    logger.info("afterNetUsed:" + afterNetUsed);
+    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
+    logger.info("testNetAccountCountAfter:" + testNetAccountCountAfter);
+    logger.info("contractAccountCountAfter:" + contractAccountCountAfter);
+
+    Assert.assertEquals(1, infoById.get().getResultValue());
+
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
+    Assert.assertEquals(testNetAccountCountBefore, testNetAccountCountAfter);
+    Assert.assertEquals(contractAccountCountBefore, contractAccountCountAfter);
+
+    Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
+    Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
+    Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
+    Assert.assertTrue(energyUsageTotal > EnergyCost.getInstance().getNEW_ACCT_CALL());
+
+    Long nonexistentAddressAccount = PublicMethed
+        .getAssetIssueValue(nonexistentAddress, assetAccountId, blockingStubFull1);
+    Assert.assertEquals(0L, nonexistentAddressAccount.longValue());
+  }
   /**
    * constructor.
    */

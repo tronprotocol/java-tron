@@ -365,7 +365,8 @@ public class DepositImpl implements Deposit {
       assetIssueCapsule = parent.getAssetIssue(tokenIdWithoutLeadingZero);
     } else {
       assetIssueCapsule = Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-          dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).get(tokenIdWithoutLeadingZero);
+          dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store())
+          .get(tokenIdWithoutLeadingZero);
     }
     if (assetIssueCapsule != null) {
       assetIssueCache.put(key, Value.create(assetIssueCapsule.getData()));
@@ -432,7 +433,8 @@ public class DepositImpl implements Deposit {
               + " insufficient balance");
     }
     if (value >= 0) {
-      accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
+      accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value,
+          this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
     } else {
       accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value,
           this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
@@ -812,4 +814,19 @@ public class DepositImpl implements Deposit {
   public static DepositImpl createRoot(Manager dbManager) {
     return new DepositImpl(dbManager, null);
   }
+
+  @Override
+  public AccountCapsule createNormalAccount(byte[] address) {
+    boolean withDefaultPermission =
+        getDynamicPropertiesStore().getAllowMultiSign() == 1;
+    Key key = new Key(address);
+    AccountCapsule account = new AccountCapsule(ByteString.copyFrom(address), AccountType.Normal,
+        getDynamicPropertiesStore().getLatestBlockHeaderTimestamp(), withDefaultPermission,
+        getDynamicPropertiesStore());
+
+    accountCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
+    return account;
+  }
+
 }
+

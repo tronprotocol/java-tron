@@ -24,15 +24,21 @@ public class ActuatorCreator {
 
   private ChainBaseManager chainBaseManager;
 
-  public static ActuatorCreator getINSTANCE() {
-    if (INSTANCE == null) {
-      INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
-    }
-    return INSTANCE;
+  private static class ActuatorCreatorInner {
+
+    private static ActuatorCreator INSTANCE;
   }
 
-  public static void init(StoreFactory storeFactory) {
-    INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
+
+  public static ActuatorCreator getINSTANCE() {
+    if (ActuatorCreatorInner.INSTANCE == null) {
+      ActuatorCreatorInner.INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
+    }
+    return ActuatorCreatorInner.INSTANCE;
+  }
+
+  public static void init() {
+    ActuatorCreatorInner.INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
   }
 
 

@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
+import org.tron.api.GrpcAPI.AccountPaginated;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
@@ -49,6 +50,7 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
+import org.tron.api.GrpcAPI.IvkDecryptAndMarkParameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
@@ -97,37 +99,10 @@ import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
-import org.tron.protos.contract.AccountContract.AccountCreateContract;
-import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
-import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.contract.ShieldContract.OutputPointInfo;
-import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
-import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
-import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
-import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
-import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
-import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
-import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
-import org.tron.protos.contract.AccountContract.SetAccountIdContract;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
-import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
-import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
-import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
-import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
-import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
-import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+
+import org.tron.protos.Contract;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -139,6 +114,34 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionSign;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
+import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
+import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldContract.OutputPointInfo;
+import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
+import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
 @Component
 @Slf4j(topic = "API")
@@ -146,6 +149,8 @@ public class RpcApiService implements Service {
 
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
+  public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
+  public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
   private int port = Args.getInstance().getRpcPort();
   private Server apiServer;
   @Autowired
@@ -164,8 +169,6 @@ public class RpcApiService implements Service {
   private WalletApi walletApi = new WalletApi();
   @Getter
   private WalletSolidityApi walletSolidityApi = new WalletSolidityApi();
-
-  private static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
 
   @Override
   public void init() {
@@ -224,6 +227,51 @@ public class RpcApiService implements Service {
       System.err.println("*** server shut down");
     }));
   }
+
+
+  private void callContract(TriggerSmartContract request,
+      StreamObserver<TransactionExtention> responseObserver, boolean isConstant) {
+    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+    Return.Builder retBuilder = Return.newBuilder();
+    try {
+      TransactionCapsule trxCap = createTransactionCapsule(request,
+          ContractType.TriggerSmartContract);
+      Transaction trx;
+      if (isConstant) {
+        trx = wallet.triggerConstantContract(request, trxCap, trxExtBuilder, retBuilder);
+      } else {
+        trx = wallet.triggerContract(request, trxCap, trxExtBuilder, retBuilder);
+      }
+      trxExtBuilder.setTransaction(trx);
+      trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+      retBuilder.setResult(true).setCode(response_code.SUCCESS);
+      trxExtBuilder.setResult(retBuilder);
+    } catch (ContractValidateException | VMIllegalException e) {
+      retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+          .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+      trxExtBuilder.setResult(retBuilder);
+      logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+    } catch (RuntimeException e) {
+      retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+      trxExtBuilder.setResult(retBuilder);
+      logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
+    } catch (Exception e) {
+      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+      trxExtBuilder.setResult(retBuilder);
+      logger.warn("unknown exception caught: " + e.getMessage(), e);
+    } finally {
+      responseObserver.onNext(trxExtBuilder.build());
+      responseObserver.onCompleted();
+    }
+  }
+
+  private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
+      ContractType contractType) throws ContractValidateException {
+    return wallet.createTransactionCapsule(message, contractType);
+  }
+
 
   private TransactionExtention transaction2Extention(Transaction transaction) {
     if (transaction == null) {
@@ -574,7 +622,20 @@ public class RpcApiService implements Service {
       } catch (Exception ex) {
         responseObserver.onError(getRunTimeException(ex));
       }
+      responseObserver.onCompleted();
+    }
 
+    @Override
+    public void getRewardInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      try {
+        long value = dbManager.getDelegationService().queryReward(request.getValue().toByteArray());
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(value);
+        responseObserver.onNext(builder.build());
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
       responseObserver.onCompleted();
     }
 
@@ -592,7 +653,7 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
-  
+
     @Override
     public void scanAndMarkNoteByIvk(GrpcAPI.IvkDecryptAndMarkParameters request,
         StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
@@ -600,13 +661,29 @@ public class RpcApiService implements Service {
       long endNum = request.getEndBlockIndex();
       try {
         DecryptNotesMarked decryptNotes = wallet.scanAndMarkNoteByIvk(startNum, endNum,
-                request.getIvk().toByteArray(),
-                request.getAk().toByteArray(),
-                request.getNk().toByteArray());
+            request.getIvk().toByteArray(),
+            request.getAk().toByteArray(),
+            request.getNk().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (BadItemException | ZksnarkException | InvalidProtocolBufferException
-              | ItemNotFoundException e) {
+          | ItemNotFoundException e) {
         responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBrokerageInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      try {
+        long cycle = dbManager.getDynamicPropertiesStore().getCurrentCycleNumber();
+        long value = dbManager.getDelegationStore()
+            .getBrokerage(cycle, request.getValue().toByteArray());
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(value);
+        responseObserver.onNext(builder.build());
+      } catch (Exception e) {
+        responseObserver.onError(e);
       }
       responseObserver.onCompleted();
     }
@@ -635,6 +712,14 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void triggerConstantContract(TriggerSmartContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+
+      callContract(request, responseObserver, true);
+    }
+
   }
 
   /**
@@ -704,7 +789,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -727,7 +812,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -738,10 +823,6 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-    private TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
-        ContractType contractType) throws ContractValidateException {
-      return wallet.createTransactionCapsule(message, contractType);
-    }
 
     @Override
     public void getTransactionSign(TransactionSign req,
@@ -936,7 +1017,7 @@ public class RpcApiService implements Service {
             createTransactionCapsule(request, ContractType.AssetIssueContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver.onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -955,7 +1036,7 @@ public class RpcApiService implements Service {
             createTransactionCapsule(request, ContractType.UnfreezeAssetContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver.onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1003,7 +1084,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1044,7 +1125,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1064,7 +1145,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1077,14 +1158,14 @@ public class RpcApiService implements Service {
 
     @Override
     public void updateWitness(WitnessUpdateContract request,
-                              StreamObserver<Transaction> responseObserver) {
+        StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
             createTransactionCapsule(request, ContractType.WitnessUpdateContract).getInstance());
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1096,7 +1177,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void updateAccount(AccountUpdateContract request,
+    public void updateAccount(Contract.AccountUpdateContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
@@ -1104,13 +1185,13 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
 
     @Override
-    public void setAccountId(SetAccountIdContract request,
+    public void setAccountId(Contract.SetAccountIdContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
@@ -1118,13 +1199,13 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
 
     @Override
-    public void updateAccount2(AccountUpdateContract request,
+    public void updateAccount2(Contract.AccountUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.AccountUpdateContract, responseObserver);
     }
@@ -1159,7 +1240,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1180,7 +1261,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1201,7 +1282,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1353,7 +1434,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1374,7 +1455,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException e) {
         responseObserver
             .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       }
       responseObserver.onCompleted();
     }
@@ -1635,7 +1716,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("ContractValidateException: {}", e.getMessage());
+        logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (RuntimeException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -1877,7 +1958,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -1905,7 +1986,7 @@ public class RpcApiService implements Service {
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
-        logger.debug("ContractValidateException: {}", e.getMessage());
+        logger.debug(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -2044,20 +2125,20 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
 
     }
-    
+
     @Override
     public void scanAndMarkNoteByIvk(GrpcAPI.IvkDecryptAndMarkParameters request,
-            StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
+        StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
       try {
         DecryptNotesMarked decryptNotes = wallet.scanAndMarkNoteByIvk(startNum, endNum,
-                request.getIvk().toByteArray(),
-                request.getAk().toByteArray(),
-                request.getNk().toByteArray());
+            request.getIvk().toByteArray(),
+            request.getAk().toByteArray(),
+            request.getNk().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (BadItemException | ZksnarkException | InvalidProtocolBufferException
-              | ItemNotFoundException e) {
+          | ItemNotFoundException e) {
         responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
@@ -2124,5 +2205,43 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getRewardInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      try {
+        long value = dbManager.getDelegationService().queryReward(request.getValue().toByteArray());
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(value);
+        responseObserver.onNext(builder.build());
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBrokerageInfo(BytesMessage request,
+        StreamObserver<NumberMessage> responseObserver) {
+      try {
+        long cycle = dbManager.getDynamicPropertiesStore().getCurrentCycleNumber();
+        long value = dbManager.getDelegationStore()
+            .getBrokerage(cycle, request.getValue().toByteArray());
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(value);
+        responseObserver.onNext(builder.build());
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void updateBrokerage(UpdateBrokerageContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UpdateBrokerageContract,
+          responseObserver);
+    }
+
   }
 }

@@ -47,7 +47,8 @@ public class UpdateAssetActuator extends AbstractActuator {
 
       AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
 
-      assetIssueCapsuleV2 = assetIssueV2Store.get(accountCapsule.getAssetIssuedID().toByteArray());
+      AssetIssueStore assetIssueStoreV2 = assetIssueV2Store;
+      assetIssueCapsuleV2 = assetIssueStoreV2.get(accountCapsule.getAssetIssuedID().toByteArray());
 
       assetIssueCapsuleV2.setFreeAssetNetLimit(newLimit);
       assetIssueCapsuleV2.setPublicFreeAssetNetLimit(newPublicLimit);
@@ -63,7 +64,7 @@ public class UpdateAssetActuator extends AbstractActuator {
 
         assetIssueStore
             .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-        assetIssueV2Store
+        assetIssueStoreV2
             .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
       } else {
         assetIssueV2Store

@@ -5,9 +5,12 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.ForkUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
+import org.tron.core.config.Parameter;
+import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.store.AccountStore;
@@ -102,7 +105,7 @@ public class ReceiptCapsule {
    * payEnergyBill pay receipt energy bill by energy processor.
    */
   public void payEnergyBill(DynamicPropertiesStore dynamicPropertiesStore,
-      AccountStore accountStore, AccountCapsule origin, AccountCapsule caller,
+      AccountStore accountStore,  ForkUtils forkUtils, AccountCapsule origin, AccountCapsule caller,
       long percent, long originEnergyLimit, EnergyProcessor energyProcessor, long now)
       throws BalanceInsufficientException {
     if (receipt.getEnergyUsageTotal() <= 0) {
@@ -110,25 +113,22 @@ public class ReceiptCapsule {
     }
 
     if (Objects.isNull(origin) && dynamicPropertiesStore.getAllowTvmConstantinople() == 1) {
-      payEnergyBill(dynamicPropertiesStore, accountStore, caller, receipt.getEnergyUsageTotal(),
-          energyProcessor, now);
+      payEnergyBill(dynamicPropertiesStore, accountStore, forkUtils, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
       return;
     }
 
     if (caller.getAddress().equals(origin.getAddress())) {
-      payEnergyBill(dynamicPropertiesStore, accountStore, caller, receipt.getEnergyUsageTotal(),
-          energyProcessor, now);
+      payEnergyBill(dynamicPropertiesStore, accountStore, forkUtils, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
     } else {
       long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
-      originUsage = getOriginUsage(dynamicPropertiesStore, origin, originEnergyLimit,
-          energyProcessor,
+      originUsage = getOriginUsage(dynamicPropertiesStore, origin, originEnergyLimit, energyProcessor,
           originUsage);
 
       long callerUsage = receipt.getEnergyUsageTotal() - originUsage;
       energyProcessor.useEnergy(origin, originUsage, now);
       this.setOriginEnergyUsage(originUsage);
-      payEnergyBill(dynamicPropertiesStore, accountStore, caller, callerUsage, energyProcessor,
-          now);
+      payEnergyBill(dynamicPropertiesStore, accountStore, forkUtils,
+          caller, callerUsage, energyProcessor, now);
     }
   }
 
@@ -144,7 +144,7 @@ public class ReceiptCapsule {
   }
 
   private void payEnergyBill(
-      DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore,
+      DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore, ForkUtils forkUtils,
       AccountCapsule account,
       long usage,
       EnergyProcessor energyProcessor,
@@ -155,6 +155,13 @@ public class ReceiptCapsule {
       this.setEnergyUsage(usage);
     } else {
       energyProcessor.useEnergy(account, accountEnergyLeft, now);
+
+      if(forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6_5) &&
+          dynamicPropertiesStore.getAllowAdaptiveEnergy() == 1) {
+        long blockEnergyUsage = dynamicPropertiesStore.getBlockEnergyUsage() + (usage - accountEnergyLeft);
+        dynamicPropertiesStore.saveBlockEnergyUsage(blockEnergyUsage);
+      }
+
       long sunPerEnergy = Constant.SUN_PER_ENERGY;
       long dynamicEnergyFee = dynamicPropertiesStore.getEnergyFee();
       if (dynamicEnergyFee > 0) {

@@ -16,6 +16,7 @@ import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.db.DelegationService;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
@@ -47,6 +48,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
         .getDelegatedResourceAccountIndexStore();
     VotesStore votesStore = chainBaseManager.getVotesStore();
+    DelegationService delegationService = chainBaseManager.getDelegationService();
     try {
       unfreezeBalanceContract = any.unpack(UnfreezeBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
@@ -55,6 +57,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
     byte[] ownerAddress = unfreezeBalanceContract.getOwnerAddress().toByteArray();
+
+    //
+    delegationService.withdrawReward(ownerAddress);
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
@@ -92,7 +97,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract)) {
         switch (unfreezeBalanceContract.getResource()) {
           case BANDWIDTH:
-            if (dynamicStore.supportShieldedTransaction()
+            if (dynamicStore.getAllowTvmSolidity059() == 1
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
                 < unfreezeBalance) {
               receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
@@ -101,7 +106,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             }
             break;
           case ENERGY:
-            if (dynamicStore.supportShieldedTransaction()
+            if (dynamicStore.getAllowTvmSolidity059() == 1
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() < unfreezeBalance) {
               receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
             } else {
@@ -306,7 +311,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       + "]");
             }
           } else {
-            if (!dynamicStore.supportShieldedTransaction()
+            if (dynamicStore.getAllowTvmSolidity059() != 1
                 && receiverCapsule != null
                 && receiverCapsule.getType() != AccountType.Contract
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
@@ -337,7 +342,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       "]");
             }
           } else {
-            if (!dynamicStore.supportShieldedTransaction()
+            if (dynamicStore.getAllowTvmSolidity059() != 1
                 && receiverCapsule != null
                 && receiverCapsule.getType() != AccountType.Contract
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()

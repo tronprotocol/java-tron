@@ -1,5 +1,7 @@
 package org.tron.common.utils;
 
+import static org.tron.core.config.args.Parameter.ForkBlockVersionConsts.ENERGY_LIMIT;
+
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.google.protobuf.ByteString;
@@ -16,7 +18,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 
 @Slf4j(topic = "utils")
@@ -32,7 +33,7 @@ public class ForkController extends ForkUtils {
   }
 
   public synchronized void update(BlockCapsule blockCapsule) {
-    List<ByteString> witnesses = manager.getActiveWitnesses();
+    List<ByteString> witnesses = manager.getWitnessScheduleStore().getActiveWitnesses();
     ByteString witness = blockCapsule.getWitnessAddress();
     int slot = witnesses.indexOf(witness);
     if (slot < 0) {
@@ -40,7 +41,7 @@ public class ForkController extends ForkUtils {
     }
 
     int version = blockCapsule.getInstance().getBlockHeader().getRawData().getVersion();
-    if (version < ForkBlockVersionConsts.ENERGY_LIMIT) {
+    if (version < ENERGY_LIMIT) {
       return;
     }
 

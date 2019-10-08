@@ -18,9 +18,11 @@
 
 package org.tron.core;
 
+import static org.tron.common.utils.Commons.ADDRESS_SIZE;
 import static org.tron.common.utils.Commons.addressPreFixByte;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
@@ -91,7 +93,6 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
@@ -103,7 +104,7 @@ import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorCreator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -123,8 +124,6 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.config.args.Parameter.ChainConstant;
-import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
@@ -153,8 +152,6 @@ import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.utils.TransactionUtil;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -267,6 +264,26 @@ public class Wallet {
     Commons.addressPreFixByte = addressPreFixByte;
   }
 
+  public static boolean addressValid(byte[] address) {
+    if (ArrayUtils.isEmpty(address)) {
+      logger.warn("Warning: Address is empty !!");
+      return false;
+    }
+    if (address.length != ADDRESS_SIZE / 2) {
+      logger.warn(
+          "Warning: Address length need " + ADDRESS_SIZE + " but " + address.length
+              + " !!");
+      return false;
+    }
+    if (address[0] != addressPreFixByte) {
+      logger.warn("Warning: Address need prefix with " + addressPreFixByte + " but "
+          + address[0] + " !!");
+      return false;
+    }
+    //Other rule;
+    return true;
+  }
+
   public static String encode58Check(byte[] input) {
     byte[] hash0 = Sha256Hash.hash(input);
     byte[] hash1 = Sha256Hash.hash(hash0);
@@ -274,6 +291,24 @@ public class Wallet {
     System.arraycopy(input, 0, inputCheck, 0, input.length);
     System.arraycopy(hash1, 0, inputCheck, input.length, 4);
     return Base58.encode(inputCheck);
+  }
+
+  private static byte[] decode58Check(String input) {
+    byte[] decodeCheck = Base58.decode(input);
+    if (decodeCheck.length <= 4) {
+      return null;
+    }
+    byte[] decodeData = new byte[decodeCheck.length - 4];
+    System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
+    byte[] hash0 = Sha256Hash.hash(decodeData);
+    byte[] hash1 = Sha256Hash.hash(hash0);
+    if (hash1[0] == decodeCheck[decodeData.length] &&
+        hash1[1] == decodeCheck[decodeData.length + 1] &&
+        hash1[2] == decodeCheck[decodeData.length + 2] &&
+        hash1[3] == decodeCheck[decodeData.length + 3]) {
+      return decodeData;
+    }
+    return null;
   }
 
   public static byte[] generateContractAddress(Transaction trx) {
@@ -320,10 +355,27 @@ public class Wallet {
 
   public static byte[] tryDecodeFromBase58Check(String address) {
     try {
-      return Commons.decodeFromBase58Check(address);
+      return Wallet.decodeFromBase58Check(address);
     } catch (Exception ex) {
       return null;
     }
+  }
+
+  public static byte[] decodeFromBase58Check(String addressBase58) {
+    if (StringUtils.isEmpty(addressBase58)) {
+      logger.warn("Warning: Address is empty !!");
+      return null;
+    }
+    byte[] address = decode58Check(addressBase58);
+    if (address == null) {
+      return null;
+    }
+
+    if (!addressValid(address)) {
+      return null;
+    }
+
+    return address;
   }
 
 //  public ShieldAddress generateShieldAddress() {
@@ -353,17 +405,16 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     long genesisTimeStamp = dbManager.getGenesisBlock().getTimeStamp();
     accountCapsule.setLatestConsumeTime(genesisTimeStamp
-        + ChainConstant.BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTime());
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTime());
     accountCapsule.setLatestConsumeFreeTime(genesisTimeStamp
-        + ChainConstant.BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeFreeTime());
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeFreeTime());
     accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
-        + ChainConstant.BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
 
     return accountCapsule.getInstance();
   }
@@ -383,8 +434,7 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     return accountCapsule.getInstance();
@@ -433,7 +483,7 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
     if (contractType != ContractType.CreateSmartContract
         && contractType != ContractType.TriggerSmartContract) {
-      List<Actuator> actList = ActuatorCreator.getINSTANCE().createActuator(trx);
+      List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
       for (Actuator act : actList) {
         act.validate();
       }
@@ -778,8 +828,7 @@ public class Wallet {
 
   public ExchangeList getExchangeList() {
     ExchangeList.Builder builder = ExchangeList.newBuilder();
-    List<ExchangeCapsule> exchangeCapsuleList = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).getAllExchanges();
+    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStoreFinal().getAllExchanges();
 
     exchangeCapsuleList
         .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
@@ -978,6 +1027,27 @@ public class Wallet {
             .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
             .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAdaptiveResourceLimitTargetRatio")
+        .setValue(
+            dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitTargetRatio() / (24 * 60))
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAdaptiveResourceLimitMultiplier")
+        .setValue(dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitMultiplier())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getChangeDelegation")
+        .setValue(dbManager.getDynamicPropertiesStore().getChangeDelegation())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getWitness127PayPerBlock")
+        .setValue(dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
+        .build());
+
     return builder.build();
   }
 
@@ -989,8 +1059,7 @@ public class Wallet {
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
-    Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).getAllAssetIssues()
+    dbManager.getAssetIssueStoreFinal().getAllAssetIssues()
         .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
@@ -1001,8 +1070,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
     List<AssetIssueCapsule> assetIssueList =
-        Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).getAssetIssuesPaginated(offset, limit);
+        dbManager.getAssetIssueStoreFinal().getAssetIssuesPaginated(offset, limit);
 
     if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
@@ -1018,8 +1086,7 @@ public class Wallet {
     }
 
     List<AssetIssueCapsule> assetIssueCapsuleList =
-        Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).getAllAssetIssues();
+        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
 
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
@@ -1092,8 +1159,7 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     long netLimit = processor
@@ -1206,8 +1272,7 @@ public class Wallet {
     }
 
     List<AssetIssueCapsule> assetIssueCapsuleList =
-        Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-            dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).getAllAssetIssues();
+        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
 
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
@@ -1332,8 +1397,7 @@ public class Wallet {
     }
     ExchangeCapsule exchangeCapsule = null;
     try {
-      exchangeCapsule = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
-          dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).get(exchangeId.toByteArray());
+      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -2157,8 +2221,8 @@ public class Wallet {
       throw new ContractValidateException("Not a shielded transaction");
     }
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-    byte[] transactionHash = TransactionUtil
-        .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
+    byte[] transactionHash = TransactionCapsule
+        .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(transactionHash)).build();
   }
 
@@ -2261,18 +2325,20 @@ public class Wallet {
     } else {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
+
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
         StoreFactory.getInstance(), true,
         false);
-    VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
+/*    VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
     VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(
         dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
     VMConfig.initAllowTvmConstantinople(
         dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
     VMConfig
-        .initAllowTvmSolidity059(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
+        .initAllowTvmSolidity059(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());*/
     VMActuator vmActuator = new VMActuator(true);
+
     vmActuator.validate(context);
     vmActuator.execute(context);
 
@@ -2432,8 +2498,7 @@ public class Wallet {
         .asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
       try {
-        return Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
-            dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).get(key);
+        return dbManager.getExchangeStoreFinal().get(key);
       } catch (Exception ex) {
         return null;
       }
@@ -2604,7 +2669,8 @@ public class Wallet {
         }
         ShieldedTransferContract stContract = null;
         try {
-          stContract = c.getParameter().unpack(ShieldedTransferContract.class);
+          stContract = c.getParameter().unpack(
+              ShieldedTransferContract.class);
         } catch (InvalidProtocolBufferException e) {
           throw new RuntimeException(
               "unpack ShieldedTransferContract failed.");
