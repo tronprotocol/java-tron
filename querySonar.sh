@@ -16,6 +16,13 @@ else
 	SonarStatus_Url="https://sonarcloud.io/api/qualitygates/project_status?projectKey=java-tron&pullRequest="$BUILDKITE_PULL_REQUEST
 	Status=`curl -s $SonarStatus_Url | jq '.projectStatus.status'`
 	echo "current branch sonarcloud status is : "$Status
+	if [ $Status = null ]; then
+	      echo "wait a moment, 5m ....."
+	      sleep 300
+	      SonarStatus_Url="https://sonarcloud.io/api/qualitygates/project_status?projectKey=java-tron&pullRequest="$BUILDKITE_PULL_REQUEST
+	      Status=`curl -s $SonarStatus_Url | jq '.projectStatus.status'`
+	fi
+
 	if [ x"$Status" = x'"ERROR"' ]; then
     		echo "Sonar Check Failed"
     		echo "Please visit https://sonarcloud.io/dashboard?id=java-tron&pullRequest="$BUILDKITE_PULL_REQUEST" for more details"

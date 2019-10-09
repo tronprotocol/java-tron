@@ -558,7 +558,7 @@ public class ContractTestSendCoin001 {
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_VALIDATE_ERROR"));
     Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-        containsString("contract validate error : No contract or not a smart contract"));
+      containsString("contract validate error : No contract or not a valid smart contract"));
 
     Assert.assertTrue(PublicMethed
         .transferAsset(returnAddressBytes, assetAccountId.toByteArray(), 100L, dev001Address,

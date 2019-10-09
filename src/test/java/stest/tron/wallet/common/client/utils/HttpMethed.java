@@ -2947,7 +2947,7 @@ public class HttpMethed {
       HttpMethed.printJsonContent(responseContent);
       String jsonString = responseContent.toJSONString();
       if (jsonString.contains("result") && (responseContent.getString("result").equals("true")
-          && responseContent.getString("message").equals("input note already spent"))) {
+          && responseContent.getString("message").equals("Input note has been spent"))) {
         return Boolean.TRUE;
       } else {
         return Boolean.FALSE;
@@ -2995,7 +2995,7 @@ public class HttpMethed {
       HttpMethed.printJsonContent(responseContent);
       String jsonString = responseContent.toJSONString();
       if (jsonString.contains("result") && (responseContent.getString("result").equals("true")
-          && responseContent.getString("message").equals("input note already spent"))) {
+          && responseContent.getString("message").equals("Input note has been spent"))) {
         return Boolean.TRUE;
       } else {
         return Boolean.FALSE;
