@@ -254,7 +254,7 @@ contract Caller {
   @Test
   public void testTransferFailedBeforeAllowTvmConstantinopl()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
-
+    ConfigLoader.disable = false;
     manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
     manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(0);
     manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(0);
