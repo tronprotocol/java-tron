@@ -32,23 +32,19 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class deployMainGateway {
 
 
-  private final String testDepositTrx = "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb7";
-  private final byte[] testDepositAddress = PublicMethed.getFinalAddress(testDepositTrx);
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] depositAddress = ecKey1.getAddress();
+  String testKeyFordeposit = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  private String testDepositTrx =
+      "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb7";
+  private byte[] testDepositAddress = PublicMethed.getFinalAddress(testDepositTrx);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
-
-
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] depositAddress = ecKey1.getAddress();
-  String testKeyFordeposit = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
 
   @BeforeSuite
   public void beforeSuite() {
@@ -62,10 +58,7 @@ public class deployMainGateway {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-//    PublicMethed.printAddress(testKeyFordeposit);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
@@ -84,18 +77,13 @@ public class deployMainGateway {
     logger.info("OralceBalance: " + OralceBalance);
 
     String contractName = "gateWayContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_MainGateway");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_MainGateway");
+    String code = Configuration.getByPath("testng.conf").getString("code.code_MainGateway");
+    String abi = Configuration.getByPath("testng.conf").getString("abi.abi_MainGateway");
     String parame = "\"" + Base58.encode58Check(testDepositAddress) + "\"";
 
     String deployTxid = PublicMethed
-        .deployContractWithConstantParame(contractName, abi, code, "constructor(address)",
-            parame, "",
-            maxFeeLimit,
-            0L, 100, null, testKeyFordeposit, depositAddress
-            , blockingStubFull);
+        .deployContractWithConstantParame(contractName, abi, code, "constructor(address)", parame,
+            "", maxFeeLimit, 0L, 100, null, testKeyFordeposit, depositAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = PublicMethed
@@ -105,11 +93,10 @@ public class deployMainGateway {
     Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertNotNull(mainChainGateway);
 
-    SmartContract smartContract = PublicMethed.getContract(mainChainGateway,
-        blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(mainChainGateway, blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    String outputPath = "./src/test/resources/mainChainGatewayAddress" ;
+    String outputPath = "./src/test/resources/mainChainGatewayAddress";
     try {
       File mainChainFile = new File(outputPath);
       Boolean cun = mainChainFile.createNewFile();
@@ -119,7 +106,7 @@ public class deployMainGateway {
 
       out.close();
       writer.close();
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
 

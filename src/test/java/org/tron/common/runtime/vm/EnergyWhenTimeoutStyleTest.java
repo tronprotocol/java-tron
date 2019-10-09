@@ -44,8 +44,7 @@ public class EnergyWhenTimeoutStyleTest {
    */
   @Before
   public void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath},
-        Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -81,14 +80,14 @@ public class EnergyWhenTimeoutStyleTest {
 
   @Test
   public void endlessLoopTest()
-      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException,
+      VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L;
     byte[] address = Hex.decode(OWNER_ADDRESS);
     long consumeUserResourcePercent = 0;
-    TVMTestResult result = deployEndlessLoopContract(value, feeLimit,
-        consumeUserResourcePercent);
+    TVMTestResult result = deployEndlessLoopContract(value, feeLimit, consumeUserResourcePercent);
 
     if (null != result.getRuntime().getResult().getException()) {
       long expectEnergyUsageTotal = feeLimit / 100;
@@ -104,7 +103,7 @@ public class EnergyWhenTimeoutStyleTest {
 
     byte[] contractAddress = result.getContractAddress();
 
-    /* =================================== CALL setVote(uint256) =================================== */
+    /* ====================== CALL setVote(uint256) =================================== */
     String params = "0000000000000000000000000000000000000000000000000000000000000003";
     byte[] triggerData = TvmTestUtils.parseAbi("setVote(uint256)", params);
     boolean haveException = false;
@@ -115,26 +114,36 @@ public class EnergyWhenTimeoutStyleTest {
     long expectEnergyUsageTotal2 = feeLimit / 100;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal2);
     Exception exception = result.getRuntime().getResult().getException();
-    Assert.assertTrue((exception instanceof OutOfTimeException)
-        || (exception instanceof OutOfEnergyException));
+    Assert.assertTrue(
+        (exception instanceof OutOfTimeException) || (exception instanceof OutOfEnergyException));
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
   }
 
   public TVMTestResult deployEndlessLoopContract(long value, long feeLimit,
       long consumeUserResourcePercent)
-      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException,
+      VMIllegalException {
     String contractName = "EndlessLoopContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
-    String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getVote\",\"outputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"name\":\"setVote\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
-    String code = "608060405234801561001057600080fd5b506000808190555060fa806100266000396000f3006080604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680630242f35114604e578063230796ae146076575b600080fd5b348015605957600080fd5b50606060a0565b6040518082815260200191505060405180910390f35b348015608157600080fd5b50609e6004803603810190808035906020019092919050505060a9565b005b60008054905090565b806000819055505b60011560cb576001600080828254019250508190555060b1565b505600a165627a7a72305820290a38c9bbafccaf6c7f752ab56d229e354da767efb72715ee9fdb653b9f4b6c0029";
+    String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getVote\",\"outputs\":[{\"name\":\""
+        + "_vote\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":"
+        + "\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_vote\",\"type\":\"uint256\""
+        + "}],\"name\":\"setVote\",\"outputs\":[],\"payable\":false,\"stateMutability\":\""
+        + "nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability"
+        + "\":\"nonpayable\",\"type\":\"constructor\"}]";
+    String code = "608060405234801561001057600080fd5b506000808190555060fa806100266000396000f300608"
+        + "0604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000"
+        + "900463ffffffff1680630242f35114604e578063230796ae146076575b600080fd5b348015605957600080f"
+        + "d5b50606060a0565b6040518082815260200191505060405180910390f35b348015608157600080fd5b5060"
+        + "9e6004803603810190808035906020019092919050505060a9565b005b60008054905090565b80600081905"
+        + "5505b60011560cb576001600080828254019250508190555060b1565b505600a165627a7a72305820290a38"
+        + "c9bbafccaf6c7f752ab56d229e354da767efb72715ee9fdb653b9f4b6c0029";
     String libraryAddressPair = null;
 
     return TvmTestUtils
-        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
-            value,
-            feeLimit, consumeUserResourcePercent, libraryAddressPair,
-            dbManager, null);
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,
+            consumeUserResourcePercent, libraryAddressPair, dbManager, null);
   }
 
   /**

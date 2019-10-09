@@ -1,6 +1,5 @@
 package org.tron.common.runtime.vm;
 
-
 import static junit.framework.TestCase.fail;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
@@ -53,9 +52,9 @@ public class PrecompiledContractsTest {
   private static final DataWord voteContractAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010001");
   //  private static final DataWord freezeBalanceAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010002");
-//  private static final DataWord unFreezeBalanceAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010003");
+  //      "0000000000000000000000000000000000000000000000000000000000010002");
+  //  private static final DataWord unFreezeBalanceAddr = new DataWord(
+  //      "0000000000000000000000000000000000000000000000000000000000010003");
   private static final DataWord withdrawBalanceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010004");
   private static final DataWord proposalApproveAddr = new DataWord(
@@ -68,10 +67,6 @@ public class PrecompiledContractsTest {
       "0000000000000000000000000000000000000000000000000000000000010008");
   private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010009");
-
-  private static TronApplicationContext context;
-  private static Application appT;
-  private static Manager dbManager;
   private static final String dbPath = "output_PrecompiledContracts_test";
   private static final String ACCOUNT_NAME = "account";
   private static final String OWNER_ADDRESS;
@@ -79,13 +74,15 @@ public class PrecompiledContractsTest {
   private static final String WITNESS_ADDRESS;
   private static final String WITNESS_ADDRESS_BASE = "548794500882809695a8a687866e76d4271a1abc";
   private static final String URL = "https://tron.network";
-
   // withdraw
   private static final long initBalance = 10_000_000_000L;
   private static final long allowance = 32_000_000L;
+  private static TronApplicationContext context;
+  private static Application appT;
+  private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -103,30 +100,36 @@ public class PrecompiledContractsTest {
   }
 
   /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
+
+  /**
    * create temp Capsule test need.
    */
   @Before
   public void createCapsule() {
     // witness: witnessCapsule
-    WitnessCapsule witnessCapsule =
-        new WitnessCapsule(
-            StringUtil.hexString2ByteString(WITNESS_ADDRESS),
-            10L,
-            URL);
+    WitnessCapsule witnessCapsule = new WitnessCapsule(
+        StringUtil.hexString2ByteString(WITNESS_ADDRESS), 10L, URL);
     // witness: AccountCapsule
-    AccountCapsule witnessAccountCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8(WITNESS_NAME),
-            StringUtil.hexString2ByteString(WITNESS_ADDRESS),
-            AccountType.Normal,
-            initBalance);
+    AccountCapsule witnessAccountCapsule = new AccountCapsule(ByteString.copyFromUtf8(WITNESS_NAME),
+        StringUtil.hexString2ByteString(WITNESS_ADDRESS), AccountType.Normal, initBalance);
     // some normal account
-    AccountCapsule ownerAccountFirstCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8(ACCOUNT_NAME),
-            StringUtil.hexString2ByteString(OWNER_ADDRESS),
-            AccountType.Normal,
-            10_000_000_000_000L);
+    AccountCapsule ownerAccountFirstCapsule = new AccountCapsule(
+        ByteString.copyFromUtf8(ACCOUNT_NAME), StringUtil.hexString2ByteString(OWNER_ADDRESS),
+        AccountType.Normal, 10_000_000_000_000L);
 
     dbManager.getAccountStore()
         .put(witnessAccountCapsule.getAddress().toByteArray(), witnessAccountCapsule);
@@ -139,14 +142,10 @@ public class PrecompiledContractsTest {
     dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
   }
 
-
   private Any getFreezeContract(String ownerAddress, long frozenBalance, long duration) {
-    return Any.pack(
-        Contract.FreezeBalanceContract.newBuilder()
-            .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
-            .setFrozenBalance(frozenBalance)
-            .setFrozenDuration(duration)
-            .build());
+    return Any.pack(Contract.FreezeBalanceContract.newBuilder()
+        .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
+        .setFrozenBalance(frozenBalance).setFrozenDuration(duration).build());
   }
 
   private PrecompiledContract createPrecompiledContract(DataWord addr, String ownerAddress) {
@@ -160,7 +159,8 @@ public class PrecompiledContractsTest {
 
   //@Test
   public void voteWitnessNativeTest()
-      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, ContractValidateException, ContractExeException {
+      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException,
+      InstantiationException, ContractValidateException, ContractExeException {
     PrecompiledContract contract = createPrecompiledContract(voteContractAddr, OWNER_ADDRESS);
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     byte[] witnessAddressBytes = new byte[32];
@@ -178,9 +178,8 @@ public class PrecompiledContractsTest {
     long frozenBalance = 1_000_000_000_000L;
     long duration = 3;
     Any freezeContract = getFreezeContract(OWNER_ADDRESS, frozenBalance, duration);
-    Constructor<FreezeBalanceActuator> constructor =
-        FreezeBalanceActuator.class
-            .getDeclaredConstructor(Any.class, dbManager.getClass());
+    Constructor<FreezeBalanceActuator> constructor = FreezeBalanceActuator.class
+        .getDeclaredConstructor(Any.class, dbManager.getClass());
     constructor.setAccessible(true);
     FreezeBalanceActuator freezeBalanceActuator = constructor
         .newInstance(freezeContract, dbManager);
@@ -217,19 +216,18 @@ public class PrecompiledContractsTest {
     Assert.assertEquals(allowance, accountCapsule.getAllowance());
     Assert.assertEquals(0, accountCapsule.getLatestWithdrawTime());
 
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address),
-        100, "http://baidu.com");
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address), 100,
+        "http://baidu.com");
     dbManager.getWitnessStore().put(address, witnessCapsule);
     contract.setDeposit(deposit);
     contract.execute(new byte[0]);
     deposit.commit();
-    AccountCapsule witnessAccount =
-        dbManager.getAccountStore().get(ByteArray.fromHexString(WITNESS_ADDRESS));
+    AccountCapsule witnessAccount = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(WITNESS_ADDRESS));
     Assert.assertEquals(initBalance + allowance, witnessAccount.getBalance());
     Assert.assertEquals(0, witnessAccount.getAllowance());
     Assert.assertNotEquals(0, witnessAccount.getLatestWithdrawTime());
   }
-
 
   //@Test
   public void proposalTest() {
@@ -262,8 +260,8 @@ public class PrecompiledContractsTest {
       Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestProposalNum());
       Assert.assertEquals(0, proposalCapsule.getApprovals().size());
       Assert.assertEquals(1000000, proposalCapsule.getCreateTime());
-      Assert.assertEquals(261200000, proposalCapsule.getExpirationTime()
-      ); // 2000000 + 3 * 4 * 21600000
+      Assert.assertEquals(261200000,
+          proposalCapsule.getExpirationTime()); // 2000000 + 3 * 4 * 21600000
 
 
 
@@ -305,12 +303,15 @@ public class PrecompiledContractsTest {
     }
   }
 
-
   @Test
   public void convertFromTronBytesAddressNativeTest() {
-//    PrecompiledContract contract = createPrecompiledContract(convertFromTronBytesAddressAddr, WITNESS_ADDRESS);
-//    byte[] solidityAddress = contract.execute(new DataWord(WITNESS_ADDRESS).getData()).getRight();
-//    Assert.assertArrayEquals(solidityAddress,new DataWord(Hex.decode(WITNESS_ADDRESS_BASE)).getData());
+    /*
+    PrecompiledContract contract = createPrecompiledContract(convertFromTronBytesAddressAddr,
+    WITNESS_ADDRESS);
+    byte[] solidityAddress = contract.execute(new DataWord(WITNESS_ADDRESS).getData()).getRight();
+    Assert.assertArrayEquals(solidityAddress,new DataWord(Hex.decode(WITNESS_ADDRESS_BASE))
+      .getData());
+    */
   }
 
   //@Test
@@ -330,22 +331,6 @@ public class PrecompiledContractsTest {
     byte[] solidityAddress = contract.execute(data).getRight();
     Assert.assertArrayEquals(solidityAddress,
         new DataWord(Hex.decode(WITNESS_ADDRESS_BASE)).getData());
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
 }

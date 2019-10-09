@@ -92,14 +92,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 public class SendCoinShieldTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
-  private static String dbPath = "output_ShieldedTransaction_test";
-  private static String dbDirectory = "db_ShieldedTransaction_test";
-  private static String indexDirectory = "index_ShieldedTransaction_test";
-  private static AnnotationConfigApplicationContext context;
-  private static Manager dbManager;
-  private static Wallet wallet;
   private static final byte[] DEFAULT_OVK;
-
   private static final String PUBLIC_ADDRESS_ONE;
   private static final long OWNER_BALANCE = 9999999000000L;
   private static final long tokenId = 1;
@@ -111,18 +104,20 @@ public class SendCoinShieldTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static String dbPath = "output_ShieldedTransaction_test";
+  private static String dbDirectory = "db_ShieldedTransaction_test";
+  private static String indexDirectory = "index_ShieldedTransaction_test";
+  private static AnnotationConfigApplicationContext context;
+  private static Manager dbManager;
+  private static Wallet wallet;
 
   static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath
-        }, "config-test-mainnet.conf"
-    );
+    Args.setParam(new String[] {"--output-directory", dbPath}, "config-test-mainnet.conf");
     context = new TronApplicationContext(DefaultConfig.class);
     PUBLIC_ADDRESS_ONE =
         Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
-    DEFAULT_OVK = ByteArray.fromHexString(
-        "030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
+    DEFAULT_OVK = ByteArray
+        .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
   }
 
   /**
@@ -154,20 +149,13 @@ public class SendCoinShieldTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
 
-    AssetIssueContract assetIssueContract =
-        AssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE)))
-            .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
-            .setId(Long.toString(tokenId))
-            .setTotalSupply(OWNER_BALANCE)
-            .setTrxNum(TRX_NUM)
-            .setNum(NUM)
-            .setStartTime(START_TIME)
-            .setEndTime(END_TIME)
-            .setVoteScore(VOTE_SCORE)
-            .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
-            .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
-            .build();
+    AssetIssueContract assetIssueContract = AssetIssueContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE)))
+        .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+        .setId(Long.toString(tokenId)).setTotalSupply(OWNER_BALANCE).setTrxNum(TRX_NUM).setNum(NUM)
+        .setStartTime(START_TIME).setEndTime(END_TIME).setVoteScore(VOTE_SCORE)
+        .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+        .setUrl(ByteString.copyFrom(ByteArray.fromString(URL))).build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
   }
@@ -210,8 +198,8 @@ public class SendCoinShieldTest {
 
   private IncrementalMerkleVoucherContainer createComplexMerkleVoucherContainer(byte[] cm)
       throws ZksnarkException {
-    IncrementalMerkleTreeContainer tree =
-        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
     String s1 = "556f3af94225d46b1ef652abc9005dee873b2e245eef07fd5be587e0f21023b0";
     PedersenHash a = String2PedersenHash(s1);
     String s2 = "5814b127a6c6b8f07ed03f0f6e2843ff04c9851ff824a4e5b4dad5b5f3475722";
@@ -229,8 +217,8 @@ public class SendCoinShieldTest {
 
   private IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm)
       throws ZksnarkException {
-    IncrementalMerkleTreeContainer tree =
-        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     compressCapsule1.setContent(ByteString.copyFrom(cm));
     PedersenHash a = compressCapsule1.getInstance();
@@ -319,12 +307,10 @@ public class SendCoinShieldTest {
     ReceiveDescription receiveDescription = capsule.getInstance();
     ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
     if (!JLibrustzcash.librustzcashSaplingCheckOutput(
-        new CheckOutputParams(ctx,
-            receiveDescription.getValueCommitment().toByteArray(),
+        new CheckOutputParams(ctx, receiveDescription.getValueCommitment().toByteArray(),
             receiveDescription.getNoteCommitment().toByteArray(),
             receiveDescription.getEpk().toByteArray(),
-            receiveDescription.getZkproof().toByteArray())
-    )) {
+            receiveDescription.getZkproof().toByteArray()))) {
       JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
       throw new RuntimeException("librustzcashSaplingCheckOutput error");
     }
@@ -352,15 +338,13 @@ public class SendCoinShieldTest {
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder.generateOutputProof(output, ctx);
     Contract.ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
-    Optional<Note> ret1 = Note.decrypt(
-        receiveDescription.getCEnc().toByteArray(),//ciphertext
-        fullViewingKey.inViewingKey().getValue(),
-        receiveDescription.getEpk().toByteArray(),//epk
+    Optional<Note> ret1 = Note.decrypt(receiveDescription.getCEnc().toByteArray(),//ciphertext
+        fullViewingKey.inViewingKey().getValue(), receiveDescription.getEpk().toByteArray(),//epk
         receiveDescription.getNoteCommitment().toByteArray() //cm
     );
 
     Assert.assertTrue(ret1.isPresent());
-    
+
     Note noteText = ret1.get();
     byte[] pkD = new byte[32];
     if (!JLibrustzcash.librustzcashIvkToPkd(
@@ -373,16 +357,12 @@ public class SendCoinShieldTest {
     Assert.assertEquals(noteText.getValue(), 4000);
     Assert.assertArrayEquals(noteText.getMemo(), memo);
 
-    String paymentAddressStr = KeyIo.encodePaymentAddress(
-        new PaymentAddress(noteText.getD(), pkD));
+    String paymentAddressStr = KeyIo.encodePaymentAddress(new PaymentAddress(noteText.getD(), pkD));
 
-    GrpcAPI.Note grpcAPINote = GrpcAPI.Note.newBuilder()
-        .setPaymentAddress(paymentAddressStr)
-        .setValue(noteText.getValue())
-        .setRcm(ByteString.copyFrom(noteText.getRcm()))
-        .setMemo(ByteString.copyFrom(noteText.getMemo()))
-        .build();
-    
+    GrpcAPI.Note grpcAPINote = GrpcAPI.Note.newBuilder().setPaymentAddress(paymentAddressStr)
+        .setValue(noteText.getValue()).setRcm(ByteString.copyFrom(noteText.getRcm()))
+        .setMemo(ByteString.copyFrom(noteText.getMemo())).build();
+
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
   }
 
@@ -432,19 +412,15 @@ public class SendCoinShieldTest {
     OutgoingPlaintext outgoingPlaintext = new OutgoingPlaintext(note.getPkD(), encryptor.getEsk());
 
     // encrypt with ovk
-    Encryption.OutCiphertext outCiphertext = outgoingPlaintext.encrypt(
-        fullViewingKey.getOvk(),
-        receiveDescription.getValueCommitment().toByteArray(),
-        receiveDescription.getNoteCommitment().toByteArray(),
-        encryptor);
+    Encryption.OutCiphertext outCiphertext = outgoingPlaintext
+        .encrypt(fullViewingKey.getOvk(), receiveDescription.getValueCommitment().toByteArray(),
+            receiveDescription.getNoteCommitment().toByteArray(), encryptor);
 
     // get pkD, esk from decryption of c_out with ovk
-    Optional<OutgoingPlaintext> ret2 = OutgoingPlaintext.decrypt(outCiphertext,
-        fullViewingKey.getOvk(),
-        receiveDescription.getValueCommitment().toByteArray(),
-        receiveDescription.getNoteCommitment().toByteArray(),
-        encryptor.getEpk()
-    );
+    Optional<OutgoingPlaintext> ret2 = OutgoingPlaintext
+        .decrypt(outCiphertext, fullViewingKey.getOvk(),
+            receiveDescription.getValueCommitment().toByteArray(),
+            receiveDescription.getNoteCommitment().toByteArray(), encryptor.getEpk());
 
     if (ret2.isPresent()) {
       OutgoingPlaintext decryptedOutgoingPlaintext = ret2.get();
@@ -455,11 +431,8 @@ public class SendCoinShieldTest {
       Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
       ciphertext.setData(enc.getEncCiphertext());
       Optional<Note> foo = Note
-          .decrypt(ciphertext,
-                  encryptor.getEpk(),
-                  decryptedOutgoingPlaintext.getEsk(),
-                  decryptedOutgoingPlaintext.getPkD(),
-                  cmuOpt);
+          .decrypt(ciphertext, encryptor.getEpk(), decryptedOutgoingPlaintext.getEsk(),
+              decryptedOutgoingPlaintext.getPkD(), cmuOpt);
 
       if (foo.isPresent()) {
         Note bar = foo.get();
@@ -480,15 +453,16 @@ public class SendCoinShieldTest {
 
   @Test
   public void pushShieldedTransactionAndDecryptWithIvk()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
-      TaposException, TransactionExpirationException, ReceiptCheckErrException,
-      DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException,
-      ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
+      throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException, TaposException, TransactionExpirationException,
+      ReceiptCheckErrException, DupTransactionException, VMIllegalException,
+      ValidateSignatureException, BadItemException, ContractExeException,
+      AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     // generate spend proof
@@ -510,8 +484,9 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
-    builder.addOutput(senderOvk, paymentAddress,
-        1000 * 1000000L - wallet.getShieldedTransactionFee(), memo);
+    builder
+        .addOutput(senderOvk, paymentAddress, 1000 * 1000000L - wallet.getShieldedTransactionFee(),
+            memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -530,10 +505,8 @@ public class SendCoinShieldTest {
           .unpack(Contract.ShieldedTransferContract.class);
       ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
 
-      Optional<Note> ret1 = Note.decrypt(
-          receiveDescription.getCEnc().toByteArray(),//ciphertext
-          ivk,
-          receiveDescription.getEpk().toByteArray(),//epk
+      Optional<Note> ret1 = Note.decrypt(receiveDescription.getCEnc().toByteArray(),//ciphertext
+          ivk, receiveDescription.getEpk().toByteArray(),//epk
           receiveDescription.getNoteCommitment().toByteArray() //cm
       );
 
@@ -546,7 +519,8 @@ public class SendCoinShieldTest {
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
-        Assert.assertEquals(1000 * 1000000L - wallet.getShieldedTransactionFee(), noteText.getValue());
+        Assert.assertEquals(1000 * 1000000L - wallet.getShieldedTransactionFee(),
+            noteText.getValue());
         Assert.assertArrayEquals(memo, noteText.getMemo());
       } else {
         Assert.assertFalse(true);
@@ -566,15 +540,16 @@ public class SendCoinShieldTest {
 
   @Test
   public void pushShieldedTransactionAndDecryptWithOvk()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
-      TaposException, TransactionExpirationException, ReceiptCheckErrException,
-      DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException,
-      ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
+      throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException, TaposException, TransactionExpirationException,
+      ReceiptCheckErrException, DupTransactionException, VMIllegalException,
+      ValidateSignatureException, BadItemException, ContractExeException,
+      AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     // generate spend proof
@@ -596,8 +571,9 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
-    builder.addOutput(senderOvk, paymentAddress,
-        1000 * 1000000L - wallet.getShieldedTransactionFee(), memo);
+    builder
+        .addOutput(senderOvk, paymentAddress, 1000 * 1000000L - wallet.getShieldedTransactionFee(),
+            memo);
 
     TransactionCapsule transactionCap = builder.build();
     boolean ok = dbManager.pushTransaction(transactionCap);
@@ -612,30 +588,25 @@ public class SendCoinShieldTest {
       Contract.ShieldedTransferContract stContract = c.getParameter()
           .unpack(Contract.ShieldedTransferContract.class);
       ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
-      
+
       //first try to decrypt cOut with ovk, get pkd、esk
       Encryption.OutCiphertext cOut = new Encryption.OutCiphertext();
       cOut.setData(receiveDescription.getCOut().toByteArray());
-      Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(
-              cOut,//ciphertext
-              senderOvk,
-              receiveDescription.getValueCommitment().toByteArray(), //cv
-              receiveDescription.getNoteCommitment().toByteArray(), //cmu
-              receiveDescription.getEpk().toByteArray() //epk
+      Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(cOut,//ciphertext
+          senderOvk, receiveDescription.getValueCommitment().toByteArray(), //cv
+          receiveDescription.getNoteCommitment().toByteArray(), //cmu
+          receiveDescription.getEpk().toByteArray() //epk
       );
-  
+
       //then decrypt c_enc with pkd、esk, get decoded note == ciphertext
       if (notePlaintext.isPresent()) {
         OutgoingPlaintext decryptedOutgoingPlaintext = notePlaintext.get();
-        
+
         Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
         ciphertext.setData(receiveDescription.getCEnc().toByteArray());
-        Optional<Note> foo = Note
-            .decrypt(ciphertext,
-                    receiveDescription.getEpk().toByteArray(),
-                    decryptedOutgoingPlaintext.getEsk(),
-                    decryptedOutgoingPlaintext.getPkD(),
-                    receiveDescription.getNoteCommitment().toByteArray());
+        Optional<Note> foo = Note.decrypt(ciphertext, receiveDescription.getEpk().toByteArray(),
+            decryptedOutgoingPlaintext.getEsk(), decryptedOutgoingPlaintext.getPkD(),
+            receiveDescription.getNoteCommitment().toByteArray());
 
         if (foo.isPresent()) {
           Note bar = foo.get();
@@ -663,7 +634,7 @@ public class SendCoinShieldTest {
     // generate spend proof
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
@@ -680,14 +651,12 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
-    builder
-        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000L, new byte[512]);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000L, new byte[512]);
     TransactionCapsule transactionCap = builder.build();
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     boolean ret = ZksnarkClient.getInstance().checkZksnarkProof(transactionCap.getInstance(),
         TransactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCap),
-        10 * 1000000
-    );
+        10 * 1000000);
     Assert.assertTrue(ret);
   }
 
@@ -714,22 +683,15 @@ public class SendCoinShieldTest {
 
     byte[] result = new byte[64];
     JLibrustzcash.librustzcashSaplingSpendSig(
-        new SpendSigParams(expsk.getAsk(),
-            spend.getAlpha(),
-            getHash(),
-            result));
+        new SpendSigParams(expsk.getAsk(), spend.getAlpha(), getHash(), result));
 
     long verifyContext = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
-    boolean ok = JLibrustzcash.librustzcashSaplingCheckSpend(
-        new CheckSpendParams(verifyContext,
-            spendDescriptionCapsule.getValueCommitment().toByteArray(),
-            spendDescriptionCapsule.getAnchor().toByteArray(),
-            spendDescriptionCapsule.getNullifier().toByteArray(),
-            spendDescriptionCapsule.getRk().toByteArray(),
-            spendDescriptionCapsule.getZkproof().toByteArray(),
-            result,
-            getHash())
-    );
+    boolean ok = JLibrustzcash.librustzcashSaplingCheckSpend(new CheckSpendParams(verifyContext,
+        spendDescriptionCapsule.getValueCommitment().toByteArray(),
+        spendDescriptionCapsule.getAnchor().toByteArray(),
+        spendDescriptionCapsule.getNullifier().toByteArray(),
+        spendDescriptionCapsule.getRk().toByteArray(),
+        spendDescriptionCapsule.getZkproof().toByteArray(), result, getHash()));
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(verifyContext);
     Assert.assertEquals(ok, true);
   }
@@ -754,25 +716,21 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder
-        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000L, new byte[512]);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000L, new byte[512]);
     builder.generateOutputProof(builder.getReceives().get(0), ctx);
 
     // test create binding sig
     byte[] bindingSig = new byte[64];
     boolean ret = JLibrustzcash.librustzcashSaplingBindingSig(
-        new BindingSigParams(ctx,
-            builder.getValueBalance(),
-            getHash(),
-            bindingSig)
-    );
+        new BindingSigParams(ctx, builder.getValueBalance(), getHash(), bindingSig));
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ret);
   }
 
   @Test
   public void pushShieldedTransaction()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
+      throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException,
       TaposException, TransactionExpirationException, ReceiptCheckErrException,
       DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException,
       ContractExeException, AccountResourceInsufficientException, ZksnarkException {
@@ -780,7 +738,7 @@ public class SendCoinShieldTest {
     // generate spend proof
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
@@ -826,61 +784,43 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder
-        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000L, new byte[512]);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000L, new byte[512]);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder
         .generateOutputProof(builder.getReceives().get(0), ctx);
 
     //create binding sig
     byte[] bindingSig = new byte[64];
     boolean ret = JLibrustzcash.librustzcashSaplingBindingSig(
-        new BindingSigParams(ctx,
-            builder.getValueBalance(),
-            getHash(),
-            bindingSig)
-    );
+        new BindingSigParams(ctx, builder.getValueBalance(), getHash(), bindingSig));
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ret);
     // check spend
     ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
     byte[] result = new byte[64];
     JLibrustzcash.librustzcashSaplingSpendSig(
-        new SpendSigParams(expsk.getAsk(),
-            builder.getSpends().get(0).getAlpha(),
-            getHash(),
+        new SpendSigParams(expsk.getAsk(), builder.getSpends().get(0).getAlpha(), getHash(),
             result));
 
     SpendDescription spendDescription = spendDescriptionCapsule.getInstance();
     boolean ok;
     ok = JLibrustzcash.librustzcashSaplingCheckSpend(
-        new CheckSpendParams(ctx,
-            spendDescription.getValueCommitment().toByteArray(),
+        new CheckSpendParams(ctx, spendDescription.getValueCommitment().toByteArray(),
             spendDescription.getAnchor().toByteArray(),
-            spendDescription.getNullifier().toByteArray(),
-            spendDescription.getRk().toByteArray(),
-            spendDescription.getZkproof().toByteArray(),
-            result,
-            getHash())
-    );
+            spendDescription.getNullifier().toByteArray(), spendDescription.getRk().toByteArray(),
+            spendDescription.getZkproof().toByteArray(), result, getHash()));
     Assert.assertTrue(ok);
 
     // check output
     ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
     ok = JLibrustzcash.librustzcashSaplingCheckOutput(
-        new CheckOutputParams(ctx,
-            receiveDescription.getValueCommitment().toByteArray(),
+        new CheckOutputParams(ctx, receiveDescription.getValueCommitment().toByteArray(),
             receiveDescription.getNoteCommitment().toByteArray(),
             receiveDescription.getEpk().toByteArray(),
-            receiveDescription.getZkproof().toByteArray())
-    );
+            receiveDescription.getZkproof().toByteArray()));
     Assert.assertTrue(ok);
     // final check
     ok = JLibrustzcash.librustzcashSaplingFinalCheck(
-        new FinalCheckParams(ctx,
-            builder.getValueBalance(),
-            bindingSig,
-            getHash())
-    );
+        new FinalCheckParams(ctx, builder.getValueBalance(), bindingSig, getHash()));
     Assert.assertTrue(ok);
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -907,10 +847,8 @@ public class SendCoinShieldTest {
   private JSONArray readFile(String fileName) throws Exception {
     String file1 = SendCoinShieldTest.class.getClassLoader()
         .getResource("json" + File.separator + fileName).getFile();
-    List<String> readLines = Files.readLines(new File(file1),
-        Charsets.UTF_8);
-    JSONArray array = JSONArray
-        .parseArray(readLines.stream().reduce((s, s2) -> s + s2).get());
+    List<String> readLines = Files.readLines(new File(file1), Charsets.UTF_8);
+    JSONArray array = JSONArray.parseArray(readLines.stream().reduce((s, s2) -> s + s2).get());
     return array;
   }
 
@@ -918,15 +856,12 @@ public class SendCoinShieldTest {
   @Test
   public void testComputeCm() throws Exception {
     byte[] result = new byte[32];
-    if (!JLibrustzcash.librustzcashComputeCm(new ComputeCmParams(
-        (ByteArray.fromHexString("fc6eb90855700861de6639")),
-        ByteArray
+    if (!JLibrustzcash.librustzcashComputeCm(
+        new ComputeCmParams((ByteArray.fromHexString("fc6eb90855700861de6639")), ByteArray
             .fromHexString("1abfbf64bc4934aaf7f29b9fea995e5a16e654e63dbe07db0ef035499d216e19"),
-        9990000000L,
-        ByteArray
+            9990000000L, ByteArray
             .fromHexString("08e3a2ff1101b628147125b786c757b483f1cf7c309f8a647055bfb1ca819c02"),
-        result)
-    )) {
+            result))) {
       System.out.println(" error");
     } else {
       System.out.println(" ok");
@@ -940,15 +875,13 @@ public class SendCoinShieldTest {
     System.out.println(sk.encode());
     System.out.println(
         "sk.expandedSpendingKey()" + ByteUtil.toHexString(sk.expandedSpendingKey().encode()));
-    System.out.println(
-        "sk.fullViewKey()" + ByteUtil.toHexString(sk.fullViewingKey().encode()));
-    System.out.println(
-        "sk.ivk()" + ByteUtil.toHexString(sk.fullViewingKey().inViewingKey().getValue()));
+    System.out.println("sk.fullViewKey()" + ByteUtil.toHexString(sk.fullViewingKey().encode()));
+    System.out
+        .println("sk.ivk()" + ByteUtil.toHexString(sk.fullViewingKey().inViewingKey().getValue()));
     System.out.println(
         "sk.defaultDiversifier:" + ByteUtil.toHexString(sk.defaultDiversifier().getData()));
 
-    System.out.println(
-        "sk.defaultAddress:" + ByteUtil.toHexString(sk.defaultAddress().encode()));
+    System.out.println("sk.defaultAddress:" + ByteUtil.toHexString(sk.defaultAddress().encode()));
 
     System.out.println("rcm:" + ByteUtil.toHexString(Note.generateR()));
 
@@ -1018,33 +951,32 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
     PaymentAddress address1 = sk1.defaultAddress();
     Note note1 = new Note(address1, 1000 * 1000000L);
-    IncrementalMerkleTreeContainer tree =
-        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
     PedersenHash a = compressCapsule1.getInstance();
     tree.append(a);
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
     byte[] anchor = voucher.root().getContent().toByteArray();
-    dbManager
-        .getMerkleContainer()
+    dbManager.getMerkleContainer()
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
     builder.addSpend(expsk1, note1, anchor, voucher);
 
-//    SpendingKey sk2 = SpendingKey.random();
-//    ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
-//    PaymentAddress address2 = sk2.defaultAddress();
-//    Note note2 = new Note(address2, 100 * 1000000);
-//    PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
-//    compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
-//    PedersenHash a2 = compressCapsule2.getInstance();
-//    tree.append(a2);
-//    IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
-//    byte[] anchor2 = voucher2.root().getContent().toByteArray();
-//    dbManager
-//        .getMerkleContainer()
-//        .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
-//    builder.addSpend(expsk2, note2, anchor2, voucher2);
+    /*SpendingKey sk2 = SpendingKey.random();
+    ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
+    PaymentAddress address2 = sk2.defaultAddress();
+    Note note2 = new Note(address2, 100 * 1000000);
+    PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
+    compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
+    PedersenHash a2 = compressCapsule2.getInstance();
+    tree.append(a2);
+    IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
+    byte[] anchor2 = voucher2.root().getContent().toByteArray();
+    dbManager
+        .getMerkleContainer()
+        .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
+    builder.addSpend(expsk2, note2, anchor2, voucher2);*/
 
     // generate output proof
     SpendingKey spendingKey = SpendingKey.random();
@@ -1077,15 +1009,11 @@ public class SendCoinShieldTest {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
       String OWNER_ADDRESS =
           Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule ownerCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("owner"),
-              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-              AccountType.Normal,
-              110_000_000L);
+      AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+          110_000_000L);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L)
-          .build());
+          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L).build());
 
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
@@ -1116,16 +1044,12 @@ public class SendCoinShieldTest {
 
       String OWNER_ADDRESS =
           Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule ownerCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("owner"),
-              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-              AccountType.Normal,
-              110_000_000L);
+      AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+          110_000_000L);
 
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L)
-          .build());
+          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
 
@@ -1138,18 +1062,14 @@ public class SendCoinShieldTest {
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule toCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("to"),
-              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
-              AccountType.Normal,
-              0L);
+      AccountCapsule toCapsule = new AccountCapsule(ByteString.copyFromUtf8("to"),
+          ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, 0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
       TransactionCapsule transactionCap = builder.build();
 
-//   100_000_000L + 0L !=  200_000_000L + 10_000_000L + 10_000_000L
+      //100_000_000L + 0L !=  200_000_000L + 10_000_000L + 10_000_000L
       try {
         executeTx(transactionCap);
         Assert.fail();
@@ -1170,16 +1090,15 @@ public class SendCoinShieldTest {
       PaymentAddress address1 = sk1.defaultAddress();
       Note note1 = new Note(address1, 110 * 1000000L);
 
-      IncrementalMerkleTreeContainer tree =
-          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+      IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+          new IncrementalMerkleTreeCapsule());
       PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
       compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
       PedersenHash a = compressCapsule1.getInstance();
       tree.append(a);
       IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
       byte[] anchor = voucher.root().getContent().toByteArray();
-      dbManager
-          .getMerkleContainer()
+      dbManager.getMerkleContainer()
           .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
       //add spendDesc into builder
@@ -1187,12 +1106,8 @@ public class SendCoinShieldTest {
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule toCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("to"),
-              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
-              AccountType.Normal,
-              0L);
+      AccountCapsule toCapsule = new AccountCapsule(ByteString.copyFromUtf8("to"),
+          ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, 0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
       addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
@@ -1220,16 +1135,15 @@ public class SendCoinShieldTest {
       PaymentAddress address1 = sk1.defaultAddress();
       Note note1 = new Note(address1, 110 * 1000000L);
 
-      IncrementalMerkleTreeContainer tree =
-          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+      IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+          new IncrementalMerkleTreeCapsule());
       PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
       compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
       PedersenHash a = compressCapsule1.getInstance();
       tree.append(a);
       IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
       byte[] anchor = voucher.root().getContent().toByteArray();
-      dbManager
-          .getMerkleContainer()
+      dbManager.getMerkleContainer()
           .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
       //add spendDesc into builder
@@ -1265,16 +1179,15 @@ public class SendCoinShieldTest {
       PaymentAddress address1 = sk1.defaultAddress();
       Note note1 = new Note(address1, 110 * 1000000L);
 
-      IncrementalMerkleTreeContainer tree =
-          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+      IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+          new IncrementalMerkleTreeCapsule());
       PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
       compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
       PedersenHash a = compressCapsule1.getInstance();
       tree.append(a);
       IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
       byte[] anchor = voucher.root().getContent().toByteArray();
-      dbManager
-          .getMerkleContainer()
+      dbManager.getMerkleContainer()
           .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
       //add spendDesc into builder
@@ -1289,12 +1202,8 @@ public class SendCoinShieldTest {
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule toCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("to"),
-              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
-              AccountType.Normal,
-              0L);
+      AccountCapsule toCapsule = new AccountCapsule(ByteString.copyFromUtf8("to"),
+          ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, 0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
@@ -1322,16 +1231,12 @@ public class SendCoinShieldTest {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
       String OWNER_ADDRESS =
           Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule ownerCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("owner"),
-              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-              AccountType.Normal,
-              220_000_000L);
+      AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+          220_000_000L);
 
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 220_000_000L)
-          .build());
+          .putAssetV2(ShieldedTransferActuator.zenTokenId, 220_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 210_000_000L);
 
@@ -1355,15 +1260,11 @@ public class SendCoinShieldTest {
 
       String OWNER_ADDRESS =
           Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule ownerCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("owner"),
-              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-              AccountType.Normal,
-              230_000_000L);
+      AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+          230_000_000L);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 230_000_000L)
-          .build());
+          .putAssetV2(ShieldedTransferActuator.zenTokenId, 230_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 220_000_000L);
 
@@ -1376,12 +1277,8 @@ public class SendCoinShieldTest {
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule toCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("to"),
-              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
-              AccountType.Normal,
-              0L);
+      AccountCapsule toCapsule = new AccountCapsule(ByteString.copyFromUtf8("to"),
+          ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, 0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
@@ -1389,7 +1286,7 @@ public class SendCoinShieldTest {
       transactionCap1.setBlockNum(2);
       txList.add(transactionCap1);
 
-//   220_000_000L + 0L =  200_000_000L + 10_000_000L + 10_000_000L
+      //220_000_000L + 0L =  200_000_000L + 10_000_000L + 10_000_000L
 
     }
 
@@ -1403,16 +1300,15 @@ public class SendCoinShieldTest {
       PaymentAddress address1 = sk1.defaultAddress();
       Note note1 = new Note(address1, 20 * 1000000L);
 
-      IncrementalMerkleTreeContainer tree =
-          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+      IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+          new IncrementalMerkleTreeCapsule());
       PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
       compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
       PedersenHash a = compressCapsule1.getInstance();
       tree.append(a);
       IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
       byte[] anchor = voucher.root().getContent().toByteArray();
-      dbManager
-          .getMerkleContainer()
+      dbManager.getMerkleContainer()
           .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
       //add spendDesc into builder
@@ -1420,12 +1316,8 @@ public class SendCoinShieldTest {
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule toCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("to"),
-              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
-              AccountType.Normal,
-              0L);
+      AccountCapsule toCapsule = new AccountCapsule(ByteString.copyFromUtf8("to"),
+          ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, 0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
@@ -1433,7 +1325,7 @@ public class SendCoinShieldTest {
       transactionCap1.setBlockNum(3);
       txList.add(transactionCap1);
 
-//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
+      // 0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
     }
 
     System.out.println("TxList size:" + txList.size());
@@ -1464,16 +1356,15 @@ public class SendCoinShieldTest {
       PaymentAddress address2 = sk2.defaultAddress();
       Note note2 = new Note(address2, 20 * 1000000L);
 
-      IncrementalMerkleTreeContainer tree =
-          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+      IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+          new IncrementalMerkleTreeCapsule());
       PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
       compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
       PedersenHash a = compressCapsule1.getInstance();
       tree.append(a);
       IncrementalMerkleVoucherContainer voucher1 = tree.toVoucher();
       byte[] anchor1 = voucher1.root().getContent().toByteArray();
-      dbManager
-          .getMerkleContainer()
+      dbManager.getMerkleContainer()
           .putMerkleTreeIntoStore(anchor1, voucher1.getVoucherCapsule().getTree());
 
       PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
@@ -1482,14 +1373,13 @@ public class SendCoinShieldTest {
       tree.append(a2);
       IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
       byte[] anchor2 = voucher2.root().getContent().toByteArray();
-      dbManager
-          .getMerkleContainer()
+      dbManager.getMerkleContainer()
           .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
 
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
         @Override
-        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-            long ctx) throws ZksnarkException {
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend, long ctx)
+            throws ZksnarkException {
 
           SpendDescriptionInfo fakeSpend = new SpendDescriptionInfo(expsk1, note1, anchor1,
               voucher1);
@@ -1503,12 +1393,8 @@ public class SendCoinShieldTest {
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule toCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("to"),
-              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
-              AccountType.Normal,
-              0L);
+      AccountCapsule toCapsule = new AccountCapsule(ByteString.copyFromUtf8("to"),
+          ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, 0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
       addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
@@ -1524,7 +1410,7 @@ public class SendCoinShieldTest {
         System.out.println("Done");
       }
 
-//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
+      // 0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
     }
   }
 
@@ -1541,8 +1427,8 @@ public class SendCoinShieldTest {
       PaymentAddress address2 = sk2.defaultAddress();
       Note note2 = new Note(address2, 20 * 1000000L);
 
-      IncrementalMerkleTreeContainer tree =
-          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+      IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+          new IncrementalMerkleTreeCapsule());
 
       PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
       compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
@@ -1550,14 +1436,13 @@ public class SendCoinShieldTest {
       tree.append(a2);
       IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
       byte[] anchor2 = voucher2.root().getContent().toByteArray();
-      dbManager
-          .getMerkleContainer()
+      dbManager.getMerkleContainer()
           .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
 
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
         @Override
-        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-            long ctx) throws ZksnarkException {
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend, long ctx)
+            throws ZksnarkException {
           long fakeCtx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
           return super.generateSpendProof(spend, fakeCtx);
         }
@@ -1568,12 +1453,8 @@ public class SendCoinShieldTest {
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule toCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("to"),
-              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
-              AccountType.Normal,
-              0L);
+      AccountCapsule toCapsule = new AccountCapsule(ByteString.copyFromUtf8("to"),
+          ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, 0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
       addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
@@ -1588,7 +1469,7 @@ public class SendCoinShieldTest {
         }
         System.out.println("Done");
       }
-//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
+      // 0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
     }
   }
 
@@ -1603,8 +1484,8 @@ public class SendCoinShieldTest {
       PaymentAddress address2 = sk2.defaultAddress();
       Note note2 = new Note(address2, 20 * 1000000L);
 
-      IncrementalMerkleTreeContainer tree =
-          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+      IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+          new IncrementalMerkleTreeCapsule());
 
       PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
       compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
@@ -1624,9 +1505,7 @@ public class SendCoinShieldTest {
       byte[] result = new byte[64];
       JLibrustzcash.librustzcashSaplingSpendSig(
           new SpendSigParams(spendDescriptionInfo.getExpsk().getAsk(),
-              spendDescriptionInfo.getAlpha(),
-              dataToBeSigned,
-              result));
+              spendDescriptionInfo.getAlpha(), dataToBeSigned, result));
     }
   }
 
@@ -1642,8 +1521,8 @@ public class SendCoinShieldTest {
     PaymentAddress address = sk.defaultAddress();
 
     Note note = new Note(address, 4010 * 1000000L);
-//    note.r =  ByteArray
-//        .fromHexString("0xe7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb6");
+    //note.r =  ByteArray
+    //    .fromHexString("0xe7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb6");
 
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
@@ -1665,8 +1544,8 @@ public class SendCoinShieldTest {
       PaymentAddress address2 = sk2.defaultAddress();
       Note note2 = new Note(address2, 20 * 1000000L);
 
-      IncrementalMerkleTreeContainer tree =
-          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+      IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+          new IncrementalMerkleTreeCapsule());
 
       PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
       compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
@@ -1674,8 +1553,7 @@ public class SendCoinShieldTest {
       tree.append(a2);
       IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
       byte[] anchor2 = voucher2.root().getContent().toByteArray();
-      dbManager
-          .getMerkleContainer()
+      dbManager.getMerkleContainer()
           .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
 
       byte[] fakeAsk = ByteArray
@@ -1687,9 +1565,7 @@ public class SendCoinShieldTest {
           for (int i = 0; i < this.getSpends().size(); i++) {
             byte[] result = new byte[64];
             JLibrustzcash.librustzcashSaplingSpendSig(
-                new SpendSigParams(fakeAsk,
-                    this.getSpends().get(i).getAlpha(),
-                    dataToBeSigned,
+                new SpendSigParams(fakeAsk, this.getSpends().get(i).getAlpha(), dataToBeSigned,
                     result));
             this.getContractBuilder().getSpendDescriptionBuilder(i)
                 .setSpendAuthoritySignature(ByteString.copyFrom(result));
@@ -1702,12 +1578,8 @@ public class SendCoinShieldTest {
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
-      AccountCapsule toCapsule =
-          new AccountCapsule(
-              ByteString.copyFromUtf8("to"),
-              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
-              AccountType.Normal,
-              0L);
+      AccountCapsule toCapsule = new AccountCapsule(ByteString.copyFromUtf8("to"),
+          ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, 0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
 
       addZeroValueOutputNote(builder);
@@ -1732,8 +1604,8 @@ public class SendCoinShieldTest {
     PaymentAddress address = sk.defaultAddress();
     Note note = new Note(address, 1000 * 1000000L);
 
-    IncrementalMerkleTreeContainer tree =
-        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
 
     PedersenHashCapsule compressCapsule = new PedersenHashCapsule();
     compressCapsule.setContent(ByteString.copyFrom(note.cm()));
@@ -1741,8 +1613,7 @@ public class SendCoinShieldTest {
     tree.append(hash);
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
     byte[] anchor = voucher.root().getContent().toByteArray();
-    dbManager
-        .getMerkleContainer()
+    dbManager.getMerkleContainer()
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
     return new SpendDescriptionInfo(expsk, note, anchor, voucher);
@@ -1751,12 +1622,8 @@ public class SendCoinShieldTest {
   private String generateDefaultToAccount() {
     String TO_ADDRESS =
         Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
-    AccountCapsule toCapsule =
-        new AccountCapsule(
-            ByteString.copyFromUtf8("to"),
-            ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
-            AccountType.Normal,
-            0L);
+    AccountCapsule toCapsule = new AccountCapsule(ByteString.copyFromUtf8("to"),
+        ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)), AccountType.Normal, 0L);
     dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
     return TO_ADDRESS;
   }
@@ -1781,7 +1648,7 @@ public class SendCoinShieldTest {
   public void TestDefaultBuilder() throws Exception {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     TransactionCapsule transactionCapsule = generateDefaultBuilder(builder);
@@ -1797,8 +1664,8 @@ public class SendCoinShieldTest {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
         //set wrong rk
         @Override
-        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-            long ctx) throws ZksnarkException {
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend, long ctx)
+            throws ZksnarkException {
           SpendDescriptionCapsule spendDescriptionCapsule = super.generateSpendProof(spend, ctx);
           //The format is correct, but it does not belong to this
           // note value ,fake : 200_000_000,real:20_000_000
@@ -1834,14 +1701,17 @@ public class SendCoinShieldTest {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
         //set wrong proof
         @Override
-        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-            long ctx) throws ZksnarkException {
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend, long ctx)
+            throws ZksnarkException {
           SpendDescriptionCapsule spendDescriptionCapsule = super.generateSpendProof(spend, ctx);
           //The format is correct, but it does not belong to this
           // note value ,fake : 200_000_000,real:20_000_000
-          byte[] fakeProof = ByteArray
-              .fromHexString(
-                  "0ac001af7f0059cdfec9eed3900b3a4b25ace3cdeb7e962929be9432e51b222be6d7b885d5393c0d373c5b3dbc19210f94e7de831750c5d3a545bbe3732b4d87e4b4350c29519cbebdabd599db9e685f37af2440abc29b3c11cc1dc6712582f74fe06506182e9202b20467017c53fb6d744cd6e08b6428d0e0607688b67876036d2e30617fe020b1fd33ce96cda898e679f44f9715d5681ee0e42f419d7af4d438240fee7b6519e525f452d2ac56b1fb7cd12e9fb0b39caf6f84918b76fa5d46");
+          byte[] fakeProof = ByteArray.fromHexString(
+              "0ac001af7f0059cdfec9eed3900b3a4b25ace3cdeb7e962929be9432e51b222be6d7b885d5393"
+                  + "c0d373c5b3dbc19210f94e7de831750c5d3a545bbe3732b4d87e4b4350c29519cbebdabd599db"
+                  + "9e685f37af2440abc29b3c11cc1dc6712582f74fe06506182e9202b20467017c53fb6d744cd6e"
+                  + "08b6428d0e0607688b67876036d2e30617fe020b1fd33ce96cda898e679f44f9715d5681ee0e4"
+                  + "2f419d7af4d438240fee7b6519e525f452d2ac56b1fb7cd12e9fb0b39caf6f84918b76fa5d46");
           System.out.println("zkproof:" + ByteArray
               .toHexString(spendDescriptionCapsule.getZkproof().toByteArray()));
 
@@ -1873,8 +1743,8 @@ public class SendCoinShieldTest {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
         //set wrong nf
         @Override
-        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-            long ctx) throws ZksnarkException {
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend, long ctx)
+            throws ZksnarkException {
           SpendDescriptionCapsule spendDescriptionCapsule = super.generateSpendProof(spend, ctx);
 
           //The format is correct, but it does not belong to this
@@ -1911,14 +1781,13 @@ public class SendCoinShieldTest {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
         //set wrong anchor
         @Override
-        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-            long ctx) throws ZksnarkException {
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend, long ctx)
+            throws ZksnarkException {
           SpendDescriptionCapsule spendDescriptionCapsule = super.generateSpendProof(spend, ctx);
           //The format is correct, but it does not belong to this
           // note value ,fake : 200_000_000,real:20_000_000
-          byte[] bytes = ByteArray
-              .fromHexString(
-                  "bd7e296f492ffc23248b1815277b29af3a8970fff70f8256492bbea79b9a5e3e");//256
+          byte[] bytes = ByteArray.fromHexString(
+              "bd7e296f492ffc23248b1815277b29af3a8970fff70f8256492bbea79b9a5e3e");//256
           System.out.println(
               "bytes:" + ByteArray.toHexString(spendDescriptionCapsule.getAnchor().toByteArray()));
           spendDescriptionCapsule.setAnchor(bytes);

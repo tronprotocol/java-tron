@@ -6,9 +6,9 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.client.DatabaseGrpcClient;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
@@ -27,7 +27,7 @@ public class SolidityNodeTest {
   private static String dbPath = "output_witness_test";
 
   static {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     Args.getInstance().setSolidityNode(true);
     appT = ApplicationFactory.create(context);

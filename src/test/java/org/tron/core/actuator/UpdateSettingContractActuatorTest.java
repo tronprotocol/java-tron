@@ -32,8 +32,6 @@ import org.tron.protos.Protocol;
 @Slf4j
 public class UpdateSettingContractActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static final String dbPath = "output_updatesettingcontract_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
@@ -46,9 +44,11 @@ public class UpdateSettingContractActuatorTest {
   private static final long SOURCE_PERCENT = 10L;
   private static final long TARGET_PERCENT = 30L;
   private static final long INVALID_PERCENT = 200L;
+  private static TronApplicationContext context;
+  private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
@@ -66,41 +66,6 @@ public class UpdateSettingContractActuatorTest {
   }
 
   /**
-   * create temp Capsule test need.
-   */
-  @Before
-  public void createCapsule() {
-    // address in accountStore and the owner of contract
-    AccountCapsule accountCapsule =
-        new AccountCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-            ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
-            Protocol.AccountType.Normal);
-    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
-
-    // smartContarct in contractStore
-    Protocol.SmartContract.Builder builder = Protocol.SmartContract.newBuilder();
-    builder.setName(SMART_CONTRACT_NAME);
-    builder.setOriginAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
-    builder.setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(CONTRACT_ADDRESS)));
-    builder.setConsumeUserResourcePercent(SOURCE_PERCENT);
-    dbManager.getContractStore().put(
-        ByteArray.fromHexString(CONTRACT_ADDRESS),
-        new ContractCapsule(builder.build()));
-
-    // address in accountStore not the owner of contract
-    AccountCapsule secondAccount =
-        new AccountCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS)),
-            ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
-            Protocol.AccountType.Normal);
-    dbManager.getAccountStore().put(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS), secondAccount);
-
-    // address does not exist in accountStore
-    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
-  }
-
-  /**
    * Release resources.
    */
   @AfterClass
@@ -114,19 +79,47 @@ public class UpdateSettingContractActuatorTest {
     }
   }
 
+  /**
+   * create temp Capsule test need.
+   */
+  @Before
+  public void createCapsule() {
+    // address in accountStore and the owner of contract
+    AccountCapsule accountCapsule = new AccountCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME), Protocol.AccountType.Normal);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
+
+    // smartContarct in contractStore
+    Protocol.SmartContract.Builder builder = Protocol.SmartContract.newBuilder();
+    builder.setName(SMART_CONTRACT_NAME);
+    builder.setOriginAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+    builder.setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(CONTRACT_ADDRESS)));
+    builder.setConsumeUserResourcePercent(SOURCE_PERCENT);
+    dbManager.getContractStore()
+        .put(ByteArray.fromHexString(CONTRACT_ADDRESS), new ContractCapsule(builder.build()));
+
+    // address in accountStore not the owner of contract
+    AccountCapsule secondAccount = new AccountCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS)),
+        ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME), Protocol.AccountType.Normal);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS), secondAccount);
+
+    // address does not exist in accountStore
+    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
+  }
+
   private Any getContract(String accountAddress, String contractAddress, long percent) {
-    return Any.pack(
-        Contract.UpdateSettingContract.newBuilder()
-            .setOwnerAddress(StringUtil.hexString2ByteString(accountAddress))
-            .setContractAddress(StringUtil.hexString2ByteString(contractAddress))
-            .setConsumeUserResourcePercent(percent).build());
+    return Any.pack(Contract.UpdateSettingContract.newBuilder()
+        .setOwnerAddress(StringUtil.hexString2ByteString(accountAddress))
+        .setContractAddress(StringUtil.hexString2ByteString(contractAddress))
+        .setConsumeUserResourcePercent(percent).build());
   }
 
   @Test
   public void successUpdateSettingContract() {
-    UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+    UpdateSettingContractActuator actuator = new UpdateSettingContractActuator(
+        getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -136,9 +129,8 @@ public class UpdateSettingContractActuatorTest {
       // assert result state and consume_user_resource_percent
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getConsumeUserResourcePercent(),
-          TARGET_PERCENT);
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getConsumeUserResourcePercent(), TARGET_PERCENT);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -148,9 +140,8 @@ public class UpdateSettingContractActuatorTest {
 
   @Test
   public void invalidAddress() {
-    UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+    UpdateSettingContractActuator actuator = new UpdateSettingContractActuator(
+        getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -168,9 +159,8 @@ public class UpdateSettingContractActuatorTest {
 
   @Test
   public void noExistAccount() {
-    UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+    UpdateSettingContractActuator actuator = new UpdateSettingContractActuator(
+        getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -188,9 +178,8 @@ public class UpdateSettingContractActuatorTest {
 
   @Test
   public void invalidResourcePercent() {
-    UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, INVALID_PERCENT), dbManager);
+    UpdateSettingContractActuator actuator = new UpdateSettingContractActuator(
+        getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, INVALID_PERCENT), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -208,9 +197,8 @@ public class UpdateSettingContractActuatorTest {
 
   @Test
   public void noExistContract() {
-    UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+    UpdateSettingContractActuator actuator = new UpdateSettingContractActuator(
+        getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -228,9 +216,8 @@ public class UpdateSettingContractActuatorTest {
 
   @Test
   public void callerNotContractOwner() {
-    UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+    UpdateSettingContractActuator actuator = new UpdateSettingContractActuator(
+        getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -240,9 +227,9 @@ public class UpdateSettingContractActuatorTest {
       fail("Account[" + SECOND_ACCOUNT_ADDRESS + "] is not the owner of the contract");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(
-          "Account[" + SECOND_ACCOUNT_ADDRESS + "] is not the owner of the contract",
-          e.getMessage());
+      Assert
+          .assertEquals("Account[" + SECOND_ACCOUNT_ADDRESS + "] is not the owner of the contract",
+              e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -250,13 +237,11 @@ public class UpdateSettingContractActuatorTest {
 
   @Test
   public void twiceUpdateSettingContract() {
-    UpdateSettingContractActuator actuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+    UpdateSettingContractActuator actuator = new UpdateSettingContractActuator(
+        getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
 
-    UpdateSettingContractActuator secondActuator =
-        new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, 90L), dbManager);
+    UpdateSettingContractActuator secondActuator = new UpdateSettingContractActuator(
+        getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, 90L), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -266,9 +251,8 @@ public class UpdateSettingContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getConsumeUserResourcePercent(),
-          TARGET_PERCENT);
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getConsumeUserResourcePercent(), TARGET_PERCENT);
 
       // second
       secondActuator.validate();
@@ -276,9 +260,8 @@ public class UpdateSettingContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getConsumeUserResourcePercent(),
-          90L);
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getConsumeUserResourcePercent(), 90L);
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
