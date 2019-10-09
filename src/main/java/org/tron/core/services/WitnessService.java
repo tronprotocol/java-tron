@@ -160,7 +160,7 @@ public class WitnessService implements Service {
    * Generate and broadcast blocks
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
-    logger.info("Try Produce Block");
+    logger.info("Try to Produce Block");
     long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
       long nexSlotTime = controller.getSlotTime(1);
@@ -260,7 +260,7 @@ public class WitnessService implements Service {
             controller.lastHeadBlockIsMaintenance());
 
         if (block == null) {
-          logger.warn("exception when generate block");
+          logger.warn("exception thrown when generate block");
           return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
         }
 
@@ -270,7 +270,7 @@ public class WitnessService implements Service {
             .min(ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
                 ChainConstant.BLOCK_PRODUCED_INTERVAL);
         if (DateTime.now().getMillis() - now > timeout) {
-          logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", timeout, new DateTime(now),
+          logger.warn("Task timeout ( > {}ms), startTime:{},endTime:{}", timeout, new DateTime(now),
               DateTime.now());
           tronApp.getDbManager().eraseBlock();
           return BlockProductionCondition.TIME_OUT;
@@ -313,7 +313,7 @@ public class WitnessService implements Service {
     try {
       tronNetService.broadcast(new BlockMessage(block.getData()));
     } catch (Exception ex) {
-      throw new RuntimeException("BroadcastBlock error");
+      throw new RuntimeException("Broadcast block error");
     }
   }
 
