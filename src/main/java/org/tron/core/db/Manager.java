@@ -76,7 +76,6 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
-import org.tron.core.db.TransactionTrace.TimeResultType;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
@@ -1063,7 +1062,7 @@ public class Manager {
       if (!block.generatedByMyself) {
         if (!block.validateSignature(this)) {
           logger.warn("The signature is not validated.");
-          throw new BadBlockException("The :signature is not validated");
+          throw new BadBlockException("The signature is not validated");
         }
 
         if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
@@ -1445,14 +1444,7 @@ public class Manager {
       TransactionCapsule trx;
       if (iterator.hasNext()) {
         fromPending = true;
-        trx = (TransactionCapsule) iterator.next();
-
-        if (trx.getTrxTrace().getTimeResultType() == TimeResultType.LONG_RUNNING) {
-          logger.warn("txid {} is LONG RUNNING, it is not packaged in the block this time",
-              Hex.toHexString(trx.getTransactionId().getBytes()));
-          continue;
-        }
-
+        trx = iterator.next();
       } else {
         trx = repushTransactions.poll();
       }
