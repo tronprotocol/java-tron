@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import javafx.util.Pair;
+import org.tron.common.utils.Pair;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
