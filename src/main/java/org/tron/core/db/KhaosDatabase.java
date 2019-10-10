@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javafx.util.Pair;
+import org.tron.common.utils.Pair;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
