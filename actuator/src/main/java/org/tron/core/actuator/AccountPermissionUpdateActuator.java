@@ -2,7 +2,6 @@ package org.tron.core.actuator;
 
 import static java.util.stream.Collectors.toList;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
@@ -14,28 +13,30 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
 
 
 @Slf4j(topic = "actuator")
 public class AccountPermissionUpdateActuator extends AbstractActuator {
 
-  AccountPermissionUpdateActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicPropertiesStore) {
-    super(contract, accountStore, dynamicPropertiesStore);
+  public AccountPermissionUpdateActuator() {
+    super(ContractType.AccountPermissionUpdateContract, AccountPermissionUpdateContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule result) throws ContractExeException {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     long fee = calcFee();
     final AccountPermissionUpdateContract accountPermissionUpdateContract;
     try {
-      accountPermissionUpdateContract = contract.unpack(AccountPermissionUpdateContract.class);
+      accountPermissionUpdateContract = any.unpack(AccountPermissionUpdateContract.class);
 
       byte[] ownerAddress = accountPermissionUpdateContract.getOwnerAddress().toByteArray();
       AccountCapsule account = accountStore.get(ownerAddress);
@@ -62,6 +63,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
   }
 
   private boolean checkPermission(Permission permission) throws ContractValidateException {
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (permission.getKeysCount() > dynamicStore.getTotalSignNum()) {
       throw new ContractValidateException("number of keys in permission should not be greater "
           + "than " + dynamicStore.getTotalSignNum());
@@ -139,25 +141,30 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
-      throw new ContractValidateException("No contract!");
-    }
-    if (accountStore == null || dynamicStore == null) {
+
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
+
+    if (this.any == null) {
+      throw new ContractValidateException("No contract!");
+    }
+
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+
     if (dynamicStore.getAllowMultiSign() != 1) {
       throw new ContractValidateException("multi sign is not allowed, "
           + "need to be opened by the committee");
     }
-    if (!this.contract.is(AccountPermissionUpdateContract.class)) {
+    if (!this.any.is(AccountPermissionUpdateContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [AccountPermissionUpdateContract],real type["
-              + contract
-              .getClass() + "]");
+              + any.getClass() + "]");
     }
     final AccountPermissionUpdateContract accountPermissionUpdateContract;
     try {
-      accountPermissionUpdateContract = contract.unpack(AccountPermissionUpdateContract.class);
+      accountPermissionUpdateContract = any.unpack(AccountPermissionUpdateContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -223,11 +230,11 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
+    return any.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
   }
 
   @Override
   public long calcFee() {
-    return dynamicStore.getUpdateAccountPermissionFee();
+    return chainBaseManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee();
   }
 }

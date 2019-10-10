@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -15,23 +14,26 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 
 @Slf4j(topic = "actuator")
 public class UpdateBrokerageActuator extends AbstractActuator {
 
-  UpdateBrokerageActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore,
-      DynamicPropertiesStore dynamicPropertiesStore, DelegationStore delegationStore) {
-    super(contract, accountStore, witnessStore, dynamicPropertiesStore, delegationStore);
+  public UpdateBrokerageActuator() {
+    super(ContractType.UpdateBrokerageContract, UpdateBrokerageContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     final UpdateBrokerageContract updateBrokerageContract;
     final long fee = calcFee();
+
+    DelegationStore delegationStore = chainBaseManager.getDelegationStore();
+
     try {
-      updateBrokerageContract = contract.unpack(UpdateBrokerageContract.class);
+      updateBrokerageContract = any.unpack(UpdateBrokerageContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -49,24 +51,28 @@ public class UpdateBrokerageActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (this.contract == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (chainBaseManager == null) {
+      throw new ContractValidateException("No account store or dynamic store!");
+    }
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    WitnessStore witnessStore = chainBaseManager.getWitnessStore();
     if (!dynamicStore.allowChangeDelegation()) {
       throw new ContractValidateException(
           "contract type error,unexpected type [UpdateBrokerageContract]");
     }
-    if (this.contract == null) {
-      throw new ContractValidateException("No contract!");
-    }
-    if (accountStore == null || dynamicStore == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
-    }
-    if (!this.contract.is(UpdateBrokerageContract.class)) {
+
+    if (!this.any.is(UpdateBrokerageContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UpdateBrokerageContract],real type[" + contract
+          "contract type error,expected type [UpdateBrokerageContract],real type[" + any
               .getClass() + "]");
     }
     final UpdateBrokerageContract updateBrokerageContract;
     try {
-      updateBrokerageContract = contract.unpack(UpdateBrokerageContract.class);
+      updateBrokerageContract = any.unpack(UpdateBrokerageContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -97,7 +103,7 @@ public class UpdateBrokerageActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(UpdateBrokerageContract.class).getOwnerAddress();
+    return any.unpack(UpdateBrokerageContract.class).getOwnerAddress();
   }
 
   @Override

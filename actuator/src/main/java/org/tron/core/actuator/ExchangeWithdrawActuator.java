@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigDecimal;
@@ -16,36 +15,40 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 
 @Slf4j(topic = "actuator")
 public class ExchangeWithdrawActuator extends AbstractActuator {
 
-  ExchangeWithdrawActuator(final Any contract, AccountStore accountStore,
-      AssetIssueStore assetIssueStore,  DynamicPropertiesStore dynamicStore,
-      ExchangeStore exchangeStore, ExchangeV2Store exchangeV2Store) {
-    super(contract, accountStore, assetIssueStore, dynamicStore,
-        exchangeStore, exchangeV2Store);
+  public ExchangeWithdrawActuator() {
+    super(ContractType.ExchangeWithdrawContract, ExchangeWithdrawContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    ExchangeStore exchangeStore = chainBaseManager.getExchangeStore();
+    ExchangeV2Store exchangeV2Store = chainBaseManager.getExchangeV2Store();
+    AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     try {
-      final ExchangeWithdrawContract exchangeWithdrawContract = this.contract
+      final ExchangeWithdrawContract exchangeWithdrawContract = this.any
           .unpack(ExchangeWithdrawContract.class);
       AccountCapsule accountCapsule = accountStore
           .get(exchangeWithdrawContract.getOwnerAddress().toByteArray());
 
-      ExchangeCapsule exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
-          get(ByteArray.fromLong(exchangeWithdrawContract.getExchangeId()));
+      ExchangeCapsule exchangeCapsule = Commons
+          .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
+              get(ByteArray.fromLong(exchangeWithdrawContract.getExchangeId()));
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
@@ -90,12 +93,14 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       if (Arrays.equals(anotherTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
-        accountCapsule.addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
+        accountCapsule
+            .addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
       }
 
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
 
-      Commons.putExchangeCapsule(exchangeCapsule, dynamicStore, exchangeStore, exchangeV2Store, assetIssueStore);
+      Commons.putExchangeCapsule(exchangeCapsule, dynamicStore, exchangeStore, exchangeV2Store,
+          assetIssueStore);
 
       ret.setExchangeWithdrawAnotherAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
@@ -114,20 +119,24 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dynamicStore == null || accountStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(ExchangeWithdrawContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    ExchangeStore exchangeStore = chainBaseManager.getExchangeStore();
+    ExchangeV2Store exchangeV2Store = chainBaseManager.getExchangeV2Store();
+    if (!this.any.is(ExchangeWithdrawContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ExchangeWithdrawContract],real type[" + contract
+          "contract type error,expected type [ExchangeWithdrawContract],real type[" + any
               .getClass() + "]");
     }
     final ExchangeWithdrawContract contract;
     try {
-      contract = this.contract.unpack(ExchangeWithdrawContract.class);
+      contract = this.any.unpack(ExchangeWithdrawContract.class);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
     }
@@ -240,7 +249,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(ExchangeWithdrawContract.class).getOwnerAddress();
+    return any.unpack(ExchangeWithdrawContract.class).getOwnerAddress();
   }
 
   @Override

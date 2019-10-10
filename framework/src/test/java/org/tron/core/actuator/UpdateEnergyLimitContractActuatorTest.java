@@ -141,10 +141,9 @@ public class UpdateEnergyLimitContractActuatorTest {
 
   @Test
   public void successUpdateEnergyLimitContract() throws InvalidProtocolBufferException {
-    UpdateEnergyLimitContractActuator actuator =
-        new UpdateEnergyLimitContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT), dbManager.getAccountStore(),
-            dbManager.getContractStore(), dbManager.getDynamicPropertiesStore());
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -165,10 +164,9 @@ public class UpdateEnergyLimitContractActuatorTest {
 
   @Test
   public void invalidAddress() {
-    UpdateEnergyLimitContractActuator actuator =
-        new UpdateEnergyLimitContractActuator(
-            getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT), dbManager.getAccountStore(),
-            dbManager.getContractStore(), dbManager.getDynamicPropertiesStore());
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -184,10 +182,9 @@ public class UpdateEnergyLimitContractActuatorTest {
 
   @Test
   public void noExistAccount() {
-    UpdateEnergyLimitContractActuator actuator =
-        new UpdateEnergyLimitContractActuator(
-            getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT),  dbManager.getAccountStore(),
-            dbManager.getContractStore(), dbManager.getDynamicPropertiesStore());
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -203,10 +200,9 @@ public class UpdateEnergyLimitContractActuatorTest {
 
   @Test
   public void invalidResourceEnergyLimit() {
-    UpdateEnergyLimitContractActuator actuator =
-        new UpdateEnergyLimitContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, INVALID_ENERGY_LIMIT), dbManager.getAccountStore(),
-            dbManager.getContractStore(), dbManager.getDynamicPropertiesStore());
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, INVALID_ENERGY_LIMIT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -222,10 +218,9 @@ public class UpdateEnergyLimitContractActuatorTest {
 
   @Test
   public void noExistContract() {
-    UpdateEnergyLimitContractActuator actuator =
-        new UpdateEnergyLimitContractActuator(
-            getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT), dbManager.getAccountStore(),
-            dbManager.getContractStore(), dbManager.getDynamicPropertiesStore());
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -241,10 +236,9 @@ public class UpdateEnergyLimitContractActuatorTest {
 
   @Test
   public void callerNotContractOwner() {
-    UpdateEnergyLimitContractActuator actuator =
-        new UpdateEnergyLimitContractActuator(
-            getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT), dbManager.getAccountStore(),
-            dbManager.getContractStore(), dbManager.getDynamicPropertiesStore());
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -262,15 +256,13 @@ public class UpdateEnergyLimitContractActuatorTest {
 
   @Test
   public void twiceUpdateEnergyLimitContract() throws InvalidProtocolBufferException {
-    UpdateEnergyLimitContractActuator actuator =
-        new UpdateEnergyLimitContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT), dbManager.getAccountStore(),
-            dbManager.getContractStore(), dbManager.getDynamicPropertiesStore());
+    UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_ENERGY_LIMIT));
 
-    UpdateEnergyLimitContractActuator secondActuator =
-        new UpdateEnergyLimitContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, 90L), dbManager.getAccountStore(),
-            dbManager.getContractStore(), dbManager.getDynamicPropertiesStore());
+    UpdateEnergyLimitContractActuator secondActuator = new UpdateEnergyLimitContractActuator();
+    secondActuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, 90L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -9,25 +8,28 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.SetAccountIdContract;
 
 @Slf4j(topic = "actuator")
 public class SetAccountIdActuator extends AbstractActuator {
 
-  SetAccountIdActuator(Any contract, AccountStore accountStore, AccountIdIndexStore accountIdIndexStore) {
-    super(contract, accountStore, accountIdIndexStore);
+  public SetAccountIdActuator() {
+    super(ContractType.SetAccountIdContract, SetAccountIdContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     final SetAccountIdContract setAccountIdContract;
     final long fee = calcFee();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountIdIndexStore accountIdIndexStore = chainBaseManager.getAccountIdIndexStore();
     try {
-      setAccountIdContract = contract.unpack(SetAccountIdContract.class);
+      setAccountIdContract = any.unpack(SetAccountIdContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -47,20 +49,22 @@ public class SetAccountIdActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountIdIndexStore == null || accountStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or account id index store!");
     }
-    if (!this.contract.is(SetAccountIdContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountIdIndexStore accountIdIndexStore = chainBaseManager.getAccountIdIndexStore();
+    if (!this.any.is(SetAccountIdContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [SetAccountIdContract],real type[" + contract
+          "contract type error,expected type [SetAccountIdContract],real type[" + any
               .getClass() + "]");
     }
     final SetAccountIdContract setAccountIdContract;
     try {
-      setAccountIdContract = contract.unpack(SetAccountIdContract.class);
+      setAccountIdContract = any.unpack(SetAccountIdContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -90,7 +94,7 @@ public class SetAccountIdActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(SetAccountIdContract.class).getOwnerAddress();
+    return any.unpack(SetAccountIdContract.class).getOwnerAddress();
   }
 
   @Override

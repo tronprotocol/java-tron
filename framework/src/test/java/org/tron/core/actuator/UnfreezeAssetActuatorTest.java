@@ -23,12 +23,12 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 
 @Slf4j
 public class UnfreezeAssetActuatorTest {
@@ -172,9 +172,9 @@ public class UnfreezeAssetActuatorTest {
     account = account.toBuilder().addFrozenSupply(newFrozen0).addFrozenSupply(newFrozen1).build();
     AccountCapsule accountCapsule = new AccountCapsule(account);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore());
+    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -219,9 +219,9 @@ public class UnfreezeAssetActuatorTest {
     account = account.toBuilder().addFrozenSupply(newFrozen0).addFrozenSupply(newFrozen1).build();
     AccountCapsule accountCapsule = new AccountCapsule(account);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore());
+    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -267,9 +267,9 @@ public class UnfreezeAssetActuatorTest {
     account = account.toBuilder().addFrozenSupply(newFrozen0).addFrozenSupply(newFrozen1).build();
     AccountCapsule accountCapsule = new AccountCapsule(account);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore());
+    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -294,9 +294,9 @@ public class UnfreezeAssetActuatorTest {
   @Test
   public void invalidOwnerAddress() {
     createAssertBeforSameTokenNameActive();
-    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS_INVALID),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore());
+    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_INVALID));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -314,9 +314,9 @@ public class UnfreezeAssetActuatorTest {
   @Test
   public void invalidOwnerAccount() {
     createAssertBeforSameTokenNameActive();
-    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ACCOUNT_INVALID),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore());
+    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ACCOUNT_INVALID));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -348,9 +348,9 @@ public class UnfreezeAssetActuatorTest {
         .build();
     AccountCapsule accountCapsule = new AccountCapsule(account);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore());
+    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -368,9 +368,9 @@ public class UnfreezeAssetActuatorTest {
   @Test
   public void noFrozenSupply() {
     createAssertBeforSameTokenNameActive();
-    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore());
+    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -400,9 +400,9 @@ public class UnfreezeAssetActuatorTest {
     account = account.toBuilder().addFrozenSupply(newFrozen).build();
     AccountCapsule accountCapsule = new AccountCapsule(account);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore());
+    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
@@ -11,12 +10,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
-import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -34,11 +30,6 @@ import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.NullifierStore;
-import org.tron.core.store.ZKProofStore;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -47,12 +38,12 @@ import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.note.Note;
+import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.TransactionSign;
 
 @Slf4j
 public class ShieldedTransferActuatorTest {
@@ -256,7 +247,7 @@ public class ShieldedTransferActuatorTest {
 
 
   /**
-   *  public address to public address + zero value shieldAddress
+   * public address to public address + zero value shieldAddress
    */
   @Test
   public void publicAddressToPublicAddressAndZereValueOutputSuccess() {
@@ -338,13 +329,11 @@ public class ShieldedTransferActuatorTest {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
       dbManager.getDynamicPropertiesStore().saveShieldedTransactionFee(fee);
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -370,17 +359,15 @@ public class ShieldedTransferActuatorTest {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
       setAssertBalance(accountCapsule, AMOUNT - 1000000);
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferContract shieldedTransferContract = contract
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferContract shieldedTransferContract = contract.getParameter()
           .unpack(ShieldedTransferContract.class);
       Assert.assertEquals(AMOUNT, shieldedTransferContract.getFromAmount());
 
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -411,13 +398,11 @@ public class ShieldedTransferActuatorTest {
         dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE)) == null);
     try {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -491,13 +476,11 @@ public class ShieldedTransferActuatorTest {
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT - fee, new byte[512]);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -523,13 +506,11 @@ public class ShieldedTransferActuatorTest {
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT - fee, new byte[512]);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -557,7 +538,7 @@ public class ShieldedTransferActuatorTest {
       SpendingKey sk = SpendingKey.random();
       ExpandedSpendingKey expsk = sk.expandedSpendingKey();
       PaymentAddress address = sk.defaultAddress();
-      Note note = new Note(address, AMOUNT+fee);
+      Note note = new Note(address, AMOUNT + fee);
       IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
       byte[] anchor = voucher.root().getContent().toByteArray();
       dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
@@ -567,13 +548,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), amount);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -611,13 +590,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), amount);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -648,13 +625,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), amount);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -687,13 +662,11 @@ public class ShieldedTransferActuatorTest {
     try {
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -733,13 +706,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(INVAILID_ADDRESS), AMOUNT - fee);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -780,13 +751,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), 2 * AMOUNT - fee);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -826,13 +795,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), 2 * AMOUNT - fee);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -870,13 +837,11 @@ public class ShieldedTransferActuatorTest {
       }
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -911,13 +876,11 @@ public class ShieldedTransferActuatorTest {
     try {
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -962,13 +925,11 @@ public class ShieldedTransferActuatorTest {
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 2 * AMOUNT - fee, new byte[512]);
 
       TransactionCapsule transactionCap = builder.build();
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -1003,13 +964,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(null), AMOUNT);
 
       TransactionCapsule transactionCap = builder.build();
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -1049,11 +1008,13 @@ public class ShieldedTransferActuatorTest {
 
       Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
           Note.generateR());
-      builderOne.addOutput(fullViewingKey.getOvk(), note.getD(), note.getPkD(), note.getValue(), note.getRcm(),
+      builderOne.addOutput(fullViewingKey.getOvk(), note.getD(), note.getPkD(), note.getValue(),
+          note.getRcm(),
           new byte[512]);
       {
         note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), 0, Note.generateR());
-        builderOne.addOutput(fullViewingKey.getOvk(), note.getD(), note.getPkD(), note.getValue(), note.getRcm(),
+        builderOne.addOutput(fullViewingKey.getOvk(), note.getD(), note.getPkD(), note.getValue(),
+            note.getRcm(),
             new byte[512]);
       }
       TransactionCapsule transactionCapOne = builderOne.build();
@@ -1103,13 +1064,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), AMOUNT);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -1143,13 +1102,11 @@ public class ShieldedTransferActuatorTest {
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, -AMOUNT, new byte[512]);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -1190,13 +1147,11 @@ public class ShieldedTransferActuatorTest {
 
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -1233,13 +1188,11 @@ public class ShieldedTransferActuatorTest {
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, Long.MAX_VALUE, new byte[512]);
       TransactionCapsule transactionCap = builder.build();
 
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -1274,13 +1227,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE), AMOUNT);
 
       TransactionCapsule transactionCap = builder.build();
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       actuator.validate();
@@ -1320,13 +1271,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), AMOUNT - fee);
 
       TransactionCapsule transactionCap = builder.build();
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
 
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1373,13 +1322,11 @@ public class ShieldedTransferActuatorTest {
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), AMOUNT - fee);
 
       TransactionCapsule transactionCap = builder.build();
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager.getAccountStore(),
-          dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore(), dbManager.getNullfierStore(),
-          dbManager.getMerkleContainer(),dbManager.getProofStore(),
-          transactionCap.getTransactionId(), transactionCap.getInstance());
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
 
       TransactionResultCapsule ret = new TransactionResultCapsule();
 

@@ -129,10 +129,9 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void successClearABIContract() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+    ClearABIContractActuator actuator = new ClearABIContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -154,10 +153,9 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void invalidAddress() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+    ClearABIContractActuator actuator = new ClearABIContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -175,10 +173,9 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void noExistAccount() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+    ClearABIContractActuator actuator = new ClearABIContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -196,10 +193,9 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void noExistContract() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+    ClearABIContractActuator actuator = new ClearABIContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -217,10 +213,9 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void callerNotContractOwner() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+    ClearABIContractActuator actuator = new ClearABIContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -240,15 +235,13 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void twiceUpdateSettingContract() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+    ClearABIContractActuator actuator = new ClearABIContractActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
 
-    ClearABIContractActuator secondActuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS),
-            dbManager.getAccountStore(), dbManager.getContractStore());
+    ClearABIContractActuator secondActuator = new ClearABIContractActuator();
+    secondActuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

@@ -259,9 +259,6 @@ message Transaction {
       ProposalDeleteContract = 18;
       SetAccountIdContract = 19;
       CustomContract = 20;
-      // BuyStorageContract = 21;
-      // BuyStorageBytesContract = 22;
-      // SellStorageContract = 23;
       CreateSmartContract = 30;
       TriggerSmartContract = 31;
       GetContract = 32;

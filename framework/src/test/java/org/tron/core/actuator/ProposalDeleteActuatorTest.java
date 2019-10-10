@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.ForkUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -29,10 +28,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ProposalStore;
-import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -127,10 +122,10 @@ public class ProposalDeleteActuatorTest {
     dbManager.getProposalStore().delete(ByteArray.fromLong(2));
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(0L, 3 * 27 * 1000L);
-    ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
-            dbManager.getProposalStore(), dbManager.getWitnessStore(),
-            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+    ProposalCreateActuator actuator = new ProposalCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setForkUtils(dbManager.getForkController())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);
     try {
@@ -177,9 +172,9 @@ public class ProposalDeleteActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000100);
     long id = 1;
 
-    ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_FIRST, id), dbManager.getAccountStore(),
-        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalDeleteActuator actuator = new ProposalDeleteActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, id));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
     try {
@@ -216,9 +211,9 @@ public class ProposalDeleteActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000100);
     long id = 1;
 
-    ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_INVALID, id), dbManager.getAccountStore(),
-        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalDeleteActuator actuator = new ProposalDeleteActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_INVALID, id));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -241,9 +236,9 @@ public class ProposalDeleteActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000100);
     long id = 1;
 
-    ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_NOACCOUNT, id), dbManager.getAccountStore(),
-        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalDeleteActuator actuator = new ProposalDeleteActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_NOACCOUNT, id));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -267,9 +262,9 @@ public class ProposalDeleteActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000100);
     long id = 1;
 
-    ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_SECOND, id), dbManager.getAccountStore(),
-        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalDeleteActuator actuator = new ProposalDeleteActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_SECOND, id));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -295,9 +290,9 @@ public class ProposalDeleteActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000100);
     long id = 2;
 
-    ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_FIRST, id), dbManager.getAccountStore(),
-        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalDeleteActuator actuator = new ProposalDeleteActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, id));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -321,9 +316,9 @@ public class ProposalDeleteActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(261200100);
     long id = 1;
 
-    ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_FIRST, id), dbManager.getAccountStore(),
-        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalDeleteActuator actuator = new ProposalDeleteActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, id));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -347,9 +342,9 @@ public class ProposalDeleteActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(100100);
     long id = 1;
 
-    ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_FIRST, id), dbManager.getAccountStore(),
-        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+    ProposalDeleteActuator actuator = new ProposalDeleteActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, id));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;

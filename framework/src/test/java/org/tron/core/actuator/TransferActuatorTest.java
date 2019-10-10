@@ -6,7 +6,6 @@ import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -21,20 +20,17 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j
 public class TransferActuatorTest {
+
   private static Manager dbManager;
   private static final String dbPath = "output_transfer_test";
   private static TronApplicationContext context;
@@ -109,7 +105,6 @@ public class TransferActuatorTest {
   }
 
   private Any getContract(long count) {
-    long nowTime = new Date().getTime();
     return Any.pack(
         TransferContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
@@ -129,8 +124,8 @@ public class TransferActuatorTest {
 
   @Test
   public void rightTransfer() {
-    TransferActuator actuator = new TransferActuator(getContract(AMOUNT), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(AMOUNT));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -153,9 +148,9 @@ public class TransferActuatorTest {
 
   @Test
   public void perfectTransfer() {
-    TransferActuator actuator = new TransferActuator(
-        getContract(OWNER_BALANCE - TRANSFER_FEE), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_BALANCE - TRANSFER_FEE));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -179,8 +174,9 @@ public class TransferActuatorTest {
 
   @Test
   public void moreTransfer() {
-    TransferActuator actuator = new TransferActuator(getContract(OWNER_BALANCE + 1), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_BALANCE + 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -206,9 +202,9 @@ public class TransferActuatorTest {
 
   @Test
   public void iniviateOwnerAddress() {
-    TransferActuator actuator = new TransferActuator(
-        getContract(10000L, OWNER_ADDRESS_INVALID, TO_ADDRESS), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(10000L, OWNER_ADDRESS_INVALID, TO_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -234,9 +230,9 @@ public class TransferActuatorTest {
 
   @Test
   public void iniviateToAddress() {
-    TransferActuator actuator = new TransferActuator(
-        getContract(10000L, OWNER_ADDRESS, TO_ADDRESS_INVALID), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(10000L, OWNER_ADDRESS, TO_ADDRESS_INVALID));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -261,9 +257,9 @@ public class TransferActuatorTest {
 
   @Test
   public void iniviateTrx() {
-    TransferActuator actuator = new TransferActuator(
-        getContract(100L, OWNER_ADDRESS, OWNER_ADDRESS), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(100L, OWNER_ADDRESS, OWNER_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -288,9 +284,9 @@ public class TransferActuatorTest {
 
   @Test
   public void noExitOwnerAccount() {
-    TransferActuator actuator = new TransferActuator(
-        getContract(100L, OWNER_ACCOUNT_INVALID, TO_ADDRESS), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(100L, OWNER_ACCOUNT_INVALID, TO_ADDRESS));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -317,9 +313,9 @@ public class TransferActuatorTest {
    * If to account not exit, create it.
    */
   public void noExitToAccount() {
-    TransferActuator actuator = new TransferActuator(
-        getContract(1_000_000L, OWNER_ADDRESS, To_ACCOUNT_INVALID), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(1_000_000L, OWNER_ADDRESS, To_ACCOUNT_INVALID));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -351,8 +347,9 @@ public class TransferActuatorTest {
 
   @Test
   public void zeroAmountTest() {
-    TransferActuator actuator = new TransferActuator(getContract(0), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(0));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -375,8 +372,9 @@ public class TransferActuatorTest {
 
   @Test
   public void negativeAmountTest() {
-    TransferActuator actuator = new TransferActuator(getContract(-AMOUNT), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(-AMOUNT));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -403,8 +401,8 @@ public class TransferActuatorTest {
     AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
     toAccount.setBalance(Long.MAX_VALUE);
     dbManager.getAccountStore().put(ByteArray.fromHexString(TO_ADDRESS), toAccount);
-    TransferActuator actuator = new TransferActuator(getContract(1), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -441,9 +439,9 @@ public class TransferActuatorTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
 
-    TransferActuator actuator = new TransferActuator(
-        getContract(AMOUNT, OWNER_NO_BALANCE, To_ACCOUNT_INVALID), dbManager.getAccountStore(),
-        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+    TransferActuator actuator = new TransferActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(AMOUNT, OWNER_NO_BALANCE, To_ACCOUNT_INVALID));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

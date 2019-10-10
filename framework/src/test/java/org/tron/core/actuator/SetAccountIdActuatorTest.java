@@ -21,9 +21,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.SetAccountIdContract;
 
 @Slf4j
 public class SetAccountIdActuatorTest {
@@ -93,9 +93,9 @@ public class SetAccountIdActuatorTest {
   @Test
   public void rightSetAccountId() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    SetAccountIdActuator actuator = new SetAccountIdActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS),
-        dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -115,9 +115,9 @@ public class SetAccountIdActuatorTest {
   @Test
   public void invalidAddress() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    SetAccountIdActuator actuator = new SetAccountIdActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS_INVALID),
-        dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS_INVALID));
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -133,9 +133,9 @@ public class SetAccountIdActuatorTest {
   @Test
   public void noExistAccount() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    SetAccountIdActuator actuator = new SetAccountIdActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS_1),
-        dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS_1));
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -151,12 +151,12 @@ public class SetAccountIdActuatorTest {
   @Test
   public void twiceUpdateAccount() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    SetAccountIdActuator actuator = new SetAccountIdActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS),
-        dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
-    SetAccountIdActuator actuator1 = new SetAccountIdActuator(
-        getContract(ACCOUNT_NAME_1, OWNER_ADDRESS),
-        dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+    SetAccountIdActuator actuator1 = new SetAccountIdActuator();
+    actuator1.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ACCOUNT_NAME_1, OWNER_ADDRESS));
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -189,12 +189,12 @@ public class SetAccountIdActuatorTest {
   @Test
   public void nameAlreadyUsed() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    SetAccountIdActuator actuator = new SetAccountIdActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS),
-        dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
-    SetAccountIdActuator actuator1 = new SetAccountIdActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS_1),
-        dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+    SetAccountIdActuator actuator1 = new SetAccountIdActuator();
+    actuator1.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS_1));
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -240,9 +240,9 @@ public class SetAccountIdActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     //Just OK 32 bytes is OK
     try {
-      SetAccountIdActuator actuator = new SetAccountIdActuator(
-          getContract("testname0123456789abcdefghijgklm", OWNER_ADDRESS),
-          dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+      SetAccountIdActuator actuator = new SetAccountIdActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager())
+          .setAny(getContract("testname0123456789abcdefghijgklm", OWNER_ADDRESS));
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
@@ -263,9 +263,9 @@ public class SetAccountIdActuatorTest {
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      SetAccountIdActuator actuator = new SetAccountIdActuator(
-          getContract("test1111", OWNER_ADDRESS),
-          dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+      SetAccountIdActuator actuator = new SetAccountIdActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager())
+          .setAny(getContract("test1111", OWNER_ADDRESS));
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
@@ -287,9 +287,9 @@ public class SetAccountIdActuatorTest {
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      SetAccountIdActuator actuator = new SetAccountIdActuator(
-          getContract(ByteString.EMPTY, OWNER_ADDRESS),
-          dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+      SetAccountIdActuator actuator = new SetAccountIdActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager())
+          .setAny(getContract(ByteString.EMPTY, OWNER_ADDRESS));
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
@@ -306,12 +306,12 @@ public class SetAccountIdActuatorTest {
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      SetAccountIdActuator actuator = new SetAccountIdActuator(
-          getContract("testname0123456789abcdefghijgklmo0123456789abcdefghijgk"
+      SetAccountIdActuator actuator = new SetAccountIdActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager())
+          .setAny(getContract("testname0123456789abcdefghijgklmo0123456789abcdefghijgk"
               + "lmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo"
               + "0123456789abcdefghijgklmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo"
-              + "0123456789abcdefghijgklmo0123456789abcdefghijgklmo", OWNER_ADDRESS),
-          dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+              + "0123456789abcdefghijgklmo0123456789abcdefghijgklmo", OWNER_ADDRESS));
       actuator.validate();
       actuator.execute(ret);
       Assert.assertFalse(true);
@@ -328,9 +328,9 @@ public class SetAccountIdActuatorTest {
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      SetAccountIdActuator actuator = new SetAccountIdActuator(
-          getContract("testnam", OWNER_ADDRESS),
-          dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+      SetAccountIdActuator actuator = new SetAccountIdActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager())
+          .setAny(getContract("testnam", OWNER_ADDRESS));
       actuator.validate();
       actuator.execute(ret);
       Assert.assertFalse(true);
@@ -347,9 +347,9 @@ public class SetAccountIdActuatorTest {
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      SetAccountIdActuator actuator = new SetAccountIdActuator(
-          getContract("t e", OWNER_ADDRESS),
-          dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+      SetAccountIdActuator actuator = new SetAccountIdActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager())
+          .setAny(getContract("t e", OWNER_ADDRESS));
       actuator.validate();
       actuator.execute(ret);
       Assert.assertFalse(true);
@@ -366,10 +366,9 @@ public class SetAccountIdActuatorTest {
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      SetAccountIdActuator actuator = new SetAccountIdActuator(
-          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))
-              , OWNER_ADDRESS),
-          dbManager.getAccountStore(), dbManager.getAccountIdIndexStore());
+      SetAccountIdActuator actuator = new SetAccountIdActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
+          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95")), OWNER_ADDRESS));
       actuator.validate();
       actuator.execute(ret);
       Assert.assertFalse(true);

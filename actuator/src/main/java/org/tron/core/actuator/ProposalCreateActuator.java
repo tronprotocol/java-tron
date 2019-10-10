@@ -4,60 +4,57 @@ import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
-import org.tron.common.utils.ForkUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ProposalStore;
-import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.ProposalUtil;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 
 @Slf4j(topic = "actuator")
 public class ProposalCreateActuator extends AbstractActuator {
 
-  ProposalCreateActuator(Any contract, AccountStore accountStore, ProposalStore proposalStore, WitnessStore witnessStore,
-      DynamicPropertiesStore dynamicPropertiesStore, ForkUtils forkUtils) {
-    super(contract, accountStore, proposalStore, witnessStore, dynamicPropertiesStore, forkUtils);
+  public ProposalCreateActuator() {
+    super(ContractType.ProposalCreateContract, ProposalCreateContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+
     try {
-      final ProposalCreateContract proposalCreateContract = this.contract
+      final ProposalCreateContract proposalCreateContract = this.any
           .unpack(ProposalCreateContract.class);
-      long id = dynamicStore.getLatestProposalNum() + 1;
+      long id = chainBaseManager.getDynamicPropertiesStore().getLatestProposalNum() + 1;
       ProposalCapsule proposalCapsule =
           new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
 
       proposalCapsule.setParameters(proposalCreateContract.getParametersMap());
 
-      long now = dynamicStore.getLatestBlockHeaderTimestamp();
-      long maintenanceTimeInterval = dynamicStore.getMaintenanceTimeInterval();
+      long now = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+      long maintenanceTimeInterval = chainBaseManager.getDynamicPropertiesStore()
+          .getMaintenanceTimeInterval();
       proposalCapsule.setCreateTime(now);
 
-      long currentMaintenanceTime = dynamicStore.getNextMaintenanceTime();
+      long currentMaintenanceTime =
+          chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
       long now3 = now + DBConfig.getProposalExpireTime();
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
           currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;
       proposalCapsule.setExpirationTime(expirationTime);
 
-      proposalStore.put(proposalCapsule.createDbKey(), proposalCapsule);
-      dynamicStore.saveLatestProposalNum(id);
+      chainBaseManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+      chainBaseManager.getDynamicPropertiesStore().saveLatestProposalNum(id);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
@@ -70,20 +67,20 @@ public class ProposalCreateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (!this.contract.is(ProposalCreateContract.class)) {
+    if (!this.any.is(ProposalCreateContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ProposalCreateContract],real type[" + contract
+          "contract type error,expected type [ProposalCreateContract],real type[" + any
               .getClass() + "]");
     }
     final ProposalCreateContract contract;
     try {
-      contract = this.contract.unpack(ProposalCreateContract.class);
+      contract = this.any.unpack(ProposalCreateContract.class);
     } catch (InvalidProtocolBufferException e) {
       throw new ContractValidateException(e.getMessage());
     }
@@ -95,12 +92,12 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!accountStore.has(ownerAddress)) {
+    if (!chainBaseManager.getAccountStore().has(ownerAddress)) {
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
-    if (!witnessStore.has(ownerAddress)) {
+    if (!chainBaseManager.getWitnessStore().has(ownerAddress)) {
       throw new ContractValidateException(
           WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
@@ -117,12 +114,13 @@ public class ProposalCreateActuator extends AbstractActuator {
   }
 
   private void validateValue(Map.Entry<Long, Long> entry) throws ContractValidateException {
-    ProposalUtil.validator(dynamicStore, forkUtils, entry.getKey(), entry.getValue());
+    ProposalUtil.validator(chainBaseManager.getDynamicPropertiesStore(), forkUtils, entry.getKey(),
+        entry.getValue());
   }
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(ProposalCreateContract.class).getOwnerAddress();
+    return any.unpack(ProposalCreateContract.class).getOwnerAddress();
   }
 
   @Override

@@ -15,14 +15,12 @@
 
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -34,24 +32,25 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 
 @Slf4j(topic = "actuator")
 public class TransferAssetActuator extends AbstractActuator {
 
-  TransferAssetActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicStore,
-      AssetIssueStore assetIssueStore, AssetIssueV2Store assetIssueV2Store) {
-    super(contract, accountStore, dynamicStore,
-        assetIssueStore, assetIssueV2Store);
+  public TransferAssetActuator() {
+    super(ContractType.TransferAssetContract, TransferAssetContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     try {
-      TransferAssetContract transferAssetContract = this.contract
-          .unpack(TransferAssetContract.class);
+      TransferAssetContract transferAssetContract = this.any.unpack(TransferAssetContract.class);
       byte[] ownerAddress = transferAssetContract.getOwnerAddress().toByteArray();
       byte[] toAddress = transferAssetContract.getToAddress().toByteArray();
       AccountCapsule toAccountCapsule = accountStore.get(toAddress);
@@ -71,12 +70,14 @@ public class TransferAssetActuator extends AbstractActuator {
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
 
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
-      if (!ownerAccountCapsule.reduceAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore)) {
+      if (!ownerAccountCapsule
+          .reduceAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore)) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
       accountStore.put(ownerAddress, ownerAccountCapsule);
 
-      toAccountCapsule.addAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore);
+      toAccountCapsule
+          .addAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore);
       accountStore.put(toAddress, toAccountCapsule);
 
       ret.setStatus(fee, code.SUCESS);
@@ -97,20 +98,24 @@ public class TransferAssetActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(TransferAssetContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
+    AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
+    if (!this.any.is(TransferAssetContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [TransferAssetContract],real type[" + contract
+          "contract type error,expected type [TransferAssetContract],real type[" + any
               .getClass() + "]");
     }
     final TransferAssetContract transferAssetContract;
     try {
-      transferAssetContract = this.contract.unpack(TransferAssetContract.class);
+      transferAssetContract = this.any.unpack(TransferAssetContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -144,7 +149,8 @@ public class TransferAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No owner account!");
     }
 
-    if (!Commons.getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store).has(assetName)) {
+    if (!Commons.getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store)
+        .has(assetName)) {
       throw new ContractValidateException("No asset !");
     }
 
@@ -200,7 +206,7 @@ public class TransferAssetActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(TransferAssetContract.class).getOwnerAddress();
+    return any.unpack(TransferAssetContract.class).getOwnerAddress();
   }
 
   @Override

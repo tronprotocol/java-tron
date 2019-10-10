@@ -1,7 +1,6 @@
 package org.tron.core.actuator;
 
 import com.google.common.collect.Lists;
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Iterator;
@@ -13,26 +12,29 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account.Frozen;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 
 @Slf4j(topic = "actuator")
 public class UnfreezeAssetActuator extends AbstractActuator {
 
-  UnfreezeAssetActuator(Any contract, AccountStore accountStore, AssetIssueStore assetIssueStore,  DynamicPropertiesStore dynamicStore) {
-    super(contract, accountStore, assetIssueStore, dynamicStore);
+  public UnfreezeAssetActuator() {
+    super(ContractType.UnfreezeAssetContract, UnfreezeAssetContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     try {
-      final UnfreezeAssetContract unfreezeAssetContract = contract
-          .unpack(UnfreezeAssetContract.class);
+      final UnfreezeAssetContract unfreezeAssetContract = any.unpack(UnfreezeAssetContract.class);
       byte[] ownerAddress = unfreezeAssetContract.getOwnerAddress().toByteArray();
 
       AccountCapsule accountCapsule = accountStore.get(ownerAddress);
@@ -79,20 +81,22 @@ public class UnfreezeAssetActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(UnfreezeAssetContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    if (!this.any.is(UnfreezeAssetContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UnfreezeAssetContract],real type[" + contract
+          "contract type error,expected type [UnfreezeAssetContract],real type[" + any
               .getClass() + "]");
     }
     final UnfreezeAssetContract unfreezeAssetContract;
     try {
-      unfreezeAssetContract = this.contract.unpack(UnfreezeAssetContract.class);
+      unfreezeAssetContract = this.any.unpack(UnfreezeAssetContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -102,7 +106,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    AccountCapsule accountCapsule =accountStore.get(ownerAddress);
+    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -135,7 +139,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(UnfreezeAssetContract.class).getOwnerAddress();
+    return any.unpack(UnfreezeAssetContract.class).getOwnerAddress();
   }
 
   @Override

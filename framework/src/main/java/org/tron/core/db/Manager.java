@@ -62,7 +62,9 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.consensus.Consensus;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
+import org.tron.core.actuator.AbstractActuator;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -131,6 +133,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
+import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -282,6 +285,10 @@ public class Manager {
 
   @Autowired
   private Consensus consensus;
+
+  @Autowired
+  @Getter
+  private ChainBaseManager chainBaseManager;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -496,16 +503,21 @@ public class Manager {
   @PostConstruct
   public void init() {
     Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
-    delegationService.initStore(this.witnessStore, this.delegationStore, this.dynamicPropertiesStore, this.accountStore);
+    delegationService
+        .initStore(this.witnessStore, this.delegationStore, this.dynamicPropertiesStore,
+            this.accountStore);
     accountStateCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
     revokingStore.check();
     this.setProposalController(ProposalController.createInstance(this));
-    this.setMerkleContainer(merkleContainer.createInstance(this.merkleTreeStore, this.merkleTreeIndexStore));
+    this.setMerkleContainer(
+        merkleContainer.createInstance(this.merkleTreeStore, this.merkleTreeIndexStore));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
+    chainBaseManager.setMerkleContainer(getMerkleContainer());
+    chainBaseManager.setDelegationService(delegationService);
 
     this.initGenesis();
     try {
@@ -553,6 +565,7 @@ public class Manager {
     prepareStoreFactory();
     //initActuatorCreator
     ActuatorCreator.init();
+    TransactionRegister.registerActuator();
   }
 
   public BlockId getGenesisBlockId() {
@@ -561,6 +574,10 @@ public class Manager {
 
   public BlockCapsule getGenesisBlock() {
     return genesisBlock;
+  }
+
+  private void initActuator() {
+    Class<? super AbstractActuator> clazz = AbstractActuator.class.getSuperclass();
   }
 
   /**
@@ -1292,7 +1309,8 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    TransactionTrace trace =  new TransactionTrace(trxCap, StoreFactory.getInstance(), new RuntimeImpl(this));
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl(this));
     trxCap.setTrxTrace(trace);
 
     consumeBandwidth(trxCap, trace);
@@ -1305,7 +1323,6 @@ public class Manager {
     VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
     VMConfig.initAllowTvmSolidity059(dynamicPropertiesStore.getAllowTvmSolidity059());
 */
-
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
@@ -1893,7 +1910,7 @@ public class Manager {
         .setKhaosDb(khaosDb)
         .setBlockIndexStore(blockIndexStore)
         .setMerkleContainer(merkleContainer)
+        .setChainBaseManager(chainBaseManager)
         .setDelegationService(delegationService);
-    ;
   }
 }

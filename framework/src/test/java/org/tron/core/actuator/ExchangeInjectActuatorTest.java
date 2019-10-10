@@ -28,14 +28,10 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ExchangeStore;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 
 @Slf4j
 
@@ -233,11 +229,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -326,11 +320,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, String.valueOf(1L), firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, String.valueOf(1L), firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
@@ -423,11 +415,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -499,11 +489,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -582,11 +570,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -640,11 +626,9 @@ public class ExchangeInjectActuatorTest {
     String firstTokenId = "abc";
     long firstTokenQuant = 200000000L;
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_INVALID, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_INVALID, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -676,11 +660,9 @@ public class ExchangeInjectActuatorTest {
     String firstTokenId = "123";
     long firstTokenQuant = 200000000L;
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_INVALID, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_INVALID, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -711,11 +693,9 @@ public class ExchangeInjectActuatorTest {
     String firstTokenId = "abc";
     long firstTokenQuant = 200000000L;
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_NOACCOUNT, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_NOACCOUNT, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -749,11 +729,9 @@ public class ExchangeInjectActuatorTest {
     String firstTokenId = "123";
     long firstTokenQuant = 200000000L;
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_NOACCOUNT, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_NOACCOUNT, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -793,11 +771,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -841,11 +817,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -885,11 +859,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -935,11 +907,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -979,11 +949,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1025,11 +993,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1069,11 +1035,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1125,11 +1089,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1177,11 +1139,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1225,11 +1185,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1268,11 +1226,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1314,11 +1270,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1358,11 +1312,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1404,11 +1356,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1447,11 +1397,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(firstTokenQuant - 1);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1493,11 +1441,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(firstTokenQuant - 1);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1539,11 +1485,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1587,11 +1531,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1630,11 +1572,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(399_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, secondTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, secondTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1674,11 +1614,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(399_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, secondTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, secondTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1720,11 +1658,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, secondTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, secondTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1768,11 +1704,9 @@ public class ExchangeInjectActuatorTest {
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, secondTokenQuant),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, secondTokenId, secondTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1802,11 +1736,9 @@ public class ExchangeInjectActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitExchangeSameTokenNameActive();
     long exchangeId = 1;
-    ExchangeInjectActuator actuator = new ExchangeInjectActuator(getContract(
-        OWNER_ADDRESS_FIRST, exchangeId, "abc", 1000),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, exchangeId, "abc", 1000));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

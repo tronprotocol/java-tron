@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -10,30 +9,32 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 
 @Slf4j(topic = "actuator")
 public class UpdateAssetActuator extends AbstractActuator {
 
-  UpdateAssetActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicStore,
-      AssetIssueStore assetIssueStore, AssetIssueV2Store assetIssueV2Store) {
-    super(contract, accountStore, dynamicStore,
-        assetIssueStore, assetIssueV2Store);
+  public UpdateAssetActuator() {
+    super(ContractType.UpdateAssetContract, UpdateAssetContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
+    AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     try {
-      final UpdateAssetContract updateAssetContract = this.contract
+      final UpdateAssetContract updateAssetContract = this.any
           .unpack(UpdateAssetContract.class);
 
       long newLimit = updateAssetContract.getNewLimit();
@@ -63,7 +64,7 @@ public class UpdateAssetActuator extends AbstractActuator {
 
         assetIssueStore
             .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-       assetIssueStoreV2
+        assetIssueStoreV2
             .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
       } else {
         assetIssueV2Store
@@ -83,20 +84,24 @@ public class UpdateAssetActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
 
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(UpdateAssetContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
+    AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
+    if (!this.any.is(UpdateAssetContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UpdateAssetContract],real type[" + contract
+          "contract type error,expected type [UpdateAssetContract],real type[" + any
               .getClass() + "]");
     }
     final UpdateAssetContract updateAssetContract;
     try {
-      updateAssetContract = this.contract.unpack(UpdateAssetContract.class);
+      updateAssetContract = this.any.unpack(UpdateAssetContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -159,7 +164,7 @@ public class UpdateAssetActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(AccountUpdateContract.class).getOwnerAddress();
+    return any.unpack(AccountUpdateContract.class).getOwnerAddress();
   }
 
   @Override

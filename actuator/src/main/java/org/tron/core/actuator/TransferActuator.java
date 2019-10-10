@@ -2,7 +2,6 @@ package org.tron.core.actuator;
 
 import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -10,29 +9,30 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j(topic = "actuator")
 public class TransferActuator extends AbstractActuator {
 
-  TransferActuator(Any contract, AccountStore accountStore, AssetIssueStore assetIssueStore, DynamicPropertiesStore dynamicStore) {
-    super(contract, accountStore, assetIssueStore, dynamicStore);
+  public TransferActuator() {
+    super(ContractType.TransferContract, TransferContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     try {
-      TransferContract transferContract = contract.unpack(TransferContract.class);
+      TransferContract transferContract = any.unpack(TransferContract.class);
       long amount = transferContract.getAmount();
       byte[] toAddress = transferContract.getToAddress().toByteArray();
       byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
@@ -71,21 +71,23 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!this.contract.is(TransferContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    if (!this.any.is(TransferContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [TransferContract],real type[" + contract
+          "contract type error,expected type [TransferContract],real type[" + any
               .getClass() + "]");
     }
     long fee = calcFee();
     final TransferContract transferContract;
     try {
-      transferContract = contract.unpack(TransferContract.class);
+      transferContract = any.unpack(TransferContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -94,8 +96,6 @@ public class TransferActuator extends AbstractActuator {
     byte[] toAddress = transferContract.getToAddress().toByteArray();
     byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
     long amount = transferContract.getAmount();
-
-
 
     if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
@@ -113,8 +113,6 @@ public class TransferActuator extends AbstractActuator {
     if (ownerAccount == null) {
       throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
     }
-
-
 
     long balance = ownerAccount.getBalance();
 
@@ -152,7 +150,7 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(TransferContract.class).getOwnerAddress();
+    return any.unpack(TransferContract.class).getOwnerAddress();
   }
 
   @Override

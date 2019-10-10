@@ -28,15 +28,10 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.ExchangeStore;
-import org.tron.core.store.ExchangeV2Store;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 
 @Slf4j
 
@@ -239,11 +234,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get("def"));
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getExchangeStore(),
-        dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -319,11 +312,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get("def"));
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getExchangeStore(),
-        dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
@@ -400,11 +391,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get("456"));
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getExchangeStore(),
-        dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -480,11 +469,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getExchangeStore(),
-        dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -567,11 +554,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-        dbManager.getDynamicPropertiesStore(), dbManager.getExchangeStore(),
-        dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -645,10 +630,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_INVALID, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_INVALID, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -692,10 +676,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_INVALID, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_INVALID, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -737,10 +720,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_NOACCOUNT, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_NOACCOUNT, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -785,10 +767,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_NOACCOUNT, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_NOACCOUNT, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -830,10 +811,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -876,10 +856,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -921,10 +900,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -960,16 +938,17 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule
+        .addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(),
+            dbManager.getAssetIssueStore());
     Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1011,10 +990,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1058,16 +1036,17 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule
+        .addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(),
+            dbManager.getAssetIssueStore());
     Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1117,10 +1096,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1156,16 +1134,17 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule
+        .addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(),
+            dbManager.getAssetIssueStore());
     Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1207,10 +1186,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1246,16 +1224,17 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule
+        .addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(),
+            dbManager.getAssetIssueStore());
     Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1296,10 +1275,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1340,10 +1318,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1385,10 +1362,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1431,10 +1407,9 @@ public class ExchangeTransactionActuatorTest {
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1485,10 +1460,9 @@ public class ExchangeTransactionActuatorTest {
       fail();
     }
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, expected + 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, expected + 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1524,7 +1498,9 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(tokenId.getBytes(), quant, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule
+        .addAssetAmountV2(tokenId.getBytes(), quant, dbManager.getDynamicPropertiesStore(),
+            dbManager.getAssetIssueStore());
     Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
@@ -1539,10 +1515,9 @@ public class ExchangeTransactionActuatorTest {
       fail();
     }
 
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, expected + 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, expected + 1));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1577,10 +1552,9 @@ public class ExchangeTransactionActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     //token id is not a valid number
-    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, "abc", quant, 1),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, "abc", quant, 1));
 
     try {
       actuator.validate();
@@ -1595,10 +1569,9 @@ public class ExchangeTransactionActuatorTest {
     }
 
     //token expected must greater than zero
-    actuator = new ExchangeTransactionActuator(getContract(
-        OWNER_ADDRESS_SECOND, exchangeId, "_", quant, 0),
-        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),  dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(), dbManager.getExchangeV2Store());
+    actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, "_", quant, 0));
 
     try {
       actuator.validate();

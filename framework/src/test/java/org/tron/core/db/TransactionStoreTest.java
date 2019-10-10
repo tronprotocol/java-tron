@@ -24,13 +24,13 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
-import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Ignore
 public class TransactionStoreTest {

@@ -3,11 +3,9 @@ package org.tron.core.actuator;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 
 import com.google.common.math.LongMath;
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
@@ -19,24 +17,26 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.WitnessStore;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
 
 @Slf4j(topic = "actuator")
 public class WithdrawBalanceActuator extends AbstractActuator {
 
-  WithdrawBalanceActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicPropertiesStore,
-      WitnessStore witnessStore, DelegationService delegationService) {
-    super(contract,accountStore, dynamicPropertiesStore, witnessStore, delegationService);
+  public WithdrawBalanceActuator() {
+    super(ContractType.WithdrawBalanceContract, WithdrawBalanceContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     final WithdrawBalanceContract withdrawBalanceContract;
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    DelegationService delegationService = chainBaseManager.getDelegationService();
     try {
-      withdrawBalanceContract = contract.unpack(WithdrawBalanceContract.class);
+      withdrawBalanceContract = any.unpack(WithdrawBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -66,21 +66,23 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-
-    if (!this.contract.is(WithdrawBalanceContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    DelegationService delegationService = chainBaseManager.getDelegationService();
+    if (!this.any.is(WithdrawBalanceContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [WithdrawBalanceContract],real type[" + contract
+          "contract type error,expected type [WithdrawBalanceContract],real type[" + any
               .getClass() + "]");
     }
     final WithdrawBalanceContract withdrawBalanceContract;
     try {
-      withdrawBalanceContract = this.contract.unpack(WithdrawBalanceContract.class);
+      withdrawBalanceContract = this.any.unpack(WithdrawBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -132,7 +134,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(WithdrawBalanceContract.class).getOwnerAddress();
+    return any.unpack(WithdrawBalanceContract.class).getOwnerAddress();
   }
 
   @Override

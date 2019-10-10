@@ -22,9 +22,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
 
 @Slf4j
 public class CreateAccountActuatorTest {
@@ -84,9 +84,9 @@ public class CreateAccountActuatorTest {
    */
   @Test
   public void firstCreateAccount() {
-    CreateAccountActuator actuator =
-        new CreateAccountActuator(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST),
-            dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+    CreateAccountActuator actuator = new CreateAccountActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -111,10 +111,9 @@ public class CreateAccountActuatorTest {
    */
   @Test
   public void secondCreateAccount() {
-    CreateAccountActuator actuator =
-        new CreateAccountActuator(
-            getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_SECOND),
-            dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+    CreateAccountActuator actuator = new CreateAccountActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_SECOND));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

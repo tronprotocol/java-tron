@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -9,20 +8,22 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
 @Slf4j(topic = "actuator")
 public class WitnessUpdateActuator extends AbstractActuator {
 
-  WitnessUpdateActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore) {
-    super(contract, accountStore, witnessStore);
+  public WitnessUpdateActuator() {
+    super(ContractType.WitnessUpdateContract, WitnessUpdateContract.class);
   }
 
   private void updateWitness(final WitnessUpdateContract contract) {
+    WitnessStore witnessStore = chainBaseManager.getWitnessStore();
     WitnessCapsule witnessCapsule = witnessStore
         .get(contract.getOwnerAddress().toByteArray());
     witnessCapsule.setUrl(contract.getUpdateUrl().toStringUtf8());
@@ -33,7 +34,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     try {
-      final WitnessUpdateContract witnessUpdateContract = this.contract
+      final WitnessUpdateContract witnessUpdateContract = this.any
           .unpack(WitnessUpdateContract.class);
       this.updateWitness(witnessUpdateContract);
       ret.setStatus(fee, code.SUCESS);
@@ -47,20 +48,22 @@ public class WitnessUpdateActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || witnessStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or witness store!");
     }
-    if (!this.contract.is(WitnessUpdateContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    WitnessStore witnessStore = chainBaseManager.getWitnessStore();
+    if (!this.any.is(WitnessUpdateContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [WitnessUpdateContract],real type[" + contract
+          "contract type error,expected type [WitnessUpdateContract],real type[" + any
               .getClass() + "]");
     }
     final WitnessUpdateContract contract;
     try {
-      contract = this.contract.unpack(WitnessUpdateContract.class);
+      contract = this.any.unpack(WitnessUpdateContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -88,7 +91,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(WitnessUpdateContract.class).getOwnerAddress();
+    return any.unpack(WitnessUpdateContract.class).getOwnerAddress();
   }
 
   @Override

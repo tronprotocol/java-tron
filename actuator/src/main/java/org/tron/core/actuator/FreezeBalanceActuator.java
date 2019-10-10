@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -16,29 +15,30 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 
 @Slf4j(topic = "actuator")
 public class FreezeBalanceActuator extends AbstractActuator {
 
-  FreezeBalanceActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicStore,
-      DelegatedResourceStore delegatedResourceStore, DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore) {
-    super(contract,  accountStore, dynamicStore,
-        delegatedResourceStore, delegatedResourceAccountIndexStore);
+  public FreezeBalanceActuator() {
+    super(ContractType.FreezeBalanceContract, FreezeBalanceContract.class);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
     final FreezeBalanceContract freezeBalanceContract;
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     try {
-      freezeBalanceContract = contract.unpack(FreezeBalanceContract.class);
+      freezeBalanceContract = any.unpack(FreezeBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -101,21 +101,23 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dynamicStore == null || accountStore == null) {
+    if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    if (!contract.is(FreezeBalanceContract.class)) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    if (!any.is(FreezeBalanceContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [FreezeBalanceContract],real type[" + contract
+          "contract type error,expected type [FreezeBalanceContract],real type[" + any
               .getClass() + "]");
     }
 
     final FreezeBalanceContract freezeBalanceContract;
     try {
-      freezeBalanceContract = this.contract.unpack(FreezeBalanceContract.class);
+      freezeBalanceContract = this.any.unpack(FreezeBalanceContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -209,7 +211,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(FreezeBalanceContract.class).getOwnerAddress();
+    return any.unpack(FreezeBalanceContract.class).getOwnerAddress();
   }
 
   @Override
@@ -219,6 +221,10 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
   private void delegateResource(byte[] ownerAddress, byte[] receiverAddress, boolean isBandwidth,
       long balance, long expireTime) {
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
+    DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore = chainBaseManager
+        .getDelegatedResourceAccountIndexStore();
     byte[] key = DelegatedResourceCapsule.createDbKey(ownerAddress, receiverAddress);
     //modify DelegatedResourceStore
     DelegatedResourceCapsule delegatedResourceCapsule = delegatedResourceStore
