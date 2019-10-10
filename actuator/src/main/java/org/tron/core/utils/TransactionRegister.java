@@ -16,8 +16,7 @@ public class TransactionRegister {
       try {
         clazz.newInstance();
       } catch (Exception e) {
-        logger.error("contract actuator register fail!", e);
-        Runtime.getRuntime().exit(0);
+        logger.error("{} contract actuator register fail!", clazz, e);
       }
     }
   }

@@ -21,7 +21,7 @@ import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 @Slf4j(topic = "actuator")
 public class UpdateBrokerageActuator extends AbstractActuator {
 
-  UpdateBrokerageActuator() {
+  public UpdateBrokerageActuator() {
     super(ContractType.UpdateBrokerageContract, UpdateBrokerageContract.class);
   }
 
