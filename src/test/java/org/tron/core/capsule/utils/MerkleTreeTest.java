@@ -1,13 +1,14 @@
 package org.tron.core.capsule.utils;
 
-import java.util.ArrayList;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.utils.MerkleTree.Leaf;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public class MerkleTreeTest {

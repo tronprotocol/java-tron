@@ -1,7 +1,6 @@
 package org.tron.core.db.api;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -12,11 +11,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
-import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -24,6 +19,8 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+
+import java.io.File;
 
 public class AssetUpdateHelperTest {
 

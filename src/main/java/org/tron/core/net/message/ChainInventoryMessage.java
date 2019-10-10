@@ -1,13 +1,14 @@
 package org.tron.core.net.message;
 
+import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.ChainInventory;
+
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.ChainInventory;
 
 public class ChainInventoryMessage extends TronMessage {
 

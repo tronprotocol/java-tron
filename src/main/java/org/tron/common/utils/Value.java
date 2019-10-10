@@ -18,10 +18,11 @@
 package org.tron.common.utils;
 
 import com.cedarsoftware.util.DeepEquals;
+import org.spongycastle.util.encoders.Hex;
+
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
-import org.spongycastle.util.encoders.Hex;
 
 /**
  * Class to encapsulate an object and provide utilities for conversion

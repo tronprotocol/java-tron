@@ -18,8 +18,6 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Arrays;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
@@ -35,6 +33,9 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+
+import java.util.Arrays;
+import java.util.Map;
 
 @Slf4j(topic = "actuator")
 public class TransferAssetActuator extends AbstractActuator {

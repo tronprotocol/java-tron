@@ -1,6 +1,5 @@
 package org.tron.common.logsfilter.capsule;
 
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.logsfilter.ContractEventParserAbi;
@@ -9,6 +8,8 @@ import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry;
+
+import java.util.List;
 
 public class ContractEventTriggerCapsule extends TriggerCapsule {
 

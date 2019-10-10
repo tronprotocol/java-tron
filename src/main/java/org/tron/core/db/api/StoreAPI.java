@@ -1,16 +1,9 @@
 package org.tron.core.db.api;
 
-import static com.googlecode.cqengine.query.QueryFactory.ascending;
-import static com.googlecode.cqengine.query.QueryFactory.equal;
-import static com.googlecode.cqengine.query.QueryFactory.orderBy;
-import static com.googlecode.cqengine.query.QueryFactory.queryOptions;
-import static org.tron.core.config.Parameter.DatabaseConstants.TRANSACTIONS_COUNT_LIMIT_MAX;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import com.googlecode.cqengine.resultset.ResultSet;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,6 +12,11 @@ import org.tron.core.db.api.index.Index;
 import org.tron.core.db.api.index.TransactionIndex;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.protos.Protocol.Transaction;
+
+import java.util.List;
+
+import static com.googlecode.cqengine.query.QueryFactory.*;
+import static org.tron.core.config.Parameter.DatabaseConstants.TRANSACTIONS_COUNT_LIMIT_MAX;
 
 @Component
 @Slf4j(topic = "DB")

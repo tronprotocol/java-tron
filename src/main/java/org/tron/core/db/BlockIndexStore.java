@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +9,8 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.ItemNotFoundException;
+
+import java.util.Arrays;
 
 @Component
 public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {

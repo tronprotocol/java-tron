@@ -2,9 +2,6 @@ package org.tron.core.db;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -14,6 +11,10 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.Account;
+
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ManagerForTest {
 

@@ -1,12 +1,13 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Arrays;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.protos.Contract.IncrementalMerkleTree;
 import org.tron.protos.Contract.PedersenHash;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMerkleTree> {

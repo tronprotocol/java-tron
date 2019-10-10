@@ -20,12 +20,13 @@ package stest.tron.wallet.common.client.utils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
+
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 
 public class DataWord implements Comparable<DataWord> {
 

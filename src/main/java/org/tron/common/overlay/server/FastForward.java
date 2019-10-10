@@ -1,12 +1,6 @@
 package org.tron.common.overlay.server;
 
 import com.google.protobuf.ByteString;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -16,8 +10,14 @@ import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.WitnessScheduleStore;
-import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocol.ReasonCode;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j(topic = "net")
 @Component

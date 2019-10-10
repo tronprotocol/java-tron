@@ -2,8 +2,6 @@ package org.tron.program;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -16,6 +14,9 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
+
+import java.io.File;
+import java.util.List;
 
 @Slf4j
 public class AccountVoteWitnessTest {

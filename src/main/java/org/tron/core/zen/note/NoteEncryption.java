@@ -1,26 +1,24 @@
 package org.tron.core.zen.note;
 
-import static org.tron.common.zksnark.JLibsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
-import static org.tron.core.zen.note.NoteEncryption.Encryption.NOTEENCRYPTION_CIPHER_KEYSIZE;
-import static org.tron.core.zen.note.ZenChainParams.ZC_ENCCIPHERTEXT_SIZE;
-import static org.tron.core.zen.note.ZenChainParams.ZC_ENCPLAINTEXT_SIZE;
-import static org.tron.core.zen.note.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
-import static org.tron.core.zen.note.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
-
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.zksnark.JLibrustzcash;
+import org.tron.common.zksnark.JLibsodium;
 import org.tron.common.zksnark.LibrustzcashParam.KaAgreeParams;
 import org.tron.common.zksnark.LibrustzcashParam.KaDerivepublicParams;
-import org.tron.common.zksnark.JLibsodium;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.note.NoteEncryption.Encryption.EncCiphertext;
 import org.tron.core.zen.note.NoteEncryption.Encryption.EncPlaintext;
 import org.tron.core.zen.note.NoteEncryption.Encryption.OutCiphertext;
 import org.tron.core.zen.note.NoteEncryption.Encryption.OutPlaintext;
+
+import java.util.Optional;
+
+import static org.tron.common.zksnark.JLibsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
+import static org.tron.core.zen.note.NoteEncryption.Encryption.NOTEENCRYPTION_CIPHER_KEYSIZE;
+import static org.tron.core.zen.note.ZenChainParams.*;
 
 @AllArgsConstructor
 public class NoteEncryption {

@@ -15,8 +15,6 @@
 
 package org.tron.common.runtime.vm;
 
-import static org.junit.Assert.assertTrue;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -29,6 +27,8 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeMockImpl;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Transaction;
+
+import static org.junit.Assert.assertTrue;
 
 @Slf4j
 public class InterpreterTest {

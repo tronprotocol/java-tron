@@ -3,6 +3,10 @@ package org.tron.keystore;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.Utils;
+
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
@@ -13,9 +17,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-import org.apache.commons.lang3.StringUtils;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.Utils;
 
 /**
  * Utility functions for working with Wallet files.

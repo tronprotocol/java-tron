@@ -2,8 +2,6 @@ package org.tron.core.services.ratelimiter.adaptor;
 
 import com.google.common.cache.Cache;
 import com.google.common.util.concurrent.RateLimiter;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
 import org.junit.Assert;
 import org.testng.annotations.Test;
 import org.tron.common.utils.ReflectUtils;
@@ -13,6 +11,9 @@ import org.tron.core.services.ratelimiter.adapter.QpsRateLimiterAdapter;
 import org.tron.core.services.ratelimiter.strategy.GlobalPreemptibleStrategy;
 import org.tron.core.services.ratelimiter.strategy.IPQpsStrategy;
 import org.tron.core.services.ratelimiter.strategy.QpsStrategy;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 
 public class AdaptorTest {
 

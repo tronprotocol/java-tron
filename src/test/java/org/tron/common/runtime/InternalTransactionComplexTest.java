@@ -1,6 +1,5 @@
 package org.tron.common.runtime;
 
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -23,6 +22,8 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
+
+import java.io.File;
 
 @Slf4j
 public class InternalTransactionComplexTest {

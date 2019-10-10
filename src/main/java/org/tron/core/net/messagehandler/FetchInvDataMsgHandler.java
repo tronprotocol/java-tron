@@ -1,7 +1,6 @@
 package org.tron.core.net.messagehandler;
 
 import com.google.common.collect.Lists;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -14,12 +13,7 @@ import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.MessageTypes;
-import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.message.TransactionsMessage;
-import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.*;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.AdvService;
@@ -27,6 +21,8 @@ import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
+
+import java.util.List;
 
 @Slf4j(topic = "net")
 @Component

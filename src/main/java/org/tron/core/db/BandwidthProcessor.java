@@ -1,11 +1,6 @@
 package org.tron.core.db;
 
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.ShieldedTransferContract;
-
 import com.google.protobuf.ByteString;
-import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
@@ -18,6 +13,12 @@ import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.ShieldedTransferContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 
 @Slf4j(topic = "DB")
 public class BandwidthProcessor extends ResourceProcessor {

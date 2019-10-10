@@ -1,9 +1,6 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-
-import java.io.File;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -16,6 +13,8 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.AccountType;
+
+import java.io.File;
 
 public class AccountStoreTest {
 

@@ -1,10 +1,11 @@
 package org.tron.common.utils;
 
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 public class Sha256HashTest {
 

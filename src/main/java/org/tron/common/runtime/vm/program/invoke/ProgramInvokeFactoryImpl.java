@@ -17,9 +17,6 @@
  */
 package org.tron.common.runtime.vm.program.invoke;
 
-import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
-import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
-
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Arrays;
 import org.springframework.stereotype.Component;
@@ -36,6 +33,9 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 
 /**
  * @author Roman Mandeleil

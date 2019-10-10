@@ -17,10 +17,11 @@ package stest.tron.wallet.common.client.utils;
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.io.Serializable;
-import java.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.FastByteComparisons;
+
+import java.io.Serializable;
+import java.util.Arrays;
 
 public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializable {
 

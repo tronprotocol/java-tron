@@ -1,9 +1,5 @@
 package org.tron.common.runtime;
 
-import static org.tron.common.runtime.TvmTestUtils.generateDeploySmartContractAndGetTransaction;
-import static org.tron.common.runtime.TvmTestUtils.generateTriggerSmartContractAndGetTransaction;
-
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -30,6 +26,11 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
+
+import java.io.File;
+
+import static org.tron.common.runtime.TvmTestUtils.generateDeploySmartContractAndGetTransaction;
+import static org.tron.common.runtime.TvmTestUtils.generateTriggerSmartContractAndGetTransaction;
 
 
 @Slf4j

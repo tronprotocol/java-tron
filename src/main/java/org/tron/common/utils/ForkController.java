@@ -3,11 +3,6 @@ package org.tron.common.utils;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +15,12 @@ import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j(topic = "utils")
 @NoArgsConstructor(access = AccessLevel.PRIVATE)

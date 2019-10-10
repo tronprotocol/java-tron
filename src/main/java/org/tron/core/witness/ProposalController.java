@@ -1,7 +1,6 @@
 package org.tron.core.witness;
 
 import com.google.protobuf.ByteString;
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +8,8 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.services.ProposalService;
 import org.tron.protos.Protocol.Proposal.State;
+
+import java.util.List;
 
 @Slf4j(topic = "witness")
 public class ProposalController {

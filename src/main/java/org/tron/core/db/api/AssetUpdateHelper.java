@@ -1,22 +1,14 @@
 package org.tron.core.db.api;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
-import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 @Slf4j(topic = "DB")
 public class AssetUpdateHelper {

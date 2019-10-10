@@ -17,15 +17,16 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
-import java.io.File;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.tron.common.utils.FileUtil;
+
+import java.io.File;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Custom storage configurations

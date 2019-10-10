@@ -2,9 +2,6 @@ package org.tron.core.db.accountstate.callback;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Internal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -22,6 +19,10 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.trie.TrieImpl;
 import org.tron.core.trie.TrieImpl.Node;
 import org.tron.core.trie.TrieImpl.ScanAction;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j(topic = "AccountState")
 @Component

@@ -1,8 +1,5 @@
 package org.tron.common.runtime.vm;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
@@ -14,6 +11,10 @@ import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.PrecompiledContracts.BatchValidateSign;
 import org.tron.core.Wallet;
 import stest.tron.wallet.common.client.utils.AbiUtil;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 public class BatchValidateSignContractTest {

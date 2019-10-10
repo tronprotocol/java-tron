@@ -1,18 +1,14 @@
 package stest.tron.wallet.common.client.utils;
 
-import java.util.Arrays;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.zen.address.DiversifierT;
-import org.tron.core.zen.address.FullViewingKey;
-import org.tron.core.zen.address.IncomingViewingKey;
-import org.tron.core.zen.address.KeyIo;
-import org.tron.core.zen.address.PaymentAddress;
-import org.tron.core.zen.address.SpendingKey;
+import org.tron.core.zen.address.*;
+
+import java.util.Arrays;
+import java.util.Optional;
 
 @AllArgsConstructor
 public class ShieldAddressInfo {

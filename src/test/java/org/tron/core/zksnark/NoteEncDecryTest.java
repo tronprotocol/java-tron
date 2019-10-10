@@ -1,14 +1,8 @@
 package org.tron.core.zksnark;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -23,6 +17,9 @@ import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.NoteEncryption.Encryption.OutCiphertext;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Contract.AssetIssueContract;
+
+import java.io.File;
+import java.util.Optional;
 
 @Slf4j
 public class NoteEncDecryTest {

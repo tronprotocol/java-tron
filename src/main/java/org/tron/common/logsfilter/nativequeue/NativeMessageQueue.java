@@ -3,6 +3,7 @@ package org.tron.common.logsfilter.nativequeue;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+
 import java.util.Objects;
 
 public class NativeMessageQueue {

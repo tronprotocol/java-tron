@@ -2,15 +2,16 @@ package org.tron.common.logsfilter;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class EventParserJsonTest {
 

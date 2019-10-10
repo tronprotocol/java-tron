@@ -1,11 +1,5 @@
 package org.tron.common.runtime.vm.program;
 
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.apache.commons.collections4.CollectionUtils.size;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-
-import java.util.*;
-
 import lombok.Setter;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.CallCreate;
@@ -13,6 +7,12 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArraySet;
 import org.tron.core.capsule.TransactionResultCapsule;
+
+import java.util.*;
+
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.CollectionUtils.size;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 public class ProgramResult {
 

@@ -1,9 +1,10 @@
 package org.tron.core.config.args;
 
+import lombok.Getter;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
-import lombok.Getter;
 
 public class GenesisBlock implements Serializable {
 

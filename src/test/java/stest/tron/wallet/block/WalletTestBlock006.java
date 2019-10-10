@@ -2,7 +2,6 @@ package stest.tron.wallet.block;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -17,6 +16,8 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class WalletTestBlock006 {

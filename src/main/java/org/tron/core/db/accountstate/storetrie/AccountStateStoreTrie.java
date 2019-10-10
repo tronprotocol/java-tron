@@ -1,6 +1,5 @@
 package org.tron.core.db.accountstate.storetrie;
 
-import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +12,8 @@ import org.tron.core.db.accountstate.AccountStateEntity;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db2.common.DB;
 import org.tron.core.trie.TrieImpl;
+
+import javax.annotation.PostConstruct;
 
 @Slf4j(topic = "AccountState")
 @Component

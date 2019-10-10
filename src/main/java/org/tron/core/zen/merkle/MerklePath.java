@@ -1,11 +1,12 @@
 package org.tron.core.zen.merkle;
 
 import com.google.common.collect.Lists;
-import java.util.List;
 import lombok.Getter;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.ZksnarkException;
+
+import java.util.List;
 
 public class MerklePath {
 

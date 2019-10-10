@@ -15,42 +15,33 @@
 
 package org.tron.common.storage.leveldb;
 
-import static org.fusesource.leveldbjni.JniDBFactory.factory;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.iq80.leveldb.*;
+import org.tron.common.storage.DbSourceInter;
+import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PropUtil;
+import org.tron.core.config.args.Args;
+import org.tron.core.db.common.iterator.StoreIterator;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.iq80.leveldb.CompressionType;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBException;
-import org.iq80.leveldb.DBIterator;
-import org.iq80.leveldb.Options;
-import org.iq80.leveldb.WriteBatch;
-import org.iq80.leveldb.WriteOptions;
-import org.tron.common.storage.DbSourceInter;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.storage.WriteOptionsWrapper;
-import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.PropUtil;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.common.iterator.StoreIterator;
+
+import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 @Slf4j(topic = "DB")
 @NoArgsConstructor

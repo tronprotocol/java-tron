@@ -1,7 +1,5 @@
 package org.tron.core.zen.address;
 
-import java.util.Optional;
-import java.util.Random;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +9,9 @@ import org.tron.common.zksnark.JLibsodium;
 import org.tron.core.Constant;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ZksnarkException;
+
+import java.util.Optional;
+import java.util.Random;
 
 @AllArgsConstructor
 public class SpendingKey {

@@ -15,11 +15,12 @@
 
 package org.tron.core.consensus.server;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class TronTest {

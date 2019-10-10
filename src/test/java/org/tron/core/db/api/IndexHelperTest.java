@@ -1,39 +1,28 @@
 package org.tron.core.db.api;
 
-import static com.googlecode.cqengine.query.QueryFactory.equal;
-
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import com.googlecode.cqengine.resultset.ResultSet;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.api.index.AccountIndex;
 import org.tron.core.db.api.index.Index;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.*;
 import org.tron.protos.Protocol.BlockHeader.raw;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Witness;
+
+import java.io.File;
+
+import static com.googlecode.cqengine.query.QueryFactory.equal;
 
 @Slf4j
 public class IndexHelperTest {

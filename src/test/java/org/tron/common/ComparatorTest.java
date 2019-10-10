@@ -1,14 +1,15 @@
 package org.tron.common;
 
 import com.google.common.collect.ImmutableList;
-import java.util.Comparator;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.testng.collections.Lists;
+
+import java.util.Comparator;
+import java.util.List;
 
 
 @Slf4j

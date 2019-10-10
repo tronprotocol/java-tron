@@ -1,11 +1,6 @@
 package org.tron.core.zen.merkle;
 
 import com.google.common.collect.Lists;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +9,11 @@ import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Contract.PedersenHash;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 @Slf4j
 public class IncrementalMerkleTreeContainer {

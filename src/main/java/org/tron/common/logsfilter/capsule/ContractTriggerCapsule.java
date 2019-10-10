@@ -1,6 +1,5 @@
 package org.tron.common.logsfilter.capsule;
 
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.ArrayUtils;
@@ -17,6 +16,8 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.SmartContract.ABI;
+
+import java.util.List;
 
 public class ContractTriggerCapsule extends TriggerCapsule {
 

@@ -2,12 +2,6 @@ package stest.tron.wallet.dailybuild.tvmnewcommand.batchValidateSignContract;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.spongycastle.util.encoders.Hex;
@@ -28,6 +22,9 @@ import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 

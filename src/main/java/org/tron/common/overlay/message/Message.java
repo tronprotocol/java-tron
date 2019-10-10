@@ -1,12 +1,8 @@
 package org.tron.common.overlay.message;
 
-import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
-
 import com.google.protobuf.CodedInputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import java.lang.reflect.Field;
-import java.util.Arrays;
 import lombok.Setter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -16,6 +12,11 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
+
+import java.lang.reflect.Field;
+import java.util.Arrays;
+
+import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 
 public abstract class Message {
 

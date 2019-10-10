@@ -4,8 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.List;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -28,6 +26,9 @@ import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.merkle.MerklePath;
 import org.tron.protos.Contract.PedersenHash;
+
+import java.io.File;
+import java.util.List;
 
 public class MerkleTreeTest {
 

@@ -18,9 +18,10 @@
 
 package org.tron.common.utils;
 
-import java.security.SecureRandom;
-import java.nio.*;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.security.SecureRandom;
 import java.util.Arrays;
 
 public interface Utils {

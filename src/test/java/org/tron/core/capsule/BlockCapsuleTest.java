@@ -1,7 +1,6 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -16,6 +15,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+
+import java.io.File;
 
 @Slf4j
 public class BlockCapsuleTest {

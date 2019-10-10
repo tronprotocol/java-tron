@@ -1,10 +1,10 @@
 
 package org.tron.core.capsule.utils;
 
-import static org.tron.common.utils.ByteUtil.toHexString;
-
 import java.io.Serializable;
 import java.util.Arrays;
+
+import static org.tron.common.utils.ByteUtil.toHexString;
 
 /**
  */

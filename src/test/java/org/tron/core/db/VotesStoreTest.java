@@ -1,9 +1,6 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -16,6 +13,10 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.Vote;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public class VotesStoreTest {

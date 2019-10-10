@@ -1,10 +1,5 @@
 package org.tron.core.services;
 
-import static org.tron.core.services.ProposalService.ProposalType.WITNESS_127_PAY_PER_BLOCK;
-
-import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,6 +13,12 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.services.ProposalService.ProposalType;
 import org.tron.protos.Protocol.Proposal;
+
+import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.tron.core.services.ProposalService.ProposalType.WITNESS_127_PAY_PER_BLOCK;
 
 public class ProposalServiceTest {
 

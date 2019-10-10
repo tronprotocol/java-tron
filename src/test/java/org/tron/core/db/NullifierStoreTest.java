@@ -1,7 +1,5 @@
 package org.tron.core.db;
 
-import java.io.File;
-import java.util.Random;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -15,6 +13,9 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+
+import java.io.File;
+import java.util.Random;
 
 public class NullifierStoreTest {
 

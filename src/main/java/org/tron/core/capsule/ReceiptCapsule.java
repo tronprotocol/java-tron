@@ -1,6 +1,5 @@
 package org.tron.core.capsule;
 
-import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.runtime.config.VMConfig;
@@ -13,6 +12,8 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.protos.Protocol.ResourceReceipt;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
+
+import java.util.Objects;
 
 public class ReceiptCapsule {
 

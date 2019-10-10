@@ -1,12 +1,13 @@
 package org.tron.common.entity;
 
+import org.tron.common.entity.NodeInfo.MachineInfo.DeadLockThreadInfo;
+import org.tron.common.entity.NodeInfo.MachineInfo.MemoryDescInfo;
+import org.tron.protos.Protocol;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.tron.common.entity.NodeInfo.MachineInfo.DeadLockThreadInfo;
-import org.tron.common.entity.NodeInfo.MachineInfo.MemoryDescInfo;
-import org.tron.protos.Protocol;
 
 public class NodeInfo {
 

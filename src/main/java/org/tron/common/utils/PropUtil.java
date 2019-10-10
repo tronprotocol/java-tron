@@ -1,18 +1,11 @@
 package org.tron.common.utils;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.*;
+import java.util.Properties;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Slf4j
 public class PropUtil {

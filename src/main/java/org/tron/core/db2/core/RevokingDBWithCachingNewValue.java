@@ -2,24 +2,15 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
-import org.tron.core.db2.common.DB;
-import org.tron.core.db2.common.IRevokingDB;
-import org.tron.core.db2.common.LevelDB;
-import org.tron.core.db2.common.RocksDB;
-import org.tron.core.db2.common.Value;
+import org.tron.core.db2.common.*;
 import org.tron.core.exception.ItemNotFoundException;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class RevokingDBWithCachingNewValue implements IRevokingDB {
 

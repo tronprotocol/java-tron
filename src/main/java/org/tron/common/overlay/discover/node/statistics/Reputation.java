@@ -1,10 +1,11 @@
 package org.tron.common.overlay.discover.node.statistics;
 
-import static java.lang.Math.min;
+import org.tron.protos.Protocol.ReasonCode;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.tron.protos.Protocol.ReasonCode;
+
+import static java.lang.Math.min;
 
 public class Reputation {
 

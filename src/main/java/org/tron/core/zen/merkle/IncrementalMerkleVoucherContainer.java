@@ -1,14 +1,14 @@
 package org.tron.core.zen.merkle;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Contract.PedersenHash;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 public class IncrementalMerkleVoucherContainer {
   @Getter

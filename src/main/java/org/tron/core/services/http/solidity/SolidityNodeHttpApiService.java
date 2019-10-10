@@ -9,34 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.http.FullNodeHttpApiService;
-import org.tron.core.services.http.GetAccountByIdServlet;
-import org.tron.core.services.http.GetAccountServlet;
-import org.tron.core.services.http.GetAssetIssueByIdServlet;
-import org.tron.core.services.http.GetAssetIssueByNameServlet;
-import org.tron.core.services.http.GetAssetIssueListByNameServlet;
-import org.tron.core.services.http.GetAssetIssueListServlet;
-import org.tron.core.services.http.GetBlockByIdServlet;
-import org.tron.core.services.http.GetBlockByLatestNumServlet;
-import org.tron.core.services.http.GetBlockByLimitNextServlet;
-import org.tron.core.services.http.GetBlockByNumServlet;
-import org.tron.core.services.http.GetBrokerageServlet;
-import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
-import org.tron.core.services.http.GetDelegatedResourceServlet;
-import org.tron.core.services.http.GetExchangeByIdServlet;
-import org.tron.core.services.http.GetMerkleTreeVoucherInfoServlet;
-import org.tron.core.services.http.GetNodeInfoServlet;
-import org.tron.core.services.http.GetNowBlockServlet;
-import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
-import org.tron.core.services.http.GetRewardServlet;
-import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
-import org.tron.core.services.http.IsSpendServlet;
-import org.tron.core.services.http.ListExchangesServlet;
-import org.tron.core.services.http.ListWitnessesServlet;
-import org.tron.core.services.http.ScanAndMarkNoteByIvkServlet;
-import org.tron.core.services.http.ScanNoteByIvkServlet;
-import org.tron.core.services.http.ScanNoteByOvkServlet;
-import org.tron.core.services.http.TriggerConstantContractServlet;
+import org.tron.core.services.http.*;
 
 
 @Component

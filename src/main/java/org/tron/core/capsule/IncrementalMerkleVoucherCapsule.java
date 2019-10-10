@@ -2,13 +2,14 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.protos.Contract.IncrementalMerkleVoucher;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.PedersenHash;
+
+import java.util.List;
 
 @Slf4j
 public class IncrementalMerkleVoucherCapsule implements ProtoCapsule<IncrementalMerkleVoucher> {

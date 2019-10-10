@@ -1,12 +1,13 @@
 package org.tron.common.utils;
 
-import static org.junit.Assert.assertEquals;
+import org.apache.commons.collections4.CollectionUtils;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.collections4.CollectionUtils;
-import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class ByteString {
 

@@ -1,7 +1,5 @@
 package org.tron.core.db.backup;
 
-import java.io.File;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -19,6 +17,9 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.ManagerForTest;
 import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
 import org.tron.core.db2.core.SnapshotManager;
+
+import java.io.File;
+import java.util.List;
 
 @Slf4j
 public class BackupDbUtilTest {

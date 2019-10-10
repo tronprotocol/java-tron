@@ -1,23 +1,6 @@
 package org.tron.core.trie;
 
-import static org.apache.commons.lang3.concurrent.ConcurrentUtils.constantFuture;
-import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.common.utils.ByteUtil.toHexString;
-import static org.tron.core.capsule.utils.RLP.EMPTY_ELEMENT_RLP;
-import static org.tron.core.capsule.utils.RLP.encodeElement;
-import static org.tron.core.capsule.utils.RLP.encodeList;
-
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import org.apache.commons.lang3.text.StrBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +11,22 @@ import org.tron.core.capsule.utils.FastByteComparisons;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db2.common.ConcurrentHashDB;
 import org.tron.core.db2.common.DB;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import static org.apache.commons.lang3.concurrent.ConcurrentUtils.constantFuture;
+import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.common.utils.ByteUtil.toHexString;
+import static org.tron.core.capsule.utils.RLP.*;
 
 /**
  *

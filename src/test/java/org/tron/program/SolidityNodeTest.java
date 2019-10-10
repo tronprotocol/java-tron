@@ -1,6 +1,5 @@
 package org.tron.program;
 
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -16,6 +15,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
+
+import java.io.File;
 
 @Slf4j
 public class SolidityNodeTest {

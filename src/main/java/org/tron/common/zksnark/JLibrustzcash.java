@@ -2,24 +2,7 @@ package org.tron.common.zksnark;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
-import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
-import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
-import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
-import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
-import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
-import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
-import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
-import org.tron.common.zksnark.LibrustzcashParam.KaAgreeParams;
-import org.tron.common.zksnark.LibrustzcashParam.KaDerivepublicParams;
-import org.tron.common.zksnark.LibrustzcashParam.MerkleHashParams;
-import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
-import org.tron.common.zksnark.LibrustzcashParam.SpendProofParams;
-import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
-import org.tron.common.zksnark.LibrustzcashParam.Zip32XfvkAddressParams;
-import org.tron.common.zksnark.LibrustzcashParam.Zip32XskDeriveParams;
-import org.tron.common.zksnark.LibrustzcashParam.Zip32XskMasterParams;
+import org.tron.common.zksnark.LibrustzcashParam.*;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
 

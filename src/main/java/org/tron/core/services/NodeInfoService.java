@@ -1,16 +1,6 @@
 package org.tron.core.services;
 
 import com.sun.management.OperatingSystemMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryPoolMXBean;
-import java.lang.management.RuntimeMXBean;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map.Entry;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +19,12 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.WitnessProductBlockService.CheatWitnessInfo;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.ReasonCode;
+
+import java.lang.management.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map.Entry;
 
 @Component
 public class NodeInfoService {

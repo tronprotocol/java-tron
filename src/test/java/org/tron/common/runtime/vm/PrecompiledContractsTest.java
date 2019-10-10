@@ -1,19 +1,9 @@
 package org.tron.common.runtime.vm;
 
-import static junit.framework.TestCase.fail;
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
@@ -44,6 +34,13 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
+
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
+import static junit.framework.TestCase.fail;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
 @Slf4j
 public class PrecompiledContractsTest {

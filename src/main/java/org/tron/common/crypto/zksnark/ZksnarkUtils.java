@@ -15,10 +15,6 @@
 
 package org.tron.common.crypto.zksnark;
 
-import java.math.BigInteger;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
-
 public class ZksnarkUtils {
   public static void sort(byte[] bytes) {
     int len = bytes.length / 2;

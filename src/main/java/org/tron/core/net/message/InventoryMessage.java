@@ -1,13 +1,14 @@
 package org.tron.core.net.message;
 
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 public class InventoryMessage extends TronMessage {

@@ -1,18 +1,9 @@
 package org.tron.core.actuator;
 
-import static org.testng.Assert.fail;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.Arrays;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -32,6 +23,12 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Map;
+
+import static org.testng.Assert.fail;
 
 @Slf4j
 

@@ -1,9 +1,6 @@
 package stest.tron.wallet.dailybuild.http;
 
-import static org.hamcrest.core.StringContains.containsString;
-
 import com.alibaba.fastjson.JSONObject;
-import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -15,6 +12,10 @@ import org.tron.common.utils.Utils;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+
+import java.util.HashMap;
+
+import static org.hamcrest.core.StringContains.containsString;
 
 @Slf4j
 public class HttpTestClearAbiContract001 {

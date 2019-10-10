@@ -15,14 +15,13 @@
 
 package org.tron.core.config.args;
 
-import java.io.Serializable;
-import java.util.Arrays;
-
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
+
+import java.io.Serializable;
 
 public class Witness implements Serializable {
 

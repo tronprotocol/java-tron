@@ -18,17 +18,14 @@
 
 package org.tron.core.tire;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.spongycastle.util.Arrays;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.trie.TrieImpl;
 import org.tron.core.trie.TrieImpl.Node;
+
+import java.util.*;
 
 public class TrieTest {
 

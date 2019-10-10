@@ -1,7 +1,5 @@
 package org.tron.common.net.udp.message.discover;
 
-import static org.tron.common.net.udp.message.UdpMessageTypeEnum.DISCOVER_FIND_NODE;
-
 import com.google.protobuf.ByteString;
 import org.tron.common.net.udp.message.Message;
 import org.tron.common.overlay.discover.node.Node;
@@ -9,6 +7,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.protos.Discover;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Discover.FindNeighbours;
+
+import static org.tron.common.net.udp.message.UdpMessageTypeEnum.DISCOVER_FIND_NODE;
 
 public class FindNodeMessage extends Message {
 

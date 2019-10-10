@@ -1,11 +1,6 @@
 package org.tron.core.witness;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,6 +12,12 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.Witness;
 import org.tron.core.db.Manager;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class WitnessControllerTest {
 

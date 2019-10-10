@@ -1,17 +1,8 @@
 package org.tron.core.services.http;
 
-import static org.tron.core.services.http.Util.getHexAddress;
-import static org.tron.core.services.http.Util.getVisiblePost;
-import static org.tron.core.services.http.Util.setTransactionPermissionId;
-
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
-import java.io.IOException;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +14,13 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.stream.Collectors;
+
+import static org.tron.core.services.http.Util.*;
 
 
 @Component

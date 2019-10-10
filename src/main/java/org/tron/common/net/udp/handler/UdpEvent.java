@@ -17,8 +17,9 @@
  */
 package org.tron.common.net.udp.handler;
 
-import java.net.InetSocketAddress;
 import org.tron.common.net.udp.message.Message;
+
+import java.net.InetSocketAddress;
 
 public class UdpEvent {
 

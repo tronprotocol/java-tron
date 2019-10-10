@@ -1,8 +1,9 @@
 package org.tron.core.net.message;
 
-import java.util.List;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol.BlockInventory.Type;
+
+import java.util.List;
 
 public class SyncBlockChainMessage extends BlockInventoryMessage {
 

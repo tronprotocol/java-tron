@@ -1,16 +1,17 @@
 package org.tron.core.db;
 
-import static org.tron.core.config.Parameter.DatabaseConstants.ASSET_ISSUE_COUNT_LIMIT_MAX;
-
 import com.google.common.collect.Streams;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AssetIssueCapsule;
+
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+import static org.tron.core.config.Parameter.DatabaseConstants.ASSET_ISSUE_COUNT_LIMIT_MAX;
 
 @Slf4j(topic = "DB")
 @Component

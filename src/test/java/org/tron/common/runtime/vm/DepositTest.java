@@ -1,7 +1,5 @@
 package org.tron.common.runtime.vm;
 
-import java.io.File;
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -30,6 +28,9 @@ import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
+
+import java.io.File;
+import java.util.Arrays;
 
 @Slf4j
 public class DepositTest {

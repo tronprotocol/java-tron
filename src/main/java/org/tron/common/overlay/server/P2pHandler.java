@@ -1,14 +1,7 @@
 package org.tron.common.overlay.server;
 
-import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
-import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
-
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -16,6 +9,14 @@ import org.tron.common.overlay.discover.node.statistics.MessageStatistics;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.protos.Protocol.ReasonCode;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import static org.tron.common.overlay.message.StaticMessages.PING_MESSAGE;
+import static org.tron.common.overlay.message.StaticMessages.PONG_MESSAGE;
 
 @Slf4j(topic = "net")
 @Component

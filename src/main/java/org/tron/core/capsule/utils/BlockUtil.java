@@ -16,9 +16,6 @@
 package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -27,6 +24,10 @@ import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.Manager;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.Transaction;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class BlockUtil {
 

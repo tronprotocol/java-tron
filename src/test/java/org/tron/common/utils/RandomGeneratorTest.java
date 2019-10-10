@@ -2,13 +2,14 @@ package org.tron.common.utils;
 
 import com.beust.jcommander.internal.Lists;
 import com.google.protobuf.ByteString;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.core.capsule.WitnessCapsule;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Ignore

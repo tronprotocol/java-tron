@@ -1,9 +1,6 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -21,6 +18,10 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
+
+import java.io.File;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 
 @Slf4j
 public class KhaosDatabaseTest {

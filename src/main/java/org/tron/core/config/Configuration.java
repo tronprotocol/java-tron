@@ -18,16 +18,13 @@
 
 package org.tron.core.config;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.commons.lang3.StringUtils.isNoneBlank;
-
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.ResourceUtils;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isNoneBlank;
 
 @Slf4j(topic = "app")
 public class Configuration {

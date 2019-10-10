@@ -1,13 +1,9 @@
 package org.tron.core.actuator;
 
-import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
-
 import com.google.common.math.LongMath;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Arrays;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
@@ -19,6 +15,11 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
+
+import java.util.Arrays;
+import java.util.Objects;
+
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 
 @Slf4j(topic = "actuator")
 public class WithdrawBalanceActuator extends AbstractActuator {

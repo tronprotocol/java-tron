@@ -2,12 +2,13 @@ package org.tron.core.actuator;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract;
+
+import java.util.List;
 
 @Slf4j(topic = "actuator")
 public class ActuatorFactory {

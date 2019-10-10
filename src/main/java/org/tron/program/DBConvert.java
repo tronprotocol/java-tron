@@ -1,23 +1,19 @@
 package org.tron.program;
 
-import static org.fusesource.leveldbjni.JniDBFactory.factory;
+import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.CompressionType;
+import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBIterator;
+import org.rocksdb.*;
+import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PropUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.CompressionType;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBIterator;
-import org.rocksdb.BlockBasedTableConfig;
-import org.rocksdb.BloomFilter;
-import org.rocksdb.Options;
-import org.rocksdb.RocksDB;
-import org.rocksdb.RocksDBException;
-import org.rocksdb.RocksIterator;
-import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.PropUtil;
+
+import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 @Slf4j
 public class DBConvert {

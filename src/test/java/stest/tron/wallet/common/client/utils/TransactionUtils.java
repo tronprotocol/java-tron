@@ -16,18 +16,19 @@ package stest.tron.wallet.common.client.utils;
  */
 
 import com.google.protobuf.ByteString;
-import java.security.SignatureException;
-import java.util.Arrays;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.api.GrpcAPI;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-//import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+
+import java.security.SignatureException;
+import java.util.Arrays;
+import java.util.List;
+
+//import org.tron.protos.Protocol.DeferredStage;
 
 
 public class TransactionUtils {

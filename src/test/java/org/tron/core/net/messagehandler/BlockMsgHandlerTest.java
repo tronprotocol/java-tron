@@ -1,6 +1,5 @@
 package org.tron.core.net.messagehandler;
 
-import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.testng.collections.Lists;
@@ -12,6 +11,8 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.Transaction;
+
+import java.util.List;
 
 public class BlockMsgHandlerTest {
 

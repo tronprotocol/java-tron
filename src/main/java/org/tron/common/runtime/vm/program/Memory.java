@@ -17,17 +17,18 @@
  */
 package org.tron.common.runtime.vm.program;
 
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.program.listener.ProgramListener;
+import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
+
+import java.util.LinkedList;
+import java.util.List;
+
 import static java.lang.Math.ceil;
 import static java.lang.Math.min;
 import static java.lang.String.format;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.ByteUtil.oneByteToHexString;
-
-import java.util.LinkedList;
-import java.util.List;
-import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.program.listener.ProgramListener;
-import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
 
 public class Memory implements ProgramListenerAware {
 

@@ -1,19 +1,7 @@
 package stest.tron.wallet.dailybuild.grammar;
 
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.BAD_JUMP_DESTINATION_VALUE;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.ILLEGAL_OPERATION_VALUE;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_ENERGY_VALUE;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_MEMORY_VALUE;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_TIME_VALUE;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT_VALUE;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.STACK_TOO_LARGE_VALUE;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.STACK_TOO_SMALL_VALUE;
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
@@ -36,6 +24,12 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.*;
 
 @Slf4j
 public class ContractGrammar004 {

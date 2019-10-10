@@ -16,10 +16,11 @@
 package org.tron.common.utils;
 
 import com.google.protobuf.ByteString;
+import org.tron.core.Wallet;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.tron.core.Wallet;
 
 public class StringUtil {
 

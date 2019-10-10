@@ -1,9 +1,6 @@
 package stest.tron.wallet.dailybuild.http;
 
 import com.alibaba.fastjson.JSONObject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.testng.Assert;
@@ -20,6 +17,10 @@ import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
 import stest.tron.wallet.common.client.utils.ShieldNoteInfo;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public class HttpTestZenToken005 {

@@ -1,19 +1,14 @@
 package org.tron.common.logsfilter;
 
-import static org.tron.common.logsfilter.FilterQuery.matchFilter;
-import static org.tron.common.logsfilter.FilterQuery.parseFromBlockNumber;
-import static org.tron.common.logsfilter.FilterQuery.parseToBlockNumber;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
 import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry;
+
+import java.util.*;
+
+import static org.tron.common.logsfilter.FilterQuery.*;
 
 public class FilterQueryTest {
 

@@ -1,9 +1,10 @@
 package org.tron.core.net.message;
 
-import java.util.List;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
+
+import java.util.List;
 
 public class TransactionsMessage extends TronMessage {
 

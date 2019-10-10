@@ -1,7 +1,5 @@
 package org.tron.common.runtime.vm;
 
-import java.util.Collections;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.ToString;
@@ -21,6 +19,9 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import stest.tron.wallet.common.client.utils.AbiUtil;
+
+import java.util.Collections;
+import java.util.List;
 
 public class TransferFailedEnergyTest extends VMTestBase {
   /*

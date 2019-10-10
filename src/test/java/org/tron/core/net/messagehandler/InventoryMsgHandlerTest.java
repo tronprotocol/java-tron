@@ -1,10 +1,11 @@
 package org.tron.core.net.messagehandler;
 
-import java.util.ArrayList;
 import org.junit.Test;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+
+import java.util.ArrayList;
 
 public class InventoryMsgHandlerTest {
 

@@ -1,9 +1,10 @@
 package org.tron.common.logsfilter;
 
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class EventPluginConfig {
 

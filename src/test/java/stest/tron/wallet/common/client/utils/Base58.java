@@ -1,8 +1,9 @@
 package stest.tron.wallet.common.client.utils;
 
+import org.tron.common.utils.Sha256Hash;
+
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import org.tron.common.utils.Sha256Hash;
 
 public class Base58 {
 

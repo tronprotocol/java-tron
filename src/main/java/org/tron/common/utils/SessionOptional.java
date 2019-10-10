@@ -1,8 +1,8 @@
 package org.tron.common.utils;
 
-import java.util.Optional;
-
 import org.tron.core.db2.core.ISession;
+
+import java.util.Optional;
 
 public final class SessionOptional {
 

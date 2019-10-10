@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -16,6 +15,8 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.Transaction;
+
+import java.io.File;
 
 public class TransactionRetStoreTest {
 

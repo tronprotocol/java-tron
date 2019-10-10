@@ -18,10 +18,11 @@
 
 package org.tron.common.overlay.discover;
 
-import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeManager;
+
+import java.util.ArrayList;
 
 @Slf4j(topic = "discover")
 public class RefreshTask extends DiscoverTask {

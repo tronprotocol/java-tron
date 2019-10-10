@@ -18,10 +18,10 @@
 
 package org.tron.common.crypto.jce;
 
+import javax.crypto.KeyAgreement;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Provider;
-import javax.crypto.KeyAgreement;
 
 public final class ECKeyAgreement {
 

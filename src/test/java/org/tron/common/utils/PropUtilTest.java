@@ -1,9 +1,10 @@
 package org.tron.common.utils;
 
-import java.io.File;
-import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
 
 public class PropUtilTest {
 

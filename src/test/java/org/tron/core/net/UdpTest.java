@@ -1,10 +1,5 @@
 package org.tron.core.net;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.collections.Lists;
@@ -17,6 +12,12 @@ import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.core.config.args.Args;
+
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 public class UdpTest {

@@ -1,25 +1,7 @@
 package org.tron.core.zksnark;
 
-import static org.tron.common.zksnark.JLibrustzcash.librustzcashCheckDiversifier;
-import static org.tron.common.zksnark.JLibrustzcash.librustzcashComputeCm;
-import static org.tron.common.zksnark.JLibrustzcash.librustzcashIvkToPkd;
-import static org.tron.common.zksnark.JLibrustzcash.librustzcashNskToNk;
-import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingBindingSig;
-import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingProvingCtxInit;
-import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendProof;
-import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendSig;
-import static org.tron.common.zksnark.JLibsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
-
-
 import com.google.protobuf.ByteString;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
-import java.io.File;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -31,14 +13,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.JLibsodium;
-import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
-import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
-import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
-import org.tron.common.zksnark.LibrustzcashParam.MerkleHashParams;
-import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
-import org.tron.common.zksnark.LibrustzcashParam.SpendProofParams;
-import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.*;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
@@ -50,18 +25,24 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
-import org.tron.core.zen.address.DiversifierT;
-import org.tron.core.zen.address.ExpandedSpendingKey;
-import org.tron.core.zen.address.FullViewingKey;
-import org.tron.core.zen.address.IncomingViewingKey;
-import org.tron.core.zen.address.PaymentAddress;
-import org.tron.core.zen.address.SpendingKey;
+import org.tron.core.zen.address.*;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.protos.Contract.PedersenHash;
+
+import java.io.File;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.stream.LongStream;
+
+import static org.tron.common.zksnark.JLibrustzcash.*;
+import static org.tron.common.zksnark.JLibsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
 
 @Slf4j
 public class LibrustzcashTest {

@@ -18,11 +18,12 @@
 
 package org.tron.common.overlay.discover;
 
+import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.overlay.discover.table.KademliaOptions;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.discover.table.KademliaOptions;
 
 public class DiscoveryExecutor {
 

@@ -3,6 +3,7 @@ package org.tron.core.db.common;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
 import java.util.Arrays;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

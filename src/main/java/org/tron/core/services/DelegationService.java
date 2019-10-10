@@ -1,9 +1,6 @@
 package org.tron.core.services;
 
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -19,6 +16,10 @@ import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.protos.Protocol.Vote;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 @Slf4j(topic = "delegation")
 @Component

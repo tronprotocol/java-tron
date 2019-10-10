@@ -1,8 +1,9 @@
 package org.tron.common.utils;
 
+import org.springframework.util.ReflectionUtils;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import org.springframework.util.ReflectionUtils;
 
 public class ReflectUtils {
 

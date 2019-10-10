@@ -1,14 +1,7 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
-import java.util.List;
-import java.util.Random;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -32,6 +25,9 @@ import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+
+import java.io.File;
+import java.util.Random;
 
 @Ignore
 public class TransactionStoreTest {

@@ -1,13 +1,10 @@
 package org.tron.core.db.common.iterator;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.DBIterator;
 
 import java.io.IOException;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
 
 @Slf4j(topic = "DB")
 public final class StoreIterator implements org.tron.core.db.common.iterator.DBIterator {

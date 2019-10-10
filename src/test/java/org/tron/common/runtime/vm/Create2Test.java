@@ -1,7 +1,5 @@
 package org.tron.common.runtime.vm;
 
-import java.util.Arrays;
-import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -18,6 +16,9 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 import stest.tron.wallet.common.client.utils.DataWord;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 @Slf4j
 public class Create2Test extends VMTestBase {

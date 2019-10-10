@@ -2,16 +2,13 @@ package org.tron.core.services;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j(topic = "witness")
 @Service

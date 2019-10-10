@@ -18,10 +18,10 @@ package org.tron.common.utils;
  */
 
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.util.Arrays;
 import java.util.Locale;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class Bech32 {
 

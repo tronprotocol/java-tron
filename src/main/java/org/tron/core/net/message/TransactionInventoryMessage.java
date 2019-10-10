@@ -1,9 +1,10 @@
 package org.tron.core.net.message;
 
-import java.util.List;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+
+import java.util.List;
 
 public class TransactionInventoryMessage extends InventoryMessage {
 

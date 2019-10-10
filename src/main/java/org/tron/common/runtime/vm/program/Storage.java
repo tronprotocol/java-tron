@@ -1,15 +1,16 @@
 package org.tron.common.runtime.vm.program;
 
-import static java.lang.System.arraycopy;
-
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Getter;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.db.StorageRowStore;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static java.lang.System.arraycopy;
 
 public class Storage {
 

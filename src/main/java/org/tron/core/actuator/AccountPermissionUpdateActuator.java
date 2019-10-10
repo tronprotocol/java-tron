@@ -1,11 +1,8 @@
 package org.tron.core.actuator;
 
-import static java.util.stream.Collectors.toList;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
@@ -21,6 +18,10 @@ import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+
+import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 
 @Slf4j(topic = "actuator")

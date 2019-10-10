@@ -1,6 +1,5 @@
 package org.tron.common.runtime.vm;
 
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -17,6 +16,8 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.AccountType;
+
+import java.io.File;
 
 @Slf4j
 public class VMTestBase {

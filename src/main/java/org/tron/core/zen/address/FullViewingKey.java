@@ -1,13 +1,13 @@
 package org.tron.core.zen.address;
 
-import java.util.Arrays;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.core.exception.ZksnarkException;
+
+import java.util.Arrays;
 
 // Decryption using a Full Viewing Key
 

@@ -3,16 +3,6 @@ package stest.tron.wallet.fulltest;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Base64;
 import org.testng.annotations.AfterClass;
@@ -25,6 +15,10 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 @Slf4j
 public class CreateAddressAndKey {

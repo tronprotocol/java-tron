@@ -1,7 +1,6 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -30,6 +29,8 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
+
+import java.io.File;
 
 @Slf4j
 public class TransferTokenTest {

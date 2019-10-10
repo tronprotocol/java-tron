@@ -1,15 +1,16 @@
 package org.tron.core.db2.common;
 
 import com.google.common.collect.Maps;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Getter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.RocksDbDataSourceImpl;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.iterator.DBIterator;
+
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RocksDB implements DB<byte[], byte[]>, Flusher {
 

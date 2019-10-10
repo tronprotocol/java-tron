@@ -1,9 +1,6 @@
 package org.tron.program;
 
 import com.beust.jcommander.JCommander;
-import java.io.File;
-import java.io.IOException;
-import java.util.Scanner;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.ECKey;
@@ -14,6 +11,10 @@ import org.tron.core.config.args.Args;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Scanner;
 
 @Slf4j(topic = "app")
 public class KeystoreFactory {

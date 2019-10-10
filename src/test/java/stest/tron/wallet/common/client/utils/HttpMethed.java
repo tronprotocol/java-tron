@@ -8,12 +8,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import io.netty.util.internal.StringUtil;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -30,6 +24,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.zen.address.DiversifierT;
 import stest.tron.wallet.common.client.Configuration;
+
+import java.nio.charset.Charset;
+import java.util.*;
 
 @Slf4j
 public class HttpMethed {

@@ -1,17 +1,9 @@
 package org.tron.core.actuator;
 
-import static junit.framework.TestCase.fail;
-import static stest.tron.wallet.common.client.utils.PublicMethed.jsonStr2Abi;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.ByteArray;
@@ -30,6 +22,11 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.SmartContract.ABI;
+
+import java.io.File;
+
+import static junit.framework.TestCase.fail;
+import static stest.tron.wallet.common.client.utils.PublicMethed.jsonStr2Abi;
 
 
 @Slf4j

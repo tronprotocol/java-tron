@@ -1,13 +1,7 @@
 package stest.tron.wallet.contract.scenario;
 
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.BAD_JUMP_DESTINATION_VALUE;
-import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_ENERGY_VALUE;
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
@@ -27,6 +21,13 @@ import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.BAD_JUMP_DESTINATION_VALUE;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.OUT_OF_ENERGY_VALUE;
 
 @Slf4j
 public class ContractScenario016 {

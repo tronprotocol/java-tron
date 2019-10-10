@@ -1,11 +1,6 @@
 package org.tron.core.services.http.solidity;
 
 import com.google.protobuf.ByteString;
-import java.io.IOException;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,6 +11,11 @@ import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.RateLimiterServlet;
 import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.TransactionInfo;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.stream.Collectors;
 
 
 @Component

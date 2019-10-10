@@ -18,13 +18,11 @@
 
 package org.tron.common.overlay.discover.node.statistics;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
-import lombok.Setter;
-import org.tron.common.overlay.discover.node.Node;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.ReasonCode;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 public class NodeStatistics {
 

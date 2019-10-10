@@ -17,13 +17,7 @@
  */
 package org.tron.common.runtime.vm.program;
 
-import static org.apache.commons.lang3.ArrayUtils.isEmpty;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-
 import com.google.common.primitives.Longs;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.crypto.Hash;
@@ -34,6 +28,13 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 public class InternalTransaction {
 

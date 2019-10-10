@@ -23,8 +23,9 @@
  */
 package org.tron.common.utils;
 
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
 
 @Slf4j(topic = "utils")
 public class RandomGenerator<T> {

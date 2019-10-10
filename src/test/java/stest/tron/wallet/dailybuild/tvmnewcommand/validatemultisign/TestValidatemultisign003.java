@@ -3,11 +3,6 @@ package stest.tron.wallet.dailybuild.tvmnewcommand.validatemultisign;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.spongycastle.util.encoders.Hex;
@@ -29,6 +24,8 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 import stest.tron.wallet.common.client.utils.Sha256Hash;
+
+import java.util.*;
 
 @Slf4j
 public class TestValidatemultisign003 {

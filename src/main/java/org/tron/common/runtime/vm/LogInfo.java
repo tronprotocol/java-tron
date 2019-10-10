@@ -19,12 +19,13 @@ package org.tron.common.runtime.vm;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteUtil;
 import org.tron.protos.Protocol.TransactionInfo.Log;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author Roman Mandeleil

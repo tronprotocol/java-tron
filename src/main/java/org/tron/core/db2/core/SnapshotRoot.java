@@ -2,6 +2,10 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import lombok.Getter;
+import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.common.*;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -9,13 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.Getter;
-import org.tron.core.db.common.WrappedByteArray;
-import org.tron.core.db2.common.DB;
-import org.tron.core.db2.common.Flusher;
-import org.tron.core.db2.common.LevelDB;
-import org.tron.core.db2.common.RocksDB;
-import org.tron.core.db2.common.TxCacheDB;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 

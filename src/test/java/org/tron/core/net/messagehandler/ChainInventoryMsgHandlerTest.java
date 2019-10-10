@@ -1,16 +1,17 @@
 package org.tron.core.net.messagehandler;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import org.tron.common.utils.Pair;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ChainInventoryMsgHandlerTest {
 

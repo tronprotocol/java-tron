@@ -1,9 +1,10 @@
 package org.tron.core.db2.core;
 
-import java.lang.ref.WeakReference;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.core.db2.common.DB;
+
+import java.lang.ref.WeakReference;
 
 public abstract class AbstractSnapshot<K, V> implements Snapshot {
 

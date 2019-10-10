@@ -1,13 +1,8 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -18,6 +13,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.StorageMarket;
 import org.tron.core.exception.ItemNotFoundException;
+
+import java.io.File;
 
 @Slf4j
 public class ExchangeCapsuleTest {

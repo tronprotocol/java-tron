@@ -1,11 +1,12 @@
 package org.tron.core.config.args;
 
 import com.typesafe.config.ConfigObject;
+import lombok.Getter;
+
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
-import lombok.Getter;
 
 
 public class RateLimiterInitialization {

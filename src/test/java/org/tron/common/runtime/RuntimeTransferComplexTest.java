@@ -1,8 +1,5 @@
 package org.tron.common.runtime;
 
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -26,6 +23,10 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.DataWord;
+
+import java.io.File;
+
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
 @Slf4j
 public class RuntimeTransferComplexTest {

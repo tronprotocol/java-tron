@@ -1,15 +1,6 @@
 package org.tron.common.logsfilter.capsule;
 
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
-
 import com.google.protobuf.Any;
-import com.google.protobuf.InvalidProtocolBufferException;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +18,13 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 @Slf4j
 public class TransactionLogTriggerCapsule extends TriggerCapsule {

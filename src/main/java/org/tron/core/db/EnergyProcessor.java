@@ -1,7 +1,5 @@
 package org.tron.core.db;
 
-import static java.lang.Long.max;
-
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -9,6 +7,8 @@ import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Account.AccountResource;
+
+import static java.lang.Long.max;
 
 @Slf4j(topic = "DB")
 public class EnergyProcessor extends ResourceProcessor {

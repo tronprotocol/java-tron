@@ -1,10 +1,11 @@
 package org.tron.core.db.backup;
 
-import java.io.File;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.FileUtil;
+
+import java.io.File;
 
 @Slf4j
 public class DbBackupConfig {

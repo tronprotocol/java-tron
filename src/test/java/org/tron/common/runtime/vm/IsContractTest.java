@@ -1,6 +1,5 @@
 package org.tron.common.runtime.vm;
 
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
@@ -15,6 +14,8 @@ import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
+
+import java.util.Arrays;
 
 @Slf4j
 public class IsContractTest extends VMTestBase {
