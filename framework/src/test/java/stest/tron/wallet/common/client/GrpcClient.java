@@ -22,7 +22,8 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.utils.ByteArray;
-import org.tron.protos.contract.AccountContract;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract;
@@ -97,7 +98,7 @@ public class GrpcClient {
     }
   }
 
-  public Transaction createTransaction(AccountContract.AccountUpdateContract contract) {
+  public Transaction createTransaction(AccountUpdateContract contract) {
     return blockingStubFull.updateAccount(contract);
   }
 
@@ -126,7 +127,7 @@ public class GrpcClient {
     return blockingStubFull.participateAssetIssue(contract);
   }
 
-  public Transaction createAccount(AccountContract.AccountCreateContract contract) {
+  public Transaction createAccount(AccountCreateContract contract) {
     return blockingStubFull.createAccount(contract);
   }
 

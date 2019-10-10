@@ -1,6 +1,5 @@
 package org.tron.core.services.ratelimiter.adaptor;
 
-
 import com.google.common.cache.Cache;
 import com.google.common.util.concurrent.RateLimiter;
 import java.util.concurrent.CountDownLatch;
@@ -23,8 +22,8 @@ public class AdaptorTest {
     IPQPSRateLimiterAdapter adapter1 = new IPQPSRateLimiterAdapter(paramString1);
     IPQpsStrategy strategy1 = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter1, "strategy");
 
-    Assert.assertTrue(Double
-        .valueOf(ReflectUtils.getFieldValue(strategy1.getMapParams().get("qps"), "value").toString())
+    Assert.assertTrue(Double.valueOf(
+        ReflectUtils.getFieldValue(strategy1.getMapParams().get("qps"), "value").toString())
         == 5.0d);
     Assert.assertTrue(strategy1.getMapParams().get("notExist") == null);
 
@@ -32,8 +31,8 @@ public class AdaptorTest {
     IPQPSRateLimiterAdapter adapter2 = new IPQPSRateLimiterAdapter(paramString2);
     IPQpsStrategy strategy2 = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter2, "strategy");
 
-    Assert.assertTrue(Double
-        .valueOf(ReflectUtils.getFieldValue(strategy2.getMapParams().get("qps"), "value").toString())
+    Assert.assertTrue(Double.valueOf(
+        ReflectUtils.getFieldValue(strategy2.getMapParams().get("qps"), "value").toString())
         .equals(IPQpsStrategy.DEFAULT_IPQPS));
   }
 
@@ -75,8 +74,8 @@ public class AdaptorTest {
     GlobalPreemptibleAdapter adapter1 = new GlobalPreemptibleAdapter(paramString1);
     GlobalPreemptibleStrategy strategy1 = (GlobalPreemptibleStrategy) ReflectUtils
         .getFieldObject(adapter1, "strategy");
-    Assert.assertTrue(Integer
-        .valueOf(ReflectUtils.getFieldValue(strategy1.getMapParams().get("permit"), "value").toString())
+    Assert.assertTrue(Integer.valueOf(
+        ReflectUtils.getFieldValue(strategy1.getMapParams().get("permit"), "value").toString())
         == 1);
     boolean first = strategy1.acquire();
     Assert.assertTrue(first);
@@ -92,8 +91,8 @@ public class AdaptorTest {
     GlobalPreemptibleAdapter adapter2 = new GlobalPreemptibleAdapter(paramString2);
     GlobalPreemptibleStrategy strategy2 = (GlobalPreemptibleStrategy) ReflectUtils
         .getFieldObject(adapter2, "strategy");
-    Assert.assertTrue(Integer
-        .valueOf(ReflectUtils.getFieldValue(strategy2.getMapParams().get("permit"), "value").toString())
+    Assert.assertTrue(Integer.valueOf(
+        ReflectUtils.getFieldValue(strategy2.getMapParams().get("permit"), "value").toString())
         == 3);
 
     first = strategy2.acquire();
@@ -124,8 +123,7 @@ public class AdaptorTest {
     String paramString = "qps=5";
     QpsRateLimiterAdapter adapter = new QpsRateLimiterAdapter(paramString);
 
-    QpsStrategy strategy = (QpsStrategy) ReflectUtils
-        .getFieldObject(adapter, "strategy");
+    QpsStrategy strategy = (QpsStrategy) ReflectUtils.getFieldObject(adapter, "strategy");
     Assert.assertTrue(Double
         .valueOf(ReflectUtils.getFieldValue(strategy.getMapParams().get("qps"), "value").toString())
         == 5);

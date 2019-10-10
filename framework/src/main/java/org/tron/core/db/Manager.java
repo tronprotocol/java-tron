@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
+import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -62,6 +63,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.consensus.Consensus;
 import org.tron.core.Constant;
+import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -75,7 +77,6 @@ import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
-import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.consensus.ProposalController;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
@@ -130,7 +131,6 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -390,6 +390,11 @@ public class Manager {
 
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
+  public long getHeadSlot() {
+    return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
+        .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
+  }
+
   // for test only
   public List<ByteString> getWitnesses() {
     return witnessScheduleStore.getActiveWitnesses();
@@ -544,6 +549,10 @@ public class Manager {
       triggerCapsuleProcessThread.start();
     }
 
+    //initStoreFactory
+    prepareStoreFactory();
+    //initActuatorCreator
+    ActuatorCreator.init();
   }
 
   public BlockId getGenesisBlockId() {
@@ -1289,11 +1298,13 @@ public class Manager {
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
 
+/*
     VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
     VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
     VMConfig.initAllowTvmSolidity059(dynamicPropertiesStore.getAllowTvmSolidity059());
+*/
 
 
     trace.init(blockCap, eventPluginLoaded);
@@ -1857,5 +1868,32 @@ public class Manager {
         }
       }
     }
+  }
+
+  private void prepareStoreFactory() {
+    StoreFactory.getInstance().setAccountStore(accountStore)
+        .setAccountIdIndexStore(accountIdIndexStore)
+        .setAccountIndexStore(accountIndexStore)
+        .setDynamicPropertiesStore(dynamicPropertiesStore)
+        .setAssetIssueStore(assetIssueStore)
+        .setContractStore(contractStore)
+        .setAssetIssueV2Store(assetIssueV2Store)
+        .setWitnessStore(witnessStore)
+        .setVotesStore(votesStore)
+        .setProofStore(proofStore)
+        .setNullifierStore(nullifierStore)
+        .setDelegatedResourceAccountIndexStore(delegatedResourceAccountIndexStore)
+        .setDelegatedResourceStore(delegatedResourceStore)
+        .setExchangeStore(exchangeStore)
+        .setExchangeV2Store(exchangeV2Store)
+        .setProposalStore(proposalStore)
+        .setCodeStore(codeStore)
+        .setStorageRowStore(storageRowStore)
+        .setBlockStore(blockStore)
+        .setKhaosDb(khaosDb)
+        .setBlockIndexStore(blockIndexStore)
+        .setMerkleContainer(merkleContainer)
+        .setDelegationService(delegationService);
+    ;
   }
 }

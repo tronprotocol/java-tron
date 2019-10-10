@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ForkUtils;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.DelegationService;
 import org.tron.core.exception.TypeMismatchNamingException;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -29,8 +30,6 @@ import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j(topic = "actuator")
 public class ActuatorCreator  {
-
-  private static ActuatorCreator INSTANCE;
 
   private AccountStore accountStore;
 
@@ -65,19 +64,26 @@ public class ActuatorCreator  {
   private AccountIndexStore accountIndexStore;
 
   private ForkUtils forkUtils = new ForkUtils();
-  ;
+
+  private DelegationService delegationService;
 
   private MerkleContainer merkleContainer;
 
-  public static ActuatorCreator getINSTANCE() {
-    if (INSTANCE == null) {
-      INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
-    }
-    return INSTANCE;
+  private static class ActuatorCreatorInner {
+
+    private static ActuatorCreator INSTANCE;
   }
 
-  public static void init(StoreFactory storeFactory) {
-    INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
+
+  public static ActuatorCreator getINSTANCE() {
+    if (ActuatorCreatorInner.INSTANCE == null) {
+      ActuatorCreatorInner.INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
+    }
+    return ActuatorCreatorInner.INSTANCE;
+  }
+
+  public static void init() {
+    ActuatorCreatorInner.INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
   }
 
 
@@ -101,6 +107,7 @@ public class ActuatorCreator  {
       proposalStore = storeFactory.getStore(ProposalStore.class);
       merkleContainer = storeFactory.getStore(MerkleContainer.class);
       accountIndexStore = storeFactory.getStore(AccountIndexStore.class);
+      delegationService = storeFactory.getStore(DelegationService.class);
       forkUtils.setDynamicPropertiesStore(dynamicPropertiesStore);
     } catch (TypeMismatchNamingException e) {
       logger.error("ActuatorCreator error", e);
@@ -142,8 +149,7 @@ public class ActuatorCreator  {
         break;
       case VoteWitnessContract:
         return new VoteWitnessActuator(contract.getParameter(), accountStore,
-            witnessStore, votesStore,
-            dynamicPropertiesStore);
+            witnessStore, votesStore, dynamicPropertiesStore, delegationService);
       case WitnessCreateContract:
         return new WitnessCreateActuator(contract.getParameter(), accountStore,
             dynamicPropertiesStore, witnessStore);
@@ -173,10 +179,10 @@ public class ActuatorCreator  {
         return new UnfreezeBalanceActuator(contract.getParameter(), accountStore,
             dynamicPropertiesStore,
             delegatedResourceStore, delegatedResourceAccountIndexStore,
-            votesStore);
+            votesStore, delegationService);
       case WithdrawBalanceContract:
         return new WithdrawBalanceActuator(contract.getParameter(), accountStore,
-            dynamicPropertiesStore, witnessStore);
+            dynamicPropertiesStore, witnessStore, delegationService);
       case UpdateAssetContract:
         return new UpdateAssetActuator(contract.getParameter(), accountStore,
             dynamicPropertiesStore,

@@ -14,12 +14,11 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
-import org.tron.common.runtime.vm.PrecompiledContracts.ValidateMultiSign;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -27,6 +26,10 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.PrecompiledContracts.ValidateMultiSign;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
@@ -80,7 +83,7 @@ public class ValidateMultiSignContractTest {
 
     ECKey key = new ECKey();
     AccountCapsule toAccount = new AccountCapsule(ByteString.copyFrom(key.getAddress()), Protocol.AccountType.Normal,
-            System.currentTimeMillis(), true, dbManager);
+            System.currentTimeMillis(), true, dbManager.getDynamicPropertiesStore());
 
     ECKey key1 = new ECKey();
     ECKey key2 = new ECKey();
@@ -168,9 +171,9 @@ public class ValidateMultiSignContractTest {
     List<Object> parameters = Arrays
         .asList(address, permissionId, "0x" + Hex.toHexString(hash), signatures);
     byte[] input = Hex.decode(AbiUtil.parseParameters(METHOD_SIGN, parameters));
-    Deposit deposit = DepositImpl.createRoot(dbManager);
+    Repository deposit = RepositoryImpl.createRoot(StoreFactory.getInstance());
     logger.info("energy for data:{}", contract.getEnergyForData(input));
-    contract.setDeposit(deposit);
+    contract.setRepository(deposit);
 
     Pair<Boolean, byte[]> ret = contract.execute(input);
 

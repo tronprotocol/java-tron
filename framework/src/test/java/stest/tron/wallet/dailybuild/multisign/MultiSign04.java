@@ -621,6 +621,7 @@ public class MultiSign04 {
   /**
    * constructor.
    */
+
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {

@@ -18,7 +18,6 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.vm.config.ConfigLoader;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import stest.tron.wallet.common.client.utils.AbiUtil;
@@ -217,9 +216,10 @@ contract Caller {
   @Test
   public void testTransferFailedAfterAllowTvmConstantinopl()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
-    ConfigLoader.disable = true;
-    VMConfig.initAllowTvmTransferTrc10(1);
-    VMConfig.initAllowTvmConstantinople(1);
+    ConfigLoader.disable = false;
+    manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
+    manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
+    manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(0);
 
     String contractName = "EnergyOfTransferFailedTest";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -254,9 +254,10 @@ contract Caller {
   @Test
   public void testTransferFailedBeforeAllowTvmConstantinopl()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
-    ConfigLoader.disable = true;
-    VMConfig.initAllowTvmTransferTrc10(1);
-    VMConfig.initAllowTvmConstantinople(0);
+    ConfigLoader.disable = false;
+    manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
+    manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(0);
+    manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(0);
 
     String contractName = "EnergyOfTransferFailedTest";
     byte[] address = Hex.decode(OWNER_ADDRESS);

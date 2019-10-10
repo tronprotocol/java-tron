@@ -149,7 +149,7 @@ public class VoteWitnessActuatorTest {
         dbManager.getDelegatedResourceAccountIndexStore());
     VoteWitnessActuator actuator =
         new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L), dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();
@@ -182,7 +182,7 @@ public class VoteWitnessActuatorTest {
     VoteWitnessActuator actuator =
         new VoteWitnessActuator(getContract(ADDRESS_INVALID, WITNESS_ADDRESS, 1L),
             dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -210,7 +210,7 @@ public class VoteWitnessActuatorTest {
     VoteWitnessActuator actuator =
         new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS_NOACCOUNT, 1L),
             dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -248,7 +248,7 @@ public class VoteWitnessActuatorTest {
     VoteWitnessActuator actuator =
         new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS_NOACCOUNT, 1L),
             dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -284,7 +284,7 @@ public class VoteWitnessActuatorTest {
     VoteWitnessActuator actuator =
         new VoteWitnessActuator(getContract(OWNER_ADDRESS, ADDRESS_INVALID, 1L),
             dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -318,7 +318,7 @@ public class VoteWitnessActuatorTest {
     //0 votes
     VoteWitnessActuator actuator =
         new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 0L), dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();
@@ -338,7 +338,7 @@ public class VoteWitnessActuatorTest {
     }
     //-1 votes
     actuator = new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, -1L), dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+        dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();
@@ -373,7 +373,7 @@ public class VoteWitnessActuatorTest {
     VoteWitnessActuator actuator = new VoteWitnessActuator(
         getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 0),
         dbManager.getAccountStore(), dbManager.getWitnessStore(),
-        dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+        dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();
@@ -394,7 +394,7 @@ public class VoteWitnessActuatorTest {
 
     actuator = new VoteWitnessActuator(getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 31),
         dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+        dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -425,7 +425,7 @@ public class VoteWitnessActuatorTest {
     VoteWitnessActuator actuator = new VoteWitnessActuator(
         getRepeateContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L, 30),
         dbManager.getAccountStore(),
-        dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+        dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();
@@ -453,7 +453,7 @@ public class VoteWitnessActuatorTest {
     VoteWitnessActuator actuator =
         new VoteWitnessActuator(getContract(OWNER_ADDRESS_NOACCOUNT, WITNESS_ADDRESS, 1L),
             dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -489,7 +489,7 @@ public class VoteWitnessActuatorTest {
         new VoteWitnessActuator(
             getContract(OWNER_ADDRESS_BALANCENOTSUFFICIENT, WITNESS_ADDRESS, 1L),
             dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -525,10 +525,10 @@ public class VoteWitnessActuatorTest {
         dbManager.getDelegatedResourceAccountIndexStore());
     VoteWitnessActuator actuator =
         new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L), dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     VoteWitnessActuator actuatorTwice =
         new VoteWitnessActuator(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 3L), dbManager.getAccountStore(),
-            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore());
+            dbManager.getWitnessStore(), dbManager.getVotesStore(), dbManager.getDynamicPropertiesStore(), dbManager.getDelegationService());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       freezeBalanceActuator.validate();

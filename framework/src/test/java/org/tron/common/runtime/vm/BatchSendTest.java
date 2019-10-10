@@ -15,7 +15,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -75,10 +74,11 @@ public class BatchSendTest {
     ownerCapsule.setBalance(1000_1000_1000L);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    VMConfig.initAllowMultiSign(1);
-    VMConfig.initAllowTvmTransferTrc10(1);
-    VMConfig.initAllowTvmConstantinople(1);
-    VMConfig.initAllowTvmSolidity059(1);
+    dbManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
+
   }
 
 

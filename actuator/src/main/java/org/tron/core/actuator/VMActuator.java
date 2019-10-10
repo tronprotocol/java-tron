@@ -161,6 +161,7 @@ public class VMActuator implements Actuator2 {
             result.setRuntimeError(result.getException().getMessage());
             result.rejectInternalTransactions();
           }
+          context.setProgramResult(result);
           return;
         }
 

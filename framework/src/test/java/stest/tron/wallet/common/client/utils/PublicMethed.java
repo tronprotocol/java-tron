@@ -77,6 +77,10 @@ import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.keystore.WalletFile;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
+import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -89,10 +93,6 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.contract.AccountContract.AccountCreateContract;
-import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
-import org.tron.protos.contract.AccountContract.SetAccountIdContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
@@ -5839,5 +5839,113 @@ public class PublicMethed {
         return b.toString();
       }
     }
+  }
+  /**
+   * constructor.
+   */
+
+  public static Return transferAssetForReturn(byte[] to, byte[] assertName, long amount,
+      byte[] address,
+      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsName = ByteString.copyFrom(assertName);
+    ByteString bsOwner = ByteString.copyFrom(address);
+    builder.setToAddress(bsTo);
+    builder.setAssetName(bsName);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    TransferAssetContract contract = builder.build();
+    TransactionExtention transaction = blockingStubFull.transferAsset2(contract);
+
+    if (transaction == null) {
+      return transaction.getResult();
+    }
+    Return ret = transaction.getResult();
+    return ret;
+//    if (!ret.getResult()) {
+//      System.out.println("Code = " + ret.getCode());
+//      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+//      return ret;
+//    } else {
+//      System.out.println("Code = " + ret.getCode());
+//      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+//    }
+  }
+
+
+  /**
+   * constructor.
+   */
+
+  public static Return sendcoinForReturn(byte[] to, long amount, byte[] owner, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    TransferContract.Builder builder = TransferContract.newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsOwner = ByteString.copyFrom(owner);
+    builder.setToAddress(bsTo);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    TransferContract contract = builder.build();
+    TransactionExtention transaction = blockingStubFull.createTransaction2(contract);
+    if (transaction == null) {
+      return transaction.getResult();
+    }
+    Return ret = transaction.getResult();
+    return ret;
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static Transaction sendcoinForTransaction(byte[] to, long amount, byte[] owner, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+
+    TransferContract.Builder builder = TransferContract.newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsOwner = ByteString.copyFrom(owner);
+    builder.setToAddress(bsTo);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    TransferContract contract = builder.build();
+    TransactionExtention extention = blockingStubFull.createTransaction2(contract);
+    Protocol.Transaction transaction = extention.getTransaction();
+    return transaction;
   }
 }

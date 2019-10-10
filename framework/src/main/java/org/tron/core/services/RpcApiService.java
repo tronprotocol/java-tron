@@ -158,8 +158,6 @@ public class RpcApiService implements Service {
   @Autowired
   private NodeManager nodeManager;
   @Autowired
-  private WalletSolidity walletSolidity;
-  @Autowired
   private Wallet wallet;
   @Autowired
   private NodeInfoService nodeInfoService;

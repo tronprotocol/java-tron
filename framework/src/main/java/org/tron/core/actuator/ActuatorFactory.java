@@ -17,6 +17,7 @@ import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
+import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
@@ -150,7 +151,8 @@ public class ActuatorFactory {
             manager.getDynamicPropertiesStore(), manager.getNullfierStore(), manager.getMerkleContainer(),
             manager.getProofStore(), tx.getTransactionId(), tx.getInstance());
       case UpdateBrokerageContract:
-        return new UpdateBrokerageActuator(contract.getParameter(), manager);
+        return new UpdateBrokerageActuator(contract.getParameter(), manager.getAccountStore(), manager.getWitnessStore(),
+            manager.getDynamicPropertiesStore(), manager.getDelegationStore());
       default:
         break;
 
