@@ -142,11 +142,12 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
 
-    if (this.any == null) {
-      throw new ContractValidateException("No contract!");
-    }
     if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
+    }
+
+    if (this.any == null) {
+      throw new ContractValidateException("No contract!");
     }
 
     AccountStore accountStore = chainBaseManager.getAccountStore();
