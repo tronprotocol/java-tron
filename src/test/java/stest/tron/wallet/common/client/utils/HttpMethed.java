@@ -3395,7 +3395,7 @@ public class HttpMethed {
         logger.info("noteTx.getTrxId():" + noteTx.getTrxId());
         HttpMethed.response = HttpMethed
             .getMerkleTreeVoucherInfoFromSolidity(httpSolidityNode, noteTx.getTrxId(),
-                noteTx.getIndex(), 3);
+              noteTx.getIndex(), 1);
         HttpMethed.responseContent = HttpMethed.parseResponseContent(HttpMethed.response);
         HttpMethed.printJsonContent(responseContent);
         JSONArray vouchers = HttpMethed.responseContent.getJSONArray("vouchers");
