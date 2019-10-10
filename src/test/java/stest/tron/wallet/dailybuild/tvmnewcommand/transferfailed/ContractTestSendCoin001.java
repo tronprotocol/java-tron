@@ -195,7 +195,7 @@ public class ContractTestSendCoin001 {
         .sendcoinForReturn(transferTokenContractAddress, 1_000_000L, fromAddress, testKey002,
             blockingStubFull);
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret1.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer trx to smartContract.",
+    Assert.assertEquals("contract validate error : Cannot transfer TRX to a smartContract.",
         ret1.getMessage().toStringUtf8());
 
     String num = "\"" + Base58.encode58Check(dev001Address) + "\"";
@@ -342,7 +342,7 @@ public class ContractTestSendCoin001 {
         .sendcoinForReturn(testContractAddress, 1_000_000L, fromAddress, testKey002,
             blockingStubFull);
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, ret1.getCode());
-    Assert.assertEquals("contract validate error : Cannot transfer trx to smartContract.",
+    Assert.assertEquals("contract validate error : Cannot transfer TRX to a smartContract.",
         ret1.getMessage().toStringUtf8());
 
     String num = "\"" + Base58.encode58Check(dev001Address) + "\"";
