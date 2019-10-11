@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.multisign;
 
 import static org.hamcrest.core.StringContains.containsString;
 
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.List;
@@ -493,6 +494,7 @@ public class MultiSign27 {
         .accountPermissionUpdateWithPermissionId(accountPermissionJson1, test001Address, dev001Key,
             blockingStubFull, 0,
             permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();

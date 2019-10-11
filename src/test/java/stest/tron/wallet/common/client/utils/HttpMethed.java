@@ -2947,7 +2947,7 @@ public class HttpMethed {
       HttpMethed.printJsonContent(responseContent);
       String jsonString = responseContent.toJSONString();
       if (jsonString.contains("result") && (responseContent.getString("result").equals("true")
-          && responseContent.getString("message").equals("input note already spent"))) {
+          && responseContent.getString("message").equals("Input note has been spent"))) {
         return Boolean.TRUE;
       } else {
         return Boolean.FALSE;
@@ -2995,7 +2995,7 @@ public class HttpMethed {
       HttpMethed.printJsonContent(responseContent);
       String jsonString = responseContent.toJSONString();
       if (jsonString.contains("result") && (responseContent.getString("result").equals("true")
-          && responseContent.getString("message").equals("input note already spent"))) {
+          && responseContent.getString("message").equals("Input note has been spent"))) {
         return Boolean.TRUE;
       } else {
         return Boolean.FALSE;
@@ -3395,7 +3395,7 @@ public class HttpMethed {
         logger.info("noteTx.getTrxId():" + noteTx.getTrxId());
         HttpMethed.response = HttpMethed
             .getMerkleTreeVoucherInfoFromSolidity(httpSolidityNode, noteTx.getTrxId(),
-                noteTx.getIndex(), 3);
+              noteTx.getIndex(), 1);
         HttpMethed.responseContent = HttpMethed.parseResponseContent(HttpMethed.response);
         HttpMethed.printJsonContent(responseContent);
         JSONArray vouchers = HttpMethed.responseContent.getJSONArray("vouchers");

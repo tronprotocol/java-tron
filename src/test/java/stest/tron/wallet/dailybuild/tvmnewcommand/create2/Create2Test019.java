@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.tvmnewcommand.create2;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS_VALUE;
 
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -262,7 +263,7 @@ public class Create2Test019 {
             containsString("CONTRACT_VALIDATE_ERROR"));
     Assert
         .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-            containsString("contract validate error : No contract or not a smart contract"));
+          containsString("contract validate error : No contract or not a valid smart contract"));
 
     txid = PublicMethed
         .triggerContract(contractAddress,
