@@ -258,6 +258,8 @@ contract isTestCtr {
     // check deployed contract
     Assert.assertEquals(Hex.toHexString(returnValue),
         "0000000000000000000000000000000000000000000000000000000000000000");
+    ConfigLoader.disable = false;
+
   }
 }
 
