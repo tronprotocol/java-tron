@@ -109,6 +109,7 @@ contract D {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     //VMConfig.initAllowTvmTransferTrc10(1);
+    this.manager.getDynamicPropertiesStore().saveAllowMultiSign(1);
     this.manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
     byte[] address = Hex.decode(OWNER_ADDRESS);
 
@@ -116,7 +117,6 @@ contract D {
         .statsByVersion(ForkBlockVersionEnum.VERSION_3_2_2.getValue(), stats);
     this.manager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_3_5.getValue(), stats);
-    this.manager.getDynamicPropertiesStore().saveAllowMultiSign(1);
 
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "testA", address, abi, aCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
@@ -148,7 +148,8 @@ contract D {
   public void testABeforeAllowMultiSignProposal()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     //VMConfig.initAllowMultiSign(0);
-    this.manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(0);
+    this.manager.getDynamicPropertiesStore().saveAllowMultiSign(0);
+    this.manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
 
     byte[] address = Hex.decode(OWNER_ADDRESS);
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
