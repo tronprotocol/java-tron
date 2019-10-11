@@ -12,7 +12,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.annotations.AfterClass;
@@ -113,10 +112,8 @@ public class StressPrecondition {
   private String oldAddress;
   private String newAddress;
   private String newContractAddress;
-  //private String fullnode = stest.tron.wallet.common.client.Configuration.getByPath("stress.conf")
-    //  .getStringList("fullnode.ip.list")
-      //.get(0);
-  private String fullnode = "101.200.46.37:50052";
+  private String fullnode = stest.tron.wallet.common.client.Configuration.getByPath("stress.conf")
+    .getStringList("fullnode.ip.list").get(0);
   ByteString assetIssueId;
   Optional<ExchangeList> listExchange;
   byte[] commonContractAddress1;
