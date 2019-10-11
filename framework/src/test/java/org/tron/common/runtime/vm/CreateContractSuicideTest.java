@@ -14,6 +14,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.program.Program.OutOfEnergyException;
 import org.tron.protos.Protocol.Transaction;
 
@@ -109,6 +110,7 @@ contract D {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     //VMConfig.initAllowTvmTransferTrc10(1);
+    ConfigLoader.disable = false;
     this.manager.getDynamicPropertiesStore().saveAllowMultiSign(1);
     this.manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -148,6 +150,7 @@ contract D {
   public void testABeforeAllowMultiSignProposal()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     //VMConfig.initAllowMultiSign(0);
+    ConfigLoader.disable = false;
     this.manager.getDynamicPropertiesStore().saveAllowMultiSign(0);
     this.manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
 
