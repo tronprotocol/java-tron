@@ -106,7 +106,6 @@ public class TransferActuatorTest {
   }
 
   private Any getContract(long count) {
-    long nowTime = new Date().getTime();
     return Any.pack(Contract.TransferContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS))).setAmount(count)
@@ -115,17 +114,16 @@ public class TransferActuatorTest {
 
 
   private Any getContract(long count, byte[] address) {
-    long nowTime = new Date().getTime();
     return Any.pack(Contract.TransferContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setToAddress(ByteString.copyFrom(address)).setAmount(count).build());
   }
 
 
-  private Any getContract(long count, String owneraddress, String toaddress) {
+  private Any getContract(long count, String ownerAddress, String toAddress) {
     return Any.pack(Contract.TransferContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(owneraddress)))
-        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toaddress))).setAmount(count)
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toAddress))).setAmount(count)
         .build());
   }
 
@@ -202,7 +200,7 @@ public class TransferActuatorTest {
 
 
   @Test
-  public void iniviateOwnerAddress() {
+  public void initiateOwnerAddress() {
     TransferActuator actuator = new TransferActuator(
         getContract(10000L, OWNER_ADDRESS_INVALID, TO_ADDRESS), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -228,7 +226,7 @@ public class TransferActuatorTest {
   }
 
   @Test
-  public void iniviateToAddress() {
+  public void initiateToAddress() {
     TransferActuator actuator = new TransferActuator(
         getContract(10000L, OWNER_ADDRESS, TO_ADDRESS_INVALID), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -253,7 +251,7 @@ public class TransferActuatorTest {
   }
 
   @Test
-  public void iniviateTrx() {
+  public void initiateTrx() {
     TransferActuator actuator = new TransferActuator(
         getContract(100L, OWNER_ADDRESS, OWNER_ADDRESS), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
