@@ -29,97 +29,16 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class CreateAddressAndKey {
 
+  private static String path = "/Users/wangzihe/Documents/";
+  private static String filename = "/Users/wangzihe/Sites/postmanUsedKeyandAddress";
+  private static String filenameTemp;
   //testng001、testng002、testng003、testng004
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final String testKey003 =
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-
-  private static String path = "/Users/wangzihe/Documents/";
-  private static String filename = "/Users/wangzihe/Sites/postmanUsedKeyandAddress";
-  private static String filenameTemp;
-
-  @BeforeSuite
-  public void beforeSuite() {
-    Wallet wallet = new Wallet();
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
-
-  /**
-   * constructor.
-   */
-  @BeforeClass(enabled = false)
-  public void beforeClass() {
-
-  }
-
-  @Test(enabled = false)
-  public void createAddressesAndKeys() {
-    Integer i = 0;
-    String accountIndex;
-    String keyIndex;
-    JsonObject jsonobject = new JsonObject();
-    JsonArray jsonarray = new JsonArray();
-    HashMap<String, String> addressAndKey = new HashMap<String, String>();
-    while (i++ < 600) {
-      ECKey ecKey1 = new ECKey(Utils.getRandom());
-      byte[] address = ecKey1.getAddress();
-      String addressString = ByteArray.toHexString(address);
-      byte[] key = ecKey1.getPrivKeyBytes();
-      final String keyString = ByteArray.toHexString(key);
-
-      logger.info(ByteArray.toStr(Base64.encode(key)));
-      logger.info(ByteArray.toStr(Base64.encode(address)));
-      JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("address", addressString);
-      userBaseObj2.addProperty("key", keyString);
-      //userBaseObj2.addProperty("address",ByteArray.toStr(Base64.encode(address)));
-      //userBaseObj2.addProperty("key", ByteArray.toStr(Base64.encode(key)));
-      jsonarray.add(userBaseObj2);
-    }
-    Gson gson = new Gson();
-    String jsonMap = gson.toJson(addressAndKey);
-    //createFile(filename,jsonobject.toString());
-    createFile(filename, jsonarray.toString());
-
-  }
-
-  @Test(enabled = true)
-  public void create() {
-    Integer i = 0;
-    String accountIndex;
-    String keyIndex;
-    JsonObject jsonobject = new JsonObject();
-    JsonArray jsonarray = new JsonArray();
-    HashMap<String, String> addressAndKey = new HashMap<String, String>();
-    while (i++ < 600) {
-      ECKey ecKey1 = new ECKey(Utils.getRandom());
-      byte[] address = ecKey1.getAddress();
-      String key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-      ArrayList<String> accountList = new ArrayList<String>();
-      accountList = PublicMethed.getAddressInfo(key);
-      JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("address", accountList.get(1));
-      userBaseObj2.addProperty("key", accountList.get(0));
-      jsonarray.add(userBaseObj2);
-    }
-    Gson gson = new Gson();
-    String jsonMap = gson.toJson(addressAndKey);
-    //createFile(filename,jsonobject.toString());
-    createFile(filename, jsonarray.toString());
-
-  }
-
-
-  @AfterClass(enabled = false)
-  public void shutdown() throws InterruptedException {
-  }
-
 
   /**
    * constructor.
@@ -148,7 +67,6 @@ public class CreateAddressAndKey {
 
     return bool;
   }
-
 
   /**
    * constructor.
@@ -239,6 +157,82 @@ public class CreateAddressAndKey {
       // TODO: handle exception
     }
     return bool;
+  }
+
+  @BeforeSuite
+  public void beforeSuite() {
+    Wallet wallet = new Wallet();
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+  }
+
+  /**
+   * constructor.
+   */
+  @BeforeClass(enabled = false)
+  public void beforeClass() {
+
+  }
+
+  @Test(enabled = false)
+  public void createAddressesAndKeys() {
+    Integer i = 0;
+    String accountIndex;
+    String keyIndex;
+    JsonObject jsonobject = new JsonObject();
+    JsonArray jsonarray = new JsonArray();
+    HashMap<String, String> addressAndKey = new HashMap<String, String>();
+    while (i++ < 600) {
+      ECKey ecKey1 = new ECKey(Utils.getRandom());
+      byte[] address = ecKey1.getAddress();
+      String addressString = ByteArray.toHexString(address);
+      byte[] key = ecKey1.getPrivKeyBytes();
+      final String keyString = ByteArray.toHexString(key);
+
+      logger.info(ByteArray.toStr(Base64.encode(key)));
+      logger.info(ByteArray.toStr(Base64.encode(address)));
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("address", addressString);
+      userBaseObj2.addProperty("key", keyString);
+      //userBaseObj2.addProperty("address",ByteArray.toStr(Base64.encode(address)));
+      //userBaseObj2.addProperty("key", ByteArray.toStr(Base64.encode(key)));
+      jsonarray.add(userBaseObj2);
+    }
+    Gson gson = new Gson();
+    String jsonMap = gson.toJson(addressAndKey);
+    //createFile(filename,jsonobject.toString());
+    createFile(filename, jsonarray.toString());
+
+  }
+
+  @Test(enabled = true)
+  public void create() {
+    Integer i = 0;
+    String accountIndex;
+    String keyIndex;
+    JsonObject jsonobject = new JsonObject();
+    JsonArray jsonarray = new JsonArray();
+    HashMap<String, String> addressAndKey = new HashMap<String, String>();
+    while (i++ < 600) {
+      ECKey ecKey1 = new ECKey(Utils.getRandom());
+      byte[] address = ecKey1.getAddress();
+      String key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+      ArrayList<String> accountList = new ArrayList<String>();
+      accountList = PublicMethed.getAddressInfo(key);
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("address", accountList.get(1));
+      userBaseObj2.addProperty("key", accountList.get(0));
+      jsonarray.add(userBaseObj2);
+    }
+    Gson gson = new Gson();
+    String jsonMap = gson.toJson(addressAndKey);
+    //createFile(filename,jsonobject.toString());
+    createFile(filename, jsonarray.toString());
+
+  }
+
+  @AfterClass(enabled = false)
+  public void shutdown() throws InterruptedException {
   }
 }
 

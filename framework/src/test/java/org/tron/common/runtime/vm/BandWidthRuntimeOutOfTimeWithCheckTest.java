@@ -80,7 +80,6 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
   private static Manager dbManager;
 
   private static String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
-  private String trx2ContractAddress = "TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj";
   private static String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
 
   static {
@@ -95,6 +94,8 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
     );
     context = new TronApplicationContext(DefaultConfig.class);
   }
+
+  private String trx2ContractAddress = "TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj";
 
   /**
    * Init data.
@@ -125,6 +126,17 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
         .put(Commons.decodeFromBase58Check(TriggerOwnerAddress), accountCapsule2);
     dbManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(System.currentTimeMillis() / 1000);
+  }
+
+  /**
+   * destroy clear data of testing.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    ApplicationFactory.create(context).shutdown();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
   }
 
   @Test
@@ -205,16 +217,5 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
       return trace.getRuntimeResult().getContractAddress();
     }
     return trace.getRuntimeResult().getContractAddress();
-  }
-
-  /**
-   * destroy clear data of testing.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    ApplicationFactory.create(context).shutdown();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 }

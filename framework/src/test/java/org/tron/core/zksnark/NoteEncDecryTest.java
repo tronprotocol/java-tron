@@ -27,16 +27,11 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 @Slf4j
 public class NoteEncDecryTest {
 
-  private static Manager dbManager;
   private static final String dbPath = "note_encdec_test";
-  private static TronApplicationContext context;
-
   private static final String FROM_ADDRESS;
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final long OWNER_BALANCE = 100_000_000;
   private static final long FROM_AMOUNT = 110_000_000;
-  private static Wallet wallet;
-
   private static final long tokenId = 1;
   private static final String ASSET_NAME = "trx";
   private static final int TRX_NUM = 10;
@@ -46,6 +41,9 @@ public class NoteEncDecryTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static Manager dbManager;
+  private static TronApplicationContext context;
+  private static Wallet wallet;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
@@ -147,7 +145,7 @@ public class NoteEncDecryTest {
     //input
     Encryption.EncCiphertext enc = new Encryption.EncCiphertext();
     enc.setData(new byte[]{
-         -113, 13, -92, 109, 3, -75, -15, -79, -102, -125, -17, 25, 68, -57, 13, -70,
+        -113, 13, -92, 109, 3, -75, -15, -79, -102, -125, -17, 25, 68, -57, 13, -70,
         60, -3, -93, -37, 35, 31, 38, -52, -24, -125, -46, -40, 45, 37, 120, -45,
         -50, 99, -114, -22, -89, 94, 11, 119, -62, -19, -60, -90, 17, -99, 3, -5,
         77, 48, -81, -30, -1, -89, 9, -38, 94, 40, -82, -43, -55, 59, 62, -111,

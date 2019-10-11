@@ -17,9 +17,9 @@
  */
 package org.tron.common.crypto.zksnark;
 
-import java.math.BigInteger;
-
 import static org.tron.common.crypto.zksnark.Params.P;
+
+import java.math.BigInteger;
 
 /**
  * Arithmetic in F_p, p = 21888242871839275222246405745257275088696311157297823662689037894645226208583
@@ -40,6 +40,14 @@ public class Fp implements Field<Fp> {
 
   Fp(BigInteger v) {
     this.v = v;
+  }
+
+  static Fp create(byte[] v) {
+    return new Fp(new BigInteger(1, v));
+  }
+
+  static Fp create(BigInteger v) {
+    return new Fp(v);
   }
 
   @Override
@@ -92,14 +100,6 @@ public class Fp implements Field<Fp> {
 
   Fp2 mul(Fp2 o) {
     return new Fp2(o.a.mul(this), o.b.mul(this));
-  }
-
-  static Fp create(byte[] v) {
-    return new Fp(new BigInteger(1, v));
-  }
-
-  static Fp create(BigInteger v) {
-    return new Fp(v);
   }
 
   public byte[] bytes() {

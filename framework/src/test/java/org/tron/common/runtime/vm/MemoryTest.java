@@ -34,6 +34,17 @@ public class MemoryTest {
   private static final int WORD_SIZE = 32;
   private static final int CHUNK_SIZE = 1024;
 
+  private static void checkMemoryExtend(int dataSize) {
+    Memory memory = new Memory();
+    memory.extend(0, dataSize);
+    Assert.assertEquals(calcSize(dataSize, CHUNK_SIZE), memory.internalSize());
+    Assert.assertEquals(calcSize(dataSize, WORD_SIZE), memory.size());
+  }
+
+  private static int calcSize(int dataSize, int chunkSize) {
+    return (int) ceil((double) dataSize / chunkSize) * chunkSize;
+  }
+
   @Test
   public void testExtend() {
     checkMemoryExtend(0);
@@ -44,17 +55,6 @@ public class MemoryTest {
     checkMemoryExtend(CHUNK_SIZE);
     checkMemoryExtend(CHUNK_SIZE + 1);
     checkMemoryExtend(2000);
-  }
-
-  private static void checkMemoryExtend(int dataSize) {
-    Memory memory = new Memory();
-    memory.extend(0, dataSize);
-    Assert.assertEquals(calcSize(dataSize, CHUNK_SIZE), memory.internalSize());
-    Assert.assertEquals(calcSize(dataSize, WORD_SIZE), memory.size());
-  }
-
-  private static int calcSize(int dataSize, int chunkSize) {
-    return (int) ceil((double) dataSize / chunkSize) * chunkSize;
   }
 
   @Test

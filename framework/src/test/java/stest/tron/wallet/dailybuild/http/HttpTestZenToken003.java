@@ -24,16 +24,6 @@ import stest.tron.wallet.common.client.utils.ShieldNoteInfo;
 @Slf4j
 public class HttpTestZenToken003 {
 
-  private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(0);
-  private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.zenTokenOwnerKey");
-  byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
-  private String zenTokenId = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.zenTokenId");
-  private Long zenTokenFee = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.zenTokenFee");
-
   Optional<ShieldAddressInfo> receiverShieldAddressInfo1;
   Optional<ShieldAddressInfo> receiverShieldAddressInfo2;
   Optional<ShieldAddressInfo> receiverShieldAddressInfo3;
@@ -56,18 +46,24 @@ public class HttpTestZenToken003 {
   ShieldNoteInfo receiverNote4;
   ShieldNoteInfo receiverNote5;
   String assetIssueId;
-
-  private Long sendTokenAmount = 8 * zenTokenFee;
-  private JSONObject responseContent;
-  private HttpResponse response;
-
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] zenTokenOwnerAddress = ecKey1.getAddress();
   String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] receiverPublicAddress = ecKey2.getAddress();
   String receiverPublicKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  private String httpnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(0);
+  private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.zenTokenOwnerKey");
+  byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
+  private String zenTokenId = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.zenTokenId");
+  private Long zenTokenFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.zenTokenFee");
+  private Long sendTokenAmount = 8 * zenTokenFee;
+  private JSONObject responseContent;
+  private HttpResponse response;
 
   /**
    * constructor.

@@ -34,8 +34,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
@@ -45,28 +45,24 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ExtCodeHashStressTest {
 
-  private AtomicLong count = new AtomicLong();
-  private AtomicLong errorCount = new AtomicLong();
-  private long startTime = System.currentTimeMillis();
-
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
+  ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2);
+  private AtomicLong count = new AtomicLong();
+  private AtomicLong errorCount = new AtomicLong();
+  private long startTime = System.currentTimeMillis();
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
   private byte[] extCodeHashContractAddress = null;
   private byte[] normalContractAddress = null;
   private byte[] testContractAddress = null;
-
   private byte[] dev001Address = fromAddress;
   private String dev001Key = testKey002;
-
   private ECKey ecKey2 = new ECKey(Utils.getRandom());
   private byte[] user001Address = ecKey2.getAddress();
   private String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
@@ -91,7 +87,6 @@ public class ExtCodeHashStressTest {
     PublicMethed.printAddress(dev001Key);
     PublicMethed.printAddress(user001Key);
   }
-
 
   @Test(enabled = true, description = "Deploy a normal contract to be used for stress testing.")
   public void test01DeployNormalContract() {
@@ -122,7 +117,6 @@ public class ExtCodeHashStressTest {
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
   }
-
 
   @Test(enabled = true, description = "Deploy a extcodehash contract.")
   public void test02DeployExtCodeHashContract() {
@@ -227,7 +221,6 @@ public class ExtCodeHashStressTest {
     return "ok";
   }
 
-
   /**
    * trigger.
    */
@@ -301,43 +294,6 @@ public class ExtCodeHashStressTest {
     }
   }
 
-  class DeployTask implements Runnable {
-
-    Map<String, Boolean> addressList;
-    CountDownLatch countDownLatch;
-    WalletGrpc.WalletBlockingStub stub;
-    int index;
-
-    DeployTask(Map<String, Boolean> addressList, int index, CountDownLatch countDownLatch,
-        WalletGrpc.WalletBlockingStub stub) {
-      this.index = index;
-      this.addressList = addressList;
-      this.countDownLatch = countDownLatch;
-      this.stub = stub;
-    }
-
-    @Override
-    public void run() {
-      logger.info("depoying :" + index);
-      String code = Configuration.getByPath("testng.conf")
-          .getString("code.code_veryLarge");
-      String abi = Configuration.getByPath("testng.conf")
-          .getString("abi.abi_veryLarge");
-      try {
-        byte[] deployedAddress = deployContract(code, abi, "test" + index, stub);
-        String address = Base58.encode58Check(deployedAddress);
-        wirteLine(
-            "src/test/resources/addresses2",
-            address);
-        logger.info("deployed : " + index + " " + address);
-      } catch (Throwable e) {
-        logger.error("deploy error: ", e);
-      } finally {
-        countDownLatch.countDown();
-      }
-    }
-  }
-
   @Test(enabled = true, description = "Deploy multiple long bytecode contract "
       + "and write address to file.")
   public void test03DeployMultiLongByteCodeContract() {
@@ -370,35 +326,6 @@ public class ExtCodeHashStressTest {
       e.printStackTrace();
     }
   }
-
-  ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2);
-
-  class CheckTask implements Runnable {
-
-    String txid;
-    WalletGrpc.WalletBlockingStub client;
-
-    CheckTask(String txid, WalletGrpc.WalletBlockingStub client) {
-      this.txid = txid;
-      this.client = client;
-    }
-
-    @Override
-    public void run() {
-
-      Optional<TransactionInfo> infoById = PublicMethed
-          .getTransactionInfoById(this.txid, blockingStubFull);
-
-      TransactionInfo transactionInfo = infoById.get();
-      if (infoById.get().getResultValue() != 0) {
-        logger.error("txid:" + this.txid);
-        logger.error(
-            "transaction failed with message: " + infoById.get().getResMessage().toStringUtf8());
-      }
-      logger.info("infoById" + infoById);
-    }
-  }
-
 
   @Test(enabled = true, description = "Calculate the contract maxfeelimit.",
       threadPoolSize = 1, invocationCount = 1)
@@ -447,7 +374,6 @@ public class ExtCodeHashStressTest {
     }
   }
 
-
   @Test(enabled = true, description = "Trigger extcodeHash contract stress.")
   public void test05TriggerContract() throws FileNotFoundException {
 
@@ -489,22 +415,6 @@ public class ExtCodeHashStressTest {
     }
   }
 
-  class TriggerTask implements Runnable {
-
-    List<String> addresses;
-    WalletGrpc.WalletBlockingStub stub;
-
-    TriggerTask(List<String> addresses, WalletGrpc.WalletBlockingStub stub) {
-      this.addresses = addresses;
-      this.stub = stub;
-    }
-
-    @Override
-    public void run() {
-      triggerContact(this.addresses.toArray(new String[0]), stub);
-    }
-  }
-
   /**
    * trigger.
    */
@@ -531,7 +441,6 @@ public class ExtCodeHashStressTest {
     }
     triggerAndGetExtCodeHashList(addressList, user001Address, user001Key, feeLimit, stub);
   }
-
 
   @Test(enabled = true, description = "Trigger normal contract stress.")
   public void test06TriggerNormalContract() throws FileNotFoundException {
@@ -576,22 +485,6 @@ public class ExtCodeHashStressTest {
     }
   }
 
-  class TriggerNormalTask implements Runnable {
-
-    List<String> addresses;
-    WalletGrpc.WalletBlockingStub stub;
-
-    TriggerNormalTask(List<String> addresses, WalletGrpc.WalletBlockingStub stub) {
-      this.addresses = addresses;
-      this.stub = stub;
-    }
-
-    @Override
-    public void run() {
-      triggerNormalContact(this.addresses.toArray(new String[0]), stub);
-    }
-  }
-
   /**
    * trigger.
    */
@@ -621,7 +514,6 @@ public class ExtCodeHashStressTest {
         user001Key, feeLimit, stub);
   }
 
-
   /**
    * constructor.
    */
@@ -629,6 +521,101 @@ public class ExtCodeHashStressTest {
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+  }
+
+  class DeployTask implements Runnable {
+
+    Map<String, Boolean> addressList;
+    CountDownLatch countDownLatch;
+    WalletGrpc.WalletBlockingStub stub;
+    int index;
+
+    DeployTask(Map<String, Boolean> addressList, int index, CountDownLatch countDownLatch,
+        WalletGrpc.WalletBlockingStub stub) {
+      this.index = index;
+      this.addressList = addressList;
+      this.countDownLatch = countDownLatch;
+      this.stub = stub;
+    }
+
+    @Override
+    public void run() {
+      logger.info("depoying :" + index);
+      String code = Configuration.getByPath("testng.conf")
+          .getString("code.code_veryLarge");
+      String abi = Configuration.getByPath("testng.conf")
+          .getString("abi.abi_veryLarge");
+      try {
+        byte[] deployedAddress = deployContract(code, abi, "test" + index, stub);
+        String address = Base58.encode58Check(deployedAddress);
+        wirteLine(
+            "src/test/resources/addresses2",
+            address);
+        logger.info("deployed : " + index + " " + address);
+      } catch (Throwable e) {
+        logger.error("deploy error: ", e);
+      } finally {
+        countDownLatch.countDown();
+      }
+    }
+  }
+
+  class CheckTask implements Runnable {
+
+    String txid;
+    WalletGrpc.WalletBlockingStub client;
+
+    CheckTask(String txid, WalletGrpc.WalletBlockingStub client) {
+      this.txid = txid;
+      this.client = client;
+    }
+
+    @Override
+    public void run() {
+
+      Optional<TransactionInfo> infoById = PublicMethed
+          .getTransactionInfoById(this.txid, blockingStubFull);
+
+      TransactionInfo transactionInfo = infoById.get();
+      if (infoById.get().getResultValue() != 0) {
+        logger.error("txid:" + this.txid);
+        logger.error(
+            "transaction failed with message: " + infoById.get().getResMessage().toStringUtf8());
+      }
+      logger.info("infoById" + infoById);
+    }
+  }
+
+  class TriggerTask implements Runnable {
+
+    List<String> addresses;
+    WalletGrpc.WalletBlockingStub stub;
+
+    TriggerTask(List<String> addresses, WalletGrpc.WalletBlockingStub stub) {
+      this.addresses = addresses;
+      this.stub = stub;
+    }
+
+    @Override
+    public void run() {
+      triggerContact(this.addresses.toArray(new String[0]), stub);
+    }
+  }
+
+  class TriggerNormalTask implements Runnable {
+
+    List<String> addresses;
+    WalletGrpc.WalletBlockingStub stub;
+
+    TriggerNormalTask(List<String> addresses, WalletGrpc.WalletBlockingStub stub) {
+      this.addresses = addresses;
+      this.stub = stub;
+    }
+
+    @Override
+    public void run() {
+      triggerNormalContact(this.addresses.toArray(new String[0]), stub);
     }
   }
 }

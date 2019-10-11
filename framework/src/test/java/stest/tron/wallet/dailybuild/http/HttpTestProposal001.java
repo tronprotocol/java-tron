@@ -15,22 +15,20 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class HttpTestProposal001 {
 
+  private static Integer proposalId;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(0);
-  private JSONObject responseContent;
-  private HttpResponse response;
-
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final byte[] witness1Address = PublicMethed.getFinalAddress(witnessKey001);
   private final String witnessKey002 = Configuration.getByPath("testng.conf")
       .getString("witness.key2");
   private final byte[] witness2Address = PublicMethed.getFinalAddress(witnessKey002);
-  private static Integer proposalId;
-
+  private String httpnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(0);
+  private JSONObject responseContent;
+  private HttpResponse response;
 
   /**
    * constructor.

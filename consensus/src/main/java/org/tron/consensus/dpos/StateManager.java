@@ -56,7 +56,8 @@ public class StateManager {
     int participation = consensusDelegate.calculateFilledSlotsCount();
     int minParticipationRate = dposService.getMinParticipationRate();
     if (participation < minParticipationRate) {
-      logger.warn("Participation:{} <  minParticipationRate:{}", participation, minParticipationRate);
+      logger
+          .warn("Participation:{} <  minParticipationRate:{}", participation, minParticipationRate);
       return State.LOW_PARTICIPATION;
     }
 

@@ -37,10 +37,8 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 @Getter // only for unit test
 public abstract class AbstractRevokingStore implements RevokingDatabase {
 
-  private static String ACTIVE_DIALOG_POSITIVE = "activeDialog has to be greater than 0";
-
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
-
+  private static String ACTIVE_DIALOG_POSITIVE = "activeDialog has to be greater than 0";
   private Deque<RevokingState> stack = new LinkedList<>();
   private boolean disabled = true;
   private int activeDialog = 0;
@@ -82,7 +80,8 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public synchronized void check() {
     LevelDbDataSourceImpl check =
-        new LevelDbDataSourceImpl(DBConfig.getOutputDirectoryByDbName("tmp"), "tmp", new Options(), new WriteOptions());
+        new LevelDbDataSourceImpl(DBConfig.getOutputDirectoryByDbName("tmp"), "tmp", new Options(),
+            new WriteOptions());
     check.initDB();
 
     if (!check.allKeys().isEmpty()) {
@@ -308,13 +307,13 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     return stack.size();
   }
 
+  public int getMaxSize() {
+    return maxSize.get();
+  }
+
   @Override
   public void setMaxSize(int maxSize) {
     this.maxSize.set(maxSize);
-  }
-
-  public int getMaxSize() {
-    return maxSize.get();
   }
 
   @Override

@@ -2,9 +2,7 @@ package org.tron.common.utils;
 
 import java.util.Arrays;
 import java.util.Objects;
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
@@ -34,7 +32,7 @@ public class ForkUtils {
     this.dynamicPropertiesStore = dynamicPropertiesStore;
   }
 
-    public boolean pass(ForkBlockVersionEnum forkBlockVersionEnum) {
+  public boolean pass(ForkBlockVersionEnum forkBlockVersionEnum) {
     return pass(forkBlockVersionEnum.getValue());
   }
 
@@ -76,7 +74,7 @@ public class ForkUtils {
         byte[] stats = dynamicPropertiesStore.statsByVersion(versionValue);
         if (!check(stats) && Objects.nonNull(stats)) {
           stats[slot] = VERSION_DOWNGRADE;
-         dynamicPropertiesStore.statsByVersion(versionValue, stats);
+          dynamicPropertiesStore.statsByVersion(versionValue, stats);
         }
       }
     }

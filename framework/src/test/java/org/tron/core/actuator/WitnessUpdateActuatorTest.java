@@ -31,8 +31,6 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 @Slf4j
 public class WitnessUpdateActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static final String dbPath = "output_WitnessUpdate_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
@@ -42,6 +40,8 @@ public class WitnessUpdateActuatorTest {
   private static final String URL = "https://tron.network";
   private static final String NewURL = "https://tron.org";
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
+  private static TronApplicationContext context;
+  private static Manager dbManager;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -59,6 +59,20 @@ public class WitnessUpdateActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+  }
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   /**
@@ -267,20 +281,6 @@ public class WitnessUpdateActuatorTest {
       Assert.assertEquals("account does not exist", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    }
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
     }
   }
 }

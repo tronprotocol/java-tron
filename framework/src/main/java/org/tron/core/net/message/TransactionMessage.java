@@ -3,8 +3,6 @@ package org.tron.core.net.message;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.P2pException;
 import org.tron.protos.Protocol.Transaction;
 
 public class TransactionMessage extends TronMessage {

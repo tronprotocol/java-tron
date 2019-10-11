@@ -28,47 +28,32 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class WalletTestTransfer004 {
 
+  private static final long now = System.currentTimeMillis();
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private WalletExtensionGrpc.WalletExtensionBlockingStub blockingStubExtension = null;
-
-  private static final long now = System.currentTimeMillis();
-
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
-
-  /**
-   * constructor.
-   */
-
-  @BeforeClass
-  public void beforeClass() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
-        .build();
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
-    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
-        .build();
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-    blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
   }
 
   /*  @Test(enabled = true)
@@ -224,6 +209,23 @@ public class WalletTestTransfer004 {
    * constructor.
    */
 
+  @BeforeClass
+  public void beforeClass() {
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
+        .build();
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+    blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
+  }
+
+  /**
+   * constructor.
+   */
+
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
@@ -251,11 +253,6 @@ public class WalletTestTransfer004 {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

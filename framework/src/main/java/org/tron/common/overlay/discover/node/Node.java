@@ -32,36 +32,6 @@ public class Node implements Serializable {
 
   private boolean isFakeNodeId = false;
 
-  public int getReputation() {
-    return reputation;
-  }
-
-  public void setReputation(int reputation) {
-    this.reputation = reputation;
-  }
-
-  public static Node instanceOf(String addressOrEnode) {
-    try {
-      URI uri = new URI(addressOrEnode);
-      if ("enode".equals(uri.getScheme())) {
-        return new Node(addressOrEnode);
-      }
-    } catch (URISyntaxException e) {
-      // continue
-    }
-
-    final String generatedNodeId = Hex.toHexString(getNodeId());
-    final Node node = new Node("enode://" + generatedNodeId + "@" + addressOrEnode);
-    return node;
-  }
-
-  public String getEnodeURL() {
-    return new StringBuilder("enode://")
-        .append(ByteArray.toHexString(id)).append("@")
-        .append(host).append(":")
-        .append(port).toString();
-  }
-
   public Node(String enodeURL) {
     try {
       URI uri = new URI(enodeURL);
@@ -94,6 +64,43 @@ public class Node implements Serializable {
     this.host = host;
     this.port = port;
     this.bindPort = bindPort;
+  }
+
+  public static Node instanceOf(String addressOrEnode) {
+    try {
+      URI uri = new URI(addressOrEnode);
+      if ("enode".equals(uri.getScheme())) {
+        return new Node(addressOrEnode);
+      }
+    } catch (URISyntaxException e) {
+      // continue
+    }
+
+    final String generatedNodeId = Hex.toHexString(getNodeId());
+    final Node node = new Node("enode://" + generatedNodeId + "@" + addressOrEnode);
+    return node;
+  }
+
+  public static byte[] getNodeId() {
+    Random gen = new Random();
+    byte[] id = new byte[64];
+    gen.nextBytes(id);
+    return id;
+  }
+
+  public int getReputation() {
+    return reputation;
+  }
+
+  public void setReputation(int reputation) {
+    this.reputation = reputation;
+  }
+
+  public String getEnodeURL() {
+    return new StringBuilder("enode://")
+        .append(ByteArray.toHexString(id)).append("@")
+        .append(host).append(":")
+        .append(port).toString();
   }
 
   public boolean isConnectible() {
@@ -137,13 +144,6 @@ public class Node implements Serializable {
       return null;
     }
     return new String(id);
-  }
-
-  public static byte[] getNodeId() {
-    Random gen = new Random();
-    byte[] id = new byte[64];
-    gen.nextBytes(id);
-    return id;
   }
 
   @Override

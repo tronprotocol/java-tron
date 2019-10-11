@@ -1,9 +1,8 @@
 package org.tron.core.db.common.iterator;
 
-import org.tron.core.capsule.AssetIssueCapsule;
-
 import java.util.Iterator;
 import java.util.Map.Entry;
+import org.tron.core.capsule.AssetIssueCapsule;
 
 public class AssetIssueIterator extends AbstractIterator<AssetIssueCapsule> {
 

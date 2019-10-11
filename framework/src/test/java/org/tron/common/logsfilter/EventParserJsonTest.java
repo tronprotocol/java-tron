@@ -10,9 +10,7 @@ import java.util.Map;
 import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 
 public class EventParserJsonTest {

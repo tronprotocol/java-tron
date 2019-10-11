@@ -20,12 +20,17 @@ import org.tron.core.store.DynamicPropertiesStore;
 public abstract class Message {
 
   protected static final Logger logger = LoggerFactory.getLogger("Message");
+  private static final Field field = ReflectionUtils
+      .findField(CodedInputStream.class, "explicitDiscardUnknownFields");
+  @Setter
+  private static DynamicPropertiesStore dynamicPropertiesStore;
+
+  static {
+    ReflectionUtils.makeAccessible(field);
+  }
 
   protected byte[] data;
   protected byte type;
-
-  @Setter
-  private static DynamicPropertiesStore dynamicPropertiesStore;
 
   public Message() {
   }
@@ -37,6 +42,24 @@ public abstract class Message {
   public Message(byte type, byte[] packed) {
     this.type = type;
     this.data = packed;
+  }
+
+  public static void compareBytes(byte[] src, byte[] dest) throws P2pException {
+    if (src.length != dest.length) {
+      throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
+    }
+  }
+
+  public static CodedInputStream getCodedInputStream(byte[] data) {
+    CodedInputStream codedInputStream = CodedInputStream.newInstance(data);
+    if (isFilter()) {
+      ReflectionUtils.setField(field, codedInputStream, true);
+    }
+    return codedInputStream;
+  }
+
+  public static boolean isFilter() {
+    return dynamicPropertiesStore.getAllowProtoFilterNum() == 1;
   }
 
   public ByteBuf getSendData() {
@@ -77,31 +100,6 @@ public abstract class Message {
     }
     Message message = (Message) o;
     return Arrays.equals(data, message.data);
-  }
-
-  public static void compareBytes(byte[] src, byte[] dest) throws P2pException {
-    if (src.length != dest.length) {
-      throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
-    }
-  }
-
-  private static final Field field = ReflectionUtils
-      .findField(CodedInputStream.class, "explicitDiscardUnknownFields");
-
-  static {
-    ReflectionUtils.makeAccessible(field);
-  }
-
-  public static CodedInputStream getCodedInputStream(byte[] data) {
-    CodedInputStream codedInputStream = CodedInputStream.newInstance(data);
-    if (isFilter()) {
-      ReflectionUtils.setField(field, codedInputStream, true);
-    }
-    return codedInputStream;
-  }
-
-  public static boolean isFilter() {
-    return dynamicPropertiesStore.getAllowProtoFilterNum() == 1;
   }
 
 }

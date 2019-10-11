@@ -19,6 +19,11 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     super(dbName);
   }
 
+  private static byte[] getLowerCaseAccountId(byte[] bsAccountId) {
+    return ByteString
+        .copyFromUtf8(ByteString.copyFrom(bsAccountId).toStringUtf8().toLowerCase()).toByteArray();
+  }
+
   public void put(AccountCapsule accountCapsule) {
     byte[] lowerCaseAccountId = getLowerCaseAccountId(accountCapsule.getAccountId().toByteArray());
     super.put(lowerCaseAccountId, new BytesCapsule(accountCapsule.getAddress().toByteArray()));
@@ -47,11 +52,6 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     byte[] lowerCaseKey = getLowerCaseAccountId(key);
     byte[] value = revokingDB.getUnchecked(lowerCaseKey);
     return !ArrayUtils.isEmpty(value);
-  }
-
-  private static byte[] getLowerCaseAccountId(byte[] bsAccountId) {
-    return ByteString
-        .copyFromUtf8(ByteString.copyFrom(bsAccountId).toStringUtf8().toLowerCase()).toByteArray();
   }
 
 }

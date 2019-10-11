@@ -36,26 +36,6 @@ public class BN128Fp extends BN128<Fp> {
     super(x, y, z);
   }
 
-  @Override
-  protected BN128<Fp> zero() {
-    return ZERO;
-  }
-
-  @Override
-  protected BN128<Fp> instance(Fp x, Fp y, Fp z) {
-    return new BN128Fp(x, y, z);
-  }
-
-  @Override
-  protected Fp b() {
-    return B_Fp;
-  }
-
-  @Override
-  protected Fp one() {
-    return Fp._1;
-  }
-
   /**
    * Checks whether x and y belong to Fp, then checks whether point with (x; y) coordinates lays on
    * the curve.
@@ -80,5 +60,25 @@ public class BN128Fp extends BN128<Fp> {
     } else {
       return null;
     }
+  }
+
+  @Override
+  protected BN128<Fp> zero() {
+    return ZERO;
+  }
+
+  @Override
+  protected BN128<Fp> instance(Fp x, Fp y, Fp z) {
+    return new BN128Fp(x, y, z);
+  }
+
+  @Override
+  protected Fp b() {
+    return B_Fp;
+  }
+
+  @Override
+  protected Fp one() {
+    return Fp._1;
   }
 }

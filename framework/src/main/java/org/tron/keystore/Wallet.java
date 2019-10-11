@@ -1,27 +1,26 @@
 package org.tron.keystore;
 
-import org.spongycastle.crypto.digests.SHA256Digest;
-import org.spongycastle.crypto.generators.PKCS5S2ParametersGenerator;
-import org.spongycastle.crypto.generators.SCrypt;
-import org.spongycastle.crypto.params.KeyParameter;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.UUID;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import org.spongycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.crypto.generators.PKCS5S2ParametersGenerator;
+import org.spongycastle.crypto.generators.SCrypt;
+import org.spongycastle.crypto.params.KeyParameter;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Hash;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * <p>Ethereum wallet file management. For reference, refer to <a href="https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition">
@@ -44,20 +43,16 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class Wallet {
 
-  private static final int N_LIGHT = 1 << 12;
-  private static final int P_LIGHT = 6;
-
-  private static final int N_STANDARD = 1 << 18;
-  private static final int P_STANDARD = 1;
-
-  private static final int R = 8;
-  private static final int DKLEN = 32;
-
-  private static final int CURRENT_VERSION = 3;
-
-  private static final String CIPHER = "aes-128-ctr";
   protected static final String AES_128_CTR = "pbkdf2";
   protected static final String SCRYPT = "scrypt";
+  private static final int N_LIGHT = 1 << 12;
+  private static final int P_LIGHT = 6;
+  private static final int N_STANDARD = 1 << 18;
+  private static final int P_STANDARD = 1;
+  private static final int R = 8;
+  private static final int DKLEN = 32;
+  private static final int CURRENT_VERSION = 3;
+  private static final String CIPHER = "aes-128-ctr";
 
   public static WalletFile create(String password, ECKey ecKeyPair, int n, int p)
       throws CipherException {

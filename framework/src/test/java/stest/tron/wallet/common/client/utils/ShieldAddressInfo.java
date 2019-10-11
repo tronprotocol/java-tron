@@ -33,7 +33,17 @@ public class ShieldAddressInfo {
   @Getter
   byte[] pkD; // 256
 
-  public ShieldAddressInfo(){
+  public ShieldAddressInfo() {
+  }
+
+  public static String getShieldAddress(DiversifierT d, byte[] pkD) {
+    try {
+      PaymentAddress paymentAddress = new PaymentAddress(d, pkD);
+      return KeyIo.encodePaymentAddress(paymentAddress);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return "";
   }
 
   public FullViewingKey getFullViewingKey() throws ZksnarkException {
@@ -43,7 +53,6 @@ public class ShieldAddressInfo {
 
   /**
    * check parameters.
-   * @return
    */
   public boolean validateCheck() {
     try {
@@ -75,16 +84,6 @@ public class ShieldAddressInfo {
     return getShieldAddress(d, pkD);
   }
 
-  public static String getShieldAddress(DiversifierT d, byte[] pkD) {
-    try {
-      PaymentAddress paymentAddress = new PaymentAddress(d, pkD);
-      return KeyIo.encodePaymentAddress(paymentAddress);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return "";
-  }
-
   //  public static PaymentAddress parseFromShieldAddress(final String shieldAddress) {
   //    PaymentAddress paymentAddress = null;
   //    try {
@@ -107,7 +106,6 @@ public class ShieldAddressInfo {
 
   /**
    * format shield address info to a string.
-   * @return
    */
   public String encode() {
     String encodeString = ByteArray.toHexString(sk) + ";";

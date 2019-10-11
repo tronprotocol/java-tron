@@ -22,15 +22,6 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class Creatasset {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey002 =
-      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
-  private final String testKey003 =
-      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
-
-  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
   private static final String tooLongDescription =
       "1qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqa"
           + "zxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvq"
@@ -40,35 +31,33 @@ public class Creatasset {
           + "qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedc"
           + "vqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqaz"
           + "xswedcvqazxswedcvqazxswedcwedcv";
-
-
   private static final long now = System.currentTimeMillis();
-  private static String name = "c_" + Long.toString(now);
-  long totalSupply = now;
   private static final long sendAmount = 1025000000L;
   private static final long netCostMeasure = 200L;
-
+  private static String name = "c_" + Long.toString(now);
+  //testng001、testng002、testng003、testng004
+  private final String testKey002 =
+      "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
+  private final String testKey003 =
+      "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
+  long totalSupply = now;
   Long freeAssetNetLimit = 30000L;
   Long publicFreeAssetNetLimit = 30000L;
   String description = "f";
   String url = "h";
-
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
-
   //get account
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] asset016Address = ecKey1.getAddress();
   String testKeyForAssetIssue016 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] transferAssetAddress = ecKey2.getAddress();
   String transferAssetCreateKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
 
   @BeforeSuite
   public void beforeSuite() {

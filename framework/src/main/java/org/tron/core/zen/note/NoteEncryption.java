@@ -12,11 +12,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.zksnark.JLibrustzcash;
+import org.tron.common.zksnark.JLibsodium;
 import org.tron.common.zksnark.LibrustzcashParam.KaAgreeParams;
 import org.tron.common.zksnark.LibrustzcashParam.KaDerivepublicParams;
-import org.tron.common.zksnark.JLibsodium;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.utils.ZenChainParams;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.note.NoteEncryption.Encryption.EncCiphertext;
 import org.tron.core.zen.note.NoteEncryption.Encryption.EncPlaintext;
@@ -40,12 +39,9 @@ public class NoteEncryption {
     this.epk = epk;
     this.esk = esk;
   }
-  
+
   /**
    * generate pair of (esk,epk). epk = esk * d
-   * @param d
-   * @return
-   * @throws ZksnarkException
    */
   public static Optional<NoteEncryption> fromDiversifier(DiversifierT d) throws ZksnarkException {
     byte[] epk = new byte[32];
@@ -57,14 +53,10 @@ public class NoteEncryption {
     }
     return Optional.of(new NoteEncryption(epk, esk));
   }
-  
+
   /**
-   * encrypt plain_enc by kEnc to cEnc with sharedsecret and epk, use this esk,epk
-   * kEnc can use in encrypt also in decrypt，symmetric encryption.
-   * @param pkD
-   * @param message
-   * @return
-   * @throws ZksnarkException
+   * encrypt plain_enc by kEnc to cEnc with sharedsecret and epk, use this esk,epk kEnc can use in
+   * encrypt also in decrypt，symmetric encryption.
    */
   public Optional<EncCiphertext> encryptToRecipient(byte[] pkD, EncPlaintext message)
       throws ZksnarkException {
@@ -87,15 +79,9 @@ public class NoteEncryption {
     alreadyEncryptedEnc = true;
     return Optional.of(ciphertext);
   }
-  
+
   /**
    * encrypt plain_out with ock to c_out, use this epk
-   * @param ovk
-   * @param cv
-   * @param cm
-   * @param message
-   * @return
-   * @throws ZksnarkException
    */
   public OutCiphertext encryptToOurselves(
       byte[] ovk, byte[] cv, byte[] cm, OutPlaintext message) throws ZksnarkException {
@@ -117,15 +103,9 @@ public class NoteEncryption {
   public static class Encryption {
 
     public static final int NOTEENCRYPTION_CIPHER_KEYSIZE = 32;
-  
+
     /**
      * generate ock by ovk, cv, cm, epk
-     * @param ock
-     * @param ovk
-     * @param cv
-     * @param cm
-     * @param epk
-     * @throws ZksnarkException
      */
     public static void prfOck(byte[] ock, byte[] ovk, byte[] cv, byte[] cm, byte[] epk)
         throws ZksnarkException {
@@ -147,15 +127,12 @@ public class NoteEncryption {
         throw new ZksnarkException("hash function failure");
       }
     }
-  
+
     /**
      * generate kEnc by sharedsecret and epk
-     * @param kEnc
-     * @param sharedsecret
-     * @param epk
-     * @throws ZksnarkException
      */
-    public static void kdfSapling(byte[] kEnc, byte[] sharedsecret, byte[] epk) throws ZksnarkException {
+    public static void kdfSapling(byte[] kEnc, byte[] sharedsecret, byte[] epk)
+        throws ZksnarkException {
       byte[] block = new byte[64];
       System.arraycopy(sharedsecret, 0, block, 0, 32);
       System.arraycopy(epk, 0, block, 32, 32);
@@ -171,15 +148,10 @@ public class NoteEncryption {
         throw new ZksnarkException(("hash function failure"));
       }
     }
-  
+
     /**
-     * decrypt cEnc by kEnc to plain_enc generate with epk + ivk
-     * kEnc can use in encrypt also in decrypt，symmetric encryption.
-     * @param ciphertext
-     * @param ivk
-     * @param epk
-     * @return
-     * @throws ZksnarkException
+     * decrypt cEnc by kEnc to plain_enc generate with epk + ivk kEnc can use in encrypt also in
+     * decrypt，symmetric encryption.
      */
     public static Optional<EncPlaintext> attemptEncDecryption(
         byte[] ciphertext, byte[] ivk, byte[] epk) throws ZksnarkException {
@@ -206,16 +178,10 @@ public class NoteEncryption {
       }
       return Optional.of(plaintext);
     }
-  
+
     /**
-     * decrypt cEnc by kEnc to plain_enc generate with esk + pkD
-     * kEnc can use in encrypt also in decrypt，symmetric encryption.
-     * @param ciphertext
-     * @param epk
-     * @param esk
-     * @param pkD
-     * @return
-     * @throws ZksnarkException
+     * decrypt cEnc by kEnc to plain_enc generate with esk + pkD kEnc can use in encrypt also in
+     * decrypt，symmetric encryption.
      */
     public static Optional<EncPlaintext> attemptEncDecryption(
         EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pkD) throws ZksnarkException {
@@ -243,16 +209,9 @@ public class NoteEncryption {
 
       return Optional.of(plaintext);
     }
-  
+
     /**
      * decrypt c_out to plain_out with ock generate ovk
-     * @param ciphertext
-     * @param ovk
-     * @param cv
-     * @param cm
-     * @param epk
-     * @return
-     * @throws ZksnarkException
      */
     public static Optional<OutPlaintext> attemptOutDecryption(
         OutCiphertext ciphertext, byte[] ovk, byte[] cv, byte[] cm, byte[] epk)
@@ -276,24 +235,28 @@ public class NoteEncryption {
     }
 
     public static class EncCiphertext {
+
       @Getter
       @Setter
       private byte[] data = new byte[ZC_ENCCIPHERTEXT_SIZE]; // ZC_ENCCIPHERTEXT_SIZE
     }
 
     public static class EncPlaintext {
+
       @Getter
       @Setter
       private byte[] data = new byte[ZC_ENCPLAINTEXT_SIZE]; // ZC_ENCPLAINTEXT_SIZE
     }
 
     public static class OutCiphertext {
+
       @Getter
       @Setter
       private byte[] data = new byte[ZC_OUTCIPHERTEXT_SIZE]; // ZC_OUTCIPHERTEXT_SIZE
     }
 
     public static class OutPlaintext {
+
       @Getter
       @Setter
       private byte[] data = new byte[ZC_OUTPLAINTEXT_SIZE]; // ZC_OUTPLAINTEXT_SIZE

@@ -46,59 +46,57 @@ import org.tron.core.Wallet;
 import org.tron.core.exception.CancelException;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.SpendingKey;
-import org.tron.protos.contract.AccountContract.AccountCreateContract;
-import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
-import org.tron.protos.contract.AccountContract.SetAccountIdContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
-import org.tron.protos.contract.ShieldContract;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract.Builder;
-import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.contract.ShieldContract.OutputPoint;
-import org.tron.protos.contract.ShieldContract.OutputPointInfo;
-import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
-import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
-import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
-import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
-import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
-import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
-import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
-import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
-import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
-import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.Transaction.raw;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.AccountContract.SetAccountIdContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
+import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
+import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
+import org.tron.protos.contract.ShieldContract;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldContract.OutputPoint;
+import org.tron.protos.contract.ShieldContract.OutputPointInfo;
+import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract.Builder;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
 
 
 public class PublicMethedForMutiSign {
 
-  Wallet wallet = new Wallet();
   private static final Logger logger = LoggerFactory.getLogger("TestLogger");
+  Wallet wallet = new Wallet();
 
   /**
    * constructor.
@@ -826,7 +824,6 @@ public class PublicMethedForMutiSign {
   }
 
 
-
   /**
    * constructor.
    */
@@ -1202,7 +1199,7 @@ public class PublicMethedForMutiSign {
 
   public static boolean createAccountWhtiPermissionId(byte[] ownerAddress,
       byte[] newAddress, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull,
-      int permissionId,String[] permissionKeyString) {
+      int permissionId, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -4877,8 +4874,8 @@ public class PublicMethedForMutiSign {
    * constructor.
    */
   public static boolean sendShieldCoin(byte[] publicZenTokenOwnerAddress,
-      long fromAmount,ShieldAddressInfo shieldAddressInfo,
-      NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
+      long fromAmount, ShieldAddressInfo shieldAddressInfo,
+      NoteTx noteTx, List<GrpcAPI.Note> shieldOutputList,
       byte[] publicZenTokenToAddress, long toAmount, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull, Integer permission_id,
       String[] permissionKeyString) {
@@ -4926,14 +4923,11 @@ public class PublicMethedForMutiSign {
         System.out.println(e);
       }
 
-
       Note.Builder noteBuild = Note.newBuilder();
       noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
       noteBuild.setValue(noteTx.getNote().getValue());
       noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
       noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
-
-
 
       //System.out.println("address " + noteInfo.getPaymentAddress());
       //System.out.println("value " + noteInfo.getValue());
@@ -5002,7 +4996,7 @@ public class PublicMethedForMutiSign {
         raw.addContract(contract);
         transaction = transaction.toBuilder().setRawData(raw).build();
 
-        transaction = signTransactionForShield(transaction,blockingStubFull,permissionKeyString);
+        transaction = signTransactionForShield(transaction, blockingStubFull, permissionKeyString);
         System.out.println(
             "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
                 .toByteArray())));
@@ -5064,7 +5058,7 @@ public class PublicMethedForMutiSign {
   /**
    * constructor.
    */
-  public static boolean createWitness(String url, byte[] owner, String priKey,int permissionId,
+  public static boolean createWitness(String url, byte[] owner, String priKey, int permissionId,
       String[] permissionKeyString, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ECKey temKey = null;
     try {
@@ -5080,7 +5074,6 @@ public class PublicMethedForMutiSign {
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(byteurl));
     WitnessCreateContract contract = builder.build();
-
 
     TransactionExtention transactionExtention = blockingStubFull.createWitness2(contract);
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
@@ -5115,7 +5108,7 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
-    return broadcastTransaction(transaction,blockingStubFull);
+    return broadcastTransaction(transaction, blockingStubFull);
   }
 
   /**

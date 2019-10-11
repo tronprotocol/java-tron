@@ -23,9 +23,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -36,34 +36,25 @@ public class TriggerConstant001 {
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
+  byte[] contractAddressNoAbi = null;
+  byte[] contractAddressWithAbi = null;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] contractExcAddress = ecKey1.getAddress();
+  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
   private ManagedChannel channelSolidity = null;
-
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-
-
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
-
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
-
-  byte[] contractAddressNoAbi = null;
-  byte[] contractAddressWithAbi = null;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contractExcAddress = ecKey1.getAddress();
-  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
 
   @BeforeSuite
   public void beforeSuite() {
@@ -173,7 +164,6 @@ public class TriggerConstant001 {
   @Test(enabled = true, description = "TriggerConstantContract a view function without ABI")
   public void test03TriggerConstantContract() {
 
-
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressNoAbi,
             "testView()", "#", false,
@@ -194,7 +184,6 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerConstantContract a pure function without ABI")
   public void test04TriggerConstantContract() {
-
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressNoAbi,
@@ -239,7 +228,6 @@ public class TriggerConstant001 {
   @Test(enabled = true, description = "TriggerConstantContract a non-payable function with ABI")
   public void test06TriggerConstantContract() {
 
-
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressWithAbi,
             "testNoPayable()", "#", false,
@@ -282,7 +270,6 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerConstantContract a pure function with ABI")
   public void test08TriggerConstantContract() {
-
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressWithAbi,
@@ -717,7 +704,6 @@ public class TriggerConstant001 {
       + "revert()")
   public void test24TriggerConstantContract() {
 
-
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressWithAbi,
             "testView2()", "#", false,
@@ -768,7 +754,6 @@ public class TriggerConstant001 {
   @Test(enabled = true, description = "TriggerConstantContract a view method without ABI,method has"
       + "revert()")
   public void testTriggerConstantContract() {
-
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressNoAbi,

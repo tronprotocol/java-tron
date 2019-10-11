@@ -369,7 +369,7 @@ public class ByteUtil {
     return compare(bytes1, bytes2) == 0;
   }
 
-  public static boolean isNullOrZeroArray(byte[] array){
+  public static boolean isNullOrZeroArray(byte[] array) {
     return (array == null) || (array.length == 0);
   }
 

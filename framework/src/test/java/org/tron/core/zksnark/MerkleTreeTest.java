@@ -104,7 +104,7 @@ public class MerkleTreeTest {
     IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeCapsule()
         .toMerkleTreeContainer();
     tree.toVoucher().setDEPTH(4);
-    System.out.println("tree depth is "+ IncrementalMerkleVoucherContainer.getDEPTH());
+    System.out.println("tree depth is " + IncrementalMerkleVoucherContainer.getDEPTH());
 
     // The root of the tree at this point is expected to be the root of the
     // empty tree.

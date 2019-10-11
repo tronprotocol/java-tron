@@ -42,7 +42,7 @@ public class InternalTransactionCallTest {
   @Before
   public void init() {
     Args.clearParam();
-    Args.setParam(new String[] {"--output-directory", dbPath, "--support-constant", "--debug"},
+    Args.setParam(new String[]{"--output-directory", dbPath, "--support-constant", "--debug"},
         Constant.TEST_CONF);
 
     context = new TronApplicationContext(DefaultConfig.class);

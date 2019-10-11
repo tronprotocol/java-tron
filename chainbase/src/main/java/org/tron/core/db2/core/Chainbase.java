@@ -9,23 +9,22 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.common.utils.ByteUtil;
 
 public class Chainbase implements IRevokingDB {
 
+  public static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
   //true:fullnode, false:soliditynode
   private ThreadLocal<Boolean> mode = new ThreadLocal<>();
   private Snapshot head;
 
-  public static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
-
   public Chainbase(Snapshot head) {
-    this.head  = head;
+    this.head = head;
     mode.set(true);
   }
 

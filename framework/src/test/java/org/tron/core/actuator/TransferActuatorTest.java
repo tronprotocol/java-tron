@@ -31,9 +31,7 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 @Slf4j
 public class TransferActuatorTest {
 
-  private static Manager dbManager;
   private static final String dbPath = "output_transfer_test";
-  private static TronApplicationContext context;
   private static final String OWNER_ADDRESS;
   private static final String TO_ADDRESS;
   private static final long AMOUNT = 100;
@@ -44,6 +42,8 @@ public class TransferActuatorTest {
   private static final String OWNER_ACCOUNT_INVALID;
   private static final String OWNER_NO_BALANCE;
   private static final String To_ACCOUNT_INVALID;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);

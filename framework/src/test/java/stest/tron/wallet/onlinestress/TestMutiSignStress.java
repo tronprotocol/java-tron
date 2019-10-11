@@ -29,15 +29,13 @@ public class TestMutiSignStress {
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final byte[] witnessAddress = PublicMethed.getFinalAddress(witnessKey001);
-
-
+  ByteString assetAccountId1;
+  String[] ownerKeyString = new String[1];
+  String accountPermissionJson = "";
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
-  ByteString assetAccountId1;
-  String[] ownerKeyString = new String[1];
-  String accountPermissionJson = "";
 
   @BeforeSuite
   public void beforeSuite() {

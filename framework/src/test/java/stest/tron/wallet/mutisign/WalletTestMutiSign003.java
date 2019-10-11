@@ -33,36 +33,30 @@ public class WalletTestMutiSign003 {
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final byte[] witnessAddress = PublicMethed.getFinalAddress(witnessKey001);
-
-  private long multiSignFee = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.multiSignFee");
-  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.updateAccountPermissionFee");
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
   ByteString assetAccountId1;
   String[] permissionKeyString = new String[2];
   String[] ownerKeyString = new String[3];
   String accountPermissionJson = "";
-
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] manager1Address = ecKey1.getAddress();
   String manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] manager2Address = ecKey2.getAddress();
   String manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
   ECKey ecKey3 = new ECKey(Utils.getRandom());
   byte[] ownerAddress = ecKey3.getAddress();
   String ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-
   ECKey ecKey4 = new ECKey(Utils.getRandom());
   byte[] newAddress = ecKey4.getAddress();
   String newKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
 
   @BeforeSuite
   public void beforeSuite() {

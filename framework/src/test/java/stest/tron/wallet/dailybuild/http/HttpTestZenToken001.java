@@ -25,19 +25,6 @@ import stest.tron.wallet.common.client.utils.ShieldNoteInfo;
 @Slf4j
 public class HttpTestZenToken001 {
 
-  private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(0);
-  private String httpSolidityNode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(2);
-  private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.zenTokenOwnerKey");
-  byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
-  private String zenTokenId = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.zenTokenId");
-  private String tokenId = zenTokenId;
-  private Long zenTokenFee = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.zenTokenFee");
-
   List<Note> shieldOutList = new ArrayList<>();
   Optional<ShieldAddressInfo> shieldAddressOptionalInfo1;
   Optional<ShieldAddressInfo> shieldAddressOptionalInfo2;
@@ -67,15 +54,25 @@ public class HttpTestZenToken001 {
   String paymentAddress2;
   String paymentAddress3;
   String rcm;
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  private String httpnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(0);
+  private String httpSolidityNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
+  private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.zenTokenOwnerKey");
+  byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
+  private String zenTokenId = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.zenTokenId");
+  private String tokenId = zenTokenId;
+  private Long zenTokenFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 20 * zenTokenFee;
   private Long sendTokenAmount = 8 * zenTokenFee;
   private JSONObject responseContent;
   private HttpResponse response;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   /**
    * constructor.

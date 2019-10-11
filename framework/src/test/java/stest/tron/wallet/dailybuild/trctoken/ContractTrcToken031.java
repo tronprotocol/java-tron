@@ -29,26 +29,16 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractTrcToken031 {
 
 
+  private static final long now = System.currentTimeMillis();
+  private static final long TotalSupply = 10000000L;
+  private static ByteString assetAccountId = null;
+  private static String tokenName = "testAssetIssue_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private static ByteString assetAccountId = null;
-  private static final long now = System.currentTimeMillis();
-  private static String tokenName = "testAssetIssue_" + Long.toString(now);
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-  private String fullnode1 = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(1);
-  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.maxFeeLimit");
-
-  private static final long TotalSupply = 10000000L;
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] dev001Address = ecKey1.getAddress();
   String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] user001Address = ecKey2.getAddress();
   String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
@@ -57,6 +47,14 @@ public class ContractTrcToken031 {
   String url = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetUrl");
   byte[] transferTokenContractAddress;
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(1);
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
 
   @BeforeSuite
   public void beforeSuite() {

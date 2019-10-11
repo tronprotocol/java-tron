@@ -41,7 +41,9 @@ public class WalletTestZenToken001 {
   DecryptNotes notes;
   String memo;
   Note note;
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -56,10 +58,6 @@ public class WalletTestZenToken001 {
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 8 * zenTokenFee;
   private Long sendTokenAmount = 3 * zenTokenFee;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   /**
    * constructor.
@@ -162,7 +160,7 @@ public class WalletTestZenToken001 {
     final Long beforeAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
         PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
         blockingStubFull);
-    
+
     Assert.assertTrue(PublicMethed.sendShieldCoin(
         null, 0,
         shieldAddressInfo.get(), notes.getNoteTxs(0),

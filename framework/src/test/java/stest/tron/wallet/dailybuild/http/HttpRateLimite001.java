@@ -16,6 +16,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class HttpRateLimite001 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -81,7 +82,7 @@ public class HttpRateLimite001 {
     Long startTimeStamp = System.currentTimeMillis();
     Integer repeatTimes = 0;
     while (repeatTimes++ < 15) {
-      HttpMethed.getBlockByLastNumFromSolidity(httpSoliditynode,5);
+      HttpMethed.getBlockByLastNumFromSolidity(httpSoliditynode, 5);
     }
     Long endTimesStap = System.currentTimeMillis();
     logger.info("startTimeStamp - endTimesStap:" + (endTimesStap - startTimeStamp));
@@ -97,7 +98,7 @@ public class HttpRateLimite001 {
     Long startTimeStamp = System.currentTimeMillis();
     Integer repeatTimes = 0;
     while (repeatTimes++ < 15) {
-      HttpMethed.getBlockByNumFromSolidity(httpSoliditynode,5);
+      HttpMethed.getBlockByNumFromSolidity(httpSoliditynode, 5);
     }
     Long endTimesStap = System.currentTimeMillis();
     logger.info("startTimeStamp - endTimesStap:" + (endTimesStap - startTimeStamp));
@@ -112,7 +113,7 @@ public class HttpRateLimite001 {
     Integer repeatTimes = 0;
     while (repeatTimes++ < 15) {
       logger.info(realHttpSoliditynode);
-      HttpMethed.getTransactionsToThisFromSolidity(realHttpSoliditynode,fromAddress,0,50);
+      HttpMethed.getTransactionsToThisFromSolidity(realHttpSoliditynode, fromAddress, 0, 50);
     }
     Long endTimesStap = System.currentTimeMillis();
     logger.info("startTimeStamp - endTimesStap:" + (endTimesStap - startTimeStamp));

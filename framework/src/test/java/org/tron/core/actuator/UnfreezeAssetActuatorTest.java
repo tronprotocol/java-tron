@@ -33,9 +33,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContra
 @Slf4j
 public class UnfreezeAssetActuatorTest {
 
-  private static Manager dbManager;
   private static final String dbPath = "output_unfreeze_asset_test";
-  private static TronApplicationContext context;
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ACCOUNT_INVALID;
@@ -43,6 +41,8 @@ public class UnfreezeAssetActuatorTest {
   private static final long frozenBalance = 1_000_000_000L;
   private static final String assetName = "testCoin";
   private static final String assetID = "123456";
+  private static Manager dbManager;
+  private static TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);

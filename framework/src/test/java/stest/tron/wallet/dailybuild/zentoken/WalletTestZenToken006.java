@@ -38,7 +38,9 @@ public class WalletTestZenToken006 {
   DecryptNotes notes;
   String memo;
   Note note;
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -53,10 +55,6 @@ public class WalletTestZenToken006 {
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 10 * zenTokenFee;
   private Long sendTokenAmount = 3 * zenTokenFee;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   /**
    * constructor.
@@ -176,7 +174,7 @@ public class WalletTestZenToken006 {
     Assert.assertEquals(receiverShieldTokenAmount, zenTokenFee);
     logger.info(PublicMethed.getMemo(note));
     Assert.assertTrue(PublicMethed.getMemo(note).length() == 512);
-    Assert.assertEquals(PublicMethed.getMemo(note),memo.substring(0,512));
+    Assert.assertEquals(PublicMethed.getMemo(note), memo.substring(0, 512));
   }
 
   @Test(enabled = true, description = "Shield note memo is empty")
@@ -254,7 +252,6 @@ public class WalletTestZenToken006 {
 
 
   }
-
 
 
   /**

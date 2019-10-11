@@ -12,12 +12,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.tron.common.utils.Pair;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -28,127 +28,9 @@ import org.tron.core.exception.UnLinkedBlockException;
 @Component
 public class KhaosDatabase extends TronDatabase {
 
-  public static class KhaosBlock {
-
-    public Sha256Hash getParentHash() {
-      return this.blk.getParentHash();
-    }
-
-    public KhaosBlock(BlockCapsule blk) {
-      this.blk = blk;
-      this.id = blk.getBlockId();
-      this.num = blk.getNum();
-    }
-
-    @Getter
-    private BlockCapsule blk;
-    private Reference<KhaosBlock> parent = new WeakReference<>(null);
-    private BlockId id;
-    private Boolean invalid;
-    private long num;
-
-    public KhaosBlock getParent() {
-      return parent == null ? null : parent.get();
-    }
-
-    public void setParent(KhaosBlock parent) {
-      this.parent = new WeakReference<>(parent);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      KhaosBlock that = (KhaosBlock) o;
-      return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-
-      return Objects.hash(id);
-    }
-  }
-
-  public class KhaosStore {
-
-    private HashMap<BlockId, KhaosBlock> hashKblkMap = new HashMap<>();
-    // private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
-    private int maxCapcity = 1024;
-
-    @Getter
-    private LinkedHashMap<Long, ArrayList<KhaosBlock>> numKblkMap =
-        new LinkedHashMap<Long, ArrayList<KhaosBlock>>() {
-
-          @Override
-          protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<KhaosBlock>> entry) {
-            long minNum = Long.max(0L, head.num - maxCapcity);
-            Map<Long, ArrayList<KhaosBlock>> minNumMap = numKblkMap.entrySet().stream()
-                .filter(e -> e.getKey() < minNum)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-            minNumMap.forEach((k, v) -> {
-              numKblkMap.remove(k);
-              v.forEach(b -> hashKblkMap.remove(b.id));
-            });
-
-            return false;
-          }
-        };
-
-    public void setMaxCapcity(int maxCapcity) {
-      this.maxCapcity = maxCapcity;
-    }
-
-    public void insert(KhaosBlock block) {
-      hashKblkMap.put(block.id, block);
-      numKblkMap.computeIfAbsent(block.num, listBlk -> new ArrayList<>()).add(block);
-    }
-
-    public boolean remove(Sha256Hash hash) {
-      KhaosBlock block = this.hashKblkMap.get(hash);
-      // Sha256Hash parentHash = Sha256Hash.ZERO_HASH;
-      if (block != null) {
-        long num = block.num;
-        // parentHash = block.getParentHash();
-        ArrayList<KhaosBlock> listBlk = numKblkMap.get(num);
-        if (listBlk != null) {
-          listBlk.removeIf(b -> b.id.equals(hash));
-        }
-
-        if (CollectionUtils.isEmpty(listBlk)) {
-          numKblkMap.remove(num);
-        }
-
-        this.hashKblkMap.remove(hash);
-        return true;
-      }
-      return false;
-    }
-
-    public List<KhaosBlock> getBlockByNum(Long num) {
-      return numKblkMap.get(num);
-    }
-
-    public KhaosBlock getByHash(Sha256Hash hash) {
-      return hashKblkMap.get(hash);
-    }
-
-    public int size() {
-      return hashKblkMap.size();
-    }
-
-  }
-
   private KhaosBlock head;
-
   @Getter
   private KhaosStore miniStore = new KhaosStore();
-
   @Getter
   private KhaosStore miniUnlinkedStore = new KhaosStore();
 
@@ -178,10 +60,6 @@ public class KhaosDatabase extends TronDatabase {
   void start(BlockCapsule blk) {
     this.head = new KhaosBlock(blk);
     miniStore.insert(this.head);
-  }
-
-  void setHead(KhaosBlock blk) {
-    this.head = blk;
   }
 
   void removeBlk(Sha256Hash hash) {
@@ -248,6 +126,10 @@ public class KhaosDatabase extends TronDatabase {
 
   public BlockCapsule getHead() {
     return head.blk;
+  }
+
+  void setHead(KhaosBlock blk) {
+    this.head = blk;
   }
 
   /**
@@ -345,7 +227,6 @@ public class KhaosDatabase extends TronDatabase {
     return new Pair<>(list1, list2);
   }
 
-
   // only for unittest
   public BlockCapsule getParentBlock(Sha256Hash hash) {
     return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
@@ -360,5 +241,120 @@ public class KhaosDatabase extends TronDatabase {
 
   public boolean hasData() {
     return !this.miniStore.hashKblkMap.isEmpty();
+  }
+
+  public static class KhaosBlock {
+
+    @Getter
+    private BlockCapsule blk;
+    private Reference<KhaosBlock> parent = new WeakReference<>(null);
+    private BlockId id;
+    private Boolean invalid;
+    private long num;
+    public KhaosBlock(BlockCapsule blk) {
+      this.blk = blk;
+      this.id = blk.getBlockId();
+      this.num = blk.getNum();
+    }
+
+    public Sha256Hash getParentHash() {
+      return this.blk.getParentHash();
+    }
+
+    public KhaosBlock getParent() {
+      return parent == null ? null : parent.get();
+    }
+
+    public void setParent(KhaosBlock parent) {
+      this.parent = new WeakReference<>(parent);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      KhaosBlock that = (KhaosBlock) o;
+      return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+
+      return Objects.hash(id);
+    }
+  }
+
+  public class KhaosStore {
+
+    private HashMap<BlockId, KhaosBlock> hashKblkMap = new HashMap<>();
+    // private HashMap<Sha256Hash, KhaosBlock> parentHashKblkMap = new HashMap<>();
+    private int maxCapcity = 1024;
+
+    @Getter
+    private LinkedHashMap<Long, ArrayList<KhaosBlock>> numKblkMap =
+        new LinkedHashMap<Long, ArrayList<KhaosBlock>>() {
+
+          @Override
+          protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<KhaosBlock>> entry) {
+            long minNum = Long.max(0L, head.num - maxCapcity);
+            Map<Long, ArrayList<KhaosBlock>> minNumMap = numKblkMap.entrySet().stream()
+                .filter(e -> e.getKey() < minNum)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            minNumMap.forEach((k, v) -> {
+              numKblkMap.remove(k);
+              v.forEach(b -> hashKblkMap.remove(b.id));
+            });
+
+            return false;
+          }
+        };
+
+    public void setMaxCapcity(int maxCapcity) {
+      this.maxCapcity = maxCapcity;
+    }
+
+    public void insert(KhaosBlock block) {
+      hashKblkMap.put(block.id, block);
+      numKblkMap.computeIfAbsent(block.num, listBlk -> new ArrayList<>()).add(block);
+    }
+
+    public boolean remove(Sha256Hash hash) {
+      KhaosBlock block = this.hashKblkMap.get(hash);
+      // Sha256Hash parentHash = Sha256Hash.ZERO_HASH;
+      if (block != null) {
+        long num = block.num;
+        // parentHash = block.getParentHash();
+        ArrayList<KhaosBlock> listBlk = numKblkMap.get(num);
+        if (listBlk != null) {
+          listBlk.removeIf(b -> b.id.equals(hash));
+        }
+
+        if (CollectionUtils.isEmpty(listBlk)) {
+          numKblkMap.remove(num);
+        }
+
+        this.hashKblkMap.remove(hash);
+        return true;
+      }
+      return false;
+    }
+
+    public List<KhaosBlock> getBlockByNum(Long num) {
+      return numKblkMap.get(num);
+    }
+
+    public KhaosBlock getByHash(Sha256Hash hash) {
+      return hashKblkMap.get(hash);
+    }
+
+    public int size() {
+      return hashKblkMap.size();
+    }
+
   }
 }

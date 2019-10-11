@@ -2,7 +2,6 @@ package org.tron.core.db.common.iterator;
 
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 import java.util.Map;

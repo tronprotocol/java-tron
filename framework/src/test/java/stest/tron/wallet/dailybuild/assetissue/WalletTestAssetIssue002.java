@@ -20,13 +20,12 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -35,13 +34,12 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class WalletTestAssetIssue002 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = now;
+  private static String name = "testAssetIssue002_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
-  private static final long now = System.currentTimeMillis();
-  private static String name = "testAssetIssue002_" + Long.toString(now);
-  private static final long totalSupply = now;
   String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
   String url = Configuration.getByPath("testng.conf")
@@ -51,6 +49,11 @@ public class WalletTestAssetIssue002 {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
+
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -138,7 +141,6 @@ public class WalletTestAssetIssue002 {
     PublicMethed.freedResource(toAddress, testKey003, fromAddress, blockingStubFull);
 
   }
-
 
   /**
    * constructor.
@@ -269,11 +271,6 @@ public class WalletTestAssetIssue002 {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

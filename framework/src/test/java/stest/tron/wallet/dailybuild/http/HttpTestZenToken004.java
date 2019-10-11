@@ -24,16 +24,6 @@ import stest.tron.wallet.common.client.utils.ShieldNoteInfo;
 @Slf4j
 public class HttpTestZenToken004 {
 
-  private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(0);
-  private String httpSolidityNode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(2);
-  private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.zenTokenOwnerKey");
-  byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
-  private Long zenTokenFee = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.zenTokenFee");
-
   Optional<ShieldAddressInfo> sendShieldAddressInfo;
   Optional<ShieldAddressInfo> receiverShieldAddressInfo1;
   Optional<ShieldAddressInfo> receiverShieldAddressInfo2;
@@ -59,14 +49,21 @@ public class HttpTestZenToken004 {
   ShieldNoteInfo receiverNote4;
   ShieldNoteInfo receiverNote5;
   String assetIssueId;
-
-  private Long sendTokenAmount = 8 * zenTokenFee;
-  private JSONObject responseContent;
-  private HttpResponse response;
-
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] receiverPublicAddress = ecKey1.getAddress();
   String receiverPublicKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  private String httpnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(0);
+  private String httpSolidityNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
+  private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.zenTokenOwnerKey");
+  byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
+  private Long zenTokenFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.zenTokenFee");
+  private Long sendTokenAmount = 8 * zenTokenFee;
+  private JSONObject responseContent;
+  private HttpResponse response;
 
   /**
    * constructor.

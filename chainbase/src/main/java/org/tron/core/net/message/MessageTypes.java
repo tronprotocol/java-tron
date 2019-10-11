@@ -51,8 +51,6 @@ public enum MessageTypes {
 
   LAST(0xFF);
 
-  private final int type;
-
   private static final Map<Integer, MessageTypes> intToTypeMap = new HashMap<>();
 
   static {
@@ -60,6 +58,8 @@ public enum MessageTypes {
       intToTypeMap.put(type.type, type);
     }
   }
+
+  private final int type;
 
   private MessageTypes(int type) {
     this.type = type;
@@ -73,16 +73,16 @@ public enum MessageTypes {
     return code < LAST.asByte();
   }
 
-  public byte asByte() {
-    return (byte) (type);
-  }
-
   public static boolean inP2pRange(byte code) {
     return code <= P2P_PONG.asByte() && code >= P2P_HELLO.asByte();
   }
 
   public static boolean inTronRange(byte code) {
     return code <= TRX_INVENTORY.asByte() && code >= FIRST.asByte();
+  }
+
+  public byte asByte() {
+    return (byte) (type);
   }
 
   @Override

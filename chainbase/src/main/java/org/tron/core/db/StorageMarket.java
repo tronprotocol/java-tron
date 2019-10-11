@@ -8,10 +8,10 @@ import org.tron.core.store.DynamicPropertiesStore;
 @Slf4j(topic = "DB")
 public class StorageMarket {
 
+  private static final long MS_PER_YEAR = 365 * 24 * 3600 * 1000L;
   private AccountStore accountStore;
   private DynamicPropertiesStore dynamicPropertiesStore;
   private long supply = 1_000_000_000_000_000L;
-  private static final long MS_PER_YEAR = 365 * 24 * 3600 * 1000L;
 
 
   public StorageMarket(AccountStore accountStore, DynamicPropertiesStore dynamicPropertiesStore) {
@@ -43,7 +43,7 @@ public class StorageMarket {
 
   private long exchange_to_supply2(boolean isTRX, long quant) {
     logger.info("isTRX: " + isTRX);
-    long balance = isTRX ?dynamicPropertiesStore.getTotalStoragePool() :
+    long balance = isTRX ? dynamicPropertiesStore.getTotalStoragePool() :
         dynamicPropertiesStore.getTotalStorageReserved();
     logger.info("balance: " + balance);
     long newBalance = balance - quant;

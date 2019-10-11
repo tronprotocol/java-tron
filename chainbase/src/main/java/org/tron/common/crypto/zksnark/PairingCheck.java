@@ -17,11 +17,13 @@
  */
 package org.tron.common.crypto.zksnark;
 
+import static org.tron.common.crypto.zksnark.Params.B_Fp2;
+import static org.tron.common.crypto.zksnark.Params.PAIRING_FINAL_EXPONENT_Z;
+import static org.tron.common.crypto.zksnark.Params.TWIST;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.tron.common.crypto.zksnark.Params.*;
 
 /**
  * Implementation of a Pairing Check operation over points of two twisted Barreto–Naehrig curves
@@ -56,30 +58,6 @@ public class PairingCheck {
 
   public static PairingCheck create() {
     return new PairingCheck();
-  }
-
-  public void addPair(BN128G1 g1, BN128G2 g2) {
-    pairs.add(Pair.of(g1, g2));
-  }
-
-  public void run() {
-
-    for (Pair pair : pairs) {
-
-      Fp12 miller = pair.millerLoop();
-
-      if (!miller.equals(Fp12._1))    // run mul code only if necessary
-      {
-        product = product.mul(miller);
-      }
-    }
-
-    // finalize
-    product = finalExponentiation(product);
-  }
-
-  public int result() {
-    return product.equals(Fp12._1) ? 1 : 0;
   }
 
   private static Fp12 millerLoop(BN128G1 g1, BN128G2 g2) {
@@ -246,18 +224,42 @@ public class PairingCheck {
     return v;
   }
 
+  public void addPair(BN128G1 g1, BN128G2 g2) {
+    pairs.add(Pair.of(g1, g2));
+  }
+
+  public void run() {
+
+    for (Pair pair : pairs) {
+
+      Fp12 miller = pair.millerLoop();
+
+      if (!miller.equals(Fp12._1))    // run mul code only if necessary
+      {
+        product = product.mul(miller);
+      }
+    }
+
+    // finalize
+    product = finalExponentiation(product);
+  }
+
+  public int result() {
+    return product.equals(Fp12._1) ? 1 : 0;
+  }
+
   static class Precomputed {
 
     BN128G2 g2;
     EllCoeffs coeffs;
 
-    static Precomputed of(BN128G2 g2, EllCoeffs coeffs) {
-      return new Precomputed(g2, coeffs);
-    }
-
     Precomputed(BN128G2 g2, EllCoeffs coeffs) {
       this.g2 = g2;
       this.coeffs = coeffs;
+    }
+
+    static Precomputed of(BN128G2 g2, EllCoeffs coeffs) {
+      return new Precomputed(g2, coeffs);
     }
   }
 
@@ -266,13 +268,13 @@ public class PairingCheck {
     BN128G1 g1;
     BN128G2 g2;
 
-    static Pair of(BN128G1 g1, BN128G2 g2) {
-      return new Pair(g1, g2);
-    }
-
     Pair(BN128G1 g1, BN128G2 g2) {
       this.g1 = g1;
       this.g2 = g2;
+    }
+
+    static Pair of(BN128G1 g1, BN128G2 g2) {
+      return new Pair(g1, g2);
     }
 
     Fp12 millerLoop() {

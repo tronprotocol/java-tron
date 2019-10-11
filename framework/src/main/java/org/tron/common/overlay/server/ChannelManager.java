@@ -27,22 +27,16 @@ import org.tron.protos.Protocol.ReasonCode;
 @Component
 public class ChannelManager {
 
+  private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
   @Autowired
   private PeerServer peerServer;
-
   @Autowired
   private PeerClient peerClient;
-
   @Autowired
   private SyncPool syncPool;
-
   @Autowired
   private FastForward fastForward;
-
   private Args args = Args.getInstance();
-
-  private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
-
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 

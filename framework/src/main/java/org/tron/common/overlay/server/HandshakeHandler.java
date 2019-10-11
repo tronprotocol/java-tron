@@ -44,19 +44,14 @@ import org.tron.protos.Protocol.ReasonCode;
 @Scope("prototype")
 public class HandshakeHandler extends ByteToMessageDecoder {
 
-  private byte[] remoteId;
-
   protected Channel channel;
-
   @Autowired
   protected NodeManager nodeManager;
-
   @Autowired
   protected ChannelManager channelManager;
-
   @Autowired
   protected Manager manager;
-
+  private byte[] remoteId;
   private P2pMessageFactory messageFactory = new P2pMessageFactory();
 
   @Autowired
@@ -123,7 +118,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     if (remoteId.length != 64) {
       InetAddress address = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
-      if (channelManager.getTrustNodes().getIfPresent(address) == null && !syncPool.isCanConnect()) {
+      if (channelManager.getTrustNodes().getIfPresent(address) == null && !syncPool
+          .isCanConnect()) {
         channel.disconnect(ReasonCode.TOO_MANY_PEERS);
         return;
       }

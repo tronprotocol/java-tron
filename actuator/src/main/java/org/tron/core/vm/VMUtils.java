@@ -47,6 +47,8 @@ import org.tron.core.vm.repository.Repository;
 @Slf4j(topic = "VM")
 public final class VMUtils {
 
+  private static final int BUF_SIZE = 4096;
+
   private VMUtils() {
   }
 
@@ -60,7 +62,7 @@ public final class VMUtils {
     }
   }
 
-  private static File createProgramTraceFile( String txHash) {
+  private static File createProgramTraceFile(String txHash) {
     File result = null;
 
     if (VMConfig.vmTrace()) {
@@ -105,8 +107,6 @@ public final class VMUtils {
       writeStringToFile(file, content);
     }
   }
-
-  private static final int BUF_SIZE = 4096;
 
   private static void write(InputStream in, OutputStream out, int bufSize) throws IOException {
     try {
@@ -157,7 +157,7 @@ public final class VMUtils {
 
 
   public static boolean validateForSmartContract(Repository deposit, byte[] ownerAddress,
-                                                 byte[] toAddress, long amount) throws ContractValidateException {
+      byte[] toAddress, long amount) throws ContractValidateException {
     if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
@@ -177,7 +177,7 @@ public final class VMUtils {
     AccountCapsule toAccount = deposit.getAccount(toAddress);
     if (toAccount == null) {
       throw new ContractValidateException(
-              "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
+          "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
     }
 
     long balance = ownerAccount.getBalance();
@@ -189,7 +189,7 @@ public final class VMUtils {
     try {
       if (balance < amount) {
         throw new ContractValidateException(
-                "Validate InternalTransfer error, balance is not sufficient.");
+            "Validate InternalTransfer error, balance is not sufficient.");
       }
 
       if (toAccount != null) {
@@ -204,7 +204,7 @@ public final class VMUtils {
   }
 
   public static boolean validateForSmartContract(Repository deposit, byte[] ownerAddress,
-                                                 byte[] toAddress, byte[] tokenId, long amount) throws ContractValidateException {
+      byte[] toAddress, byte[] tokenId, long amount) throws ContractValidateException {
     if (deposit == null) {
       throw new ContractValidateException("No deposit!");
     }
@@ -238,7 +238,8 @@ public final class VMUtils {
       throw new ContractValidateException("No asset !");
     }
     if (!Commons.getAssetIssueStoreFinal(deposit.getDynamicPropertiesStore(),
-            deposit.getAssetIssueStore(), deposit.getAssetIssueV2Store()).has(tokenIdWithoutLeadingZero)) {
+        deposit.getAssetIssueStore(), deposit.getAssetIssueV2Store())
+        .has(tokenIdWithoutLeadingZero)) {
       throw new ContractValidateException("No asset !");
     }
 
@@ -277,7 +278,7 @@ public final class VMUtils {
       }
     } else {
       throw new ContractValidateException(
-              "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
+          "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
     }
 
     return true;

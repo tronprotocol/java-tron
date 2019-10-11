@@ -5,7 +5,6 @@ import static org.tron.core.config.args.Parameter.ForkBlockVersionConsts.ENERGY_
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -26,6 +25,10 @@ public class ForkController extends ForkUtils {
 
   @Getter
   private Manager manager;
+
+  public static ForkController instance() {
+    return ForkControllerEnum.INSTANCE.getInstance();
+  }
 
   public void init(Manager manager) {
     this.manager = manager;
@@ -72,10 +75,6 @@ public class ForkController extends ForkUtils {
         slot,
         Wallet.encode58Check(witness.toByteArray()),
         version);
-  }
-
-  public static ForkController instance() {
-    return ForkControllerEnum.INSTANCE.getInstance();
   }
 
   private enum ForkControllerEnum {

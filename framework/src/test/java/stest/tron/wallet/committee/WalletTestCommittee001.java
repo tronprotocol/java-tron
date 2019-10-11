@@ -25,6 +25,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestCommittee001 {
 
+  private static final long now = System.currentTimeMillis();
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -46,22 +47,15 @@ public class WalletTestCommittee001 {
   //Witness 47.93.184.2
   private final String witnessKey005 = Configuration.getByPath("testng.conf")
       .getString("witness.key5");
-
-
   private final byte[] witness001Address = PublicMethed.getFinalAddress(witnessKey001);
   private final byte[] witness002Address = PublicMethed.getFinalAddress(witnessKey002);
   private final byte[] witness003Address = PublicMethed.getFinalAddress(witnessKey003);
   private final byte[] witness004Address = PublicMethed.getFinalAddress(witnessKey004);
   private final byte[] witness005Address = PublicMethed.getFinalAddress(witnessKey005);
-
-
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
-  private static final long now = System.currentTimeMillis();
-
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")

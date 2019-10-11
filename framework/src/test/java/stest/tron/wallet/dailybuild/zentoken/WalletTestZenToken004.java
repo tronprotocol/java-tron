@@ -34,7 +34,14 @@ public class WalletTestZenToken004 {
   List<Note> shieldOutList = new ArrayList<>();
   DecryptNotes notes;
   Note note;
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] receiverPublicAddress = ecKey2.getAddress();
+  String receiverPublicKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  Optional<ShieldAddressInfo> sendShieldAddressInfo;
+  String sendshieldAddress;
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -48,17 +55,6 @@ public class WalletTestZenToken004 {
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 10 * zenTokenFee;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] receiverPublicAddress = ecKey2.getAddress();
-  String receiverPublicKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-  Optional<ShieldAddressInfo> sendShieldAddressInfo;
-  String sendshieldAddress;
 
   /**
    * constructor.

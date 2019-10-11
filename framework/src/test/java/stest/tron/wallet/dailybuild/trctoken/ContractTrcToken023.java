@@ -29,27 +29,15 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractTrcToken023 {
 
 
+  private static final long now = System.currentTimeMillis();
+  private static final long TotalSupply = 10000000L;
+  private static String tokenName = "testAssetIssue_" + Long.toString(now);
+  private static ByteString assetAccountId = null;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private static final long now = System.currentTimeMillis();
-
-  private static String tokenName = "testAssetIssue_" + Long.toString(now);
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private static ByteString assetAccountId = null;
-
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-  private String fullnode1 = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(1);
-  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.maxFeeLimit");
   byte[] transferTokenContractAddress;
   byte[] btestAddress;
-  private static final long TotalSupply = 10000000L;
-
   String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
   String url = Configuration.getByPath("testng.conf")
@@ -57,10 +45,21 @@ public class ContractTrcToken023 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] dev001Address = ecKey1.getAddress();
   String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] user001Address = ecKey2.getAddress();
   String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(1);
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
+
+  private static int randomInt(int minInt, int maxInt) {
+    return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -80,11 +79,6 @@ public class ContractTrcToken023 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
-
-  private static int randomInt(int minInt, int maxInt) {
-    return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
-  }
-
 
   @Test(enabled = true, description = "Fallback function energy limit to prevent fallback attacks")
   public void deploy01TransferTokenContract() {

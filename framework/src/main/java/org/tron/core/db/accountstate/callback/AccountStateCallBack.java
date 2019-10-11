@@ -2,9 +2,7 @@ package org.tron.core.db.accountstate.callback;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Internal;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -12,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Hash;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.Manager;

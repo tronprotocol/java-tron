@@ -15,8 +15,8 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 @Slf4j(topic = "DB")
 public class AssetUpdateHelper {

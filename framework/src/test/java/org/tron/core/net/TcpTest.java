@@ -41,70 +41,20 @@ import org.tron.protos.Protocol.Block;
 @Slf4j
 public class TcpTest {
 
+  Node node = Node.instanceOf("127.0.0.1:" + Args.getInstance().getNodeListenPort());
   private ChannelManager channelManager;
   private Manager manager;
   private SyncPool pool;
   private TronNetDelegate tronNetDelegate;
-
   private int tryTimes = 10;
   private int sleepTime = 1000;
   private boolean finish = false;
-
-  Node node = Node.instanceOf("127.0.0.1:" + Args.getInstance().getNodeListenPort());
 
   public TcpTest(TronApplicationContext context) {
     channelManager = context.getBean(ChannelManager.class);
     manager = context.getBean(Manager.class);
     pool = context.getBean(SyncPool.class);
     tronNetDelegate = context.getBean(TronNetDelegate.class);
-  }
-
-  private enum TestType {
-    normal, errorGenesisBlock, errorVersion, errorSolid, repeatConnect
-  }
-
-  private class HandshakeHandler extends ByteToMessageDecoder {
-
-    private P2pMessageFactory messageFactory = new P2pMessageFactory();
-
-    private TestType testType;
-
-    public HandshakeHandler(TestType testType) {
-      this.testType = testType;
-    }
-
-    @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out)
-        throws Exception {
-      byte[] encoded = new byte[buffer.readableBytes()];
-      buffer.readBytes(encoded);
-      P2pMessage msg = messageFactory.create(encoded);
-      switch (testType) {
-        case normal:
-          Assert.assertEquals(msg.getType(), P2P_HELLO);
-          break;
-        case errorGenesisBlock:
-          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
-          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), INCOMPATIBLE_CHAIN);
-          break;
-        case errorVersion:
-          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
-          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), INCOMPATIBLE_VERSION);
-          break;
-        case errorSolid:
-          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
-          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), FORKED);
-          break;
-        case repeatConnect:
-          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
-          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), DUPLICATE_PEER);
-          break;
-        default:
-          break;
-      }
-
-      finish = true;
-    }
   }
 
   public void normalTest() throws InterruptedException {
@@ -258,5 +208,53 @@ public class TcpTest {
     unHandshakeTest();
     logger.info("begin errorMsg test");
     errorMsgTest();
+  }
+
+  private enum TestType {
+    normal, errorGenesisBlock, errorVersion, errorSolid, repeatConnect
+  }
+
+  private class HandshakeHandler extends ByteToMessageDecoder {
+
+    private P2pMessageFactory messageFactory = new P2pMessageFactory();
+
+    private TestType testType;
+
+    public HandshakeHandler(TestType testType) {
+      this.testType = testType;
+    }
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out)
+        throws Exception {
+      byte[] encoded = new byte[buffer.readableBytes()];
+      buffer.readBytes(encoded);
+      P2pMessage msg = messageFactory.create(encoded);
+      switch (testType) {
+        case normal:
+          Assert.assertEquals(msg.getType(), P2P_HELLO);
+          break;
+        case errorGenesisBlock:
+          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
+          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), INCOMPATIBLE_CHAIN);
+          break;
+        case errorVersion:
+          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
+          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), INCOMPATIBLE_VERSION);
+          break;
+        case errorSolid:
+          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
+          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), FORKED);
+          break;
+        case repeatConnect:
+          Assert.assertEquals(msg.getType(), P2P_DISCONNECT);
+          Assert.assertEquals(((DisconnectMessage) msg).getReasonCode(), DUPLICATE_PEER);
+          break;
+        default:
+          break;
+      }
+
+      finish = true;
+    }
   }
 }

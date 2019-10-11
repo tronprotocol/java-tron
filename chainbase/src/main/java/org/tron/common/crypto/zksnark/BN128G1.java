@@ -33,11 +33,6 @@ public class BN128G1 extends BN128Fp {
     super(p.x, p.y, p.z);
   }
 
-  @Override
-  public BN128G1 toAffine() {
-    return new BN128G1(super.toAffine());
-  }
-
   /**
    * Checks whether point is a member of subgroup, returns a point if check has been passed and null
    * otherwise
@@ -63,5 +58,10 @@ public class BN128G1 extends BN128Fp {
    */
   private static boolean isGroupMember(BN128<Fp> p) {
     return true;
+  }
+
+  @Override
+  public BN128G1 toAffine() {
+    return new BN128G1(super.toAffine());
   }
 }

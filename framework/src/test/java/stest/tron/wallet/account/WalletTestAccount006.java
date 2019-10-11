@@ -26,30 +26,26 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAccount006 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = now;
+  private static final long sendAmount = 20000000000L;
+  private static final long FREENETLIMIT = 5000L;
+  private static final long BASELINE = 4800L;
+  private static String name = "AssetIssue012_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-  private static final long now = System.currentTimeMillis();
-  private static String name = "AssetIssue012_" + Long.toString(now);
-  private static final long totalSupply = now;
-  private static final long sendAmount = 20000000000L;
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
-
-  private static final long FREENETLIMIT = 5000L;
-  private static final long BASELINE = 4800L;
-
   //get account
   ECKey ecKey = new ECKey(Utils.getRandom());
   byte[] account006Address = ecKey.getAddress();
   String account006Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
 
   @BeforeSuite
   public void beforeSuite() {

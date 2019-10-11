@@ -26,15 +26,15 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPoint;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 public class MerkleContainerTest {
 
@@ -52,7 +52,8 @@ public class MerkleContainerTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    merkleContainer = MerkleContainer.createInstance(dbManager.getMerkleTreeStore(), dbManager.getMerkleTreeIndexStore());
+    merkleContainer = MerkleContainer
+        .createInstance(dbManager.getMerkleTreeStore(), dbManager.getMerkleTreeIndexStore());
   }
 
   @AfterClass

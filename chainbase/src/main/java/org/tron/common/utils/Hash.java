@@ -34,13 +34,10 @@ import org.tron.common.crypto.jce.TronCastleProvider;
 @Slf4j(topic = "crypto")
 public class Hash {
 
+  public static final byte[] EMPTY_TRIE_HASH;
   private static final Provider CRYPTO_PROVIDER;
-
   private static final String HASH_256_ALGORITHM_NAME;
   private static final String HASH_512_ALGORITHM_NAME;
-
-  public static final byte[] EMPTY_TRIE_HASH;
-
   /**
    * [0x80] If a string is 0-55 bytes long, the RLP encoding consists of a single byte with value
    * 0x80 plus the length of the string followed by the string. The range of the first byte is thus

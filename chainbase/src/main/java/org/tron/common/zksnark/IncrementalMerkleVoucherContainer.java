@@ -10,6 +10,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 
 public class IncrementalMerkleVoucherContainer {
+
   @Getter
   @Setter
   private static Integer DEPTH = IncrementalMerkleTreeContainer.getDEPTH();
@@ -78,7 +79,7 @@ public class IncrementalMerkleVoucherContainer {
   }
 
   public long position() {
-    return (long)(voucherCapsule.getTree().toMerkleTreeContainer().size() - 1);
+    return (long) (voucherCapsule.getTree().toMerkleTreeContainer().size() - 1);
   }
 
   public PedersenHash root() throws ZksnarkException {

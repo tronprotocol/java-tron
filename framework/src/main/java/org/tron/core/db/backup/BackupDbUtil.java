@@ -2,7 +2,6 @@ package org.tron.core.db.backup;
 
 import java.util.List;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDBException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,39 +25,9 @@ public class BackupDbUtil {
 
   @Getter
   private static final int DB_BACKUP_STATE_DEFAULT = 11;
-
-  public enum State {
-    BAKINGONE(1), BAKEDONE(11), BAKINGTWO(2), BAKEDTWO(22);
-    private int status;
-
-    State(int status) {
-      this.status = status;
-    }
-
-    public int getStatus() {
-      return status;
-    }
-
-    public static State valueOf(int value) {
-      switch (value) {
-        case 1:
-          return BAKINGONE;
-        case 11:
-          return BAKEDONE;
-        case 2:
-          return BAKINGTWO;
-        case 22:
-          return BAKEDTWO;
-        default:
-          return BAKEDONE;
-      }
-    }
-  }
-
   @Getter
   @Autowired
   private RevokingDatabase db;
-
   private Args args = Args.getInstance();
 
   private int getBackupState() {
@@ -172,6 +141,34 @@ public class BackupDbUtil {
         ((org.tron.core.db2.common.RocksDB) (((SnapshotRoot) (store.getHead().getRoot())).getDb()))
             .getDb().deleteDbBakPath(path);
       }
+    }
+  }
+
+  public enum State {
+    BAKINGONE(1), BAKEDONE(11), BAKINGTWO(2), BAKEDTWO(22);
+    private int status;
+
+    State(int status) {
+      this.status = status;
+    }
+
+    public static State valueOf(int value) {
+      switch (value) {
+        case 1:
+          return BAKINGONE;
+        case 11:
+          return BAKEDONE;
+        case 2:
+          return BAKINGTWO;
+        case 22:
+          return BAKEDTWO;
+        default:
+          return BAKEDONE;
+      }
+    }
+
+    public int getStatus() {
+      return status;
     }
   }
 }

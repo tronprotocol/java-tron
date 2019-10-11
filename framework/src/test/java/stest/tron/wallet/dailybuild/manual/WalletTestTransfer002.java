@@ -21,10 +21,10 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -49,6 +49,11 @@ public class WalletTestTransfer002 {
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -171,11 +176,6 @@ public class WalletTestTransfer002 {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

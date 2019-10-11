@@ -35,19 +35,9 @@ import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 @Ignore
 public class TransactionStoreTest {
 
-  private static String dbPath = "output_TransactionStore_test";
-  private static String dbDirectory = "db_TransactionStore_test";
-  private static String indexDirectory = "index_TransactionStore_test";
-  private static TransactionStore transactionStore;
-  private static TronApplicationContext context;
-  private static Application AppT;
   private static final byte[] key1 = TransactionStoreTest.randomBytes(21);
-  private static Manager dbManager;
   private static final byte[] key2 = TransactionStoreTest.randomBytes(21);
-
-
   private static final String URL = "https://tron.network";
-
   private static final String ACCOUNT_NAME = "ownerF";
   private static final String OWNER_ADDRESS =
       Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -56,6 +46,13 @@ public class TransactionStoreTest {
   private static final long AMOUNT = 100;
   private static final String WITNESS_ADDRESS =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private static String dbPath = "output_TransactionStore_test";
+  private static String dbDirectory = "db_TransactionStore_test";
+  private static String indexDirectory = "index_TransactionStore_test";
+  private static TransactionStore transactionStore;
+  private static TronApplicationContext context;
+  private static Application AppT;
+  private static Manager dbManager;
 
   static {
     Args.setParam(
@@ -79,6 +76,23 @@ public class TransactionStoreTest {
     dbManager = context.getBean(Manager.class);
     transactionStore = dbManager.getTransactionStore();
 
+  }
+
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
+  }
+
+  public static byte[] randomBytes(int length) {
+    // generate the random number
+    byte[] result = new byte[length];
+    new Random().nextBytes(result);
+    result[0] = Wallet.getAddressPreFixByte();
+    return result;
   }
 
   /**
@@ -335,23 +349,5 @@ public class TransactionStoreTest {
     } catch (RuntimeException e) {
       Assert.assertEquals("The key argument cannot be null", e.getMessage());
     }
-  }
-
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
-  }
-
-
-  public static byte[] randomBytes(int length) {
-    // generate the random number
-    byte[] result = new byte[length];
-    new Random().nextBytes(result);
-    result[0] = Wallet.getAddressPreFixByte();
-    return result;
   }
 }

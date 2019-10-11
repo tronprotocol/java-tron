@@ -33,6 +33,7 @@ import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
 @Slf4j
 public class WalletTestZenToken010 {
 
+  private static ByteString assetAccountId = null;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -45,8 +46,9 @@ public class WalletTestZenToken010 {
   String memo;
   Note sendNote;
   Note receiverNote;
-  private static ByteString assetAccountId = null;
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private ManagedChannel channelSolidity = null;
@@ -69,14 +71,9 @@ public class WalletTestZenToken010 {
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 10 * zenTokenFee;
   private Long sendTokenAmount = 8 * zenTokenFee;
-
   private String txid;
   private Optional<TransactionInfo> infoById;
   private Optional<Transaction> byId;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   /**
    * constructor.
@@ -151,9 +148,9 @@ public class WalletTestZenToken010 {
         == sendNote.getValue() - 2 * zenTokenFee);
     Assert.assertEquals(notes.getNoteTxs(1).getNote().getPaymentAddress(),
         notes.getNoteTxs(2).getNote().getPaymentAddress());
-    Assert.assertEquals(notes.getNoteTxs(1).getTxid(),notes.getNoteTxs(2).getTxid());
+    Assert.assertEquals(notes.getNoteTxs(1).getTxid(), notes.getNoteTxs(2).getTxid());
     Assert.assertTrue(PublicMethed.getSpendResult(sendShieldAddressInfo.get(),
-        notes.getNoteTxs(0),blockingStubFull).getResult());
+        notes.getNoteTxs(0), blockingStubFull).getResult());
 
     notes = PublicMethed.getShieldNotesByOvk(sendShieldAddressInfo, blockingStubFull);
     Assert.assertTrue(notes.getNoteTxsCount() == 2);

@@ -20,25 +20,22 @@ public class HttpTestAccount002 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] freezeBalanceAddress = ecKey1.getAddress();
+  String freezeBalanceKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] receiverResourceAddress = ecKey2.getAddress();
+  String receiverResourceKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  Long berforeBalance;
+  Long afterBalance;
+  Long amount = 10000000L;
+  Long frozenBalance = 2000000L;
   private JSONObject responseContent;
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(1);
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] freezeBalanceAddress = ecKey1.getAddress();
-  String freezeBalanceKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] receiverResourceAddress = ecKey2.getAddress();
-  String receiverResourceKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-  Long berforeBalance;
-  Long afterBalance;
-
-  Long amount = 10000000L;
-  Long frozenBalance = 2000000L;
 
   /**
    * constructor.

@@ -22,12 +22,12 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
-import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.contract.WitnessContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -53,6 +53,10 @@ public class VoteWitnessAccount2Test {
   private String searchFullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -190,7 +194,8 @@ public class VoteWitnessAccount2Test {
       beforeVoteNum = beforeVote.getVotes(0).getVoteCount();
     }
 
-    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract.newBuilder();
+    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract
+        .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(addRess));
     for (String addressBase58 : witness.keySet()) {
 
@@ -260,7 +265,8 @@ public class VoteWitnessAccount2Test {
     }
     final ECKey ecKey = temKey;
 
-    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract.newBuilder();
+    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract
+        .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(url));
     WitnessContract.WitnessCreateContract contract = builder.build();
@@ -316,7 +322,8 @@ public class VoteWitnessAccount2Test {
       beforeVoteNum = beforeVote.getVotes(0).getVoteCount();
     }
 
-    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract.newBuilder();
+    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract
+        .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(addRess));
     for (String addressBase58 : witness.keySet()) {
 
@@ -544,11 +551,6 @@ public class VoteWitnessAccount2Test {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

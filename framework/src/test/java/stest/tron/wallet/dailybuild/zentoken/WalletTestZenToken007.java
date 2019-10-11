@@ -39,6 +39,7 @@ import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
 @Slf4j
 public class WalletTestZenToken007 {
 
+  private static ByteString assetAccountId = null;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -63,10 +64,32 @@ public class WalletTestZenToken007 {
   Note receiverNote1;
   Note receiverNote2;
   Note receiverNote3;
-  private static ByteString assetAccountId = null;
   BytesMessage ak;
   BytesMessage nk;
-
+  BytesMessage sk;
+  ExpandedSpendingKeyMessage expandedSpendingKeyMessage;
+  DiversifierMessage diversifierMessage1;
+  DiversifierMessage diversifierMessage2;
+  DiversifierMessage diversifierMessage3;
+  IncomingViewingKeyMessage ivk;
+  ShieldAddressInfo addressInfo1 = new ShieldAddressInfo();
+  ShieldAddressInfo addressInfo2 = new ShieldAddressInfo();
+  ShieldAddressInfo addressInfo3 = new ShieldAddressInfo();
+  Optional<ShieldAddressInfo> receiverAddressInfo1;
+  Optional<ShieldAddressInfo> receiverAddressInfo2;
+  Optional<ShieldAddressInfo> receiverAddressInfo3;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress1 = ecKey1.getAddress();
+  String zenTokenOwnerKey1 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress2 = ecKey2.getAddress();
+  String zenTokenOwnerKey2 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress3 = ecKey3.getAddress();
+  String zenTokenOwnerKey3 = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+  ECKey ecKey4 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress4 = ecKey4.getAddress();
+  String zenTokenOwnerKey4 = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private ManagedChannel channelSolidity = null;
@@ -89,32 +112,6 @@ public class WalletTestZenToken007 {
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 10 * zenTokenFee;
   private Long sendTokenAmount = 8 * zenTokenFee;
-  BytesMessage sk;
-  ExpandedSpendingKeyMessage expandedSpendingKeyMessage;
-  DiversifierMessage diversifierMessage1;
-  DiversifierMessage diversifierMessage2;
-  DiversifierMessage diversifierMessage3;
-  IncomingViewingKeyMessage ivk;
-  ShieldAddressInfo addressInfo1 = new ShieldAddressInfo();
-  ShieldAddressInfo addressInfo2 = new ShieldAddressInfo();
-  ShieldAddressInfo addressInfo3 = new ShieldAddressInfo();
-
-  Optional<ShieldAddressInfo> receiverAddressInfo1;
-  Optional<ShieldAddressInfo> receiverAddressInfo2;
-  Optional<ShieldAddressInfo> receiverAddressInfo3;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress1 = ecKey1.getAddress();
-  String zenTokenOwnerKey1 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress2 = ecKey2.getAddress();
-  String zenTokenOwnerKey2 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-  ECKey ecKey3 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress3 = ecKey3.getAddress();
-  String zenTokenOwnerKey3 = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-  ECKey ecKey4 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress4 = ecKey4.getAddress();
-  String zenTokenOwnerKey4 = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
   /**
    * constructor.
@@ -171,28 +168,28 @@ public class WalletTestZenToken007 {
     memo1 = "Shield memo1 in " + System.currentTimeMillis();
     memo2 = "Shield memo2 in " + System.currentTimeMillis();
     memo3 = "Shield memo3 in " + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress1,
-        "" + (sendTokenAmount - zenTokenFee),memo1);
-    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress1,sendTokenAmount,null,
-        null,shieldOutList,null,0,zenTokenOwnerKey1,blockingStubFull));
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress1,
+        "" + (sendTokenAmount - zenTokenFee), memo1);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress1, sendTokenAmount, null,
+        null, shieldOutList, null, 0, zenTokenOwnerKey1, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     shieldOutList.clear();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress2,
-        "" + (sendTokenAmount - zenTokenFee),memo2);
-    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress2,sendTokenAmount,null,
-        null,shieldOutList,null,0,zenTokenOwnerKey2,blockingStubFull));
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress2,
+        "" + (sendTokenAmount - zenTokenFee), memo2);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress2, sendTokenAmount, null,
+        null, shieldOutList, null, 0, zenTokenOwnerKey2, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     shieldOutList.clear();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress3,
-        "" + (sendTokenAmount - zenTokenFee),memo3);
-    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress3,sendTokenAmount,null,
-        null,shieldOutList,null,0,zenTokenOwnerKey3,blockingStubFull));
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress3,
+        "" + (sendTokenAmount - zenTokenFee), memo3);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress3, sendTokenAmount, null,
+        null, shieldOutList, null, 0, zenTokenOwnerKey3, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.listShieldNote(sendShieldAddressInfo1,blockingStubFull);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo1, blockingStubFull);
     sendNote1 = notes.getNoteTxs(0).getNote();
-    notes = PublicMethed.listShieldNote(sendShieldAddressInfo2,blockingStubFull);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo2, blockingStubFull);
     sendNote2 = notes.getNoteTxs(0).getNote();
-    notes = PublicMethed.listShieldNote(sendShieldAddressInfo3,blockingStubFull);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo3, blockingStubFull);
     sendNote3 = notes.getNoteTxs(0).getNote();
 
   }
@@ -277,7 +274,7 @@ public class WalletTestZenToken007 {
     builder.setD(diversifierMessage1);
     builder.setIvk(ivk);
     PaymentAddressMessage addressMessage = blockingStubFull.getZenPaymentAddress(builder.build());
-    System.out.println("pkd1: " +  ByteArray.toHexString(addressMessage.getPkD().toByteArray()));
+    System.out.println("pkd1: " + ByteArray.toHexString(addressMessage.getPkD().toByteArray()));
     System.out.println("address1: " + addressMessage.getPaymentAddress());
     addressInfo1.setSk(sk.getValue().toByteArray());
     addressInfo1.setD(new DiversifierT(diversifierMessage1.getD().toByteArray()));
@@ -291,7 +288,7 @@ public class WalletTestZenToken007 {
     builder.setD(diversifierMessage2);
     builder.setIvk(ivk);
     addressMessage = blockingStubFull.getZenPaymentAddress(builder.build());
-    System.out.println("pkd2: " +  ByteArray.toHexString(addressMessage.getPkD().toByteArray()));
+    System.out.println("pkd2: " + ByteArray.toHexString(addressMessage.getPkD().toByteArray()));
     System.out.println("address2: " + addressMessage.getPaymentAddress());
     addressInfo2.setSk(sk.getValue().toByteArray());
     addressInfo2.setD(new DiversifierT(diversifierMessage2.getD().toByteArray()));
@@ -305,7 +302,7 @@ public class WalletTestZenToken007 {
     builder.setD(diversifierMessage3);
     builder.setIvk(ivk);
     addressMessage = blockingStubFull.getZenPaymentAddress(builder.build());
-    System.out.println("pkd3: " +  ByteArray.toHexString(addressMessage.getPkD().toByteArray()));
+    System.out.println("pkd3: " + ByteArray.toHexString(addressMessage.getPkD().toByteArray()));
     System.out.println("address3: " + addressMessage.getPaymentAddress());
     addressInfo3.setSk(sk.getValue().toByteArray());
     addressInfo3.setD(new DiversifierT(diversifierMessage3.getD().toByteArray()));
@@ -321,52 +318,55 @@ public class WalletTestZenToken007 {
   public void test08Shield2ShieldTransaction() {
     //S to S address1
     receiverShieldAddress1 = receiverAddressInfo1.get().getAddress();
-    shieldOutList.clear();;
+    shieldOutList.clear();
+    ;
     memo1 = "Send shield to receiver1 shield memo in" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,receiverShieldAddress1,
-        "" + (sendNote1.getValue() - zenTokenFee),memo1);
-    notes = PublicMethed.listShieldNote(sendShieldAddressInfo1,blockingStubFull);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, receiverShieldAddress1,
+        "" + (sendNote1.getValue() - zenTokenFee), memo1);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo1, blockingStubFull);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        null,0,
+        null, 0,
         sendShieldAddressInfo1.get(), notes.getNoteTxs(0),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey1,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey1, blockingStubFull));
 
     //S to S address2
     receiverShieldAddress2 = receiverAddressInfo2.get().getAddress();
-    shieldOutList.clear();;
+    shieldOutList.clear();
+    ;
     memo2 = "Send shield2 to receiver shield memo in" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,receiverShieldAddress2,
-        "" + (sendNote2.getValue() - zenTokenFee),memo2);
-    notes = PublicMethed.listShieldNote(sendShieldAddressInfo2,blockingStubFull);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, receiverShieldAddress2,
+        "" + (sendNote2.getValue() - zenTokenFee), memo2);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo2, blockingStubFull);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        null,0,
+        null, 0,
         sendShieldAddressInfo2.get(), notes.getNoteTxs(0),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey2,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey2, blockingStubFull));
 
     //S to S address3
     receiverShieldAddress3 = receiverAddressInfo3.get().getAddress();
-    shieldOutList.clear();;
+    shieldOutList.clear();
+    ;
     memo3 = "Send shield3 to receiver shield memo in" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,receiverShieldAddress3,
-        "" + (sendNote3.getValue() - zenTokenFee),memo3);
-    notes = PublicMethed.listShieldNote(sendShieldAddressInfo3,blockingStubFull);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, receiverShieldAddress3,
+        "" + (sendNote3.getValue() - zenTokenFee), memo3);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo3, blockingStubFull);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        null,0,
+        null, 0,
         sendShieldAddressInfo3.get(), notes.getNoteTxs(0),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey3,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey3, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Same sk and different d can produce different
     // shield address,the notes can scan out by same ivk.
-    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo1,blockingStubFull);
+    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo1, blockingStubFull);
     Assert.assertTrue(notes.getNoteTxsCount() == 3);
 
     receiverNote1 = notes.getNoteTxs(0).getNote();
@@ -391,102 +391,104 @@ public class WalletTestZenToken007 {
     sendShieldAddressInfo3 = PublicMethed.generateShieldAddress();
     sendShieldAddress3 = sendShieldAddressInfo3.get().getAddress();
 
-    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo3,blockingStubFull);
+    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo3, blockingStubFull);
     receiverNote1 = notes.getNoteTxs(0).getNote();
     receiverNote2 = notes.getNoteTxs(1).getNote();
     receiverNote3 = notes.getNoteTxs(2).getNote();
-    shieldOutList.clear();;
+    shieldOutList.clear();
+    ;
     memo1 = "Send shield address 1 without ask" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress1,
-        "" + (receiverNote1.getValue() - zenTokenFee),memo1);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress1,
+        "" + (receiverNote1.getValue() - zenTokenFee), memo1);
 
     Assert.assertTrue(PublicMethed.sendShieldCoinWithoutAsk(
-        null,0,
+        null, 0,
         receiverAddressInfo1.get(), notes.getNoteTxs(0),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey1,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey1, blockingStubFull));
 
-    shieldOutList.clear();;
+    shieldOutList.clear();
+    ;
     memo2 = "Send shield address 2 without ask" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress2,
-        "" + (receiverNote2.getValue() - zenTokenFee),memo2);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress2,
+        "" + (receiverNote2.getValue() - zenTokenFee), memo2);
     Assert.assertTrue(PublicMethed.sendShieldCoinWithoutAsk(
-        null,0,
+        null, 0,
         receiverAddressInfo2.get(), notes.getNoteTxs(1),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey2,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey2, blockingStubFull));
 
-    shieldOutList.clear();;
+    shieldOutList.clear();
+    ;
     memo3 = "Send shield address 3 without ask" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress3,
-        "" + (receiverNote3.getValue() - zenTokenFee),memo3);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress3,
+        "" + (receiverNote3.getValue() - zenTokenFee), memo3);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        null,0,
+        null, 0,
         receiverAddressInfo3.get(), notes.getNoteTxs(2),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey3,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey3, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-
-    notes = PublicMethed.getShieldNotesByOvk(receiverAddressInfo3,blockingStubFull);
+    notes = PublicMethed.getShieldNotesByOvk(receiverAddressInfo3, blockingStubFull);
     logger.info("notes count:" + notes.getNoteTxsCount());
     Assert.assertTrue(notes.getNoteTxsCount() == 3);
     sendNote1 = notes.getNoteTxs(0).getNote();
     logger.info("Receiver1 note:" + sendNote1.toString());
     Assert.assertTrue(sendNote1.getValue() == receiverNote1.getValue() - zenTokenFee);
-    Assert.assertEquals(memo1,PublicMethed.getMemo(sendNote1));
+    Assert.assertEquals(memo1, PublicMethed.getMemo(sendNote1));
 
     sendNote2 = notes.getNoteTxs(1).getNote();
     logger.info("Receiver2 note:" + sendNote2.toString());
     Assert.assertTrue(sendNote2.getValue() == receiverNote2.getValue() - zenTokenFee);
-    Assert.assertEquals(memo2,PublicMethed.getMemo(sendNote2));
+    Assert.assertEquals(memo2, PublicMethed.getMemo(sendNote2));
 
     sendNote3 = notes.getNoteTxs(2).getNote();
     logger.info("Receiver3 note:" + sendNote3.toString());
     Assert.assertTrue(sendNote3.getValue() == receiverNote3.getValue() - zenTokenFee);
-    Assert.assertEquals(memo3,PublicMethed.getMemo(sendNote3));
+    Assert.assertEquals(memo3, PublicMethed.getMemo(sendNote3));
   }
 
   @Test(enabled = true, description = "Get shield Nulltifier")
   public void test10GetShieldNulltifier() {
-    notes = PublicMethed.listShieldNote(sendShieldAddressInfo1,blockingStubFull);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo1, blockingStubFull);
     Assert.assertEquals(PublicMethed.getShieldNullifier(sendShieldAddressInfo1.get(),
-        notes.getNoteTxs(0),blockingStubFull).length(),64);
-    notes = PublicMethed.listShieldNote(receiverAddressInfo1,blockingStubFull);
+        notes.getNoteTxs(0), blockingStubFull).length(), 64);
+    notes = PublicMethed.listShieldNote(receiverAddressInfo1, blockingStubFull);
     Assert.assertEquals(PublicMethed.getShieldNullifier(receiverAddressInfo1.get(),
-        notes.getNoteTxs(0),blockingStubFull).length(),64);
+        notes.getNoteTxs(0), blockingStubFull).length(), 64);
 
     Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo1.get(),
-        notes.getNoteTxs(0),blockingStubFull).getResult());
+        notes.getNoteTxs(0), blockingStubFull).getResult());
   }
 
   @Test(enabled = true, description = "Same sk transfer shield address note is spent")
   public void test11SameSkTransferShieldAddressNoteCanSpent() {
-    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2,blockingStubFull);
+    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2, blockingStubFull);
 
     receiverNote1 = notes.getNoteTxs(0).getNote();
     shieldOutList.clear();
     memo1 = "Send shield address 1 without ask" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress1,
-        "" + (receiverNote1.getValue() - zenTokenFee),memo1);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress1,
+        "" + (receiverNote1.getValue() - zenTokenFee), memo1);
     Assert.assertFalse(PublicMethed.sendShieldCoinWithoutAsk(
-        null,0,
+        null, 0,
         receiverAddressInfo1.get(), notes.getNoteTxs(0),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey1,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey1, blockingStubFull));
 
     Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo1.get(),
-        notes.getNoteTxs(0),blockingStubFull).getResult());
+        notes.getNoteTxs(0), blockingStubFull).getResult());
     Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo2.get(),
-        notes.getNoteTxs(1),blockingStubFull).getResult());
+        notes.getNoteTxs(1), blockingStubFull).getResult());
     Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo3.get(),
-        notes.getNoteTxs(2),blockingStubFull).getResult());
+        notes.getNoteTxs(2), blockingStubFull).getResult());
   }
 
   @Test(enabled = true, description = "Same sk transfer two shield address,"
@@ -494,91 +496,88 @@ public class WalletTestZenToken007 {
   public void test12SameSkTransferTwoShieldAddressInOneTransaction() {
     shieldOutList.clear();
     memo1 = "Send to first shield address " + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,receiverShieldAddress1,
-        "" + zenTokenFee,memo1);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, receiverShieldAddress1,
+        "" + zenTokenFee, memo1);
     memo2 = "Send to second shield address " + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,receiverShieldAddress2,
-        "" + (costTokenAmount - 2 * zenTokenFee),memo2);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, receiverShieldAddress2,
+        "" + (costTokenAmount - 2 * zenTokenFee), memo2);
     logger.info("address1 receiver amount:" + zenTokenFee);
     logger.info("address2 receiver amount:" + (costTokenAmount - 2 * zenTokenFee));
     Assert.assertTrue(PublicMethed.sendShieldCoinWithoutAsk(
-        zenTokenOwnerAddress4,costTokenAmount,
+        zenTokenOwnerAddress4, costTokenAmount,
         null, null,
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey4,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey4, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2,blockingStubFull);
+    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2, blockingStubFull);
     Assert.assertTrue(notes.getNoteTxsCount() == 5);
     Assert.assertTrue(notes.getNoteTxs(3).getNote().getValue() == zenTokenFee);
     Assert.assertTrue(notes.getNoteTxs(4).getNote().getValue()
         == (costTokenAmount - 2 * zenTokenFee));
-    Assert.assertEquals(PublicMethed.getMemo(notes.getNoteTxs(3).getNote()),memo1);
-    Assert.assertEquals(PublicMethed.getMemo(notes.getNoteTxs(4).getNote()),memo2);
+    Assert.assertEquals(PublicMethed.getMemo(notes.getNoteTxs(3).getNote()), memo1);
+    Assert.assertEquals(PublicMethed.getMemo(notes.getNoteTxs(4).getNote()), memo2);
 
-
-
-
-    shieldOutList.clear();;
+    shieldOutList.clear();
+    ;
     receiverNote1 = notes.getNoteTxs(3).getNote();
     receiverNote2 = notes.getNoteTxs(4).getNote();
     memo1 = "Send shield address 1 without ask" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress1,
-        "" + (receiverNote1.getValue() - zenTokenFee),memo1);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress1,
+        "" + (receiverNote1.getValue() - zenTokenFee), memo1);
     Assert.assertTrue(PublicMethed.sendShieldCoinWithoutAsk(
-        null,0,
+        null, 0,
         receiverAddressInfo1.get(), notes.getNoteTxs(3),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey1,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey1, blockingStubFull));
 
-    shieldOutList.clear();;
+    shieldOutList.clear();
+    ;
     memo2 = "Send shield address 2 without ask" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress2,
-        "" + (receiverNote2.getValue() - zenTokenFee),memo2);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress2,
+        "" + (receiverNote2.getValue() - zenTokenFee), memo2);
     Assert.assertTrue(PublicMethed.sendShieldCoinWithoutAsk(
-        null,0,
+        null, 0,
         receiverAddressInfo2.get(), notes.getNoteTxs(4),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey2,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey2, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-
-
-    notes = PublicMethed.getShieldNotesByIvk(sendShieldAddressInfo1,blockingStubFull);
+    notes = PublicMethed.getShieldNotesByIvk(sendShieldAddressInfo1, blockingStubFull);
     sendNote1 = notes.getNoteTxs(0).getNote();
     shieldOutList.clear();
     memo2 = "Send receiver a note and spend it" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress2,
-        "" + (sendNote1.getValue() - zenTokenFee),memo2);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress2,
+        "" + (sendNote1.getValue() - zenTokenFee), memo2);
     Assert.assertTrue(PublicMethed.sendShieldCoinWithoutAsk(
-        null,0,
+        null, 0,
         sendShieldAddressInfo1.get(), notes.getNoteTxs(0),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey2,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey2, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2,blockingStubFull);
+    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2, blockingStubFull);
 
     Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo1.get(),
-        notes.getNoteTxs(3),blockingStubFull).getResult());
+        notes.getNoteTxs(3), blockingStubFull).getResult());
     Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo2.get(),
-        notes.getNoteTxs(4),blockingStubFull).getResult());
+        notes.getNoteTxs(4), blockingStubFull).getResult());
 
-    notes = PublicMethed.getShieldNotesByOvk(receiverAddressInfo1,blockingStubFull);
+    notes = PublicMethed.getShieldNotesByOvk(receiverAddressInfo1, blockingStubFull);
     Assert.assertTrue(PublicMethed.getSpendResult(sendShieldAddressInfo1.get(),
-        notes.getNoteTxs(0),blockingStubFull).getResult());
+        notes.getNoteTxs(0), blockingStubFull).getResult());
     Assert.assertFalse(PublicMethed.getSpendResult(receiverAddressInfo2.get(),
-        notes.getNoteTxs(1),blockingStubFull).getResult());
+        notes.getNoteTxs(1), blockingStubFull).getResult());
     Assert.assertFalse(PublicMethed.getSpendResult(receiverAddressInfo3.get(),
-        notes.getNoteTxs(2),blockingStubFull).getResult());
+        notes.getNoteTxs(2), blockingStubFull).getResult());
     Assert.assertFalse(PublicMethed.getSpendResult(receiverAddressInfo1.get(),
-        notes.getNoteTxs(3),blockingStubFull).getResult());
+        notes.getNoteTxs(3), blockingStubFull).getResult());
     Assert.assertFalse(PublicMethed.getSpendResult(receiverAddressInfo2.get(),
-        notes.getNoteTxs(4),blockingStubFull).getResult());
+        notes.getNoteTxs(4), blockingStubFull).getResult());
 
     //Send shield coin without ask when there is no output shield address
     shieldOutList.clear();
@@ -609,10 +608,7 @@ public class WalletTestZenToken007 {
         notes.getNoteTxs(2), blockingStubFull).getResult());
 
 
-
-
   }
-
 
 
   /**

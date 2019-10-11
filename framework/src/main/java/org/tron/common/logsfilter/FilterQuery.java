@@ -16,28 +16,22 @@ import org.tron.common.logsfilter.trigger.ContractTrigger;
 @Slf4j
 public class FilterQuery {
 
+  public static final int EARLIEST_BLOCK_NUM = 0;
+  public static final int LATEST_BLOCK_NUM = -1;
+  public static final String EARLIEST = "earliest";
+  public static final String LATEST = "latest";
   @Getter
   @Setter
   private long fromBlock;
-
   @Getter
   @Setter
   private long toBlock;
-
   @Getter
   @Setter
   private List<String> contractAddressList;
-
   @Getter
   @Setter
   private List<String> contractTopicList;
-
-  public static final int EARLIEST_BLOCK_NUM = 0;
-  public static final int LATEST_BLOCK_NUM = -1;
-
-  public static final String EARLIEST = "earliest";
-  public static final String LATEST = "latest";
-
 
   public static long parseFromBlockNumber(String blockNum) {
     long number = 0;

@@ -22,27 +22,6 @@ public class RateLimiterInitialization {
   @Getter
   private Map<String, RpcRateLimiterItem> rpcMap = new HashMap();
 
-
-  public void setHttpMap(List<HttpRateLimiterItem> list) {
-    for (HttpRateLimiterItem item : list) {
-      if (item != null) {
-        httpMap.put(item.component, item);
-      }
-    }
-    httpFlag = httpMap.size() > 0;
-  }
-
-
-  public void setRpcMap(List<RpcRateLimiterItem> list) {
-    for (RpcRateLimiterItem item : list) {
-      if (item != null) {
-        rpcMap.put(item.component, item);
-      }
-    }
-    rpcFlag = rpcMap.size() > 0;
-  }
-
-
   @Nullable
   public static HttpRateLimiterItem createHttpItem(final ConfigObject asset) {
     try {
@@ -59,6 +38,24 @@ public class RateLimiterInitialization {
     } catch (Exception e) {
       return null;
     }
+  }
+
+  public void setHttpMap(List<HttpRateLimiterItem> list) {
+    for (HttpRateLimiterItem item : list) {
+      if (item != null) {
+        httpMap.put(item.component, item);
+      }
+    }
+    httpFlag = httpMap.size() > 0;
+  }
+
+  public void setRpcMap(List<RpcRateLimiterItem> list) {
+    for (RpcRateLimiterItem item : list) {
+      if (item != null) {
+        rpcMap.put(item.component, item);
+      }
+    }
+    rpcFlag = rpcMap.size() > 0;
   }
 
   public static class HttpRateLimiterItem {

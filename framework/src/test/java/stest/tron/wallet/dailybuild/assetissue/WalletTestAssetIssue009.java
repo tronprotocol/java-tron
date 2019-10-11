@@ -43,27 +43,15 @@ public class WalletTestAssetIssue009 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-  }
-
-  /**
-   * constructor.
-   */
-
-  @BeforeClass(enabled = false)
-  public void beforeClass() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
-    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
-        .build();
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
 
@@ -103,6 +91,23 @@ public class WalletTestAssetIssue009 {
    * constructor.
    */
 
+  @BeforeClass(enabled = false)
+  public void beforeClass() {
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+  }
+
+  /**
+   * constructor.
+   */
+
   @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
@@ -130,11 +135,6 @@ public class WalletTestAssetIssue009 {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

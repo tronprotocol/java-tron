@@ -47,9 +47,6 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContra
 @Slf4j
 public class TransferAssetActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
-  private static Any contract;
   private static final String dbPath = "output_transferasset_test";
   private static final String ASSET_NAME = "trx";
   private static final String OWNER_ADDRESS;
@@ -70,6 +67,9 @@ public class TransferAssetActuatorTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static TronApplicationContext context;
+  private static Manager dbManager;
+  private static Any contract;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -92,6 +92,20 @@ public class TransferAssetActuatorTest {
   }
 
   /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
+
+  /**
    * create temp Capsule test need.
    */
   @Before
@@ -109,20 +123,6 @@ public class TransferAssetActuatorTest {
       return true;
     }
     return false;
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   public void createAsset(String assetName) {

@@ -90,23 +90,23 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
-
     // Trigger contract method: deploy(bytes,uint)
     long salt = 100L;
     String hexInput = AbiUtil.parseMethod(methodSign, Arrays.asList(testCode, salt));
-    TVMTestResult result =  TvmTestUtils
+    TVMTestResult result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     byte[] actualContract = MUtil.convertToTronAddress(Arrays.copyOfRange(returnValue, 12, 32));
-    byte[] expectedContract = Wallet.generateContractAddress2(address, new DataWord(salt).getData(), Hex.decode(testCode));
+    byte[] expectedContract = Wallet
+        .generateContractAddress2(address, new DataWord(salt).getData(), Hex.decode(testCode));
     // check deployed contract
     Assert.assertEquals(actualContract, expectedContract);
 
     // trigger deployed contract
-    String methodToTrigger  = "plusOne()";
+    String methodToTrigger = "plusOne()";
     for (int i = 1; i < 3; i++) {
       hexInput = AbiUtil.parseMethod(methodToTrigger, Collections.emptyList());
       result = TvmTestUtils
@@ -117,7 +117,7 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
     }
 
     // deploy contract again
-    result =  TvmTestUtils
+    result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNotNull(result.getRuntime().getRuntimeError());

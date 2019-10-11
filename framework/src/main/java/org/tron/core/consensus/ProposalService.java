@@ -3,10 +3,8 @@ package org.tron.core.consensus;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractValidateException;
 import org.tron.core.utils.ProposalUtil;
 
 /**
@@ -17,6 +15,7 @@ import org.tron.core.utils.ProposalUtil;
  */
 @Slf4j
 public class ProposalService extends ProposalUtil {
+
   public static boolean process(Manager manager, ProposalCapsule proposalCapsule) {
     Map<Long, Long> map = proposalCapsule.getInstance().getParametersMap();
     boolean find = true;

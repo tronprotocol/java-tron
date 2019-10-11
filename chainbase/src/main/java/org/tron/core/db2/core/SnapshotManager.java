@@ -20,10 +20,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.Options;
-import org.iq80.leveldb.WriteOptions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
@@ -36,9 +33,9 @@ import org.tron.core.store.CheckTmpStore;
 @Slf4j(topic = "DB")
 public class SnapshotManager implements RevokingDatabase {
 
-  private static final int DEFAULT_STACK_MAX_SIZE = 256;
   public static final int DEFAULT_MAX_FLUSH_COUNT = 500;
   public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
+  private static final int DEFAULT_STACK_MAX_SIZE = 256;
   @Getter
   private List<Chainbase> dbs = new ArrayList<>();
   @Getter
@@ -66,6 +63,13 @@ public class SnapshotManager implements RevokingDatabase {
   private volatile int maxFlushCount = DEFAULT_MIN_FLUSH_COUNT;
 
   public SnapshotManager(String checkpointPath) {
+  }
+
+  public static String simpleDecode(byte[] bytes) {
+    byte[] lengthBytes = Arrays.copyOf(bytes, 4);
+    int length = Ints.fromByteArray(lengthBytes);
+    byte[] value = Arrays.copyOfRange(bytes, 4, 4 + length);
+    return new String(value);
   }
 
   public ISession buildSession() {
@@ -103,7 +107,8 @@ public class SnapshotManager implements RevokingDatabase {
   public void add(IRevokingDB db) {
     Chainbase revokingDB = (Chainbase) db;
     dbs.add(revokingDB);
-    flushServices.put(revokingDB.getDbName(), MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()));
+    flushServices.put(revokingDB.getDbName(),
+        MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()));
   }
 
   private void advance() {
@@ -193,13 +198,13 @@ public class SnapshotManager implements RevokingDatabase {
     return size;
   }
 
+  public int getMaxSize() {
+    return maxSize.get();
+  }
+
   @Override
   public void setMaxSize(int maxSize) {
     this.maxSize.set(maxSize);
-  }
-
-  public int getMaxSize() {
-    return maxSize.get();
   }
 
   public synchronized void disable() {
@@ -310,12 +315,12 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     checkTmpStore.getDbSource().updateByBatch(batch.entrySet().stream()
-            .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-            .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll));
+        .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
+        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll));
   }
 
   private void deleteCheckpoint() {
-    Map <byte[], byte[]> hmap = new HashMap<byte[], byte[]>();
+    Map<byte[], byte[]> hmap = new HashMap<byte[], byte[]>();
     if (!checkTmpStore.getDbSource().allKeys().isEmpty()) {
       for (Map.Entry<byte[], byte[]> e : checkTmpStore.getDbSource()) {
         hmap.put(e.getKey(), null);
@@ -371,13 +376,6 @@ public class SnapshotManager implements RevokingDatabase {
     System.arraycopy(length, 0, r, 0, 4);
     System.arraycopy(bytes, 0, r, 4, bytes.length);
     return r;
-  }
-
-  public static String simpleDecode(byte[] bytes) {
-    byte[] lengthBytes = Arrays.copyOf(bytes, 4);
-    int length = Ints.fromByteArray(lengthBytes);
-    byte[] value = Arrays.copyOfRange(bytes, 4, 4 + length);
-    return new String(value);
   }
 
   @Slf4j(topic = "DB")

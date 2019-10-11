@@ -4,9 +4,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
-import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 
 @Slf4j
 public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMerkleTree> {

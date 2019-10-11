@@ -22,13 +22,13 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -37,22 +37,9 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class WalletTestAssetIssue010 {
 
-  private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
-  private final String testKey003 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key2");
-  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-
   private static final long now = System.currentTimeMillis();
-  private static String name = "testAssetIssue010_" + Long.toString(now);
   private static final long totalSupply = now;
   private static final long sendAmount = 10000000000L;
-  String description = "just-test";
-  String url = "https://github.com/tronprotocol/wallet-cli/";
-  String updateDescription = "This is test for update asset issue, case AssetIssue_010";
-  String updateUrl = "www.updateassetissue.010.cn";
   private static final String tooLongDescription =
       "1qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcv"
           + "qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswe"
@@ -61,21 +48,34 @@ public class WalletTestAssetIssue010 {
       + "wqaswqasw1qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazx"
       + "swedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedc"
       + "vqazxswedcvqazxswedcvqazxswedcvqazxswedcv";
-
+  private static String name = "testAssetIssue010_" + Long.toString(now);
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
+  String description = "just-test";
+  String url = "https://github.com/tronprotocol/wallet-cli/";
+  String updateDescription = "This is test for update asset issue, case AssetIssue_010";
+  String updateUrl = "www.updateassetissue.010.cn";
   Long freeAssetNetLimit = 1000L;
   Long publicFreeAssetNetLimit = 1000L;
   Long updateFreeAssetNetLimit = 10001L;
   Long updatePublicFreeAssetNetLimit = 10001L;
-
+  //get account
+  ECKey ecKey = new ECKey(Utils.getRandom());
+  byte[] asset010Address = ecKey.getAddress();
+  String testKeyForAssetIssue010 = ByteArray.toHexString(ecKey.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
-  //get account
-  ECKey ecKey = new ECKey(Utils.getRandom());
-  byte[] asset010Address = ecKey.getAddress();
-  String testKeyForAssetIssue010 = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -287,11 +287,6 @@ public class WalletTestAssetIssue010 {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

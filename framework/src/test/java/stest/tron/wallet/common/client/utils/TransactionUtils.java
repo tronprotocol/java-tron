@@ -24,20 +24,25 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-//import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.contract.*;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.SmartContractOuterClass;
+import org.tron.protos.contract.VoteAssetContractOuterClass;
+import org.tron.protos.contract.WitnessContract;
+
+//import org.tron.protos.Protocol.DeferredStage;
 
 
 public class TransactionUtils {
 
-  private static final Logger logger = LoggerFactory.getLogger("Transaction");
-  private static final int RESERVE_BALANCE = 10;
   public static final int NORMALTRANSACTION = 0;
   public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;
   public static final int EXECUTINGDEFERREDTRANSACTION = 2;
+  private static final Logger logger = LoggerFactory.getLogger("Transaction");
+  private static final int RESERVE_BALANCE = 10;
 
   /**
    * constructor.
@@ -71,7 +76,8 @@ public class TransactionUtils {
               .unpack(AssetIssueContractOuterClass.TransferAssetContract.class).getOwnerAddress();
           break;
         case VoteAssetContract:
-          owner = contract.getParameter().unpack(VoteAssetContractOuterClass.VoteAssetContract.class)
+          owner = contract.getParameter()
+              .unpack(VoteAssetContractOuterClass.VoteAssetContract.class)
               .getOwnerAddress();
           break;
         case VoteWitnessContract:
@@ -83,7 +89,8 @@ public class TransactionUtils {
               .unpack(WitnessContract.WitnessCreateContract.class).getOwnerAddress();
           break;
         case AssetIssueContract:
-          owner = contract.getParameter().unpack(AssetIssueContractOuterClass.AssetIssueContract.class)
+          owner = contract.getParameter()
+              .unpack(AssetIssueContractOuterClass.AssetIssueContract.class)
               .getOwnerAddress();
           break;
         case ParticipateAssetIssueContract:

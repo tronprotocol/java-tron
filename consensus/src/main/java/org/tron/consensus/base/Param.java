@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.tron.core.config.args.GenesisBlock;
 
 public class Param {
+
   @Getter
   @Setter
   private boolean enable;
@@ -30,6 +31,7 @@ public class Param {
   private BlockHandle blockHandle;
 
   public class Miner {
+
     @Getter
     @Setter
     private byte[] privateKey;

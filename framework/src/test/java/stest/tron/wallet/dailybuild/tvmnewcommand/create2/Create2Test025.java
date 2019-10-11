@@ -18,8 +18,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
@@ -176,7 +176,6 @@ public class Create2Test025 {
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
     long devEnergyLimitAfter = accountResource.getEnergyLimit();
     long devEnergyUsageAfter = accountResource.getEnergyUsed();
@@ -223,7 +222,6 @@ public class Create2Test025 {
 
     testContractAddress = WalletClient.decodeFromBase58Check(addressFinal);
 
-
     String txid = PublicMethed.triggerContract(testContractAddress,
         "getNum()", "#", false, 0L,
         1000000000L, "0", 0, user001Address, user001Key,
@@ -232,7 +230,6 @@ public class Create2Test025 {
         blockingStubFull);
     TransactionInfo transactionInfo2 = infoById2.get();
     final int Num = ByteArray.toInt(transactionInfo2.getContractResult(0).toByteArray());
-
 
     accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
     userEnergyLimitAfter = accountResource.getEnergyLimit();
@@ -245,10 +242,9 @@ public class Create2Test025 {
     logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));
 
     logger.info("NUM :" + Num);
-    Assert.assertEquals(infoById.get().getResult().toString(),"SUCESS");
-    Assert.assertEquals(infoById.get().getResultValue(),0);
-    Assert.assertEquals(5,Num);
-
+    Assert.assertEquals(infoById.get().getResult().toString(), "SUCESS");
+    Assert.assertEquals(infoById.get().getResultValue(), 0);
+    Assert.assertEquals(5, Num);
 
 
   }

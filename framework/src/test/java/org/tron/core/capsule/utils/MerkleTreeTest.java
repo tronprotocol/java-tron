@@ -29,6 +29,54 @@ public class MerkleTreeTest {
     return Sha256Hash.of(leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
   }
 
+  //number: the number of hash
+  private static void pareTree(Leaf head, List<Sha256Hash> hashList, int maxRank, int curBank,
+      int number) {
+    Leaf left = head.getLeft();
+    Leaf right = head.getRight();
+    if (curBank < maxRank) {
+      curBank++;
+      number = number << 1;
+      pareTree(left, hashList, maxRank, curBank, number);
+      number++;
+      if ((number << (maxRank - curBank)) >= hashList
+          .size()) {    //The smallest leaf child number = number<<(maxRank-curBank)
+        Assert.assertTrue(right == null);
+        Assert.assertEquals(head.getHash(), left.getHash());  //No right, leaf = left
+      } else {
+        pareTree(right, hashList, maxRank, curBank, number);
+        Assert.assertEquals(head.getHash(),
+            computeHash(left.getHash(), right.getHash())); //hash = sha256(left || right)
+      }
+    } else {
+      // last rank, no child, it is real leaf. Its hash in hashList.
+      Assert.assertTrue(left == null);
+      Assert.assertTrue(right == null);
+      Assert.assertEquals(head.getHash(), hashList.get(number));
+      System.out.println("curBank :" + curBank + " number :" + number);
+      System.out.println(ByteArray.toHexString(head.getHash().getBytes()));
+    }
+  }
+
+  private static int getRank(int num) {
+    if (num <= 0) {
+      return 0;
+    }
+    if (num == 1) {
+      return 1;
+    }
+    int rank = 0;
+    int temp = num;
+    while (num > 0) {
+      num = num >> 1;
+      rank++;
+    }
+    if (temp == Math.pow(2, rank - 1)) {
+      rank -= 1;
+    }
+    return rank;
+  }
+
   @Test
   /**
    * Make a merkletree with no hash.
@@ -120,53 +168,5 @@ public class MerkleTreeTest {
       Leaf root = tree.getRoot();
       pareTree(root, hashList, maxRank, 0, 0);
     }
-  }
-
-  //number: the number of hash
-  private static void pareTree(Leaf head, List<Sha256Hash> hashList, int maxRank, int curBank,
-      int number) {
-    Leaf left = head.getLeft();
-    Leaf right = head.getRight();
-    if (curBank < maxRank) {
-      curBank++;
-      number = number << 1;
-      pareTree(left, hashList, maxRank, curBank, number);
-      number++;
-      if ((number << (maxRank - curBank)) >= hashList
-          .size()) {    //The smallest leaf child number = number<<(maxRank-curBank)
-        Assert.assertTrue(right == null);
-        Assert.assertEquals(head.getHash(), left.getHash());  //No right, leaf = left
-      } else {
-        pareTree(right, hashList, maxRank, curBank, number);
-        Assert.assertEquals(head.getHash(),
-            computeHash(left.getHash(), right.getHash())); //hash = sha256(left || right)
-      }
-    } else {
-      // last rank, no child, it is real leaf. Its hash in hashList.
-      Assert.assertTrue(left == null);
-      Assert.assertTrue(right == null);
-      Assert.assertEquals(head.getHash(), hashList.get(number));
-      System.out.println("curBank :" + curBank + " number :" + number);
-      System.out.println(ByteArray.toHexString(head.getHash().getBytes()));
-    }
-  }
-
-  private static int getRank(int num) {
-    if (num <= 0) {
-      return 0;
-    }
-    if (num == 1) {
-      return 1;
-    }
-    int rank = 0;
-    int temp = num;
-    while (num > 0) {
-      num = num >> 1;
-      rank++;
-    }
-    if (temp == Math.pow(2, rank - 1)) {
-      rank -= 1;
-    }
-    return rank;
   }
 }

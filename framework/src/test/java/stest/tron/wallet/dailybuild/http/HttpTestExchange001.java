@@ -17,33 +17,9 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class HttpTestExchange001 {
 
-  private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
-  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private JSONObject responseContent;
-  private HttpResponse response;
-  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(1);
-  private String httpSoliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(2);
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] exchangeOwnerAddress = ecKey1.getAddress();
-  String exchangeOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] asset2Address = ecKey2.getAddress();
-  String asset2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-  Long amount = 2048000000L;
-
-  String description = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetDescription");
-  String url = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetUrl");
   private static final long now = System.currentTimeMillis();
-  private static String name = "testAssetIssue002_" + Long.toString(now);
   private static final long totalSupply = now;
+  private static String name = "testAssetIssue002_" + Long.toString(now);
   private static String assetIssueId1;
   private static String assetIssueId2;
   private static Integer exchangeId;
@@ -53,6 +29,26 @@ public class HttpTestExchange001 {
   private static Long afterWithdrawBalance;
   private static Long beforeTransactionBalance;
   private static Long afterTransactionBalance;
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] exchangeOwnerAddress = ecKey1.getAddress();
+  String exchangeOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] asset2Address = ecKey2.getAddress();
+  String asset2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  Long amount = 2048000000L;
+  String description = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetDescription");
+  String url = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetUrl");
+  private JSONObject responseContent;
+  private HttpResponse response;
+  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
+      .get(1);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
 
   /**
    * constructor.

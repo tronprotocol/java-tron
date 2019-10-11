@@ -17,14 +17,11 @@ package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.Commons;
-import org.tron.core.Constant;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j(topic = "capsule")
 public class TransactionUtil {

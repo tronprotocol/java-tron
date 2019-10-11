@@ -37,14 +37,14 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class ProgramResultTest {
 
+  private static final String dbPath = "output_InternalTransactionComplexTest";
+  private static final String OWNER_ADDRESS;
+  private static final String TRANSFER_TO;
   private static Runtime runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;
   private static DepositImpl deposit;
-  private static final String dbPath = "output_InternalTransactionComplexTest";
-  private static final String OWNER_ADDRESS;
-  private static final String TRANSFER_TO;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
@@ -67,6 +67,22 @@ public class ProgramResultTest {
     deposit.createAccount(Hex.decode(TRANSFER_TO), AccountType.Normal);
     deposit.addBalance(Hex.decode(TRANSFER_TO), 0);
     deposit.commit();
+  }
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   /**
@@ -210,7 +226,6 @@ public class ProgramResultTest {
             deposit, null);
   }
 
-
   /**
    * pragma solidity ^0.4.24;
    *
@@ -322,7 +337,6 @@ public class ProgramResultTest {
     checkTransactionInfo(traceFailed, trx2, null, internalTransactionsListFail);
   }
 
-
   private byte[] deployC()
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "C";
@@ -381,7 +395,6 @@ public class ProgramResultTest {
             feeLimit, consumeUserResourcePercent, null,
             deposit, null);
   }
-
 
   /**
    * pragma solidity ^0.4.24;
@@ -469,22 +482,6 @@ public class ProgramResultTest {
       // for now only one callValue. will be change to list in future.
       Assert.assertEquals(callValueInfoListFromProtocol.get(0).getCallValue(),
           internalTransactionsList.get(i).getValue());
-    }
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
     }
   }
 

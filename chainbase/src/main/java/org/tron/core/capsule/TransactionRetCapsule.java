@@ -9,6 +9,7 @@ import org.tron.protos.Protocol.TransactionRet;
 
 @Slf4j(topic = "capsule")
 public class TransactionRetCapsule implements ProtoCapsule<TransactionRet> {
+
   private TransactionRet transactionRet;
 
   public TransactionRetCapsule(BlockCapsule blockCapsule) {
@@ -22,7 +23,7 @@ public class TransactionRetCapsule implements ProtoCapsule<TransactionRet> {
   }
 
   // only for test
-  public  TransactionRetCapsule() {
+  public TransactionRetCapsule() {
     transactionRet = TransactionRet.newBuilder().build();
   }
 

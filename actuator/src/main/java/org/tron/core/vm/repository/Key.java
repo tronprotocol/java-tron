@@ -1,10 +1,10 @@
 package org.tron.core.vm.repository;
 
+import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.util.Arrays;
-
 public class Key {
+
   /**
    * data could not be null
    */
@@ -28,6 +28,15 @@ public class Key {
   private Key(Key key) {
     this.data = new byte[key.getData().length];
     System.arraycopy(key.getData(), 0, this.data, 0, this.data.length);
+  }
+
+  /**
+   *
+   * @param data
+   * @return
+   */
+  public static Key create(byte[] data) {
+    return new Key(data);
   }
 
   /**
@@ -62,14 +71,5 @@ public class Key {
   @Override
   public int hashCode() {
     return data != null ? ArrayUtils.hashCode(data) : 0;
-  }
-
-  /**
-   *
-   * @param data
-   * @return
-   */
-  public static Key create(byte[] data) {
-    return new Key(data);
   }
 }

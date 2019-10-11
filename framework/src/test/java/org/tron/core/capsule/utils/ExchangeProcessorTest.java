@@ -17,13 +17,13 @@ import org.tron.core.config.args.Args;
 @Slf4j
 public class ExchangeProcessorTest {
 
-  private static ExchangeProcessor processor;
   private static final String dbPath = "output_buy_exchange_processor_test";
-  private static TronApplicationContext context;
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000_000_000L;
+  private static ExchangeProcessor processor;
+  private static TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);

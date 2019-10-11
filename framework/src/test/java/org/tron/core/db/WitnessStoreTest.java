@@ -20,23 +20,24 @@ public class WitnessStoreTest {
 
   private static final String dbPath = "output-witnessStore-test";
   private static TronApplicationContext context;
-  WitnessStore witnessStore;
 
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  @Before
-  public void initDb() {
-    this.witnessStore = context.getBean(WitnessStore.class);
-  }
+  WitnessStore witnessStore;
 
   @AfterClass
   public static void destroy() {
     Args.clearParam();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
+  }
+
+  @Before
+  public void initDb() {
+    this.witnessStore = context.getBean(WitnessStore.class);
   }
 
   @Test

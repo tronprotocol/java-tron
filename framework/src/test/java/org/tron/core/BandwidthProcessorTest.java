@@ -36,9 +36,7 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 @Slf4j
 public class BandwidthProcessorTest {
 
-  private static Manager dbManager;
   private static final String dbPath = "output_bandwidth_test";
-  private static TronApplicationContext context;
   private static final String ASSET_NAME;
   private static final String ASSET_NAME_V2;
   private static final String OWNER_ADDRESS;
@@ -51,6 +49,8 @@ public class BandwidthProcessorTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static Manager dbManager;
+  private static TronApplicationContext context;
   private static long START_TIME;
   private static long END_TIME;
 

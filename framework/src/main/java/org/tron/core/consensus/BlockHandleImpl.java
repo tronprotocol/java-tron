@@ -15,7 +15,7 @@ import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
 @Component
-public class BlockHandleImpl implements BlockHandle{
+public class BlockHandleImpl implements BlockHandle {
 
   @Autowired
   private Manager manager;
@@ -50,7 +50,7 @@ public class BlockHandleImpl implements BlockHandle{
       tronNetService.fastForward(blockMessage);
       manager.pushBlock(blockCapsule);
       tronNetService.broadcast(blockMessage);
-    }catch (Exception e) {
+    } catch (Exception e) {
       logger.error("Push block failed.", e);
     }
   }

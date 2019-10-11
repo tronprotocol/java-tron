@@ -10,6 +10,12 @@ public class TVMTestResult {
   private ReceiptCapsule receipt;
   private byte[] contractAddress;
 
+  public TVMTestResult(Runtime runtime, ReceiptCapsule receipt, byte[] contractAddress) {
+    this.runtime = runtime;
+    this.receipt = receipt;
+    this.contractAddress = contractAddress;
+  }
+
   public byte[] getContractAddress() {
     return contractAddress;
   }
@@ -35,12 +41,6 @@ public class TVMTestResult {
   public TVMTestResult setReceipt(ReceiptCapsule receipt) {
     this.receipt = receipt;
     return this;
-  }
-
-  public TVMTestResult(Runtime runtime, ReceiptCapsule receipt, byte[] contractAddress) {
-    this.runtime = runtime;
-    this.receipt = receipt;
-    this.contractAddress = contractAddress;
   }
 
 }

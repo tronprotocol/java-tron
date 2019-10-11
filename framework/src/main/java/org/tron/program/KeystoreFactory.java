@@ -20,6 +20,18 @@ public class KeystoreFactory {
 
   private static final String FilePath = "Wallet";
 
+  public static void main(String[] args) {
+    Args.setParam(args, Constant.TESTNET_CONF);
+    KeystoreFactory cli = new KeystoreFactory();
+
+    JCommander.newBuilder()
+        .addObject(cli)
+        .build()
+        .parse(args);
+
+    cli.run();
+  }
+
   private boolean priKeyValid(String priKey) {
     if (StringUtils.isEmpty(priKey)) {
       logger.warn("Warning: PrivateKey is empty !!");
@@ -147,17 +159,5 @@ public class KeystoreFactory {
         logger.error(e.getMessage());
       }
     }
-  }
-
-  public static void main(String[] args) {
-    Args.setParam(args, Constant.TESTNET_CONF);
-    KeystoreFactory cli = new KeystoreFactory();
-
-    JCommander.newBuilder()
-        .addObject(cli)
-        .build()
-        .parse(args);
-
-    cli.run();
   }
 }

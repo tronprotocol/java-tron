@@ -37,8 +37,6 @@ import org.tron.protos.contract.ProposalContract;
 
 public class ProposalDeleteActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static final String dbPath = "output_ProposalApprove_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
   private static final String OWNER_ADDRESS_FIRST;
@@ -47,6 +45,8 @@ public class ProposalDeleteActuatorTest {
   private static final String URL = "https://tron.network";
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ADDRESS_NOACCOUNT;
+  private static TronApplicationContext context;
+  private static Manager dbManager;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);

@@ -8,6 +8,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.db.common.iterator.DBIterator;
 
 public class LevelDB implements DB<byte[], byte[]>, Flusher {
+
   @Getter
   private LevelDbDataSourceImpl db;
 
@@ -62,6 +63,7 @@ public class LevelDB implements DB<byte[], byte[]>, Flusher {
   public void close() {
     db.closeDB();
   }
+
   @Override
   public void reset() {
     db.resetDb();

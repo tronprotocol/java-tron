@@ -49,28 +49,36 @@ public class TransactionResultCapsule implements ProtoCapsule<Result> {
     return transactionResult.getFee();
   }
 
-  public void setUnfreezeAmount(long amount) {
-    this.transactionResult = this.transactionResult.toBuilder().setUnfreezeAmount(amount).build();
+  public void setFee(long fee) {
+    this.transactionResult = this.transactionResult.toBuilder().setFee(fee).build();
   }
 
   public long getUnfreezeAmount() {
     return transactionResult.getUnfreezeAmount();
   }
 
-  public void setAssetIssueID(String id) {
-    this.transactionResult = this.transactionResult.toBuilder().setAssetIssueID(id).build();
+  public void setUnfreezeAmount(long amount) {
+    this.transactionResult = this.transactionResult.toBuilder().setUnfreezeAmount(amount).build();
   }
 
   public String getAssetIssueID() {
     return transactionResult.getAssetIssueID();
   }
 
-  public void setWithdrawAmount(long amount) {
-    this.transactionResult = this.transactionResult.toBuilder().setWithdrawAmount(amount).build();
+  public void setAssetIssueID(String id) {
+    this.transactionResult = this.transactionResult.toBuilder().setAssetIssueID(id).build();
   }
 
   public long getWithdrawAmount() {
     return transactionResult.getWithdrawAmount();
+  }
+
+  public void setWithdrawAmount(long amount) {
+    this.transactionResult = this.transactionResult.toBuilder().setWithdrawAmount(amount).build();
+  }
+
+  public long getExchangeReceivedAmount() {
+    return transactionResult.getExchangeReceivedAmount();
   }
 
   public void setExchangeReceivedAmount(long amount) {
@@ -78,25 +86,13 @@ public class TransactionResultCapsule implements ProtoCapsule<Result> {
         .build();
   }
 
-  public long getExchangeReceivedAmount() {
-    return transactionResult.getExchangeReceivedAmount();
-  }
-
-
-  public void setExchangeWithdrawAnotherAmount(long amount) {
-    this.transactionResult = this.transactionResult.toBuilder()
-        .setExchangeWithdrawAnotherAmount(amount)
-        .build();
-  }
-
   public long getExchangeWithdrawAnotherAmount() {
     return transactionResult.getExchangeWithdrawAnotherAmount();
   }
 
-
-  public void setExchangeInjectAnotherAmount(long amount) {
+  public void setExchangeWithdrawAnotherAmount(long amount) {
     this.transactionResult = this.transactionResult.toBuilder()
-        .setExchangeInjectAnotherAmount(amount)
+        .setExchangeWithdrawAnotherAmount(amount)
         .build();
   }
 
@@ -114,8 +110,10 @@ public class TransactionResultCapsule implements ProtoCapsule<Result> {
     return transactionResult.getExchangeInjectAnotherAmount();
   }
 
-  public void setFee(long fee) {
-    this.transactionResult = this.transactionResult.toBuilder().setFee(fee).build();
+  public void setExchangeInjectAnotherAmount(long amount) {
+    this.transactionResult = this.transactionResult.toBuilder()
+        .setExchangeInjectAnotherAmount(amount)
+        .build();
   }
 
   public void addFee(long fee) {
@@ -127,13 +125,13 @@ public class TransactionResultCapsule implements ProtoCapsule<Result> {
     this.transactionResult = this.transactionResult.toBuilder().setRet(code).build();
   }
 
+  public long getShieldedTransactionFee() {
+    return transactionResult.getShieldedTransactionFee();
+  }
+
   public void setShieldedTransactionFee(long fee) {
     this.transactionResult = this.transactionResult.toBuilder().setShieldedTransactionFee(fee)
         .build();
-  }
-
-  public long getShieldedTransactionFee() {
-    return transactionResult.getShieldedTransactionFee();
   }
 
   @Override

@@ -21,22 +21,6 @@ import org.junit.Test;
 
 public class ObjectSizeUtilTest {
 
-  class Person {
-
-    int age;
-    String name;
-    int[] scores;
-
-    public Person() {
-    }
-
-    public Person(int age, String name, int[] scores) {
-      this.age = age;
-      this.name = name;
-      this.scores = scores;
-    }
-  }
-
   @Test
   public void testGetObjectSize() {
 
@@ -57,6 +41,22 @@ public class ObjectSizeUtilTest {
     Person person6 = new Person(1, "tom", new int[]{100, 100, 100, 100, 100});
     assertEquals(136, com.carrotsearch.sizeof.RamUsageEstimator.sizeOf(person6));
 
+  }
+
+  class Person {
+
+    int age;
+    String name;
+    int[] scores;
+
+    public Person() {
+    }
+
+    public Person(int age, String name, int[] scores) {
+      this.age = age;
+      this.name = name;
+      this.scores = scores;
+    }
   }
 
 }

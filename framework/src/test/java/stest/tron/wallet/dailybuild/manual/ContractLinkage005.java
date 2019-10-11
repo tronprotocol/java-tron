@@ -29,18 +29,6 @@ public class ContractLinkage005 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey003);
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-  private ManagedChannel channelFull1 = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-  private String fullnode1 = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(1);
-  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.maxFeeLimit");
-
   String contractName;
   String code;
   String abi;
@@ -57,10 +45,19 @@ public class ContractLinkage005 {
   Long forthForCycleTimes = 506L;
   Long fifthForCycleTimes = 508L;
   byte[] contractAddress;
-
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] linkage005Address = ecKey1.getAddress();
   String linkage005Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
+  private ManagedChannel channelFull1 = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(1);
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
 
   @BeforeSuite
   public void beforeSuite() {
@@ -323,7 +320,6 @@ public class ContractLinkage005 {
         == secondForCycleCost - firstForCycleCost);
     Assert.assertTrue(fifthForCycleCost - forthForCycleCost
         == forthForCycleCost - thirdForCycleCost);
-
 
 
   }

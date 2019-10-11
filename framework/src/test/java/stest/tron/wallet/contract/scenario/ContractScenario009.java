@@ -28,7 +28,9 @@ public class ContractScenario009 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] contract009Address = ecKey1.getAddress();
+  String contract009Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
@@ -37,10 +39,6 @@ public class ContractScenario009 {
       .getLong("defaultParameter.maxFeeLimit");
   private String compilerVersion = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.solidityCompilerVersion");
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contract009Address = ecKey1.getAddress();
-  String contract009Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {

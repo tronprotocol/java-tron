@@ -22,6 +22,9 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
@@ -30,9 +33,6 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.WitnessContract;
 
 
@@ -118,7 +118,8 @@ public class GrpcClient {
     return blockingStubFull.unfreezeBalance(contract);
   }
 
-  public Transaction createTransferAssetTransaction(AssetIssueContractOuterClass.TransferAssetContract contract) {
+  public Transaction createTransferAssetTransaction(
+      AssetIssueContractOuterClass.TransferAssetContract contract) {
     return blockingStubFull.transferAsset(contract);
   }
 

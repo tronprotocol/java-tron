@@ -260,7 +260,7 @@ public class WalletTestAccount013 {
     //check DelegatedResourceAccountIndex of Account4
     Optional<Protocol.DelegatedResourceAccountIndex> delegatedResourceIndexResult1AfterUnfreeze =
         PublicMethed
-        .getDelegatedResourceAccountIndex(account4DelegatedResourceAddress, blockingStubFull);
+            .getDelegatedResourceAccountIndex(account4DelegatedResourceAddress, blockingStubFull);
     //result of From list is empty
     Assert.assertTrue(
         delegatedResourceIndexResult1AfterUnfreeze.get().getFromAccountsList().isEmpty());

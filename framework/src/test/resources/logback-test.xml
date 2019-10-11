@@ -2,7 +2,7 @@
 
   <!-- FILE appender is disabled -->
 
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+  <appender class="ch.qos.logback.core.ConsoleAppender" name="STDOUT">
     <encoder>
       <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
     </encoder>
@@ -11,8 +11,8 @@
     </filter>
   </appender>
 
-  <appender name="FILE"
-    class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <appender class="ch.qos.logback.core.rolling.RollingFileAppender"
+    name="FILE">
     <file>./logs/tron-test.log</file>
     <rollingPolicy
       class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
@@ -34,7 +34,7 @@
     <appender-ref ref="FILE"/>
   </root>
 
-  <logger name="Test" level="INFO"/>
-  <logger name="Manager" level="INFO"/>
+  <logger level="INFO" name="Test"/>
+  <logger level="INFO" name="Manager"/>
 
 </configuration>

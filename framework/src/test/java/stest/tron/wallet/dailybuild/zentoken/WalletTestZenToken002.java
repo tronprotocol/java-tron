@@ -34,6 +34,7 @@ import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
 @Slf4j
 public class WalletTestZenToken002 {
 
+  private static ByteString assetAccountId = null;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -46,8 +47,11 @@ public class WalletTestZenToken002 {
   String memo;
   Note sendNote;
   Note receiverNote;
-  private static ByteString assetAccountId = null;
-
+  IncrementalMerkleVoucherInfo firstMerkleVoucherInfo;
+  IncrementalMerkleVoucherInfo secondMerkleVoucherInfo;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private ManagedChannel channelSolidity = null;
@@ -70,12 +74,6 @@ public class WalletTestZenToken002 {
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 10 * zenTokenFee;
   private Long sendTokenAmount = 8 * zenTokenFee;
-  IncrementalMerkleVoucherInfo firstMerkleVoucherInfo;
-  IncrementalMerkleVoucherInfo secondMerkleVoucherInfo;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   /**
    * constructor.
@@ -300,7 +298,6 @@ public class WalletTestZenToken002 {
 
     Assert.assertEquals(firstMerkleVoucherInfo, secondMerkleVoucherInfo);
   }
-
 
 
   /**

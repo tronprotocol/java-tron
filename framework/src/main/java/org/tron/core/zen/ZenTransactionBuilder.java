@@ -30,9 +30,9 @@ import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
-import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 
 @Slf4j
 public class ZenTransactionBuilder {
@@ -265,7 +265,8 @@ public class ZenTransactionBuilder {
       throw new ZksnarkException("Output is invalid");
     }
 
-    Optional<NotePlaintextEncryptionResult> res = output.getNote().encrypt(output.getNote().getPkD());
+    Optional<NotePlaintextEncryptionResult> res = output.getNote()
+        .encrypt(output.getNote().getPkD());
     if (!res.isPresent()) {
       throw new ZksnarkException("Failed to encrypt note");
     }

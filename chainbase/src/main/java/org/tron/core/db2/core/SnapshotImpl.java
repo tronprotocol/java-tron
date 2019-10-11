@@ -16,6 +16,7 @@ import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
+
   @Getter
   protected Snapshot root;
 
@@ -90,7 +91,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   @Override
-  public Iterator<Map.Entry<byte[],byte[]>> iterator() {
+  public Iterator<Map.Entry<byte[], byte[]>> iterator() {
     Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
     collect(all);
     Set<WrappedByteArray> keys = new HashSet<>(all.keySet());

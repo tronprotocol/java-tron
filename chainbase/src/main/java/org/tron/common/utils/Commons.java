@@ -17,15 +17,13 @@ import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
-import org.tron.protos.Protocol.DynamicProperties;
 
 @Slf4j(topic = "Commons")
 public class Commons {
+
   public static final int ADDRESS_SIZE = 42;
-
-  public static byte addressPreFixByte = ADD_PRE_FIX_BYTE_MAINNET;
-
   public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
+  public static byte addressPreFixByte = ADD_PRE_FIX_BYTE_MAINNET;
 
   public static byte[] clone(byte[] value) {
     byte[] clone = new byte[value.length];
@@ -98,6 +96,7 @@ public class Commons {
   public static String createReadableString(byte[] bytes) {
     return ByteArray.toHexString(bytes);
   }
+
   /**
    * judge balance.
    */
@@ -117,7 +116,8 @@ public class Commons {
     accountStore.put(account.getAddress().toByteArray(), account);
   }
 
-  public static ExchangeStore getExchangeStoreFinal(DynamicPropertiesStore dynamicPropertiesStore, ExchangeStore exchangeStore,
+  public static ExchangeStore getExchangeStoreFinal(DynamicPropertiesStore dynamicPropertiesStore,
+      ExchangeStore exchangeStore,
       ExchangeV2Store exchangeV2Store) {
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       return exchangeStore;
@@ -126,7 +126,8 @@ public class Commons {
     }
   }
 
-  public static void putExchangeCapsule(ExchangeCapsule exchangeCapsule, DynamicPropertiesStore dynamicPropertiesStore, ExchangeStore exchangeStore,
+  public static void putExchangeCapsule(ExchangeCapsule exchangeCapsule,
+      DynamicPropertiesStore dynamicPropertiesStore, ExchangeStore exchangeStore,
       ExchangeV2Store exchangeV2Store, AssetIssueStore assetIssueStore) {
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       exchangeStore.put(exchangeCapsule.createDbKey(), exchangeCapsule);
@@ -158,20 +159,24 @@ public class Commons {
   }
 
   public static void adjustAssetBalanceV2(AccountCapsule account, String AssetID, long amount,
-      AccountStore accountStore, AssetIssueStore assetIssueStore, DynamicPropertiesStore dynamicPropertiesStore)
+      AccountStore accountStore, AssetIssueStore assetIssueStore,
+      DynamicPropertiesStore dynamicPropertiesStore)
       throws BalanceInsufficientException {
     if (amount < 0) {
-      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, dynamicPropertiesStore, assetIssueStore)) {
+      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, dynamicPropertiesStore,
+          assetIssueStore)) {
         throw new BalanceInsufficientException("reduceAssetAmount failed !");
       }
     } else if (amount > 0 &&
-        !account.addAssetAmountV2(AssetID.getBytes(), amount, dynamicPropertiesStore, assetIssueStore)) {
+        !account.addAssetAmountV2(AssetID.getBytes(), amount, dynamicPropertiesStore,
+            assetIssueStore)) {
       throw new BalanceInsufficientException("addAssetAmount failed !");
     }
     accountStore.put(account.getAddress().toByteArray(), account);
   }
 
-  public static void adjustTotalShieldedPoolValue(long valueBalance, DynamicPropertiesStore dynamicPropertiesStore) throws BalanceInsufficientException {
+  public static void adjustTotalShieldedPoolValue(long valueBalance,
+      DynamicPropertiesStore dynamicPropertiesStore) throws BalanceInsufficientException {
     long totalShieldedPoolValue = Math
         .subtractExact(dynamicPropertiesStore.getTotalShieldedPoolValue(), valueBalance);
     if (totalShieldedPoolValue < 0) {
@@ -181,9 +186,11 @@ public class Commons {
   }
 
   public static void adjustAssetBalanceV2(byte[] accountAddress, String AssetID, long amount
-      , AccountStore accountStore, AssetIssueStore assetIssueStore, DynamicPropertiesStore dynamicPropertiesStore)
+      , AccountStore accountStore, AssetIssueStore assetIssueStore,
+      DynamicPropertiesStore dynamicPropertiesStore)
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
-    adjustAssetBalanceV2(account, AssetID, amount, accountStore, assetIssueStore, dynamicPropertiesStore);
+    adjustAssetBalanceV2(account, AssetID, amount, accountStore, assetIssueStore,
+        dynamicPropertiesStore);
   }
 }

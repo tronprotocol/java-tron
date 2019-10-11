@@ -23,32 +23,26 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAccount010 {
 
+  private static final long now = System.currentTimeMillis();
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-  private static final long now = System.currentTimeMillis();
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] account010Address = ecKey1.getAddress();
+  String account010Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] account010SecondAddress = ecKey2.getAddress();
+  String account010SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] account010InvalidAddress = ecKey3.getAddress();
+  String account010InvalidKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] account010Address = ecKey1.getAddress();
-  String account010Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] account010SecondAddress = ecKey2.getAddress();
-  String account010SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-  ECKey ecKey3 = new ECKey(Utils.getRandom());
-  byte[] account010InvalidAddress = ecKey3.getAddress();
-  String account010InvalidKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-
 
   @BeforeSuite
   public void beforeSuite() {

@@ -79,7 +79,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     for (Contract contract : contracts) {
-      if (contract.getType() == ShieldedTransferContract){
+      if (contract.getType() == ShieldedTransferContract) {
         continue;
       }
       if (dbManager.getDynamicPropertiesStore().supportVM()) {
@@ -230,7 +230,8 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
     assetIssueCapsule = Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).get(assetName.toByteArray());
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store())
+        .get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
       throw new ContractValidateException("asset not exists");
     }

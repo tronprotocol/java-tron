@@ -195,6 +195,9 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 @Component
 public class Wallet {
 
+  private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
+  private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   @Getter
   private final ECKey ecKey;
   @Autowired
@@ -205,12 +208,7 @@ public class Wallet {
   private Manager dbManager;
   @Autowired
   private NodeManager nodeManager;
-  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
-
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
-
-  private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
-  private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -242,10 +240,6 @@ public class Wallet {
     } catch (Exception e) {
       return false;
     }
-  }
-
-  public byte[] getAddress() {
-    return ecKey.getAddress();
   }
 
   public static String getAddressPreFixString() {
@@ -352,7 +346,6 @@ public class Wallet {
     return Hash.sha3omit12(combined);
   }
 
-
   public static byte[] tryDecodeFromBase58Check(String address) {
     try {
       return Wallet.decodeFromBase58Check(address);
@@ -378,6 +371,17 @@ public class Wallet {
     return address;
   }
 
+  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+      throws PermissionException {
+    ByteString operations = permission.getOperations();
+    if (operations.size() != 32) {
+      throw new PermissionException("operations size must be 32");
+    }
+    int contractType = contract.getTypeValue();
+    boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
+    return b;
+  }
+
 //  public ShieldAddress generateShieldAddress() {
 //    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
 //    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
@@ -396,6 +400,77 @@ public class Wallet {
 //    return builder.build();
 //  }
 
+  public static String makeUpperCamelMethod(String originName) {
+    return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)
+        .replace("_", "");
+  }
+
+  private static byte[] getSelector(byte[] data) {
+    if (data == null ||
+        data.length < 4) {
+      return null;
+    }
+
+    byte[] ret = new byte[4];
+    System.arraycopy(data, 0, ret, 0, 4);
+    return ret;
+  }
+
+  /**
+   * Create a transaction.
+   */
+  /*public Transaction createTransaction(byte[] address, String to, long amount) {
+    long balance = getBalance(address);
+    return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
+  } */
+
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
+
+    if (selector == null || selector.length != 4
+        || abi.getEntrysList().size() == 0) {
+      return false;
+    }
+
+    for (int i = 0; i < abi.getEntrysCount(); i++) {
+      ABI.Entry entry = abi.getEntrys(i);
+      if (entry.getType() != ABI.Entry.EntryType.Function) {
+        continue;
+      }
+
+      int inputCount = entry.getInputsCount();
+      StringBuffer sb = new StringBuffer();
+      sb.append(entry.getName());
+      sb.append("(");
+      for (int k = 0; k < inputCount; k++) {
+        ABI.Entry.Param param = entry.getInputs(k);
+        sb.append(param.getType());
+        if (k + 1 < inputCount) {
+          sb.append(",");
+        }
+      }
+      sb.append(")");
+
+      byte[] funcSelector = new byte[4];
+      System
+          .arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0,
+              4);
+      if (Arrays.equals(funcSelector, selector)) {
+        if (entry.getConstant() == true || entry.getStateMutability()
+            .equals(StateMutabilityType.View)) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  public byte[] getAddress() {
+    return ecKey.getAddress();
+  }
+
   public Account getAccount(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule accountCapsule = accountStore.get(account.getAddress().toByteArray());
@@ -405,7 +480,8 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
+        dbManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     long genesisTimeStamp = dbManager.getGenesisBlock().getTimeStamp();
@@ -418,7 +494,6 @@ public class Wallet {
 
     return accountCapsule.getInstance();
   }
-
 
   public Account getAccountById(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
@@ -434,19 +509,12 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
+        dbManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     return accountCapsule.getInstance();
   }
-
-  /**
-   * Create a transaction.
-   */
-  /*public Transaction createTransaction(byte[] address, String to, long amount) {
-    long balance = getBalance(address);
-    return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
-  } */
 
   /**
    * Create a transaction by contract.
@@ -526,7 +594,8 @@ public class Wallet {
       Message message = new TransactionMessage(signaturedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
-          logger.warn("Broadcast transaction {} has failed, no connection.", trx.getTransactionId());
+          logger
+              .warn("Broadcast transaction {} has failed, no connection.", trx.getTransactionId());
           return builder.setResult(false).setCode(response_code.NO_CONNECTION)
               .setMessage(ByteString.copyFromUtf8("no connection"))
               .build();
@@ -547,12 +616,14 @@ public class Wallet {
       }
 
       if (dbManager.isTooManyPending()) {
-        logger.warn("Broadcast transaction {} has failed, too many pending.", trx.getTransactionId());
+        logger
+            .warn("Broadcast transaction {} has failed, too many pending.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
       if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
-        logger.warn("Broadcast transaction {} has failed, it already exists.", trx.getTransactionId());
+        logger.warn("Broadcast transaction {} has failed, it already exists.",
+            trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
       } else {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
@@ -625,17 +696,6 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
     trx.addSign(privateKey, dbManager.getAccountStore());
     return trx;
-  }
-
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
-      throws PermissionException {
-    ByteString operations = permission.getOperations();
-    if (operations.size() != 32) {
-      throw new PermissionException("operations size must be 32");
-    }
-    int contractType = contract.getTypeValue();
-    boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
-    return b;
   }
 
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
@@ -1051,11 +1111,6 @@ public class Wallet {
     return builder.build();
   }
 
-  public static String makeUpperCamelMethod(String originName) {
-    return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)
-        .replace("_", "");
-  }
-
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
@@ -1064,7 +1119,6 @@ public class Wallet {
 
     return builder.build();
   }
-
 
   public AssetIssueList getAssetIssueList(long offset, long limit) {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
@@ -1159,7 +1213,8 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
+        dbManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     long netLimit = processor
@@ -1236,7 +1291,8 @@ public class Wallet {
 
       // check count
       if (builder.getAssetIssueCount() > 1) {
-        throw new NonUniqueObjectException("To get more than one asset, please use getAssetIssuebyid syntax");
+        throw new NonUniqueObjectException(
+            "To get more than one asset, please use getAssetIssuebyid syntax");
       } else {
         // fetch from DB by assetName as id
         AssetIssueCapsule assetIssueCapsule =
@@ -1423,7 +1479,6 @@ public class Wallet {
     }
     return null;
   }
-
 
   private long getBlockNumber(OutputPoint outPoint)
       throws BadItemException, ZksnarkException {
@@ -2383,60 +2438,6 @@ public class Wallet {
       return contractCapsule.getInstance();
     }
     return null;
-  }
-
-  private static byte[] getSelector(byte[] data) {
-    if (data == null ||
-        data.length < 4) {
-      return null;
-    }
-
-    byte[] ret = new byte[4];
-    System.arraycopy(data, 0, ret, 0, 4);
-    return ret;
-  }
-
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
-
-    if (selector == null || selector.length != 4
-        || abi.getEntrysList().size() == 0) {
-      return false;
-    }
-
-    for (int i = 0; i < abi.getEntrysCount(); i++) {
-      ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != ABI.Entry.EntryType.Function) {
-        continue;
-      }
-
-      int inputCount = entry.getInputsCount();
-      StringBuffer sb = new StringBuffer();
-      sb.append(entry.getName());
-      sb.append("(");
-      for (int k = 0; k < inputCount; k++) {
-        ABI.Entry.Param param = entry.getInputs(k);
-        sb.append(param.getType());
-        if (k + 1 < inputCount) {
-          sb.append(",");
-        }
-      }
-      sb.append(")");
-
-      byte[] funcSelector = new byte[4];
-      System
-          .arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0,
-              4);
-      if (Arrays.equals(funcSelector, selector)) {
-        if (entry.getConstant() == true || entry.getStateMutability()
-            .equals(StateMutabilityType.View)) {
-          return true;
-        } else {
-          return false;
-        }
-      }
-    }
-
-    return false;
   }
 
   /*

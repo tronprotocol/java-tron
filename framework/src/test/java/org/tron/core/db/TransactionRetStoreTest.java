@@ -30,7 +30,7 @@ public class TransactionRetStoreTest {
   private static TransactionStore transactionStore;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath, "--storage-db-directory", dbDirectory,
+    Args.setParam(new String[]{"--output-directory", dbPath, "--storage-db-directory", dbDirectory,
         "--storage-index-directory", indexDirectory}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }

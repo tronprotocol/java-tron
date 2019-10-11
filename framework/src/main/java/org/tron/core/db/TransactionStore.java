@@ -13,7 +13,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.StoreException;
 
 @Slf4j(topic = "DB")
 @Component

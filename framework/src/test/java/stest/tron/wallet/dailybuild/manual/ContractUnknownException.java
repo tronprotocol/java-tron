@@ -33,37 +33,27 @@ public class ContractUnknownException {
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
-  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.maxFeeLimit");
-  private ManagedChannel channelSolidity = null;
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
-  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-
-
   byte[] contractAddress = null;
-
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] grammarAddress = ecKey1.getAddress();
   String testKeyForGrammarAddress = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] grammarAddress2 = ecKey2.getAddress();
   String testKeyForGrammarAddress2 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-
   ECKey ecKey3 = new ECKey(Utils.getRandom());
   byte[] grammarAddress3 = ecKey3.getAddress();
   String testKeyForGrammarAddress3 = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-
   ECKey ecKey4 = new ECKey(Utils.getRandom());
   byte[] grammarAddress4 = ecKey4.getAddress();
   String testKeyForGrammarAddress4 = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
+  private ManagedChannel channelSolidity = null;
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private String fullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
 
   @BeforeSuite
   public void beforeSuite() {

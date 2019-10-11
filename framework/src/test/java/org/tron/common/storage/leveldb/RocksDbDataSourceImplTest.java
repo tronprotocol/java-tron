@@ -41,12 +41,6 @@ public class RocksDbDataSourceImplTest {
   private byte[] key5 = "00000005aa".getBytes();
   private byte[] key6 = "00000006aa".getBytes();
 
-  @Before
-  public void initDb() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-dbbackup.conf");
-    dataSourceTest = new RocksDbDataSourceImpl(dbPath + File.separator, "test_rocksDb");
-  }
-
   /**
    * Release resources.
    */
@@ -58,6 +52,12 @@ public class RocksDbDataSourceImplTest {
     } else {
       logger.info("Release resources failure.");
     }
+  }
+
+  @Before
+  public void initDb() {
+    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-dbbackup.conf");
+    dataSourceTest = new RocksDbDataSourceImpl(dbPath + File.separator, "test_rocksDb");
   }
 
   @Test

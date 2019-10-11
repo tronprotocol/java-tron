@@ -34,16 +34,14 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class GetTransactionsFromThis2Test {
 
+  private static final byte[] INVAILD_ADDRESS =
+      Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final String notexist01 =
       "DCB620820121A866E4E25905DC37F5025BFA5420B781C69E1BC6E1D83038C88A";
-
-
-  private static final byte[] INVAILD_ADDRESS =
-      Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
   private ManagedChannel channelFull = null;
@@ -56,12 +54,16 @@ public class GetTransactionsFromThis2Test {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
-
 
   /**
    * constructor.
@@ -183,11 +185,6 @@ public class GetTransactionsFromThis2Test {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

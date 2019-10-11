@@ -1,7 +1,6 @@
 package org.tron.common.utils;
 
 import java.util.Optional;
-
 import org.tron.core.db2.core.ISession;
 
 public final class SessionOptional {
@@ -12,6 +11,10 @@ public final class SessionOptional {
 
   private SessionOptional() {
     this.value = Optional.empty();
+  }
+
+  public static SessionOptional instance() {
+    return INSTANCE;
   }
 
   public synchronized SessionOptional setValue(ISession value) {
@@ -28,10 +31,6 @@ public final class SessionOptional {
   public synchronized void reset() {
     value.ifPresent(ISession::destroy);
     value = Optional.empty();
-  }
-
-  public static SessionOptional instance() {
-    return INSTANCE;
   }
 
   private enum OptionalEnum {

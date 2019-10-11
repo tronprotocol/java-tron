@@ -133,6 +133,17 @@ public class BandWidthRuntimeTest {
         .saveLatestBlockHeaderTimestamp(System.currentTimeMillis() / 1000);
   }
 
+  /**
+   * destroy clear data of testing.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    ApplicationFactory.create(context).shutdown();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
+  }
+
   @Test
   public void testSuccess() {
     try {
@@ -242,16 +253,5 @@ public class BandWidthRuntimeTest {
         .assertEquals(52299 * Constant.SUN_PER_ENERGY, balance + energy * Constant.SUN_PER_ENERGY);
     Assert.assertNull(trace.getRuntimeError());
     return trace.getRuntimeResult().getContractAddress();
-  }
-
-  /**
-   * destroy clear data of testing.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    ApplicationFactory.create(context).shutdown();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 }

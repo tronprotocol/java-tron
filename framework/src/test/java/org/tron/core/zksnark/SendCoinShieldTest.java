@@ -93,14 +93,7 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 public class SendCoinShieldTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
-  private static String dbPath = "output_ShieldedTransaction_test";
-  private static String dbDirectory = "db_ShieldedTransaction_test";
-  private static String indexDirectory = "index_ShieldedTransaction_test";
-  private static AnnotationConfigApplicationContext context;
-  private static Manager dbManager;
-  private static Wallet wallet;
   private static final byte[] DEFAULT_OVK;
-
   private static final String PUBLIC_ADDRESS_ONE;
   private static final long OWNER_BALANCE = 9999999000000L;
   private static final long tokenId = 1;
@@ -112,6 +105,12 @@ public class SendCoinShieldTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static String dbPath = "output_ShieldedTransaction_test";
+  private static String dbDirectory = "db_ShieldedTransaction_test";
+  private static String indexDirectory = "index_ShieldedTransaction_test";
+  private static AnnotationConfigApplicationContext context;
+  private static Manager dbManager;
+  private static Wallet wallet;
 
   static {
     Args.setParam(
@@ -361,7 +360,7 @@ public class SendCoinShieldTest {
     );
 
     Assert.assertTrue(ret1.isPresent());
-    
+
     Note noteText = ret1.get();
     byte[] pkD = new byte[32];
     if (!JLibrustzcash.librustzcashIvkToPkd(
@@ -383,7 +382,7 @@ public class SendCoinShieldTest {
         .setRcm(ByteString.copyFrom(noteText.getRcm()))
         .setMemo(ByteString.copyFrom(noteText.getMemo()))
         .build();
-    
+
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
   }
 
@@ -457,10 +456,10 @@ public class SendCoinShieldTest {
       ciphertext.setData(enc.getEncCiphertext());
       Optional<Note> foo = Note
           .decrypt(ciphertext,
-                  encryptor.getEpk(),
-                  decryptedOutgoingPlaintext.getEsk(),
-                  decryptedOutgoingPlaintext.getPkD(),
-                  cmuOpt);
+              encryptor.getEpk(),
+              decryptedOutgoingPlaintext.getEsk(),
+              decryptedOutgoingPlaintext.getPkD(),
+              cmuOpt);
 
       if (foo.isPresent()) {
         Note bar = foo.get();
@@ -547,7 +546,8 @@ public class SendCoinShieldTest {
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
-        Assert.assertEquals(1000 * 1000000L - wallet.getShieldedTransactionFee(), noteText.getValue());
+        Assert.assertEquals(1000 * 1000000L - wallet.getShieldedTransactionFee(),
+            noteText.getValue());
         Assert.assertArrayEquals(memo, noteText.getMemo());
       } else {
         Assert.assertFalse(true);
@@ -613,30 +613,30 @@ public class SendCoinShieldTest {
       ShieldedTransferContract stContract = c.getParameter()
           .unpack(ShieldedTransferContract.class);
       ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
-      
+
       //first try to decrypt cOut with ovk, get pkd、esk
       Encryption.OutCiphertext cOut = new Encryption.OutCiphertext();
       cOut.setData(receiveDescription.getCOut().toByteArray());
       Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(
-              cOut,//ciphertext
-              senderOvk,
-              receiveDescription.getValueCommitment().toByteArray(), //cv
-              receiveDescription.getNoteCommitment().toByteArray(), //cmu
-              receiveDescription.getEpk().toByteArray() //epk
+          cOut,//ciphertext
+          senderOvk,
+          receiveDescription.getValueCommitment().toByteArray(), //cv
+          receiveDescription.getNoteCommitment().toByteArray(), //cmu
+          receiveDescription.getEpk().toByteArray() //epk
       );
-  
+
       //then decrypt c_enc with pkd、esk, get decoded note == ciphertext
       if (notePlaintext.isPresent()) {
         OutgoingPlaintext decryptedOutgoingPlaintext = notePlaintext.get();
-        
+
         Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
         ciphertext.setData(receiveDescription.getCEnc().toByteArray());
         Optional<Note> foo = Note
             .decrypt(ciphertext,
-                    receiveDescription.getEpk().toByteArray(),
-                    decryptedOutgoingPlaintext.getEsk(),
-                    decryptedOutgoingPlaintext.getPkD(),
-                    receiveDescription.getNoteCommitment().toByteArray());
+                receiveDescription.getEpk().toByteArray(),
+                decryptedOutgoingPlaintext.getEsk(),
+                decryptedOutgoingPlaintext.getPkD(),
+                receiveDescription.getNoteCommitment().toByteArray());
 
         if (foo.isPresent()) {
           Note bar = foo.get();

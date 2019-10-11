@@ -19,19 +19,17 @@ public class HttpTestAccount004 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] setAccountIdAddress = ecKey1.getAddress();
+  String setAccountIdKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  Long amount = 10000000L;
+  String accountId;
   private JSONObject responseContent;
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(0);
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] setAccountIdAddress = ecKey1.getAddress();
-  String setAccountIdKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  Long amount = 10000000L;
-  String accountId;
-
 
   /**
    * constructor.
@@ -42,16 +40,14 @@ public class HttpTestAccount004 {
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
 
-
-    response = HttpMethed.setAccountId(httpnode,setAccountIdAddress,
-        System.currentTimeMillis() + "id",false,setAccountIdKey);
+    response = HttpMethed.setAccountId(httpnode, setAccountIdAddress,
+        System.currentTimeMillis() + "id", false, setAccountIdKey);
     Assert.assertFalse(HttpMethed.verificationResult(response));
-
 
     //Set account id.
     accountId = System.currentTimeMillis() + "id";
-    response = HttpMethed.setAccountId(httpnode,setAccountIdAddress,
-        accountId,true,setAccountIdKey);
+    response = HttpMethed.setAccountId(httpnode, setAccountIdAddress,
+        accountId, true, setAccountIdKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
   }
 
@@ -60,13 +56,13 @@ public class HttpTestAccount004 {
    */
   @Test(enabled = true, description = "Get account by id via http")
   public void test2getAccountId() {
-    response = HttpMethed.getAccountById(httpnode,accountId,true);
+    response = HttpMethed.getAccountById(httpnode, accountId, true);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertEquals(responseContent.get("account_id"), accountId);
     Assert.assertTrue(responseContent.size() >= 10);
 
-    response = HttpMethed.getAccountById(httpnode,accountId,false);
+    response = HttpMethed.getAccountById(httpnode, accountId, false);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.size() <= 1);
@@ -79,14 +75,13 @@ public class HttpTestAccount004 {
    */
   @Test(enabled = true, description = "Get account by id via http")
   public void test3getAccountIdFromSolidity() {
-    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
-    response = HttpMethed.getAccountByIdFromSolidity(httpSoliditynode,accountId,true);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    response = HttpMethed.getAccountByIdFromSolidity(httpSoliditynode, accountId, true);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertEquals(responseContent.get("account_id"), accountId);
     Assert.assertTrue(responseContent.size() >= 10);
   }
-
 
 
   /**

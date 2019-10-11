@@ -16,6 +16,11 @@ public class GlobalPreemptibleStrategy extends Strategy {
 
   private Semaphore sp;
 
+  public GlobalPreemptibleStrategy(String paramString) {
+    super(paramString);
+    sp = new Semaphore((Integer) mapParams.get(STRATEGY_PARAM_PERMIT).value);
+  }
+
   // define the default strategy params.
   @Override
   protected Map<String, ParamItem> defaultParam() {
@@ -23,12 +28,6 @@ public class GlobalPreemptibleStrategy extends Strategy {
     map.put(STRATEGY_PARAM_PERMIT, new ParamItem(Integer.class, DEFAULT_PERMIT_NUM));
     return map;
   }
-
-  public GlobalPreemptibleStrategy(String paramString) {
-    super(paramString);
-    sp = new Semaphore((Integer) mapParams.get(STRATEGY_PARAM_PERMIT).value);
-  }
-
 
   public boolean acquire() {
 

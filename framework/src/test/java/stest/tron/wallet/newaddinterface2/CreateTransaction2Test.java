@@ -21,11 +21,11 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -46,7 +46,10 @@ public class CreateTransaction2Test {
       .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
+  //receipt account
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] receiptAccountAddress = ecKey2.getAddress();
+  String receiptAccountKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private ManagedChannel searchChannelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -59,10 +62,10 @@ public class CreateTransaction2Test {
   byte[] sendAccountAddress = ecKey1.getAddress();
   String sendAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-  //receipt account
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] receiptAccountAddress = ecKey2.getAddress();
-  String receiptAccountKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -313,11 +316,6 @@ public class CreateTransaction2Test {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

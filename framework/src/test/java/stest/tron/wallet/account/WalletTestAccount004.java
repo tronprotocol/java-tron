@@ -21,11 +21,11 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
-import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -45,7 +45,7 @@ public class WalletTestAccount004 {
 
 
   private final byte[] noFrozenAddress = PublicMethed.getFinalAddress(noFrozenBalanceTestKey);
-
+  Long freezeAmount = 2000000L;
   private ManagedChannel channelFull = null;
   private ManagedChannel searchChannelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -55,8 +55,10 @@ public class WalletTestAccount004 {
   private String searchFullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
-
-  Long freezeAmount = 2000000L;
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -82,7 +84,6 @@ public class WalletTestAccount004 {
 
 
   }
-
 
   @Test(enabled = true)
   public void testFreezeBalance() {
@@ -311,11 +312,6 @@ public class WalletTestAccount004 {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

@@ -54,6 +54,12 @@ public class ProgramResult {
    */
   private List<CallCreate> callCreateList;
 
+  public static ProgramResult createEmpty() {
+    ProgramResult result = new ProgramResult();
+    result.setHReturn(EMPTY_BYTE_ARRAY);
+    return result;
+  }
+
   public void spendEnergy(long energy) {
     energyUsed += energy;
   }
@@ -70,21 +76,21 @@ public class ProgramResult {
     energyUsed -= energy;
   }
 
+  public byte[] getContractAddress() {
+    return Arrays.copyOf(contractAddress, contractAddress.length);
+  }
+
   public void setContractAddress(byte[] contractAddress) {
     this.contractAddress = Arrays.copyOf(contractAddress, contractAddress.length);
   }
 
-  public byte[] getContractAddress() {
-    return Arrays.copyOf(contractAddress, contractAddress.length);
+  public byte[] getHReturn() {
+    return hReturn;
   }
 
   public void setHReturn(byte[] hReturn) {
     this.hReturn = hReturn;
 
-  }
-
-  public byte[] getHReturn() {
-    return hReturn;
   }
 
   public List<ContractTrigger> getTriggerList() {
@@ -103,12 +109,12 @@ public class ProgramResult {
     return exception;
   }
 
-  public long getEnergyUsed() {
-    return energyUsed;
-  }
-
   public void setException(RuntimeException exception) {
     this.exception = exception;
+  }
+
+  public long getEnergyUsed() {
+    return energyUsed;
   }
 
   public Set<DataWord> getDeleteAccounts() {
@@ -227,12 +233,6 @@ public class ProgramResult {
       addFutureRefund(another.getFutureRefund());
       addTouchAccounts(another.getTouchedAccounts());
     }
-  }
-
-  public static ProgramResult createEmpty() {
-    ProgramResult result = new ProgramResult();
-    result.setHReturn(EMPTY_BYTE_ARRAY);
-    return result;
   }
 
 }

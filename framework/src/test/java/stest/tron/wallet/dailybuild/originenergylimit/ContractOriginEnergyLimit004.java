@@ -19,9 +19,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -32,7 +32,13 @@ public class ContractOriginEnergyLimit004 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
+  byte[] contractAddress = null;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] dev001Address = ecKey1.getAddress();
+  String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] user001Address = ecKey2.getAddress();
+  String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -43,17 +49,6 @@ public class ContractOriginEnergyLimit004 {
       .getStringList("fullnode.ip.list").get(1);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
-  byte[] contractAddress = null;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] dev001Address = ecKey1.getAddress();
-  String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] user001Address = ecKey2.getAddress();
-  String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
 
   @BeforeSuite
   public void beforeSuite() {

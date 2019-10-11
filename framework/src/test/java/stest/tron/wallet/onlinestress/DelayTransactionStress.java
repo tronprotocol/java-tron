@@ -15,57 +15,48 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
+//import org.tron.protos.Protocol.DeferredTransaction;
+
 @Slf4j
 public class DelayTransactionStress {
 
+  public static final long MAX_DEFERRED_TRANSACTION_DELAY_SECONDS = 45 * 24 * 3_600L; //45 days
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
+  Optional<TransactionInfo> infoById = null;
+  //Optional<DeferredTransaction> deferredTransactionById = null;
+  Optional<Transaction> getTransactionById = null;
+  ECKey ecKey = new ECKey(Utils.getRandom());
+  byte[] delayAccount1Address = ecKey.getAddress();
+  String delayAccount1Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] delayAccount2Address = ecKey2.getAddress();
+  String delayAccount2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] receiverAccountAddress = ecKey3.getAddress();
+  String receiverAccountKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+  ECKey ecKey4 = new ECKey(Utils.getRandom());
+  byte[] delayAccount3Address = ecKey4.getAddress();
+  String delayAccount3Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+  ECKey ecKey5 = new ECKey(Utils.getRandom());
+  byte[] receiverAccount4Address = ecKey5.getAddress();
+  String receiverAccount4Key = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private Long delayTransactionFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.delayTransactionFee");
-
-
-  public static final long MAX_DEFERRED_TRANSACTION_DELAY_SECONDS = 45 * 24 * 3_600L; //45 days
-  Optional<TransactionInfo> infoById = null;
-  //Optional<DeferredTransaction> deferredTransactionById = null;
-  Optional<Transaction> getTransactionById = null;
-
-
-  ECKey ecKey = new ECKey(Utils.getRandom());
-  byte[] delayAccount1Address = ecKey.getAddress();
-  String delayAccount1Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] delayAccount2Address = ecKey2.getAddress();
-  String delayAccount2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-  ECKey ecKey3 = new ECKey(Utils.getRandom());
-  byte[] receiverAccountAddress = ecKey3.getAddress();
-  String receiverAccountKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-
-  ECKey ecKey4 = new ECKey(Utils.getRandom());
-  byte[] delayAccount3Address = ecKey4.getAddress();
-  String delayAccount3Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
-
-  ECKey ecKey5 = new ECKey(Utils.getRandom());
-  byte[] receiverAccount4Address = ecKey5.getAddress();
-  String receiverAccount4Key = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -90,12 +81,12 @@ public class DelayTransactionStress {
     String txid = "";
     Integer i = 0;
     String cancelId = "";
-    while (i++  <= 10000000) {
+    while (i++ <= 10000000) {
       ECKey ecKey2 = new ECKey(Utils.getRandom());
       byte[] delayAccount2Address = ecKey2.getAddress();
       String delayAccount2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-      txid = PublicMethed.sendcoinDelayedGetTxid(delayAccount2Address, 1L, 20,fromAddress,
+      txid = PublicMethed.sendcoinDelayedGetTxid(delayAccount2Address, 1L, 20, fromAddress,
           testKey002, blockingStubFull);
       //PublicMethed.waitProduceNextBlock(blockingStubFull);
       if (i % 20 == 0) {
@@ -103,9 +94,9 @@ public class DelayTransactionStress {
         //PublicMethed.sendcoin(delayAccount2Address,1L,fromAddress,testKey002,blockingStubFull);
       }
       if (i % 39 == 0) {
-        PublicMethed.cancelDeferredTransactionById(cancelId,fromAddress,testKey002,
+        PublicMethed.cancelDeferredTransactionById(cancelId, fromAddress, testKey002,
             blockingStubFull);
-        PublicMethed.sendcoin(delayAccount2Address,1L,fromAddress,testKey002,
+        PublicMethed.sendcoin(delayAccount2Address, 1L, fromAddress, testKey002,
             blockingStubFull);
       }
 
@@ -250,7 +241,7 @@ public class DelayTransactionStress {
 
     Long sendCoinAmount = 100000000L;
     //Pre sendcoin to the test account
-    Assert.assertTrue(PublicMethed.sendcoin(delayAccount3Address, sendCoinAmount,fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(delayAccount3Address, sendCoinAmount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -266,7 +257,7 @@ public class DelayTransactionStress {
     logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
     Long delaySecond = 4L;
     Assert.assertFalse(PublicMethed.sendcoinDelayed(receiverAccount4Address, sendCoinAmount,
-        delaySecond,delayAccount3Address, delayAccount3Key, blockingStubFull));
+        delaySecond, delayAccount3Address, delayAccount3Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Query balance after delay send coin.
@@ -281,8 +272,7 @@ public class DelayTransactionStress {
     logger.info("deplayAccountBeforeBalance: " + deplayAccountBeforeBalance);
     logger.info("deplayAccountAfterBalance: " + deplayAccountAfterBalance);
 
-    Assert.assertEquals(deplayAccountBeforeBalance,deplayAccountAfterBalance);
-
+    Assert.assertEquals(deplayAccountBeforeBalance, deplayAccountAfterBalance);
 
     logger.info("----------------No balance to create account send coin--------------------");
     //Test delay send coin to create account.
@@ -294,7 +284,7 @@ public class DelayTransactionStress {
     logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
     Long createAccountFee = 100000L;
     Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address,
-        deplayAccountBeforeBalance - createAccountFee, delaySecond,delayAccount3Address,
+        deplayAccountBeforeBalance - createAccountFee, delaySecond, delayAccount3Address,
         delayAccount3Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -309,7 +299,6 @@ public class DelayTransactionStress {
     Assert.assertTrue(recevierAccountAfterDelayalance == 0);
     Assert.assertTrue(deplayAccountBeforeBalance - deplayAccountAfterBalance == 100000);
 
-
     logger.info("---------------Balance enough to create account send coin--------------------");
     //Test delay send coin to create account.
     createAccountFee = 100000L;
@@ -321,7 +310,7 @@ public class DelayTransactionStress {
     logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
     Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address,
         deplayAccountBeforeBalance - createAccountFee - delayTransactionFee,
-        delaySecond,delayAccount3Address, delayAccount3Key, blockingStubFull));
+        delaySecond, delayAccount3Address, delayAccount3Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -338,8 +327,6 @@ public class DelayTransactionStress {
     Assert.assertEquals(recevierAccountAfterDelayalance, receiverBalanceShouldBe);
     Assert.assertTrue(deplayAccountAfterBalance == 0);
   }
-
-
 
 
   /**

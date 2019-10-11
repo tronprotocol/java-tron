@@ -48,10 +48,7 @@ import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 @Slf4j
 public class ShieldedTransferActuatorTest {
 
-  private static Wallet wallet;
-  private static Manager dbManager;
   private static final String dbPath = "output_shield_transfer_test";
-  private static TronApplicationContext context;
   private static final String PUBLIC_ADDRESS_ONE;
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final String PUBLIC_ADDRESS_TWO;
@@ -62,8 +59,6 @@ public class ShieldedTransferActuatorTest {
   private static final long TO_BALANCE = 100001000000L;
   private static final String INVAILID_ADDRESS = "aaaa";
   private static final byte[] DEFAULT_OVK;
-
-
   private static final long tokenId = 1;
   private static final String ASSET_NAME = "trx";
   private static final int TRX_NUM = 10;
@@ -73,6 +68,9 @@ public class ShieldedTransferActuatorTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static Wallet wallet;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -112,6 +110,10 @@ public class ShieldedTransferActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
+  }
+
+  private static void librustzcashInitZksnarkParams() throws ZksnarkException {
+    FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
   /**
@@ -157,10 +159,6 @@ public class ShieldedTransferActuatorTest {
             AccountType.Normal,
             TO_BALANCE);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
-  }
-
-  private static void librustzcashInitZksnarkParams() throws ZksnarkException {
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
   private TransactionCapsule getPublicToShieldedTransaction() throws Exception {

@@ -2,7 +2,6 @@ package stest.tron.wallet.dailybuild.multisign;
 
 import static org.hamcrest.core.StringContains.containsString;
 
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.List;
@@ -116,7 +115,7 @@ public class MultiSign34 {
             containsString("PERMISSION_ERROR"));
     Assert
         .assertThat(transactionSignWeight.getResult().getMessage(),
-          containsString("Permission for this, does not exist!"));
+            containsString("Permission for this, does not exist!"));
 
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
@@ -155,7 +154,7 @@ public class MultiSign34 {
             containsString("PERMISSION_ERROR"));
     Assert
         .assertThat(transactionSignWeight.getResult().getMessage(),
-          containsString("Permission for this, does not exist!"));
+            containsString("Permission for this, does not exist!"));
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
     logger.info("returnResult1:" + returnResult1);

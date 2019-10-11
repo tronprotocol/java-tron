@@ -9,7 +9,6 @@ import org.tron.common.utils.ForkUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -37,24 +36,25 @@ public class ReceiptCapsule {
     this.receiptAddress = receiptAddress;
   }
 
-  public void setReceipt(ResourceReceipt receipt) {
-    this.receipt = receipt;
+  public static ResourceReceipt copyReceipt(ReceiptCapsule origin) {
+    return origin.getReceipt().toBuilder().build();
+  }
+
+  private static boolean checkForEnergyLimit(DynamicPropertiesStore ds) {
+    long blockNum = ds.getLatestBlockHeaderNumber();
+    return blockNum >= DBConfig.getBlockNumForEneryLimit();
   }
 
   public ResourceReceipt getReceipt() {
     return this.receipt;
   }
 
+  public void setReceipt(ResourceReceipt receipt) {
+    this.receipt = receipt;
+  }
+
   public Sha256Hash getReceiptAddress() {
     return this.receiptAddress;
-  }
-
-  public void setNetUsage(long netUsage) {
-    this.receipt = this.receipt.toBuilder().setNetUsage(netUsage).build();
-  }
-
-  public void setNetFee(long netFee) {
-    this.receipt = this.receipt.toBuilder().setNetFee(netFee).build();
   }
 
   public void addNetFee(long netFee) {
@@ -65,12 +65,12 @@ public class ReceiptCapsule {
     return this.receipt.getEnergyUsage();
   }
 
-  public long getEnergyFee() {
-    return this.receipt.getEnergyFee();
-  }
-
   public void setEnergyUsage(long energyUsage) {
     this.receipt = this.receipt.toBuilder().setEnergyUsage(energyUsage).build();
+  }
+
+  public long getEnergyFee() {
+    return this.receipt.getEnergyFee();
   }
 
   public void setEnergyFee(long energyFee) {
@@ -81,12 +81,12 @@ public class ReceiptCapsule {
     return this.receipt.getOriginEnergyUsage();
   }
 
-  public long getEnergyUsageTotal() {
-    return this.receipt.getEnergyUsageTotal();
-  }
-
   public void setOriginEnergyUsage(long energyUsage) {
     this.receipt = this.receipt.toBuilder().setOriginEnergyUsage(energyUsage).build();
+  }
+
+  public long getEnergyUsageTotal() {
+    return this.receipt.getEnergyUsageTotal();
   }
 
   public void setEnergyUsageTotal(long energyUsage) {
@@ -97,15 +97,23 @@ public class ReceiptCapsule {
     return this.receipt.getNetUsage();
   }
 
+  public void setNetUsage(long netUsage) {
+    this.receipt = this.receipt.toBuilder().setNetUsage(netUsage).build();
+  }
+
   public long getNetFee() {
     return this.receipt.getNetFee();
+  }
+
+  public void setNetFee(long netFee) {
+    this.receipt = this.receipt.toBuilder().setNetFee(netFee).build();
   }
 
   /**
    * payEnergyBill pay receipt energy bill by energy processor.
    */
   public void payEnergyBill(DynamicPropertiesStore dynamicPropertiesStore,
-      AccountStore accountStore,  ForkUtils forkUtils, AccountCapsule origin, AccountCapsule caller,
+      AccountStore accountStore, ForkUtils forkUtils, AccountCapsule origin, AccountCapsule caller,
       long percent, long originEnergyLimit, EnergyProcessor energyProcessor, long now)
       throws BalanceInsufficientException {
     if (receipt.getEnergyUsageTotal() <= 0) {
@@ -113,15 +121,18 @@ public class ReceiptCapsule {
     }
 
     if (Objects.isNull(origin) && dynamicPropertiesStore.getAllowTvmConstantinople() == 1) {
-      payEnergyBill(dynamicPropertiesStore, accountStore, forkUtils, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
+      payEnergyBill(dynamicPropertiesStore, accountStore, forkUtils, caller,
+          receipt.getEnergyUsageTotal(), energyProcessor, now);
       return;
     }
 
     if (caller.getAddress().equals(origin.getAddress())) {
-      payEnergyBill(dynamicPropertiesStore, accountStore, forkUtils, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
+      payEnergyBill(dynamicPropertiesStore, accountStore, forkUtils, caller,
+          receipt.getEnergyUsageTotal(), energyProcessor, now);
     } else {
       long originUsage = Math.multiplyExact(receipt.getEnergyUsageTotal(), percent) / 100;
-      originUsage = getOriginUsage(dynamicPropertiesStore, origin, originEnergyLimit, energyProcessor,
+      originUsage = getOriginUsage(dynamicPropertiesStore, origin, originEnergyLimit,
+          energyProcessor,
           originUsage);
 
       long callerUsage = receipt.getEnergyUsageTotal() - originUsage;
@@ -156,9 +167,10 @@ public class ReceiptCapsule {
     } else {
       energyProcessor.useEnergy(account, accountEnergyLeft, now);
 
-      if(forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6_5) &&
+      if (forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6_5) &&
           dynamicPropertiesStore.getAllowAdaptiveEnergy() == 1) {
-        long blockEnergyUsage = dynamicPropertiesStore.getBlockEnergyUsage() + (usage - accountEnergyLeft);
+        long blockEnergyUsage =
+            dynamicPropertiesStore.getBlockEnergyUsage() + (usage - accountEnergyLeft);
         dynamicPropertiesStore.saveBlockEnergyUsage(blockEnergyUsage);
       }
 
@@ -186,20 +198,11 @@ public class ReceiptCapsule {
     accountStore.put(account.getAddress().toByteArray(), account);
   }
 
-  public static ResourceReceipt copyReceipt(ReceiptCapsule origin) {
-    return origin.getReceipt().toBuilder().build();
-  }
-
-  public void setResult(contractResult success) {
-    this.receipt = receipt.toBuilder().setResult(success).build();
-  }
-
   public contractResult getResult() {
     return this.receipt.getResult();
   }
 
-  private static boolean checkForEnergyLimit(DynamicPropertiesStore ds) {
-    long blockNum = ds.getLatestBlockHeaderNumber();
-    return blockNum >= DBConfig.getBlockNumForEneryLimit();
+  public void setResult(contractResult success) {
+    this.receipt = receipt.toBuilder().setResult(success).build();
   }
 }

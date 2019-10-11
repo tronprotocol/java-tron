@@ -27,6 +27,11 @@ import org.tron.core.vm.repository.Repository;
 @Slf4j
 public class ProgramInvokeImpl implements ProgramInvoke {
 
+  /*****************/
+  /* NOTE: In the protocol there is no restriction on the maximum message data,
+   * However msgData here is a byte[] and this can't hold more than 2^32-1
+   */
+  private static final BigInteger MAX_MSG_DATA = BigInteger.valueOf(Integer.MAX_VALUE);
   /* TRANSACTION  env*/
   private final DataWord address;
   private final DataWord origin;
@@ -35,19 +40,15 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private final DataWord callValue;
   private final DataWord tokenValue;
   private final DataWord tokenId;
-
-  private byte[] msgData;
-
-  private long vmStartInUs;
-  private long vmShouldEndInUs;
-  private long energyLimit;
-
   /* BLOCK  env **/
   private final DataWord prevHash;
   private final DataWord coinbase;
   private final DataWord timestamp;
   private final DataWord number;
-
+  private byte[] msgData;
+  private long vmStartInUs;
+  private long vmShouldEndInUs;
+  private long energyLimit;
   private Repository deposit;
   private boolean byTransaction = true;
   private boolean byTestingSuite = false;
@@ -156,18 +157,13 @@ public class ProgramInvokeImpl implements ProgramInvoke {
     return tokenValue;
   }
 
+  /*****************/
+  /***  msg data ***/
+
   /*          TOKENID op     */
   public DataWord getTokenId() {
     return tokenId;
   }
-
-  /*****************/
-  /***  msg data ***/
-  /*****************/
-  /* NOTE: In the protocol there is no restriction on the maximum message data,
-   * However msgData here is a byte[] and this can't hold more than 2^32-1
-   */
-  private static final BigInteger MAX_MSG_DATA = BigInteger.valueOf(Integer.MAX_VALUE);
 
   /*     CALLDATALOAD  op   */
   public DataWord getDataValue(DataWord indexData) {

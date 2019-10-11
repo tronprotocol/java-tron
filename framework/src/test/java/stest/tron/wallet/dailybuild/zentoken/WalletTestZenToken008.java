@@ -31,6 +31,7 @@ import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
 @Slf4j
 public class WalletTestZenToken008 {
 
+  private static ByteString assetAccountId = null;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -43,8 +44,9 @@ public class WalletTestZenToken008 {
   String memo;
   Note sendNote;
   Note receiverNote;
-  private static ByteString assetAccountId = null;
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private ManagedChannel channelSolidity = null;
@@ -67,10 +69,6 @@ public class WalletTestZenToken008 {
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 1 * zenTokenFee + 1;
   private Long sendTokenAmount = 1 * zenTokenFee;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   /**
    * constructor.
@@ -177,7 +175,6 @@ public class WalletTestZenToken008 {
         shieldOutList,
         null, 0,
         zenTokenOwnerKey, blockingStubFull));
-
 
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     shieldOutList.clear();

@@ -50,41 +50,33 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
-//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+
+//import org.tron.protos.Protocol.DeferredTransaction;
 
 @Slf4j
 public class WalletTest {
 
-  private static TronApplicationContext context;
-  private static Wallet wallet;
-  private static Manager manager;
-  private static String dbPath = "output_wallet_test";
   public static final String ACCOUNT_ADDRESS_ONE = "121212a9cf";
   public static final String ACCOUNT_ADDRESS_TWO = "232323a9cf";
   public static final String ACCOUNT_ADDRESS_THREE = "343434a9cf";
   public static final String ACCOUNT_ADDRESS_FOUR = "454545a9cf";
   public static final String ACCOUNT_ADDRESS_FIVE = "565656a9cf";
   public static final String ACCOUNT_ADDRESS_SIX = "12344349cf";
-  private static Block block1;
-  private static Block block2;
-  private static Block block3;
-  private static Block block4;
-  private static Block block5;
   public static final long BLOCK_NUM_ONE = 1;
   public static final long BLOCK_NUM_TWO = 2;
   public static final long BLOCK_NUM_THREE = 3;
@@ -100,18 +92,27 @@ public class WalletTest {
   public static final long BLOCK_WITNESS_THREE = 14;
   public static final long BLOCK_WITNESS_FOUR = 15;
   public static final long BLOCK_WITNESS_FIVE = 16;
-  private static Transaction transaction1;
-  private static Transaction transaction2;
-  private static Transaction transaction3;
-  private static Transaction transaction4;
-  private static Transaction transaction5;
-  private static Transaction transaction6;
   //private static DeferredTransaction deferredTransaction;
   public static final long TRANSACTION_TIMESTAMP_ONE = DateTime.now().minusDays(4).getMillis();
   public static final long TRANSACTION_TIMESTAMP_TWO = DateTime.now().minusDays(3).getMillis();
   public static final long TRANSACTION_TIMESTAMP_THREE = DateTime.now().minusDays(2).getMillis();
   public static final long TRANSACTION_TIMESTAMP_FOUR = DateTime.now().minusDays(1).getMillis();
   public static final long TRANSACTION_TIMESTAMP_FIVE = DateTime.now().getMillis();
+  private static TronApplicationContext context;
+  private static Wallet wallet;
+  private static Manager manager;
+  private static String dbPath = "output_wallet_test";
+  private static Block block1;
+  private static Block block2;
+  private static Block block3;
+  private static Block block4;
+  private static Block block5;
+  private static Transaction transaction1;
+  private static Transaction transaction2;
+  private static Transaction transaction3;
+  private static Transaction transaction4;
+  private static Transaction transaction5;
+  private static Transaction transaction6;
   private static AssetIssueCapsule Asset1;
 
   static {
@@ -169,7 +170,7 @@ public class WalletTest {
         .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
   }
 
-  private static void   addTransactionInfoToStore(Transaction transaction) {
+  private static void addTransactionInfoToStore(Transaction transaction) {
     TransactionInfoCapsule transactionInfo = new TransactionInfoCapsule();
     byte[] trxId = transaction.getRawData().toByteArray();
     transactionInfo.setId(trxId);

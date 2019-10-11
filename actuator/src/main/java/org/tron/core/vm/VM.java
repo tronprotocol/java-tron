@@ -36,13 +36,11 @@ import org.tron.core.vm.program.Stack;
 @Slf4j(topic = "VM")
 public class VM {
 
+  public static final String ADDRESS_LOG = "address: ";
   private static final BigInteger _32_ = BigInteger.valueOf(32);
   private static final String ENERGY_LOG_FORMATE = "{} Op:[{}]  Energy:[{}] Deep:[{}] Hint:[{}]";
-
   // 3MB
   private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
-  public static final String ADDRESS_LOG = "address: ";
-
   private final VMConfig config;
 
   public VM() {
@@ -51,6 +49,18 @@ public class VM {
 
   public VM(VMConfig config) {
     this.config = config;
+  }
+
+  /**
+   * Utility to calculate new total memory size needed for an operation. <br/> Basically just offset
+   * + size, unless size is 0, in which case the result is also 0.
+   *
+   * @param offset starting position of the memory
+   * @param size number of bytes needed
+   * @return offset + size, unless size is 0. In that case memNeeded is also 0.
+   */
+  private static BigInteger memNeeded(DataWord offset, DataWord size) {
+    return size.isZero() ? BigInteger.ZERO : offset.value().add(size.value());
   }
 
   private void checkMemorySize(OpCode op, BigInteger newMemSize) {
@@ -1474,17 +1484,5 @@ public class VM {
   private boolean isDeadAccount(Program program, DataWord address) {
     return program.getContractState().getAccount(convertToTronAddress(address.getLast20Bytes()))
         == null;
-  }
-
-  /**
-   * Utility to calculate new total memory size needed for an operation. <br/> Basically just offset
-   * + size, unless size is 0, in which case the result is also 0.
-   *
-   * @param offset starting position of the memory
-   * @param size number of bytes needed
-   * @return offset + size, unless size is 0. In that case memNeeded is also 0.
-   */
-  private static BigInteger memNeeded(DataWord offset, DataWord size) {
-    return size.isZero() ? BigInteger.ZERO : offset.value().add(size.value());
   }
 }

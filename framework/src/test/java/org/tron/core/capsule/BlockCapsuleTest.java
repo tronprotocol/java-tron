@@ -14,8 +14,8 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
-import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j
 public class BlockCapsuleTest {

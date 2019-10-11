@@ -90,6 +90,10 @@ public class RepositoryImpl implements Repository {
     init(storeFactory, repository);
   }
 
+  public static RepositoryImpl createRoot(StoreFactory storeFactory) {
+    return new RepositoryImpl(storeFactory, null);
+  }
+
   protected void init(StoreFactory storeFactory, RepositoryImpl parent) {
     if (storeFactory != null) {
       try {
@@ -117,7 +121,6 @@ public class RepositoryImpl implements Repository {
     return new RepositoryImpl(storeFactory, this);
   }
 
-
   @Override
   public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
@@ -130,7 +133,6 @@ public class RepositoryImpl implements Repository {
 
     return max(energyLimit - newEnergyUsage, 0); // us
   }
-
 
   @Override
   public AssetIssueCapsule getAssetIssue(byte[] tokenId) {
@@ -394,7 +396,6 @@ public class RepositoryImpl implements Repository {
     return accountCapsule.getBalance();
   }
 
-
   @Override
   public void setParent(Repository repository) {
     parent = repository;
@@ -416,7 +417,6 @@ public class RepositoryImpl implements Repository {
   public void putAccount(Key key, Value value) {
     accountCache.put(key, value);
   }
-
 
   @Override
   public void putCode(Key key, Value value) {
@@ -501,7 +501,6 @@ public class RepositoryImpl implements Repository {
     }
   }
 
-
   private long increase(long lastUsage, long usage, long lastTime, long now) {
     return increase(lastUsage, usage, lastTime, now, windowSize);
   }
@@ -553,7 +552,6 @@ public class RepositoryImpl implements Repository {
         / BLOCK_PRODUCED_INTERVAL;
   }
 
-
   private void commitAccountCache(Repository deposit) {
     accountCache.forEach((key, value) -> {
       if (value.getType().isCreate() || value.getType().isDirty()) {
@@ -601,11 +599,6 @@ public class RepositoryImpl implements Repository {
       }
     });
 
-  }
-
-
-  public static RepositoryImpl createRoot(StoreFactory storeFactory) {
-    return new RepositoryImpl(storeFactory, null);
   }
 
   /**

@@ -618,6 +618,7 @@ public class MultiSign04 {
   public void aftertest() {
     PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
   }
+
   /**
    * constructor.
    */

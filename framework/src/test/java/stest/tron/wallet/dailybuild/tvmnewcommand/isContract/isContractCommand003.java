@@ -31,29 +31,22 @@ public class isContractCommand003 {
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
+  byte[] contractAddress = null;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] contractExcAddress = ecKey1.getAddress();
+  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  byte[] selfdestructContractExcAddress = ecKey1.getAddress();
+  String selfdestructContractKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
-
-  byte[] contractAddress = null;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contractExcAddress = ecKey1.getAddress();
-  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  byte[] selfdestructContractExcAddress = ecKey1.getAddress();
-  String selfdestructContractKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
 
   @BeforeSuite
   public void beforeSuite() {

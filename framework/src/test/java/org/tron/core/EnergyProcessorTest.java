@@ -24,12 +24,12 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 @Slf4j
 public class EnergyProcessorTest {
 
-  private static Manager dbManager;
   private static final String dbPath = "EnergyProcessorTest";
-  private static TronApplicationContext context;
   private static final String ASSET_NAME;
   private static final String CONTRACT_PROVIDER_ADDRESS;
   private static final String USER_ADDRESS;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);

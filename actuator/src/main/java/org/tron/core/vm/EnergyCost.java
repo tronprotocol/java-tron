@@ -3,11 +3,11 @@ package org.tron.core.vm;
 
 public class EnergyCost {
 
+  private static EnergyCost instance = null;
   /* backwards compatibility, remove eventually */
   private final int STEP = 1;
-  private final int SSTORE = 300;
   /* backwards compatibility, remove eventually */
-
+  private final int SSTORE = 300;
   private final int ZEROSTEP = 0;
   private final int QUICKSTEP = 2;
   private final int FASTESTSTEP = 3;
@@ -15,11 +15,8 @@ public class EnergyCost {
   private final int MIDSTEP = 8;
   private final int SLOWSTEP = 10;
   private final int EXTSTEP = 20;
-
   private final int GENESISENERGYLIMIT = 1000000;
   private final int MINENERGYLIMIT = 125000;
-
-
   private final int BALANCE = 20;
   private final int SHA3 = 30;
   private final int SHA3_WORD = 6;
@@ -31,7 +28,6 @@ public class EnergyCost {
   private final int RESET_SSTORE = 5000;
   private final int REFUND_SSTORE = 15000;
   private final int CREATE = 32000;
-
   private final int JUMPDEST = 1;
   private final int CREATE_DATA_BYTE = 5;
   private final int CALL = 40;
@@ -63,6 +59,14 @@ public class EnergyCost {
   private final int EXT_CODE_COPY = 20;
   private final int EXT_CODE_HASH = 400;
   private final int NEW_ACCT_SUICIDE = 0;
+
+  public static EnergyCost getInstance() {
+    if (instance == null) {
+      instance = new EnergyCost();
+    }
+
+    return instance;
+  }
 
   public int getSTEP() {
     return STEP;
@@ -274,15 +278,5 @@ public class EnergyCost {
 
   public int getEXT_CODE_HASH() {
     return EXT_CODE_HASH;
-  }
-
-  private static EnergyCost instance = null;
-
-  public static EnergyCost getInstance() {
-    if (instance == null) {
-      instance = new EnergyCost();
-    }
-
-    return instance;
   }
 }

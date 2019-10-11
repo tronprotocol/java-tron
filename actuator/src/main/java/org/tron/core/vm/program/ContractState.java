@@ -37,9 +37,9 @@ import org.tron.protos.Protocol.AccountType;
 
 public class ContractState implements Repository, ProgramListenerAware {
 
-  private Repository repository;
   // contract address
   private final DataWord address;
+  private Repository repository;
   private ProgramListener programListener;
 
   ContractState(ProgramInvoke programInvoke) {

@@ -3,7 +3,6 @@ package org.tron.core.net.messagehandler;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;

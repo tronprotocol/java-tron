@@ -44,6 +44,10 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     this.assetIssueContract = assetIssueContract;
   }
 
+  public static String createDbKeyString(String name, long order) {
+    return name + "_" + order;
+  }
+
   public byte[] getData() {
     return this.assetIssueContract.toByteArray();
   }
@@ -62,14 +66,18 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     return this.assetIssueContract.getName();
   }
 
+  public String getId() {
+    return this.assetIssueContract.getId();
+  }
+
   public void setId(String id) {
     this.assetIssueContract = this.assetIssueContract.toBuilder()
         .setId(id)
         .build();
   }
 
-  public String getId() {
-    return this.assetIssueContract.getId();
+  public int getPrecision() {
+    return this.assetIssueContract.getPrecision();
   }
 
   public void setPrecision(int precision) {
@@ -78,18 +86,14 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
         .build();
   }
 
-  public int getPrecision() {
-    return this.assetIssueContract.getPrecision();
+  public long getOrder() {
+    return this.assetIssueContract.getOrder();
   }
 
   public void setOrder(long order) {
     this.assetIssueContract = this.assetIssueContract.toBuilder()
         .setOrder(order)
         .build();
-  }
-
-  public long getOrder() {
-    return this.assetIssueContract.getOrder();
   }
 
   public byte[] createDbV2Key() {
@@ -113,10 +117,6 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     } else {
       return createDbV2Key();
     }
-  }
-
-  public static String createDbKeyString(String name, long order) {
-    return name + "_" + order;
   }
 
   public int getNum() {

@@ -17,9 +17,11 @@
  */
 package org.tron.common.crypto.zksnark;
 
-import java.math.BigInteger;
+import static org.tron.common.crypto.zksnark.Params.R;
+import static org.tron.common.crypto.zksnark.Params.TWIST_MUL_BY_P_X;
+import static org.tron.common.crypto.zksnark.Params.TWIST_MUL_BY_P_Y;
 
-import static org.tron.common.crypto.zksnark.Params.*;
+import java.math.BigInteger;
 
 /**
  * Implementation of specific cyclic subgroup of points belonging to {@link BN128Fp2} <br/> Members
@@ -37,17 +39,14 @@ import static org.tron.common.crypto.zksnark.Params.*;
  */
 public class BN128G2 extends BN128Fp2 {
 
+  static final BigInteger FR_NEG_ONE = BigInteger.ONE.negate().mod(R);
+
   BN128G2(BN128<Fp2> p) {
     super(p.x, p.y, p.z);
   }
 
   BN128G2(Fp2 x, Fp2 y, Fp2 z) {
     super(x, y, z);
-  }
-
-  @Override
-  public BN128G2 toAffine() {
-    return new BN128G2(super.toAffine());
   }
 
   /**
@@ -76,7 +75,10 @@ public class BN128G2 extends BN128Fp2 {
     return left.isZero(); // should satisfy condition: -1 * p + p == 0, where -1 belongs to F_r
   }
 
-  static final BigInteger FR_NEG_ONE = BigInteger.ONE.negate().mod(R);
+  @Override
+  public BN128G2 toAffine() {
+    return new BN128G2(super.toAffine());
+  }
 
   BN128G2 mulByP() {
 

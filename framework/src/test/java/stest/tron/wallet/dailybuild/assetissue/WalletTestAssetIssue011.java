@@ -23,39 +23,32 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAssetIssue011 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = now;
+  private static final long sendAmount = 10000000000L;
+  private static final String updateMostLongName = Long.toString(now) + "w234567890123456789";
+  private static String name = "testAssetIssue011_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-  private static final long now = System.currentTimeMillis();
-  private static String name = "testAssetIssue011_" + Long.toString(now);
-  private static final long totalSupply = now;
-  private static final long sendAmount = 10000000000L;
-  private static final String updateMostLongName = Long.toString(now) + "w234567890123456789";
-
   Long freeAssetNetLimit = 10000L;
   Long publicFreeAssetNetLimit = 10000L;
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
-
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
-
   //get account
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] asset011Address = ecKey1.getAddress();
   String testKeyForAssetIssue011 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] transferAssetCreateAddress = ecKey2.getAddress();
   String transferAssetCreateKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
 
   @BeforeSuite
   public void beforeSuite() {

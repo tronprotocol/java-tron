@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.services.http.ScanAndMarkNoteByIvkServlet;
-import org.tron.core.services.http.ScanNoteByIvkServlet;
 import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 

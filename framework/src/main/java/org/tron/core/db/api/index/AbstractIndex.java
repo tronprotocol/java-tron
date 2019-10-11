@@ -13,16 +13,16 @@ import java.util.Objects;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.api.index.Index.Iface;
-import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db.common.WrappedResultSet;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.ITronChainBase;
 
 public abstract class AbstractIndex<E extends ProtoCapsule<T>, T> implements Iface<T> {
 
   protected ITronChainBase<E> database;
   protected ConcurrentIndexedCollection<WrappedByteArray> index;
-  private File parent = new File(Args.getInstance().getOutputDirectory() + "index");
   protected File indexPath;
+  private File parent = new File(Args.getInstance().getOutputDirectory() + "index");
 
   public AbstractIndex() {
     if (!parent.exists()) {

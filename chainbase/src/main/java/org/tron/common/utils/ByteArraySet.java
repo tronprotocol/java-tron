@@ -27,6 +27,7 @@ import org.tron.core.db.ByteArrayWrapper;
 
 
 public class ByteArraySet implements Set<byte[]> {
+
   private static final String RUNTIME_EXCEPTION_MSG = "Not implemented";
 
   private Set<ByteArrayWrapper> delegate;

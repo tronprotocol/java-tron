@@ -73,7 +73,8 @@ public class JsonFormat {
       "[0-9]",
       Pattern.CASE_INSENSITIVE);
   private static final String WRITING_STRING_BUILDER_EXCEPTION
-          = "Writing to a StringBuilder threw an IOException (should never happen).";
+      = "Writing to a StringBuilder threw an IOException (should never happen).";
+
   /**
    * Outputs a textual representation of the Protocol Message supplied into the parameter output.
    * (This representation is the new version of the classic "ProtocolPrinter" output from the

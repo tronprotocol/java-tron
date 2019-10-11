@@ -30,7 +30,19 @@ public class ContractLinkage006 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey003);
-
+  String contractName;
+  String code;
+  String abi;
+  byte[] contractAddress;
+  String txid;
+  Optional<TransactionInfo> infoById;
+  String initParmes;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] linkage006Address = ecKey1.getAddress();
+  String linkage006Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] linkage006Address2 = ecKey2.getAddress();
+  String linkage006Key2 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
@@ -41,21 +53,6 @@ public class ContractLinkage006 {
       .getStringList("fullnode.ip.list").get(0);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
-  String contractName;
-  String code;
-  String abi;
-  byte[] contractAddress;
-  String txid;
-  Optional<TransactionInfo> infoById;
-  String initParmes;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] linkage006Address = ecKey1.getAddress();
-  String linkage006Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] linkage006Address2 = ecKey2.getAddress();
-  String linkage006Key2 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {

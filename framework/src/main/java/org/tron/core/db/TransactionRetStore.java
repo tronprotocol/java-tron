@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 
 @Slf4j(topic = "DB")
 @Component
-public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCapsule>  {
+public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCapsule> {
 
   @Autowired
   private TransactionStore transactionStore;

@@ -1,4 +1,3 @@
-
 package org.tron.core.capsule.utils;
 
 import static java.util.Arrays.copyOfRange;
@@ -19,31 +18,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.Value;
 
 /**
- * Recursive Length Prefix (RLP) encoding.
- * <p>
- * The purpose of RLP is to encode arbitrarily nested arrays of binary data, and RLP is the main
- * encoding method used to serialize objects in Ethereum. The only purpose of RLP is to encode
- * structure; encoding specific atomic data types (eg. strings, integers, floats) is left up to
- * higher-order protocols; in Ethereum the standard is that integers are represented in big endian
- * binary form. If one wishes to use RLP to encode a dictionary, the two suggested canonical forms
- * are to either use [[k1,v1],[k2,v2]...] with keys in lexicographic order or to use the
- * higher-level Patricia Tree encoding as Ethereum does.
- * <p>
- * The RLP encoding function takes in an item. An item is defined as follows:
- * <p>
- * - A string (ie. byte array) is an item - A list of items is an item
- * <p>
- * For example, an empty string is an item, as is the string containing the word "cat", a list
- * containing any number of strings, as well as more complex data structures like
- * ["cat",["puppy","cow"],"horse",[[]],"pig",[""],"sheep"]. Note that in the context of the rest of
- * this article, "string" will be used as a synonym for "a certain number of bytes of binary data";
- * no special encodings are used and no knowledge about the content of the strings is implied.
- * <p>
- * See: https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-RLP
+ * Recursive Length Prefix (RLP) encoding. <p> The purpose of RLP is to encode arbitrarily nested
+ * arrays of binary data, and RLP is the main encoding method used to serialize objects in Ethereum.
+ * The only purpose of RLP is to encode structure; encoding specific atomic data types (eg. strings,
+ * integers, floats) is left up to higher-order protocols; in Ethereum the standard is that integers
+ * are represented in big endian binary form. If one wishes to use RLP to encode a dictionary, the
+ * two suggested canonical forms are to either use [[k1,v1],[k2,v2]...] with keys in lexicographic
+ * order or to use the higher-level Patricia Tree encoding as Ethereum does. <p> The RLP encoding
+ * function takes in an item. An item is defined as follows: <p> - A string (ie. byte array) is an
+ * item - A list of items is an item <p> For example, an empty string is an item, as is the string
+ * containing the word "cat", a list containing any number of strings, as well as more complex data
+ * structures like ["cat",["puppy","cow"],"horse",[[]],"pig",[""],"sheep"]. Note that in the context
+ * of the rest of this article, "string" will be used as a synonym for "a certain number of bytes of
+ * binary data"; no special encodings are used and no knowledge about the content of the strings is
+ * implied. <p> See: https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-RLP
  *
  * @author Roman Mandeleil
  * @since 01.04.2014
@@ -51,17 +42,11 @@ import org.tron.common.utils.Value;
 public class RLP {
 
   private static final Logger logger = LoggerFactory.getLogger("rlp");
-
-
-  public static final byte[] EMPTY_ELEMENT_RLP = encodeElement(new byte[0]);
-
   private static final int MAX_DEPTH = 16;
-
   /**
    * Allow for content up to size of 2^64 bytes *
    */
   private static final double MAX_ITEM_LENGTH = Math.pow(256, 8);
-
   /**
    * Reason for threshold according to Vitalik Buterin: - 56 bytes maximizes the benefit of both
    * options - if we went with 60 then we would have only had 4 slots for long strings so RLP would
@@ -70,14 +55,6 @@ public class RLP {
    * the cutoff - also, that's where Bitcoin's varint does the cutof
    */
   private static final int SIZE_THRESHOLD = 56;
-
-  /** RLP encoding rules are defined as follows: */
-
-  /*
-   * For a single byte whose value is in the [0x00, 0x7f] range, that byte is
-   * its own RLP encoding.
-   */
-
   /**
    * [0x80] If a string is 0-55 bytes long, the RLP encoding consists of a single byte with value
    * 0x80 plus the length of the string followed by the string. The range of the first byte is thus
@@ -85,6 +62,12 @@ public class RLP {
    */
   private static final int OFFSET_SHORT_ITEM = 0x80;
 
+  /** RLP encoding rules are defined as follows: */
+
+  /*
+   * For a single byte whose value is in the [0x00, 0x7f] range, that byte is
+   * its own RLP encoding.
+   */
   /**
    * [0xb7] If a string is more than 55 bytes long, the RLP encoding consists of a single byte with
    * value 0xb7 plus the length of the length of the string in binary form, followed by the length
@@ -92,7 +75,7 @@ public class RLP {
    * \xb9\x04\x00 followed by the string. The range of the first byte is thus [0xb8, 0xbf].
    */
   private static final int OFFSET_LONG_ITEM = 0xb7;
-
+  public static final byte[] EMPTY_ELEMENT_RLP = encodeElement(new byte[0]);
   /**
    * [0xc0] If the total payload of a list (i.e. the combined length of all its items) is 0-55 bytes
    * long, the RLP encoding consists of a single byte with value 0xc0 plus the length of the list
@@ -676,52 +659,6 @@ public class RLP {
     }
   }
 
-  public static final class LList {
-
-    private final byte[] rlp;
-    private final int[] offsets = new int[32];
-    private final int[] lens = new int[32];
-    private int cnt;
-
-    public LList(byte[] rlp) {
-      this.rlp = rlp;
-    }
-
-    public byte[] getEncoded() {
-      byte encoded[][] = new byte[cnt][];
-      for (int i = 0; i < cnt; i++) {
-        encoded[i] = encodeElement(getBytes(i));
-      }
-      return encodeList(encoded);
-    }
-
-    public void add(int off, int len, boolean isList) {
-      offsets[cnt] = off;
-      lens[cnt] = isList ? (-1 - len) : len;
-      cnt++;
-    }
-
-    public byte[] getBytes(int idx) {
-      int len = lens[idx];
-      len = len < 0 ? (-len - 1) : len;
-      byte[] ret = new byte[len];
-      System.arraycopy(rlp, offsets[idx], ret, 0, len);
-      return ret;
-    }
-
-    public LList getList(int idx) {
-      return decodeLazyList(rlp, offsets[idx], -lens[idx] - 1);
-    }
-
-    public boolean isList(int idx) {
-      return lens[idx] < 0;
-    }
-
-    public int size() {
-      return cnt;
-    }
-  }
-
   public static LList decodeLazyList(byte[] data) {
     LList lList = decodeLazyList(data, 0, data.length);
     return lList == null ? null : lList.getList(0);
@@ -774,7 +711,6 @@ public class RLP {
     return ret;
   }
 
-
   private static DecodeResult decodeList(byte[] data, int pos, int len) {
     // check that length is in payload bounds
     verifyLength(len, data.length - pos);
@@ -791,10 +727,6 @@ public class RLP {
     }
     return new DecodeResult(pos, slice.toArray());
   }
-
-  /* ******************************************************
-   *                      ENCODING                        *
-   * ******************************************************/
 
   /**
    * Turn Object into its RLP encoded equivalent of a byte-array Support for String, Integer,
@@ -826,6 +758,10 @@ public class RLP {
       }
     }
   }
+
+  /* ******************************************************
+   *                      ENCODING                        *
+   * ******************************************************/
 
   /**
    * Integer limitation goes up to 2^31-1 so length can never be bigger than MAX_ITEM_LENGTH
@@ -981,7 +917,6 @@ public class RLP {
     }
   }
 
-
   public static byte[] encodeListHeader(int size) {
 
     if (size == 0) {
@@ -1019,7 +954,6 @@ public class RLP {
 
     return header;
   }
-
 
   public static byte[] encodeLongElementHeader(int length) {
 
@@ -1083,8 +1017,7 @@ public class RLP {
   }
 
   /**
-   * A handy shortcut for {@link #encodeElement(byte[])} + {@link #encodeList(byte[]...)}
-   * <p>
+   * A handy shortcut for {@link #encodeElement(byte[])} + {@link #encodeList(byte[]...)} <p>
    * Encodes each data element and wraps them all into a list.
    */
   public static byte[] wrapList(byte[]... data) {
@@ -1218,7 +1151,6 @@ public class RLP {
         "Unsupported type: Only accepting String, Integer and BigInteger for now");
   }
 
-
   public static byte[] decodeItemBytes(byte[] data, int index) {
 
     final int length = calculateItemLength(data, index);
@@ -1254,7 +1186,6 @@ public class RLP {
     }
   }
 
-
   private static int calculateItemLength(byte[] data, int index) {
 
     // [0xb8, 0xbf] - 56+ bytes item
@@ -1282,6 +1213,52 @@ public class RLP {
 
     } else {
       throw new RuntimeException("wrong decode attempt");
+    }
+  }
+
+  public static final class LList {
+
+    private final byte[] rlp;
+    private final int[] offsets = new int[32];
+    private final int[] lens = new int[32];
+    private int cnt;
+
+    public LList(byte[] rlp) {
+      this.rlp = rlp;
+    }
+
+    public byte[] getEncoded() {
+      byte encoded[][] = new byte[cnt][];
+      for (int i = 0; i < cnt; i++) {
+        encoded[i] = encodeElement(getBytes(i));
+      }
+      return encodeList(encoded);
+    }
+
+    public void add(int off, int len, boolean isList) {
+      offsets[cnt] = off;
+      lens[cnt] = isList ? (-1 - len) : len;
+      cnt++;
+    }
+
+    public byte[] getBytes(int idx) {
+      int len = lens[idx];
+      len = len < 0 ? (-len - 1) : len;
+      byte[] ret = new byte[len];
+      System.arraycopy(rlp, offsets[idx], ret, 0, len);
+      return ret;
+    }
+
+    public LList getList(int idx) {
+      return decodeLazyList(rlp, offsets[idx], -lens[idx] - 1);
+    }
+
+    public boolean isList(int idx) {
+      return lens[idx] < 0;
+    }
+
+    public int size() {
+      return cnt;
     }
   }
 }

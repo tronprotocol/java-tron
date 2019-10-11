@@ -44,10 +44,6 @@ public class LocalWitnesses {
     setPrivateKeys(privateKeys);
   }
 
-  public void setWitnessAccountAddress(final byte[] localWitnessAccountAddress) {
-    this.witnessAccountAddress = localWitnessAccountAddress;
-  }
-
   public byte[] getWitnessAccountAddress() {
     if (witnessAccountAddress == null) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
@@ -55,6 +51,10 @@ public class LocalWitnesses {
       this.witnessAccountAddress = ecKey.getAddress();
     }
     return witnessAccountAddress;
+  }
+
+  public void setWitnessAccountAddress(final byte[] localWitnessAccountAddress) {
+    this.witnessAccountAddress = localWitnessAccountAddress;
   }
 
   public void initWitnessAccountAddress() {

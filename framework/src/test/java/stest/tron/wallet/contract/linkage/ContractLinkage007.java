@@ -29,7 +29,13 @@ public class ContractLinkage007 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
+  String contractName;
+  String code;
+  String abi;
+  byte[] contractAddress;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] linkage007Address = ecKey1.getAddress();
+  String linkage007Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
@@ -40,15 +46,6 @@ public class ContractLinkage007 {
       .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
-  String contractName;
-  String code;
-  String abi;
-  byte[] contractAddress;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] linkage007Address = ecKey1.getAddress();
-  String linkage007Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {

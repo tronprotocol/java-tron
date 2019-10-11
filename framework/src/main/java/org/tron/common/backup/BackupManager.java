@@ -51,19 +51,13 @@ public class BackupManager implements EventHandler {
     this.messageHandler = messageHandler;
   }
 
-  public enum BackupStatusEnum {
-    INIT,
-    SLAVER,
-    MASTER
+  public BackupStatusEnum getStatus() {
+    return status;
   }
 
   public void setStatus(BackupStatusEnum status) {
     logger.info("Change backup status to {}", status);
     this.status = status;
-  }
-
-  public BackupStatusEnum getStatus() {
-    return status;
   }
 
   public void init() {
@@ -151,6 +145,12 @@ public class BackupManager implements EventHandler {
   @Override
   public void channelActivated() {
     init();
+  }
+
+  public enum BackupStatusEnum {
+    INIT,
+    SLAVER,
+    MASTER
   }
 
 }

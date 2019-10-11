@@ -7,7 +7,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 
-
 public class RuntimeDataTest {
 
   @Test

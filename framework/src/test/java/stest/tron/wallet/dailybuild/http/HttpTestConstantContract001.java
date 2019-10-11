@@ -17,23 +17,19 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class HttpTestConstantContract001 {
 
+  private static String contractName;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private JSONObject responseContent;
-  private HttpResponse response;
-  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(0);
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] assetOwnerAddress = ecKey2.getAddress();
   String assetOwnerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   String contractAddress;
-
   Long amount = 2048000000L;
-
-  private static String contractName;
-
+  private JSONObject responseContent;
+  private HttpResponse response;
+  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
+      .get(0);
 
   /**
    * constructor.
@@ -99,7 +95,7 @@ public class HttpTestConstantContract001 {
     String param = param1 + param2;
     logger.info(ByteArray.toHexString(assetOwnerAddress));
     response = HttpMethed.triggerConstantContract(httpnode, assetOwnerAddress, contractAddress,
-      "testPure(uint256,uint256)",param, 1000000000L,  assetOwnerKey);
+        "testPure(uint256,uint256)", param, 1000000000L, assetOwnerKey);
     HttpMethed.waitToProduceOneBlock(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);

@@ -37,10 +37,6 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 @Slf4j
 public class VoteWitnessActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
-  private static MaintenanceManager maintenanceManager;
-  private static ConsensusService consensusService;
   private static final String dbPath = "output_VoteWitness_test";
   private static final String ACCOUNT_NAME = "account";
   private static final String OWNER_ADDRESS;
@@ -51,6 +47,10 @@ public class VoteWitnessActuatorTest {
   private static final String WITNESS_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_NOACCOUNT;
   private static final String OWNER_ADDRESS_BALANCENOTSUFFICIENT;
+  private static TronApplicationContext context;
+  private static Manager dbManager;
+  private static MaintenanceManager maintenanceManager;
+  private static ConsensusService consensusService;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -74,6 +74,20 @@ public class VoteWitnessActuatorTest {
     maintenanceManager = context.getBean(MaintenanceManager.class);
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
+  }
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   /**
@@ -540,20 +554,6 @@ public class VoteWitnessActuatorTest {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    }
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
     }
   }
 }

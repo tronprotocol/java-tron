@@ -33,11 +33,6 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 @Slf4j
 public class TransferTokenTest {
 
-  private static Runtime runtime;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Application appT;
-  private static DepositImpl deposit;
   private static final String dbPath = "output_TransferTokenTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
@@ -49,6 +44,11 @@ public class TransferTokenTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static Runtime runtime;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
+  private static Application appT;
+  private static DepositImpl deposit;
   private static AccountCapsule ownerCapsule;
 
   static {
@@ -71,6 +71,21 @@ public class TransferTokenTest {
     ownerCapsule.setBalance(1000_1000_1000L);
   }
 
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
 
   private long createAsset(String tokenName) {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
@@ -98,7 +113,6 @@ public class TransferTokenTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     return id;
   }
-
 
   /**
    * pragma solidity ^0.4.24;
@@ -170,7 +184,6 @@ public class TransferTokenTest {
         .get(String.valueOf(id2)).longValue());
   }
 
-
   private byte[] deployTransferTokenContract(long id)
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "TransferWhenDeployContract";
@@ -232,7 +245,6 @@ public class TransferTokenTest {
 
   }
 
-
   private byte[] deployTransferTokenPerformanceContract(long id)
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "TransferTokenPerformanceContract";
@@ -258,21 +270,5 @@ public class TransferTokenTest {
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
             deposit, null);
     return contractAddress;
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 }

@@ -23,39 +23,35 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class DelayTransaction007 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = now;
+  private static final String name = "Asset008_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private static final long now = System.currentTimeMillis();
-  private static final long totalSupply = now;
-  private static final String name = "Asset008_" + Long.toString(now);
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
   Long delaySecond = 10L;
-
+  ByteString assetId;
+  SmartContract smartContract;
+  ECKey ecKey = new ECKey(Utils.getRandom());
+  byte[] doCreateAccountAddress = ecKey.getAddress();
+  String doCreateAccountKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] newAccountAddress = ecKey1.getAddress();
+  String newAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private Long delayTransactionFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.delayTransactionFee");
   private Long cancleDelayTransactionFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.cancleDelayTransactionFee");
-  ByteString assetId;
   private byte[] contractAddress = null;
-  SmartContract smartContract;
-
-  ECKey ecKey = new ECKey(Utils.getRandom());
-  byte[] doCreateAccountAddress = ecKey.getAddress();
-  String doCreateAccountKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] newAccountAddress = ecKey1.getAddress();
-  String newAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -91,28 +87,27 @@ public class DelayTransaction007 {
     Assert.assertTrue(PublicMethed.sendcoin(doCreateAccountAddress, 1000000L, fromAddress,
         testKey002, blockingStubFull));
 
-
     Long beforeCreateAccountBalance = PublicMethed.queryAccount(doCreateAccountKey,
         blockingStubFull).getBalance();
     final String txid = PublicMethed.createAccountDelayGetTxid(doCreateAccountAddress,
-        newAccountAddress,delaySecond,doCreateAccountKey,blockingStubFull);
+        newAccountAddress, delaySecond, doCreateAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed.queryAccount(newAccountAddress,blockingStubFull)
+    Assert.assertTrue(PublicMethed.queryAccount(newAccountAddress, blockingStubFull)
         .getCreateTime() == 0);
-    Long balanceInDelay = PublicMethed.queryAccount(doCreateAccountKey,blockingStubFull)
+    Long balanceInDelay = PublicMethed.queryAccount(doCreateAccountKey, blockingStubFull)
         .getBalance();
     Assert.assertTrue(beforeCreateAccountBalance - balanceInDelay == delayTransactionFee);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    logger.info("create time is " + PublicMethed.queryAccount(newAccountAddress,blockingStubFull)
+    logger.info("create time is " + PublicMethed.queryAccount(newAccountAddress, blockingStubFull)
         .getCreateTime());
-    Assert.assertTrue(PublicMethed.queryAccount(newAccountAddress,blockingStubFull)
+    Assert.assertTrue(PublicMethed.queryAccount(newAccountAddress, blockingStubFull)
         .getCreateTime() > 0);
-    Long afterCreateAccountBalance = PublicMethed.queryAccount(doCreateAccountKey,blockingStubFull)
+    Long afterCreateAccountBalance = PublicMethed.queryAccount(doCreateAccountKey, blockingStubFull)
         .getBalance();
-    Long netFee = PublicMethed.getTransactionInfoById(txid,blockingStubFull).get().getReceipt()
+    Long netFee = PublicMethed.getTransactionInfoById(txid, blockingStubFull).get().getReceipt()
         .getNetFee();
-    Long fee = PublicMethed.getTransactionInfoById(txid,blockingStubFull).get().getFee();
+    Long fee = PublicMethed.getTransactionInfoById(txid, blockingStubFull).get().getFee();
     Assert.assertTrue(fee - netFee == delayTransactionFee);
     Assert.assertTrue(beforeCreateAccountBalance - afterCreateAccountBalance
         == delayTransactionFee + 100000L);
@@ -126,30 +121,30 @@ public class DelayTransaction007 {
     newAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.printAddress(newAccountKey);
 
-    final Long beforeCreateBalance = PublicMethed.queryAccount(doCreateAccountKey,blockingStubFull)
+    final Long beforeCreateBalance = PublicMethed.queryAccount(doCreateAccountKey, blockingStubFull)
         .getBalance();
     final String txid = PublicMethed.createAccountDelayGetTxid(doCreateAccountAddress,
-        newAccountAddress,delaySecond,doCreateAccountKey,blockingStubFull);
+        newAccountAddress, delaySecond, doCreateAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,fromAddress,testKey002,
+    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid, fromAddress, testKey002,
         blockingStubFull));
     final String cancelTxid = PublicMethed.cancelDeferredTransactionByIdGetTxid(txid,
-        doCreateAccountAddress,doCreateAccountKey,blockingStubFull);
-    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,doCreateAccountAddress,
-        doCreateAccountKey,blockingStubFull));
+        doCreateAccountAddress, doCreateAccountKey, blockingStubFull);
+    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid, doCreateAccountAddress,
+        doCreateAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    final Long afterCreateBalance = PublicMethed.queryAccount(doCreateAccountKey,blockingStubFull)
+    final Long afterCreateBalance = PublicMethed.queryAccount(doCreateAccountKey, blockingStubFull)
         .getBalance();
-    final Long netFee = PublicMethed.getTransactionInfoById(cancelTxid,blockingStubFull).get()
+    final Long netFee = PublicMethed.getTransactionInfoById(cancelTxid, blockingStubFull).get()
         .getReceipt().getNetFee();
-    final Long fee = PublicMethed.getTransactionInfoById(cancelTxid,blockingStubFull).get()
+    final Long fee = PublicMethed.getTransactionInfoById(cancelTxid, blockingStubFull).get()
         .getFee();
-    logger.info("net fee : " + PublicMethed.getTransactionInfoById(cancelTxid,blockingStubFull)
+    logger.info("net fee : " + PublicMethed.getTransactionInfoById(cancelTxid, blockingStubFull)
         .get().getReceipt().getNetFee());
-    logger.info("Fee : " + PublicMethed.getTransactionInfoById(cancelTxid,blockingStubFull)
+    logger.info("Fee : " + PublicMethed.getTransactionInfoById(cancelTxid, blockingStubFull)
         .get().getFee());
 
     Assert.assertTrue(fee - netFee == cancleDelayTransactionFee + delayTransactionFee);

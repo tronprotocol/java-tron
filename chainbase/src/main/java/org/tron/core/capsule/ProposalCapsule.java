@@ -38,6 +38,10 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
         .build();
   }
 
+  public static byte[] calculateDbKey(long number) {
+    return ByteArray.fromLong(number);
+  }
+
   public long getID() {
     return this.proposal.getProposalId();
   }
@@ -135,13 +139,8 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
     return this.proposal.getExpirationTime() <= time;
   }
 
-
   public byte[] createDbKey() {
     return calculateDbKey(getID());
-  }
-
-  public static byte[] calculateDbKey(long number) {
-    return ByteArray.fromLong(number);
   }
 
   @Override

@@ -19,16 +19,14 @@ import org.tron.core.store.NullifierStore;
 
 public class NullifierStoreTest {
 
-  private static NullifierStore nullifierStore;
-  private static String dbPath = "output_NullifierStore_test";
-  private static TronApplicationContext context;
-  public static Application AppT;
-
   private static final byte[] NULLIFIER_ONE = randomBytes(32);
   private static final byte[] NULLIFIER_TWO = randomBytes(32);
   private static final byte[] TRX_TWO = randomBytes(32);
   private static final byte[] TRX_TWO_NEW = randomBytes(32);
-
+  public static Application AppT;
+  private static NullifierStore nullifierStore;
+  private static String dbPath = "output_NullifierStore_test";
+  private static TronApplicationContext context;
   private static BytesCapsule nullifier1;
   private static BytesCapsule nullifier2;
   private static BytesCapsule nullifier2New;
@@ -60,6 +58,14 @@ public class NullifierStoreTest {
     nullifierStore.put(NULLIFIER_TWO, nullifier2);
   }
 
+  public static byte[] randomBytes(int length) {
+    // generate the random number
+    byte[] result = new byte[length];
+    new Random().nextBytes(result);
+    result[0] = Wallet.getAddressPreFixByte();
+    return result;
+  }
+
   @Test
   public void putAndGet() {
     byte[] nullifier = nullifierStore.get(NULLIFIER_ONE).getData();
@@ -79,14 +85,5 @@ public class NullifierStoreTest {
     Assert.assertTrue("putAndGet1", result);
     result = nullifierStore.has(NULLIFIER_TWO);
     Assert.assertTrue("putAndGet2", result);
-  }
-
-
-  public static byte[] randomBytes(int length) {
-    // generate the random number
-    byte[] result = new byte[length];
-    new Random().nextBytes(result);
-    result[0] = Wallet.getAddressPreFixByte();
-    return result;
   }
 }

@@ -53,6 +53,11 @@ public class WalletTestAccount005 {
   private String searchFullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -165,7 +170,8 @@ public class WalletTestAccount005 {
       beforeVoteNum = beforeVote.getVotes(0).getVoteCount();
     }
 
-    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract.newBuilder();
+    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract
+        .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(address));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
@@ -224,11 +230,6 @@ public class WalletTestAccount005 {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

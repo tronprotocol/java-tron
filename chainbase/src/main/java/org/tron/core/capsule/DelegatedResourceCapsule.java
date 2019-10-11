@@ -30,6 +30,12 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
         .build();
   }
 
+  public static byte[] createDbKey(byte[] from, byte[] to) {
+    byte[] key = new byte[from.length + to.length];
+    System.arraycopy(from, 0, key, 0, from.length);
+    System.arraycopy(to, 0, key, from.length, to.length);
+    return key;
+  }
 
   public ByteString getFrom() {
     return this.delegatedResource.getFrom();
@@ -80,18 +86,18 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return this.delegatedResource.getExpireTimeForBandwidth();
   }
 
+  public void setExpireTimeForBandwidth(long ExpireTime) {
+    this.delegatedResource = this.delegatedResource.toBuilder()
+        .setExpireTimeForBandwidth(ExpireTime)
+        .build();
+  }
+
   public long getExpireTimeForEnergy(DynamicPropertiesStore dynamicPropertiesStore) {
     if (dynamicPropertiesStore.getAllowMultiSign() == 0) {
       return this.delegatedResource.getExpireTimeForBandwidth();
     } else {
       return this.delegatedResource.getExpireTimeForEnergy();
     }
-  }
-
-  public void setExpireTimeForBandwidth(long ExpireTime) {
-    this.delegatedResource = this.delegatedResource.toBuilder()
-        .setExpireTimeForBandwidth(ExpireTime)
-        .build();
   }
 
   public void setExpireTimeForEnergy(long ExpireTime) {
@@ -103,13 +109,6 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
   public byte[] createDbKey() {
     return createDbKey(this.delegatedResource.getFrom().toByteArray(),
         this.delegatedResource.getTo().toByteArray());
-  }
-
-  public static byte[] createDbKey(byte[] from, byte[] to) {
-    byte[] key = new byte[from.length + to.length];
-    System.arraycopy(from, 0, key, 0, from.length);
-    System.arraycopy(to, 0, key, from.length, to.length);
-    return key;
   }
 
   @Override

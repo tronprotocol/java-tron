@@ -500,11 +500,6 @@ public class Args {
   @Setter
   private RateLimiterInitialization rateLimiterInitialization;
 
-  public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
-    this.fullNodeAllowShieldedTransaction = fullNodeAllowShieldedTransaction;
-    DBConfig.setFullNodeAllowShieldedTransaction(fullNodeAllowShieldedTransaction);
-  }
-
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -634,7 +629,8 @@ public class Args {
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
 
       if (config.hasPath("localWitnessAccountAddress")) {
-        byte[] bytes = Commons.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+        byte[] bytes = Commons
+            .decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
         if (bytes != null) {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from config.conf");
@@ -681,7 +677,8 @@ public class Args {
       INSTANCE.localWitnesses.setPrivateKeys(privateKeys);
 
       if (config.hasPath("localWitnessAccountAddress")) {
-        byte[] bytes = Commons.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+        byte[] bytes = Commons
+            .decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
         if (bytes != null) {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from config.conf");
@@ -920,8 +917,8 @@ public class Args {
             .getInt("committee.allowTvmConstantinople") : 0;
 
     INSTANCE.allowTvmSolidity059 =
-            config.hasPath("committee.allowTvmSolidity059") ? config
-                    .getInt("committee.allowTvmSolidity059") : 0;
+        config.hasPath("committee.allowTvmSolidity059") ? config
+            .getInt("committee.allowTvmSolidity059") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
@@ -992,8 +989,8 @@ public class Args {
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
     INSTANCE.fullNodeAllowShieldedTransaction =
-            !config.hasPath("node.fullNodeAllowShieldedTransaction")
-             || config.getBoolean("node.fullNodeAllowShieldedTransaction");
+        !config.hasPath("node.fullNodeAllowShieldedTransaction")
+            || config.getBoolean("node.fullNodeAllowShieldedTransaction");
 
     INSTANCE.zenTokenId = config.hasPath("node.zenTokenId") ?
         config.getString("node.zenTokenId") : "000000";
@@ -1089,30 +1086,6 @@ public class Args {
 
   public static Args getInstance() {
     return INSTANCE;
-  }
-
-  /**
-   * Get storage path by name of database
-   *
-   * @param dbName name of database
-   * @return path of that database
-   */
-  public String getOutputDirectoryByDbName(String dbName) {
-    String path = storage.getPathByDbName(dbName);
-    if (!StringUtils.isBlank(path)) {
-      return path;
-    }
-    return getOutputDirectory();
-  }
-
-  /**
-   * get output directory.
-   */
-  public String getOutputDirectory() {
-    if (!this.outputDirectory.equals("") && !this.outputDirectory.endsWith(File.separator)) {
-      return this.outputDirectory + File.separator;
-    }
-    return this.outputDirectory;
   }
 
   private static List<Node> getNodes(final com.typesafe.config.Config config, String path) {
@@ -1257,7 +1230,6 @@ public class Args {
     return filter;
   }
 
-
   private static String getGeneratedNodePrivateKey() {
     String nodeId;
     try {
@@ -1346,19 +1318,10 @@ public class Args {
     }
   }
 
-  public ECKey getMyKey() {
-    if (StringUtils.isEmpty(INSTANCE.p2pNodeId)) {
-      INSTANCE.p2pNodeId = getGeneratedNodePrivateKey();
-    }
-
-    return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
-  }
-
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;
   }
-
 
   private static void initRocksDbSettings(Config config) {
     String prefix = "storage.dbSettings.";
@@ -1443,7 +1406,6 @@ public class Args {
     logger.info("\n");
   }
 
-
   public static void initDBConfig(Args cfgArgs) {
     if (Objects.nonNull(cfgArgs.getStorage())) {
       DBConfig.setDbVersion(cfgArgs.getStorage().getDbVersion());
@@ -1485,5 +1447,42 @@ public class Args {
     DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
     DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
+  }
+
+  public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
+    this.fullNodeAllowShieldedTransaction = fullNodeAllowShieldedTransaction;
+    DBConfig.setFullNodeAllowShieldedTransaction(fullNodeAllowShieldedTransaction);
+  }
+
+  /**
+   * Get storage path by name of database
+   *
+   * @param dbName name of database
+   * @return path of that database
+   */
+  public String getOutputDirectoryByDbName(String dbName) {
+    String path = storage.getPathByDbName(dbName);
+    if (!StringUtils.isBlank(path)) {
+      return path;
+    }
+    return getOutputDirectory();
+  }
+
+  /**
+   * get output directory.
+   */
+  public String getOutputDirectory() {
+    if (!this.outputDirectory.equals("") && !this.outputDirectory.endsWith(File.separator)) {
+      return this.outputDirectory + File.separator;
+    }
+    return this.outputDirectory;
+  }
+
+  public ECKey getMyKey() {
+    if (StringUtils.isEmpty(INSTANCE.p2pNodeId)) {
+      INSTANCE.p2pNodeId = getGeneratedNodePrivateKey();
+    }
+
+    return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
   }
 }

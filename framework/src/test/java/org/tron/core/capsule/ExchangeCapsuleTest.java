@@ -22,14 +22,14 @@ import org.tron.core.exception.ItemNotFoundException;
 @Slf4j
 public class ExchangeCapsuleTest {
 
-  private static Manager dbManager;
-  private static StorageMarket storageMarket;
   private static final String dbPath = "output_exchange_capsule_test_test";
-  private static TronApplicationContext context;
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000_000_000L;
+  private static Manager dbManager;
+  private static StorageMarket storageMarket;
+  private static TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -45,7 +45,8 @@ public class ExchangeCapsuleTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    storageMarket = new StorageMarket(dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    storageMarket = new StorageMarket(dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore());
     //    Args.setParam(new String[]{"--output-directory", dbPath},
     //        "config-junit.conf");
     //    dbManager = new Manager();

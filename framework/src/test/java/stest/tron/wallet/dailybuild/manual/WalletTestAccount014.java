@@ -27,33 +27,26 @@ public class WalletTestAccount014 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] account014Address = ecKey1.getAddress();
+  String account014Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] account014SecondAddress = ecKey2.getAddress();
+  String account014SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private ManagedChannel channelSoliInFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSoliInFull = null;
-
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
-
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
   private String soliInFullnode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(1);
-
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] account014Address = ecKey1.getAddress();
-  String account014Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] account014SecondAddress = ecKey2.getAddress();
-  String account014SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {

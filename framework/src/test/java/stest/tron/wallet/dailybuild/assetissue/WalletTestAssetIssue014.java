@@ -24,39 +24,32 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAssetIssue014 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = now;
+  private static final long sendAmount = 10000000000L;
+  private static final long netCostMeasure = 200L;
+  private static String name = "AssetIssue014_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-  private static final long now = System.currentTimeMillis();
-  private static String name = "AssetIssue014_" + Long.toString(now);
-  private static final long totalSupply = now;
-  private static final long sendAmount = 10000000000L;
-  private static final long netCostMeasure = 200L;
-
   Long freeAssetNetLimit = 3000L;
   Long publicFreeAssetNetLimit = 300L;
   String description = "for case assetissue014";
   String url = "https://stest.assetissue014.url";
-
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
-
   //get account
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] asset014Address = ecKey1.getAddress();
   String testKeyForAssetIssue014 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] transferAssetAddress = ecKey2.getAddress();
   String transferAssetCreateKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
 
   @BeforeSuite
   public void beforeSuite() {

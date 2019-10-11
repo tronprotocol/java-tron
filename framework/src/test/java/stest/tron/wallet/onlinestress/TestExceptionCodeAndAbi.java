@@ -1,4 +1,3 @@
-
 package stest.tron.wallet.onlinestress;
 
 import io.grpc.ManagedChannel;
@@ -38,28 +37,24 @@ public class TestExceptionCodeAndAbi {
   //"FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   //"BC70ADC5A0971BA3F7871FBB7249E345D84CE7E5458828BE1E28BF8F98F2795B";
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
+  byte[] contractAddress = null;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] asset016Address = ecKey1.getAddress();
+  String testKeyForAssetIssue016 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-
   private ManagedChannel channelFull2 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull2 = null;
-
   private ManagedChannel channelFull3 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull3 = null;
-
   private ManagedChannel channelFull4 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull4 = null;
-
-
   private ManagedChannel channelFull5 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull5 = null;
-
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
@@ -73,12 +68,78 @@ public class TestExceptionCodeAndAbi {
   private String fullnode5 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(4);
 
-  byte[] contractAddress = null;
+  /**
+   * constructor.
+   */
 
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] asset016Address = ecKey1.getAddress();
-  String testKeyForAssetIssue016 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  public static void serachInfo(String txid, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid,
+        blockingStubFull);
+    logger.info("---------------------------------------------");
 
+    logger.info("fee is " + infoById.get().getFee());
+    logger.info("Energy fee is " + infoById.get().getReceipt().getEnergyFee());
+    logger.info("Total energy is " + infoById.get().getReceipt().getEnergyUsageTotal());
+    logger.info("Energy used is " + infoById.get().getReceipt().getEnergyUsage());
+    logger.info("Net used is " + infoById.get().getReceipt().getNetUsage());
+    logger.info("Net fee is " + infoById.get().getReceipt().getNetFee());
+
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static String getRandomCode(int length) {
+    String str = "0123456789";
+    Random random = new Random();
+    StringBuffer sb = new StringBuffer();
+    for (int i = 0; i < length; i++) {
+      int number = random.nextInt(10);
+      sb.append(str.charAt(number));
+    }
+    return sb.toString();
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static void writeCsv(String minBalance, String beforeBalance, String beforeNetLimit,
+      String beforeFreeNet, String beforeNetUsed, String beforeEnergyLimit, String beforeEnergyUsed,
+      String beforeFreeNetUsed, String energyUsageTotal, String fee, String energyFee,
+      String netUsed, String energyUsed,
+      String netFee, String afterBalance, String afterEnergyLimit, String afterEnergyUsed,
+      String afterFreeNetUsed, String afterFreeNet, String afterNetLimit,
+      String afterNetUsed, String txid, String testKeyForAssetIssue016) {
+    try {
+      File csv = new File("/Users/wangzihe/Documents/costFee.csv");
+      String time = Long.toString(System.currentTimeMillis());
+      BufferedWriter bw = new BufferedWriter(new FileWriter(csv, true));
+      bw.write("TestTimeoutusefeelimit:(HaveEnergyAndHaveFreezeNet)" + "," + "timestamp" + time
+          + "," + "min:" + minBalance + "," + "beforeBalance:" + beforeBalance + ","
+          + "beforeNetLimit:"
+          + beforeNetLimit + "," + "beforeFreeNet:" + beforeFreeNet + "," + "beforeNetused:"
+          + beforeNetUsed
+          + "," + "beforeEnergyLimit:" + beforeEnergyLimit + "," + "beforeEnergyUsed:"
+          + beforeEnergyUsed
+          + "," + "beforeFreeNetUsed" + beforeFreeNetUsed + "," + "energyUsageTotal:"
+          + energyUsageTotal
+          + "," + "fee:" + fee + "," + "energyFee:" + energyFee + "," + "netUsed:" + netUsed + ","
+          + "energyUsed:" + energyUsed + "," + "netFee:" + netFee + "," + "afterBalance:"
+          + afterBalance + "," + "afterEnergyLimit:" + afterEnergyLimit + ","
+          + "afterEnergyUsed:" + afterEnergyUsed + "," + "afterFreeNetUsed:" + afterFreeNetUsed
+          + "," + "afterFreeNet:" + afterFreeNet + "," + "afterNetLimit:" + afterNetLimit + ","
+          + "afterNetUsed:" + afterNetUsed + "," + txid + "," + testKeyForAssetIssue016);
+      bw.newLine();
+      bw.close();
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -324,81 +385,6 @@ public class TestExceptionCodeAndAbi {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-  }
-
-  /**
-   * constructor.
-   */
-
-  public static void serachInfo(String txid, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(txid,
-        blockingStubFull);
-    logger.info("---------------------------------------------");
-
-    logger.info("fee is " + infoById.get().getFee());
-    logger.info("Energy fee is " + infoById.get().getReceipt().getEnergyFee());
-    logger.info("Total energy is " + infoById.get().getReceipt().getEnergyUsageTotal());
-    logger.info("Energy used is " + infoById.get().getReceipt().getEnergyUsage());
-    logger.info("Net used is " + infoById.get().getReceipt().getNetUsage());
-    logger.info("Net fee is " + infoById.get().getReceipt().getNetFee());
-
-  }
-
-
-  /**
-   * constructor.
-   */
-
-  public static String getRandomCode(int length) {
-    String str = "0123456789";
-    Random random = new Random();
-    StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < length; i++) {
-      int number = random.nextInt(10);
-      sb.append(str.charAt(number));
-    }
-    return sb.toString();
-  }
-
-
-  /**
-   * constructor.
-   */
-
-  public static void writeCsv(String minBalance, String beforeBalance, String beforeNetLimit,
-      String beforeFreeNet, String beforeNetUsed, String beforeEnergyLimit, String beforeEnergyUsed,
-      String beforeFreeNetUsed, String energyUsageTotal, String fee, String energyFee,
-      String netUsed, String energyUsed,
-      String netFee, String afterBalance, String afterEnergyLimit, String afterEnergyUsed,
-      String afterFreeNetUsed, String afterFreeNet, String afterNetLimit,
-      String afterNetUsed, String txid, String testKeyForAssetIssue016) {
-    try {
-      File csv = new File("/Users/wangzihe/Documents/costFee.csv");
-      String time = Long.toString(System.currentTimeMillis());
-      BufferedWriter bw = new BufferedWriter(new FileWriter(csv, true));
-      bw.write("TestTimeoutusefeelimit:(HaveEnergyAndHaveFreezeNet)" + "," + "timestamp" + time
-          + "," + "min:" + minBalance + "," + "beforeBalance:" + beforeBalance + ","
-          + "beforeNetLimit:"
-          + beforeNetLimit + "," + "beforeFreeNet:" + beforeFreeNet + "," + "beforeNetused:"
-          + beforeNetUsed
-          + "," + "beforeEnergyLimit:" + beforeEnergyLimit + "," + "beforeEnergyUsed:"
-          + beforeEnergyUsed
-          + "," + "beforeFreeNetUsed" + beforeFreeNetUsed + "," + "energyUsageTotal:"
-          + energyUsageTotal
-          + "," + "fee:" + fee + "," + "energyFee:" + energyFee + "," + "netUsed:" + netUsed + ","
-          + "energyUsed:" + energyUsed + "," + "netFee:" + netFee + "," + "afterBalance:"
-          + afterBalance + "," + "afterEnergyLimit:" + afterEnergyLimit + ","
-          + "afterEnergyUsed:" + afterEnergyUsed + "," + "afterFreeNetUsed:" + afterFreeNetUsed
-          + "," + "afterFreeNet:" + afterFreeNet + "," + "afterNetLimit:" + afterNetLimit + ","
-          + "afterNetUsed:" + afterNetUsed + "," + txid + "," + testKeyForAssetIssue016);
-      bw.newLine();
-      bw.close();
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-
   }
 
 }

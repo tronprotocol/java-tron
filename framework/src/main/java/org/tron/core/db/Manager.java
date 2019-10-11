@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import org.tron.common.utils.Pair;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
@@ -57,6 +56,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
+import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -144,6 +144,12 @@ import org.tron.protos.Protocol.TransactionInfo;
 @Component
 public class Manager {
 
+  private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
+  private final int SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = Args.getInstance()
+      .getShieldedTransInPendingMaxCounts();
+  @Getter
+  @Setter
+  public boolean eventPluginLoaded = false;
   // db storef
   @Getter
   @Autowired
@@ -204,91 +210,116 @@ public class Manager {
   @Autowired
   @Getter
   private ZKProofStore proofStore;
-
   @Autowired
   @Getter
   private IncrementalMerkleTreeStore merkleTreeStore;
-
   @Setter
   private TronNetService tronNetService;
-
   // for network
   @Autowired
   private PeersStore peersStore;
-
   @Autowired
   private KhaosDatabase khaosDb;
-
-
   private BlockCapsule genesisBlock;
   @Getter
   @Autowired
   private RevokingDatabase revokingStore;
-
   @Getter
   private SessionOptional session = SessionOptional.instance();
-
   @Getter
   @Setter
   private boolean isSyncMode;
 
+  // map<Long, IncrementalMerkleTree>
   @Getter
   @Setter
   private String netType;
-
   @Getter
   @Setter
   private ProposalController proposalController;
-
   @Getter
   @Setter
   private MerkleContainer merkleContainer;
-
-  // map<Long, IncrementalMerkleTree>
-
   @Autowired
   @Getter
   @Setter
   private TreeBlockIndexStore merkleTreeIndexStore;
-
   private ExecutorService validateSignService;
-
   private boolean isRunRepushThread = true;
-
   private boolean isRunTriggerCapsuleProcessThread = true;
-
   private long latestSolidifiedBlockNumber;
-
-  @Getter
-  @Setter
-  public boolean eventPluginLoaded = false;
-
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
-
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
-
   @Getter
   private ForkController forkController = ForkController.instance();
-
   @Autowired
   private AccountStateCallBack accountStateCallBack;
-
   @Autowired
   private TrieService trieService;
   private Set<String> ownerAddressSet = new HashSet<>();
-
   @Getter
   @Autowired
   private DelegationService delegationService;
-
   @Autowired
   private Consensus consensus;
-
   @Autowired
   @Getter
   private ChainBaseManager chainBaseManager;
+  // transactions cache
+  private List<TransactionCapsule> pendingTransactions;
+  @Getter
+  private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
+  // transactions popped
+  private List<TransactionCapsule> popedTransactions =
+      Collections.synchronizedList(Lists.newArrayList());
+  // the capacity is equal to Integer.MAX_VALUE default
+  private BlockingQueue<TransactionCapsule> repushTransactions;
+  private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+  /**
+   * Cycle thread to repush Transactions
+   */
+  private Runnable repushLoop =
+      () -> {
+        while (isRunRepushThread) {
+          TransactionCapsule tx = null;
+          try {
+            tx = getRepushTransactions().peek();
+            if (tx != null) {
+              this.rePush(tx);
+            } else {
+              TimeUnit.MILLISECONDS.sleep(50L);
+            }
+          } catch (Exception ex) {
+            logger.error("unknown exception happened in repush loop", ex);
+          } catch (Throwable throwable) {
+            logger.error("unknown throwable happened in repush loop", throwable);
+          } finally {
+            if (tx != null) {
+              getRepushTransactions().remove(tx);
+            }
+          }
+        }
+      };
+  private Runnable triggerCapsuleProcessLoop =
+      () -> {
+        while (isRunTriggerCapsuleProcessThread) {
+          try {
+            TriggerCapsule tiggerCapsule = triggerCapsuleQueue.poll(1, TimeUnit.SECONDS);
+            if (tiggerCapsule != null) {
+              tiggerCapsule.processTrigger();
+            }
+          } catch (InterruptedException ex) {
+            logger.info(ex.getMessage());
+            Thread.currentThread().interrupt();
+          } catch (Exception ex) {
+            logger.error("unknown exception happened in process capsule loop", ex);
+          } catch (Throwable throwable) {
+            logger.error("unknown throwable happened in process capsule loop", throwable);
+          }
+        }
+      };
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -313,7 +344,6 @@ public class Manager {
   public void setWitnessScheduleStore(final WitnessScheduleStore witnessScheduleStore) {
     this.witnessScheduleStore = witnessScheduleStore;
   }
-
 
   public DelegatedResourceStore getDelegatedResourceStore() {
     return delegatedResourceStore;
@@ -378,25 +408,6 @@ public class Manager {
     return repushTransactions;
   }
 
-  // transactions cache
-  private List<TransactionCapsule> pendingTransactions;
-
-  @Getter
-  private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
-
-  private final int SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = Args.getInstance()
-      .getShieldedTransInPendingMaxCounts();
-  private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
-
-  // transactions popped
-  private List<TransactionCapsule> popedTransactions =
-      Collections.synchronizedList(Lists.newArrayList());
-
-  // the capacity is equal to Integer.MAX_VALUE default
-  private BlockingQueue<TransactionCapsule> repushTransactions;
-
-  private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
-
   public long getHeadSlot() {
     return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
         .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
@@ -438,7 +449,6 @@ public class Manager {
     return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
 
-
   public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
   }
@@ -446,51 +456,6 @@ public class Manager {
   public Set<Node> readNeighbours() {
     return this.peersStore.get("neighbours".getBytes());
   }
-
-  /**
-   * Cycle thread to repush Transactions
-   */
-  private Runnable repushLoop =
-      () -> {
-        while (isRunRepushThread) {
-          TransactionCapsule tx = null;
-          try {
-            tx = getRepushTransactions().peek();
-            if (tx != null) {
-              this.rePush(tx);
-            } else {
-              TimeUnit.MILLISECONDS.sleep(50L);
-            }
-          } catch (Exception ex) {
-            logger.error("unknown exception happened in repush loop", ex);
-          } catch (Throwable throwable) {
-            logger.error("unknown throwable happened in repush loop", throwable);
-          } finally {
-            if (tx != null) {
-              getRepushTransactions().remove(tx);
-            }
-          }
-        }
-      };
-
-  private Runnable triggerCapsuleProcessLoop =
-      () -> {
-        while (isRunTriggerCapsuleProcessThread) {
-          try {
-            TriggerCapsule tiggerCapsule = triggerCapsuleQueue.poll(1, TimeUnit.SECONDS);
-            if (tiggerCapsule != null) {
-              tiggerCapsule.processTrigger();
-            }
-          } catch (InterruptedException ex) {
-            logger.info(ex.getMessage());
-            Thread.currentThread().interrupt();
-          } catch (Exception ex) {
-            logger.error("unknown exception happened in process capsule loop", ex);
-          } catch (Throwable throwable) {
-            logger.error("unknown throwable happened in process capsule loop", throwable);
-          }
-        }
-      };
 
   public void stopRepushThread() {
     isRunRepushThread = false;
@@ -1632,6 +1597,10 @@ public class Manager {
     return assetIssueStore;
   }
 
+  public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
+    this.assetIssueStore = assetIssueStore;
+  }
+
   public AssetIssueV2Store getAssetIssueV2Store() {
     return assetIssueV2Store;
   }
@@ -1642,10 +1611,6 @@ public class Manager {
     } else {
       return getAssetIssueV2Store();
     }
-  }
-
-  public void setAssetIssueStore(AssetIssueStore assetIssueStore) {
-    this.assetIssueStore = assetIssueStore;
   }
 
   public void setBlockIndexStore(BlockIndexStore indexStore) {
@@ -1721,32 +1686,6 @@ public class Manager {
   public boolean isTooManyPending() {
     return getPendingTransactions().size() + getRepushTransactions().size()
         > MAX_TRANSACTION_PENDING;
-  }
-
-  private static class ValidateSignTask implements Callable<Boolean> {
-
-    private TransactionCapsule trx;
-    private CountDownLatch countDownLatch;
-    private Manager manager;
-
-    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch,
-        Manager manager) {
-      this.trx = trx;
-      this.countDownLatch = countDownLatch;
-      this.manager = manager;
-    }
-
-    @Override
-    public Boolean call() throws ValidateSignatureException {
-      try {
-        trx.validateSignature(manager.accountStore, manager.dynamicPropertiesStore);
-      } catch (ValidateSignatureException e) {
-        throw e;
-      } finally {
-        countDownLatch.countDown();
-      }
-      return true;
-    }
   }
 
   public void preValidateTransactionSign(BlockCapsule block)
@@ -1912,5 +1851,31 @@ public class Manager {
         .setMerkleContainer(merkleContainer)
         .setChainBaseManager(chainBaseManager)
         .setDelegationService(delegationService);
+  }
+
+  private static class ValidateSignTask implements Callable<Boolean> {
+
+    private TransactionCapsule trx;
+    private CountDownLatch countDownLatch;
+    private Manager manager;
+
+    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch,
+        Manager manager) {
+      this.trx = trx;
+      this.countDownLatch = countDownLatch;
+      this.manager = manager;
+    }
+
+    @Override
+    public Boolean call() throws ValidateSignatureException {
+      try {
+        trx.validateSignature(manager.accountStore, manager.dynamicPropertiesStore);
+      } catch (ValidateSignatureException e) {
+        throw e;
+      } finally {
+        countDownLatch.countDown();
+      }
+      return true;
+    }
   }
 }

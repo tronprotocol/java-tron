@@ -19,11 +19,11 @@ import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Vote;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 @Ignore
 public class AccountCapsuleTest {
@@ -71,6 +71,13 @@ public class AccountCapsuleTest {
     Args.clearParam();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
+  }
+
+  public static byte[] randomBytes(int length) {
+    //generate the random number
+    byte[] result = new byte[length];
+    new Random().nextBytes(result);
+    return result;
   }
 
   @Test
@@ -133,14 +140,6 @@ public class AccountCapsuleTest {
     long amountValue = 33L;
     boolean addAsssetTrue = accountCapsuleTest.addAsset(keyName.getBytes(), amountValue);
     Assert.assertTrue(addAsssetTrue);
-  }
-
-
-  public static byte[] randomBytes(int length) {
-    //generate the random number
-    byte[] result = new byte[length];
-    new Random().nextBytes(result);
-    return result;
   }
 
   /**

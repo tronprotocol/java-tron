@@ -35,9 +35,6 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract
 @Slf4j
 public class UpdateAssetActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Application AppT;
-  private static Manager dbManager;
   private static final String dbPath = "output_updateAsset_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
@@ -48,6 +45,9 @@ public class UpdateAssetActuatorTest {
   private static final long TOTAL_SUPPLY = 10000L;
   private static final String DESCRIPTION = "myCoin";
   private static final String URL = "tron-my.com";
+  private static TronApplicationContext context;
+  private static Application AppT;
+  private static Manager dbManager;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -69,6 +69,22 @@ public class UpdateAssetActuatorTest {
   }
 
   /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
+
+  /**
    * create temp Capsule test need.
    */
   @Before
@@ -83,22 +99,6 @@ public class UpdateAssetActuatorTest {
 
     // address does not exist in accountStore
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   private Any getContract(

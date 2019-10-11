@@ -3,7 +3,6 @@ package org.tron.core.net.message;
 import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Items;
 

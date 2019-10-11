@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.exception.ZksnarkException;
@@ -16,7 +15,7 @@ public class MerkleContainer {
 
   private static final byte[] lastTreeKey = "LAST_TREE".getBytes();
   private static final byte[] currentTreeKey = "CURRENT_TREE".getBytes();
-  
+
   @Getter
   @Setter
   private IncrementalMerkleTreeStore incrementalMerkleTreeStore;
@@ -25,7 +24,8 @@ public class MerkleContainer {
   @Setter
   private TreeBlockIndexStore merkleTreeIndexStore;
 
-  public static MerkleContainer createInstance(IncrementalMerkleTreeStore incrementalMerkleTreeStore,
+  public static MerkleContainer createInstance(
+      IncrementalMerkleTreeStore incrementalMerkleTreeStore,
       TreeBlockIndexStore merkleTreeIndexStore) {
     MerkleContainer instance = new MerkleContainer();
     instance.setIncrementalMerkleTreeStore(incrementalMerkleTreeStore);

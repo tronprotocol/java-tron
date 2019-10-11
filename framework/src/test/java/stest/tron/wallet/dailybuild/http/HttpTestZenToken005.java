@@ -24,6 +24,19 @@ import stest.tron.wallet.common.client.utils.ShieldNoteInfo;
 @Slf4j
 public class HttpTestZenToken005 {
 
+  Optional<ShieldAddressInfo> sendShieldAddressInfo;
+  Optional<ShieldAddressInfo> receiverShieldAddressInfo;
+  String sendShieldAddress;
+  String receiverShieldAddress;
+  List<Note> shieldOutList = new ArrayList<>();
+  String memo1;
+  String memo2;
+  ShieldNoteInfo sendNote;
+  ShieldNoteInfo receiveNote;
+  String assetIssueId;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private String httpnode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(0);
   private String httpSolidityNode = Configuration.getByPath("testng.conf")
@@ -35,25 +48,9 @@ public class HttpTestZenToken005 {
       .getString("defaultParameter.zenTokenId");
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
-
-  Optional<ShieldAddressInfo> sendShieldAddressInfo;
-  Optional<ShieldAddressInfo> receiverShieldAddressInfo;
-  String sendShieldAddress;
-  String receiverShieldAddress;
-  List<Note> shieldOutList = new ArrayList<>();
-  String memo1;
-  String memo2;
-  ShieldNoteInfo sendNote;
-  ShieldNoteInfo receiveNote;
-  String assetIssueId;
-
   private Long sendTokenAmount = 7 * zenTokenFee;
   private JSONObject responseContent;
   private HttpResponse response;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   /**
    * constructor.

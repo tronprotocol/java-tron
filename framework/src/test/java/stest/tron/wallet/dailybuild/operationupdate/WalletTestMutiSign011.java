@@ -25,50 +25,45 @@ import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 @Slf4j
 public class WalletTestMutiSign011 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = now;
+  private static String name = "MutiSign001_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String testKey001 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress01 = PublicMethed.getFinalAddress(testKey001);
-  private long multiSignFee = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.multiSignFee");
-  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.updateAccountPermissionFee");
   private final String operations = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.operations");
-  private static final long now = System.currentTimeMillis();
-  private static String name = "MutiSign001_" + Long.toString(now);
-  private static final long totalSupply = now;
   String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
   String url = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetUrl");
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
   ByteString assetAccountId1;
   String[] permissionKeyString = new String[2];
   String[] ownerKeyString = new String[2];
   String accountPermissionJson = "";
-
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] manager1Address = ecKey1.getAddress();
   String manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] manager2Address = ecKey2.getAddress();
   String manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
   ECKey ecKey3 = new ECKey(Utils.getRandom());
   byte[] ownerAddress = ecKey3.getAddress();
   String ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-
   ECKey ecKey4 = new ECKey(Utils.getRandom());
   byte[] participateAddress = ecKey4.getAddress();
   String participateKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
 
   @BeforeSuite
   public void beforeSuite() {

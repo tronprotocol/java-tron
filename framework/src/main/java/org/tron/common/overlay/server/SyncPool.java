@@ -29,14 +29,12 @@ import org.tron.core.net.peer.PeerConnection;
 @Component
 public class SyncPool {
 
-  private double factor = Args.getInstance().getConnectFactor();
-  private double activeFactor = Args.getInstance().getActiveConnectFactor();
-
   private final List<PeerConnection> activePeers = Collections
       .synchronizedList(new ArrayList<PeerConnection>());
   private final AtomicInteger passivePeersCount = new AtomicInteger(0);
   private final AtomicInteger activePeersCount = new AtomicInteger(0);
-
+  private double factor = Args.getInstance().getConnectFactor();
+  private double activeFactor = Args.getInstance().getActiveConnectFactor();
   private Cache<NodeHandler, Long> nodeHandlerCache = CacheBuilder.newBuilder()
       .maximumSize(1000).expireAfterWrite(180, TimeUnit.SECONDS).recordStats().build();
 

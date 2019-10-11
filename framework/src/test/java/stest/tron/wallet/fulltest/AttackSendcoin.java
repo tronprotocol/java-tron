@@ -17,13 +17,13 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.BalanceContract;
-import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -32,6 +32,21 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class AttackSendcoin {
 
+  private static final long now = System.currentTimeMillis();
+  private static long start;
+  private static long end;
+  private static long beforeFromBalance;
+  private static long beforeNormal1Balance;
+  private static long beforeNormal2Balance;
+  private static long beforeNormal3Balance;
+  private static long beforeNormal4Balance;
+  private static long beforeAttackBalance;
+  private static long afterFromBalance;
+  private static long afterNormal1Balance;
+  private static long afterNormal2Balance;
+  private static long afterNormal3Balance;
+  private static long afterNormal4Balance;
+  private static long afterAttackBalance;
   //testng001、testng002、testng003、testng004
   //Devaccount
   private final String testKey001 =
@@ -54,8 +69,6 @@ public class AttackSendcoin {
   //Normal4
   private final String normalKey004 =
       "271c824fcb55f04a9f86f768424a80edeb26ab79cf12aa56643b595f689c008a";
-
-
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
   private final byte[] attackAddress = PublicMethed.getFinalAddress(testKey001);
@@ -63,23 +76,6 @@ public class AttackSendcoin {
   private final byte[] normal2Address = PublicMethed.getFinalAddress(normalKey002);
   private final byte[] normal3Address = PublicMethed.getFinalAddress(normalKey003);
   private final byte[] normal4Address = PublicMethed.getFinalAddress(normalKey004);
-
-
-  private static final long now = System.currentTimeMillis();
-  private static long start;
-  private static long end;
-  private static long beforeFromBalance;
-  private static long beforeNormal1Balance;
-  private static long beforeNormal2Balance;
-  private static long beforeNormal3Balance;
-  private static long beforeNormal4Balance;
-  private static long beforeAttackBalance;
-  private static long afterFromBalance;
-  private static long afterNormal1Balance;
-  private static long afterNormal2Balance;
-  private static long afterNormal3Balance;
-  private static long afterNormal4Balance;
-  private static long afterAttackBalance;
   private final Long sendNromal1Amount = 1L;
   private final Long sendNromal2Amount = 2L;
   private final Long sendNromal3Amount = 3L;
@@ -92,6 +88,64 @@ public class AttackSendcoin {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
+  /**
+   * constructor.
+   */
+
+  public static Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
+      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    byte[] address = addRess;
+    long frozenBalance = freezeBalance;
+    long frozenDuration = freezeDuration;
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    Protocol.Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI
+        .EmptyMessage.newBuilder().build());
+    final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long beforeFrozenBalance = 0L;
+    //Long beforeBandwidth     = beforeFronzen.getBandwidth();
+
+    BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract
+        .newBuilder();
+    ByteString byteAddreess = ByteString.copyFrom(address);
+
+    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
+        .setFrozenDuration(frozenDuration);
+
+    BalanceContract.FreezeBalanceContract contract = builder.build();
+    Transaction transaction = blockingStubFull.freezeBalance(contract);
+
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction = null");
+      return false;
+    }
+
+    transaction = TransactionUtils.setTimestamp(transaction);
+    transaction = TransactionUtils.sign(transaction, ecKey);
+    Return response = blockingStubFull.broadcastTransaction(transaction);
+
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    }
+
+    Long afterBlockNum = 0L;
+
+    while (afterBlockNum < beforeBlockNum) {
+      Protocol.Block currentBlock1 = blockingStubFull.getNowBlock(GrpcAPI
+          .EmptyMessage.newBuilder().build());
+      afterBlockNum = currentBlock1.getBlockHeader().getRawData().getNumber();
+    }
+    return true;
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -296,64 +350,6 @@ public class AttackSendcoin {
     logger.info("Total block record num is " + Integer.toString(blockTransNum));
 
 
-  }
-
-  /**
-   * constructor.
-   */
-
-  public static Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    byte[] address = addRess;
-    long frozenBalance = freezeBalance;
-    long frozenDuration = freezeDuration;
-    //String priKey = testKey002;
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    Protocol.Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI
-        .EmptyMessage.newBuilder().build());
-    final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
-    Long beforeFrozenBalance = 0L;
-    //Long beforeBandwidth     = beforeFronzen.getBandwidth();
-
-    BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract.newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
-
-    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
-        .setFrozenDuration(frozenDuration);
-
-    BalanceContract.FreezeBalanceContract contract = builder.build();
-    Transaction transaction = blockingStubFull.freezeBalance(contract);
-
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      logger.info("transaction = null");
-      return false;
-    }
-
-    transaction = TransactionUtils.setTimestamp(transaction);
-    transaction = TransactionUtils.sign(transaction, ecKey);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    }
-
-    Long afterBlockNum = 0L;
-
-    while (afterBlockNum < beforeBlockNum) {
-      Protocol.Block currentBlock1 = blockingStubFull.getNowBlock(GrpcAPI
-          .EmptyMessage.newBuilder().build());
-      afterBlockNum = currentBlock1.getBlockHeader().getRawData().getNumber();
-    }
-    return true;
   }
 
   /**

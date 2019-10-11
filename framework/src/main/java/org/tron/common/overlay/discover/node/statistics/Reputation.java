@@ -8,6 +8,31 @@ import org.tron.protos.Protocol.ReasonCode;
 
 public class Reputation {
 
+  private List<Score> scoreList = new ArrayList<>();
+
+  public Reputation(NodeStatistics nodeStatistics) {
+    Score<MessageStatistics> discoverScore = new DiscoverScore(nodeStatistics.messageStatistics);
+    Score<NodeStatistics> otherScore = new OtherScore(nodeStatistics);
+    Score<NodeStatistics> tcpScore = new TcpScore(nodeStatistics);
+    Score<NodeStatistics> disconnectScore = new DisConnectScore(nodeStatistics);
+
+    scoreList.add(discoverScore);
+    scoreList.add(tcpScore);
+    scoreList.add(otherScore);
+    scoreList.add(disconnectScore);
+  }
+
+  public int calculate() {
+    int scoreNumber = 0;
+    for (Score score : scoreList) {
+      scoreNumber = score.calculate(scoreNumber);
+      if (!score.isContinue()) {
+        break;
+      }
+    }
+    return scoreNumber > 0 ? scoreNumber : 0;
+  }
+
   public abstract class Score<T> implements Comparable<Score> {
 
     protected T t;
@@ -137,31 +162,6 @@ public class Reputation {
           : min(1000 / t.discoverMessageLatency.getAvrg(), 20);
       return baseScore;
     }
-  }
-
-  private List<Score> scoreList = new ArrayList<>();
-
-  public Reputation(NodeStatistics nodeStatistics) {
-    Score<MessageStatistics> discoverScore = new DiscoverScore(nodeStatistics.messageStatistics);
-    Score<NodeStatistics> otherScore = new OtherScore(nodeStatistics);
-    Score<NodeStatistics> tcpScore = new TcpScore(nodeStatistics);
-    Score<NodeStatistics> disconnectScore = new DisConnectScore(nodeStatistics);
-
-    scoreList.add(discoverScore);
-    scoreList.add(tcpScore);
-    scoreList.add(otherScore);
-    scoreList.add(disconnectScore);
-  }
-
-  public int calculate() {
-    int scoreNumber = 0;
-    for (Score score : scoreList) {
-      scoreNumber = score.calculate(scoreNumber);
-      if (!score.isContinue()) {
-        break;
-      }
-    }
-    return scoreNumber > 0 ? scoreNumber : 0;
   }
 
 }

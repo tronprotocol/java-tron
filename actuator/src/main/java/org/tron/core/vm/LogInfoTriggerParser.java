@@ -36,6 +36,19 @@ public class LogInfoTriggerParser {
 
   }
 
+  public static String getEntrySignature(ABI.Entry entry) {
+    String signature = entry.getName() + "(";
+    StringBuilder builder = new StringBuilder();
+    for (ABI.Entry.Param param : entry.getInputsList()) {
+      if (builder.length() > 0) {
+        builder.append(",");
+      }
+      builder.append(param.getType());
+    }
+    signature += builder.toString() + ")";
+    return signature;
+  }
+
   public List<ContractTrigger> parseLogInfos(List<LogInfo> logInfos, Repository deposit) {
 
     List<ContractTrigger> list = new LinkedList<>();
@@ -93,18 +106,5 @@ public class LogInfoTriggerParser {
     }
 
     return list;
-  }
-
-  public static String getEntrySignature(ABI.Entry entry) {
-    String signature = entry.getName() + "(";
-    StringBuilder builder = new StringBuilder();
-    for (ABI.Entry.Param param : entry.getInputsList()) {
-      if (builder.length() > 0) {
-        builder.append(",");
-      }
-      builder.append(param.getType());
-    }
-    signature += builder.toString() + ")";
-    return signature;
   }
 }

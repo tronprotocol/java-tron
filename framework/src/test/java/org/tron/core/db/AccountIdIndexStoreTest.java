@@ -19,9 +19,6 @@ import org.tron.protos.Protocol.AccountType;
 
 public class AccountIdIndexStoreTest {
 
-  private static String dbPath = "output_AccountIndexStore_test";
-  private static TronApplicationContext context;
-  private static AccountIdIndexStore accountIdIndexStore;
   private static final byte[] ACCOUNT_ADDRESS_ONE = randomBytes(16);
   private static final byte[] ACCOUNT_ADDRESS_TWO = randomBytes(16);
   private static final byte[] ACCOUNT_ADDRESS_THREE = randomBytes(16);
@@ -31,6 +28,9 @@ public class AccountIdIndexStoreTest {
   private static final byte[] ACCOUNT_NAME_THREE = randomBytes(6);
   private static final byte[] ACCOUNT_NAME_FOUR = randomBytes(6);
   private static final byte[] ACCOUNT_NAME_FIVE = randomBytes(6);
+  private static String dbPath = "output_AccountIndexStore_test";
+  private static TronApplicationContext context;
+  private static AccountIdIndexStore accountIdIndexStore;
   private static AccountCapsule accountCapsule1;
   private static AccountCapsule accountCapsule2;
   private static AccountCapsule accountCapsule3;
@@ -70,6 +70,14 @@ public class AccountIdIndexStoreTest {
     accountIdIndexStore.put(accountCapsule4);
   }
 
+  public static byte[] randomBytes(int length) {
+    // generate the random number
+    byte[] result = new byte[length];
+    new Random().nextBytes(result);
+    result[0] = Wallet.getAddressPreFixByte();
+    return result;
+  }
+
   @Test
   public void putAndGet() {
     byte[] address = accountIdIndexStore.get(ByteString.copyFrom(ACCOUNT_NAME_ONE));
@@ -99,7 +107,6 @@ public class AccountIdIndexStoreTest {
     Assert.assertFalse("putAndGet4", result);
   }
 
-
   @Test
   public void testCaseInsensitive() {
     byte[] ACCOUNT_NAME = "aABbCcDd_ssd1234".getBytes();
@@ -127,13 +134,5 @@ public class AccountIdIndexStoreTest {
 
     Assert.assertNotNull("getLowerCase fail", accountIdIndexStore.get(upperCase));
 
-  }
-
-  public static byte[] randomBytes(int length) {
-    // generate the random number
-    byte[] result = new byte[length];
-    new Random().nextBytes(result);
-    result[0] = Wallet.getAddressPreFixByte();
-    return result;
   }
 }

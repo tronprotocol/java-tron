@@ -70,17 +70,6 @@ public class TransactionTrace {
 
   @Getter
   private TransactionContext transactionContext;
-
-  public TransactionCapsule getTrx() {
-    return trx;
-  }
-
-  public enum TimeResultType {
-    NORMAL,
-    LONG_RUNNING,
-    OUT_OF_TIME
-  }
-
   @Getter
   @Setter
   private TimeResultType timeResultType = TimeResultType.NORMAL;
@@ -117,6 +106,10 @@ public class TransactionTrace {
     this.runtime = runtime;
     this.forkUtils = new ForkUtils();
     forkUtils.init(dynamicPropertiesStore);
+  }
+
+  public TransactionCapsule getTrx() {
+    return trx;
   }
 
   private boolean needVM() {
@@ -295,13 +288,11 @@ public class TransactionTrace {
     return runtime;
   }
 
-
   public void deleteContract(byte[] address) {
     codeStore.delete(address);
     accountStore.delete(address);
     contractStore.delete(address);
   }
-
 
   private byte[] convertToTronAddress(byte[] address) {
     if (address.length == 20) {
@@ -312,5 +303,12 @@ public class TransactionTrace {
       address = newAddress;
     }
     return address;
+  }
+
+
+  public enum TimeResultType {
+    NORMAL,
+    LONG_RUNNING,
+    OUT_OF_TIME
   }
 }

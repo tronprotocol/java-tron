@@ -52,11 +52,6 @@ public class VMConfig {
   private VMConfig() {
   }
 
-  private static class SystemPropertiesInstance {
-
-    private static final VMConfig INSTANCE = new VMConfig();
-  }
-
   public static VMConfig getInstance() {
     return SystemPropertiesInstance.INSTANCE;
   }
@@ -107,6 +102,11 @@ public class VMConfig {
 
   public static boolean allowTvmSolidity059() {
     return ALLOW_TVM_SOLIDITY_059;
+  }
+
+  private static class SystemPropertiesInstance {
+
+    private static final VMConfig INSTANCE = new VMConfig();
   }
 
 }

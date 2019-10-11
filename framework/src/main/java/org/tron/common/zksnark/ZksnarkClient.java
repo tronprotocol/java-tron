@@ -21,6 +21,10 @@ public class ZksnarkClient {
         .build());
   }
 
+  public static ZksnarkClient getInstance() {
+    return instance;
+  }
+
   public boolean checkZksnarkProof(Transaction transaction, byte[] sighash, long valueBalance) {
     String txId = new TransactionCapsule(transaction).getTransactionId().toString();
     ZksnarkRequest request = ZksnarkRequest.newBuilder()
@@ -30,9 +34,5 @@ public class ZksnarkClient {
         .setValueBalance(valueBalance)
         .build();
     return blockingStub.checkZksnarkProof(request).getCode() == Code.SUCCESS;
-  }
-
-  public static ZksnarkClient getInstance() {
-    return instance;
   }
 }

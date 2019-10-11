@@ -123,11 +123,18 @@ public class Bucket {
 
   //tree operations
 
+  public String getName() {
+    return name;
+  }
+
+  public List<Peer> getPeers() {
+    return peers;
+  }
+
   public interface DoOnTree {
 
     void call(Bucket bucket);
   }
-
 
   public static class SaveLeaf implements DoOnTree {
 
@@ -147,13 +154,5 @@ public class Bucket {
     public void setLeafs(List<Bucket> leafs) {
       this.leafs = leafs;
     }
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public List<Peer> getPeers() {
-    return peers;
   }
 }

@@ -13,11 +13,6 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
   private Witness witness;
 
 
-  @Override
-  public int compareTo(WitnessCapsule otherObject) {
-    return Long.compare(otherObject.getVoteCount(), this.getVoteCount());
-  }
-
   /**
    * WitnessCapsule constructor with pubKey and url.
    */
@@ -58,6 +53,11 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
     }
   }
 
+  @Override
+  public int compareTo(WitnessCapsule otherObject) {
+    return Long.compare(otherObject.getVoteCount(), this.getVoteCount());
+  }
+
   public ByteString getAddress() {
     return this.witness.getAddress();
   }
@@ -92,51 +92,51 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
     this.witness = this.witness.toBuilder().setVoteCount(voteCount).build();
   }
 
-  public void setTotalProduced(final long totalProduced) {
-    this.witness = this.witness.toBuilder().setTotalProduced(totalProduced).build();
-  }
-
   public long getTotalProduced() {
     return this.witness.getTotalProduced();
   }
 
-  public void setTotalMissed(final long totalMissed) {
-    this.witness = this.witness.toBuilder().setTotalMissed(totalMissed).build();
+  public void setTotalProduced(final long totalProduced) {
+    this.witness = this.witness.toBuilder().setTotalProduced(totalProduced).build();
   }
 
   public long getTotalMissed() {
     return this.witness.getTotalMissed();
   }
 
-  public void setLatestBlockNum(final long latestBlockNum) {
-    this.witness = this.witness.toBuilder().setLatestBlockNum(latestBlockNum).build();
+  public void setTotalMissed(final long totalMissed) {
+    this.witness = this.witness.toBuilder().setTotalMissed(totalMissed).build();
   }
 
   public long getLatestBlockNum() {
     return this.witness.getLatestBlockNum();
   }
 
-  public void setLatestSlotNum(final long latestSlotNum) {
-    this.witness = this.witness.toBuilder().setLatestSlotNum(latestSlotNum).build();
+  public void setLatestBlockNum(final long latestBlockNum) {
+    this.witness = this.witness.toBuilder().setLatestBlockNum(latestBlockNum).build();
   }
 
   public long getLatestSlotNum() {
     return this.witness.getLatestSlotNum();
   }
 
-  public void setIsJobs(final boolean isJobs) {
-    this.witness = this.witness.toBuilder().setIsJobs(isJobs).build();
+  public void setLatestSlotNum(final long latestSlotNum) {
+    this.witness = this.witness.toBuilder().setLatestSlotNum(latestSlotNum).build();
   }
 
   public boolean getIsJobs() {
     return this.witness.getIsJobs();
   }
 
-  public void setUrl(final String url) {
-    this.witness = this.witness.toBuilder().setUrl(url).build();
+  public void setIsJobs(final boolean isJobs) {
+    this.witness = this.witness.toBuilder().setIsJobs(isJobs).build();
   }
 
   public String getUrl() {
     return this.witness.getUrl();
+  }
+
+  public void setUrl(final String url) {
+    this.witness = this.witness.toBuilder().setUrl(url).build();
   }
 }

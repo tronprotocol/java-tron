@@ -28,14 +28,14 @@ import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 @Slf4j
 public class UpdateAccountActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static final String dbPath = "output_updateaccount_test";
   private static final String ACCOUNT_NAME = "ownerTest";
   private static final String ACCOUNT_NAME_1 = "ownerTest1";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_1;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
+  private static TronApplicationContext context;
+  private static Manager dbManager;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -50,6 +50,20 @@ public class UpdateAccountActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+  }
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   /**
@@ -76,6 +90,10 @@ public class UpdateAccountActuatorTest {
             .build());
   }
 
+  /**
+   * Unit test.
+   */
+
   private Any getContract(ByteString name, String address) {
     return Any.pack(
         AccountUpdateContract.newBuilder()
@@ -84,9 +102,6 @@ public class UpdateAccountActuatorTest {
             .build());
   }
 
-  /**
-   * Unit test.
-   */
   /**
    * Update account when all right.
    */
@@ -362,19 +377,5 @@ public class UpdateAccountActuatorTest {
 //    } catch (ContractExeException e) {
 //      Assert.assertFalse(e instanceof ContractExeException);
 //    }
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 }

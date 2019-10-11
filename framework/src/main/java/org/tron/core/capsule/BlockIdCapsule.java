@@ -6,6 +6,31 @@ import org.tron.common.utils.Sha256Hash;
 
 public class BlockIdCapsule extends Sha256Hash implements ProtoCapsule {
 
+  private long num;
+
+  public BlockIdCapsule() {
+    super(Sha256Hash.ZERO_HASH.getBytes());
+    num = 0;
+  }
+
+  /**
+   * Use {@link #wrap(byte[])} instead.
+   */
+  public BlockIdCapsule(Sha256Hash hash, long num) {
+    super(hash.getBytes());
+    this.num = num;
+  }
+
+  public BlockIdCapsule(byte[] hash, long num) {
+    super(hash);
+    this.num = num;
+  }
+
+  public BlockIdCapsule(ByteString hash, long num) {
+    super(hash.toByteArray());
+    this.num = num;
+  }
+
   @Override
   public byte[] getData() {
     return new byte[0];
@@ -48,31 +73,6 @@ public class BlockIdCapsule extends Sha256Hash implements ProtoCapsule {
       return Long.compare(num, otherNum);
     }
     return super.compareTo(other);
-  }
-
-  private long num;
-
-  public BlockIdCapsule() {
-    super(Sha256Hash.ZERO_HASH.getBytes());
-    num = 0;
-  }
-
-  /**
-   * Use {@link #wrap(byte[])} instead.
-   */
-  public BlockIdCapsule(Sha256Hash hash, long num) {
-    super(hash.getBytes());
-    this.num = num;
-  }
-
-  public BlockIdCapsule(byte[] hash, long num) {
-    super(hash);
-    this.num = num;
-  }
-
-  public BlockIdCapsule(ByteString hash, long num) {
-    super(hash.toByteArray());
-    this.num = num;
   }
 
   public long getNum() {

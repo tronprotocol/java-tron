@@ -19,8 +19,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
@@ -33,6 +33,9 @@ public class deploySideGateway {
 
   private final String testDepositTrx = "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb7";
   private final byte[] testDepositAddress = PublicMethed.getFinalAddress(testDepositTrx);
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] depositAddress = ecKey1.getAddress();
+  String testKeyFordeposit = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
   private String description = Configuration.getByPath("testng.conf")
@@ -41,15 +44,8 @@ public class deploySideGateway {
       .getString("defaultParameter.assetUrl");
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
-
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
   private String fullnode = "127.0.0.1:50151";
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] depositAddress = ecKey1.getAddress();
-  String testKeyFordeposit = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -101,7 +97,7 @@ public class deploySideGateway {
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    String outputPath = "./src/test/resources/sideChainGatewayAddress" ;
+    String outputPath = "./src/test/resources/sideChainGatewayAddress";
     try {
       File mainChainFile = new File(outputPath);
       Boolean cun = mainChainFile.createNewFile();
@@ -111,7 +107,7 @@ public class deploySideGateway {
 
       out.close();
       writer.close();
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
 

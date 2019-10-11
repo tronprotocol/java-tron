@@ -23,20 +23,15 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAssetIssue019 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = now;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private static final long now = System.currentTimeMillis();
-  private static final long totalSupply = now;
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
-
   //get account
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] asset019Address = ecKey1.getAddress();
@@ -44,6 +39,10 @@ public class WalletTestAssetIssue019 {
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] asset019SecondAddress = ecKey2.getAddress();
   String asset019SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
 
   @BeforeSuite
   public void beforeSuite() {

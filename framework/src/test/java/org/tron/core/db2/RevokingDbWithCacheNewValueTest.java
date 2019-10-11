@@ -242,6 +242,7 @@ public class RevokingDbWithCacheNewValueTest {
   }
 
   public static class TestSnapshotManager extends SnapshotManager {
+
     public TestSnapshotManager(String checkpointPath) {
       super(checkpointPath);
     }

@@ -60,6 +60,53 @@ public class DBConvert {
     return dbOptions;
   }
 
+  public static void main(String[] args) {
+    String dbSrc;
+    String dbDst;
+    if (args.length < 2) {
+      dbSrc = "output-directory/database";
+      dbDst = "output-directory-dst/database";
+    } else {
+      dbSrc = args[0];
+      dbDst = args[1];
+    }
+    File dbDirectory = new File(dbSrc);
+    if (!dbDirectory.exists()) {
+      System.out.println(dbSrc + "is not exists.");
+      return;
+    }
+    File[] files = dbDirectory.listFiles();
+    if (files == null || files.length == 0) {
+      System.out.println(dbSrc + " not contains any database.");
+      return;
+    }
+    long time = System.currentTimeMillis();
+    for (File file : files) {
+      if (!file.isDirectory()) {
+        System.out.println(file.getName() + " is not a database directory, ignore it.");
+        continue;
+      }
+      try {
+        DBConvert convert = new DBConvert(dbSrc, dbDst, file.getName());
+        if (convert.doConvert()) {
+          System.out.println(String
+              .format(
+                  "Convert database %s successful with %s key-value. keySum: %d, valueSum: %d",
+                  convert.dbName,
+                  convert.srcDbKeyCount, convert.dstDbKeySum, convert.dstDbValueSum));
+        } else {
+          System.out.println(String.format("Convert database %s failure", convert.dbName));
+        }
+      } catch (Exception e) {
+        System.out.println(e.getMessage());
+        return;
+      }
+    }
+    System.out.println(String
+        .format("database convert use %d seconds total.",
+            (System.currentTimeMillis() - time) / 1000));
+  }
+
   public DB newLevelDb(Path db) throws IOException {
     DB database = null;
     File file = db.toFile();
@@ -184,52 +231,5 @@ public class DBConvert {
       sum += (int) oneByte;
     }
     return sum;
-  }
-
-  public static void main(String[] args) {
-    String dbSrc;
-    String dbDst;
-    if (args.length < 2) {
-      dbSrc = "output-directory/database";
-      dbDst = "output-directory-dst/database";
-    } else {
-      dbSrc = args[0];
-      dbDst = args[1];
-    }
-    File dbDirectory = new File(dbSrc);
-    if (!dbDirectory.exists()) {
-      System.out.println(dbSrc + "is not exists.");
-      return;
-    }
-    File[] files = dbDirectory.listFiles();
-    if (files == null || files.length == 0) {
-      System.out.println(dbSrc + " not contains any database.");
-      return;
-    }
-    long time = System.currentTimeMillis();
-    for (File file : files) {
-      if (!file.isDirectory()) {
-        System.out.println(file.getName() + " is not a database directory, ignore it.");
-        continue;
-      }
-      try {
-        DBConvert convert = new DBConvert(dbSrc, dbDst, file.getName());
-        if (convert.doConvert()) {
-          System.out.println(String
-              .format(
-                  "Convert database %s successful with %s key-value. keySum: %d, valueSum: %d",
-                  convert.dbName,
-                  convert.srcDbKeyCount, convert.dstDbKeySum, convert.dstDbValueSum));
-        } else {
-          System.out.println(String.format("Convert database %s failure", convert.dbName));
-        }
-      } catch (Exception e) {
-        System.out.println(e.getMessage());
-        return;
-      }
-    }
-    System.out.println(String
-        .format("database convert use %d seconds total.",
-            (System.currentTimeMillis() - time) / 1000));
   }
 }

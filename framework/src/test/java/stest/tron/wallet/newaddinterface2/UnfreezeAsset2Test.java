@@ -22,13 +22,13 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -37,34 +37,14 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class UnfreezeAsset2Test {
 
-  //testng001、testng002、testng003、testng004
-  private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
-  private final String testKey003 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key2");
+  private static final long now = System.currentTimeMillis();
+  private static final String name = "testAssetIssue003_" + Long.toString(now);
 
   /*  //testng001、testng002、testng003、testng004
   private static final byte[] fromAddress = Base58
       .decodeFromBase58Check("THph9K2M2nLvkianrMGswRhz5hjSA9fuH7");
   private static final byte[] toAddress = Base58
       .decodeFromBase58Check("TV75jZpdmP2juMe1dRwGrwpV6AMU6mr1EU");*/
-
-  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-  //get account
-  ECKey ecKey = new ECKey(Utils.getRandom());
-  byte[] lowBalAddress = ecKey.getAddress();
-  String lowBalTest = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-
-  //get account
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] lowBalAddress2 = ecKey2.getAddress();
-  String lowBalTest2 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-
-  private static final long now = System.currentTimeMillis();
-  private static final String name = "testAssetIssue003_" + Long.toString(now);
   private static final String shortname = "a";
   private static final String tooLongName = "qazxswedcvfrtgbnhyujmkiolpoiuytre";
   private static final String chineseAssetIssuename = "中文都名字";
@@ -78,6 +58,21 @@ public class UnfreezeAsset2Test {
           + "vqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqaz"
           + "xswedcvqazxswedcvqazxswedcvqazxswedcv";
   private static final long totalSupply = now;
+  //testng001、testng002、testng003、testng004
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final String testKey003 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key2");
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
+  //get account
+  ECKey ecKey = new ECKey(Utils.getRandom());
+  byte[] lowBalAddress = ecKey.getAddress();
+  String lowBalTest = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+  //get account
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] lowBalAddress2 = ecKey2.getAddress();
+  String lowBalTest2 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
 
@@ -85,6 +80,11 @@ public class UnfreezeAsset2Test {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
+
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -423,11 +423,6 @@ public class UnfreezeAsset2Test {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

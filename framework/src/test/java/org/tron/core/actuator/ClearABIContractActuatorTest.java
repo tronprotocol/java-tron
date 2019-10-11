@@ -36,8 +36,6 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 @Slf4j
 public class ClearABIContractActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static final String dbPath = "output_clearabicontract_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
@@ -50,6 +48,8 @@ public class ClearABIContractActuatorTest {
   private static final ABI SOURCE_ABI = jsonStr2Abi(
       "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]");
   private static final ABI TARGET_ABI = ABI.getDefaultInstance();
+  private static TronApplicationContext context;
+  private static Manager dbManager;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -68,6 +68,20 @@ public class ClearABIContractActuatorTest {
   public static void init() {
     VMConfig.initAllowTvmConstantinople(1);
     dbManager = context.getBean(Manager.class);
+  }
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   /**
@@ -103,20 +117,6 @@ public class ClearABIContractActuatorTest {
 
     // address does not exist in accountStore
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   private Any getContract(String accountAddress, String contractAddress) {

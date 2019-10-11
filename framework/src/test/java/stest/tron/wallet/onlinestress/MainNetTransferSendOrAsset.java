@@ -44,14 +44,13 @@ public class MainNetTransferSendOrAsset {
 
 
   private final Long transferAmount = 1L;
+  private final Long sendAmount = 1L;
   private Long start;
   private Long end;
   private Long beforeToBalance;
   private Long afterToBalance;
   private Long beforeToAssetBalance = 0L;
   private Long afterToAssetBalance = 0L;
-  private final Long sendAmount = 1L;
-
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
 

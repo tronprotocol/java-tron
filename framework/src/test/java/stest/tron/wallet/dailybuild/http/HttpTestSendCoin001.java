@@ -20,14 +20,14 @@ public class HttpTestSendCoin001 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(1);
-  private String httpSoliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(2);
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] receiverAddress = ecKey1.getAddress();
   String receiverKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   Long amount = 1000L;
+  private String httpnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(1);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
   private JSONObject responseContent;
   private HttpResponse response;
 

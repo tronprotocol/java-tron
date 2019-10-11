@@ -29,14 +29,17 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class TestTransferTokenInContract {
 
-  private AtomicLong count = new AtomicLong();
-  private AtomicLong errorCount = new AtomicLong();
-  private long startTime = System.currentTimeMillis();
-
+  private static final long TotalSupply = 1000000L;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
+  String description = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetDescription");
+  String url = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetUrl");
+  private AtomicLong count = new AtomicLong();
+  private AtomicLong errorCount = new AtomicLong();
+  private long startTime = System.currentTimeMillis();
   private ManagedChannel channelFull = null;
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -48,12 +51,9 @@ public class TestTransferTokenInContract {
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
-  private static final long TotalSupply = 1000000L;
-
-  String description = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetDescription");
-  String url = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetUrl");
+  private static int randomInt(int minInt, int maxInt) {
+    return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -77,10 +77,6 @@ public class TestTransferTokenInContract {
         .usePlaintext(true)
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-  }
-
-  private static int randomInt(int minInt, int maxInt) {
-    return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
 
   /**

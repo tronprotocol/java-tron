@@ -29,49 +29,39 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class Create2Test021 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final String name = "Asset008_" + Long.toString(now);
+  private static final long totalSupply = now;
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
+  byte[] contractAddress = null;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] bytes;
+  String description = "just-test";
+  String url = "https://github.com/tronprotocol/wallet-cli/";
+  ByteString assetAccountId = null;
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] resourceOnwerAddress = ecKey2.getAddress();
+  String resourceOnwerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
   private ManagedChannel channelSolidity = null;
-
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-
-
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
-
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
-
-  byte[] contractAddress = null;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] contractExcAddress = PublicMethed
       .getFinalAddress("9fc9b78370cdeab1bc11ba5e387e5e4f205f17d1957b1bebf4ce6d0330a448a4");
   private String contractExcKey =
       "9fc9b78370cdeab1bc11ba5e387e5e4f205f17d1957b1bebf4ce6d0330a448a4";
-  byte[] bytes;
-  private static final long now = System.currentTimeMillis();
-  private static final String name = "Asset008_" + Long.toString(now);
-  private static final long totalSupply = now;
-  String description = "just-test";
-  String url = "https://github.com/tronprotocol/wallet-cli/";
-  ByteString assetAccountId = null;
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] resourceOnwerAddress = ecKey2.getAddress();
-  String resourceOnwerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
 
   @BeforeSuite
   public void beforeSuite() {

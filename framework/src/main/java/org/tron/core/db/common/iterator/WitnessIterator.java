@@ -1,9 +1,8 @@
 package org.tron.core.db.common.iterator;
 
-import org.tron.core.capsule.WitnessCapsule;
-
 import java.util.Iterator;
 import java.util.Map.Entry;
+import org.tron.core.capsule.WitnessCapsule;
 
 public class WitnessIterator extends AbstractIterator<WitnessCapsule> {
 

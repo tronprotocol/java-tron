@@ -20,6 +20,8 @@ public class NodeInfoServiceTest {
 
   private NodeInfoService nodeInfoService;
   private WitnessProductBlockService witnessProductBlockService;
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
 
   public NodeInfoServiceTest(TronApplicationContext context) {
     nodeInfoService = context.getBean("nodeInfoService", NodeInfoService.class);
@@ -38,9 +40,6 @@ public class NodeInfoServiceTest {
     Assert.assertEquals(nodeInfo.getCheatWitnessInfoMap().size(), 1);
     logger.info("{}", JSON.toJSONString(nodeInfo));
   }
-
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
 
   public void testGrpc() {
     WalletBlockingStub walletStub = WalletGrpc

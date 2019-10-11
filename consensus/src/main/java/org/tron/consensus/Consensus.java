@@ -27,11 +27,11 @@ public class Consensus {
     consensusInterface.stop();
   }
 
-  public void receiveBlock(Block block){
+  public void receiveBlock(Block block) {
     consensusInterface.receiveBlock(block);
   }
 
-  public boolean validBlock(Block block){
+  public boolean validBlock(Block block) {
     return consensusInterface.validBlock(block);
   }
 

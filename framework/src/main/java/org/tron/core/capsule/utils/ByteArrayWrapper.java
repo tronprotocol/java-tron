@@ -1,4 +1,3 @@
-
 package org.tron.core.capsule.utils;
 
 import static org.tron.common.utils.ByteUtil.toHexString;

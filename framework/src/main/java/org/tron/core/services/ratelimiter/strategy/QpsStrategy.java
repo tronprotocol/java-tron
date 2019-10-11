@@ -9,10 +9,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class QpsStrategy extends Strategy {
 
-  private RateLimiter rateLimiter;
-
   public static final String STRATEGY_PARAM_QPS = "qps";
   public static final Double DEFAULT_QPS = 100D;
+  private RateLimiter rateLimiter;
+
+  public QpsStrategy(String paramString) {
+    super(paramString);
+    rateLimiter = RateLimiter.create((Double) mapParams.get(STRATEGY_PARAM_QPS).value);
+  }
 
   // define the default strategy params
   @Override
@@ -20,11 +24,6 @@ public class QpsStrategy extends Strategy {
     Map<String, ParamItem> map = new HashMap<>();
     map.put(STRATEGY_PARAM_QPS, new ParamItem(Double.class, DEFAULT_QPS));
     return map;
-  }
-
-  public QpsStrategy(String paramString) {
-    super(paramString);
-    rateLimiter = RateLimiter.create((Double) mapParams.get(STRATEGY_PARAM_QPS).value);
   }
 
   public boolean acquire() {

@@ -17,9 +17,9 @@
  */
 package org.tron.common.crypto.zksnark;
 
-import java.math.BigInteger;
-
 import static org.tron.common.crypto.zksnark.Params.B_Fp2;
+
+import java.math.BigInteger;
 
 /**
  * Definition of {@link BN128} over F_p2, where "p" equals {@link Params#P} <br/>
@@ -36,26 +36,6 @@ public class BN128Fp2 extends BN128<Fp2> {
 
   protected BN128Fp2(Fp2 x, Fp2 y, Fp2 z) {
     super(x, y, z);
-  }
-
-  @Override
-  protected BN128<Fp2> zero() {
-    return ZERO;
-  }
-
-  @Override
-  protected BN128<Fp2> instance(Fp2 x, Fp2 y, Fp2 z) {
-    return new BN128Fp2(x, y, z);
-  }
-
-  @Override
-  protected Fp2 b() {
-    return B_Fp2;
-  }
-
-  @Override
-  protected Fp2 one() {
-    return Fp2._1;
   }
 
   protected BN128Fp2(BigInteger a, BigInteger b, BigInteger c, BigInteger d) {
@@ -85,5 +65,25 @@ public class BN128Fp2 extends BN128<Fp2> {
     } else {
       return null;
     }
+  }
+
+  @Override
+  protected BN128<Fp2> zero() {
+    return ZERO;
+  }
+
+  @Override
+  protected BN128<Fp2> instance(Fp2 x, Fp2 y, Fp2 z) {
+    return new BN128Fp2(x, y, z);
+  }
+
+  @Override
+  protected Fp2 b() {
+    return B_Fp2;
+  }
+
+  @Override
+  protected Fp2 one() {
+    return Fp2._1;
   }
 }

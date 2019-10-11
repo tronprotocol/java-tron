@@ -30,17 +30,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.Options;
-import org.iq80.leveldb.WriteOptions;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
 @Slf4j
@@ -64,11 +60,6 @@ public class LevelDbDataSourceImplTest {
   private byte[] key5 = "00000005aa".getBytes();
   private byte[] key6 = "00000006aa".getBytes();
   private byte[] key7 = "00000003ab".getBytes();
-  @Before
-  public void initDb() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    dataSourceTest = new LevelDbDataSourceImpl(dbPath + File.separator, "test_levelDb");
-  }
 
   /**
    * Release resources.
@@ -81,6 +72,12 @@ public class LevelDbDataSourceImplTest {
     } else {
       logger.info("Release resources failure.");
     }
+  }
+
+  @Before
+  public void initDb() {
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    dataSourceTest = new LevelDbDataSourceImpl(dbPath + File.separator, "test_levelDb");
   }
 
   @Test

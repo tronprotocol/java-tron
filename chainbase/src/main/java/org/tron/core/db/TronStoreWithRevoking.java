@@ -56,7 +56,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
                     DBConfig.getOptionsByDbName(dbName),
                     new WriteOptions().sync(DBConfig.isDbSync())))));
       } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
-        String parentPath =  Paths.get(DBConfig.getOutputDirectoryByDbName(dbName), DBConfig.getDbDirectory()).toString();
+        String parentPath = Paths
+            .get(DBConfig.getOutputDirectoryByDbName(dbName), DBConfig.getDbDirectory()).toString();
 
         this.revokingDB = new Chainbase(new SnapshotRoot(
             new RocksDB(
@@ -77,21 +78,20 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
   }
 
+  // only for test
+  protected TronStoreWithRevoking(String dbName, RevokingDatabase revokingDatabase) {
+    this.revokingDB = new RevokingDBWithCachingOldValue(dbName,
+        (AbstractRevokingStore) revokingDatabase);
+  }
+
   @Override
   public String getDbName() {
     return null;
   }
 
-
   @PostConstruct
   private void init() {
     revokingDatabase.add(revokingDB);
-  }
-
-  // only for test
-  protected TronStoreWithRevoking(String dbName, RevokingDatabase revokingDatabase) {
-    this.revokingDB = new RevokingDBWithCachingOldValue(dbName,
-        (AbstractRevokingStore) revokingDatabase);
   }
 
   @Override

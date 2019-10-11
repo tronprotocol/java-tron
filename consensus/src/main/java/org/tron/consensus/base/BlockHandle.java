@@ -1,4 +1,3 @@
-
 package org.tron.consensus.base;
 
 import org.tron.protos.Protocol.Block;

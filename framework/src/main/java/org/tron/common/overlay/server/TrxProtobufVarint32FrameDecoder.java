@@ -21,32 +21,6 @@ public class TrxProtobufVarint32FrameDecoder extends ByteToMessageDecoder {
     this.channel = channel;
   }
 
-  @Override
-  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-    in.markReaderIndex();
-    int preIndex = in.readerIndex();
-    int length = readRawVarint32(in);
-    if (length >= maxMsgLength) {
-      logger.error("recv a big msg, host : {}, msg length is : {}", ctx.channel().remoteAddress(),
-          length);
-      in.clear();
-      channel.close();
-      return;
-    }
-    if (preIndex == in.readerIndex()) {
-      return;
-    }
-    if (length < 0) {
-      throw new CorruptedFrameException("negative length: " + length);
-    }
-
-    if (in.readableBytes() < length) {
-      in.resetReaderIndex();
-    } else {
-      out.add(in.readRetainedSlice(length));
-    }
-  }
-
   private static int readRawVarint32(ByteBuf buffer) {
     if (!buffer.isReadable()) {
       return 0;
@@ -93,6 +67,32 @@ public class TrxProtobufVarint32FrameDecoder extends ByteToMessageDecoder {
         }
       }
       return result;
+    }
+  }
+
+  @Override
+  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+    in.markReaderIndex();
+    int preIndex = in.readerIndex();
+    int length = readRawVarint32(in);
+    if (length >= maxMsgLength) {
+      logger.error("recv a big msg, host : {}, msg length is : {}", ctx.channel().remoteAddress(),
+          length);
+      in.clear();
+      channel.close();
+      return;
+    }
+    if (preIndex == in.readerIndex()) {
+      return;
+    }
+    if (length < 0) {
+      throw new CorruptedFrameException("negative length: " + length);
+    }
+
+    if (in.readableBytes() < length) {
+      in.resetReaderIndex();
+    } else {
+      out.add(in.readRetainedSlice(length));
     }
   }
 }

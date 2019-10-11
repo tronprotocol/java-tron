@@ -17,8 +17,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -26,50 +26,42 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAssetIssue018 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final String name = "Asset008_" + Long.toString(now);
+  private static final String char32Name = "To_long_asset_name_" + Long.toString(now);
+  private static final String char33Name = "To_long_asset_name_a" + Long.toString(now);
+  private static final long totalSupply = now;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-  private static final long now = System.currentTimeMillis();
-  private static final String name = "Asset008_" + Long.toString(now);
-  private static final String char32Name = "To_long_asset_name_" + Long.toString(now);
-  private static final String char33Name = "To_long_asset_name_a" + Long.toString(now);
-  private static final long totalSupply = now;
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(1);
-
   //get account
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] assetAccount1Address = ecKey1.getAddress();
   String assetAccount1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] assetAccount2Address = ecKey2.getAddress();
   String assetAccount2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
   ECKey ecKey3 = new ECKey(Utils.getRandom());
   byte[] assetAccount3Address = ecKey3.getAddress();
   String assetAccount3Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-
   ECKey ecKey4 = new ECKey(Utils.getRandom());
   byte[] assetAccount4Address = ecKey4.getAddress();
   String assetAccount4Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
-
-
   ECKey ecKey5 = new ECKey(Utils.getRandom());
   byte[] assetAccount5Address = ecKey5.getAddress();
   String assetAccount5Key = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
-
   ECKey ecKey6 = new ECKey(Utils.getRandom());
   byte[] assetAccount6Address = ecKey6.getAddress();
   String assetAccount6Key = ByteArray.toHexString(ecKey6.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(1);
 
   @BeforeSuite
   public void beforeSuite() {

@@ -36,428 +36,8 @@ public class TrieImpl implements Trie<byte[]> {
 
   private final static Object NULL_NODE = new Object();
   private final static int MIN_BRANCHES_CONCURRENTLY = 3;
-  private static ExecutorService executor;
-
   private static final Logger logger = LoggerFactory.getLogger(TrieImpl.class);
-
-  public static ExecutorService getExecutor() {
-    if (executor == null) {
-      executor = Executors.newFixedThreadPool(4,
-          new ThreadFactoryBuilder().setNameFormat("trie-calc-thread-%d").build());
-    }
-    return executor;
-  }
-
-  public enum NodeType {
-    BranchNode,
-    KVNodeValue,
-    KVNodeNode
-  }
-
-  public final class Node {
-
-    byte[] hash = null;
-    private byte[] rlp = null;
-    private RLP.LList parsedRlp = null;
-    private boolean dirty = false;
-    private NodeType nodeType;
-
-    private Object[] children = null;
-
-    // new empty BranchNode
-    public Node() {
-      children = new Object[17];
-      dirty = true;
-    }
-
-    // new KVNode with key and (value or node)
-    public Node(TrieKey key, Object valueOrNode) {
-      this(new Object[]{key, valueOrNode});
-      dirty = true;
-    }
-
-    // new Node with hash or RLP
-    public Node(byte[] hashOrRlp) {
-      if (hashOrRlp.length == 32) {
-        this.hash = hashOrRlp;
-      } else {
-        this.rlp = hashOrRlp;
-      }
-    }
-
-    private Node(RLP.LList parsedRlp) {
-      this.parsedRlp = parsedRlp;
-      this.rlp = parsedRlp.getEncoded();
-    }
-
-    private Node(Object[] children) {
-      this.children = children;
-    }
-
-    public Node(int length) {
-      this.children = new Object[length];
-    }
-
-    public boolean resolveCheck() {
-      if (rlp != null || parsedRlp != null || hash == null) {
-        return true;
-      }
-      rlp = getHash(hash);
-      return rlp != null;
-    }
-
-    private void resolve() {
-      if (!resolveCheck()) {
-        logger.error("Invalid Trie state, can't resolve hash " + toHexString(hash));
-        throw new RuntimeException("Invalid Trie state, can't resolve hash " + toHexString(hash));
-      }
-    }
-
-    public byte[] encode() {
-      return encode(1, true);
-    }
-
-    private byte[] encode(final int depth, boolean forceHash) {
-      if (!dirty) {
-        return hash != null ? encodeElement(hash) : rlp;
-      } else {
-        NodeType type = getType();
-        byte[] ret;
-        if (type == NodeType.BranchNode) {
-          if (depth == 1 && async) {
-            // parallelize encode() on the first trie level only and if there are at least
-            // MIN_BRANCHES_CONCURRENTLY branches are modified
-            final Object[] encoded = new Object[17];
-            int encodeCnt = 0;
-            for (int i = 0; i < 16; i++) {
-              final Node child = branchNodeGetChild(i);
-              if (child == null) {
-                encoded[i] = EMPTY_ELEMENT_RLP;
-              } else if (!child.dirty) {
-                encoded[i] = child.encode(depth + 1, false);
-              } else {
-                encodeCnt++;
-              }
-            }
-            for (int i = 0; i < 16; i++) {
-              if (encoded[i] == null) {
-                final Node child = branchNodeGetChild(i);
-                if (child == null) {
-                  continue;
-                }
-                if (encodeCnt >= MIN_BRANCHES_CONCURRENTLY) {
-                  encoded[i] = getExecutor().submit(() -> child.encode(depth + 1, false));
-                } else {
-                  encoded[i] = child.encode(depth + 1, false);
-                }
-              }
-            }
-            byte[] value = branchNodeGetValue();
-            encoded[16] = constantFuture(encodeElement(value));
-            try {
-              ret = encodeRlpListFutures(encoded);
-            } catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-          } else {
-            byte[][] encoded = new byte[17][];
-            for (int i = 0; i < 16; i++) {
-              Node child = branchNodeGetChild(i);
-              encoded[i] = child == null ? EMPTY_ELEMENT_RLP : child.encode(depth + 1, false);
-            }
-            byte[] value = branchNodeGetValue();
-            encoded[16] = encodeElement(value);
-            ret = encodeList(encoded);
-          }
-        } else if (type == NodeType.KVNodeNode) {
-          ret = encodeList(encodeElement(kvNodeGetKey().toPacked()),
-              kvNodeGetChildNode().encode(depth + 1, false));
-        } else {
-          byte[] value = kvNodeGetValue();
-          ret = encodeList(encodeElement(kvNodeGetKey().toPacked()),
-              encodeElement(value == null ? EMPTY_BYTE_ARRAY : value));
-        }
-        if (hash != null) {
-          deleteHash(hash);
-        }
-        dirty = false;
-        if (ret.length < 32 && !forceHash) {
-          rlp = ret;
-          return ret;
-        } else {
-          hash = Hash.sha3(ret);
-          addHash(hash, ret);
-          return encodeElement(hash);
-        }
-      }
-    }
-
-    @SafeVarargs
-    private final byte[] encodeRlpListFutures(Object... list)
-        throws ExecutionException, InterruptedException {
-      byte[][] vals = new byte[list.length][];
-      for (int i = 0; i < list.length; i++) {
-        if (list[i] instanceof Future) {
-          vals[i] = ((Future<byte[]>) list[i]).get();
-        } else {
-          vals[i] = (byte[]) list[i];
-        }
-      }
-      return encodeList(vals);
-    }
-
-    private void parse() {
-      if (children != null) {
-        return;
-      }
-      resolve();
-
-      RLP.LList list = parsedRlp == null ? RLP.decodeLazyList(rlp) : parsedRlp;
-
-      if (list != null && list.size() == 2) {
-        children = new Object[2];
-        TrieKey key = TrieKey.fromPacked(list.getBytes(0));
-        children[0] = key;
-        if (key.isTerminal()) {
-          children[1] = list.getBytes(1);
-        } else {
-          children[1] = list.isList(1) ? new Node(list.getList(1)) : new Node(list.getBytes(1));
-        }
-      } else {
-        children = new Object[17];
-        parsedRlp = list;
-      }
-    }
-
-    public Node branchNodeGetChild(int hex) {
-      parse();
-      assert getType() == NodeType.BranchNode;
-      Object n = children[hex];
-      if (n == null && parsedRlp != null) {
-        if (parsedRlp.isList(hex)) {
-          n = new Node(parsedRlp.getList(hex));
-        } else {
-          byte[] bytes = parsedRlp.getBytes(hex);
-          if (bytes.length == 0) {
-            n = NULL_NODE;
-          } else {
-            n = new Node(bytes);
-          }
-        }
-        children[hex] = n;
-      }
-      return n == NULL_NODE ? null : (Node) n;
-    }
-
-    public Node branchNodeSetChild(int hex, Node node) {
-      parse();
-      assert getType() == NodeType.BranchNode;
-      children[hex] = node == null ? NULL_NODE : node;
-      dirty = true;
-      return this;
-    }
-
-    public byte[] branchNodeGetValue() {
-      parse();
-      assert getType() == NodeType.BranchNode;
-      Object n = children[16];
-      if (n == null && parsedRlp != null) {
-        byte[] bytes = parsedRlp.getBytes(16);
-        if (bytes.length == 0) {
-          n = NULL_NODE;
-        } else {
-          n = bytes;
-        }
-        children[16] = n;
-      }
-      return n == NULL_NODE ? null : (byte[]) n;
-    }
-
-    public Node branchNodeSetValue(byte[] val) {
-      parse();
-      assert getType() == NodeType.BranchNode;
-      children[16] = val == null ? NULL_NODE : val;
-      dirty = true;
-      return this;
-    }
-
-    public int branchNodeCompactIdx() {
-      parse();
-      assert getType() == NodeType.BranchNode;
-      int cnt = 0;
-      int idx = -1;
-      for (int i = 0; i < 16; i++) {
-        if (branchNodeGetChild(i) != null) {
-          cnt++;
-          idx = i;
-          if (cnt > 1) {
-            return -1;
-          }
-        }
-      }
-      return cnt > 0 ? idx : (branchNodeGetValue() == null ? -1 : 16);
-    }
-
-    public boolean branchNodeCanCompact() {
-      parse();
-      assert getType() == NodeType.BranchNode;
-      int cnt = 0;
-      for (int i = 0; i < 16; i++) {
-        cnt += branchNodeGetChild(i) == null ? 0 : 1;
-        if (cnt > 1) {
-          return false;
-        }
-      }
-      return cnt == 0 || branchNodeGetValue() == null;
-    }
-
-    public TrieKey kvNodeGetKey() {
-      parse();
-      assert getType() != NodeType.BranchNode;
-      return (TrieKey) children[0];
-    }
-
-    public Node kvNodeGetChildNode() {
-      parse();
-      assert getType() == NodeType.KVNodeNode;
-      return (Node) children[1];
-    }
-
-    public byte[] kvNodeGetValue() {
-      parse();
-      assert getType() == NodeType.KVNodeValue;
-      return (byte[]) children[1];
-    }
-
-    public Node kvNodeSetValue(byte[] value) {
-      parse();
-      assert getType() == NodeType.KVNodeValue;
-      children[1] = value;
-      dirty = true;
-      return this;
-    }
-
-    public Object kvNodeGetValueOrNode() {
-      parse();
-      assert getType() != NodeType.BranchNode;
-      return children[1];
-    }
-
-    public Node kvNodeSetValueOrNode(Object valueOrNode) {
-      parse();
-      assert getType() != NodeType.BranchNode;
-      children[1] = valueOrNode;
-      dirty = true;
-      return this;
-    }
-
-    public NodeType getType() {
-      parse();
-
-      return children.length == 17 ? NodeType.BranchNode :
-          (children[1] instanceof Node ? NodeType.KVNodeNode : NodeType.KVNodeValue);
-    }
-
-    public void dispose() {
-      if (hash != null) {
-        deleteHash(hash);
-      }
-    }
-
-    public Node invalidate() {
-      dirty = true;
-      return this;
-    }
-
-    /***********  Dump methods  ************/
-
-    public String dumpStruct(String indent, String prefix) {
-      String ret = indent + prefix + getType() + (dirty ? " *" : "") +
-          (hash == null ? "" : "(hash: " + Hex.toHexString(hash).substring(0, 6) + ")");
-      if (getType() == NodeType.BranchNode) {
-        byte[] value = branchNodeGetValue();
-        ret += (value == null ? "" : " [T] = " + Hex.toHexString(value)) + "\n";
-        for (int i = 0; i < 16; i++) {
-          Node child = branchNodeGetChild(i);
-          if (child != null) {
-            ret += child.dumpStruct(indent + "  ", "[" + i + "] ");
-          }
-        }
-
-      } else if (getType() == NodeType.KVNodeNode) {
-        ret += " [" + kvNodeGetKey() + "]\n";
-        ret += kvNodeGetChildNode().dumpStruct(indent + "  ", "");
-      } else {
-        ret += " [" + kvNodeGetKey() + "] = " + Hex.toHexString(kvNodeGetValue()) + "\n";
-      }
-      return ret;
-    }
-
-    public List<String> dumpTrieNode(boolean compact) {
-      List<String> ret = new ArrayList<>();
-      if (hash != null) {
-        ret.add(hash2str(hash, compact) + " ==> " + dumpContent(false, compact));
-      }
-
-      if (getType() == NodeType.BranchNode) {
-        for (int i = 0; i < 16; i++) {
-          Node child = branchNodeGetChild(i);
-          if (child != null) {
-            ret.addAll(child.dumpTrieNode(compact));
-          }
-        }
-      } else if (getType() == NodeType.KVNodeNode) {
-        ret.addAll(kvNodeGetChildNode().dumpTrieNode(compact));
-      }
-      return ret;
-    }
-
-    private String dumpContent(boolean recursion, boolean compact) {
-      if (recursion && hash != null) {
-        return hash2str(hash, compact);
-      }
-      String ret;
-      if (getType() == NodeType.BranchNode) {
-        ret = "[";
-        for (int i = 0; i < 16; i++) {
-          Node child = branchNodeGetChild(i);
-          ret += i == 0 ? "" : ",";
-          ret += child == null ? "" : child.dumpContent(true, compact);
-        }
-        byte[] value = branchNodeGetValue();
-        ret += value == null ? "" : ", " + val2str(value, compact);
-        ret += "]";
-      } else if (getType() == NodeType.KVNodeNode) {
-        ret = "[<" + kvNodeGetKey() + ">, " + kvNodeGetChildNode().dumpContent(true, compact) + "]";
-      } else {
-        ret = "[<" + kvNodeGetKey() + ">, " + val2str(kvNodeGetValue(), compact) + "]";
-      }
-      return ret;
-    }
-
-    public NodeType getNodeType() {
-      return nodeType;
-    }
-
-    public Node setNodeType(NodeType nodeType) {
-      this.nodeType = nodeType;
-      return this;
-    }
-
-    @Override
-    public String toString() {
-      return getType() + (dirty ? " *" : "") + (hash == null ? ""
-          : "(hash: " + toHexString(hash) + " )");
-    }
-  }
-
-  public interface ScanAction {
-
-    void doOnNode(byte[] hash, Node node);
-
-    void doOnValue(byte[] nodeHash, Node node, byte[] key, byte[] value);
-  }
-
+  private static ExecutorService executor;
   private DB<byte[], BytesCapsule> cache;
   private Node root;
   private boolean async = true;
@@ -469,14 +49,33 @@ public class TrieImpl implements Trie<byte[]> {
   public TrieImpl(byte[] root) {
     this(new ConcurrentHashDB(), root);
   }
-
   public TrieImpl(DB<byte[], BytesCapsule> cache) {
     this(cache, null);
   }
-
   public TrieImpl(DB<byte[], BytesCapsule> cache, byte[] root) {
     this.cache = cache;
     setRoot(root);
+  }
+
+  public static ExecutorService getExecutor() {
+    if (executor == null) {
+      executor = Executors.newFixedThreadPool(4,
+          new ThreadFactoryBuilder().setNameFormat("trie-calc-thread-%d").build());
+    }
+    return executor;
+  }
+
+  private static String hash2str(byte[] hash, boolean shortHash) {
+    String ret = Hex.toHexString(hash);
+    return "0x" + (shortHash ? ret.substring(0, 8) : ret);
+  }
+
+  private static String val2str(byte[] val, boolean shortHash) {
+    String ret = Hex.toHexString(val);
+    if (val.length > 16) {
+      ret = ret.substring(0, 10) + "... len " + val.length;
+    }
+    return "\"" + ret + "\"";
   }
 
   public void setAsync(boolean async) {
@@ -487,15 +86,6 @@ public class TrieImpl implements Trie<byte[]> {
     if (root != null) {
       root.encode();
     }
-  }
-
-  public void setRoot(byte[] root) {
-    if (root != null && !FastByteComparisons.equalByte(root, EMPTY_TRIE_HASH)) {
-      this.root = new Node(root);
-    } else {
-      this.root = null;
-    }
-
   }
 
   private boolean hasRoot() {
@@ -964,16 +554,422 @@ public class TrieImpl implements Trie<byte[]> {
     return root;
   }
 
-  private static String hash2str(byte[] hash, boolean shortHash) {
-    String ret = Hex.toHexString(hash);
-    return "0x" + (shortHash ? ret.substring(0, 8) : ret);
+  public void setRoot(byte[] root) {
+    if (root != null && !FastByteComparisons.equalByte(root, EMPTY_TRIE_HASH)) {
+      this.root = new Node(root);
+    } else {
+      this.root = null;
+    }
+
   }
 
-  private static String val2str(byte[] val, boolean shortHash) {
-    String ret = Hex.toHexString(val);
-    if (val.length > 16) {
-      ret = ret.substring(0, 10) + "... len " + val.length;
+  public enum NodeType {
+    BranchNode,
+    KVNodeValue,
+    KVNodeNode
+  }
+
+  public interface ScanAction {
+
+    void doOnNode(byte[] hash, Node node);
+
+    void doOnValue(byte[] nodeHash, Node node, byte[] key, byte[] value);
+  }
+
+  public final class Node {
+
+    byte[] hash = null;
+    private byte[] rlp = null;
+    private RLP.LList parsedRlp = null;
+    private boolean dirty = false;
+    private NodeType nodeType;
+
+    private Object[] children = null;
+
+    // new empty BranchNode
+    public Node() {
+      children = new Object[17];
+      dirty = true;
     }
-    return "\"" + ret + "\"";
+
+    // new KVNode with key and (value or node)
+    public Node(TrieKey key, Object valueOrNode) {
+      this(new Object[]{key, valueOrNode});
+      dirty = true;
+    }
+
+    // new Node with hash or RLP
+    public Node(byte[] hashOrRlp) {
+      if (hashOrRlp.length == 32) {
+        this.hash = hashOrRlp;
+      } else {
+        this.rlp = hashOrRlp;
+      }
+    }
+
+    private Node(RLP.LList parsedRlp) {
+      this.parsedRlp = parsedRlp;
+      this.rlp = parsedRlp.getEncoded();
+    }
+
+    private Node(Object[] children) {
+      this.children = children;
+    }
+
+    public Node(int length) {
+      this.children = new Object[length];
+    }
+
+    public boolean resolveCheck() {
+      if (rlp != null || parsedRlp != null || hash == null) {
+        return true;
+      }
+      rlp = getHash(hash);
+      return rlp != null;
+    }
+
+    private void resolve() {
+      if (!resolveCheck()) {
+        logger.error("Invalid Trie state, can't resolve hash " + toHexString(hash));
+        throw new RuntimeException("Invalid Trie state, can't resolve hash " + toHexString(hash));
+      }
+    }
+
+    public byte[] encode() {
+      return encode(1, true);
+    }
+
+    private byte[] encode(final int depth, boolean forceHash) {
+      if (!dirty) {
+        return hash != null ? encodeElement(hash) : rlp;
+      } else {
+        NodeType type = getType();
+        byte[] ret;
+        if (type == NodeType.BranchNode) {
+          if (depth == 1 && async) {
+            // parallelize encode() on the first trie level only and if there are at least
+            // MIN_BRANCHES_CONCURRENTLY branches are modified
+            final Object[] encoded = new Object[17];
+            int encodeCnt = 0;
+            for (int i = 0; i < 16; i++) {
+              final Node child = branchNodeGetChild(i);
+              if (child == null) {
+                encoded[i] = EMPTY_ELEMENT_RLP;
+              } else if (!child.dirty) {
+                encoded[i] = child.encode(depth + 1, false);
+              } else {
+                encodeCnt++;
+              }
+            }
+            for (int i = 0; i < 16; i++) {
+              if (encoded[i] == null) {
+                final Node child = branchNodeGetChild(i);
+                if (child == null) {
+                  continue;
+                }
+                if (encodeCnt >= MIN_BRANCHES_CONCURRENTLY) {
+                  encoded[i] = getExecutor().submit(() -> child.encode(depth + 1, false));
+                } else {
+                  encoded[i] = child.encode(depth + 1, false);
+                }
+              }
+            }
+            byte[] value = branchNodeGetValue();
+            encoded[16] = constantFuture(encodeElement(value));
+            try {
+              ret = encodeRlpListFutures(encoded);
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          } else {
+            byte[][] encoded = new byte[17][];
+            for (int i = 0; i < 16; i++) {
+              Node child = branchNodeGetChild(i);
+              encoded[i] = child == null ? EMPTY_ELEMENT_RLP : child.encode(depth + 1, false);
+            }
+            byte[] value = branchNodeGetValue();
+            encoded[16] = encodeElement(value);
+            ret = encodeList(encoded);
+          }
+        } else if (type == NodeType.KVNodeNode) {
+          ret = encodeList(encodeElement(kvNodeGetKey().toPacked()),
+              kvNodeGetChildNode().encode(depth + 1, false));
+        } else {
+          byte[] value = kvNodeGetValue();
+          ret = encodeList(encodeElement(kvNodeGetKey().toPacked()),
+              encodeElement(value == null ? EMPTY_BYTE_ARRAY : value));
+        }
+        if (hash != null) {
+          deleteHash(hash);
+        }
+        dirty = false;
+        if (ret.length < 32 && !forceHash) {
+          rlp = ret;
+          return ret;
+        } else {
+          hash = Hash.sha3(ret);
+          addHash(hash, ret);
+          return encodeElement(hash);
+        }
+      }
+    }
+
+    @SafeVarargs
+    private final byte[] encodeRlpListFutures(Object... list)
+        throws ExecutionException, InterruptedException {
+      byte[][] vals = new byte[list.length][];
+      for (int i = 0; i < list.length; i++) {
+        if (list[i] instanceof Future) {
+          vals[i] = ((Future<byte[]>) list[i]).get();
+        } else {
+          vals[i] = (byte[]) list[i];
+        }
+      }
+      return encodeList(vals);
+    }
+
+    private void parse() {
+      if (children != null) {
+        return;
+      }
+      resolve();
+
+      RLP.LList list = parsedRlp == null ? RLP.decodeLazyList(rlp) : parsedRlp;
+
+      if (list != null && list.size() == 2) {
+        children = new Object[2];
+        TrieKey key = TrieKey.fromPacked(list.getBytes(0));
+        children[0] = key;
+        if (key.isTerminal()) {
+          children[1] = list.getBytes(1);
+        } else {
+          children[1] = list.isList(1) ? new Node(list.getList(1)) : new Node(list.getBytes(1));
+        }
+      } else {
+        children = new Object[17];
+        parsedRlp = list;
+      }
+    }
+
+    public Node branchNodeGetChild(int hex) {
+      parse();
+      assert getType() == NodeType.BranchNode;
+      Object n = children[hex];
+      if (n == null && parsedRlp != null) {
+        if (parsedRlp.isList(hex)) {
+          n = new Node(parsedRlp.getList(hex));
+        } else {
+          byte[] bytes = parsedRlp.getBytes(hex);
+          if (bytes.length == 0) {
+            n = NULL_NODE;
+          } else {
+            n = new Node(bytes);
+          }
+        }
+        children[hex] = n;
+      }
+      return n == NULL_NODE ? null : (Node) n;
+    }
+
+    public Node branchNodeSetChild(int hex, Node node) {
+      parse();
+      assert getType() == NodeType.BranchNode;
+      children[hex] = node == null ? NULL_NODE : node;
+      dirty = true;
+      return this;
+    }
+
+    public byte[] branchNodeGetValue() {
+      parse();
+      assert getType() == NodeType.BranchNode;
+      Object n = children[16];
+      if (n == null && parsedRlp != null) {
+        byte[] bytes = parsedRlp.getBytes(16);
+        if (bytes.length == 0) {
+          n = NULL_NODE;
+        } else {
+          n = bytes;
+        }
+        children[16] = n;
+      }
+      return n == NULL_NODE ? null : (byte[]) n;
+    }
+
+    public Node branchNodeSetValue(byte[] val) {
+      parse();
+      assert getType() == NodeType.BranchNode;
+      children[16] = val == null ? NULL_NODE : val;
+      dirty = true;
+      return this;
+    }
+
+    public int branchNodeCompactIdx() {
+      parse();
+      assert getType() == NodeType.BranchNode;
+      int cnt = 0;
+      int idx = -1;
+      for (int i = 0; i < 16; i++) {
+        if (branchNodeGetChild(i) != null) {
+          cnt++;
+          idx = i;
+          if (cnt > 1) {
+            return -1;
+          }
+        }
+      }
+      return cnt > 0 ? idx : (branchNodeGetValue() == null ? -1 : 16);
+    }
+
+    public boolean branchNodeCanCompact() {
+      parse();
+      assert getType() == NodeType.BranchNode;
+      int cnt = 0;
+      for (int i = 0; i < 16; i++) {
+        cnt += branchNodeGetChild(i) == null ? 0 : 1;
+        if (cnt > 1) {
+          return false;
+        }
+      }
+      return cnt == 0 || branchNodeGetValue() == null;
+    }
+
+    public TrieKey kvNodeGetKey() {
+      parse();
+      assert getType() != NodeType.BranchNode;
+      return (TrieKey) children[0];
+    }
+
+    public Node kvNodeGetChildNode() {
+      parse();
+      assert getType() == NodeType.KVNodeNode;
+      return (Node) children[1];
+    }
+
+    public byte[] kvNodeGetValue() {
+      parse();
+      assert getType() == NodeType.KVNodeValue;
+      return (byte[]) children[1];
+    }
+
+    public Node kvNodeSetValue(byte[] value) {
+      parse();
+      assert getType() == NodeType.KVNodeValue;
+      children[1] = value;
+      dirty = true;
+      return this;
+    }
+
+    public Object kvNodeGetValueOrNode() {
+      parse();
+      assert getType() != NodeType.BranchNode;
+      return children[1];
+    }
+
+    public Node kvNodeSetValueOrNode(Object valueOrNode) {
+      parse();
+      assert getType() != NodeType.BranchNode;
+      children[1] = valueOrNode;
+      dirty = true;
+      return this;
+    }
+
+    public NodeType getType() {
+      parse();
+
+      return children.length == 17 ? NodeType.BranchNode :
+          (children[1] instanceof Node ? NodeType.KVNodeNode : NodeType.KVNodeValue);
+    }
+
+    public void dispose() {
+      if (hash != null) {
+        deleteHash(hash);
+      }
+    }
+
+    public Node invalidate() {
+      dirty = true;
+      return this;
+    }
+
+    /***********  Dump methods  ************/
+
+    public String dumpStruct(String indent, String prefix) {
+      String ret = indent + prefix + getType() + (dirty ? " *" : "") +
+          (hash == null ? "" : "(hash: " + Hex.toHexString(hash).substring(0, 6) + ")");
+      if (getType() == NodeType.BranchNode) {
+        byte[] value = branchNodeGetValue();
+        ret += (value == null ? "" : " [T] = " + Hex.toHexString(value)) + "\n";
+        for (int i = 0; i < 16; i++) {
+          Node child = branchNodeGetChild(i);
+          if (child != null) {
+            ret += child.dumpStruct(indent + "  ", "[" + i + "] ");
+          }
+        }
+
+      } else if (getType() == NodeType.KVNodeNode) {
+        ret += " [" + kvNodeGetKey() + "]\n";
+        ret += kvNodeGetChildNode().dumpStruct(indent + "  ", "");
+      } else {
+        ret += " [" + kvNodeGetKey() + "] = " + Hex.toHexString(kvNodeGetValue()) + "\n";
+      }
+      return ret;
+    }
+
+    public List<String> dumpTrieNode(boolean compact) {
+      List<String> ret = new ArrayList<>();
+      if (hash != null) {
+        ret.add(hash2str(hash, compact) + " ==> " + dumpContent(false, compact));
+      }
+
+      if (getType() == NodeType.BranchNode) {
+        for (int i = 0; i < 16; i++) {
+          Node child = branchNodeGetChild(i);
+          if (child != null) {
+            ret.addAll(child.dumpTrieNode(compact));
+          }
+        }
+      } else if (getType() == NodeType.KVNodeNode) {
+        ret.addAll(kvNodeGetChildNode().dumpTrieNode(compact));
+      }
+      return ret;
+    }
+
+    private String dumpContent(boolean recursion, boolean compact) {
+      if (recursion && hash != null) {
+        return hash2str(hash, compact);
+      }
+      String ret;
+      if (getType() == NodeType.BranchNode) {
+        ret = "[";
+        for (int i = 0; i < 16; i++) {
+          Node child = branchNodeGetChild(i);
+          ret += i == 0 ? "" : ",";
+          ret += child == null ? "" : child.dumpContent(true, compact);
+        }
+        byte[] value = branchNodeGetValue();
+        ret += value == null ? "" : ", " + val2str(value, compact);
+        ret += "]";
+      } else if (getType() == NodeType.KVNodeNode) {
+        ret = "[<" + kvNodeGetKey() + ">, " + kvNodeGetChildNode().dumpContent(true, compact) + "]";
+      } else {
+        ret = "[<" + kvNodeGetKey() + ">, " + val2str(kvNodeGetValue(), compact) + "]";
+      }
+      return ret;
+    }
+
+    public NodeType getNodeType() {
+      return nodeType;
+    }
+
+    public Node setNodeType(NodeType nodeType) {
+      this.nodeType = nodeType;
+      return this;
+    }
+
+    @Override
+    public String toString() {
+      return getType() + (dirty ? " *" : "") + (hash == null ? ""
+          : "(hash: " + toHexString(hash) + " )");
+    }
   }
 }

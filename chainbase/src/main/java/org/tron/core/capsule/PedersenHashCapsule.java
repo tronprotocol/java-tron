@@ -58,9 +58,11 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
   public static void main(String[] args) {
     try {
       byte[] a =
-          ByteArray.fromHexString("05655316a07e6ec8c9769af54ef98b30667bfb6302b32987d552227dae86a087");
+          ByteArray
+              .fromHexString("05655316a07e6ec8c9769af54ef98b30667bfb6302b32987d552227dae86a087");
       byte[] b =
-          ByteArray.fromHexString("06041357de59ba64959d1b60f93de24dfe5ea1e26ed9e8a73d35b225a1845ba7");
+          ByteArray
+              .fromHexString("06041357de59ba64959d1b60f93de24dfe5ea1e26ed9e8a73d35b225a1845ba7");
 
       PedersenHash sa = PedersenHash.newBuilder().setContent(ByteString.copyFrom(a)).build();
       PedersenHash sb = PedersenHash.newBuilder().setContent(ByteString.copyFrom(b)).build();

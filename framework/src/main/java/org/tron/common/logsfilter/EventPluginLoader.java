@@ -58,13 +58,14 @@ public class EventPluginLoader {
     return instance;
   }
 
-  private boolean launchNativeQueue(EventPluginConfig config){
+  private boolean launchNativeQueue(EventPluginConfig config) {
 
-    if (!NativeMessageQueue.getInstance().start(config.getBindPort(), config.getSendQueueLength())){
+    if (!NativeMessageQueue.getInstance()
+        .start(config.getBindPort(), config.getSendQueueLength())) {
       return false;
     }
 
-    if (Objects.isNull(triggerConfigList)){
+    if (Objects.isNull(triggerConfigList)) {
       logger.error("trigger config is null");
       return false;
     }
@@ -76,7 +77,7 @@ public class EventPluginLoader {
     return true;
   }
 
-  private boolean launchEventPlugin(EventPluginConfig config){
+  private boolean launchEventPlugin(EventPluginConfig config) {
     boolean success = false;
     // parsing subscribe config from config.conf
     String pluginPath = config.getPluginPath();
@@ -108,7 +109,7 @@ public class EventPluginLoader {
 
     useNativeQueue = config.isUseNativeQueue();
 
-    if (config.isUseNativeQueue()){
+    if (config.isUseNativeQueue()) {
       return launchNativeQueue(config);
     }
 
@@ -132,7 +133,7 @@ public class EventPluginLoader {
     });
   }
 
-  private void setSingleTriggerConfig(TriggerConfig triggerConfig){
+  private void setSingleTriggerConfig(TriggerConfig triggerConfig) {
     if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         blockLogTriggerEnable = true;
@@ -140,43 +141,43 @@ public class EventPluginLoader {
         blockLogTriggerEnable = false;
       }
 
-      if (!useNativeQueue){
+      if (!useNativeQueue) {
         setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
       }
 
     } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME
-            .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+        .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         transactionLogTriggerEnable = true;
       } else {
         transactionLogTriggerEnable = false;
       }
 
-      if (!useNativeQueue){
+      if (!useNativeQueue) {
         setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
       }
 
     } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME
-            .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+        .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         contractEventTriggerEnable = true;
       } else {
         contractEventTriggerEnable = false;
       }
 
-      if (!useNativeQueue){
+      if (!useNativeQueue) {
         setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
       }
 
     } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME
-            .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+        .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         contractLogTriggerEnable = true;
       } else {
         contractLogTriggerEnable = false;
       }
 
-      if (!useNativeQueue){
+      if (!useNativeQueue) {
         setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
       }
     }
@@ -246,7 +247,7 @@ public class EventPluginLoader {
   }
 
   public void stopPlugin() {
-    if (Objects.nonNull(pluginManager)){
+    if (Objects.nonNull(pluginManager)) {
       pluginManager.stopPlugins();
     }
 
@@ -256,41 +257,41 @@ public class EventPluginLoader {
   }
 
   public void postBlockTrigger(BlockLogTrigger trigger) {
-    if (useNativeQueue){
-      NativeMessageQueue.getInstance().publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    }
-    else {
+    if (useNativeQueue) {
+      NativeMessageQueue.getInstance()
+          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    } else {
       eventListeners.forEach(listener ->
-              listener.handleBlockEvent(toJsonString(trigger)));
+          listener.handleBlockEvent(toJsonString(trigger)));
     }
   }
 
   public void postTransactionTrigger(TransactionLogTrigger trigger) {
-    if (useNativeQueue){
-      NativeMessageQueue.getInstance().publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    }
-    else {
+    if (useNativeQueue) {
+      NativeMessageQueue.getInstance()
+          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    } else {
       eventListeners.forEach(listener -> listener.handleTransactionTrigger(toJsonString(trigger)));
     }
   }
 
   public void postContractLogTrigger(ContractLogTrigger trigger) {
-    if (useNativeQueue){
-      NativeMessageQueue.getInstance().publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    }
-    else {
+    if (useNativeQueue) {
+      NativeMessageQueue.getInstance()
+          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    } else {
       eventListeners.forEach(listener ->
-              listener.handleContractLogTrigger(toJsonString(trigger)));
+          listener.handleContractLogTrigger(toJsonString(trigger)));
     }
   }
 
   public void postContractEventTrigger(ContractEventTrigger trigger) {
-    if (useNativeQueue){
-      NativeMessageQueue.getInstance().publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    }
-    else {
+    if (useNativeQueue) {
+      NativeMessageQueue.getInstance()
+          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    } else {
       eventListeners.forEach(listener ->
-              listener.handleContractEventTrigger(toJsonString(trigger)));
+          listener.handleContractEventTrigger(toJsonString(trigger)));
     }
   }
 
@@ -306,11 +307,11 @@ public class EventPluginLoader {
     return jsonData;
   }
 
-  public synchronized void setFilterQuery(FilterQuery filterQuery) {
-    this.filterQuery = filterQuery;
-  }
-
   public synchronized FilterQuery getFilterQuery() {
     return filterQuery;
+  }
+
+  public synchronized void setFilterQuery(FilterQuery filterQuery) {
+    this.filterQuery = filterQuery;
   }
 }

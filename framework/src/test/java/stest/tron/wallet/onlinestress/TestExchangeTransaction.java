@@ -28,30 +28,25 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class TestExchangeTransaction {
 
+  private static final long now = System.currentTimeMillis();
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
-  private static final long now = System.currentTimeMillis();
-
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
-  private String soliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("solidityNode.ip.list").get(0);
-
   Optional<ExchangeList> listExchange;
   Optional<Exchange> exchangeIdInfo;
   Integer exchangeId = 0;
   Integer exchangeRate = 10;
   Long firstTokenInitialBalance = 10000L;
   Long secondTokenInitialBalance = firstTokenInitialBalance * exchangeRate;
-
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
 
   @BeforeSuite
   public void beforeSuite() {
@@ -94,7 +89,6 @@ public class TestExchangeTransaction {
         PublicMethed.queryAccount(tokenOwnerAddress, blockingStubFull);
     ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
     logger.info("AssetId:" + assetAccountId.toString());
-
 
 
   }

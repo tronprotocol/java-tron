@@ -23,38 +23,31 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAccount009 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = now;
+  private static final long sendAmount = 10000000000L;
+  private static final long FREENETLIMIT = 5000L;
+  private static final long BASELINE = 4800L;
+  private static String name = "AssetIssue012_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-  private static final long now = System.currentTimeMillis();
-  private static String name = "AssetIssue012_" + Long.toString(now);
-  private static final long totalSupply = now;
-  private static final long sendAmount = 10000000000L;
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] account009Address = ecKey1.getAddress();
+  String account009Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] account009SecondAddress = ecKey2.getAddress();
+  String account009SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] account009InvalidAddress = ecKey3.getAddress();
+  String account009InvalidKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
-
-  private static final long FREENETLIMIT = 5000L;
-  private static final long BASELINE = 4800L;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] account009Address = ecKey1.getAddress();
-  String account009Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] account009SecondAddress = ecKey2.getAddress();
-  String account009SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-  ECKey ecKey3 = new ECKey(Utils.getRandom());
-  byte[] account009InvalidAddress = ecKey3.getAddress();
-  String account009InvalidKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-
 
   @BeforeSuite
   public void beforeSuite() {

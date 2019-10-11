@@ -28,13 +28,34 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletExchange001 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = 1000000001L;
+  private static String name1 = "exchange001_1_" + Long.toString(now);
+  private static String name2 = "exchange001_2_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
+  String description = "just-test";
+  String url = "https://github.com/tronprotocol/wallet-cli/";
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] exchange001Address = ecKey1.getAddress();
+  String exchange001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] secondExchange001Address = ecKey2.getAddress();
+  String secondExchange001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  Long secondTransferAssetToFirstAccountNum = 100000000L;
+  Account firstAccount;
+  ByteString assetAccountId1;
+  ByteString assetAccountId2;
+  Optional<ExchangeList> listExchange;
+  Optional<Exchange> exchangeIdInfo;
+  Integer exchangeId = 0;
+  Integer exchangeRate = 10;
+  Long firstTokenInitialBalance = 10000L;
+  Long secondTokenInitialBalance = firstTokenInitialBalance * exchangeRate;
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -43,32 +64,6 @@ public class WalletExchange001 {
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(1);
-
-  private static final long now = System.currentTimeMillis();
-  private static String name1 = "exchange001_1_" + Long.toString(now);
-  private static String name2 = "exchange001_2_" + Long.toString(now);
-  private static final long totalSupply = 1000000001L;
-  String description = "just-test";
-  String url = "https://github.com/tronprotocol/wallet-cli/";
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] exchange001Address = ecKey1.getAddress();
-  String exchange001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] secondExchange001Address = ecKey2.getAddress();
-  String secondExchange001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-  Long secondTransferAssetToFirstAccountNum = 100000000L;
-  Account firstAccount;
-  ByteString assetAccountId1;
-  ByteString assetAccountId2;
-
-  Optional<ExchangeList> listExchange;
-  Optional<Exchange> exchangeIdInfo;
-  Integer exchangeId = 0;
-  Integer exchangeRate = 10;
-  Long firstTokenInitialBalance = 10000L;
-  Long secondTokenInitialBalance = firstTokenInitialBalance * exchangeRate;
 
   @BeforeSuite
   public void beforeSuite() {

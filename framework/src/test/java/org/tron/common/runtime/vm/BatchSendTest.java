@@ -36,11 +36,6 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 @Slf4j
 public class BatchSendTest {
 
-  private static Runtime runtime;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Application appT;
-  private static DepositImpl deposit;
   private static final String dbPath = "output_BatchSendTest";
   private static final String OWNER_ADDRESS;
   private static final String TRANSFER_TO;
@@ -52,6 +47,11 @@ public class BatchSendTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static Runtime runtime;
+  private static Manager dbManager;
+  private static TronApplicationContext context;
+  private static Application appT;
+  private static DepositImpl deposit;
   private static AccountCapsule ownerCapsule;
 
   static {
@@ -81,6 +81,21 @@ public class BatchSendTest {
 
   }
 
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
 
   /**
    * pragma solidity ^0.5.4;
@@ -137,7 +152,6 @@ public class BatchSendTest {
 
   }
 
-
   private byte[] deployTransferContract()
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "TestTransferTo";
@@ -166,22 +180,5 @@ public class BatchSendTest {
             feeLimit, consumeUserResourcePercent, null, tokenValue, tokenId,
             deposit, null);
     return contractAddress;
-  }
-
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 }

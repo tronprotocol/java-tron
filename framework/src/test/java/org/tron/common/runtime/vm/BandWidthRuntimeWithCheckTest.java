@@ -135,6 +135,17 @@ public class BandWidthRuntimeWithCheckTest {
 
   }
 
+  /**
+   * destroy clear data of testing.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    ApplicationFactory.create(context).shutdown();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
+  }
+
   @Test
   public void testSuccess() {
     try {
@@ -258,16 +269,5 @@ public class BandWidthRuntimeWithCheckTest {
     }
     return trace.getRuntimeResult().getContractAddress();
 
-  }
-
-  /**
-   * destroy clear data of testing.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    ApplicationFactory.create(context).shutdown();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 }

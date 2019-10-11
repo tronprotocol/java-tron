@@ -30,13 +30,13 @@ public class KhaosDatabaseTest {
   private static TronApplicationContext context;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     khaosDatabase = context.getBean(KhaosDatabase.class);
   }
 

@@ -56,6 +56,22 @@ class Fp2 implements Field<Fp2> {
     this(new Fp(a), new Fp(b));
   }
 
+  static Fp2 create(BigInteger aa, BigInteger bb) {
+
+    Fp a = Fp.create(aa);
+    Fp b = Fp.create(bb);
+
+    return new Fp2(a, b);
+  }
+
+  static Fp2 create(byte[] aa, byte[] bb) {
+
+    Fp a = Fp.create(aa);
+    Fp b = Fp.create(bb);
+
+    return new Fp2(a, b);
+  }
+
   @Override
   public Fp2 squared() {
 
@@ -126,22 +142,6 @@ class Fp2 implements Field<Fp2> {
   @Override
   public boolean isValid() {
     return a.isValid() && b.isValid();
-  }
-
-  static Fp2 create(BigInteger aa, BigInteger bb) {
-
-    Fp a = Fp.create(aa);
-    Fp b = Fp.create(bb);
-
-    return new Fp2(a, b);
-  }
-
-  static Fp2 create(byte[] aa, byte[] bb) {
-
-    Fp a = Fp.create(aa);
-    Fp b = Fp.create(bb);
-
-    return new Fp2(a, b);
   }
 
   @Override

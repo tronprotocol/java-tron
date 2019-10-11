@@ -2,7 +2,6 @@ package org.tron.common.application;
 
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.overlay.discover.DiscoverServer;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.ChannelManager;

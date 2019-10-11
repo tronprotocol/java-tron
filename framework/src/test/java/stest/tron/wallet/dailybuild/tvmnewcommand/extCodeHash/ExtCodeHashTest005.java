@@ -459,7 +459,6 @@ public class ExtCodeHashTest005 {
     byte[] fullHexAddr = new DataWord(fakeAddress).getData();
     logger.info("fullHexAddr  ++=  " + Hex.toHexString(fullHexAddr));
 
-
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,
         "getCodeHashByUint(uint256)", Hex.toHexString(fullHexAddr), true, callValue,
         1000000000L, "0", 0, user001Address, user001Key,
@@ -549,7 +548,6 @@ public class ExtCodeHashTest005 {
     logger.info("realAddress: " + fakeAddress);
     byte[] fullHexAddr = new DataWord(fakeAddress).getData();
     logger.info("fullHexAddr  ++=  " + Hex.toHexString(fullHexAddr));
-
 
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,
         "getCodeHashByUint(uint256)", Hex.toHexString(fullHexAddr), true, callValue,

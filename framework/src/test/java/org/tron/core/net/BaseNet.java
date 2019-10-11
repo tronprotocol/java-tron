@@ -47,6 +47,30 @@ public abstract class BaseNet {
 
   private ExecutorService executorService = Executors.newFixedThreadPool(1);
 
+  public static Channel connect(ByteToMessageDecoder decoder) throws InterruptedException {
+    NioEventLoopGroup group = new NioEventLoopGroup(1);
+    Bootstrap b = new Bootstrap();
+    b.group(group).channel(NioSocketChannel.class)
+        .handler(new ChannelInitializer<Channel>() {
+          @Override
+          protected void initChannel(Channel ch) throws Exception {
+            ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));
+            ch.config().setOption(ChannelOption.SO_RCVBUF, 256 * 1024);
+            ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
+            ch.pipeline()
+                .addLast("readTimeoutHandler", new ReadTimeoutHandler(600, TimeUnit.SECONDS))
+                .addLast("writeTimeoutHandler", new WriteTimeoutHandler(600, TimeUnit.SECONDS));
+            ch.pipeline().addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
+            ch.pipeline().addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
+            ch.pipeline().addLast("handshakeHandler", decoder);
+            ch.closeFuture();
+          }
+        }).option(ChannelOption.SO_KEEPALIVE, true)
+        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
+        .option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
+    return b.connect("127.0.0.1", port).sync().channel();
+  }
+
   @Before
   public void init() throws Exception {
     executorService.execute(new Runnable() {
@@ -80,30 +104,6 @@ public abstract class BaseNet {
     while (++tryTimes < 100 && tronNetDelegate == null) {
       Thread.sleep(3000);
     }
-  }
-
-  public static Channel connect(ByteToMessageDecoder decoder) throws InterruptedException {
-    NioEventLoopGroup group = new NioEventLoopGroup(1);
-    Bootstrap b = new Bootstrap();
-    b.group(group).channel(NioSocketChannel.class)
-        .handler(new ChannelInitializer<Channel>() {
-          @Override
-          protected void initChannel(Channel ch) throws Exception {
-            ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));
-            ch.config().setOption(ChannelOption.SO_RCVBUF, 256 * 1024);
-            ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
-            ch.pipeline()
-                .addLast("readTimeoutHandler", new ReadTimeoutHandler(600, TimeUnit.SECONDS))
-                .addLast("writeTimeoutHandler", new WriteTimeoutHandler(600, TimeUnit.SECONDS));
-            ch.pipeline().addLast("protoPender", new ProtobufVarint32LengthFieldPrepender());
-            ch.pipeline().addLast("lengthDecode", new ProtobufVarint32FrameDecoder());
-            ch.pipeline().addLast("handshakeHandler", decoder);
-            ch.closeFuture();
-          }
-        }).option(ChannelOption.SO_KEEPALIVE, true)
-        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
-        .option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
-    return b.connect("127.0.0.1", port).sync().channel();
   }
 
   @After

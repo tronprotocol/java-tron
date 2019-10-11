@@ -1,4 +1,3 @@
-
 package org.tron.core.trie;
 
 import static org.tron.common.utils.ByteArray.toHexString;
@@ -14,6 +13,16 @@ public final class TrieKey {
   private final byte[] key;
   private final int off;
   private final boolean terminal;
+
+  public TrieKey(byte[] key, int off, boolean terminal) {
+    this.terminal = terminal;
+    this.off = off;
+    this.key = key;
+  }
+
+  private TrieKey(byte[] key) {
+    this(key, 0, true);
+  }
 
   public static TrieKey fromNormal(byte[] key) {
     return new TrieKey(key);
@@ -32,16 +41,6 @@ public final class TrieKey {
     TrieKey ret = new TrieKey(new byte[1], 1, false);
     ret.setHex(0, hex);
     return ret;
-  }
-
-  public TrieKey(byte[] key, int off, boolean terminal) {
-    this.terminal = terminal;
-    this.off = off;
-    this.key = key;
-  }
-
-  private TrieKey(byte[] key) {
-    this(key, 0, true);
   }
 
   public byte[] toPacked() {

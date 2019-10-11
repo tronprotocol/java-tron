@@ -21,7 +21,6 @@ package org.tron.common.utils;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-
 import org.spongycastle.util.encoders.Hex;
 
 @SuppressWarnings("serial")

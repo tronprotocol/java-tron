@@ -21,6 +21,12 @@ public class EnergyProcessor extends ResourceProcessor {
     super(dynamicPropertiesStore, accountStore);
   }
 
+  public static long getHeadSlot(DynamicPropertiesStore dynamicPropertiesStore) {
+    return (dynamicPropertiesStore.getLatestBlockHeaderTimestamp() -
+        Long.parseLong(DBConfig.getGenesisBlock().getTimestamp()))
+        / BLOCK_PRODUCED_INTERVAL;
+  }
+
   @Override
   public void updateUsage(AccountCapsule accountCapsule) {
     long now = getHeadSlot();
@@ -87,7 +93,6 @@ public class EnergyProcessor extends ResourceProcessor {
     throw new RuntimeException("Not support");
   }
 
-
   public boolean useEnergy(AccountCapsule accountCapsule, long energy, long now) {
 
     long energyUsage = accountCapsule.getEnergyUsage();
@@ -117,7 +122,6 @@ public class EnergyProcessor extends ResourceProcessor {
     return true;
   }
 
-
   public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForEnergy();
     if (frozeBalance < 1_000_000L) {
@@ -146,13 +150,6 @@ public class EnergyProcessor extends ResourceProcessor {
 
   private long getHeadSlot() {
     return getHeadSlot(dynamicPropertiesStore);
-  }
-
-
-  public static long getHeadSlot(DynamicPropertiesStore dynamicPropertiesStore) {
-    return (dynamicPropertiesStore.getLatestBlockHeaderTimestamp() -
-        Long.parseLong(DBConfig.getGenesisBlock().getTimestamp()))
-        / BLOCK_PRODUCED_INTERVAL;
   }
 
 

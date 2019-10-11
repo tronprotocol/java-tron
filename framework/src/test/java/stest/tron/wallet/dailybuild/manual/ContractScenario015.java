@@ -27,28 +27,24 @@ public class ContractScenario015 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.maxFeeLimit");
-
   byte[] contractAddress1 = null;
   byte[] contractAddress2 = null;
   byte[] contractAddress3 = null;
   String txid = "";
   Optional<TransactionInfo> infoById = null;
   String contractName = "";
-
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contract014Address = ecKey1.getAddress();
   String contract014Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] receiverAddress = ecKey2.getAddress();
   String receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
 
   @BeforeSuite
   public void beforeSuite() {
@@ -105,8 +101,8 @@ public class ContractScenario015 {
     logger.info(txid);
 
     siringContractString = "\"" + Base58.encode58Check(fromAddress) + "\",\"" + 17 + "\"";
-    txid = PublicMethed.triggerContract(contractAddress1,"transfer(address,uint256)",
-        siringContractString,false, 0, 10000000L, contract014Address,
+    txid = PublicMethed.triggerContract(contractAddress1, "transfer(address,uint256)",
+        siringContractString, false, 0, 10000000L, contract014Address,
         contract014Key, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);

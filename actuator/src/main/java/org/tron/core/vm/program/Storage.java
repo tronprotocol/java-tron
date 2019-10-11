@@ -13,27 +13,20 @@ import org.tron.core.store.StorageRowStore;
 
 public class Storage {
 
+  private static final int PREFIX_BYTES = 16;
+  @Getter
+  private final Map<DataWord, StorageRowCapsule> rowCache = new HashMap<>();
   @Getter
   private byte[] addrHash;
   @Getter
   private StorageRowStore store;
   @Getter
-  private final Map<DataWord, StorageRowCapsule> rowCache = new HashMap<>();
-
-  @Getter
   private byte[] address;
-
-  private static final int PREFIX_BYTES = 16;
 
   public Storage(byte[] address, StorageRowStore store) {
     addrHash = addrHash(address);
     this.address = address;
     this.store = store;
-  }
-
-  public void generateAddrHash(byte[] trxId) {
-    // update addreHash for create2
-    addrHash = addrHash(address, trxId);
   }
 
   public Storage(Storage storage) {
@@ -44,6 +37,30 @@ public class Storage {
       StorageRowCapsule newRow = new StorageRowCapsule(row);
       this.rowCache.put(rowKey.clone(), newRow);
     });
+  }
+
+  private static byte[] compose(byte[] key, byte[] addrHash) {
+    byte[] result = new byte[key.length];
+    arraycopy(addrHash, 0, result, 0, PREFIX_BYTES);
+    arraycopy(key, PREFIX_BYTES, result, PREFIX_BYTES, PREFIX_BYTES);
+    return result;
+  }
+
+  // 32 bytes
+  private static byte[] addrHash(byte[] address) {
+    return Hash.sha3(address);
+  }
+
+  private static byte[] addrHash(byte[] address, byte[] trxHash) {
+    if (ByteUtil.isNullOrZeroArray(trxHash)) {
+      return Hash.sha3(address);
+    }
+    return Hash.sha3(ByteUtil.merge(address, trxHash));
+  }
+
+  public void generateAddrHash(byte[] trxId) {
+    // update addreHash for create2
+    addrHash = addrHash(address, trxId);
   }
 
   public DataWord getValue(DataWord key) {
@@ -67,25 +84,6 @@ public class Storage {
       StorageRowCapsule row = new StorageRowCapsule(rowKey, value.getData());
       rowCache.put(key, row);
     }
-  }
-
-  private static byte[] compose(byte[] key, byte[] addrHash) {
-    byte[] result = new byte[key.length];
-    arraycopy(addrHash, 0, result, 0, PREFIX_BYTES);
-    arraycopy(key, PREFIX_BYTES, result, PREFIX_BYTES, PREFIX_BYTES);
-    return result;
-  }
-
-  // 32 bytes
-  private static byte[] addrHash(byte[] address) {
-    return Hash.sha3(address);
-  }
-
-  private static byte[] addrHash(byte[] address, byte[] trxHash) {
-    if (ByteUtil.isNullOrZeroArray(trxHash)) {
-      return Hash.sha3(address);
-    }
-    return Hash.sha3(ByteUtil.merge(address, trxHash));
   }
 
   public void commit() {

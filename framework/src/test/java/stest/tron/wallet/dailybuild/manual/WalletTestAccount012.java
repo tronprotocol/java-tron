@@ -21,8 +21,8 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -41,7 +41,14 @@ public class WalletTestAccount012 {
   private final String testKey004 = Configuration.getByPath("testng.conf")
       .getString("mainWitness.key3");
   private final byte[] testAddress004 = PublicMethed.getFinalAddress(testKey004);
-
+  ArrayList<String> txidList = new ArrayList<String>();
+  Optional<TransactionInfo> infoById = null;
+  Long beforeTime;
+  Long afterTime;
+  Long beforeBlockNum;
+  Long afterBlockNum;
+  Block currentBlock;
+  Long currentBlockNum;
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private ManagedChannel channelFull1 = null;
@@ -50,18 +57,8 @@ public class WalletTestAccount012 {
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
-  ArrayList<String> txidList = new ArrayList<String>();
-
-  Optional<TransactionInfo> infoById = null;
-  Long beforeTime;
-  Long afterTime;
-  Long beforeBlockNum;
-  Long afterBlockNum;
-  Block currentBlock;
-  Long currentBlockNum;
 
   //get account
-
 
   /**
    * constructor.

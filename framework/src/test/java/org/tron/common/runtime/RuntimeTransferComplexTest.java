@@ -8,10 +8,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+import org.testng.Assert;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.testng.Assert;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -30,14 +30,14 @@ import stest.tron.wallet.common.client.utils.DataWord;
 @Slf4j
 public class RuntimeTransferComplexTest {
 
+  private static final String dbPath = "output_RuntimeTransferComplexTest";
+  private static final String OWNER_ADDRESS;
+  private static final String TRANSFER_TO;
   private static Runtime runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;
   private static DepositImpl deposit;
-  private static final String dbPath = "output_RuntimeTransferComplexTest";
-  private static final String OWNER_ADDRESS;
-  private static final String TRANSFER_TO;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
@@ -61,6 +61,21 @@ public class RuntimeTransferComplexTest {
     deposit.commit();
   }
 
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    appT.shutdownServices();
+    appT.shutdown();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
 
   /**
    * Test constructor Transfer pragma solidity ^0.4.16; contract transferWhenDeploy { constructor ()
@@ -114,7 +129,6 @@ public class RuntimeTransferComplexTest {
     Assert.assertNull(dbManager.getAccountStore().get(contractAddress));
     recoverDeposit();
   }
-
 
   /**
    * pragma solidity ^0.4.16; contract transferWhenTriggerContract { constructor () {} function
@@ -333,7 +347,6 @@ public class RuntimeTransferComplexTest {
     recoverDeposit();
   }
 
-
   private byte[] deployCalledContract()
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "TransferWhenDeployContract";
@@ -419,23 +432,6 @@ public class RuntimeTransferComplexTest {
   private void recoverDeposit() {
     dbManager = context.getBean(Manager.class);
     deposit = DepositImpl.createRoot(dbManager);
-  }
-
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
 

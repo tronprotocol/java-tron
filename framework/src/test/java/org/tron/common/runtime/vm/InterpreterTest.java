@@ -43,6 +43,11 @@ public class InterpreterTest {
     DBConfig.setDebug(true);
   }
 
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+  }
+
   @Test
   public void testVMException() throws ContractValidateException {
     VM vm = new VM();
@@ -144,10 +149,5 @@ public class InterpreterTest {
     }
 
     assertTrue(result);
-  }
-
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
   }
 }

@@ -70,6 +70,16 @@ public class RocksDbSettings {
     return settings;
   }
 
+  public static void loggingSettings() {
+    logger.info(String.format(
+        "level number: %d, CompactThreads: %d, Blocksize: %d, maxBytesForLevelBase: %d,"
+            + " withMaxBytesForLevelMultiplier: %f, level0FileNumCompactionTrigger: %d, "
+            + "withTargetFileSizeBase: %d, withTargetFileSizeMultiplier: %d",
+        settings.getLevelNumber(),
+        settings.getCompactThreads(), settings.getBlockSize(), settings.getMaxBytesForLevelBase(),
+        settings.getMaxBytesForLevelMultiplier(), settings.getLevel0FileNumCompactionTrigger(),
+        settings.getTargetFileSizeBase(), settings.getTargetFileSizeMultiplier()));
+  }
 
   public RocksDbSettings withMaxOpenFiles(int maxOpenFiles) {
     this.maxOpenFiles = maxOpenFiles;
@@ -111,7 +121,6 @@ public class RocksDbSettings {
     return this;
   }
 
-
   public RocksDbSettings withTargetFileSizeBase(long targetFileSizeBase) {
     this.targetFileSizeBase = targetFileSizeBase * 1024 * 1024;
     return this;
@@ -120,16 +129,5 @@ public class RocksDbSettings {
   public RocksDbSettings withTargetFileSizeMultiplier(int targetFileSizeMultiplier) {
     this.targetFileSizeMultiplier = targetFileSizeMultiplier;
     return this;
-  }
-
-  public static void loggingSettings() {
-    logger.info(String.format(
-        "level number: %d, CompactThreads: %d, Blocksize: %d, maxBytesForLevelBase: %d,"
-            + " withMaxBytesForLevelMultiplier: %f, level0FileNumCompactionTrigger: %d, "
-            + "withTargetFileSizeBase: %d, withTargetFileSizeMultiplier: %d",
-        settings.getLevelNumber(),
-        settings.getCompactThreads(), settings.getBlockSize(), settings.getMaxBytesForLevelBase(),
-        settings.getMaxBytesForLevelMultiplier(), settings.getLevel0FileNumCompactionTrigger(),
-        settings.getTargetFileSizeBase(), settings.getTargetFileSizeMultiplier()));
   }
 }

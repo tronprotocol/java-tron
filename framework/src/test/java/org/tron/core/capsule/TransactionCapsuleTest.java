@@ -52,7 +52,7 @@ public class TransactionCapsuleTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
     dbManager = context.getBean(Manager.class);

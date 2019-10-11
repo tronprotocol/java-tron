@@ -26,25 +26,16 @@ import org.tron.protos.Protocol.ReasonCode;
 @Scope("prototype")
 public class MessageQueue {
 
-  private volatile boolean sendMsgFlag = false;
-
-  private volatile long sendTime;
-
-  private volatile long sendPing;
-
-  private Thread sendMsgThread;
-
-  private Channel channel;
-
-  private ChannelHandlerContext ctx = null;
-
-  private Queue<MessageRoundtrip> requestQueue = new ConcurrentLinkedQueue<>();
-
-  private BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<>();
-
   private static ScheduledExecutorService sendTimer = Executors.
       newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
-
+  private volatile boolean sendMsgFlag = false;
+  private volatile long sendTime;
+  private volatile long sendPing;
+  private Thread sendMsgThread;
+  private Channel channel;
+  private ChannelHandlerContext ctx = null;
+  private Queue<MessageRoundtrip> requestQueue = new ConcurrentLinkedQueue<>();
+  private BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<>();
   private ScheduledFuture<?> sendTask;
 
 

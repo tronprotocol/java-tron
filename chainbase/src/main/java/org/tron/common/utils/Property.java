@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.iq80.leveldb.Options;
 
 public class Property {
+
   @Getter
   @Setter
   private String name;

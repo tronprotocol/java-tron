@@ -17,55 +17,47 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
+//import org.tron.protos.Protocol.DeferredTransaction;
+
 @Slf4j
 public class DelayTransaction003 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = now;
+  private static final String name = "Asset008_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private static final long now = System.currentTimeMillis();
-  private static final long totalSupply = now;
-  private static final String name = "Asset008_" + Long.toString(now);
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
   Long delaySecond = 10L;
-
+  ByteString assetId;
+  Optional<TransactionInfo> infoById = null;
+  //Optional<DeferredTransaction> deferredTransactionById = null;
+  Optional<Transaction> getTransactionById = null;
+  ECKey ecKey = new ECKey(Utils.getRandom());
+  byte[] assetOwnerAddress = ecKey.getAddress();
+  String assetOwnerKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] receiverAssetAddress = ecKey3.getAddress();
+  String receiverassetKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(1);
   private Long delayTransactionFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.delayTransactionFee");
   private Long cancleDelayTransactionFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.cancleDelayTransactionFee");
-  ByteString assetId;
-
-
-
-  Optional<TransactionInfo> infoById = null;
-  //Optional<DeferredTransaction> deferredTransactionById = null;
-  Optional<Transaction> getTransactionById = null;
-
-
-  ECKey ecKey = new ECKey(Utils.getRandom());
-  byte[] assetOwnerAddress = ecKey.getAddress();
-  String assetOwnerKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-
-  ECKey ecKey3 = new ECKey(Utils.getRandom());
-  byte[] receiverAssetAddress = ecKey3.getAddress();
-  String receiverassetKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-
 
   @BeforeSuite
   public void beforeSuite() {
@@ -115,23 +107,22 @@ public class DelayTransaction003 {
     //Delay transfer asset
     Long transferAssetAmount = 1L;
     final Long ownerAssetBalanceOfbeforeTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId, assetOwnerKey,blockingStubFull);
+        .getAssetBalanceByAssetId(assetId, assetOwnerKey, blockingStubFull);
     final Long receiverAssetBalanceOfbeforeTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId,receiverassetKey,blockingStubFull);
+        .getAssetBalanceByAssetId(assetId, receiverassetKey, blockingStubFull);
     Assert.assertTrue(PublicMethed.transferAssetDelay(receiverAssetAddress, assetId.toByteArray(),
-        transferAssetAmount, delaySecond,assetOwnerAddress, assetOwnerKey, blockingStubFull));
+        transferAssetAmount, delaySecond, assetOwnerAddress, assetOwnerKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long ownerAssetBalanceInDelayTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId,assetOwnerKey,blockingStubFull);
+        .getAssetBalanceByAssetId(assetId, assetOwnerKey, blockingStubFull);
     final Long receiverAssetBalanceInDelayTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId,receiverassetKey,blockingStubFull);
+        .getAssetBalanceByAssetId(assetId, receiverassetKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long ownerAssetBalanceAfterTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId,assetOwnerKey,blockingStubFull);
+        .getAssetBalanceByAssetId(assetId, assetOwnerKey, blockingStubFull);
     Long receiverAssetBalanceAfterTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId,receiverassetKey,blockingStubFull);
-
+        .getAssetBalanceByAssetId(assetId, receiverassetKey, blockingStubFull);
 
     Assert.assertEquals(ownerAssetBalanceOfbeforeTransferAsset,
         ownerAssetBalanceInDelayTransferAsset);
@@ -147,39 +138,37 @@ public class DelayTransaction003 {
   @Test(enabled = false, description = "Cancel delay transfer asset")
   public void test2CancelDelayTransferAsset() {
 
-
     //Delay transfer asset
     Long transferAssetAmount = 1L;
     final Long ownerAssetBalanceOfbeforeTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId, assetOwnerKey,blockingStubFull);
+        .getAssetBalanceByAssetId(assetId, assetOwnerKey, blockingStubFull);
     final Long receiverAssetBalanceOfbeforeTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId,receiverassetKey,blockingStubFull);
+        .getAssetBalanceByAssetId(assetId, receiverassetKey, blockingStubFull);
 
     String txid = PublicMethed.transferAssetDelayGetTxid(receiverAssetAddress,
-        assetId.toByteArray(), transferAssetAmount, delaySecond,assetOwnerAddress, assetOwnerKey,
+        assetId.toByteArray(), transferAssetAmount, delaySecond, assetOwnerAddress, assetOwnerKey,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,receiverAssetAddress,
     // receiverassetKey,blockingStubFull));
-    Assert.assertTrue(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,
-        assetOwnerKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.cancelDeferredTransactionById(txid, assetOwnerAddress,
+        assetOwnerKey, blockingStubFull));
     //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,
     // assetOwnerKey,blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long ownerAssetBalanceAfterTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId,assetOwnerKey,blockingStubFull);
+        .getAssetBalanceByAssetId(assetId, assetOwnerKey, blockingStubFull);
     Long receiverAssetBalanceAfterTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId,receiverassetKey,blockingStubFull);
-
+        .getAssetBalanceByAssetId(assetId, receiverassetKey, blockingStubFull);
 
     Assert.assertEquals(ownerAssetBalanceOfbeforeTransferAsset, ownerAssetBalanceAfterTransferAsset
     );
     Assert.assertTrue(receiverAssetBalanceAfterTransferAsset
         == receiverAssetBalanceOfbeforeTransferAsset);
-    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,
-        assetOwnerKey,blockingStubFull));
+    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid, assetOwnerAddress,
+        assetOwnerKey, blockingStubFull));
 
   }
 
@@ -187,16 +176,13 @@ public class DelayTransaction003 {
   public void test3DelayUnfreezeAsset() {
 
     final Long ownerAssetBalanceOfbeforeTransferAsset = PublicMethed
-        .getAssetBalanceByAssetId(assetId, assetOwnerKey,blockingStubFull);
+        .getAssetBalanceByAssetId(assetId, assetOwnerKey, blockingStubFull);
 
-    String txid = PublicMethed.unfreezeAssetDelayGetTxid(assetOwnerAddress,delaySecond,
-        assetOwnerKey,blockingStubFull);
-
+    String txid = PublicMethed.unfreezeAssetDelayGetTxid(assetOwnerAddress, delaySecond,
+        assetOwnerKey, blockingStubFull);
 
 
   }
-
-
 
 
   /**

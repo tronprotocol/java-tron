@@ -39,8 +39,14 @@ public class WalletTestTransfer001 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-
+  //send account
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  final byte[] sendAccountAddress = ecKey1.getAddress();
+  String sendAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  //receipt account
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  final byte[] receiptAccountAddress = ecKey2.getAddress();
+  String receiptAccountKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private ManagedChannel searchChannelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -50,16 +56,10 @@ public class WalletTestTransfer001 {
   private String searchFullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
-  //send account
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  final byte[] sendAccountAddress = ecKey1.getAddress();
-  String sendAccountKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  //receipt account
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  final byte[] receiptAccountAddress = ecKey2.getAddress();
-  String receiptAccountKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -177,7 +177,8 @@ public class WalletTestTransfer001 {
       logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
     }
 
-    BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract.newBuilder();
+    BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract
+        .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
@@ -248,7 +249,8 @@ public class WalletTestTransfer001 {
     ECKey ecKey = temKey;
     Account search = queryAccount(ecKey, blockingStubFull);
 
-    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract.newBuilder();
+    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract
+        .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
@@ -286,11 +288,6 @@ public class WalletTestTransfer001 {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

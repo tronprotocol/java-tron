@@ -14,12 +14,12 @@ public class DisconnectMessageTest extends com.google.protobuf.GeneratedMessageV
   private static final DisconnectMessageTest DEFAULT_INSTANCE;
   private static final com.google.protobuf.Parser<DisconnectMessageTest> PARSER =
       new com.google.protobuf.AbstractParser<DisconnectMessageTest>() {
-    public DisconnectMessageTest parsePartialFrom(com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return new DisconnectMessageTest(input, extensionRegistry);
-    }
-  };
+        public DisconnectMessageTest parsePartialFrom(com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return new DisconnectMessageTest(input, extensionRegistry);
+        }
+      };
 
   static {
     DEFAULT_INSTANCE = new DisconnectMessageTest();

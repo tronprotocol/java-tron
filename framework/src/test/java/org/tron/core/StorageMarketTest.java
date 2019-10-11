@@ -17,24 +17,23 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.StorageMarket;
-import org.tron.protos.contract.StorageContract.BuyStorageContract;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.contract.StorageContract.BuyStorageContract;
 
 @Slf4j
 public class StorageMarketTest {
 
-  private static Manager dbManager;
-  private static StorageMarket storageMarket;
   private static final String dbPath = "output_storage_market_test";
-  private static TronApplicationContext context;
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ACCOUNT_INVALID;
   private static final long initBalance = 10_000_000_000_000_000L;
+  private static Manager dbManager;
+  private static StorageMarket storageMarket;
+  private static TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -50,7 +49,8 @@ public class StorageMarketTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    storageMarket = new StorageMarket(dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+    storageMarket = new StorageMarket(dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore());
     //    Args.setParam(new String[]{"--output-directory", dbPath},
     //        "config-junit.conf");
     //    dbManager = new Manager();

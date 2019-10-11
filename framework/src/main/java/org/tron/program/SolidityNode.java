@@ -49,6 +49,57 @@ public class SolidityNode {
     remoteBlockNum.set(getLastSolidityBlockNum());
   }
 
+  /**
+   * Start the SolidityNode.
+   */
+  public static void main(String[] args) {
+    logger.info("Solidity node running.");
+    Args.setParam(args, Constant.TESTNET_CONF);
+    Args cfgArgs = Args.getInstance();
+
+    logger.info("index switch is {}",
+        BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
+
+    if (StringUtils.isEmpty(cfgArgs.getTrustNodeAddr())) {
+      logger.error("Trust node not set.");
+      return;
+    }
+    cfgArgs.setSolidityNode(true);
+
+    ApplicationContext context = new TronApplicationContext(DefaultConfig.class);
+
+    if (cfgArgs.isHelp()) {
+      logger.info("Here is the help message.");
+      return;
+    }
+    Application appT = ApplicationFactory.create(context);
+    FullNode.shutdown(appT);
+
+    //appT.init(cfgArgs);
+    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
+    appT.addService(rpcApiService);
+    //http
+    SolidityNodeHttpApiService httpApiService = context.getBean(SolidityNodeHttpApiService.class);
+    appT.addService(httpApiService);
+
+    appT.initServices(cfgArgs);
+    appT.startServices();
+//    appT.startup();
+
+    //Disable peer discovery for solidity node
+    DiscoverServer discoverServer = context.getBean(DiscoverServer.class);
+    discoverServer.close();
+    ChannelManager channelManager = context.getBean(ChannelManager.class);
+    channelManager.close();
+    NodeManager nodeManager = context.getBean(NodeManager.class);
+    nodeManager.close();
+
+    SolidityNode node = new SolidityNode(appT.getDbManager());
+    node.start();
+
+    rpcApiService.blockUntilShutdown();
+  }
+
   private void start() {
     try {
       new Thread(() -> getBlock()).start();
@@ -164,56 +215,5 @@ public class SolidityNode {
           headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
       dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
     }
-  }
-
-  /**
-   * Start the SolidityNode.
-   */
-  public static void main(String[] args) {
-    logger.info("Solidity node running.");
-    Args.setParam(args, Constant.TESTNET_CONF);
-    Args cfgArgs = Args.getInstance();
-
-    logger.info("index switch is {}",
-        BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
-
-    if (StringUtils.isEmpty(cfgArgs.getTrustNodeAddr())) {
-      logger.error("Trust node not set.");
-      return;
-    }
-    cfgArgs.setSolidityNode(true);
-
-    ApplicationContext context = new TronApplicationContext(DefaultConfig.class);
-
-    if (cfgArgs.isHelp()) {
-      logger.info("Here is the help message.");
-      return;
-    }
-    Application appT = ApplicationFactory.create(context);
-    FullNode.shutdown(appT);
-
-    //appT.init(cfgArgs);
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-    appT.addService(rpcApiService);
-    //http
-    SolidityNodeHttpApiService httpApiService = context.getBean(SolidityNodeHttpApiService.class);
-    appT.addService(httpApiService);
-
-    appT.initServices(cfgArgs);
-    appT.startServices();
-//    appT.startup();
-
-    //Disable peer discovery for solidity node
-    DiscoverServer discoverServer = context.getBean(DiscoverServer.class);
-    discoverServer.close();
-    ChannelManager channelManager = context.getBean(ChannelManager.class);
-    channelManager.close();
-    NodeManager nodeManager = context.getBean(NodeManager.class);
-    nodeManager.close();
-
-    SolidityNode node = new SolidityNode(appT.getDbManager());
-    node.start();
-
-    rpcApiService.blockUntilShutdown();
   }
 }

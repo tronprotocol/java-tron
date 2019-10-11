@@ -20,8 +20,6 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 public class BatchValidateSignContractTest {
 
   private static final String METHOD_SIGN = "batchvalidatesign(bytes32,bytes[],address[])";
-  PrecompiledContracts.BatchValidateSign contract = new BatchValidateSign();
-
   private static final byte[] smellData;
   private static final byte[] longData;
 
@@ -31,6 +29,8 @@ public class BatchValidateSignContractTest {
     Arrays.fill(smellData, (byte) 1);
     Arrays.fill(longData, (byte) 2);
   }
+
+  PrecompiledContracts.BatchValidateSign contract = new BatchValidateSign();
 
   @Test
   void staticCallTest() {
@@ -148,7 +148,8 @@ public class BatchValidateSignContractTest {
 
   }
 
-  Pair<Boolean, byte[]> validateMultiSign(byte[] hash, List<Object> signatures, List<Object> addresses) {
+  Pair<Boolean, byte[]> validateMultiSign(byte[] hash, List<Object> signatures,
+      List<Object> addresses) {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     byte[] input = Hex.decode(AbiUtil.parseParameters(METHOD_SIGN, parameters));
     contract.getEnergyForData(input);

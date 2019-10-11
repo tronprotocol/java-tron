@@ -17,8 +17,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -35,13 +35,6 @@ public class TestNetErc721Cat {
       //fromAddress
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-
-
   String kittyCoreAddressAndCut = "";
   byte[] kittyCoreContractAddress = null;
   byte[] saleClockAuctionContractAddress = null;
@@ -50,15 +43,16 @@ public class TestNetErc721Cat {
   Integer consumeUserResourcePercent = 20;
   String txid = "";
   Optional<TransactionInfo> infoById = null;
-
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] deployAddress = ecKey1.getAddress();
   String deployKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] triggerAddress = ecKey2.getAddress();
   String triggerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
+  private ManagedChannel channelFull = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private String fullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
 
   @BeforeSuite
   public void beforeSuite() {

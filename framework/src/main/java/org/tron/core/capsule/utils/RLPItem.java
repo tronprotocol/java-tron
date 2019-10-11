@@ -1,4 +1,3 @@
-
 package org.tron.core.capsule.utils;
 
 /**

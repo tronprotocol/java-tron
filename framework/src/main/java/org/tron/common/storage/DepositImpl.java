@@ -73,6 +73,10 @@ public class DepositImpl implements Deposit {
     init(dbManager, parent);
   }
 
+  public static DepositImpl createRoot(Manager dbManager) {
+    return new DepositImpl(dbManager, null);
+  }
+
   protected void init(Manager dbManager, DepositImpl parent) {
     this.dbManager = dbManager;
     this.parent = parent;
@@ -194,7 +198,6 @@ public class DepositImpl implements Deposit {
     return witnessCapsule;
   }
 
-
   @Override
   public synchronized VotesCapsule getVotesCapsule(byte[] address) {
     Key key = new Key(address);
@@ -214,7 +217,6 @@ public class DepositImpl implements Deposit {
     }
     return votesCapsule;
   }
-
 
   @Override
   public synchronized ProposalCapsule getProposalCapsule(byte[] id) {
@@ -760,7 +762,6 @@ public class DepositImpl implements Deposit {
     }));
   }
 
-
   @Override
   public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
     Key key = new Key(address);
@@ -805,14 +806,9 @@ public class DepositImpl implements Deposit {
     commitDynamicPropertiesCache(deposit);
   }
 
-
   @Override
   public void setParent(Deposit deposit) {
     parent = deposit;
-  }
-
-  public static DepositImpl createRoot(Manager dbManager) {
-    return new DepositImpl(dbManager, null);
   }
 
   @Override

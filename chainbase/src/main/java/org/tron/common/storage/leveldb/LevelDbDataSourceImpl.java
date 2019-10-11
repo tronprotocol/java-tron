@@ -64,7 +64,8 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   /**
    * constructor.
    */
-  public LevelDbDataSourceImpl(String parentPath, String dataBaseName, Options options, WriteOptions writeOptions) {
+  public LevelDbDataSourceImpl(String parentPath, String dataBaseName, Options options,
+      WriteOptions writeOptions) {
     this.parentPath = Paths.get(
         parentPath,
         DBConfig.getDbDirectory()

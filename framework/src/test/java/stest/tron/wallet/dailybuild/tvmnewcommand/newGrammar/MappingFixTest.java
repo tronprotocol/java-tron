@@ -69,7 +69,6 @@ public class MappingFixTest {
     PublicMethed.printAddress(dev001Key);
   }
 
-
   // after solidity version 0.5.4.
   // Tron Solidity compiler is no longer compatible with Ethereum
   // Tron handles 41 Address in contract, and Ethereum do not
@@ -140,11 +139,10 @@ public class MappingFixTest {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-
     String methodStr = "update(uint256)";
     String argStr = "123";
-    String TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,argStr,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, argStr, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;
@@ -159,18 +157,17 @@ public class MappingFixTest {
     String ContractResult =
         ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray());
     String tmpAddress =
-        Base58.encode58Check(ByteArray.fromHexString("41"+ContractResult.substring(24)));
+        Base58.encode58Check(ByteArray.fromHexString("41" + ContractResult.substring(24)));
     Assert.assertEquals(WalletClient.encode58Check(dev001Address), tmpAddress);
 
     logger.info("EnergyUsageTotal: " + transactionInfo.getReceipt().getEnergyUsageTotal());
     logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
 
-
     methodStr = "balances(address)";
-    argStr = "\"" + WalletClient.encode58Check(dev001Address) +"\"";
+    argStr = "\"" + WalletClient.encode58Check(dev001Address) + "\"";
     TransactionExtention return1 = PublicMethed
-        .triggerContractForExtention(contractAddress,methodStr,argStr,false,
-        0,maxFeeLimit,"0",0L,dev001Address,dev001Key,blockingStubFull);
+        .triggerContractForExtention(contractAddress, methodStr, argStr, false,
+            0, maxFeeLimit, "0", 0L, dev001Address, dev001Key, blockingStubFull);
     logger.info("return1: " + return1);
     logger.info(Hex.toHexString(return1.getConstantResult(0).toByteArray()));
     int ContractRestult = ByteArray.toInt(return1.getConstantResult(0).toByteArray());

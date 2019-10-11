@@ -37,6 +37,10 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
         .build();
   }
 
+  public static byte[] calculateDbKey(long number) {
+    return ByteArray.fromLong(number);
+  }
+
   public long getID() {
     return this.exchange.getExchangeId();
   }
@@ -78,14 +82,14 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
     return this.exchange.getFirstTokenId().toByteArray();
   }
 
-  public byte[] getSecondTokenId() {
-    return this.exchange.getSecondTokenId().toByteArray();
-  }
-
   public void setFirstTokenId(byte[] id) {
     this.exchange = this.exchange.toBuilder()
         .setFirstTokenId(ByteString.copyFrom(id))
         .build();
+  }
+
+  public byte[] getSecondTokenId() {
+    return this.exchange.getSecondTokenId().toByteArray();
   }
 
   public void setSecondTokenId(byte[] id) {
@@ -102,13 +106,8 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
     return this.exchange.getSecondTokenBalance();
   }
 
-
   public byte[] createDbKey() {
     return calculateDbKey(getID());
-  }
-
-  public static byte[] calculateDbKey(long number) {
-    return ByteArray.fromLong(number);
   }
 
   public long transaction(byte[] sellTokenID, long sellTokenQuant) {
@@ -149,7 +148,7 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
       byte[] firstTokenID = firstTokenName;
       byte[] secondTokenID = secondTokenName;
       if (!Arrays.equals(firstTokenName, "_".getBytes())) {
-        firstTokenID =assetIssueStore.get(firstTokenName).getId().getBytes();
+        firstTokenID = assetIssueStore.get(firstTokenName).getId().getBytes();
       }
       if (!Arrays.equals(secondTokenName, "_".getBytes())) {
         secondTokenID = assetIssueStore.get(secondTokenName).getId().getBytes();

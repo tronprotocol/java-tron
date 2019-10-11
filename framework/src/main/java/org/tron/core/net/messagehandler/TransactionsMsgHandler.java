@@ -1,6 +1,5 @@
 package org.tron.core.net.messagehandler;
 
-import com.googlecode.cqengine.query.simple.In;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,8 +19,8 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.Item;
-import org.tron.core.net.service.AdvService;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.service.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
@@ -31,18 +30,14 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Component
 public class TransactionsMsgHandler implements TronMsgHandler {
 
+  private static int MAX_TRX_SIZE = 50_000;
+  private static int MAX_SMART_CONTRACT_SUBMIT_SIZE = 100;
   @Autowired
   private TronNetDelegate tronNetDelegate;
-
   @Autowired
   private AdvService advService;
 
-  private static int MAX_TRX_SIZE = 50_000;
-
-  private static int MAX_SMART_CONTRACT_SUBMIT_SIZE = 100;
-
 //  private static int TIME_OUT = 10 * 60 * 1000;
-
   private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(MAX_TRX_SIZE);
 
   private BlockingQueue<Runnable> queue = new LinkedBlockingQueue();
@@ -53,22 +48,6 @@ public class TransactionsMsgHandler implements TronMsgHandler {
 
   private ScheduledExecutorService smartContractExecutor = Executors
       .newSingleThreadScheduledExecutor();
-
-  class TrxEvent {
-
-    @Getter
-    private PeerConnection peer;
-    @Getter
-    private TransactionMessage msg;
-    @Getter
-    private long time;
-
-    public TrxEvent(PeerConnection peer, TransactionMessage msg) {
-      this.peer = peer;
-      this.msg = msg;
-      this.time = System.currentTimeMillis();
-    }
-  }
 
   public void init() {
     handleSmartContract();
@@ -147,6 +126,22 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     } catch (Exception e) {
       logger.error("Trx {} from peer {} process failed.", trx.getMessageId(), peer.getInetAddress(),
           e);
+    }
+  }
+
+  class TrxEvent {
+
+    @Getter
+    private PeerConnection peer;
+    @Getter
+    private TransactionMessage msg;
+    @Getter
+    private long time;
+
+    public TrxEvent(PeerConnection peer, TransactionMessage msg) {
+      this.peer = peer;
+      this.msg = msg;
+      this.time = System.currentTimeMillis();
     }
   }
 }

@@ -49,24 +49,6 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   private long blockNum;
 
 
-  private byte[] generateBlockId(long blockNum, Sha256Hash blockHash) {
-    byte[] numBytes = Longs.toByteArray(blockNum);
-    byte[] hash = blockHash.getBytes();
-    System.arraycopy(numBytes, 0, hash, 0, 8);
-    return hash;
-  }
-
-  private byte[] generateBlockId(long blockNum, byte[] blockHash) {
-    byte[] numBytes = Longs.toByteArray(blockNum);
-    byte[] hash = blockHash;
-    System.arraycopy(numBytes, 0, hash, 0, 8);
-    return hash;
-  }
-
-  public long getBlockNum() {
-    return blockNum;
-  }
-
   /**
    * constructor.
    */
@@ -238,6 +220,24 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     digest.update(input1, offset1, length1);
     digest.update(input2, offset2, length2);
     return digest.digest(digest.digest());
+  }
+
+  private byte[] generateBlockId(long blockNum, Sha256Hash blockHash) {
+    byte[] numBytes = Longs.toByteArray(blockNum);
+    byte[] hash = blockHash.getBytes();
+    System.arraycopy(numBytes, 0, hash, 0, 8);
+    return hash;
+  }
+
+  private byte[] generateBlockId(long blockNum, byte[] blockHash) {
+    byte[] numBytes = Longs.toByteArray(blockNum);
+    byte[] hash = blockHash;
+    System.arraycopy(numBytes, 0, hash, 0, 8);
+    return hash;
+  }
+
+  public long getBlockNum() {
+    return blockNum;
   }
 
   @Override

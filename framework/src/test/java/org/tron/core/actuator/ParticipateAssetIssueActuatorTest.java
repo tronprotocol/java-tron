@@ -32,9 +32,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIss
 public class ParticipateAssetIssueActuatorTest {
 
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  private static Manager dbManager;
   private static final String dbPath = "output_participateAsset_test";
-  private static TronApplicationContext context;
   private static final String OWNER_ADDRESS;
   private static final String TO_ADDRESS;
   private static final String TO_ADDRESS_2;
@@ -49,6 +47,8 @@ public class ParticipateAssetIssueActuatorTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private static Manager dbManager;
+  private static TronApplicationContext context;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);

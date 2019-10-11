@@ -50,13 +50,13 @@ public class LibrustzcashParam {
   }
 
   public static void validValueParams(long value) throws ZksnarkException {
-    if(value < 0){
+    if (value < 0) {
       throw new ZksnarkException("Value should be non-negative.");
     }
   }
 
   public static void validPositionParams(long value) throws ZksnarkException {
-    if(value < 0){
+    if (value < 0) {
       throw new ZksnarkException("Position should be non-negative.");
     }
   }
@@ -418,21 +418,6 @@ public class LibrustzcashParam {
       valid();
     }
 
-    @Override
-    public void valid() throws ZksnarkException {
-      validValueParams(value);
-      valid32Params(ak);
-      valid32Params(nsk);
-      valid11Params(d);
-      valid32Params(r);
-      valid32Params(alpha);
-      valid32Params(anchor);
-      validVoucherPath(voucherPath);
-      valid32Params(cv);
-      valid32Params(rk);
-      validParamLength(zkproof, 192);
-    }
-
     public static SpendProofParams decode(long ctx, byte[] data)
         throws ZksnarkException {
       byte[] ak = new byte[32];
@@ -461,6 +446,21 @@ public class LibrustzcashParam {
 
       return new SpendProofParams(ctx, ak, nsk, d, r, alpha, ByteArray.toLong(valueByte),
           anchor, voucherPath, cv, rk, zkproof);
+    }
+
+    @Override
+    public void valid() throws ZksnarkException {
+      validValueParams(value);
+      valid32Params(ak);
+      valid32Params(nsk);
+      valid11Params(d);
+      valid32Params(r);
+      valid32Params(alpha);
+      valid32Params(anchor);
+      validVoucherPath(voucherPath);
+      valid32Params(cv);
+      valid32Params(rk);
+      validParamLength(zkproof, 192);
     }
 
     public byte[] encode() {
@@ -656,17 +656,6 @@ public class LibrustzcashParam {
       valid();
     }
 
-    @Override
-    public void valid() throws ZksnarkException {
-      valid32Params(cv);
-      valid32Params(anchor);
-      valid32Params(nullifier);
-      valid32Params(rk);
-      validParamLength(zkproof, 192);
-      validParamLength(spendAuthSig, 64);
-      valid32Params(sighashValue);
-    }
-
     public static CheckSpendParams decode(long ctx, byte[] data, byte[] sigHashValue)
         throws ZksnarkException {
       byte[] cv = new byte[32];
@@ -685,6 +674,17 @@ public class LibrustzcashParam {
 
       return new CheckSpendParams(ctx, cv, anchor, nullifier, rk, zkproof, spendAuthSig,
           sigHashValue);
+    }
+
+    @Override
+    public void valid() throws ZksnarkException {
+      valid32Params(cv);
+      valid32Params(anchor);
+      valid32Params(nullifier);
+      valid32Params(rk);
+      validParamLength(zkproof, 192);
+      validParamLength(spendAuthSig, 64);
+      valid32Params(sighashValue);
     }
   }
 
@@ -720,15 +720,6 @@ public class LibrustzcashParam {
       valid();
     }
 
-    public byte[] encode() {
-      byte[] data = new byte[32 + 32 + 32 + 192];
-      System.arraycopy(cv, 0, data, 0, 32);
-      System.arraycopy(cm, 0, data, 32, 32);
-      System.arraycopy(ephemeralKey, 0, data, 64, 32);
-      System.arraycopy(zkproof, 0, data, 96, 192);
-      return data;
-    }
-
     public static CheckOutputParams decode(long ctx, byte[] data)
         throws ZksnarkException {
       byte[] cv = new byte[32];
@@ -757,6 +748,15 @@ public class LibrustzcashParam {
       System.arraycopy(data, 96 + 580 + 80, zkproof, 0, 192);
 
       return new CheckOutputParams(ctx, cv, cm, ephemeralKey, zkproof);
+    }
+
+    public byte[] encode() {
+      byte[] data = new byte[32 + 32 + 32 + 192];
+      System.arraycopy(cv, 0, data, 0, 32);
+      System.arraycopy(cm, 0, data, 32, 32);
+      System.arraycopy(ephemeralKey, 0, data, 64, 32);
+      System.arraycopy(zkproof, 0, data, 96, 192);
+      return data;
     }
 
     @Override
@@ -803,7 +803,8 @@ public class LibrustzcashParam {
   }
 
   /**
-   * ivk: incoming viewing key, 32 bytes, should be 251bits , not checked; d: 11 bytes pkD: 32 bytes
+   * ivk: incoming viewing key, 32 bytes, should be 251bits , not checked; d: 11 bytes pkD: 32
+   * bytes
    */
   public static class IvkToPkdParams implements ValidParam {
 
@@ -829,7 +830,7 @@ public class LibrustzcashParam {
       valid32Params(ivk);
       valid11Params(d);
       valid32Params(pkD);
-      if((ivk[31] >> 3) != 0){
+      if ((ivk[31] >> 3) != 0) {
         throw new ZksnarkException("Most significant five bits of ivk should be 0.");
       }
     }
@@ -863,7 +864,7 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      if (!((depth < 63) && (depth >=0))) {
+      if (!((depth < 63) && (depth >= 0))) {
         throw new ZksnarkException("Merkle tree depth must be smaller than 63");
       }
       valid32Params(a);

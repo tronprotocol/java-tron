@@ -175,43 +175,41 @@ contract Caller {
 }
  */
 
-  @Data
-  @AllArgsConstructor
-  @ToString
-  static class TestCase {
-    String method;
-    List<Object> params;
-    boolean allEnergy;
-    contractResult receiptResult;
-  }
-
   private static final String nonExistAddress = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";  // 21 char
-
   TestCase[] testCasesAfterAllowTvmConstantinop = {
-      new TestCase("testTransferTrxSelf()", Collections.emptyList(), false, contractResult.TRANSFER_FAILED),
-      new TestCase("testSendTrxSelf()", Collections.emptyList(), false, contractResult.TRANSFER_FAILED),
-      new TestCase("testSuicideNonexistentTarget(address)", Collections.singletonList(nonExistAddress), false, contractResult.TRANSFER_FAILED),
-      new TestCase("testTransferTrxNonexistentTarget(address)", Collections.singletonList(nonExistAddress), false, contractResult.TRANSFER_FAILED),
-      new TestCase("testCallTrxNonexistentTarget(address)", Collections.singletonList(nonExistAddress), false, contractResult.TRANSFER_FAILED),
+      new TestCase("testTransferTrxSelf()", Collections.emptyList(), false,
+          contractResult.TRANSFER_FAILED),
+      new TestCase("testSendTrxSelf()", Collections.emptyList(), false,
+          contractResult.TRANSFER_FAILED),
+      new TestCase("testSuicideNonexistentTarget(address)",
+          Collections.singletonList(nonExistAddress), false, contractResult.TRANSFER_FAILED),
+      new TestCase("testTransferTrxNonexistentTarget(address)",
+          Collections.singletonList(nonExistAddress), false, contractResult.TRANSFER_FAILED),
+      new TestCase("testCallTrxNonexistentTarget(address)",
+          Collections.singletonList(nonExistAddress), false, contractResult.TRANSFER_FAILED),
   };
-
   TestCase[] testCasesBeforeAllowTvmConstantinop = {
       new TestCase("testTransferTrxSelf()", Collections.emptyList(), true, contractResult.UNKNOWN),
       new TestCase("testSendTrxSelf()", Collections.emptyList(), true, contractResult.UNKNOWN),
-      new TestCase("testSuicideNonexistentTarget(address)", Collections.singletonList(nonExistAddress), true, contractResult.UNKNOWN),
-      new TestCase("testTransferTrxNonexistentTarget(address)", Collections.singletonList(nonExistAddress), true, contractResult.UNKNOWN),
-      new TestCase("testCallTrxNonexistentTarget(address)", Collections.singletonList(nonExistAddress), true, contractResult.UNKNOWN),
+      new TestCase("testSuicideNonexistentTarget(address)",
+          Collections.singletonList(nonExistAddress), true, contractResult.UNKNOWN),
+      new TestCase("testTransferTrxNonexistentTarget(address)",
+          Collections.singletonList(nonExistAddress), true, contractResult.UNKNOWN),
+      new TestCase("testCallTrxNonexistentTarget(address)",
+          Collections.singletonList(nonExistAddress), true, contractResult.UNKNOWN),
   };
-
   TestCase[] testCasesInsufficientBalance = {
-      new TestCase("testTransferTrxInsufficientBalance()", Collections.emptyList(), false, contractResult.REVERT),
-      new TestCase("testSendTrxInsufficientBalance()", Collections.emptyList(), false, contractResult.SUCCESS),
-      new TestCase("testCreateTrxInsufficientBalance()", Collections.emptyList(), false, contractResult.REVERT),
-      new TestCase("testCallTrxInsufficientBalance()", Collections.emptyList(), false, contractResult.REVERT),
-      new TestCase("testTransferTokenInsufficientBalance(trcToken)", Collections.singletonList(1000001), false, contractResult.REVERT),
+      new TestCase("testTransferTrxInsufficientBalance()", Collections.emptyList(), false,
+          contractResult.REVERT),
+      new TestCase("testSendTrxInsufficientBalance()", Collections.emptyList(), false,
+          contractResult.SUCCESS),
+      new TestCase("testCreateTrxInsufficientBalance()", Collections.emptyList(), false,
+          contractResult.REVERT),
+      new TestCase("testCallTrxInsufficientBalance()", Collections.emptyList(), false,
+          contractResult.REVERT),
+      new TestCase("testTransferTokenInsufficientBalance(trcToken)",
+          Collections.singletonList(1000001), false, contractResult.REVERT),
   };
-
-
 
   @Test
   public void testTransferFailedAfterAllowTvmConstantinopl()
@@ -306,5 +304,16 @@ contract Caller {
     } else {
       Assert.assertTrue(programResult.getEnergyUsed() < allEnergy, testCase.getMethod());
     }
+  }
+
+  @Data
+  @AllArgsConstructor
+  @ToString
+  static class TestCase {
+
+    String method;
+    List<Object> params;
+    boolean allEnergy;
+    contractResult receiptResult;
   }
 }

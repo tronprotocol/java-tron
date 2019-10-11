@@ -16,14 +16,6 @@ public class Credentials {
     this.address = address;
   }
 
-  public ECKey getEcKeyPair() {
-    return ecKeyPair;
-  }
-
-  public String getAddress() {
-    return address;
-  }
-
   public static Credentials create(ECKey ecKeyPair) {
     String address = org.tron.core.Wallet.encode58Check(ecKeyPair.getAddress());
     return new Credentials(ecKeyPair, address);
@@ -32,6 +24,14 @@ public class Credentials {
   public static Credentials create(String privateKey) {
     ECKey eCkey = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
     return create(eCkey);
+  }
+
+  public ECKey getEcKeyPair() {
+    return ecKeyPair;
+  }
+
+  public String getAddress() {
+    return address;
   }
 
   @Override

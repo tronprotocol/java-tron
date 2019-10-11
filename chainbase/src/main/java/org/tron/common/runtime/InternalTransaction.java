@@ -67,21 +67,6 @@ public class InternalTransaction {
   private byte[] protoEncoded;
 
 
-  public enum TrxType {
-    TRX_PRECOMPILED_TYPE,
-    TRX_CONTRACT_CREATION_TYPE,
-    TRX_CONTRACT_CALL_TYPE,
-    TRX_UNKNOWN_TYPE,
-  }
-
-  public enum ExecutorType {
-    ET_PRE_TYPE,
-    ET_NORMAL_TYPE,
-    ET_CONSTANT_TYPE,
-    ET_UNKNOWN_TYPE,
-  }
-
-
   /**
    * Construct a root InternalTransaction
    */
@@ -217,7 +202,6 @@ public class InternalTransaction {
     return data.clone();
   }
 
-
   public final byte[] getHash() {
     if (!isEmpty(hash)) {
       return Arrays.copyOf(hash, hash.length);
@@ -259,6 +243,20 @@ public class InternalTransaction {
         valueByte.length);
     this.protoEncoded = raw;
     return protoEncoded.clone();
+  }
+
+  public enum TrxType {
+    TRX_PRECOMPILED_TYPE,
+    TRX_CONTRACT_CREATION_TYPE,
+    TRX_CONTRACT_CALL_TYPE,
+    TRX_UNKNOWN_TYPE,
+  }
+
+  public enum ExecutorType {
+    ET_PRE_TYPE,
+    ET_NORMAL_TYPE,
+    ET_CONSTANT_TYPE,
+    ET_UNKNOWN_TYPE,
   }
 
 }

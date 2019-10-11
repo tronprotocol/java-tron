@@ -36,9 +36,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class WireTrafficStats implements Runnable {
 
-  private ScheduledExecutorService executor;
   public final TrafficStatHandler tcp = new TrafficStatHandler();
   public final TrafficStatHandler udp = new TrafficStatHandler();
+  private ScheduledExecutorService executor;
 
   public WireTrafficStats() {
     executor = Executors.newSingleThreadScheduledExecutor(
@@ -58,7 +58,7 @@ public class WireTrafficStats implements Runnable {
   @ChannelHandler.Sharable
   static class TrafficStatHandler extends ChannelDuplexHandler {
 
-//    private long outSizeTot;
+    //    private long outSizeTot;
 //    private long inSizeTot;
     private AtomicLong outSize = new AtomicLong();
     private AtomicLong inSize = new AtomicLong();

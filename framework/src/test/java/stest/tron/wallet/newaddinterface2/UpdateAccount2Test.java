@@ -43,19 +43,16 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class UpdateAccount2Test {
 
+  private static final long now = System.currentTimeMillis();
+  private static final String name = "testAssetIssue_" + Long.toString(now);
+  private static final long TotalSupply = now;
   //testng001、testng002、testng003、testng004
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
-
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
-
-  private static final long now = System.currentTimeMillis();
-  private static final String name = "testAssetIssue_" + Long.toString(now);
-  private static final long TotalSupply = now;
   String mostLongNamePlusOneChar = "1abcdeabcdefabcdefg1abcdefg10o0og1abcdefg10o0oabcd"
       + "efabcdefg1abcdefg10o0og1abcdefg10o0oabcdefabcdefg1abcdefg10o0og1abcdefg10o0oab"
       + "cdefabcdefg1abcdefg10o0og1abcdefg10o0ofabcdefg1abcdefg10o0og1abcdefg10o0o";
@@ -71,17 +68,19 @@ public class UpdateAccount2Test {
   String lowBalTest = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
   //System.out.println();
-
+  //get account
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] noBandwitchAddress = ecKey1.getAddress();
+  String noBandwitch = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
-  //get account
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] noBandwitchAddress = ecKey1.getAddress();
-  String noBandwitch = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -176,7 +175,6 @@ public class UpdateAccount2Test {
           "Please confirm wither the create account test is pass, or you will do it by manual");
     }
   }
-
 
   @Test(enabled = true)
   public void testUpdateAccount2() {
@@ -281,7 +279,8 @@ public class UpdateAccount2Test {
     }
     final ECKey ecKey = temKey;
 
-    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract.newBuilder();
+    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract
+        .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(url));
     WitnessContract.WitnessCreateContract contract = builder.build();
@@ -312,7 +311,8 @@ public class UpdateAccount2Test {
     }
     final ECKey ecKey = temKey;
 
-    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract.newBuilder();
+    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract
+        .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(url));
     WitnessContract.WitnessCreateContract contract = builder.build();
@@ -360,7 +360,8 @@ public class UpdateAccount2Test {
     }
     final ECKey ecKey = temKey;
 
-    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract.newBuilder();
+    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract
+        .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
@@ -398,7 +399,8 @@ public class UpdateAccount2Test {
     }
     final ECKey ecKey = temKey;
 
-    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract.newBuilder();
+    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract
+        .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
@@ -455,7 +457,8 @@ public class UpdateAccount2Test {
     ECKey ecKey = temKey;
 
     try {
-      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract.newBuilder();
+      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract
+          .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(TotalSupply);
@@ -487,13 +490,6 @@ public class UpdateAccount2Test {
     }
   }
 
-  class AccountComparator implements Comparator {
-
-    public int compare(Object o1, Object o2) {
-      return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
-    }
-  }
-
   /**
    * constructor.
    */
@@ -519,12 +515,6 @@ public class UpdateAccount2Test {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {
@@ -761,7 +751,8 @@ public class UpdateAccount2Test {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract.newBuilder();
+    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract
+        .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(address));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
@@ -809,7 +800,8 @@ public class UpdateAccount2Test {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract.newBuilder();
+    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract
+        .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(address));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
@@ -878,7 +870,8 @@ public class UpdateAccount2Test {
     }
     final ECKey ecKey = temKey;
 
-    BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract.newBuilder();
+    BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract
+        .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
@@ -923,7 +916,8 @@ public class UpdateAccount2Test {
     }
     final ECKey ecKey = temKey;
 
-    BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract.newBuilder();
+    BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract
+        .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
@@ -959,6 +953,13 @@ public class UpdateAccount2Test {
       return response;
     }
     return ret;
+  }
+
+  class AccountComparator implements Comparator {
+
+    public int compare(Object o1, Object o2) {
+      return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
+    }
   }
 
 

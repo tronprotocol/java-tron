@@ -34,20 +34,9 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class UpdateAsset2Test {
 
-  private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
-
-  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
-
   private static final long now = System.currentTimeMillis();
-  private static String name = "testAssetIssue010_" + Long.toString(now);
   private static final long totalSupply = now;
   private static final long sendAmount = 10000000000L;
-  String description = "just-test";
-  String url = "https://github.com/tronprotocol/wallet-cli/";
-  String updateDescription = "This is test for update asset issue, case AssetIssue_010";
-  String updateUrl = "www.updateassetissue.010.cn";
   private static final String tooLongDescription =
       "1qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcv"
           + "qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswe"
@@ -56,21 +45,31 @@ public class UpdateAsset2Test {
       + "wqaswqasw1qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazx"
       + "swedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedc"
       + "vqazxswedcvqazxswedcvqazxswedcvqazxswedcv";
-
+  private static String name = "testAssetIssue010_" + Long.toString(now);
+  private final String testKey002 = Configuration.getByPath("testng.conf")
+      .getString("foundationAccount.key1");
+  private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  String description = "just-test";
+  String url = "https://github.com/tronprotocol/wallet-cli/";
+  String updateDescription = "This is test for update asset issue, case AssetIssue_010";
+  String updateUrl = "www.updateassetissue.010.cn";
   Long freeAssetNetLimit = 1000L;
   Long publicFreeAssetNetLimit = 1000L;
   Long updateFreeAssetNetLimit = 10001L;
   Long updatePublicFreeAssetNetLimit = 10001L;
-
+  //get account
+  ECKey ecKey = new ECKey(Utils.getRandom());
+  byte[] asset010Address = ecKey.getAddress();
+  String testKeyForAssetIssue010 = ByteArray.toHexString(ecKey.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
-  //get account
-  ECKey ecKey = new ECKey(Utils.getRandom());
-  byte[] asset010Address = ecKey.getAddress();
-  String testKeyForAssetIssue010 = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -125,7 +124,8 @@ public class UpdateAsset2Test {
     //Query the description and url,freeAssetNetLimit and publicFreeAssetNetLimit
     ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
-    AssetIssueContractOuterClass.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
+    AssetIssueContractOuterClass.AssetIssueContract assetIssueByName = blockingStubFull
+        .getAssetIssueByName(request);
 
     Assert.assertTrue(
         ByteArray.toStr(assetIssueByName.getDescription().toByteArray()).equals(description));
@@ -250,7 +250,8 @@ public class UpdateAsset2Test {
     Account search = PublicMethed.queryAccount(priKey, blockingStubFull);
 
     try {
-      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract.newBuilder();
+      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract
+          .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -307,11 +308,6 @@ public class UpdateAsset2Test {
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
   }
 
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
-  }
-
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
@@ -361,7 +357,8 @@ public class UpdateAsset2Test {
     }
     final ECKey ecKey = temKey;
 
-    AssetIssueContractOuterClass.TransferAssetContract.Builder builder = AssetIssueContractOuterClass.TransferAssetContract.newBuilder();
+    AssetIssueContractOuterClass.TransferAssetContract.Builder builder = AssetIssueContractOuterClass.TransferAssetContract
+        .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);

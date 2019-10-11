@@ -23,23 +23,24 @@ public class VotesStoreTest {
 
   private static final String dbPath = "output-votesStore-test";
   private static TronApplicationContext context;
-  VotesStore votesStore;
 
   static {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  @Before
-  public void initDb() {
-    this.votesStore = context.getBean(VotesStore.class);
-  }
+  VotesStore votesStore;
 
   @AfterClass
   public static void destroy() {
     Args.clearParam();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
+  }
+
+  @Before
+  public void initDb() {
+    this.votesStore = context.getBean(VotesStore.class);
   }
 
   @Test

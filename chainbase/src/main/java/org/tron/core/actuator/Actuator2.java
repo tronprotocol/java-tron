@@ -6,7 +6,7 @@ import org.tron.core.exception.ContractValidateException;
 
 public interface Actuator2 {
 
-    void execute(TransactionContext context) throws ContractExeException;
+  void execute(TransactionContext context) throws ContractExeException;
 
-    void validate(TransactionContext context) throws ContractValidateException;
+  void validate(TransactionContext context) throws ContractValidateException;
 }

@@ -7,6 +7,32 @@ import lombok.Getter;
 @EqualsAndHashCode(exclude = "operator")
 public final class Value {
 
+  @Getter
+  final private Operator operator;
+  final private WrappedByteArray data;
+
+  private Value(Operator operator, WrappedByteArray data) {
+    this.operator = operator;
+    this.data = data;
+  }
+
+  public static Value decode(byte[] bytes) {
+    Operator operator = Operator.valueOf(bytes[0]);
+    byte[] value = null;
+    if (bytes.length > 1) {
+      value = Arrays.copyOfRange(bytes, 1, bytes.length);
+    }
+    return Value.of(operator, value);
+  }
+
+  public static Value copyOf(Operator operator, byte[] data) {
+    return new Value(operator, WrappedByteArray.copyOf(data));
+  }
+
+  public static Value of(Operator operator, byte[] data) {
+    return new Value(operator, WrappedByteArray.of(data));
+  }
+
   public byte[] encode() {
     if (data.getBytes() == null) {
       return new byte[]{operator.getValue()};
@@ -18,13 +44,13 @@ public final class Value {
     return r;
   }
 
-  public static Value decode(byte[] bytes) {
-    Operator operator = Operator.valueOf(bytes[0]);
-    byte[] value = null;
-    if (bytes.length > 1) {
-      value = Arrays.copyOfRange(bytes, 1, bytes.length);
+  public byte[] getBytes() {
+    byte[] value = data.getBytes();
+    if (value == null) {
+      return null;
     }
-    return Value.of(operator, value);
+
+    return Arrays.copyOf(value, value.length);
   }
 
   public enum Operator {
@@ -54,31 +80,5 @@ public final class Value {
           return null;
       }
     }
-  }
-
-  @Getter
-  final private Operator operator;
-  final private WrappedByteArray data;
-
-  private Value(Operator operator, WrappedByteArray data) {
-    this.operator = operator;
-    this.data = data;
-  }
-
-  public static Value copyOf(Operator operator, byte[] data) {
-    return new Value(operator, WrappedByteArray.copyOf(data));
-  }
-
-  public static Value of(Operator operator, byte[] data) {
-    return new Value(operator, WrappedByteArray.of(data));
-  }
-
-  public byte[] getBytes() {
-    byte[] value = data.getBytes();
-    if (value == null) {
-      return null;
-    }
-
-    return Arrays.copyOf(value, value.length);
   }
 }

@@ -34,10 +34,26 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class TestValidatemultisign001 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
+  ByteString assetAccountId1;
+  String[] permissionKeyString = new String[2];
+  String[] ownerKeyString = new String[2];
+  String accountPermissionJson = "";
+  ECKey ecKey001 = new ECKey(Utils.getRandom());
+  byte[] manager1Address = ecKey001.getAddress();
+  String manager1Key = ByteArray.toHexString(ecKey001.getPrivKeyBytes());
+  ECKey ecKey002 = new ECKey(Utils.getRandom());
+  byte[] manager2Address = ecKey002.getAddress();
+  String manager2Key = ByteArray.toHexString(ecKey002.getPrivKeyBytes());
+  ECKey ecKey003 = new ECKey(Utils.getRandom());
+  byte[] ownerAddress = ecKey003.getAddress();
+  String ownerKey = ByteArray.toHexString(ecKey003.getPrivKeyBytes());
+  ECKey ecKey004 = new ECKey(Utils.getRandom());
+  byte[] participateAddress = ecKey004.getAddress();
+  String participateKey = ByteArray.toHexString(ecKey004.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
@@ -48,33 +64,10 @@ public class TestValidatemultisign001 {
       .getLong("defaultParameter.multiSignFee");
   private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.updateAccountPermissionFee");
-
   private byte[] contractAddress = null;
-  ByteString assetAccountId1;
-  String[] permissionKeyString = new String[2];
-  String[] ownerKeyString = new String[2];
-  String accountPermissionJson = "";
-
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] dev001Address = ecKey1.getAddress();
   private String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-
-  ECKey ecKey001 = new ECKey(Utils.getRandom());
-  byte[] manager1Address = ecKey001.getAddress();
-  String manager1Key = ByteArray.toHexString(ecKey001.getPrivKeyBytes());
-
-  ECKey ecKey002 = new ECKey(Utils.getRandom());
-  byte[] manager2Address = ecKey002.getAddress();
-  String manager2Key = ByteArray.toHexString(ecKey002.getPrivKeyBytes());
-
-  ECKey ecKey003 = new ECKey(Utils.getRandom());
-  byte[] ownerAddress = ecKey003.getAddress();
-  String ownerKey = ByteArray.toHexString(ecKey003.getPrivKeyBytes());
-
-  ECKey ecKey004 = new ECKey(Utils.getRandom());
-  byte[] participateAddress = ecKey004.getAddress();
-  String participateKey = ByteArray.toHexString(ecKey004.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -181,15 +174,14 @@ public class TestValidatemultisign001 {
     ownerKeyString[1] = manager1Key;
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
-        fromAddress,1L,ownerAddress,ownerKey,blockingStubFull,ownerKeyString);
+        fromAddress, 1L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
     byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
 
-    byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0),hash);
+    byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     byte[] tosign = Sha256Hash.hash(merged);
 
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
-
 
     // Trigger with correct Permission address
     List<Object> parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
@@ -197,19 +189,19 @@ public class TestValidatemultisign001 {
     String input = PublicMethed.parametersString(parameters);
 
     String methodStr = "testmulti(address,uint256,bytes32,bytes[])";
-    String TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // Trigger with wrong Permission address
-    merged = ByteUtil.merge(dev001Address, ByteArray.fromInt(0),hash);
+    merged = ByteUtil.merge(dev001Address, ByteArray.fromInt(0), hash);
     tosign = Sha256Hash.hash(merged);
 
     signatures.clear();
@@ -220,17 +212,17 @@ public class TestValidatemultisign001 {
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
-    TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // Trigger with address that have not permission
-    merged = ByteUtil.merge(fromAddress, ByteArray.fromInt(0),hash);
+    merged = ByteUtil.merge(fromAddress, ByteArray.fromInt(0), hash);
     tosign = Sha256Hash.hash(merged);
 
     signatures.clear();
@@ -241,17 +233,17 @@ public class TestValidatemultisign001 {
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
-    TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // Trigger with not exist address
-    merged = ByteUtil.merge(manager1Address, ByteArray.fromInt(0),hash);
+    merged = ByteUtil.merge(manager1Address, ByteArray.fromInt(0), hash);
     tosign = Sha256Hash.hash(merged);
 
     signatures.clear();
@@ -262,17 +254,17 @@ public class TestValidatemultisign001 {
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
-    TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // Trigger with error format address
-    merged = ByteUtil.merge(manager1Address, ByteArray.fromInt(0),hash);
+    merged = ByteUtil.merge(manager1Address, ByteArray.fromInt(0), hash);
     tosign = Sha256Hash.hash(merged);
 
     signatures.clear();
@@ -283,13 +275,13 @@ public class TestValidatemultisign001 {
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
-    TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
@@ -302,14 +294,13 @@ public class TestValidatemultisign001 {
     ownerKeyString[1] = manager1Key;
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
-        fromAddress,1L,ownerAddress,ownerKey,blockingStubFull,ownerKeyString);
+        fromAddress, 1L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
     byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
-
 
     // Trigger with wrong PermissionID
     long permissionId = 2;
 
-    byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId),hash);
+    byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId), hash);
     byte[] tosign = Sha256Hash.hash(merged);
 
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
@@ -320,20 +311,20 @@ public class TestValidatemultisign001 {
     String input = PublicMethed.parametersString(parameters);
 
     String methodStr = "testmulti(address,uint256,bytes32,bytes[])";
-    String TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // Trigger with error format PermissionID
     permissionId = 100;
-    merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId),hash);
+    merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId), hash);
     tosign = Sha256Hash.hash(merged);
 
     signatures.clear();
@@ -344,18 +335,18 @@ public class TestValidatemultisign001 {
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
-    TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // Trigger with Long.MAX_VALUE + 1 PermissionID
     permissionId = Long.MAX_VALUE + 1;
-    merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId),hash);
+    merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId), hash);
     tosign = Sha256Hash.hash(merged);
 
     signatures.clear();
@@ -366,18 +357,18 @@ public class TestValidatemultisign001 {
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
-    TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // Trigger with Long.MIN_VALUE - 1 PermissionID
     permissionId = Long.MIN_VALUE - 1;
-    merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId),hash);
+    merged = ByteUtil.merge(ownerAddress, ByteArray.fromLong(permissionId), hash);
     tosign = Sha256Hash.hash(merged);
 
     signatures.clear();
@@ -388,13 +379,13 @@ public class TestValidatemultisign001 {
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
-    TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
@@ -407,11 +398,11 @@ public class TestValidatemultisign001 {
     ownerKeyString[1] = manager1Key;
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
-        fromAddress,1L, ownerAddress,0, ownerKey, blockingStubFull);
+        fromAddress, 1L, ownerAddress, 0, ownerKey, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
     byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
 
-    byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0),hash);
+    byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     byte[] tosign = Sha256Hash.hash(merged);
 
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
@@ -423,25 +414,25 @@ public class TestValidatemultisign001 {
     String input = PublicMethed.parametersString(parameters);
 
     String methodStr = "testmulti(address,uint256,bytes32,bytes[])";
-    String TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    String TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
     // Trigger with wrong hash
     transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
-        fromAddress,1L, ownerAddress,0, ownerKey, blockingStubFull);
-    logger.info("hash: {}" , Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes());
+        fromAddress, 1L, ownerAddress, 0, ownerKey, blockingStubFull);
+    logger.info("hash: {}", Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes());
 
     hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
 
-    merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0),hash);
+    merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     tosign = Sha256Hash.hash(merged);
 
     signatures.clear();
@@ -455,27 +446,25 @@ public class TestValidatemultisign001 {
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
-    TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
-
 
     // 1) address B create transaction_1, but address A`s permission address sign
     // 2) user address A verify transaction_1 that created by B
     transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
-        fromAddress,1L, dev001Address,0, dev001Key, blockingStubFull);
+        fromAddress, 1L, dev001Address, 0, dev001Key, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
-
 
     hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
 
-    merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0),hash);
+    merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     tosign = Sha256Hash.hash(merged);
 
     signatures.clear();
@@ -486,14 +475,14 @@ public class TestValidatemultisign001 {
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
-    TriggerTxid = PublicMethed.triggerContract(contractAddress,methodStr,input,false,
-        0,maxFeeLimit,dev001Address,dev001Key,blockingStubFull);
+    TriggerTxid = PublicMethed.triggerContract(contractAddress, methodStr, input, false,
+        0, maxFeeLimit, dev001Address, dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed.getTransactionInfoById(TriggerTxid, blockingStubFull);
     logger.info("infoById" + infoById);
 
-    Assert.assertEquals(0,infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 

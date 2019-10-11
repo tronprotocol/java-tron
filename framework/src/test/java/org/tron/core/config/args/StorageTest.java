@@ -21,9 +21,7 @@ import org.iq80.leveldb.Options;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
 
 public class StorageTest {
 

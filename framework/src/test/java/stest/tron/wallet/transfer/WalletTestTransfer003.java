@@ -40,15 +40,23 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class WalletTestTransfer003 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final String name = "transaction007_" + Long.toString(now);
+  private static Protocol.Transaction sendCoinTransaction;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
   private final Long createUseFee = 100000L;
-
+  //get account
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] sendCoinAddress = ecKey1.getAddress();
+  String testKeyForSendCoin = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] newAccountAddress = ecKey2.getAddress();
+  String testKeyForNewAccount = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private ManagedChannel channelFull1 = null;
   private ManagedChannel channelSolidity = null;
@@ -56,11 +64,6 @@ public class WalletTestTransfer003 {
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private WalletExtensionGrpc.WalletExtensionBlockingStub blockingStubExtension = null;
-
-  private static final long now = System.currentTimeMillis();
-  private static final String name = "transaction007_" + Long.toString(now);
-  private static Protocol.Transaction sendCoinTransaction;
-
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
@@ -68,20 +71,65 @@ public class WalletTestTransfer003 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  //get account
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] sendCoinAddress = ecKey1.getAddress();
-  String testKeyForSendCoin = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] newAccountAddress = ecKey2.getAddress();
-  String testKeyForNewAccount = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
   /*  @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }*/
+
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
+
+  private static Transaction signTransaction(ECKey ecKey, Transaction transaction) {
+    if (ecKey == null || ecKey.getPrivKey() == null) {
+      logger.warn("Warning: Can't sign,there is no private key !!");
+      return null;
+    }
+    transaction = TransactionUtils.setTimestamp(transaction);
+    return TransactionUtils.sign(transaction, ecKey);
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static Protocol.Transaction sendcoin(byte[] to, long amount, byte[] owner, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
+
+    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract
+        .newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsOwner = ByteString.copyFrom(owner);
+    builder.setToAddress(bsTo);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    BalanceContract.TransferContract contract = builder.build();
+    Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction ==null");
+    }
+    transaction = signTransaction(ecKey, transaction);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+    }
+
+    return transaction;
+  }
 
   /**
    * constructor.
@@ -107,7 +155,6 @@ public class WalletTestTransfer003 {
     blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
 
   }
-
 
   @Test(enabled = true)
   public void test1UseFeeOrNet() {
@@ -280,11 +327,6 @@ public class WalletTestTransfer003 {
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
   }
 
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
-  }
-
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
@@ -308,54 +350,6 @@ public class WalletTestTransfer003 {
     builder.setNum(blockNum);
     return blockingStubFull.getBlockByNum(builder.build());
 
-  }
-
-  private static Transaction signTransaction(ECKey ecKey, Transaction transaction) {
-    if (ecKey == null || ecKey.getPrivKey() == null) {
-      logger.warn("Warning: Can't sign,there is no private key !!");
-      return null;
-    }
-    transaction = TransactionUtils.setTimestamp(transaction);
-    return TransactionUtils.sign(transaction, ecKey);
-  }
-
-  /**
-   * constructor.
-   */
-
-  public static Protocol.Transaction sendcoin(byte[] to, long amount, byte[] owner, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    //String priKey = testKey002;
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
-
-    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract.newBuilder();
-    ByteString bsTo = ByteString.copyFrom(to);
-    ByteString bsOwner = ByteString.copyFrom(owner);
-    builder.setToAddress(bsTo);
-    builder.setOwnerAddress(bsOwner);
-    builder.setAmount(amount);
-
-    BalanceContract.TransferContract contract = builder.build();
-    Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      logger.info("transaction ==null");
-    }
-    transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-    }
-
-    return transaction;
   }
 
   /**

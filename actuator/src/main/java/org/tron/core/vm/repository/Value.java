@@ -62,6 +62,14 @@ public class Value {
     }
   }
 
+  public static Value create(byte[] any, int type) {
+    return new Value(any, type);
+  }
+
+  public static Value create(byte[] any) {
+    return new Value(any, Type.VALUE_TYPE_NORMAL);
+  }
+
   /**
    * @return
    */
@@ -152,7 +160,6 @@ public class Value {
     }
   }
 
-
   /**
    * @return
    */
@@ -191,7 +198,6 @@ public class Value {
     return new CodeCapsule(any);
   }
 
-
   /**
    * @return
    */
@@ -201,7 +207,6 @@ public class Value {
     }
     return new ContractCapsule(any);
   }
-
 
   public AssetIssueCapsule getAssetIssue() {
     if (ArrayUtils.isEmpty(any)) {
@@ -240,20 +245,12 @@ public class Value {
     return false;
   }
 
-  @Override
-  public int hashCode() {
-    return new Integer(type.hashCode() + Arrays.hashCode(any)).hashCode();
-  }
-
-  public static Value create(byte[] any, int type) {
-    return new Value(any, type);
-  }
-
 //    public static Value create(byte[] any, Type type) {
 //        return new Value(any, type);
 //    }
 
-  public static Value create(byte[] any) {
-    return new Value(any, Type.VALUE_TYPE_NORMAL);
+  @Override
+  public int hashCode() {
+    return new Integer(type.hashCode() + Arrays.hashCode(any)).hashCode();
   }
 }

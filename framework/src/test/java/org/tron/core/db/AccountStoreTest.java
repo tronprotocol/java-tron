@@ -1,9 +1,7 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-
 import java.io.File;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -20,12 +18,12 @@ import org.tron.protos.Protocol.AccountType;
 
 public class AccountStoreTest {
 
+  private static final byte[] data = TransactionStoreTest.randomBytes(32);
   private static String dbPath = "output_AccountStore_test";
   private static String dbDirectory = "db_AccountStore_test";
   private static String indexDirectory = "index_AccountStore_test";
   private static TronApplicationContext context;
   private static AccountStore accountStore;
-  private static final byte[] data = TransactionStoreTest.randomBytes(32);
   private static byte[] address = TransactionStoreTest.randomBytes(32);
   private static byte[] accountName = TransactionStoreTest.randomBytes(32);
 

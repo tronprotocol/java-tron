@@ -17,46 +17,37 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class HttpTestEasyAccount001 {
 
+  private static String assetIssueId;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private JSONObject responseContent;
-  private HttpResponse response;
-  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(0);
   String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
   String url = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetUrl");
-
-  private long now = System.currentTimeMillis();
-  private String userPassword = "ps_" + Long.toString(now);
-  private String assetName = "httpEasyAsset_" + Long.toString(now);
-  private final long totalSupply = now;
-  private static String assetIssueId;
-
-  private String easyAddress = null;
-
-  private String generatePriKey = null;
-  private String generateAddress = null;
-  private String generateHexAddress = null;
-
   long beforeEasyBalance = 0L;
   long afterEasyBalance = 0L;
-
   long beforeGenerateBalance = 0L;
   long afterGenerateBalance = 0L;
-
   long beforeEasyAsset = 0L;
   long afterEasyAsset = 0L;
-
   long beforeGenerateAsset = 0L;
   long afterGenerateAsset = 0L;
-
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] assetAddress = ecKey1.getAddress();
   String assetKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
+  private JSONObject responseContent;
+  private HttpResponse response;
+  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
+      .get(0);
+  private long now = System.currentTimeMillis();
+  private final long totalSupply = now;
+  private String userPassword = "ps_" + Long.toString(now);
+  private String assetName = "httpEasyAsset_" + Long.toString(now);
+  private String easyAddress = null;
+  private String generatePriKey = null;
+  private String generateAddress = null;
+  private String generateHexAddress = null;
 
   /**
    * constructor.

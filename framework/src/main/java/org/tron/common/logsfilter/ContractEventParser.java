@@ -17,17 +17,6 @@ public class ContractEventParser {
 
   private static final int DATAWORD_UNIT_SIZE = 32;
 
-  private enum Type {
-    UNKNOWN,
-    INT_NUMBER,
-    BOOL,
-    FLOAT_NUMBER,
-    FIXED_BYTES,
-    ADDRESS,
-    STRING,
-    BYTES,
-  }
-
   protected static String parseDataBytes(byte[] data, String typeStr, int index) {
     try {
       byte[] startBytes = subBytes(data, index * DATAWORD_UNIT_SIZE, DATAWORD_UNIT_SIZE);
@@ -114,5 +103,16 @@ public class ContractEventParser {
       return Wallet.encode58Check(MUtil.convertToTronAddress(last20Bytes));
     }
     return Hex.toHexString(bytes);
+  }
+
+  private enum Type {
+    UNKNOWN,
+    INT_NUMBER,
+    BOOL,
+    FLOAT_NUMBER,
+    FIXED_BYTES,
+    ADDRESS,
+    STRING,
+    BYTES,
   }
 }

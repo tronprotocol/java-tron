@@ -28,53 +28,18 @@ import org.tron.common.runtime.vm.DataWord;
 
 public class OpActions {
 
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  public static class Action {
-
-    public enum Name {
-      pop,
-      push,
-      swap,
-      extend,
-      write,
-      put,
-      remove,
-      clear;
-    }
-
-    private Name name;
-    private Map<String, Object> params;
-
-    public Name getName() {
-      return name;
-    }
-
-    public void setName(Name name) {
-      this.name = name;
-    }
-
-    public Map<String, Object> getParams() {
-      return params;
-    }
-
-    public void setParams(Map<String, Object> params) {
-      this.params = params;
-    }
-
-    Action addParam(String name, Object value) {
-      if (value != null) {
-        if (params == null) {
-          params = new HashMap<>();
-        }
-        params.put(name, value.toString());
-      }
-      return this;
-    }
-  }
-
   private List<Action> stack = new ArrayList<>();
   private List<Action> memory = new ArrayList<>();
   private List<Action> storage = new ArrayList<>();
+
+  private static Action addAction(List<Action> container, Action.Name name) {
+    Action action = new Action();
+    action.setName(name);
+
+    container.add(action);
+
+    return action;
+  }
 
   public List<Action> getStack() {
     return stack;
@@ -98,15 +63,6 @@ public class OpActions {
 
   public void setStorage(List<Action> storage) {
     this.storage = storage;
-  }
-
-  private static Action addAction(List<Action> container, Action.Name name) {
-    Action action = new Action();
-    action.setName(name);
-
-    container.add(action);
-
-    return action;
   }
 
   public Action addStackPop() {
@@ -148,5 +104,49 @@ public class OpActions {
 
   public Action addStorageClear() {
     return addAction(storage, Action.Name.clear);
+  }
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public static class Action {
+
+    private Name name;
+    private Map<String, Object> params;
+
+    public Name getName() {
+      return name;
+    }
+
+    public void setName(Name name) {
+      this.name = name;
+    }
+
+    public Map<String, Object> getParams() {
+      return params;
+    }
+
+    public void setParams(Map<String, Object> params) {
+      this.params = params;
+    }
+
+    Action addParam(String name, Object value) {
+      if (value != null) {
+        if (params == null) {
+          params = new HashMap<>();
+        }
+        params.put(name, value.toString());
+      }
+      return this;
+    }
+
+    public enum Name {
+      pop,
+      push,
+      swap,
+      extend,
+      write,
+      put,
+      remove,
+      clear;
+    }
   }
 }

@@ -18,11 +18,8 @@
 
 package org.tron.common.overlay.discover.node.statistics;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
-import lombok.Setter;
-import org.tron.common.overlay.discover.node.Node;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -31,8 +28,13 @@ public class NodeStatistics {
   public static final int REPUTATION_PREDEFINED = 100000;
   public static final long TOO_MANY_PEERS_PENALIZE_TIMEOUT = 60 * 1000L;
   private static final long CLEAR_CYCLE_TIME = 60 * 60 * 1000L;
+  public final MessageStatistics messageStatistics = new MessageStatistics();
+  public final MessageCount p2pHandShake = new MessageCount();
+  public final MessageCount tcpFlow = new MessageCount();
+  public final SimpleStatter discoverMessageLatency;
+  public final SimpleStatter pingMessageLatency;
+  public final AtomicLong lastPongReplyTime = new AtomicLong(0L); // in milliseconds
   private final long MIN_DATA_LENGTH = Args.getInstance().getReceiveTcpMinDataLength();
-
   private boolean isPredefined = false;
   private int persistedReputation = 0;
   @Getter
@@ -43,16 +45,6 @@ public class NodeStatistics {
   private ReasonCode tronLastLocalDisconnectReason = null;
   private long lastDisconnectedTime = 0;
   private long firstDisconnectedTime = 0;
-
-  public final MessageStatistics messageStatistics = new MessageStatistics();
-  public final MessageCount p2pHandShake = new MessageCount();
-  public final MessageCount tcpFlow = new MessageCount();
-
-  public final SimpleStatter discoverMessageLatency;
-  public final SimpleStatter pingMessageLatency;
-
-  public final AtomicLong lastPongReplyTime = new AtomicLong(0L); // in milliseconds
-
   private Reputation reputation;
 
   public NodeStatistics() {
@@ -153,12 +145,12 @@ public class NodeStatistics {
     return lastDisconnectedTime > 0;
   }
 
-  public void setPredefined(boolean isPredefined) {
-    this.isPredefined = isPredefined;
-  }
-
   public boolean isPredefined() {
     return isPredefined;
+  }
+
+  public void setPredefined(boolean isPredefined) {
+    this.isPredefined = isPredefined;
   }
 
   public void setPersistedReputation(int persistedReputation) {
@@ -185,7 +177,16 @@ public class NodeStatistics {
         + ", tcp flow: " + tcpFlow.getTotalCount();
   }
 
+  public boolean nodeIsHaveDataTransfer() {
+    return tcpFlow.getTotalCount() > MIN_DATA_LENGTH;
+  }
+
+  public void resetTcpFlow() {
+    tcpFlow.reset();
+  }
+
   public class SimpleStatter {
+
     private long sum;
     @Getter
     private long count;
@@ -199,7 +200,7 @@ public class NodeStatistics {
     public void add(long value) {
       last = value;
       sum += value;
-      min = min == 0? value : Math.min(min, value);
+      min = min == 0 ? value : Math.min(min, value);
       max = Math.max(max, value);
       count++;
     }
@@ -208,14 +209,6 @@ public class NodeStatistics {
       return count == 0 ? 0 : sum / count;
     }
 
-  }
-
-  public boolean nodeIsHaveDataTransfer() {
-    return tcpFlow.getTotalCount() > MIN_DATA_LENGTH;
-  }
-
-  public void resetTcpFlow() {
-    tcpFlow.reset();
   }
 
 }

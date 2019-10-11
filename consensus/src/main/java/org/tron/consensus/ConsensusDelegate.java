@@ -62,7 +62,7 @@ public class ConsensusDelegate {
   }
 
   public long getWitnessStandbyAllowance() {
-    return  dynamicPropertiesStore.getWitnessStandbyAllowance();
+    return dynamicPropertiesStore.getWitnessStandbyAllowance();
   }
 
   public long getLatestBlockHeaderTimestamp() {

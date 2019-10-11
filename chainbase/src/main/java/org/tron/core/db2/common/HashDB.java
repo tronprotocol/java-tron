@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class HashDB implements DB<Key, Value> {
+
   private Map<Key, Value> db = new HashMap<>();
   private String name;
 
@@ -43,7 +44,7 @@ public class HashDB implements DB<Key, Value> {
   }
 
   @Override
-  public Iterator<Map.Entry<Key,Value>> iterator() {
+  public Iterator<Map.Entry<Key, Value>> iterator() {
     return db.entrySet().iterator();
   }
 

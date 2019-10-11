@@ -7,7 +7,6 @@ import com.google.common.util.concurrent.RateLimiter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.tron.core.services.ratelimiter.strategy.Strategy;
 
 public class IPQpsStrategy extends Strategy {
 

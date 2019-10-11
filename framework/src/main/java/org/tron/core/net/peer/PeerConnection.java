@@ -4,24 +4,21 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.Deque;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
-import org.tron.common.utils.Pair;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.node.statistics.NodeStatistics.SimpleStatter;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
+import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
@@ -68,50 +65,40 @@ public class PeerConnection extends Channel {
 
   @Getter
   private BlockId blockBothHave = new BlockId();
+  @Getter
+  private volatile long blockBothHaveUpdateTime = System.currentTimeMillis();
+  @Setter
+  @Getter
+  private BlockId lastSyncBlockId;
+  @Setter
+  @Getter
+  private volatile long remainNum;
+  @Getter
+  private Cache<Sha256Hash, Long> syncBlockIdCache = CacheBuilder.newBuilder()
+      .maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).recordStats().build();
+  @Setter
+  @Getter
+  private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
+  @Setter
+  @Getter
+  private Map<BlockId, Long> syncBlockRequested = new ConcurrentHashMap<>();
+  @Setter
+  @Getter
+  private Pair<Deque<BlockId>, Long> syncChainRequested = null;
+  @Setter
+  @Getter
+  private Set<BlockId> syncBlockInProcess = new HashSet<>();
+  @Setter
+  @Getter
+  private volatile boolean needSyncFromPeer;
+  @Setter
+  @Getter
+  private volatile boolean needSyncFromUs;
 
   public void setBlockBothHave(BlockId blockId) {
     this.blockBothHave = blockId;
     this.blockBothHaveUpdateTime = System.currentTimeMillis();
   }
-
-  @Getter
-  private volatile long blockBothHaveUpdateTime = System.currentTimeMillis();
-
-  @Setter
-  @Getter
-  private BlockId lastSyncBlockId;
-
-  @Setter
-  @Getter
-  private volatile long remainNum;
-
-  @Getter
-  private Cache<Sha256Hash, Long> syncBlockIdCache = CacheBuilder.newBuilder()
-      .maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).recordStats().build();
-
-  @Setter
-  @Getter
-  private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
-
-  @Setter
-  @Getter
-  private Map<BlockId, Long> syncBlockRequested = new ConcurrentHashMap<>();
-
-  @Setter
-  @Getter
-  private Pair<Deque<BlockId>, Long> syncChainRequested = null;
-
-  @Setter
-  @Getter
-  private Set<BlockId> syncBlockInProcess = new HashSet<>();
-
-  @Setter
-  @Getter
-  private volatile boolean needSyncFromPeer;
-
-  @Setter
-  @Getter
-  private volatile boolean needSyncFromUs;
 
   public boolean isIdle() {
     return advInvRequest.isEmpty() && syncBlockRequested.isEmpty() && syncChainRequested == null;

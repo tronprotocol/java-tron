@@ -630,12 +630,6 @@ public enum OpCode {
    */
   SUICIDE(0xff, 1, 0, OpCode.Tier.ZeroTier);
 
-  private final byte opcode;
-  private final int require;
-  private final Tier tier;
-  private final int ret;
-  private final EnumSet<CallFlags> callFlags;
-
   private static final OpCode[] intToTypeMap = new OpCode[256];
   private static final Map<String, Byte> stringToByteMap = new HashMap<>();
 
@@ -645,6 +639,12 @@ public enum OpCode {
       stringToByteMap.put(type.name(), type.opcode);
     }
   }
+
+  private final byte opcode;
+  private final int require;
+  private final Tier tier;
+  private final int ret;
+  private final EnumSet<CallFlags> callFlags;
 
   //require = required args
   //return = required return
@@ -657,6 +657,17 @@ public enum OpCode {
         EnumSet.copyOf(Arrays.asList(callFlags));
   }
 
+  public static boolean contains(String code) {
+    return stringToByteMap.containsKey(code.trim());
+  }
+
+  public static byte byteVal(String code) {
+    return stringToByteMap.get(code);
+  }
+
+  public static OpCode code(byte code) {
+    return intToTypeMap[code & 0xFF];
+  }
 
   public byte val() {
     return opcode;
@@ -677,18 +688,6 @@ public enum OpCode {
 
   public int asInt() {
     return opcode;
-  }
-
-  public static boolean contains(String code) {
-    return stringToByteMap.containsKey(code.trim());
-  }
-
-  public static byte byteVal(String code) {
-    return stringToByteMap.get(code);
-  }
-
-  public static OpCode code(byte code) {
-    return intToTypeMap[code & 0xFF];
   }
 
   private EnumSet<CallFlags> getCallFlags() {

@@ -10,13 +10,13 @@ import org.testng.TestListenerAdapter;
 
 public class DailyBuildReport extends TestListenerAdapter {
 
+  StringBuilder passedDescriptionList = new StringBuilder("");
+  StringBuilder failedDescriptionList = new StringBuilder("");
+  StringBuilder skippedDescriptionList = new StringBuilder("");
   private Integer passedNum = 0;
   private Integer failedNum = 0;
   private Integer skippedNum = 0;
   private String reportPath;
-  StringBuilder passedDescriptionList = new StringBuilder("");
-  StringBuilder failedDescriptionList = new StringBuilder("");
-  StringBuilder skippedDescriptionList = new StringBuilder("");
 
   @Override
   public void onStart(ITestContext context) {

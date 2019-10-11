@@ -44,15 +44,6 @@ public class DataWord implements Comparable<DataWord> {
   // TODO not safe
   public static final DataWord ZERO = new DataWord(
       new byte[WORD_SIZE]);      // don't push it in to the stack
-
-  public static DataWord ONE() {
-    return DataWord.of((byte) 1);
-  }
-
-  public static DataWord ZERO() {
-    return new DataWord(new byte[32]);
-  }
-
   private byte[] data = new byte[32];
 
   public DataWord() {
@@ -71,13 +62,6 @@ public class DataWord implements Comparable<DataWord> {
     final byte[] array = buffer.array();
     System.arraycopy(array, 0, targetByteBuffer.array(), WORD_SIZE - array.length, array.length);
     this.data = targetByteBuffer.array();
-  }
-
-  public static DataWord of(byte num) {
-    byte[] bb = new byte[WORD_SIZE];
-    bb[31] = num;
-    return new DataWord(bb);
-
   }
 
   @JsonCreator
@@ -99,6 +83,73 @@ public class DataWord implements Comparable<DataWord> {
     } else {
       throw new RuntimeException("Data word can't exceed 32 bytes: " + ByteUtil.toHexString(data));
     }
+  }
+
+  public static DataWord ONE() {
+    return DataWord.of((byte) 1);
+  }
+
+  public static DataWord ZERO() {
+    return new DataWord(new byte[32]);
+  }
+
+  public static DataWord of(byte num) {
+    byte[] bb = new byte[WORD_SIZE];
+    bb[31] = num;
+    return new DataWord(bb);
+
+  }
+
+  public static String bigIntValue(byte[] data) {
+    return new BigInteger(data).toString();
+  }
+
+  public static boolean isZero(byte[] data) {
+    for (byte tmp : data) {
+      if (tmp != 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static String shortHex(byte[] data) {
+    byte[] bytes = ByteUtil.stripLeadingZeroes(data);
+    String hexValue = Hex.toHexString(bytes).toUpperCase();
+    return "0x" + hexValue.replaceFirst("^0+(?!$)", "");
+  }
+
+  public static long sizeInWords(long bytesSize) {
+    return bytesSize == 0 ? 0 : (bytesSize - 1) / WORD_SIZE + 1;
+  }
+
+  public static DataWord[] parseArray(byte[] data) {
+    int len = data.length / WORD_SIZE;
+    DataWord[] words = new DataWord[len];
+    for (int i = 0; i < len; i++) {
+      byte[] bytes = Arrays.copyOfRange(data, i * WORD_SIZE, (i + 1) * WORD_SIZE);
+      words[i] = new DataWord(bytes);
+    }
+    return words;
+  }
+
+  public static boolean equalAddressByteArray(byte[] arr1, byte[] arr2) {
+    if (arr1 == arr2) {
+      return true;
+    }
+    if (arr1 == null || arr2 == null || arr1.length < 20 || arr2.length < 20) {
+      return false;
+    }
+
+    int i = arr1.length - 20;
+    int j = arr2.length - 20;
+
+    for (; i < arr1.length && j < arr2.length; i++, j++) {
+      if (arr1[i] != arr2[j]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public byte[] getData() {
@@ -192,21 +243,8 @@ public class DataWord implements Comparable<DataWord> {
     return new BigInteger(data);
   }
 
-  public static String bigIntValue(byte[] data) {
-    return new BigInteger(data).toString();
-  }
-
   public String bigIntValue() {
     return new BigInteger(data).toString();
-  }
-
-  public static boolean isZero(byte[] data) {
-    for (byte tmp : data) {
-      if (tmp != 0) {
-        return false;
-      }
-    }
-    return true;
   }
 
   public boolean isZero() {
@@ -395,12 +433,6 @@ public class DataWord implements Comparable<DataWord> {
     return Hex.toHexString(pref).substring(0, 6);
   }
 
-  public static String shortHex(byte[] data) {
-    byte[] bytes = ByteUtil.stripLeadingZeroes(data);
-    String hexValue = Hex.toHexString(bytes).toUpperCase();
-    return "0x" + hexValue.replaceFirst("^0+(?!$)", "");
-  }
-
   public String shortHex() {
     String hexValue = Hex.toHexString(getNoLeadZeroesData()).toUpperCase();
     return "0x" + hexValue.replaceFirst("^0+(?!$)", "");
@@ -409,7 +441,6 @@ public class DataWord implements Comparable<DataWord> {
   public DataWord clone() {
     return new DataWord(Arrays.clone(data));
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -519,38 +550,5 @@ public class DataWord implements Comparable<DataWord> {
 
     BigInteger result = sValue().shiftRight(arg.intValueSafe());
     return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
-  }
-
-  public static long sizeInWords(long bytesSize) {
-    return bytesSize == 0 ? 0 : (bytesSize - 1) / WORD_SIZE + 1;
-  }
-
-  public static DataWord[] parseArray(byte[] data) {
-    int len = data.length / WORD_SIZE;
-    DataWord[] words = new DataWord[len];
-    for (int i = 0; i < len; i++) {
-      byte[] bytes = Arrays.copyOfRange(data, i * WORD_SIZE, (i + 1) * WORD_SIZE);
-      words[i] = new DataWord(bytes);
-    }
-    return words;
-  }
-
-  public static boolean equalAddressByteArray(byte[] arr1, byte[] arr2) {
-    if (arr1 == arr2) {
-      return true;
-    }
-    if (arr1 == null || arr2 == null || arr1.length < 20 || arr2.length < 20) {
-      return false;
-    }
-
-    int i = arr1.length - 20;
-    int j = arr2.length - 20;
-
-    for (; i < arr1.length && j < arr2.length; i++, j++) {
-      if (arr1[i] != arr2[j]) {
-        return false;
-      }
-    }
-    return true;
   }
 }

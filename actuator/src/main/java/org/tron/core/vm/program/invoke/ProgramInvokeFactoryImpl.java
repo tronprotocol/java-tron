@@ -48,9 +48,10 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
   // Invocation by the wire tx
   @Override
   public ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
-                                           InternalTransaction.ExecutorType executorType, Transaction tx, long tokenValue, long tokenId, Block block,
-                                           Repository deposit, long vmStartInUs,
-                                           long vmShouldEndInUs, long energyLimit) throws ContractValidateException {
+      InternalTransaction.ExecutorType executorType, Transaction tx, long tokenValue, long tokenId,
+      Block block,
+      Repository deposit, long vmStartInUs,
+      long vmShouldEndInUs, long energyLimit) throws ContractValidateException {
     byte[] contractAddress;
     byte[] ownerAddress;
     long balance;
@@ -74,7 +75,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
           if (null != block) {
             lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
             coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress()
-                    .toByteArray();
+                .toByteArray();
             timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp() / 1000;
             number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
           }
@@ -84,12 +85,12 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       }
 
       return new ProgramInvokeImpl(contractAddress, ownerAddress, ownerAddress, balance, callValue,
-              tokenValue, tokenId, data, lastHash, coinbase, timestamp, number, deposit, vmStartInUs,
-              vmShouldEndInUs, energyLimit);
+          tokenValue, tokenId, data, lastHash, coinbase, timestamp, number, deposit, vmStartInUs,
+          vmShouldEndInUs, energyLimit);
 
     } else if (trxType == TRX_CONTRACT_CALL_TYPE) {
       TriggerSmartContract contract = ContractCapsule
-              .getTriggerContractFromTransaction(tx);
+          .getTriggerContractFromTransaction(tx);
       /***         ADDRESS op       ***/
       // YP: Get address of currently executing account.
       byte[] address = contract.getContractAddress().toByteArray();
@@ -123,7 +124,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
             lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
             /***   COINBASE  op ***/
             coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress()
-                    .toByteArray();
+                .toByteArray();
             /*** TIMESTAMP  op  ***/
             timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp() / 1000;
             /*** NUMBER  op  ***/
@@ -135,9 +136,9 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
       }
 
       return new ProgramInvokeImpl(address, origin, caller, balance, callValue, tokenValue, tokenId,
-              data,
-              lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs,
-              energyLimit);
+          data,
+          lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs,
+          energyLimit);
     }
     throw new ContractValidateException("Unknown contract type");
   }
@@ -147,10 +148,10 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
    */
   @Override
   public ProgramInvoke createProgramInvoke(Program program, DataWord toAddress,
-                                           DataWord callerAddress,
-                                           DataWord inValue, DataWord tokenValue, DataWord tokenId, long balanceInt, byte[] dataIn,
-                                           Repository deposit, boolean isStaticCall, boolean byTestingSuite, long vmStartInUs,
-                                           long vmShouldEndInUs, long energyLimit) {
+      DataWord callerAddress,
+      DataWord inValue, DataWord tokenValue, DataWord tokenId, long balanceInt, byte[] dataIn,
+      Repository deposit, boolean isStaticCall, boolean byTestingSuite, long vmStartInUs,
+      long vmShouldEndInUs, long energyLimit) {
 
     DataWord address = toAddress;
     DataWord origin = program.getOriginAddress();
@@ -166,9 +167,9 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
     DataWord difficulty = program.getDifficulty();
 
     return new ProgramInvokeImpl(address, origin, caller, balance, callValue, tokenValue, tokenId,
-            data, lastHash, coinbase, timestamp, number, difficulty,
-            deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite, vmStartInUs,
-            vmShouldEndInUs, energyLimit);
+        data, lastHash, coinbase, timestamp, number, difficulty,
+        deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite, vmStartInUs,
+        vmShouldEndInUs, energyLimit);
   }
 
 

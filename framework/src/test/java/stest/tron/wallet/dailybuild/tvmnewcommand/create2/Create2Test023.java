@@ -18,8 +18,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -203,11 +203,9 @@ public class Create2Test023 {
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
 
-
     TransactionInfo transactionInfo = infoById.get();
     logger.info("EnergyUsageTotal: " + transactionInfo.getReceipt().getEnergyUsageTotal());
     logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
-
 
     byte[] a = infoById.get().getContractResult(0).toByteArray();
     byte[] b = subByte(a, 11, 1);
@@ -228,7 +226,6 @@ public class Create2Test023 {
     Assert.assertEquals(realResult, "00");
     Assert.assertNotEquals(realResult, "41");
 
-
     String addressFinal = Base58.encode58Check(ByteArray.fromHexString(exceptedResult));
     logger.info("B Address : " + addressFinal);
 
@@ -240,10 +237,9 @@ public class Create2Test023 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
-    Assert.assertEquals(infoById.get().getResultValue(),0);
-    Assert.assertEquals(ByteArray.toLong(infoById.get().getContractResult(0).toByteArray()),1);
-    Assert.assertEquals("SUCESS",infoById.get().getResult().toString());
-
+    Assert.assertEquals(infoById.get().getResultValue(), 0);
+    Assert.assertEquals(ByteArray.toLong(infoById.get().getContractResult(0).toByteArray()), 1);
+    Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
 
     triggerTxid = PublicMethed.triggerContract(factoryContractAddress,
         "kill()", "#", false, callValue,
@@ -255,11 +251,9 @@ public class Create2Test023 {
     String note = ByteArray
         .toStr(infoById.get().getInternalTransactions(0).getNote().toByteArray());
 
-    Assert.assertEquals(infoById.get().getResultValue(),0);
-    Assert.assertEquals("SUCESS",infoById.get().getResult().toString());
+    Assert.assertEquals(infoById.get().getResultValue(), 0);
+    Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
     Assert.assertEquals("suicide", note);
-
-
 
     triggerTxid = PublicMethed.triggerContract(ByteArray.fromHexString(exceptedResult),
         "test()", "#", false, callValue,
@@ -268,9 +262,9 @@ public class Create2Test023 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
-    Assert.assertEquals(infoById.get().getResultValue(),0);
-    Assert.assertEquals("SUCESS",infoById.get().getResult().toString());
-    Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(infoById.get().getResultValue(), 0);
+    Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
+    Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
   }
 

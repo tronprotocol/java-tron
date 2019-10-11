@@ -40,6 +40,7 @@ import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
 @Slf4j
 public class WalletTestZenTokenStress {
 
+  private static ByteString assetAccountId = null;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -52,8 +53,6 @@ public class WalletTestZenTokenStress {
   String memo;
   Note sendNote;
   Note receiverNote;
-  private static ByteString assetAccountId = null;
-
   BytesMessage ak;
   BytesMessage nk;
   BytesMessage sk;
@@ -69,9 +68,9 @@ public class WalletTestZenTokenStress {
   Optional<ShieldAddressInfo> receiverAddressInfo1;
   Optional<ShieldAddressInfo> receiverAddressInfo2;
   Optional<ShieldAddressInfo> receiverAddressInfo3;
-
-
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private ManagedChannel channelSolidity = null;
@@ -94,10 +93,6 @@ public class WalletTestZenTokenStress {
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 1 * zenTokenFee + 1;
   private Long sendTokenAmount = 1 * zenTokenFee;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   /**
    * constructor.

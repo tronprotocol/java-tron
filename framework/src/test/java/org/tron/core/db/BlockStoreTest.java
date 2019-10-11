@@ -15,7 +15,6 @@ import org.tron.core.config.args.Args;
 public class BlockStoreTest {
 
   private static final String dbPath = "output-blockStore-test";
-  BlockStore blockStore;
   private static TronApplicationContext context;
 
   static {
@@ -23,6 +22,8 @@ public class BlockStoreTest {
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
+
+  BlockStore blockStore;
 
   @Before
   public void init() {

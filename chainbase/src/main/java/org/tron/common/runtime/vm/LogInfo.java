@@ -42,6 +42,16 @@ public class LogInfo {
     this.data = (data != null) ? data : new byte[]{};
   }
 
+  public static Log buildLog(LogInfo logInfo) {
+    List<ByteString> topics = Lists.newArrayList();
+    logInfo.getTopics().forEach(topic -> {
+      topics.add(ByteString.copyFrom(topic.getData()));
+    });
+    ByteString address = ByteString.copyFrom(logInfo.getAddress());
+    ByteString data = ByteString.copyFrom(logInfo.getData());
+    return Log.newBuilder().setAddress(address).addAllTopics(topics).setData(data).build();
+  }
+
   public byte[] getAddress() {
     return address;
   }
@@ -99,16 +109,6 @@ public class LogInfo {
         + ", topics=" + topicsStr
         + ", data=" + Hex.toHexString(data)
         + '}';
-  }
-
-  public static Log buildLog(LogInfo logInfo) {
-    List<ByteString> topics = Lists.newArrayList();
-    logInfo.getTopics().forEach(topic -> {
-      topics.add(ByteString.copyFrom(topic.getData()));
-    });
-    ByteString address = ByteString.copyFrom(logInfo.getAddress());
-    ByteString data = ByteString.copyFrom(logInfo.getData());
-    return Log.newBuilder().setAddress(address).addAllTopics(topics).setData(data).build();
   }
 
 }

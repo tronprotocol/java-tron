@@ -29,46 +29,38 @@ import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 @Slf4j
 public class MultiSign07 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long TotalSupply = 1000L;
+  private static String tokenName = "testAssetIssue_" + Long.toString(now);
+  private static ByteString assetAccountId = null;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
-
   private long multiSignFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.multiSignFee");
   private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.updateAccountPermissionFee");
-
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] ownerAddress = ecKey1.getAddress();
   private String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
   private ECKey ecKey2 = new ECKey(Utils.getRandom());
   private byte[] normalAddr001 = ecKey2.getAddress();
   private String normalKey001 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
   private ECKey tmpEcKey01 = new ECKey(Utils.getRandom());
   private byte[] tmpAddr01 = tmpEcKey01.getAddress();
   private String tmpKey01 = ByteArray.toHexString(tmpEcKey01.getPrivKeyBytes());
-
   private ECKey tmpEcKey02 = new ECKey(Utils.getRandom());
   private byte[] tmpAddr02 = tmpEcKey02.getAddress();
   private String tmpKey02 = ByteArray.toHexString(tmpEcKey02.getPrivKeyBytes());
-
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
-  private static final long now = System.currentTimeMillis();
-  private static String tokenName = "testAssetIssue_" + Long.toString(now);
-  private static ByteString assetAccountId = null;
-  private static final long TotalSupply = 1000L;
   private byte[] transferTokenContractAddress = null;
 
   private String description = Configuration.getByPath("testng.conf")

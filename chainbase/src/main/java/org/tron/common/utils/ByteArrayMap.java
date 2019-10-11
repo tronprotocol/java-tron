@@ -29,6 +29,7 @@ import org.tron.core.db.ByteArrayWrapper;
 
 
 public class ByteArrayMap<V> implements Map<byte[], V> {
+
   private static final String RUNTIME_EXCEPTION_MSG = "Not implemented";
 
   private final Map<ByteArrayWrapper, V> delegate;

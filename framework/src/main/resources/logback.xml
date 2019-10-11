@@ -14,8 +14,8 @@
   <!--</filter>-->
   <!--</appender>-->
 
-  <appender name="FILE"
-    class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <appender class="ch.qos.logback.core.rolling.RollingFileAppender"
+    name="FILE">
     <file>./logs/tron.log</file>
     <rollingPolicy
       class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
@@ -34,7 +34,7 @@
     </filter>
   </appender>
 
-  <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+  <appender class="ch.qos.logback.classic.AsyncAppender" name="ASYNC">
     <!-- Don't discard INFO, DEBUG, TRACE events in case of queue is 80% full -->
     <discardingThreshold>0</discardingThreshold>
     <!-- Default is 256 -->
@@ -50,18 +50,18 @@
     <appender-ref ref="ASYNC"/>
   </root>
 
-  <logger name="app" level="INFO"/>
-  <logger name="net" level="INFO"/>
-  <logger name="backup" level="INFO"/>
-  <logger name="discover" level="INFO"/>
-  <logger name="crypto" level="INFO"/>
-  <logger name="utils" level="INFO"/>
-  <logger name="actuator" level="INFO"/>
-  <logger name="API" level="INFO"/>
-  <logger name="witness" level="INFO"/>
-  <logger name="DB" level="INFO"/>
-  <logger name="capsule" level="INFO"/>
-  <logger name="VM" level="INFO"/>
+  <logger level="INFO" name="app"/>
+  <logger level="INFO" name="net"/>
+  <logger level="INFO" name="backup"/>
+  <logger level="INFO" name="discover"/>
+  <logger level="INFO" name="crypto"/>
+  <logger level="INFO" name="utils"/>
+  <logger level="INFO" name="actuator"/>
+  <logger level="INFO" name="API"/>
+  <logger level="INFO" name="witness"/>
+  <logger level="INFO" name="DB"/>
+  <logger level="INFO" name="capsule"/>
+  <logger level="INFO" name="VM"/>
 
 </configuration>
 

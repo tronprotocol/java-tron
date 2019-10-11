@@ -171,72 +171,6 @@ public class Storage {
         config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) : DEFAULT_TRANSACTIONHISTORY_SWITCH;
   }
 
-  /**
-   * Set propertyMap of Storage object from Config
-   *
-   * @param config Config object from "config.conf" file
-   */
-  public void setPropertyMapFromConfig(final Config config) {
-    if (config.hasPath(PROPERTIES_CONFIG_KEY)) {
-      propertyMap = config.getObjectList(PROPERTIES_CONFIG_KEY).stream()
-          .map(Storage::createProperty)
-          .collect(Collectors.toMap(Property::getName, p -> p));
-    }
-  }
-
-  /**
-   * Get storage path by name of database
-   *
-   * @param dbName name of database
-   * @return path of that database
-   */
-  public String getPathByDbName(String dbName) {
-    if (hasProperty(dbName)) {
-      return getProperty(dbName).getPath();
-    }
-    return null;
-  }
-
-  /**
-   * Get database options by name of database
-   *
-   * @param dbName name of database
-   * @return options of that database
-   */
-  public Options getOptionsByDbName(String dbName) {
-    if (hasProperty(dbName)) {
-      return getProperty(dbName).getDbOptions();
-    }
-    return createDefaultDbOptions();
-  }
-
-  /**
-   * Only for unit test on db
-   */
-  public void deleteAllStoragePaths() {
-    if (propertyMap == null) {
-      return;
-    }
-
-    for (Property property : propertyMap.values()) {
-      String path = property.getPath();
-      if (path != null) {
-        FileUtil.recursiveDelete(path);
-      }
-    }
-  }
-
-  private boolean hasProperty(String dbName) {
-    if (propertyMap != null) {
-      return propertyMap.containsKey(dbName);
-    }
-    return false;
-  }
-
-  private Property getProperty(String dbName) {
-    return propertyMap.get(dbName);
-  }
-
   private static Property createProperty(final ConfigObject conf) {
 
     Property property = new Property();
@@ -375,6 +309,72 @@ public class Storage {
     dbOptions.maxOpenFiles(DEFAULT_MAX_OPEN_FILES);
 
     return dbOptions;
+  }
+
+  /**
+   * Set propertyMap of Storage object from Config
+   *
+   * @param config Config object from "config.conf" file
+   */
+  public void setPropertyMapFromConfig(final Config config) {
+    if (config.hasPath(PROPERTIES_CONFIG_KEY)) {
+      propertyMap = config.getObjectList(PROPERTIES_CONFIG_KEY).stream()
+          .map(Storage::createProperty)
+          .collect(Collectors.toMap(Property::getName, p -> p));
+    }
+  }
+
+  /**
+   * Get storage path by name of database
+   *
+   * @param dbName name of database
+   * @return path of that database
+   */
+  public String getPathByDbName(String dbName) {
+    if (hasProperty(dbName)) {
+      return getProperty(dbName).getPath();
+    }
+    return null;
+  }
+
+  /**
+   * Get database options by name of database
+   *
+   * @param dbName name of database
+   * @return options of that database
+   */
+  public Options getOptionsByDbName(String dbName) {
+    if (hasProperty(dbName)) {
+      return getProperty(dbName).getDbOptions();
+    }
+    return createDefaultDbOptions();
+  }
+
+  /**
+   * Only for unit test on db
+   */
+  public void deleteAllStoragePaths() {
+    if (propertyMap == null) {
+      return;
+    }
+
+    for (Property property : propertyMap.values()) {
+      String path = property.getPath();
+      if (path != null) {
+        FileUtil.recursiveDelete(path);
+      }
+    }
+  }
+
+  private boolean hasProperty(String dbName) {
+    if (propertyMap != null) {
+      return propertyMap.containsKey(dbName);
+    }
+    return false;
+  }
+
+  private Property getProperty(String dbName) {
+    return propertyMap.get(dbName);
   }
 
 }

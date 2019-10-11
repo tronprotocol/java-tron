@@ -6,15 +6,15 @@ import org.tron.common.utils.Sha256Hash;
 
 public class Base58 {
 
-  private static final int BASE58CHECK_ADDRESS_SIZE = 35;
-  private static final int ADDRESS_SIZE = 21;
-  private static final byte ADD_PRE_FIX_BYTE = (byte) 0xa0;
   /**
    * constructor.
    */
 
   public static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
       .toCharArray();
+  private static final int BASE58CHECK_ADDRESS_SIZE = 35;
+  private static final int ADDRESS_SIZE = 21;
+  private static final byte ADD_PRE_FIX_BYTE = (byte) 0xa0;
   private static final int[] INDEXES = new int[128];
 
   static {

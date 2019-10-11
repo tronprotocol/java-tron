@@ -162,35 +162,86 @@ public class PrecompiledContracts {
     return res;
   }
 
+  private static byte[] recoverAddrBySign(byte[] sign, byte[] hash) {
+    byte v;
+    byte[] r;
+    byte[] s;
+    byte[] out = null;
+    if (ArrayUtils.isEmpty(sign) || sign.length < 65) {
+      return new byte[0];
+    }
+    try {
+      r = Arrays.copyOfRange(sign, 0, 32);
+      s = Arrays.copyOfRange(sign, 32, 64);
+      v = sign[64];
+      if (v < 27) {
+        v += 27;
+      }
+      ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
+      if (signature.validateComponents()) {
+        out = ECKey.signatureToAddress(hash, signature);
+      }
+    } catch (Throwable any) {
+      logger.info("ECRecover error", any.getMessage());
+    }
+    return out;
+  }
+
+  private static byte[][] extractBytes32Array(DataWord[] words, int offset) {
+    int len = words[offset].intValueSafe();
+    byte[][] bytes32Array = new byte[len][];
+    for (int i = 0; i < len; i++) {
+      bytes32Array[i] = words[offset + i + 1].getData();
+    }
+    return bytes32Array;
+  }
+
+  private static byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
+    if (offset > words.length - 1) {
+      return new byte[0][];
+    }
+    int len = words[offset].intValueSafe();
+    byte[][] bytesArray = new byte[len][];
+    for (int i = 0; i < len; i++) {
+      int bytesOffset = words[offset + i + 1].intValueSafe() / WORD_SIZE;
+      int bytesLen = words[offset + bytesOffset + 1].intValueSafe();
+      bytesArray[i] = extractBytes(data, (bytesOffset + offset + 2) * WORD_SIZE,
+          bytesLen);
+    }
+    return bytesArray;
+  }
+
+  private static byte[] extractBytes(byte[] data, int offset, int len) {
+    return Arrays.copyOfRange(data, offset, offset + len);
+  }
+
   public static abstract class PrecompiledContract {
 
     protected static final byte[] DATA_FALSE = new byte[WORD_SIZE];
-
+    private byte[] callerAddress;
+    private Repository deposit;
+    private ProgramResult result;
+    @Setter
+    @Getter
+    private boolean isConstantCall;
+    @Getter
+    @Setter
+    private long vmShouldEndInUs;
 
     public abstract long getEnergyForData(byte[] data);
 
     public abstract Pair<Boolean, byte[]> execute(byte[] data);
 
-    private byte[] callerAddress;
-
-    public void setCallerAddress(byte[] callerAddress) {
-      this.callerAddress = callerAddress.clone();
-    }
-
     public void setRepository(Repository deposit) {
       this.deposit = deposit;
     }
 
-    public void setResult(ProgramResult result) {
-      this.result = result;
-    }
-
-    private Repository deposit;
-
-    private ProgramResult result;
-
     public byte[] getCallerAddress() {
       return callerAddress.clone();
+    }
+
+    public void setCallerAddress(byte[] callerAddress) {
+      this.callerAddress = callerAddress.clone();
     }
 
     public Repository getDeposit() {
@@ -201,14 +252,9 @@ public class PrecompiledContracts {
       return result;
     }
 
-    @Setter
-    @Getter
-    private boolean isConstantCall;
-
-    @Getter
-    @Setter
-    private long vmShouldEndInUs;
-
+    public void setResult(ProgramResult result) {
+      this.result = result;
+    }
 
     protected long getCPUTimeLeftInNanoSecond() {
       long left = getVmShouldEndInUs() * VMConstant.ONE_THOUSAND - System.nanoTime();
@@ -273,7 +319,6 @@ public class PrecompiledContracts {
     }
   }
 
-
   public static class Ripempd160 extends PrecompiledContract {
 
 
@@ -301,8 +346,16 @@ public class PrecompiledContracts {
     }
   }
 
-
   public static class ECRecover extends PrecompiledContract {
+
+    private static boolean validateV(byte[] v) {
+      for (int i = 0; i < v.length - 1; i++) {
+        if (v[i] != 0) {
+          return false;
+        }
+      }
+      return true;
+    }
 
     @Override
     public long getEnergyForData(byte[] data) {
@@ -339,15 +392,6 @@ public class PrecompiledContracts {
       } else {
         return Pair.of(true, out.getData());
       }
-    }
-
-    private static boolean validateV(byte[] v) {
-      for (int i = 0; i < v.length - 1; i++) {
-        if (v[i] != 0) {
-          return false;
-        }
-      }
-      return true;
     }
   }
 
@@ -647,7 +691,6 @@ public class PrecompiledContracts {
     }
   }
 
-
   public static class ValidateMultiSign extends PrecompiledContract {
 
     private static final int ENGERYPERSIGN = 1500;
@@ -713,7 +756,6 @@ public class PrecompiledContracts {
     }
   }
 
-
   public static class BatchValidateSign extends PrecompiledContract {
 
     private static final ExecutorService workers;
@@ -722,31 +764,6 @@ public class PrecompiledContracts {
 
     static {
       workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
-    }
-
-    @AllArgsConstructor
-    private static class RecoverAddrTask implements Callable<RecoverAddrResult> {
-
-      private CountDownLatch countDownLatch;
-      private byte[] hash;
-      private byte[] signature;
-      private int nonce;
-
-      @Override
-      public RecoverAddrResult call() {
-        try {
-          return new RecoverAddrResult(recoverAddrBySign(this.signature, this.hash), nonce);
-        } finally {
-          countDownLatch.countDown();
-        }
-      }
-    }
-
-    @AllArgsConstructor
-    private static class RecoverAddrResult {
-
-      private byte[] addr;
-      private int nonce;
     }
 
     @Override
@@ -815,60 +832,32 @@ public class PrecompiledContracts {
       return Pair.of(true, res);
     }
 
+    @AllArgsConstructor
+    private static class RecoverAddrTask implements Callable<RecoverAddrResult> {
 
-  }
+      private CountDownLatch countDownLatch;
+      private byte[] hash;
+      private byte[] signature;
+      private int nonce;
 
-  private static byte[] recoverAddrBySign(byte[] sign, byte[] hash) {
-    byte v;
-    byte[] r;
-    byte[] s;
-    byte[] out = null;
-    if (ArrayUtils.isEmpty(sign) || sign.length < 65) {
-      return new byte[0];
-    }
-    try {
-      r = Arrays.copyOfRange(sign, 0, 32);
-      s = Arrays.copyOfRange(sign, 32, 64);
-      v = sign[64];
-      if (v < 27) {
-        v += 27;
+      @Override
+      public RecoverAddrResult call() {
+        try {
+          return new RecoverAddrResult(recoverAddrBySign(this.signature, this.hash), nonce);
+        } finally {
+          countDownLatch.countDown();
+        }
       }
-      ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
-      if (signature.validateComponents()) {
-        out = ECKey.signatureToAddress(hash, signature);
-      }
-    } catch (Throwable any) {
-      logger.info("ECRecover error", any.getMessage());
     }
-    return out;
-  }
 
-  private static byte[][] extractBytes32Array(DataWord[] words, int offset) {
-    int len = words[offset].intValueSafe();
-    byte[][] bytes32Array = new byte[len][];
-    for (int i = 0; i < len; i++) {
-      bytes32Array[i] = words[offset + i + 1].getData();
-    }
-    return bytes32Array;
-  }
+    @AllArgsConstructor
+    private static class RecoverAddrResult {
 
-  private static byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
-    if (offset > words.length - 1) {
-      return new byte[0][];
+      private byte[] addr;
+      private int nonce;
     }
-    int len = words[offset].intValueSafe();
-    byte[][] bytesArray = new byte[len][];
-    for (int i = 0; i < len; i++) {
-      int bytesOffset = words[offset + i + 1].intValueSafe() / WORD_SIZE;
-      int bytesLen = words[offset + bytesOffset + 1].intValueSafe();
-      bytesArray[i] = extractBytes(data, (bytesOffset + offset + 2) * WORD_SIZE,
-          bytesLen);
-    }
-    return bytesArray;
-  }
 
-  private static byte[] extractBytes(byte[] data, int offset, int len) {
-    return Arrays.copyOfRange(data, offset, offset + len);
+
   }
 
 }

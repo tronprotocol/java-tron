@@ -9,27 +9,22 @@ import org.tron.common.utils.FileUtil;
 @Slf4j
 public class DbBackupConfig {
 
+  private static volatile DbBackupConfig instance;
   @Getter
   @Setter
   private String propPath;
-
   @Getter
   @Setter
   private String bak1path;
-
   @Getter
   @Setter
   private String bak2path;
-
   @Setter
   @Getter
   private int frequency;
-
   @Getter
   @Setter
   private boolean enable = false;
-
-  private static volatile DbBackupConfig instance;
 
   // singleton
   public static DbBackupConfig getInstance() {

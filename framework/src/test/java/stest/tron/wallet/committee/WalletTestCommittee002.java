@@ -3,7 +3,6 @@ package stest.tron.wallet.committee;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -11,8 +10,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI.EmptyMessage;
-import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.core.Wallet;
@@ -24,6 +21,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestCommittee002 {
 
+  private static final long now = System.currentTimeMillis();
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -44,23 +42,16 @@ public class WalletTestCommittee002 {
   //Witness 47.93.184.2
   private final String witnessKey005 = Configuration.getByPath("testng.conf")
       .getString("witness.key5");
-
-
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
   private final byte[] witness001Address = PublicMethed.getFinalAddress(witnessKey001);
   private final byte[] witness002Address = PublicMethed.getFinalAddress(witnessKey002);
   private final byte[] witness003Address = PublicMethed.getFinalAddress(witnessKey003);
   private final byte[] witness004Address = PublicMethed.getFinalAddress(witnessKey004);
   private final byte[] witness005Address = PublicMethed.getFinalAddress(witnessKey005);
-
-
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
-  private static final long now = System.currentTimeMillis();
-
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")

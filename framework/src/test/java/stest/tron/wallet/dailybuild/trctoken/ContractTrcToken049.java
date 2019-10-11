@@ -30,10 +30,20 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class ContractTrcToken049 {
 
 
+  private static final long TotalSupply = 10000000L;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
+  String description = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetDescription");
+  String url = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetUrl");
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] dev001Address = ecKey1.getAddress();
+  String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] user001Address = ecKey2.getAddress();
+  String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -45,20 +55,9 @@ public class ContractTrcToken049 {
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
-  private static final long TotalSupply = 10000000L;
-
-  String description = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetDescription");
-  String url = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetUrl");
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] dev001Address = ecKey1.getAddress();
-  String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] user001Address = ecKey2.getAddress();
-  String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  private static int randomInt(int minInt, int maxInt) {
+    return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -78,10 +77,6 @@ public class ContractTrcToken049 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-  }
-
-  private static int randomInt(int minInt, int maxInt) {
-    return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
 
   /**

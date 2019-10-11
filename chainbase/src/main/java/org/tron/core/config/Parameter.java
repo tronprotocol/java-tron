@@ -1,7 +1,5 @@
 package org.tron.core.config;
 
-import lombok.Getter;
-
 public class Parameter {
 
   public class ChainConstant {

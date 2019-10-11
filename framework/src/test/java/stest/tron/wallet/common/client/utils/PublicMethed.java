@@ -85,7 +85,6 @@ import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -129,16 +128,16 @@ import stest.tron.wallet.common.client.WalletClient;
 
 public class PublicMethed {
 
-  Wallet wallet = new Wallet();
   //Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   private static final String FilePath = "Wallet";
-  private static List<WalletFile> walletFile = new ArrayList<>();
   private static final Logger logger = LoggerFactory.getLogger("TestLogger");
-  private static ShieldWrapper shieldWrapper = new ShieldWrapper();
   //private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   //private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   public static Map<Long, ShieldNoteInfo> utxoMapNote = new ConcurrentHashMap();
   public static List<ShieldNoteInfo> spendUtxoList = new ArrayList<>();
+  private static List<WalletFile> walletFile = new ArrayList<>();
+  private static ShieldWrapper shieldWrapper = new ShieldWrapper();
+  Wallet wallet = new Wallet();
 
   /**
    * constructor.
@@ -5840,6 +5839,7 @@ public class PublicMethed {
       }
     }
   }
+
   /**
    * constructor.
    */
@@ -5922,7 +5922,8 @@ public class PublicMethed {
    * constructor.
    */
 
-  public static Transaction sendcoinForTransaction(byte[] to, long amount, byte[] owner, String priKey,
+  public static Transaction sendcoinForTransaction(byte[] to, long amount, byte[] owner,
+      String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     //String priKey = testKey002;
@@ -5934,7 +5935,6 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-
 
     TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);

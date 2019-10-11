@@ -16,12 +16,12 @@ import org.tron.core.exception.BadItemException;
 
 public class TransactionHistoryTest {
 
+  private static final byte[] transactionId = TransactionStoreTest.randomBytes(32);
   private static String dbPath = "output_TransactionHistoryStore_test";
   private static String dbDirectory = "db_TransactionHistoryStore_test";
   private static String indexDirectory = "index_TransactionHistoryStore_test";
   private static TronApplicationContext context;
   private static TransactionHistoryStore transactionHistoryStore;
-  private static final byte[] transactionId = TransactionStoreTest.randomBytes(32);
 
   static {
     Args.setParam(

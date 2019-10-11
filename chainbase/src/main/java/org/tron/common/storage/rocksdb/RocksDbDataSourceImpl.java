@@ -26,7 +26,6 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.DbSourceInter;
@@ -39,13 +38,11 @@ import org.tron.core.db2.common.Instance;
 public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>>, Instance<RocksDbDataSourceImpl> {
 
+  ReadOptions readOpts;
   private String dataBaseName;
   private RocksDB database;
   private boolean alive;
   private String parentPath;
-  ReadOptions readOpts;
-
-
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings) {

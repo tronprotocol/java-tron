@@ -19,8 +19,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -32,7 +32,20 @@ public class ContractScenario011 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
+  String kittyCoreAddressAndCut = "";
+  byte[] kittyCoreContractAddress = null;
+  byte[] saleClockAuctionContractAddress = null;
+  byte[] siringClockAuctionContractAddress = null;
+  byte[] geneScienceInterfaceContractAddress = null;
+  Integer consumeUserResourcePercent = 50;
+  String txid = "";
+  Optional<TransactionInfo> infoById = null;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] deployAddress = ecKey1.getAddress();
+  String deployKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] triggerAddress = ecKey2.getAddress();
+  String triggerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private ManagedChannel channelFull1 = null;
@@ -43,24 +56,6 @@ public class ContractScenario011 {
       .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
-
-  String kittyCoreAddressAndCut = "";
-  byte[] kittyCoreContractAddress = null;
-  byte[] saleClockAuctionContractAddress = null;
-  byte[] siringClockAuctionContractAddress = null;
-  byte[] geneScienceInterfaceContractAddress = null;
-  Integer consumeUserResourcePercent = 50;
-  String txid = "";
-  Optional<TransactionInfo> infoById = null;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] deployAddress = ecKey1.getAddress();
-  String deployKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] triggerAddress = ecKey2.getAddress();
-  String triggerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {

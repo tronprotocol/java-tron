@@ -36,8 +36,6 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract.
 @Slf4j
 public class AssetIssueActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static final String dbPath = "output_assetIssue_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_SECOND;
@@ -48,6 +46,8 @@ public class AssetIssueActuatorTest {
   private static final String DESCRIPTION = "myCoin";
   private static final String URL = "tron-my.com";
   private static final String ASSET_NAME_SECOND = "asset_name2";
+  private static TronApplicationContext context;
+  private static Manager dbManager;
   private static long now = 0;
   private static long startTime = 0;
   private static long endTime = 0;
@@ -70,6 +70,20 @@ public class AssetIssueActuatorTest {
     //        "config-junit.conf");
     //    dbManager = new Manager();
     //    dbManager.init();
+  }
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   /**
@@ -105,20 +119,6 @@ public class AssetIssueActuatorTest {
   public void removeCapsule() {
     byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
     dbManager.getAccountStore().delete(address);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   private Any getContract() {

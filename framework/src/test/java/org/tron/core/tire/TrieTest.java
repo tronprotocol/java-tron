@@ -43,11 +43,11 @@ public class TrieTest {
   @Test
   public void test() {
     TrieImpl trie = new TrieImpl();
-    trie.put(new byte[] {1}, c.getBytes());
+    trie.put(new byte[]{1}, c.getBytes());
     Assert.assertTrue(Arrays.areEqual(trie.get(RLP.encodeInt(1)), c.getBytes()));
-    trie.put(new byte[] {1, 0}, ca.getBytes());
-    trie.put(new byte[] {1, 1}, cat.getBytes());
-    trie.put(new byte[] {1, 2}, dog.getBytes());
+    trie.put(new byte[]{1, 0}, ca.getBytes());
+    trie.put(new byte[]{1, 1}, cat.getBytes());
+    trie.put(new byte[]{1, 2}, dog.getBytes());
     trie.put(RLP.encodeInt(5), doge.getBytes());
     trie.put(RLP.encodeInt(6), doge.getBytes());
     trie.put(RLP.encodeInt(7), doge.getBytes());
@@ -58,9 +58,9 @@ public class TrieTest {
     byte[] rootHash = trie.getRootHash();
     TrieImpl trieCopy = new TrieImpl(trie.getCache(), rootHash);
     Assert.assertNull(trie.prove(RLP.encodeInt(111)));
-    Map<byte[], Node> map = trieCopy.prove(new byte[] {1, 1});
+    Map<byte[], Node> map = trieCopy.prove(new byte[]{1, 1});
     boolean result = trie
-        .verifyProof(trieCopy.getRootHash(), new byte[] {1, 1}, (LinkedHashMap<byte[], Node>) map);
+        .verifyProof(trieCopy.getRootHash(), new byte[]{1, 1}, (LinkedHashMap<byte[], Node>) map);
     Assert.assertTrue(result);
     System.out.println(trieCopy.prove(RLP.encodeInt(5)));
     System.out.println(trieCopy.prove(RLP.encodeInt(6)));

@@ -44,17 +44,6 @@ public class Bech32 {
       1, 0, 3, 16, 11, 28, 12, 14, 6, 4, 2, -1, -1, -1, -1, -1
   };
 
-  public static class Bech32Data {
-
-    public final String hrp;
-    public final byte[] data;
-
-    private Bech32Data(final String hrp, final byte[] data) {
-      this.hrp = hrp;
-      this.data = data;
-    }
-  }
-
   /**
    * Find the polynomial with value coefficients mod the generator as 30-bit.
    */
@@ -202,5 +191,16 @@ public class Bech32 {
       throw new IllegalArgumentException("InvalidChecksum:");
     }
     return new Bech32Data(hrp, Arrays.copyOfRange(values, 0, values.length - 6));
+  }
+
+  public static class Bech32Data {
+
+    public final String hrp;
+    public final byte[] data;
+
+    private Bech32Data(final String hrp, final byte[] data) {
+      this.hrp = hrp;
+      this.data = data;
+    }
   }
 }

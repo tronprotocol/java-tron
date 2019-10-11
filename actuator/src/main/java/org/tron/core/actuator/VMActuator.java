@@ -92,6 +92,14 @@ public class VMActuator implements Actuator2 {
     programInvokeFactory = new ProgramInvokeFactoryImpl();
   }
 
+  private static long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,
+      long callerEnergyTotal) {
+    if (callerEnergyTotal <= 0) {
+      return 0;
+    }
+    return BigInteger.valueOf(callerEnergyFrozen).multiply(BigInteger.valueOf(callerEnergyUsage))
+        .divide(BigInteger.valueOf(callerEnergyTotal)).longValueExact();
+  }
 
   @Override
   public void validate(TransactionContext context) throws ContractValidateException {
@@ -127,7 +135,6 @@ public class VMActuator implements Actuator2 {
         throw new ContractValidateException("Unknown contract type");
     }
   }
-
 
   @Override
   public void execute(TransactionContext context) throws ContractExeException {
@@ -259,7 +266,6 @@ public class VMActuator implements Actuator2 {
 
   }
 
-
   private void create()
       throws ContractValidateException {
     if (!repository.getDynamicPropertiesStore().supportVM()) {
@@ -384,7 +390,6 @@ public class VMActuator implements Actuator2 {
 
   }
 
-
   /**
    * **
    */
@@ -493,7 +498,6 @@ public class VMActuator implements Actuator2 {
 
   }
 
-
   public long getAccountEnergyLimitWithFixRatio(AccountCapsule account, long feeLimit,
       long callValue) {
 
@@ -511,7 +515,6 @@ public class VMActuator implements Actuator2 {
     return min(availableEnergy, energyFromFeeLimit);
 
   }
-
 
   private long getAccountEnergyLimitWithFloatRatio(AccountCapsule account, long feeLimit,
       long callValue) {
@@ -550,16 +553,6 @@ public class VMActuator implements Actuator2 {
     }
 
     return min(Math.addExact(leftEnergyFromFreeze, energyFromBalance), energyFromFeeLimit);
-  }
-
-
-  private static long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,
-      long callerEnergyTotal) {
-    if (callerEnergyTotal <= 0) {
-      return 0;
-    }
-    return BigInteger.valueOf(callerEnergyFrozen).multiply(BigInteger.valueOf(callerEnergyUsage))
-        .divide(BigInteger.valueOf(callerEnergyTotal)).longValueExact();
   }
 
   public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,

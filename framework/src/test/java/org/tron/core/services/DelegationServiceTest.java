@@ -11,7 +11,6 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.DelegationService;
@@ -21,12 +20,32 @@ import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 @Slf4j
 public class DelegationServiceTest {
 
+  private static String fullnode = "127.0.0.1:50051";
   private DelegationService delegationService;
   private Manager manager;
 
   public DelegationServiceTest(TronApplicationContext context) {
     delegationService = context.getBean(DelegationService.class);
     manager = context.getBean(Manager.class);
+  }
+
+  public static void testGrpc() {
+    WalletBlockingStub walletStub = WalletGrpc
+        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build());
+    BytesMessage.Builder builder = BytesMessage.newBuilder();
+    builder.setValue(ByteString.copyFromUtf8("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD"));
+    System.out
+        .println("getBrokerageInfo: " + walletStub.getBrokerageInfo(builder.build()).getNum());
+    System.out.println("getRewardInfo: " + walletStub.getRewardInfo(builder.build()).getNum());
+    UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
+    updateBrokerageContract.setOwnerAddress(
+        ByteString.copyFrom(Wallet.decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
+        .setBrokerage(10);
+    TransactionExtention transactionExtention = walletStub
+        .updateBrokerage(updateBrokerageContract.build());
+    System.out.println("UpdateBrokerage: " + transactionExtention);
   }
 
   private void testPay(int cycle) {
@@ -95,27 +114,6 @@ public class DelegationServiceTest {
     manager.getDelegationStore().setWitnessVote(2, sr27, 100000000);
     testPay(0);
     testWithdraw();
-  }
-
-  private static String fullnode = "127.0.0.1:50051";
-
-  public static void testGrpc() {
-    WalletBlockingStub walletStub = WalletGrpc
-        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
-            .build());
-    BytesMessage.Builder builder = BytesMessage.newBuilder();
-    builder.setValue(ByteString.copyFromUtf8("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD"));
-    System.out
-        .println("getBrokerageInfo: " + walletStub.getBrokerageInfo(builder.build()).getNum());
-    System.out.println("getRewardInfo: " + walletStub.getRewardInfo(builder.build()).getNum());
-    UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
-    updateBrokerageContract.setOwnerAddress(
-        ByteString.copyFrom(Wallet.decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
-        .setBrokerage(10);
-    TransactionExtention transactionExtention = walletStub
-        .updateBrokerage(updateBrokerageContract.build());
-    System.out.println("UpdateBrokerage: " + transactionExtention);
   }
 
 }

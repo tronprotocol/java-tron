@@ -18,18 +18,22 @@ public class StoreFactory {
 
   private ChainBaseManager chainBaseManager;
 
-  public StoreFactory setDelegationService(DelegationService delegationService) {
-    add(delegationService);
-    return this;
-  }
-
-
   public StoreFactory() {
     stores = new HashMap<>();
   }
 
+
   private StoreFactory(Map<String, Object> stores) {
     this.stores = stores;
+  }
+
+  public static StoreFactory getInstance() {
+    return INSTANCE;
+  }
+
+  public StoreFactory setDelegationService(DelegationService delegationService) {
+    add(delegationService);
+    return this;
   }
 
   public void add(Object store) {
@@ -51,11 +55,6 @@ public class StoreFactory {
     }
     return t;
   }
-
-  public static StoreFactory getInstance() {
-    return INSTANCE;
-  }
-
 
   public StoreFactory setAccountStore(AccountStore accountStore) {
     add(accountStore);

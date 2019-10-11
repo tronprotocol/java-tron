@@ -103,17 +103,11 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 @Slf4j
 public class ShieldedReceiveTest extends BlockGenerate {
 
-  private static Manager dbManager;
-  private static ConsensusService consensusService;
   private static final String dbPath = "receive_description_test";
-  private static TronApplicationContext context;
-
   private static final String FROM_ADDRESS;
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final long OWNER_BALANCE = 100_000_000;
   private static final long FROM_AMOUNT = 110_000_000;
-  private static Wallet wallet;
-
   private static final long tokenId = 1;
   private static final String ASSET_NAME = "trx";
   private static final int TRX_NUM = 10;
@@ -123,15 +117,10 @@ public class ShieldedReceiveTest extends BlockGenerate {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-
-  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM}
-
-  public enum TestSignMissingColumn {
-    FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION,
-    RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT
-  }
-
-  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF}
+  private static Manager dbManager;
+  private static ConsensusService consensusService;
+  private static TronApplicationContext context;
+  private static Wallet wallet;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
@@ -170,6 +159,26 @@ public class ShieldedReceiveTest extends BlockGenerate {
     } else {
       logger.info("Release resources failure.");
     }
+  }
+
+  private static void librustzcashInitZksnarkParams() {
+    FullNodeHttpApiService.librustzcashInitZksnarkParams();
+  }
+
+  private static byte[] randomUint256() {
+    return org.tron.keystore.Wallet.generateRandomBytes(32);
+  }
+
+  private static byte[] randomUint640() {
+    return org.tron.keystore.Wallet.generateRandomBytes(80);
+  }
+
+  private static byte[] randomUint1536() {
+    return org.tron.keystore.Wallet.generateRandomBytes(192);
+  }
+
+  private static byte[] randomUint4640() {
+    return org.tron.keystore.Wallet.generateRandomBytes(580);
   }
 
   /**
@@ -211,26 +220,6 @@ public class ShieldedReceiveTest extends BlockGenerate {
             OWNER_BALANCE);
     ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(tokenId)), OWNER_BALANCE);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-  }
-
-  private static void librustzcashInitZksnarkParams() {
-    FullNodeHttpApiService.librustzcashInitZksnarkParams();
-  }
-
-  private static byte[] randomUint256() {
-    return org.tron.keystore.Wallet.generateRandomBytes(32);
-  }
-
-  private static byte[] randomUint640() {
-    return org.tron.keystore.Wallet.generateRandomBytes(80);
-  }
-
-  private static byte[] randomUint1536() {
-    return org.tron.keystore.Wallet.generateRandomBytes(192);
-  }
-
-  private static byte[] randomUint4640() {
-    return org.tron.keystore.Wallet.generateRandomBytes(580);
   }
 
   public IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm)
@@ -2081,14 +2070,6 @@ public class ShieldedReceiveTest extends BlockGenerate {
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  @AllArgsConstructor
-  class TransactionHash {
-
-    @Setter
-    @Getter
-    byte[] hash;
-  }
-
   /*
    * test use isolate method to build the signature
    */
@@ -2539,6 +2520,23 @@ public class ShieldedReceiveTest extends BlockGenerate {
     ReceiveNote receiveNote2 = wallet.createReceiveNoteRandom(0);
     Assert.assertNotEquals(receiveNote1.getNote().getPaymentAddress(),
         receiveNote2.getNote().getPaymentAddress());
+  }
+
+  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM}
+
+  public enum TestSignMissingColumn {
+    FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION,
+    RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT
+  }
+
+  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF}
+
+  @AllArgsConstructor
+  class TransactionHash {
+
+    @Setter
+    @Getter
+    byte[] hash;
   }
 
 }

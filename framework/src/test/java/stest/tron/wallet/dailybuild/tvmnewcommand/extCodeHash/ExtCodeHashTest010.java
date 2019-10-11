@@ -18,8 +18,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -80,7 +80,6 @@ public class ExtCodeHashTest010 {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
 
-
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //before deploy, check account resource
@@ -139,7 +138,6 @@ public class ExtCodeHashTest010 {
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
 
-
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
     long devEnergyLimitBefore = accountResource.getEnergyLimit();
@@ -159,7 +157,6 @@ public class ExtCodeHashTest010 {
     logger.info("before trigger, userEnergyLimitBefore is " + Long.toString(userEnergyLimitBefore));
     logger.info("before trigger, userEnergyUsageBefore is " + Long.toString(userEnergyUsageBefore));
     logger.info("before trigger, userBalanceBefore is " + Long.toString(userBalanceBefore));
-
 
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,
         "getCodeHashRevert()", "#", false, 0L,
@@ -216,7 +213,6 @@ public class ExtCodeHashTest010 {
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
 
-
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
     long devEnergyLimitBefore = accountResource.getEnergyLimit();
@@ -236,7 +232,6 @@ public class ExtCodeHashTest010 {
     logger.info("before trigger, userEnergyLimitBefore is " + Long.toString(userEnergyLimitBefore));
     logger.info("before trigger, userEnergyUsageBefore is " + Long.toString(userEnergyUsageBefore));
     logger.info("before trigger, userBalanceBefore is " + Long.toString(userBalanceBefore));
-
 
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,
         "getCodeHashCreate()", "#", false, 0L,
@@ -292,7 +287,6 @@ public class ExtCodeHashTest010 {
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
 
-
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
     long devEnergyLimitBefore = accountResource.getEnergyLimit();
@@ -312,7 +306,6 @@ public class ExtCodeHashTest010 {
     logger.info("before trigger, userEnergyLimitBefore is " + Long.toString(userEnergyLimitBefore));
     logger.info("before trigger, userEnergyUsageBefore is " + Long.toString(userEnergyUsageBefore));
     logger.info("before trigger, userBalanceBefore is " + Long.toString(userBalanceBefore));
-
 
     String param = "\"" + Base58.encode58Check(extCodeHashContractAddress) + "\"";
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,

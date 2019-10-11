@@ -24,11 +24,16 @@ public class ActuatorCreator {
 
   private ChainBaseManager chainBaseManager;
 
-  private static class ActuatorCreatorInner {
+  private ActuatorCreator(StoreFactory storeFactory) {
+    try {
+      dynamicPropertiesStore = storeFactory.getStore(DynamicPropertiesStore.class);
+      chainBaseManager = storeFactory.getChainBaseManager();
+      forkUtils.setDynamicPropertiesStore(dynamicPropertiesStore);
+    } catch (TypeMismatchNamingException e) {
+      logger.error("ActuatorCreator error", e);
+    }
 
-    private static ActuatorCreator INSTANCE;
   }
-
 
   public static ActuatorCreator getINSTANCE() {
     if (ActuatorCreatorInner.INSTANCE == null) {
@@ -39,18 +44,6 @@ public class ActuatorCreator {
 
   public static void init() {
     ActuatorCreatorInner.INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
-  }
-
-
-  private ActuatorCreator(StoreFactory storeFactory) {
-    try {
-      dynamicPropertiesStore = storeFactory.getStore(DynamicPropertiesStore.class);
-      chainBaseManager = storeFactory.getChainBaseManager();
-      forkUtils.setDynamicPropertiesStore(dynamicPropertiesStore);
-    } catch (TypeMismatchNamingException e) {
-      logger.error("ActuatorCreator error", e);
-    }
-
   }
 
   /**
@@ -87,5 +80,10 @@ public class ActuatorCreator {
     abstractActuator.setChainBaseManager(chainBaseManager).setContract(contract)
         .setForkUtils(forkUtils).setTx(tx);
     return abstractActuator;
+  }
+
+  private static class ActuatorCreatorInner {
+
+    private static ActuatorCreator INSTANCE;
   }
 }

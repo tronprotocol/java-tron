@@ -1,96 +1,20 @@
 package org.tron.core.utils;
 
 import org.tron.common.utils.ForkUtils;
-import org.tron.common.utils.StringUtil;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 
 public class ProposalUtil {
+
   protected static final long LONG_VALUE = 100_000_000_000_000_000L;
+  protected static final String BAD_PARAM_ID = "Bad chain parameter id";
   private static final String LONG_VALUE_ERROR =
       "Bad chain parameter value,valid range is [0," + LONG_VALUE + "]";
-  protected static final String BAD_PARAM_ID = "Bad chain parameter id";
 
-  public enum ProposalType {
-    MAINTENANCE_TIME_INTERVAL(0), //ms  ,0
-    ACCOUNT_UPGRADE_COST(1), //drop ,1
-    CREATE_ACCOUNT_FEE(2), //drop ,2
-    TRANSACTION_FEE(3), //drop ,3
-    ASSET_ISSUE_FEE(4), //drop ,4
-    WITNESS_PAY_PER_BLOCK(5), //drop ,5
-    WITNESS_STANDBY_ALLOWANCE(6), //drop ,6
-    CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT(7), //drop ,7
-    CREATE_NEW_ACCOUNT_BANDWIDTH_RATE(8), // 1 ~ ,8
-    ALLOW_CREATION_OF_CONTRACTS(9), // 0 / >0 ,9
-    REMOVE_THE_POWER_OF_THE_GR(10),  // 1 ,10
-    ENERGY_FEE(11), // drop, 11
-    EXCHANGE_CREATE_FEE(12), // drop, 12
-    MAX_CPU_TIME_OF_ONE_TX(13), // ms, 13
-    ALLOW_UPDATE_ACCOUNT_NAME(14), // 1, 14
-    ALLOW_SAME_TOKEN_NAME(15), // 1, 15
-    ALLOW_DELEGATE_RESOURCE(16), // 0, 16
-    TOTAL_ENERGY_LIMIT(17), // 50,000,000,000, 17
-    ALLOW_TVM_TRANSFER_TRC10(18), // 1, 18
-    TOTAL_CURRENT_ENERGY_LIMIT(19), // 50,000,000,000, 19
-    ALLOW_MULTI_SIGN(20), // 1, 20
-    ALLOW_ADAPTIVE_ENERGY(21), // 1, 21
-    UPDATE_ACCOUNT_PERMISSION_FEE(22), // 100, 22
-    MULTI_SIGN_FEE(23), // 1, 23
-    ALLOW_PROTO_FILTER_NUM(24), // 1, 24
-    ALLOW_ACCOUNT_STATE_ROOT(25), // 1, 25
-    ALLOW_TVM_CONSTANTINOPLE(26), // 1, 26
-    ALLOW_SHIELDED_TRANSACTION(27), // 27
-    SHIELDED_TRANSACTION_FEE(28), // 28
-    ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER(29), // 1000, 29
-    ALLOW_CHANGE_DELEGATION(30), //1, 30
-    WITNESS_127_PAY_PER_BLOCK(31), //drop, 31
-    ALLOW_TVM_SOLIDITY_059(32), // 1, 32
-    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33); // 10, 33
-
-    ProposalType(long code) {
-      this.code = code;
-    }
-
-    public static boolean contain(long code) {
-      for (ProposalType parameters : values()) {
-        if (parameters.code == code) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    public static ProposalType getEnum(long code) throws ContractValidateException {
-      for (ProposalType parameters : values()) {
-        if (parameters.code == code) {
-          return parameters;
-        }
-      }
-      throw new ContractValidateException("not support code : " + code);
-    }
-
-    public static ProposalType getEnumOrNull(long code) {
-      for (ProposalType parameters : values()) {
-        if (parameters.code == code) {
-          return parameters;
-        }
-      }
-      return null;
-    }
-
-    private long code;
-
-    public long getCode() {
-      return code;
-    }
-  }
-
-  public static void validator(DynamicPropertiesStore dynamicPropertiesStore, ForkUtils forkUtils, long code, long value)
+  public static void validator(DynamicPropertiesStore dynamicPropertiesStore, ForkUtils forkUtils,
+      long code, long value)
       throws ContractValidateException {
     ProposalType proposalType = ProposalType.getEnum(code);
     switch (proposalType) {
@@ -353,6 +277,80 @@ public class ProposalUtil {
       }
       default:
         break;
+    }
+  }
+
+  public enum ProposalType {
+    MAINTENANCE_TIME_INTERVAL(0), //ms  ,0
+    ACCOUNT_UPGRADE_COST(1), //drop ,1
+    CREATE_ACCOUNT_FEE(2), //drop ,2
+    TRANSACTION_FEE(3), //drop ,3
+    ASSET_ISSUE_FEE(4), //drop ,4
+    WITNESS_PAY_PER_BLOCK(5), //drop ,5
+    WITNESS_STANDBY_ALLOWANCE(6), //drop ,6
+    CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT(7), //drop ,7
+    CREATE_NEW_ACCOUNT_BANDWIDTH_RATE(8), // 1 ~ ,8
+    ALLOW_CREATION_OF_CONTRACTS(9), // 0 / >0 ,9
+    REMOVE_THE_POWER_OF_THE_GR(10),  // 1 ,10
+    ENERGY_FEE(11), // drop, 11
+    EXCHANGE_CREATE_FEE(12), // drop, 12
+    MAX_CPU_TIME_OF_ONE_TX(13), // ms, 13
+    ALLOW_UPDATE_ACCOUNT_NAME(14), // 1, 14
+    ALLOW_SAME_TOKEN_NAME(15), // 1, 15
+    ALLOW_DELEGATE_RESOURCE(16), // 0, 16
+    TOTAL_ENERGY_LIMIT(17), // 50,000,000,000, 17
+    ALLOW_TVM_TRANSFER_TRC10(18), // 1, 18
+    TOTAL_CURRENT_ENERGY_LIMIT(19), // 50,000,000,000, 19
+    ALLOW_MULTI_SIGN(20), // 1, 20
+    ALLOW_ADAPTIVE_ENERGY(21), // 1, 21
+    UPDATE_ACCOUNT_PERMISSION_FEE(22), // 100, 22
+    MULTI_SIGN_FEE(23), // 1, 23
+    ALLOW_PROTO_FILTER_NUM(24), // 1, 24
+    ALLOW_ACCOUNT_STATE_ROOT(25), // 1, 25
+    ALLOW_TVM_CONSTANTINOPLE(26), // 1, 26
+    ALLOW_SHIELDED_TRANSACTION(27), // 27
+    SHIELDED_TRANSACTION_FEE(28), // 28
+    ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER(29), // 1000, 29
+    ALLOW_CHANGE_DELEGATION(30), //1, 30
+    WITNESS_127_PAY_PER_BLOCK(31), //drop, 31
+    ALLOW_TVM_SOLIDITY_059(32), // 1, 32
+    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33); // 10, 33
+
+    private long code;
+
+    ProposalType(long code) {
+      this.code = code;
+    }
+
+    public static boolean contain(long code) {
+      for (ProposalType parameters : values()) {
+        if (parameters.code == code) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public static ProposalType getEnum(long code) throws ContractValidateException {
+      for (ProposalType parameters : values()) {
+        if (parameters.code == code) {
+          return parameters;
+        }
+      }
+      throw new ContractValidateException("not support code : " + code);
+    }
+
+    public static ProposalType getEnumOrNull(long code) {
+      for (ProposalType parameters : values()) {
+        if (parameters.code == code) {
+          return parameters;
+        }
+      }
+      return null;
+    }
+
+    public long getCode() {
+      return code;
     }
   }
 }

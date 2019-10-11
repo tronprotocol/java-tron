@@ -33,8 +33,6 @@ import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
 @Slf4j
 public class UpdateSettingContractActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static final String dbPath = "output_updatesettingcontract_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
@@ -47,6 +45,8 @@ public class UpdateSettingContractActuatorTest {
   private static final long SOURCE_PERCENT = 10L;
   private static final long TARGET_PERCENT = 30L;
   private static final long INVALID_PERCENT = 200L;
+  private static TronApplicationContext context;
+  private static Manager dbManager;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -64,6 +64,20 @@ public class UpdateSettingContractActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+  }
+
+  /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   /**
@@ -99,20 +113,6 @@ public class UpdateSettingContractActuatorTest {
 
     // address does not exist in accountStore
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   private Any getContract(String accountAddress, String contractAddress, long percent) {

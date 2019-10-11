@@ -44,8 +44,8 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 @Slf4j(topic = "actuator")
 public class ShieldedTransferActuator extends AbstractActuator {
 
-  private ShieldedTransferContract shieldedTransferContract;
   public static String zenTokenId;
+  private ShieldedTransferContract shieldedTransferContract;
 
   public ShieldedTransferActuator() {
     super(ContractType.ShieldedTransferContract, ShieldedTransferContract.class);

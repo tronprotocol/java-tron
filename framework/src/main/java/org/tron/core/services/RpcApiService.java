@@ -24,7 +24,6 @@ import org.springframework.stereotype.Component;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
-import org.tron.api.GrpcAPI.AccountPaginated;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
@@ -50,7 +49,6 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
-import org.tron.api.GrpcAPI.IvkDecryptAndMarkParameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
@@ -95,8 +93,8 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.protos.Protocol;
@@ -147,10 +145,10 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 @Slf4j(topic = "API")
 public class RpcApiService implements Service {
 
-  private static final long BLOCK_LIMIT_NUM = 100;
-  private static final long TRANSACTION_LIMIT_NUM = 1000;
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
+  private static final long BLOCK_LIMIT_NUM = 100;
+  private static final long TRANSACTION_LIMIT_NUM = 1000;
   private int port = Args.getInstance().getRpcPort();
   private Server apiServer;
   @Autowired
@@ -302,7 +300,7 @@ public class RpcApiService implements Service {
   }
 
   private StatusRuntimeException getRunTimeException(Exception e) {
-    if (e != null ) {
+    if (e != null) {
       return Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException();
     } else {
       return Status.INTERNAL.withDescription("unknown").asRuntimeException();
@@ -2088,7 +2086,6 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
-
 
 
     @Override

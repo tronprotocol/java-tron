@@ -36,15 +36,12 @@ import org.tron.core.db.Manager;
 @Component
 public class NodeManager implements EventHandler {
 
-  private Args args = Args.getInstance();
-
-  private Manager dbManager;
-
   private static final long DB_COMMIT_RATE = 1 * 60 * 1000L;
   private static final int MAX_NODES = 2000;
   private static final int MAX_NODES_WRITE_TO_DB = 30;
   private static final int NODES_TRIM_THRESHOLD = 3000;
-
+  private Args args = Args.getInstance();
+  private Manager dbManager;
   private Consumer<UdpEvent> messageSender;
 
   private NodeTable table;

@@ -4,13 +4,10 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.google.protobuf.Any;
-import com.google.protobuf.InvalidProtocolBufferException;
-
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import com.google.protobuf.ByteString;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +22,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
 import org.tron.protos.Protocol;
-import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
-import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j
@@ -36,10 +31,6 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
   @Getter
   @Setter
   TransactionLogTrigger transactionLogTrigger;
-
-  public void setLatestSolidifiedBlockNumber(long latestSolidifiedBlockNumber) {
-    transactionLogTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
-  }
 
   public TransactionLogTriggerCapsule(TransactionCapsule trxCasule, BlockCapsule blockCapsule) {
     transactionLogTrigger = new TransactionLogTrigger();
@@ -134,7 +125,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     }
 
     // program result
-    if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getRuntime()) &&  Objects.nonNull(trxTrace.getRuntime().getResult())) {
+    if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getRuntime()) && Objects
+        .nonNull(trxTrace.getRuntime().getResult())) {
       ProgramResult programResult = trxTrace.getRuntime().getResult();
       ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
       ByteString contractAddress = ByteString.copyFrom(programResult.getContractAddress());
@@ -152,6 +144,10 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       transactionLogTrigger.setInternalTrananctionList(
           getInternalTransactionList(programResult.getInternalTransactions()));
     }
+  }
+
+  public void setLatestSolidifiedBlockNumber(long latestSolidifiedBlockNumber) {
+    transactionLogTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
   }
 
   private List<InternalTransactionPojo> getInternalTransactionList(

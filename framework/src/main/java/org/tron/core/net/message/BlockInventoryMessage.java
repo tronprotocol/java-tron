@@ -17,15 +17,6 @@ public class BlockInventoryMessage extends TronMessage {
     this.blockInventory = Protocol.BlockInventory.parseFrom(data);
   }
 
-  @Override
-  public Class<?> getAnswerMessage() {
-    return null;
-  }
-
-  private BlockInventory getBlockInventory() {
-    return blockInventory;
-  }
-
   public BlockInventoryMessage(List<BlockId> blockIds, BlockInventory.Type type) {
     BlockInventory.Builder invBuilder = BlockInventory.newBuilder();
     blockIds.forEach(blockId -> {
@@ -39,6 +30,15 @@ public class BlockInventoryMessage extends TronMessage {
     blockInventory = invBuilder.build();
     this.type = MessageTypes.BLOCK_INVENTORY.asByte();
     this.data = blockInventory.toByteArray();
+  }
+
+  @Override
+  public Class<?> getAnswerMessage() {
+    return null;
+  }
+
+  private BlockInventory getBlockInventory() {
+    return blockInventory;
   }
 
   public List<BlockId> getBlockIds() {

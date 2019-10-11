@@ -104,6 +104,16 @@ public class TransactionTraceTest {
 
   }
 
+  /**
+   * destroy clear data of testing.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
+  }
+
   @Test
   public void testUseFee()
       throws InvalidProtocolBufferException, VMIllegalException, BalanceInsufficientException, ContractExeException, ContractValidateException {
@@ -328,15 +338,5 @@ public class TransactionTraceTest {
     transactionTrace.setBill(0L);
     transactionTrace.pay();
     AccountCapsule accountCapsule1 = dbManager.getAccountStore().get(ownerAddress.toByteArray());
-  }
-
-  /**
-   * destroy clear data of testing.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 }

@@ -17,8 +17,6 @@ public enum UdpMessageTypeEnum {
 
   UNKNOWN((byte) 0xFF);
 
-  private final byte type;
-
   private static final Map<Byte, UdpMessageTypeEnum> intToTypeMap = new HashMap<>();
 
   static {
@@ -26,6 +24,8 @@ public enum UdpMessageTypeEnum {
       intToTypeMap.put(value.type, value);
     }
   }
+
+  private final byte type;
 
   UdpMessageTypeEnum(byte type) {
     this.type = type;

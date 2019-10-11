@@ -38,28 +38,23 @@ public class ContractEvent001 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
+  String txid;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] event001Address = ecKey1.getAddress();
+  String event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] event002Address = ecKey2.getAddress();
+  String event002Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
-  String txid;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] event001Address = ecKey1.getAddress();
-  String event001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] event002Address = ecKey2.getAddress();
-  String event002Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -269,7 +264,7 @@ public class ContractEvent001 {
       public void run() {
         while (true) {
           Event event = Event.read(moniter.base());
-          System.out.println(event.event +  "  " + event.addr);
+          System.out.println(event.event + "  " + event.addr);
         }
       }
 
@@ -283,7 +278,6 @@ public class ContractEvent001 {
         System.out.println("receive : " + new String(message));
       }
     }
-
 
 
   }

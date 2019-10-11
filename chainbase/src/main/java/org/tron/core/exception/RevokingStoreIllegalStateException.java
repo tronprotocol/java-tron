@@ -2,6 +2,8 @@ package org.tron.core.exception;
 
 public class RevokingStoreIllegalStateException extends RuntimeException {
 
+  static final long serialVersionUID = -1848914673093119416L;
+
   /**
    * Constructs an RevokingStoreIllegalStateException with no detail message. A detail message is a
    * String that describes this particular exception.
@@ -49,6 +51,4 @@ public class RevokingStoreIllegalStateException extends RuntimeException {
   public RevokingStoreIllegalStateException(Throwable cause) {
     super("", cause);
   }
-
-  static final long serialVersionUID = -1848914673093119416L;
 }

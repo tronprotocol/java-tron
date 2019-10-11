@@ -92,37 +92,28 @@ public class Program {
   private static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE =
       "validateForSmartContract failure:%s";
   private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
-
+  private final VMConfig config;
   private long nonce;
   private byte[] rootTransactionId;
-
   private InternalTransaction internalTransaction;
-
   private ProgramInvoke invoke;
   private ProgramInvokeFactory programInvokeFactory = new ProgramInvokeFactoryImpl();
-
   private ProgramOutListener listener;
   private ProgramTraceListener traceListener;
   private ProgramStorageChangeListener storageDiffListener = new ProgramStorageChangeListener();
   private CompositeProgramListener programListener = new CompositeProgramListener();
-
   private Stack stack;
   private Memory memory;
   private ContractState contractState;
   private byte[] returnDataBuffer;
-
   private ProgramResult result = new ProgramResult();
   private ProgramTrace trace = new ProgramTrace();
-
   private byte[] ops;
   private int pc;
   private byte lastOp;
   private byte previouslyExecutedOp;
   private boolean stopped;
-
   private ProgramPrecompile programPrecompile;
-
-  private final VMConfig config;
 
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
@@ -145,6 +136,144 @@ public class Program {
     this.contractState = setupProgramListener(new ContractState(programInvoke));
     this.trace = new ProgramTrace(config, programInvoke);
     this.nonce = internalTransaction.getNonce();
+  }
+
+  static String formatBinData(byte[] binData, int startPC) {
+    StringBuilder ret = new StringBuilder();
+    for (int i = 0; i < binData.length; i += 16) {
+      ret.append(VMUtils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
+      ret.append(Hex.toHexString(binData, i, min(16, binData.length - i))).append('\n');
+    }
+    return ret.toString();
+  }
+
+  public static String stringifyMultiline(byte[] code) {
+    int index = 0;
+    StringBuilder sb = new StringBuilder();
+    BitSet mask = buildReachableBytecodesMask(code);
+    ByteArrayOutputStream binData = new ByteArrayOutputStream();
+    int binDataStartPC = -1;
+
+    while (index < code.length) {
+      final byte opCode = code[index];
+      OpCode op = OpCode.code(opCode);
+
+      if (!mask.get(index)) {
+        if (binDataStartPC == -1) {
+          binDataStartPC = index;
+        }
+        binData.write(code[index]);
+        index++;
+        if (index < code.length) {
+          continue;
+        }
+      }
+
+      if (binDataStartPC != -1) {
+        sb.append(formatBinData(binData.toByteArray(), binDataStartPC));
+        binDataStartPC = -1;
+        binData = new ByteArrayOutputStream();
+        if (index == code.length) {
+          continue;
+        }
+      }
+
+      sb.append(VMUtils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
+
+      if (op == null) {
+        sb.append("<UNKNOWN>: ").append(0xFF & opCode).append("\n");
+        index++;
+        continue;
+      }
+
+      if (op.name().startsWith("PUSH")) {
+        sb.append(' ').append(op.name()).append(' ');
+
+        int nPush = op.val() - OpCode.PUSH1.val() + 1;
+        byte[] data = Arrays.copyOfRange(code, index + 1, index + nPush + 1);
+        BigInteger bi = new BigInteger(1, data);
+        sb.append("0x").append(bi.toString(16));
+        if (bi.bitLength() <= 32) {
+          sb.append(" (").append(new BigInteger(1, data).toString()).append(") ");
+        }
+
+        index += nPush + 1;
+      } else {
+        sb.append(' ').append(op.name());
+        index++;
+      }
+      sb.append('\n');
+    }
+
+    return sb.toString();
+  }
+
+  static BitSet buildReachableBytecodesMask(byte[] code) {
+    NavigableSet<Integer> gotos = new TreeSet<>();
+    ByteCodeIterator it = new ByteCodeIterator(code);
+    BitSet ret = new BitSet(code.length);
+    int lastPush = 0;
+    int lastPushPC = 0;
+    do {
+      ret.set(it.getPC()); // reachable bytecode
+      if (it.isPush()) {
+        lastPush = new BigInteger(1, it.getCurOpcodeArg()).intValue();
+        lastPushPC = it.getPC();
+      }
+      if (it.getCurOpcode() == OpCode.JUMP || it.getCurOpcode() == OpCode.JUMPI) {
+        if (it.getPC() != lastPushPC + 1) {
+          // some PC arithmetic we totally can't deal with
+          // assuming all bytecodes are reachable as a fallback
+          ret.set(0, code.length);
+          return ret;
+        }
+        int jumpPC = lastPush;
+        if (!ret.get(jumpPC)) {
+          // code was not explored yet
+          gotos.add(jumpPC);
+        }
+      }
+      if (it.getCurOpcode() == OpCode.JUMP || it.getCurOpcode() == OpCode.RETURN
+          || it.getCurOpcode() == OpCode.STOP) {
+        if (gotos.isEmpty()) {
+          break;
+        }
+        it.setPC(gotos.pollFirst());
+      }
+    } while (it.next());
+    return ret;
+  }
+
+  public static String stringify(byte[] code) {
+    int index = 0;
+    StringBuilder sb = new StringBuilder();
+
+    while (index < code.length) {
+      final byte opCode = code[index];
+      OpCode op = OpCode.code(opCode);
+
+      if (op == null) {
+        sb.append(" <UNKNOWN>: ").append(0xFF & opCode).append(" ");
+        index++;
+        continue;
+      }
+
+      if (op.name().startsWith("PUSH")) {
+        sb.append(' ').append(op.name()).append(' ');
+
+        int nPush = op.val() - OpCode.PUSH1.val() + 1;
+        byte[] data = Arrays.copyOfRange(code, index + 1, index + nPush + 1);
+        BigInteger bi = new BigInteger(1, data);
+        sb.append("0x").append(bi.toString(16)).append(" ");
+
+        index += nPush + 1;
+      } else {
+        sb.append(' ').append(op.name());
+        index++;
+      }
+    }
+
+    return sb.toString();
   }
 
   public byte[] getRootTransactionId() {
@@ -223,17 +352,17 @@ public class Program {
   }
 
   /**
-   * Should be set only after the OP is fully executed.
-   */
-  public void setPreviouslyExecutedOp(byte op) {
-    this.previouslyExecutedOp = op;
-  }
-
-  /**
    * Returns the last fully executed OP.
    */
   public byte getPreviouslyExecutedOp() {
     return this.previouslyExecutedOp;
+  }
+
+  /**
+   * Should be set only after the OP is fully executed.
+   */
+  public void setPreviouslyExecutedOp(byte op) {
+    this.previouslyExecutedOp = op;
   }
 
   public void stackPush(byte[] data) {
@@ -262,16 +391,16 @@ public class Program {
     return pc;
   }
 
-  public void setPC(DataWord pc) {
-    this.setPC(pc.intValue());
-  }
-
   public void setPC(int pc) {
     this.pc = pc;
 
     if (this.pc >= ops.length) {
       stop();
     }
+  }
+
+  public void setPC(DataWord pc) {
+    this.setPC(pc.intValue());
   }
 
   public boolean isStopped() {
@@ -382,7 +511,6 @@ public class Program {
   public void allocateMemory(int offset, int size) {
     memory.extend(offset, size);
   }
-
 
   public void suicide(DataWord obtainerAddress) {
 
@@ -1012,7 +1140,7 @@ public class Program {
     checkTokenIdInTokenBalance(tokenId);
     long ret = getContractState()
         .getTokenBalance(MUtil.convertToTronAddress(address.getLast20Bytes()),
-        String.valueOf(tokenId.longValue()).getBytes());
+            String.valueOf(tokenId.longValue()).getBytes());
     return ret == 0 ? new DataWord(0) : new DataWord(ret);
   }
 
@@ -1174,76 +1302,6 @@ public class Program {
     return trace;
   }
 
-  static String formatBinData(byte[] binData, int startPC) {
-    StringBuilder ret = new StringBuilder();
-    for (int i = 0; i < binData.length; i += 16) {
-      ret.append(VMUtils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
-      ret.append(Hex.toHexString(binData, i, min(16, binData.length - i))).append('\n');
-    }
-    return ret.toString();
-  }
-
-  public static String stringifyMultiline(byte[] code) {
-    int index = 0;
-    StringBuilder sb = new StringBuilder();
-    BitSet mask = buildReachableBytecodesMask(code);
-    ByteArrayOutputStream binData = new ByteArrayOutputStream();
-    int binDataStartPC = -1;
-
-    while (index < code.length) {
-      final byte opCode = code[index];
-      OpCode op = OpCode.code(opCode);
-
-      if (!mask.get(index)) {
-        if (binDataStartPC == -1) {
-          binDataStartPC = index;
-        }
-        binData.write(code[index]);
-        index++;
-        if (index < code.length) {
-          continue;
-        }
-      }
-
-      if (binDataStartPC != -1) {
-        sb.append(formatBinData(binData.toByteArray(), binDataStartPC));
-        binDataStartPC = -1;
-        binData = new ByteArrayOutputStream();
-        if (index == code.length) {
-          continue;
-        }
-      }
-
-      sb.append(VMUtils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
-
-      if (op == null) {
-        sb.append("<UNKNOWN>: ").append(0xFF & opCode).append("\n");
-        index++;
-        continue;
-      }
-
-      if (op.name().startsWith("PUSH")) {
-        sb.append(' ').append(op.name()).append(' ');
-
-        int nPush = op.val() - OpCode.PUSH1.val() + 1;
-        byte[] data = Arrays.copyOfRange(code, index + 1, index + nPush + 1);
-        BigInteger bi = new BigInteger(1, data);
-        sb.append("0x").append(bi.toString(16));
-        if (bi.bitLength() <= 32) {
-          sb.append(" (").append(new BigInteger(1, data).toString()).append(") ");
-        }
-
-        index += nPush + 1;
-      } else {
-        sb.append(' ').append(op.name());
-        index++;
-      }
-      sb.append('\n');
-    }
-
-    return sb.toString();
-  }
-
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
     byte[] senderAddress = MUtil.convertToTronAddress(this.getCallerAddress().getLast20Bytes());
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
@@ -1251,115 +1309,6 @@ public class Program {
     byte[] contractAddress = WalletUtil
         .generateContractAddress2(senderAddress, salt.getData(), programCode);
     createContractImpl(value, programCode, contractAddress, true);
-  }
-
-  static class ByteCodeIterator {
-
-    private byte[] code;
-    private int pc;
-
-    public ByteCodeIterator(byte[] code) {
-      this.code = code;
-    }
-
-    public void setPC(int pc) {
-      this.pc = pc;
-    }
-
-    public int getPC() {
-      return pc;
-    }
-
-    public OpCode getCurOpcode() {
-      return pc < code.length ? OpCode.code(code[pc]) : null;
-    }
-
-    public boolean isPush() {
-      return getCurOpcode() != null && getCurOpcode().name().startsWith("PUSH");
-    }
-
-    public byte[] getCurOpcodeArg() {
-      if (isPush()) {
-        int nPush = getCurOpcode().val() - OpCode.PUSH1.val() + 1;
-        byte[] data = Arrays.copyOfRange(code, pc + 1, pc + nPush + 1);
-        return data;
-      } else {
-        return new byte[0];
-      }
-    }
-
-    public boolean next() {
-      pc += 1 + getCurOpcodeArg().length;
-      return pc < code.length;
-    }
-  }
-
-  static BitSet buildReachableBytecodesMask(byte[] code) {
-    NavigableSet<Integer> gotos = new TreeSet<>();
-    ByteCodeIterator it = new ByteCodeIterator(code);
-    BitSet ret = new BitSet(code.length);
-    int lastPush = 0;
-    int lastPushPC = 0;
-    do {
-      ret.set(it.getPC()); // reachable bytecode
-      if (it.isPush()) {
-        lastPush = new BigInteger(1, it.getCurOpcodeArg()).intValue();
-        lastPushPC = it.getPC();
-      }
-      if (it.getCurOpcode() == OpCode.JUMP || it.getCurOpcode() == OpCode.JUMPI) {
-        if (it.getPC() != lastPushPC + 1) {
-          // some PC arithmetic we totally can't deal with
-          // assuming all bytecodes are reachable as a fallback
-          ret.set(0, code.length);
-          return ret;
-        }
-        int jumpPC = lastPush;
-        if (!ret.get(jumpPC)) {
-          // code was not explored yet
-          gotos.add(jumpPC);
-        }
-      }
-      if (it.getCurOpcode() == OpCode.JUMP || it.getCurOpcode() == OpCode.RETURN
-          || it.getCurOpcode() == OpCode.STOP) {
-        if (gotos.isEmpty()) {
-          break;
-        }
-        it.setPC(gotos.pollFirst());
-      }
-    } while (it.next());
-    return ret;
-  }
-
-  public static String stringify(byte[] code) {
-    int index = 0;
-    StringBuilder sb = new StringBuilder();
-
-    while (index < code.length) {
-      final byte opCode = code[index];
-      OpCode op = OpCode.code(opCode);
-
-      if (op == null) {
-        sb.append(" <UNKNOWN>: ").append(0xFF & opCode).append(" ");
-        index++;
-        continue;
-      }
-
-      if (op.name().startsWith("PUSH")) {
-        sb.append(' ').append(op.name()).append(' ');
-
-        int nPush = op.val() - OpCode.PUSH1.val() + 1;
-        byte[] data = Arrays.copyOfRange(code, index + 1, index + nPush + 1);
-        BigInteger bi = new BigInteger(1, data);
-        sb.append("0x").append(bi.toString(16)).append(" ");
-
-        index += nPush + 1;
-      } else {
-        sb.append(' ').append(op.name());
-        index++;
-      }
-    }
-
-    return sb.toString();
   }
 
   public void addListener(ProgramOutListener listener) {
@@ -1476,11 +1425,6 @@ public class Program {
     return invoke.byTestingSuite();
   }
 
-  public interface ProgramOutListener {
-
-    void output(String out);
-  }
-
   /**
    * check TokenId TokenId  \ isTransferToken -------------------------------------------------------------------
    * false                                     true -----------------------------------------------
@@ -1551,6 +1495,92 @@ public class Program {
         throw new BytecodeExecutionException(
             String.format(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG));
       }
+    }
+  }
+
+  public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
+    return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
+  }
+
+  public DataWord getCreateEnergy(DataWord availableEnergy) {
+    return availableEnergy;
+  }
+
+  /**
+   * . used mostly for testing reasons
+   */
+  public byte[] getMemory() {
+    return memory.read(0, memory.size());
+  }
+
+  /**
+   * . used mostly for testing reasons
+   */
+  public void initMem(byte[] data) {
+    this.memory.write(0, data, data.length, false);
+  }
+
+  public long getVmStartInUs() {
+    return this.invoke.getVmStartInUs();
+  }
+
+  private boolean isContractExist(AccountCapsule existingAddr, Repository deposit) {
+    return deposit.getContract(existingAddr.getAddress().toByteArray()) != null;
+  }
+
+  private void createAccountIfNotExist(Repository deposit, byte[] contextAddress) {
+    if (VMConfig.allowTvmSolidity059()) {
+      //after solidity059 proposal , allow contract transfer trc10 or trx to non-exist address(would create one)
+      AccountCapsule sender = deposit.getAccount(contextAddress);
+      if (sender == null) {
+        deposit.createNormalAccount(contextAddress);
+      }
+    }
+  }
+
+  public interface ProgramOutListener {
+
+    void output(String out);
+  }
+
+  static class ByteCodeIterator {
+
+    private byte[] code;
+    private int pc;
+
+    public ByteCodeIterator(byte[] code) {
+      this.code = code;
+    }
+
+    public int getPC() {
+      return pc;
+    }
+
+    public void setPC(int pc) {
+      this.pc = pc;
+    }
+
+    public OpCode getCurOpcode() {
+      return pc < code.length ? OpCode.code(code[pc]) : null;
+    }
+
+    public boolean isPush() {
+      return getCurOpcode() != null && getCurOpcode().name().startsWith("PUSH");
+    }
+
+    public byte[] getCurOpcodeArg() {
+      if (isPush()) {
+        int nPush = getCurOpcode().val() - OpCode.PUSH1.val() + 1;
+        byte[] data = Arrays.copyOfRange(code, pc + 1, pc + nPush + 1);
+        return data;
+      } else {
+        return new byte[0];
+      }
+    }
+
+    public boolean next() {
+      pc += 1 + getCurOpcodeArg().length;
+      return pc < code.length;
     }
   }
 
@@ -1747,46 +1777,6 @@ public class Program {
 
     public StackTooLargeException(String message) {
       super(message);
-    }
-  }
-
-  public DataWord getCallEnergy(OpCode op, DataWord requestedEnergy, DataWord availableEnergy) {
-    return requestedEnergy.compareTo(availableEnergy) > 0 ? availableEnergy : requestedEnergy;
-  }
-
-  public DataWord getCreateEnergy(DataWord availableEnergy) {
-    return availableEnergy;
-  }
-
-  /**
-   * . used mostly for testing reasons
-   */
-  public byte[] getMemory() {
-    return memory.read(0, memory.size());
-  }
-
-  /**
-   * . used mostly for testing reasons
-   */
-  public void initMem(byte[] data) {
-    this.memory.write(0, data, data.length, false);
-  }
-
-  public long getVmStartInUs() {
-    return this.invoke.getVmStartInUs();
-  }
-
-  private boolean isContractExist(AccountCapsule existingAddr, Repository deposit) {
-    return deposit.getContract(existingAddr.getAddress().toByteArray()) != null;
-  }
-
-  private void createAccountIfNotExist(Repository deposit, byte[] contextAddress) {
-    if (VMConfig.allowTvmSolidity059()) {
-      //after solidity059 proposal , allow contract transfer trc10 or trx to non-exist address(would create one)
-      AccountCapsule sender = deposit.getAccount(contextAddress);
-      if (sender == null) {
-        deposit.createNormalAccount(contextAddress);
-      }
     }
   }
 }

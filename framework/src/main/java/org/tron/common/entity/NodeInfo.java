@@ -29,6 +29,213 @@ public class NodeInfo {
 
   private Map<String, String> cheatWitnessInfoMap = new HashMap<>();
 
+  public long getBeginSyncNum() {
+    return beginSyncNum;
+  }
+
+  public NodeInfo setBeginSyncNum(long beginSyncNum) {
+    this.beginSyncNum = beginSyncNum;
+    return this;
+  }
+
+  public String getBlock() {
+    return block;
+  }
+
+  public NodeInfo setBlock(String block) {
+    this.block = block;
+    return this;
+  }
+
+  public String getSolidityBlock() {
+    return solidityBlock;
+  }
+
+  public NodeInfo setSolidityBlock(String solidityBlock) {
+    this.solidityBlock = solidityBlock;
+    return this;
+  }
+
+  public int getCurrentConnectCount() {
+    return currentConnectCount;
+  }
+
+  public NodeInfo setCurrentConnectCount(int currentConnectCount) {
+    this.currentConnectCount = currentConnectCount;
+    return this;
+  }
+
+  public int getActiveConnectCount() {
+    return activeConnectCount;
+  }
+
+  public NodeInfo setActiveConnectCount(int activeConnectCount) {
+    this.activeConnectCount = activeConnectCount;
+    return this;
+  }
+
+  public int getPassiveConnectCount() {
+    return passiveConnectCount;
+  }
+
+  public NodeInfo setPassiveConnectCount(int passiveConnectCount) {
+    this.passiveConnectCount = passiveConnectCount;
+    return this;
+  }
+
+  public long getTotalFlow() {
+    return totalFlow;
+  }
+
+  public NodeInfo setTotalFlow(long totalFlow) {
+    this.totalFlow = totalFlow;
+    return this;
+  }
+
+  public List<PeerInfo> getPeerList() {
+    return new ArrayList<>(peerList);
+  }
+
+  public NodeInfo setPeerList(List<PeerInfo> peerList) {
+    this.peerList = new ArrayList<>(peerList);
+    return this;
+  }
+
+  public ConfigNodeInfo getConfigNodeInfo() {
+    return configNodeInfo;
+  }
+
+  public NodeInfo setConfigNodeInfo(ConfigNodeInfo configNodeInfo) {
+    this.configNodeInfo = configNodeInfo;
+    return this;
+  }
+
+  public MachineInfo getMachineInfo() {
+    return machineInfo;
+  }
+
+  public NodeInfo setMachineInfo(MachineInfo machineInfo) {
+    this.machineInfo = machineInfo;
+    return this;
+  }
+
+  public Map<String, String> getCheatWitnessInfoMap() {
+    return cheatWitnessInfoMap;
+  }
+
+  public NodeInfo setCheatWitnessInfoMap(
+      Map<String, String> cheatWitnessInfoMap) {
+    this.cheatWitnessInfoMap = cheatWitnessInfoMap;
+    return this;
+  }
+
+  public Protocol.NodeInfo transferToProtoEntity() {
+    Protocol.NodeInfo.Builder builder = Protocol.NodeInfo.newBuilder();
+    builder.setBeginSyncNum(getBeginSyncNum());
+    builder.setBlock(getBlock());
+    builder.setSolidityBlock(getSolidityBlock());
+    builder.setCurrentConnectCount(getCurrentConnectCount());
+    builder.setActiveConnectCount(getActiveConnectCount());
+    builder.setPassiveConnectCount(getPassiveConnectCount());
+    builder.setTotalFlow(getTotalFlow());
+    builder.putAllCheatWitnessInfoMap(getCheatWitnessInfoMap());
+    for (PeerInfo peerInfo : getPeerList()) {
+      Protocol.NodeInfo.PeerInfo.Builder peerInfoBuilder = Protocol.NodeInfo.PeerInfo.newBuilder();
+      peerInfoBuilder.setLastSyncBlock(peerInfo.getLastSyncBlock());
+      peerInfoBuilder.setRemainNum(peerInfo.getRemainNum());
+      peerInfoBuilder.setLastBlockUpdateTime(peerInfo.getLastBlockUpdateTime());
+      peerInfoBuilder.setSyncFlag(peerInfo.isSyncFlag());
+      peerInfoBuilder.setHeadBlockTimeWeBothHave(peerInfo.getHeadBlockTimeWeBothHave());
+      peerInfoBuilder.setNeedSyncFromPeer(peerInfo.isSyncFlag());
+      peerInfoBuilder.setNeedSyncFromUs(peerInfo.isNeedSyncFromUs());
+      peerInfoBuilder.setHost(peerInfo.getHost());
+      peerInfoBuilder.setPort(peerInfo.getPort());
+      peerInfoBuilder.setNodeId(peerInfo.getNodeId());
+      peerInfoBuilder.setConnectTime(peerInfo.getConnectTime());
+      peerInfoBuilder.setAvgLatency(peerInfo.getAvgLatency());
+      peerInfoBuilder.setSyncToFetchSize(peerInfo.getSyncToFetchSize());
+      peerInfoBuilder.setSyncToFetchSizePeekNum(peerInfo.getSyncToFetchSizePeekNum());
+      peerInfoBuilder.setSyncBlockRequestedSize(peerInfo.getSyncBlockRequestedSize());
+      peerInfoBuilder.setUnFetchSynNum(peerInfo.getUnFetchSynNum());
+      peerInfoBuilder.setBlockInPorcSize(peerInfo.getBlockInPorcSize());
+      peerInfoBuilder.setHeadBlockWeBothHave(peerInfo.getHeadBlockWeBothHave());
+      peerInfoBuilder.setIsActive(peerInfo.isActive());
+      peerInfoBuilder.setScore(peerInfo.getScore());
+      peerInfoBuilder.setNodeCount(peerInfo.getNodeCount());
+      peerInfoBuilder.setInFlow(peerInfo.getInFlow());
+      peerInfoBuilder.setDisconnectTimes(peerInfo.getDisconnectTimes());
+      peerInfoBuilder.setLocalDisconnectReason(peerInfo.getLocalDisconnectReason());
+      peerInfoBuilder.setRemoteDisconnectReason(peerInfo.getRemoteDisconnectReason());
+      builder.addPeerInfoList(peerInfoBuilder.build());
+    }
+    ConfigNodeInfo configNodeInfo = getConfigNodeInfo();
+    if (configNodeInfo != null) {
+      Protocol.NodeInfo.ConfigNodeInfo.Builder configBuilder = Protocol.NodeInfo.ConfigNodeInfo
+          .newBuilder();
+      configBuilder.setCodeVersion(configNodeInfo.getCodeVersion());
+      configBuilder.setP2PVersion(configNodeInfo.getP2pVersion());
+      configBuilder.setListenPort(configNodeInfo.getListenPort());
+      configBuilder.setDiscoverEnable(configNodeInfo.isDiscoverEnable());
+      configBuilder.setActiveNodeSize(configNodeInfo.getActiveNodeSize());
+      configBuilder.setPassiveNodeSize(configNodeInfo.getPassiveNodeSize());
+      configBuilder.setSendNodeSize(configNodeInfo.getSendNodeSize());
+      configBuilder.setMaxConnectCount(configNodeInfo.getMaxConnectCount());
+      configBuilder.setSameIpMaxConnectCount(configNodeInfo.getSameIpMaxConnectCount());
+      configBuilder.setBackupListenPort(configNodeInfo.getBackupListenPort());
+      configBuilder.setBackupMemberSize(configNodeInfo.getBackupMemberSize());
+      configBuilder.setBackupPriority(configNodeInfo.getBackupPriority());
+      configBuilder.setDbVersion(configNodeInfo.getDbVersion());
+      configBuilder.setMinParticipationRate(configNodeInfo.getMinParticipationRate());
+      configBuilder.setSupportConstant(configNodeInfo.isSupportConstant());
+      configBuilder.setMinTimeRatio(configNodeInfo.getMinTimeRatio());
+      configBuilder.setMaxTimeRatio(configNodeInfo.getMaxTimeRatio());
+      configBuilder.setAllowCreationOfContracts(configNodeInfo.getAllowCreationOfContracts());
+      configBuilder.setAllowAdaptiveEnergy(configNodeInfo.getAllowAdaptiveEnergy());
+      builder.setConfigNodeInfo(configBuilder.build());
+    }
+    MachineInfo machineInfo = getMachineInfo();
+    if (machineInfo != null) {
+      Protocol.NodeInfo.MachineInfo.Builder machineBuilder = Protocol.NodeInfo.MachineInfo
+          .newBuilder();
+      machineBuilder.setThreadCount(machineInfo.getThreadCount());
+      machineBuilder.setDeadLockThreadCount(machineInfo.getDeadLockThreadCount());
+      machineBuilder.setCpuCount(machineInfo.getCpuCount());
+      machineBuilder.setTotalMemory(machineInfo.getTotalMemory());
+      machineBuilder.setFreeMemory(machineInfo.getFreeMemory());
+      machineBuilder.setCpuRate(machineInfo.getCpuRate());
+      machineBuilder.setJavaVersion(machineInfo.getJavaVersion());
+      machineBuilder.setOsName(machineInfo.getOsName());
+      machineBuilder.setJvmTotalMemoery(machineInfo.getJvmTotalMemoery());
+      machineBuilder.setJvmFreeMemory(machineInfo.getJvmFreeMemory());
+      machineBuilder.setProcessCpuRate(machineInfo.getProcessCpuRate());
+      for (MemoryDescInfo memoryDescInfo : machineInfo.getMemoryDescInfoList()) {
+        Protocol.NodeInfo.MachineInfo.MemoryDescInfo.Builder descBuilder = Protocol.NodeInfo.MachineInfo.MemoryDescInfo
+            .newBuilder();
+        descBuilder.setName(memoryDescInfo.getName());
+        descBuilder.setInitSize(memoryDescInfo.getInitSize());
+        descBuilder.setUseSize(memoryDescInfo.getUseSize());
+        descBuilder.setMaxSize(memoryDescInfo.getMaxSize());
+        descBuilder.setUseRate(memoryDescInfo.getUseRate());
+        machineBuilder.addMemoryDescInfoList(descBuilder.build());
+      }
+      for (DeadLockThreadInfo deadLockThreadInfo : machineInfo.getDeadLockThreadInfoList()) {
+        Protocol.NodeInfo.MachineInfo.DeadLockThreadInfo.Builder deadBuilder = Protocol.NodeInfo.MachineInfo.DeadLockThreadInfo
+            .newBuilder();
+        deadBuilder.setName(deadLockThreadInfo.getName());
+        deadBuilder.setLockName(deadLockThreadInfo.getLockName());
+        deadBuilder.setLockOwner(deadLockThreadInfo.getLockOwner());
+        deadBuilder.setState(deadLockThreadInfo.getState());
+        deadBuilder.setBlockTime(deadLockThreadInfo.getBlockTime());
+        deadBuilder.setWaitTime(deadLockThreadInfo.getWaitTime());
+        deadBuilder.setStackTrace(deadLockThreadInfo.getStackTrace());
+        machineBuilder.addDeadLockThreadInfoList(deadBuilder.build());
+      }
+      builder.setMachineInfo(machineBuilder.build());
+    }
+
+    return builder.build();
+  }
+
   public static class MachineInfo {
 
     /*machine information*/
@@ -45,6 +252,124 @@ public class NodeInfo {
     private double processCpuRate;
     private List<MemoryDescInfo> memoryDescInfoList = new ArrayList<>();
     private List<DeadLockThreadInfo> deadLockThreadInfoList = new ArrayList<>();
+
+    public int getThreadCount() {
+      return threadCount;
+    }
+
+    public MachineInfo setThreadCount(int threadCount) {
+      this.threadCount = threadCount;
+      return this;
+    }
+
+    public int getCpuCount() {
+      return cpuCount;
+    }
+
+    public MachineInfo setCpuCount(int cpuCount) {
+      this.cpuCount = cpuCount;
+      return this;
+    }
+
+    public long getTotalMemory() {
+      return totalMemory;
+    }
+
+    public MachineInfo setTotalMemory(long totalMemory) {
+      this.totalMemory = totalMemory;
+      return this;
+    }
+
+    public long getFreeMemory() {
+      return freeMemory;
+    }
+
+    public MachineInfo setFreeMemory(long freeMemory) {
+      this.freeMemory = freeMemory;
+      return this;
+    }
+
+    public double getCpuRate() {
+      return cpuRate;
+    }
+
+    public MachineInfo setCpuRate(double cpuRate) {
+      this.cpuRate = cpuRate;
+      return this;
+    }
+
+    public String getJavaVersion() {
+      return javaVersion;
+    }
+
+    public MachineInfo setJavaVersion(String javaVersion) {
+      this.javaVersion = javaVersion;
+      return this;
+    }
+
+    public String getOsName() {
+      return osName;
+    }
+
+    public MachineInfo setOsName(String osName) {
+      this.osName = osName;
+      return this;
+    }
+
+    public long getJvmTotalMemoery() {
+      return jvmTotalMemoery;
+    }
+
+    public MachineInfo setJvmTotalMemoery(long jvmTotalMemoery) {
+      this.jvmTotalMemoery = jvmTotalMemoery;
+      return this;
+    }
+
+    public long getJvmFreeMemory() {
+      return jvmFreeMemory;
+    }
+
+    public MachineInfo setJvmFreeMemory(long jvmFreeMemory) {
+      this.jvmFreeMemory = jvmFreeMemory;
+      return this;
+    }
+
+    public double getProcessCpuRate() {
+      return processCpuRate;
+    }
+
+    public MachineInfo setProcessCpuRate(double processCpuRate) {
+      this.processCpuRate = processCpuRate;
+      return this;
+    }
+
+    public List<MemoryDescInfo> getMemoryDescInfoList() {
+      return new ArrayList<>(memoryDescInfoList);
+    }
+
+    public MachineInfo setMemoryDescInfoList(
+        List<MemoryDescInfo> memoryDescInfoList) {
+      this.memoryDescInfoList = new ArrayList<>(memoryDescInfoList);
+      return this;
+    }
+
+    public int getDeadLockThreadCount() {
+      return deadLockThreadCount;
+    }
+
+    public MachineInfo setDeadLockThreadCount(int deadLockThreadCount) {
+      this.deadLockThreadCount = deadLockThreadCount;
+      return this;
+    }
+
+    public List<DeadLockThreadInfo> getDeadLockThreadInfoList() {
+      return new ArrayList<>(deadLockThreadInfoList);
+    }
+
+    public MachineInfo setDeadLockThreadInfoList(List<DeadLockThreadInfo> deadLockThreadInfoList) {
+      this.deadLockThreadInfoList = new ArrayList<>(deadLockThreadInfoList);
+      return this;
+    }
 
     public static class MemoryDescInfo {
 
@@ -172,124 +497,6 @@ public class NodeInfo {
         this.stackTrace = stackTrace;
         return this;
       }
-    }
-
-    public int getThreadCount() {
-      return threadCount;
-    }
-
-    public MachineInfo setThreadCount(int threadCount) {
-      this.threadCount = threadCount;
-      return this;
-    }
-
-    public int getCpuCount() {
-      return cpuCount;
-    }
-
-    public MachineInfo setCpuCount(int cpuCount) {
-      this.cpuCount = cpuCount;
-      return this;
-    }
-
-    public long getTotalMemory() {
-      return totalMemory;
-    }
-
-    public MachineInfo setTotalMemory(long totalMemory) {
-      this.totalMemory = totalMemory;
-      return this;
-    }
-
-    public long getFreeMemory() {
-      return freeMemory;
-    }
-
-    public MachineInfo setFreeMemory(long freeMemory) {
-      this.freeMemory = freeMemory;
-      return this;
-    }
-
-    public double getCpuRate() {
-      return cpuRate;
-    }
-
-    public MachineInfo setCpuRate(double cpuRate) {
-      this.cpuRate = cpuRate;
-      return this;
-    }
-
-    public String getJavaVersion() {
-      return javaVersion;
-    }
-
-    public MachineInfo setJavaVersion(String javaVersion) {
-      this.javaVersion = javaVersion;
-      return this;
-    }
-
-    public String getOsName() {
-      return osName;
-    }
-
-    public MachineInfo setOsName(String osName) {
-      this.osName = osName;
-      return this;
-    }
-
-    public long getJvmTotalMemoery() {
-      return jvmTotalMemoery;
-    }
-
-    public MachineInfo setJvmTotalMemoery(long jvmTotalMemoery) {
-      this.jvmTotalMemoery = jvmTotalMemoery;
-      return this;
-    }
-
-    public long getJvmFreeMemory() {
-      return jvmFreeMemory;
-    }
-
-    public MachineInfo setJvmFreeMemory(long jvmFreeMemory) {
-      this.jvmFreeMemory = jvmFreeMemory;
-      return this;
-    }
-
-    public double getProcessCpuRate() {
-      return processCpuRate;
-    }
-
-    public MachineInfo setProcessCpuRate(double processCpuRate) {
-      this.processCpuRate = processCpuRate;
-      return this;
-    }
-
-    public List<MemoryDescInfo> getMemoryDescInfoList() {
-      return new ArrayList<>(memoryDescInfoList);
-    }
-
-    public MachineInfo setMemoryDescInfoList(
-        List<MemoryDescInfo> memoryDescInfoList) {
-      this.memoryDescInfoList = new ArrayList<>(memoryDescInfoList);
-      return this;
-    }
-
-    public int getDeadLockThreadCount() {
-      return deadLockThreadCount;
-    }
-
-    public MachineInfo setDeadLockThreadCount(int deadLockThreadCount) {
-      this.deadLockThreadCount = deadLockThreadCount;
-      return this;
-    }
-
-    public List<DeadLockThreadInfo> getDeadLockThreadInfoList() {
-      return new ArrayList<>(deadLockThreadInfoList);
-    }
-
-    public MachineInfo setDeadLockThreadInfoList(List<DeadLockThreadInfo> deadLockThreadInfoList) {
-      this.deadLockThreadInfoList = new ArrayList<>(deadLockThreadInfoList);
-      return this;
     }
   }
 
@@ -505,212 +712,5 @@ public class NodeInfo {
       return this;
     }
 
-  }
-
-  public long getBeginSyncNum() {
-    return beginSyncNum;
-  }
-
-  public NodeInfo setBeginSyncNum(long beginSyncNum) {
-    this.beginSyncNum = beginSyncNum;
-    return this;
-  }
-
-  public String getBlock() {
-    return block;
-  }
-
-  public NodeInfo setBlock(String block) {
-    this.block = block;
-    return this;
-  }
-
-  public String getSolidityBlock() {
-    return solidityBlock;
-  }
-
-  public NodeInfo setSolidityBlock(String solidityBlock) {
-    this.solidityBlock = solidityBlock;
-    return this;
-  }
-
-  public int getCurrentConnectCount() {
-    return currentConnectCount;
-  }
-
-  public NodeInfo setCurrentConnectCount(int currentConnectCount) {
-    this.currentConnectCount = currentConnectCount;
-    return this;
-  }
-
-  public int getActiveConnectCount() {
-    return activeConnectCount;
-  }
-
-  public NodeInfo setActiveConnectCount(int activeConnectCount) {
-    this.activeConnectCount = activeConnectCount;
-    return this;
-  }
-
-  public int getPassiveConnectCount() {
-    return passiveConnectCount;
-  }
-
-  public NodeInfo setPassiveConnectCount(int passiveConnectCount) {
-    this.passiveConnectCount = passiveConnectCount;
-    return this;
-  }
-
-  public long getTotalFlow() {
-    return totalFlow;
-  }
-
-  public NodeInfo setTotalFlow(long totalFlow) {
-    this.totalFlow = totalFlow;
-    return this;
-  }
-
-  public List<PeerInfo> getPeerList() {
-    return new ArrayList<>(peerList);
-  }
-
-  public NodeInfo setPeerList(List<PeerInfo> peerList) {
-    this.peerList = new ArrayList<>(peerList);
-    return this;
-  }
-
-  public ConfigNodeInfo getConfigNodeInfo() {
-    return configNodeInfo;
-  }
-
-  public NodeInfo setConfigNodeInfo(ConfigNodeInfo configNodeInfo) {
-    this.configNodeInfo = configNodeInfo;
-    return this;
-  }
-
-  public MachineInfo getMachineInfo() {
-    return machineInfo;
-  }
-
-  public NodeInfo setMachineInfo(MachineInfo machineInfo) {
-    this.machineInfo = machineInfo;
-    return this;
-  }
-
-  public Map<String, String> getCheatWitnessInfoMap() {
-    return cheatWitnessInfoMap;
-  }
-
-  public NodeInfo setCheatWitnessInfoMap(
-      Map<String, String> cheatWitnessInfoMap) {
-    this.cheatWitnessInfoMap = cheatWitnessInfoMap;
-    return this;
-  }
-
-  public Protocol.NodeInfo transferToProtoEntity() {
-    Protocol.NodeInfo.Builder builder = Protocol.NodeInfo.newBuilder();
-    builder.setBeginSyncNum(getBeginSyncNum());
-    builder.setBlock(getBlock());
-    builder.setSolidityBlock(getSolidityBlock());
-    builder.setCurrentConnectCount(getCurrentConnectCount());
-    builder.setActiveConnectCount(getActiveConnectCount());
-    builder.setPassiveConnectCount(getPassiveConnectCount());
-    builder.setTotalFlow(getTotalFlow());
-    builder.putAllCheatWitnessInfoMap(getCheatWitnessInfoMap());
-    for (PeerInfo peerInfo : getPeerList()) {
-      Protocol.NodeInfo.PeerInfo.Builder peerInfoBuilder = Protocol.NodeInfo.PeerInfo.newBuilder();
-      peerInfoBuilder.setLastSyncBlock(peerInfo.getLastSyncBlock());
-      peerInfoBuilder.setRemainNum(peerInfo.getRemainNum());
-      peerInfoBuilder.setLastBlockUpdateTime(peerInfo.getLastBlockUpdateTime());
-      peerInfoBuilder.setSyncFlag(peerInfo.isSyncFlag());
-      peerInfoBuilder.setHeadBlockTimeWeBothHave(peerInfo.getHeadBlockTimeWeBothHave());
-      peerInfoBuilder.setNeedSyncFromPeer(peerInfo.isSyncFlag());
-      peerInfoBuilder.setNeedSyncFromUs(peerInfo.isNeedSyncFromUs());
-      peerInfoBuilder.setHost(peerInfo.getHost());
-      peerInfoBuilder.setPort(peerInfo.getPort());
-      peerInfoBuilder.setNodeId(peerInfo.getNodeId());
-      peerInfoBuilder.setConnectTime(peerInfo.getConnectTime());
-      peerInfoBuilder.setAvgLatency(peerInfo.getAvgLatency());
-      peerInfoBuilder.setSyncToFetchSize(peerInfo.getSyncToFetchSize());
-      peerInfoBuilder.setSyncToFetchSizePeekNum(peerInfo.getSyncToFetchSizePeekNum());
-      peerInfoBuilder.setSyncBlockRequestedSize(peerInfo.getSyncBlockRequestedSize());
-      peerInfoBuilder.setUnFetchSynNum(peerInfo.getUnFetchSynNum());
-      peerInfoBuilder.setBlockInPorcSize(peerInfo.getBlockInPorcSize());
-      peerInfoBuilder.setHeadBlockWeBothHave(peerInfo.getHeadBlockWeBothHave());
-      peerInfoBuilder.setIsActive(peerInfo.isActive());
-      peerInfoBuilder.setScore(peerInfo.getScore());
-      peerInfoBuilder.setNodeCount(peerInfo.getNodeCount());
-      peerInfoBuilder.setInFlow(peerInfo.getInFlow());
-      peerInfoBuilder.setDisconnectTimes(peerInfo.getDisconnectTimes());
-      peerInfoBuilder.setLocalDisconnectReason(peerInfo.getLocalDisconnectReason());
-      peerInfoBuilder.setRemoteDisconnectReason(peerInfo.getRemoteDisconnectReason());
-      builder.addPeerInfoList(peerInfoBuilder.build());
-    }
-    ConfigNodeInfo configNodeInfo = getConfigNodeInfo();
-    if (configNodeInfo != null) {
-      Protocol.NodeInfo.ConfigNodeInfo.Builder configBuilder = Protocol.NodeInfo.ConfigNodeInfo
-          .newBuilder();
-      configBuilder.setCodeVersion(configNodeInfo.getCodeVersion());
-      configBuilder.setP2PVersion(configNodeInfo.getP2pVersion());
-      configBuilder.setListenPort(configNodeInfo.getListenPort());
-      configBuilder.setDiscoverEnable(configNodeInfo.isDiscoverEnable());
-      configBuilder.setActiveNodeSize(configNodeInfo.getActiveNodeSize());
-      configBuilder.setPassiveNodeSize(configNodeInfo.getPassiveNodeSize());
-      configBuilder.setSendNodeSize(configNodeInfo.getSendNodeSize());
-      configBuilder.setMaxConnectCount(configNodeInfo.getMaxConnectCount());
-      configBuilder.setSameIpMaxConnectCount(configNodeInfo.getSameIpMaxConnectCount());
-      configBuilder.setBackupListenPort(configNodeInfo.getBackupListenPort());
-      configBuilder.setBackupMemberSize(configNodeInfo.getBackupMemberSize());
-      configBuilder.setBackupPriority(configNodeInfo.getBackupPriority());
-      configBuilder.setDbVersion(configNodeInfo.getDbVersion());
-      configBuilder.setMinParticipationRate(configNodeInfo.getMinParticipationRate());
-      configBuilder.setSupportConstant(configNodeInfo.isSupportConstant());
-      configBuilder.setMinTimeRatio(configNodeInfo.getMinTimeRatio());
-      configBuilder.setMaxTimeRatio(configNodeInfo.getMaxTimeRatio());
-      configBuilder.setAllowCreationOfContracts(configNodeInfo.getAllowCreationOfContracts());
-      configBuilder.setAllowAdaptiveEnergy(configNodeInfo.getAllowAdaptiveEnergy());
-      builder.setConfigNodeInfo(configBuilder.build());
-    }
-    MachineInfo machineInfo = getMachineInfo();
-    if (machineInfo != null) {
-      Protocol.NodeInfo.MachineInfo.Builder machineBuilder = Protocol.NodeInfo.MachineInfo
-          .newBuilder();
-      machineBuilder.setThreadCount(machineInfo.getThreadCount());
-      machineBuilder.setDeadLockThreadCount(machineInfo.getDeadLockThreadCount());
-      machineBuilder.setCpuCount(machineInfo.getCpuCount());
-      machineBuilder.setTotalMemory(machineInfo.getTotalMemory());
-      machineBuilder.setFreeMemory(machineInfo.getFreeMemory());
-      machineBuilder.setCpuRate(machineInfo.getCpuRate());
-      machineBuilder.setJavaVersion(machineInfo.getJavaVersion());
-      machineBuilder.setOsName(machineInfo.getOsName());
-      machineBuilder.setJvmTotalMemoery(machineInfo.getJvmTotalMemoery());
-      machineBuilder.setJvmFreeMemory(machineInfo.getJvmFreeMemory());
-      machineBuilder.setProcessCpuRate(machineInfo.getProcessCpuRate());
-      for (MemoryDescInfo memoryDescInfo : machineInfo.getMemoryDescInfoList()) {
-        Protocol.NodeInfo.MachineInfo.MemoryDescInfo.Builder descBuilder = Protocol.NodeInfo.MachineInfo.MemoryDescInfo
-            .newBuilder();
-        descBuilder.setName(memoryDescInfo.getName());
-        descBuilder.setInitSize(memoryDescInfo.getInitSize());
-        descBuilder.setUseSize(memoryDescInfo.getUseSize());
-        descBuilder.setMaxSize(memoryDescInfo.getMaxSize());
-        descBuilder.setUseRate(memoryDescInfo.getUseRate());
-        machineBuilder.addMemoryDescInfoList(descBuilder.build());
-      }
-      for (DeadLockThreadInfo deadLockThreadInfo : machineInfo.getDeadLockThreadInfoList()) {
-        Protocol.NodeInfo.MachineInfo.DeadLockThreadInfo.Builder deadBuilder = Protocol.NodeInfo.MachineInfo.DeadLockThreadInfo
-            .newBuilder();
-        deadBuilder.setName(deadLockThreadInfo.getName());
-        deadBuilder.setLockName(deadLockThreadInfo.getLockName());
-        deadBuilder.setLockOwner(deadLockThreadInfo.getLockOwner());
-        deadBuilder.setState(deadLockThreadInfo.getState());
-        deadBuilder.setBlockTime(deadLockThreadInfo.getBlockTime());
-        deadBuilder.setWaitTime(deadLockThreadInfo.getWaitTime());
-        deadBuilder.setStackTrace(deadLockThreadInfo.getStackTrace());
-        machineBuilder.addDeadLockThreadInfoList(deadBuilder.build());
-      }
-      builder.setMachineInfo(machineBuilder.build());
-    }
-
-    return builder.build();
   }
 }

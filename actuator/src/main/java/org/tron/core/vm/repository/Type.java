@@ -76,19 +76,19 @@ public class Type {
 
   /**
    * @param type
-   * @return
-   */
-  public boolean isValidType(int type) {
-    return (type & VALUE_TYPE_UNKNOWN) == VALUE_TYPE_NORMAL;
-  }
-
-  /**
-   * @param type
    */
   public void setType(int type) {
     if (isValidType(type)) {
       this.type = type;
     }
+  }
+
+  /**
+   * @param type
+   * @return
+   */
+  public boolean isValidType(int type) {
+    return (type & VALUE_TYPE_UNKNOWN) == VALUE_TYPE_NORMAL;
   }
 
   /**

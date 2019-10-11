@@ -23,13 +23,11 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -38,13 +36,21 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 @Slf4j
 public class WalletTestAssetIssue008 {
 
+  private static final long now = System.currentTimeMillis();
+  private static final long totalSupply = now;
+  private static String name = "assetissue008" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
+  String description = "test query assetissue from soliditynode";
+  String url = "https://testqueryassetissue.com/from/soliditynode/";
+  //get account
+  ECKey ecKey = new ECKey(Utils.getRandom());
+  byte[] queryAssetIssueFromSoliAddress = ecKey.getAddress();
+  String queryAssetIssueKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -54,16 +60,10 @@ public class WalletTestAssetIssue008 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
-  private static final long now = System.currentTimeMillis();
-  private static String name = "assetissue008" + Long.toString(now);
-  private static final long totalSupply = now;
-  String description = "test query assetissue from soliditynode";
-  String url = "https://testqueryassetissue.com/from/soliditynode/";
-
-  //get account
-  ECKey ecKey = new ECKey(Utils.getRandom());
-  byte[] queryAssetIssueFromSoliAddress = ecKey.getAddress();
-  String queryAssetIssueKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+  public static String loadPubKey() {
+    char[] buf = new char[0x100];
+    return String.valueOf(buf, 32, 130);
+  }
 
   @BeforeSuite
   public void beforeSuite() {
@@ -88,7 +88,6 @@ public class WalletTestAssetIssue008 {
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
-
 
   @Test(enabled = true, description = "Get asset issue list from Solidity")
   public void testGetAllAssetIssueFromSolidity() {
@@ -130,12 +129,12 @@ public class WalletTestAssetIssue008 {
 
   }
 
-
   @AfterMethod
   public void aftertest() {
     PublicMethed.freedResource(queryAssetIssueFromSoliAddress, queryAssetIssueKey, fromAddress,
         blockingStubFull);
   }
+
   /**
    * constructor.
    */
@@ -167,11 +166,6 @@ public class WalletTestAssetIssue008 {
       ecKey = ECKey.fromPublicOnly(pubKeyHex);
     }
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
-  public static String loadPubKey() {
-    char[] buf = new char[0x100];
-    return String.valueOf(buf, 32, 130);
   }
 
   public byte[] getAddress(ECKey ecKey) {

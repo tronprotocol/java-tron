@@ -12,12 +12,10 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.config.args.Witness;
 import org.tron.core.db.Manager;
 
 public class WitnessControllerTest {
@@ -33,6 +31,8 @@ public class WitnessControllerTest {
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
+  ByteString blank = ByteString.copyFrom(new byte[1]);
+
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
@@ -45,8 +45,6 @@ public class WitnessControllerTest {
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
-
-  ByteString blank = ByteString.copyFrom(new byte[1]);
 
   @Test
   public void testSlot() {

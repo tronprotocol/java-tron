@@ -41,7 +41,21 @@ public class WalletTestZenToken009 {
   DecryptNotes notes;
   String memo;
   Note note;
-
+  String[] permissionKeyString = new String[2];
+  String[] ownerKeyString = new String[2];
+  String accountPermissionJson = "";
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] manager1Address = ecKey1.getAddress();
+  String manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] manager2Address = ecKey2.getAddress();
+  String manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] ownerAddress = ecKey3.getAddress();
+  String ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+  ECKey ecKey4 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey4.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -56,35 +70,10 @@ public class WalletTestZenToken009 {
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 5 * zenTokenFee;
   private Long sendTokenAmount = 3 * zenTokenFee;
-
-
-  String[] permissionKeyString = new String[2];
-  String[] ownerKeyString = new String[2];
-  String accountPermissionJson = "";
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] manager1Address = ecKey1.getAddress();
-  String manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] manager2Address = ecKey2.getAddress();
-  String manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-  ECKey ecKey3 = new ECKey(Utils.getRandom());
-  byte[] ownerAddress = ecKey3.getAddress();
-  String ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
-
-  ECKey ecKey4 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey4.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
-
-
-
   private long multiSignFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.multiSignFee");
   private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.updateAccountPermissionFee");
-
 
 
   /**
@@ -148,7 +137,7 @@ public class WalletTestZenToken009 {
         PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
         blockingStubFull);
     final Long beforeBalance = PublicMethed
-        .queryAccount(zenTokenOwnerAddress,blockingStubFull).getBalance();
+        .queryAccount(zenTokenOwnerAddress, blockingStubFull).getBalance();
     final Long beforeNetUsed = PublicMethed
         .getAccountResource(zenTokenOwnerAddress, blockingStubFull).getFreeNetUsed();
 
@@ -162,7 +151,7 @@ public class WalletTestZenToken009 {
         null, null,
         shieldOutList,
         null, 0,
-        zenTokenOwnerKey, blockingStubFull,0,ownerKeyString));
+        zenTokenOwnerKey, blockingStubFull, 0, ownerKeyString));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
@@ -173,9 +162,9 @@ public class WalletTestZenToken009 {
     Assert.assertTrue(beforeAssetBalance - afterAssetBalance == sendTokenAmount);
     logger.info("Before net:" + beforeNetUsed);
     logger.info("After net:" + afterNetUsed);
-    Assert.assertEquals(beforeNetUsed,afterNetUsed);
+    Assert.assertEquals(beforeNetUsed, afterNetUsed);
     final Long afterBalance = PublicMethed
-        .queryAccount(zenTokenOwnerAddress,blockingStubFull).getBalance();
+        .queryAccount(zenTokenOwnerAddress, blockingStubFull).getBalance();
     Assert.assertTrue(beforeBalance - afterBalance == multiSignFee);
     notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
     note = notes.getNoteTxs(0).getNote();
@@ -193,7 +182,6 @@ public class WalletTestZenToken009 {
     notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
     note = notes.getNoteTxs(0).getNote();
 
-
     shieldOutList.clear();
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, receiverAddress,
         "" + (note.getValue() - zenTokenFee), memo);
@@ -203,8 +191,7 @@ public class WalletTestZenToken009 {
         shieldAddressInfo.get(), notes.getNoteTxs(0),
         shieldOutList,
         null, 0,
-        zenTokenOwnerKey, blockingStubFull,0, ownerKeyString));
-
+        zenTokenOwnerKey, blockingStubFull, 0, ownerKeyString));
 
     Assert.assertFalse(PublicMethed.sendShieldCoin(
         null, 321321,
@@ -214,8 +201,7 @@ public class WalletTestZenToken009 {
         zenTokenOwnerKey, blockingStubFull));
 
     Assert.assertFalse(PublicMethed.getSpendResult(shieldAddressInfo.get(),
-        notes.getNoteTxs(0),blockingStubFull).getResult());
-
+        notes.getNoteTxs(0), blockingStubFull).getResult());
 
 
   }
@@ -230,7 +216,7 @@ public class WalletTestZenToken009 {
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
             PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
             blockingStubFull), zenTokenOwnerAddress,
-        zenTokenOwnerKey, blockingStubFull,ownerKeyString);
+        zenTokenOwnerKey, blockingStubFull, ownerKeyString);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

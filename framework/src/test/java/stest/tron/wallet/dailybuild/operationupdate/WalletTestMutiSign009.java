@@ -28,44 +28,36 @@ import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 @Slf4j
 public class WalletTestMutiSign009 {
 
+  private static final long now = System.currentTimeMillis();
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final byte[] witness001Address = PublicMethed.getFinalAddress(witnessKey001);
-
+  private final String operations = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.operations");
+  String[] permissionKeyString = new String[2];
+  String[] ownerKeyString = new String[1];
+  String accountPermissionJson = "";
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] manager1Address = ecKey1.getAddress();
+  String manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] manager2Address = ecKey2.getAddress();
+  String manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private long multiSignFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.multiSignFee");
   private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.updateAccountPermissionFee");
-  private final String operations = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.operations");
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
-  private static final long now = System.currentTimeMillis();
-
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
-
-  String[] permissionKeyString = new String[2];
-  String[] ownerKeyString = new String[1];
-  String accountPermissionJson = "";
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] manager1Address = ecKey1.getAddress();
-  String manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] manager2Address = ecKey2.getAddress();
-  String manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
 
   @BeforeSuite
   public void beforeSuite() {
