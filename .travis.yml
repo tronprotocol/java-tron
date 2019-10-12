@@ -1,24 +1,13 @@
 language: ruby
-
 cache:
   directories:
-  - $HOME/protobuf
-
+  - "$HOME/protobuf"
 sudo: false
-
-before_install:
-  #- bash install-protobuf.sh
-  #- bash install-googleapis.sh
-
-# check what has been installed by listing contents of protobuf folder
-before_script:
-  #- ls -R $HOME/protobuf
-
-# let's use protobuf
+before_install: 
+before_script: 
 script:
-#  - $HOME/protobuf/bin/protoc --java_out=./  ./core/*.proto ./api/*.proto
-#  - $HOME/protobuf/bin/protoc -I. -I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --go_out=./  ./core/*.proto
-#  - $HOME/protobuf/bin/protoc -I. -I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --go_out=./  ./api/*.proto
-#  - $HOME/protobuf/bin/protoc -I. -I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --grpc-gateway_out=logtostderr=true:./  ./api/*.proto
-
-   - ls -l
+- ls -l
+notifications:
+  slack:
+    secure: lCDOgsHefxu0Sd7J4N9wyo6Y/dvAentdf+q+R6R+SpJUym+tI7h4lPVwDFl9iQabFahLC6bV4lgfv/US0aqjL4QE/c3ZsWBDo2dtkfCzGmkCiU6mGd/bPWLFP9e28OHEFBzUT8ukc5O3GDJREnzscIqGk7Knv3QYQGsoZw563grzVG9VVfqKhsVgrAjhzDwiCoUNSiND09ZNifGrHr7JBQ2u0wrZRR+E9yOQ1K3pNnfq5wAJjbJ0LiuxRlLZoajR7z8VeP8ytet+u2XQE1+fd089XEa/thYxtt0ZvhnyOYk1vmEldDdVakqMqVaa9MKiyLBNnLby1xdSosrM55ZB3tFmXQo6EMIaNKyO07xMUJ/hK0gEppQhHMDlbOW31YmOshVutp2yN4tRF8D3ot1OcYPXsVeXFG+kMUR0PYM71YiqZy8UVgoslKgRgEehvxjuAhbMYXMG878bznco9L64TzubFcjOx0+owR8H0kCXDNf5Xwm+tlc2onWlUDerEWIAignVOT1iR8KK0U+EnhTfw2BWfDV+BkSBvaeFbmnsFgz00d7qSvzbtCJ9KdDj3f4FUjUuORNv5ykMGCv1MrvAvttAZPTNIc/wOFJ9yRC2NhoUfbNILYg7bYhmqKiicnflln03Bh7Ml2mzldzPaRMm7eUBUwYTFbgC83YusX4fxBg=
+  if: branch = master
