@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -18,13 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
 import org.tron.consensus.ConsensusDelegate;
+import org.tron.consensus.pbft.PbftManager;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
-import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -37,19 +39,45 @@ public class MaintenanceManager {
   private IncentiveManager incentiveManager;
 
   @Setter
+  private PbftManager pbftManager;
+
+  @Setter
   private DposService dposService;
 
-  public void applyBlock(Block block) {
-    long blockNum = block.getBlockHeader().getRawData().getNumber();
-    long blockTime = block.getBlockHeader().getRawData().getTimestamp();
+  @Getter
+  private final List<ByteString> beforeWitness = new ArrayList<>();
+  @Getter
+  private final List<ByteString> currentWitness = new ArrayList<>();
+  @Getter
+  private long beforeMaintenanceTime;
+
+  public void init() {
+    currentWitness.addAll(consensusDelegate.getActiveWitnesses());
+  }
+
+  public void applyBlock(BlockCapsule block) {
+    long blockNum = block.getInstance().getBlockHeader().getRawData().getNumber();
+    long blockTime = block.getInstance().getBlockHeader().getRawData().getTimestamp();
     boolean flag = consensusDelegate.getNextMaintenanceTime() <= blockTime;
     if (flag) {
       if (blockNum != 1) {
+        updateWitnessValue(beforeWitness);
+        beforeMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
         doMaintenance();
+        updateWitnessValue(currentWitness);
+        //pbft sr msg
+        pbftManager.srPrePrepare(block, currentWitness);
       }
       consensusDelegate.updateNextMaintenanceTime(blockTime);
     }
     consensusDelegate.saveStateFlag(flag ? 1 : 0);
+    //pbft block msg
+    pbftManager.blockPrePrepare(block);
+  }
+
+  private void updateWitnessValue(List<ByteString> srList) {
+    srList.clear();
+    srList.addAll(consensusDelegate.getActiveWitnesses());
   }
 
   public void doMaintenance() {

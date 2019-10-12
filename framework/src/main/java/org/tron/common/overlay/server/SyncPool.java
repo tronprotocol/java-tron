@@ -59,7 +59,6 @@ public class SyncPool {
   private PeerClient peerClient;
 
   public void init() {
-
     channelManager = ctx.getBean(ChannelManager.class);
 
     peerClient = ctx.getBean(PeerClient.class);

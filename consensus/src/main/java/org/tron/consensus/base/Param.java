@@ -8,6 +8,8 @@ import org.tron.core.config.args.GenesisBlock;
 
 public class Param {
 
+  private static volatile Param param = new Param();
+
   @Getter
   @Setter
   private boolean enable;
@@ -29,9 +31,32 @@ public class Param {
   @Getter
   @Setter
   private BlockHandle blockHandle;
+  @Getter
+  @Setter
+  private int CheckMsgCount;
+  @Getter
+  @Setter
+  private int agreeNodeCount;
+  @Getter
+  @Setter
+  private PbftInterface pbftInterface;
+
+  private Param() {
+
+  }
+
+  public static Param getInstance() {
+    if (param == null) {
+      synchronized (Param.class) {
+        if (param == null) {
+          param = new Param();
+        }
+      }
+    }
+    return param;
+  }
 
   public class Miner {
-
     @Getter
     @Setter
     private byte[] privateKey;
@@ -49,5 +74,9 @@ public class Param {
       this.privateKeyAddress = privateKeyAddress;
       this.witnessAddress = witnessAddress;
     }
+  }
+
+  public Miner getMiner() {
+    return miners.get(0);
   }
 }

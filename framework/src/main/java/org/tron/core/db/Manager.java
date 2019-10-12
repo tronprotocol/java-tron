@@ -321,6 +321,14 @@ public class Manager {
         }
       };
 
+  @Autowired
+  @Getter
+  private PbftCommitMsgStore pbftCommitMsgStore;
+
+  @Autowired
+  @Getter
+  private CommonDataBase commonDataBase;
+
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
   }
@@ -972,7 +980,7 @@ public class Manager {
         Exception exception = null;
         // todo  process the exception carefully later
         try (ISession tmpSession = revokingStore.buildSession()) {
-          applyBlock(item.getBlk());
+          applyBlock(item.getBlk().setSwitch(true));
           tmpSession.commit();
         } catch (AccountResourceInsufficientException
             | ValidateSignatureException
@@ -1010,7 +1018,7 @@ public class Manager {
             for (KhaosBlock khaosBlock : second) {
               // todo  process the exception carefully later
               try (ISession tmpSession = revokingStore.buildSession()) {
-                applyBlock(khaosBlock.getBlk());
+                applyBlock(khaosBlock.getBlk().setSwitch(true));
                 tmpSession.commit();
               } catch (AccountResourceInsufficientException
                   | ValidateSignatureException
@@ -1540,7 +1548,7 @@ public class Manager {
       forkController.reset();
     }
 
-    if (!consensus.applyBlock(block.getInstance())) {
+    if (!consensus.applyBlock(block)) {
       throw new BadBlockException("consensus apply block failed");
     }
 

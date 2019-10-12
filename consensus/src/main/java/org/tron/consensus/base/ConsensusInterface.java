@@ -1,5 +1,6 @@
 package org.tron.consensus.base;
 
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.protos.Protocol.Block;
 
 public interface ConsensusInterface {
@@ -12,6 +13,6 @@ public interface ConsensusInterface {
 
   boolean validBlock(Block block);
 
-  boolean applyBlock(Block block);
+  boolean applyBlock(BlockCapsule block);
 
 }

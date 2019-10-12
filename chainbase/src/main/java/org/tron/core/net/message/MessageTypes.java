@@ -49,6 +49,10 @@ public enum MessageTypes {
 
   DISCOVER_PEERS(0x33),
 
+  PBFT_BLOCK_MSG(0x34),
+
+  PBFT_SR_MSG(0x35),
+
   LAST(0xFF);
 
   private static final Map<Integer, MessageTypes> intToTypeMap = new HashMap<>();
@@ -83,6 +87,10 @@ public enum MessageTypes {
 
   public byte asByte() {
     return (byte) (type);
+  }
+
+  public static boolean inPbftRange(byte code) {
+    return code >= PBFT_BLOCK_MSG.asByte() && code <= PBFT_SR_MSG.asByte();
   }
 
   @Override

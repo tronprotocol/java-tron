@@ -1,6 +1,8 @@
 package org.tron.core.db.backup;
 
+import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -11,9 +13,13 @@ import org.rocksdb.RocksDB;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
+import org.tron.consensus.base.Param;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.dpos.DposSlot;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
@@ -21,6 +27,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.ManagerForTest;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.SnapshotManager;
+import org.tron.protos.Protocol.Block;
 
 @Slf4j
 public class BackupDbUtilTest {
@@ -90,6 +97,12 @@ public class BackupDbUtilTest {
   public void testDoBackup() {
     PropUtil.writeProperty(propPath, BackupDbUtil.getDB_BACKUP_STATE(),
         String.valueOf("11"));
+    byte[] pk = ByteArray.fromHexString("41f08012b4881c320eb40b80f1228731898824e09d");
+    Param param = Param.getInstance();
+    List<Miner> minerList = new ArrayList<>();
+    Param.Miner miner = param.new Miner(pk, null, null);
+    minerList.add(miner);
+    param.setMiners(minerList);
     mngForTest.pushNTestBlock(50);
     List<Chainbase> alist = ((SnapshotManager) dbBackupUtil.getDb()).getDbs();
 

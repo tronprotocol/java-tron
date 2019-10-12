@@ -29,15 +29,20 @@ public class ConsensusService {
   @Autowired
   private BlockHandleImpl blockHandle;
 
+  @Autowired
+  private PbftBaseImpl pbftBaseImpl;
+
   private Args args = Args.getInstance();
 
   public void start() {
-    Param param = new Param();
+    Param param = Param.getInstance();
     param.setEnable(args.isWitness());
     param.setGenesisBlock(args.getGenesisBlock());
     param.setMinParticipationRate(args.getMinParticipationRate());
     param.setBlockProduceTimeoutPercent(Args.getInstance().getBlockProducedTimeOut());
     param.setNeedSyncCheck(args.isNeedSyncCheck());
+    param.setCheckMsgCount(args.getCheckMsgCount());
+    param.setAgreeNodeCount(args.getAgreeNodeCount());
     List<Miner> miners = new ArrayList<>();
     byte[] privateKey = ByteArray
         .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey());
@@ -53,7 +58,9 @@ public class ConsensusService {
     }
     param.setMiners(miners);
     param.setBlockHandle(blockHandle);
+    param.setPbftInterface(pbftBaseImpl);
     consensus.start(param);
+    logger.info("consensus service start success");
   }
 
   public void stop() {

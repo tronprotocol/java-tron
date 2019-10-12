@@ -22,6 +22,7 @@ import org.tron.consensus.base.BlockHandle;
 import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.protos.Protocol.Block;
 
@@ -93,6 +94,7 @@ public class DposService implements ConsensusInterface {
       });
       sortWitness(witnesses);
       consensusDelegate.saveActiveWitnesses(witnesses);
+      maintenanceManager.init();
     }
 
     dposTask.init();
@@ -135,9 +137,9 @@ public class DposService implements ConsensusInterface {
   }
 
   @Override
-  public boolean applyBlock(Block block) {
-    statisticManager.applyBlock(block);
-    incentiveManager.applyBlock(block);
+  public boolean applyBlock(BlockCapsule block) {
+    statisticManager.applyBlock(block.getInstance());
+    incentiveManager.applyBlock(block.getInstance());
     maintenanceManager.applyBlock(block);
     updateSolidBlock();
     return true;

@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.consensus.base.Constant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.config.args.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -500,6 +501,14 @@ public class Args {
   @Setter
   private RateLimiterInitialization rateLimiterInitialization;
 
+  @Getter
+  @Setter
+  private int agreeNodeCount;
+
+  @Getter
+  @Setter
+  private int checkMsgCount;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -582,6 +591,8 @@ public class Args {
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
     INSTANCE.shieldedTransInPendingMaxCounts = 10;
+    INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    INSTANCE.checkMsgCount = 1;
   }
 
   /**
@@ -1024,6 +1035,16 @@ public class Args {
     INSTANCE.rateLimiterInitialization =
         config.hasPath("rate.limiter") ? getRateLimiterFromConfig(config)
             : new RateLimiterInitialization();
+
+    INSTANCE.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
+        .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    INSTANCE.agreeNodeCount = INSTANCE.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
+        ? MAX_ACTIVE_WITNESS_NUM : INSTANCE.agreeNodeCount;
+    if (INSTANCE.isWitness()) {
+      INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    }
+    INSTANCE.checkMsgCount = config.hasPath("node.checkMsgCount") ? config
+        .getInt("node.checkMsgCount") : 1;
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {

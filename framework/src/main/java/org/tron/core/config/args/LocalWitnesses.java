@@ -105,4 +105,14 @@ public class LocalWitnesses {
     return privateKeys.get(0);
   }
 
+  public byte[] getPublicKey() {
+    if (CollectionUtils.isEmpty(privateKeys)) {
+      logger.warn("privateKey is null");
+      return null;
+    }
+    byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
+    final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    return ecKey.getAddress();
+  }
+
 }

@@ -57,6 +57,17 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   private List<TransactionCapsule> transactions = new ArrayList<>();
   private StringBuffer toStringBuff = new StringBuffer();
 
+  private boolean isSwitch;
+
+  public boolean isSwitch() {
+    return isSwitch;
+  }
+
+  public BlockCapsule setSwitch(boolean aSwitch) {
+    isSwitch = aSwitch;
+    return this;
+  }
+
   public BlockCapsule() {
     // blockheader raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
