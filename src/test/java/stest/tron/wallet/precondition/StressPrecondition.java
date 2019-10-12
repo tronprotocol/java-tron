@@ -154,7 +154,6 @@ public class StressPrecondition {
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }
 
-    System.exit(1);
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
 
     for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
