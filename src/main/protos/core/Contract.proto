@@ -254,3 +254,8 @@ message AccountPermissionUpdateContract {
   Permission witness = 3;//Can be empty
   repeated Permission actives = 4;//Empty is invalidate
 }
+
+message UpdateBrokerageContract {
+  bytes owner_address = 1;
+  int32 brokerage = 2; // 1 mean 1%
+}

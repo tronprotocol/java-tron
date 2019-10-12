@@ -92,6 +92,8 @@ public class TransferActuator extends AbstractActuator {
     byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
     long amount = transferContract.getAmount();
 
+
+
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
@@ -104,9 +106,12 @@ public class TransferActuator extends AbstractActuator {
     }
 
     AccountCapsule ownerAccount = dbManager.getAccountStore().get(ownerAddress);
+
     if (ownerAccount == null) {
       throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
     }
+
+
 
     long balance = ownerAccount.getBalance();
 
@@ -119,6 +124,12 @@ public class TransferActuator extends AbstractActuator {
       if (toAccount == null) {
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
+      //after TvmSolidity059 proposal, send trx to smartContract by actuator is not allowed.
+      if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1
+              && toAccount != null
+              && toAccount.getType() == AccountType.Contract) {
+        throw new ContractValidateException("Cannot transfer trx to smartContract.");
+      }
 
       if (balance < Math.addExact(amount, fee)) {
         throw new ContractValidateException(
@@ -126,7 +137,7 @@ public class TransferActuator extends AbstractActuator {
       }
 
       if (toAccount != null) {
-        long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
+        Math.addExact(toAccount.getBalance(), amount);
       }
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
@@ -171,10 +182,7 @@ public class TransferActuator extends AbstractActuator {
         throw new ContractValidateException(
             "Validate InternalTransfer error, balance is not sufficient.");
       }
-
-      if (toAccount != null) {
-        long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
-      }
+      Math.addExact(toAccount.getBalance(), amount);
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());

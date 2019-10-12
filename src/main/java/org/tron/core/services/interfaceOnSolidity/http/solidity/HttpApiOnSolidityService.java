@@ -8,7 +8,28 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.interfaceOnSolidity.http.*;
+import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByNameOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueListByNameOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBlockByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLatestNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBlockByLimitNextOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBlockByNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetBrokerageOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetExchangeByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetRewardOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.TriggerConstantContractOnSolidityServlet;
 
 @Slf4j(topic = "API")
 public class HttpApiOnSolidityService implements Service {
@@ -64,6 +85,12 @@ public class HttpApiOnSolidityService implements Service {
   private GetBlockByLimitNextOnSolidityServlet getBlockByLimitNextOnSolidityServlet;
   @Autowired
   private GetBlockByLatestNumOnSolidityServlet getBlockByLatestNumOnSolidityServlet;
+  @Autowired
+  private GetBrokerageOnSolidityServlet getBrokerageServlet;
+  @Autowired
+  private GetRewardOnSolidityServlet getRewardServlet;
+  @Autowired
+  private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
 
   @Override
   public void init() {
@@ -117,6 +144,8 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumOnSolidityServlet),
           "/walletsolidity/getblockbylatestnum");
+      context.addServlet(new ServletHolder(triggerConstantContractOnSolidityServlet),
+          "/walletsolidity/triggerconstantcontract");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),
@@ -130,6 +159,8 @@ public class HttpApiOnSolidityService implements Service {
               "/walletsolidity/gettransactioncountbyblocknum");
 
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
+      context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
+      context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));

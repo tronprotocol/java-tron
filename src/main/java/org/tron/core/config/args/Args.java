@@ -359,6 +359,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long allowTvmSolidity059; //committee parameter
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -524,6 +528,7 @@ public class Args {
     INSTANCE.allowTvmConstantinople = 0;
     INSTANCE.allowDelegateResource = 0;
     INSTANCE.allowSameTokenName = 0;
+    INSTANCE.allowTvmSolidity059 = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -639,6 +644,17 @@ public class Args {
         }
       }
       INSTANCE.localWitnesses.setPrivateKeys(privateKeys);
+
+      if (config.hasPath("localWitnessAccountAddress")) {
+        byte[] bytes = Wallet.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+        if (bytes != null) {
+          INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
+          logger.debug("Got localWitnessAccountAddress from config.conf");
+        } else {
+          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+        }
+      }
+      INSTANCE.localWitnesses.initWitnessAccountAddress();
       logger.debug("Got privateKey from keystore");
     }
 
@@ -867,6 +883,10 @@ public class Args {
     INSTANCE.allowTvmConstantinople =
         config.hasPath("committee.allowTvmConstantinople") ? config
             .getInt("committee.allowTvmConstantinople") : 0;
+
+    INSTANCE.allowTvmSolidity059 =
+            config.hasPath("committee.allowTvmSolidity059") ? config
+                    .getInt("committee.allowTvmSolidity059") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
