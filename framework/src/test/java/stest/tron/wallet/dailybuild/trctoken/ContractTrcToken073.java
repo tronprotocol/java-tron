@@ -112,7 +112,7 @@ public class ContractTrcToken073 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountBefore: "
         + devAssetCountBefore);
 
-    String filePath = "./src/test/resources/soliditycode/contractTrcToken073.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/contractTrcToken073.sol";
     String contractName = "Dest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

@@ -88,7 +88,7 @@ public class AssertException {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/assertExceptiontest1DivideInt.sol";
+    String filePath = "framework/src/test/resources/soliditycode/assertExceptiontest1DivideInt.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -168,7 +168,7 @@ public class AssertException {
   @Test(enabled = true, description = "Trigger contract index out of bounds")
   public void test2FindArgsContractMinTest() {
     String filePath =
-        "src/test/resources/soliditycode/assertExceptiontest2FindArgsContractMinTest.sol";
+        "framework/src/test/resources/soliditycode/assertExceptiontest2FindArgsContractMinTest.sol";
     String contractName = "findArgsIContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -231,7 +231,7 @@ public class AssertException {
 
   @Test(enabled = true, description = "Trigger contract Bytes array index out of bounds")
   public void test3ByteMinContract() {
-    String filePath = "src/test/resources/soliditycode/assertExceptiontest3ByteMinContract.sol";
+    String filePath = "framework/src/test/resources/soliditycode/assertExceptiontest3ByteMinContract.sol";
     String contractName = "byteContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -294,7 +294,7 @@ public class AssertException {
 
   @Test(enabled = true, description = "Trigger contract convert too large value to enumerated type")
   public void test4Enum() {
-    String filePath = "src/test/resources/soliditycode/assertExceptiontest4Enum.sol";
+    String filePath = "framework/src/test/resources/soliditycode/assertExceptiontest4Enum.sol";
     String contractName = "enumContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -357,7 +357,7 @@ public class AssertException {
 
   @Test(enabled = true, description = "Trigger contract move a negative value to a binary")
   public void test5MoveRight() {
-    String filePath = "src/test/resources/soliditycode/assertExceptiontest5MoveRight.sol";
+    String filePath = "framework/src/test/resources/soliditycode/assertExceptiontest5MoveRight.sol";
     String contractName = "binaryRightContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -424,7 +424,7 @@ public class AssertException {
       + "internal function type variable")
   public void test6UninitializedContract() {
     String filePath =
-        "src/test/resources/soliditycode/assertExceptiontest6UninitializedContract.sol";
+        "framework/src/test/resources/soliditycode/assertExceptiontest6UninitializedContract.sol";
     String contractName = "uni";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -487,7 +487,7 @@ public class AssertException {
 
   @Test(enabled = true, description = "Trigger contract assert exception")
   public void test7TestAssertContract() {
-    String filePath = "src/test/resources/soliditycode/assertExceptiontest7TestAssertContract.sol";
+    String filePath = "framework/src/test/resources/soliditycode/assertExceptiontest7TestAssertContract.sol";
     String contractName = "TestThrowsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

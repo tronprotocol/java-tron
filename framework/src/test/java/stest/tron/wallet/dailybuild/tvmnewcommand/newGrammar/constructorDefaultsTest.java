@@ -63,7 +63,7 @@ public class constructorDefaultsTest {
         .sendcoin(dev001Address, 200000000L, fromAddress, testKey002, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
-    String filePath = "./src/test/resources/soliditycode/ConstructorDefaults.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/ConstructorDefaults.sol";
     String contractName = "testIsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

@@ -107,7 +107,7 @@ public class Create2Test019 {
         SUCCESS_VALUE);
     Assert.assertEquals(ById.get().getRet(0).getContractRetValue(), SUCCESS_VALUE);
     Assert.assertEquals(ById.get().getRet(0).getContractRet(), contractResult.SUCCESS);
-    String filePath = "src/test/resources/soliditycode/create2contractn2.sol";
+    String filePath = "framework/src/test/resources/soliditycode/create2contractn2.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

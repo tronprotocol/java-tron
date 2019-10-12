@@ -137,7 +137,7 @@ public class ContractTrcToken003 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "./src/test/resources/soliditycode/contractTrcToken003.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/contractTrcToken003.sol";
     String contractName = "tokenTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

@@ -75,7 +75,7 @@ public class TransferFailed007 {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/TransferFailed007.sol";
+    String filePath = "framework/src/test/resources/soliditycode/TransferFailed007.sol";
     String contractName = "EnergyOfTransferFailedTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -114,7 +114,7 @@ public class TransferFailed007 {
             .queryAccount(contractAddress, blockingStubFull)
             .getBalance());
 
-    String filePath = "./src/test/resources/soliditycode/TransferFailed007.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/TransferFailed007.sol";
     String contractName = "Caller";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String testContractCode = retMap.get("byteCode").toString();

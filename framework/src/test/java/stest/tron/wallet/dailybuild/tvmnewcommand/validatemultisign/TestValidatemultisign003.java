@@ -99,7 +99,7 @@ public class TestValidatemultisign003 {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String filePath = "./src/test/resources/soliditycode/validatemultisign001.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/validatemultisign001.sol";
     String contractName = "validatemultisignTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

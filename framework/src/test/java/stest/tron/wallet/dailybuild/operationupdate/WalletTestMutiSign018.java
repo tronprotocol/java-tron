@@ -144,7 +144,7 @@ public class WalletTestMutiSign018 {
         blockingStubFull, ownerKeyString);
 
     Long maxFeeLimit = 1000000000L;
-    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
+    String filePath = "framework/src/test/resources/soliditycode/TriggerConstant004.sol";
     String contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -222,7 +222,7 @@ public class WalletTestMutiSign018 {
         blockingStubFull, ownerKeyString);
 
     Long maxFeeLimit = 1000000000L;
-    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
+    String filePath = "framework/src/test/resources/soliditycode/TriggerConstant004.sol";
     String contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -277,7 +277,7 @@ public class WalletTestMutiSign018 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long maxFeeLimit = 1000000000L;
-    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
+    String filePath = "framework/src/test/resources/soliditycode/TriggerConstant004.sol";
     String contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

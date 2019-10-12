@@ -71,7 +71,7 @@ public class ContractTrcToken077 {
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
 
-    String filePath = "./src/test/resources/soliditycode/contractTrcToken077.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/contractTrcToken077.sol";
     String contractName = "trcToken077";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
