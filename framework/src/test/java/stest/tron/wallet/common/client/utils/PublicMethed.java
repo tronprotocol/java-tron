@@ -4493,7 +4493,7 @@ public class PublicMethed {
         .getString("defaultParameter.solidityCompile");
 
     String dirPath = solFile.substring(solFile.lastIndexOf("/"), solFile.lastIndexOf("."));
-    String outputPath = "src/test/resources/soliditycode/output" + dirPath;
+    String outputPath = "framework/src/test/resources/soliditycode/output" + dirPath;
 
     File binFile = new File(outputPath + "/" + contractName + ".bin");
     File abiFile = new File(outputPath + "/" + contractName + ".abi");
@@ -4573,7 +4573,7 @@ public class PublicMethed {
       String contractName) {
     HashMap retMap = null;
     String dirPath = solFile.substring(solFile.lastIndexOf("/"), solFile.lastIndexOf("."));
-    String outputPath = "src/test/resources/soliditycode/output" + dirPath;
+    String outputPath = "framework/src/test/resources/soliditycode/output" + dirPath;
     try {
       retMap = PublicMethed.getBycodeAbi(solFile, contractName);
       String library = fileRead(outputPath + "/" + contractName + ".bin", true);

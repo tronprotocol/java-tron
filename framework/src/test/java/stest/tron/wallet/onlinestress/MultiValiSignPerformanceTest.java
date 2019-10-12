@@ -101,7 +101,7 @@ public class MultiValiSignPerformanceTest {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "src/test/resources/soliditycode/multiValiSignPerformance01.sol";
+    String filePath = "framework/src/test/resources/soliditycode/multiValiSignPerformance01.sol";
     String contractName = "ecrecoverValidateSign";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -161,7 +161,7 @@ public class MultiValiSignPerformanceTest {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "src/test/resources/soliditycode/multiValiSignPerformance02.sol";
+    String filePath = "framework/src/test/resources/soliditycode/multiValiSignPerformance02.sol";
     String contractName = "multiValidateSignContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

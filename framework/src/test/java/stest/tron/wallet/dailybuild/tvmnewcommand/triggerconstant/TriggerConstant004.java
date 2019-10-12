@@ -85,7 +85,7 @@ public class TriggerConstant004 {
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
+    String filePath = "framework/src/test/resources/soliditycode/TriggerConstant004.sol";
     String contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

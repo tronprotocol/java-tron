@@ -86,7 +86,7 @@ public class mappingGetterTest {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String filePath = "./src/test/resources/soliditycode/mappingGetter.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/mappingGetter.sol";
     String contractName = "mappingGetter";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

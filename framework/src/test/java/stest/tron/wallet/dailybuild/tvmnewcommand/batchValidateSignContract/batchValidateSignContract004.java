@@ -79,7 +79,7 @@ public class batchValidateSignContract004 {
             testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/batchvalidatesign001.sol";
+    String filePath = "framework/src/test/resources/soliditycode/batchvalidatesign001.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

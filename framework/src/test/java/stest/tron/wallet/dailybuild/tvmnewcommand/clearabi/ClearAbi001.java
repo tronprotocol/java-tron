@@ -94,7 +94,7 @@ public class ClearAbi001 {
 
   @Test(enabled = true, description = "Clear a contract created by other account")
   public void testClearAbi001() {
-    String filePath = "src/test/resources/soliditycode/ClearAbi001.sol";
+    String filePath = "framework/src/test/resources/soliditycode/ClearAbi001.sol";
     String contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

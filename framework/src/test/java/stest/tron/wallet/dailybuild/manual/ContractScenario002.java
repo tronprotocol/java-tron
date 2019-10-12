@@ -90,7 +90,7 @@ public class ContractScenario002 {
     logger.info("before balance is " + Long.toString(balanceBefore));
 
     String contractName = "TronNative";
-    String filePath = "./src/test/resources/soliditycode/contractScenario002.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/contractScenario002.sol";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();

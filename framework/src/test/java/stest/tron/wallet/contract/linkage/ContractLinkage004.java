@@ -119,7 +119,7 @@ public class ContractLinkage004 {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String filePath = "./src/test/resources/soliditycode/contractLinkage004.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/contractLinkage004.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -193,7 +193,7 @@ public class ContractLinkage004 {
     logger.info("beforeNetUsed1:" + beforeNetUsed1);
     logger.info("beforeFreeNetUsed1:" + beforeFreeNetUsed1);
 
-    String filePath = "./src/test/resources/soliditycode/contractLinkage004.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/contractLinkage004.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

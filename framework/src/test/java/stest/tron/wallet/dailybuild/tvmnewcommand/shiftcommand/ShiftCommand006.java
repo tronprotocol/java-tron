@@ -86,7 +86,7 @@ public class ShiftCommand006 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    String filePath = "src/test/resources/soliditycode/ShiftCommand001.sol";
+    String filePath = "framework/src/test/resources/soliditycode/ShiftCommand001.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -1350,7 +1350,7 @@ public class ShiftCommand006 {
       + "is 0x0101")
   public void testShiftRightSigned17() {
 
-    String filePath = "src/test/resources/soliditycode/TvmNewCommand043.sol";
+    String filePath = "framework/src/test/resources/soliditycode/TvmNewCommand043.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -1439,7 +1439,7 @@ public class ShiftCommand006 {
       + "is 0x0101")
   public void testShiftRightSigned18() {
 
-    String filePath = "src/test/resources/soliditycode/TvmNewCommand043.sol";
+    String filePath = "framework/src/test/resources/soliditycode/TvmNewCommand043.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

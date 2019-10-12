@@ -75,7 +75,7 @@ public class ContractOriginEnergyLimit001 {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/contractOriginEnergyLimit001.sol";
+    String filePath = "framework/src/test/resources/soliditycode/contractOriginEnergyLimit001.sol";
     String contractName = "findArgsContractTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

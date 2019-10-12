@@ -143,7 +143,7 @@ public class ContractScenario016 {
   @Test(enabled = true, description = "ContractResult is OUT_OF_ENERGY")
   public void test2Grammar002() {
 
-    String filePath = "src/test/resources/soliditycode/contractUnknownException.sol";
+    String filePath = "framework/src/test/resources/soliditycode/contractUnknownException.sol";
     String contractName = "testC";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

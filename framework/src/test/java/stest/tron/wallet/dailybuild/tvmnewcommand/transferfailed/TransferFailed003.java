@@ -106,7 +106,7 @@ public class TransferFailed003 {
             10000, start, end, 1, description, url, 100000L,
             100000L, 1L, 1L, contractExcKey, blockingStubFull));
 
-    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
+    String filePath = "framework/src/test/resources/soliditycode/TransferFailed001.sol";
     String contractName = "EnergyOfTransferFailedTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

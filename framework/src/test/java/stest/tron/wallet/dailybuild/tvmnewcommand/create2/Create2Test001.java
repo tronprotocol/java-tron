@@ -80,7 +80,7 @@ public class Create2Test001 {
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 10000_000_000L, fromAddress,
         testKey002, blockingStubFull));
-    String filePath = "./src/test/resources/soliditycode/create2contract.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/create2contract.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -116,7 +116,7 @@ public class Create2Test001 {
 
     Long callValue = Long.valueOf(0);
 
-    String filePath = "./src/test/resources/soliditycode/create2contract.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/create2contract.sol";
     String contractName = "TestConstract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -188,7 +188,7 @@ public class Create2Test001 {
 
     Long callValue = Long.valueOf(0);
 
-    String filePath = "./src/test/resources/soliditycode/create2contract.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/create2contract.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -257,7 +257,7 @@ public class Create2Test001 {
 
     Long callValue = Long.valueOf(0);
 
-    String filePath = "./src/test/resources/soliditycode/create2contract.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/create2contract.sol";
     String contractName = "TestConstract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

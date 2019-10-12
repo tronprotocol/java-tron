@@ -76,7 +76,7 @@ public class AddressStrictCheck002 {
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addressCheckOld.sol";
+    String filePath = "framework/src/test/resources/soliditycode/addressCheckOld.sol";
     String contractName = "testIsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
