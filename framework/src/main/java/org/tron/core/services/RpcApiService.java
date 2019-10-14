@@ -2240,5 +2240,12 @@ public class RpcApiService implements Service {
           responseObserver);
     }
 
+    @Override
+    public void createCommonTransaction(Transaction request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      Transaction.Contract contract = request.getRawData().getContract(0);
+      createTransactionExtention(contract.getParameter(), contract.getType(),
+          responseObserver);
+    }
   }
 }
