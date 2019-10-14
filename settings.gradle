@@ -1,2 +1,6 @@
-rootProject.name = 'java-tron'
-
+rootProject.name = 'javatron'
+include 'framework'
+include 'chainbase'
+include 'protocol'
+include 'actuator'
+include 'consensus'
