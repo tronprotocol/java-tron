@@ -1352,7 +1352,7 @@ public class Manager {
 
     long postponedTrxCount = 0;
 
-    BlockCapsule blockCapsule = new BlockCapsule();
+    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockId());
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
