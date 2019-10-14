@@ -131,7 +131,7 @@ public class ContractTestSendCoin001 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountBefore: "
         + devAssetCountBefore);
 
-    String filePath = "framework/src/test/resources/soliditycode/contractTrcToken031.sol";
+    String filePath = "src/test/resources/soliditycode/contractTrcToken031.sol";
     String contractName = "token";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -257,7 +257,7 @@ public class ContractTestSendCoin001 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountBefore: "
         + devAssetCountBefore);
 
-    String filePath = "framework/src/test/resources/soliditycode/contractTransferToken001.sol";
+    String filePath = "src/test/resources/soliditycode/contractTransferToken001.sol";
 
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -402,7 +402,7 @@ public class ContractTestSendCoin001 {
     Assert.assertEquals(ById.get().getRet(0).getContractRet().getNumber(), SUCCESS_VALUE);
     Assert.assertEquals(ById.get().getRet(0).getContractRetValue(), SUCCESS_VALUE);
     Assert.assertEquals(ById.get().getRet(0).getContractRet(), contractResult.SUCCESS);
-    String filePath = "framework/src/test/resources/soliditycode/create2contractn2.sol";
+    String filePath = "src/test/resources/soliditycode/create2contractn2.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

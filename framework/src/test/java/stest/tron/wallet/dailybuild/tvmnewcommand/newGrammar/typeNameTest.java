@@ -87,7 +87,7 @@ public class typeNameTest {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String filePath = "./framework/src/test/resources/soliditycode/typeName.sol";
+    String filePath = "./src/test/resources/soliditycode/typeName.sol";
     String contractName = "TypeName";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

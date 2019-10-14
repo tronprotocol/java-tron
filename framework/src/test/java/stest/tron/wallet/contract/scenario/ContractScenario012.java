@@ -34,22 +34,26 @@ public class ContractScenario012 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-  byte[] contractAddress = null;
-  String txid = "";
-  Optional<TransactionInfo> infoById = null;
-  String receiveAddressParam;
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contract012Address = ecKey1.getAddress();
-  String contract012Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] receiverAddress = ecKey2.getAddress();
-  String receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
+
+  byte[] contractAddress = null;
+  String txid = "";
+  Optional<TransactionInfo> infoById = null;
+  String receiveAddressParam;
+
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] contract012Address = ecKey1.getAddress();
+  String contract012Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] receiverAddress = ecKey2.getAddress();
+  String receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -86,7 +90,7 @@ public class ContractScenario012 {
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    String filePath = "./framework/src/test/resources/soliditycode/contractScenario012.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario012.sol";
     String contractName = "PayTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -136,26 +140,27 @@ public class ContractScenario012 {
     receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     //Send some trx to the contract account.
-    Assert.assertTrue(PublicMethed.sendcoin(contractAddress, 1000000000L, toAddress,
-        testKey003, blockingStubFull));
     Account account = PublicMethed.queryAccount(contractAddress, blockingStubFull);
     logger.info("contract Balance : -- " + account.getBalance());
     receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
-    //In smart contract, you can't create account
+    //In smart contract, you can create account
     txid = PublicMethed.triggerContract(contractAddress,
         "sendToAddress2(address)", receiveAddressParam, false,
-        0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+        1000000000L, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("infobyid : --- " + infoById);
     logger.info("result is " + infoById.get().getResultValue());
     logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
     Assert.assertFalse(infoById.get().getContractAddress().isEmpty());
+
+    Account account2 = PublicMethed.queryAccount(receiverAddress, blockingStubFull);
+    Assert.assertEquals(5L, account2.getBalance());
 
   }
 

@@ -86,7 +86,7 @@ public class calldataTest {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String filePath = "./framework/src/test/resources/soliditycode/calldata.sol";
+    String filePath = "./src/test/resources/soliditycode/calldata.sol";
     String contractName = "C";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

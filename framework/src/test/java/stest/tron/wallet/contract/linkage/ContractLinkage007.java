@@ -98,7 +98,7 @@ public class ContractLinkage007 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     //When the feelimit is large, the deploy will be failed,No used everything.
 
-    String filePath = "./framework/src/test/resources/soliditycode/contractLinkage002.sol";
+    String filePath = "./src/test/resources/soliditycode/contractLinkage002.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

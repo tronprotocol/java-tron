@@ -76,7 +76,7 @@ public class TransferFailed006 {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "framework/src/test/resources/soliditycode/TransferFailed006.sol";
+    String filePath = "src/test/resources/soliditycode/TransferFailed006.sol";
     String contractName = "EnergyOfTransferFailedTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -91,7 +91,7 @@ public class TransferFailed006 {
     contractAddress = infoById.get().getContractAddress().toByteArray();
     Assert.assertEquals(0, infoById.get().getResultValue());
 
-    filePath = "framework/src/test/resources/soliditycode/TransferFailed006.sol";
+    filePath = "src/test/resources/soliditycode/TransferFailed006.sol";
     contractName = "Caller";
     retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     code = retMap.get("byteCode").toString();

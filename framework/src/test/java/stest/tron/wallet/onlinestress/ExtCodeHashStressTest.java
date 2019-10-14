@@ -104,7 +104,7 @@ public class ExtCodeHashStressTest {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./framework/src/test/resources/soliditycode/extCodeHashStress.sol";
+    String filePath = "./src/test/resources/soliditycode/extCodeHashStress.sol";
     String contractName = "TriggerNormal";  //TBVEkA72g1wFoBBVLSXFZ2Bp944oL17NeU
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -134,7 +134,7 @@ public class ExtCodeHashStressTest {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./framework/src/test/resources/soliditycode/extCodeHashStress.sol";
+    String filePath = "./src/test/resources/soliditycode/extCodeHashStress.sol";
     String contractName = "Trigger"; //THAx2PcAtRCerwrLGN237dahqSUfq5wLnR
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

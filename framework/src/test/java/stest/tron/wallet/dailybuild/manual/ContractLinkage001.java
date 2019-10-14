@@ -94,7 +94,7 @@ public class ContractLinkage001 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     //Value is equal balance,this will be failed.Only use FreeNet,Other not change.
-    String filePath = "./framework/src/test/resources/soliditycode/contractLinkage001.sol";
+    String filePath = "./src/test/resources/soliditycode/contractLinkage001.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

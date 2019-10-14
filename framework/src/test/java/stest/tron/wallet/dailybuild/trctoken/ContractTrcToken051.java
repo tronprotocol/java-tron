@@ -110,7 +110,7 @@ public class ContractTrcToken051 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // deploy transferTokenContract
-    String filePath = "./framework/src/test/resources/soliditycode/contractTrcToken051.sol";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken051.sol";
     String contractName = "tokenTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

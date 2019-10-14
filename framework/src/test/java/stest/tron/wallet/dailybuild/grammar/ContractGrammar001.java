@@ -84,7 +84,7 @@ public class ContractGrammar001 {
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "framework/src/test/resources/soliditycode/contractGrammar001test1Grammar001.sol";
+    String filePath = "src/test/resources/soliditycode/contractGrammar001test1Grammar001.sol";
     String contractName = "FunctionSelector";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -143,7 +143,7 @@ public class ContractGrammar001 {
 
   @Test(enabled = true, description = "Ordinary library contract")
   public void test2Grammar002() {
-    String filePath = "framework/src/test/resources/soliditycode/contractGrammar001test2Grammar002.sol";
+    String filePath = "src/test/resources/soliditycode/contractGrammar001test2Grammar002.sol";
     String contractName = "Set";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -156,7 +156,7 @@ public class ContractGrammar001 {
     String txid = "";
     String num = "1";
     byte[] contractAddress1 = null;
-    String filePath1 = "framework/src/test/resources/soliditycode/contractGrammar001test2Grammar002.sol";
+    String filePath1 = "src/test/resources/soliditycode/contractGrammar001test2Grammar002.sol";
     String contractName1 = "C";
     HashMap retMap1 = PublicMethed.getBycodeAbiForLibrary(filePath1, contractName1);
     String code1 = retMap1.get("byteCode").toString();
@@ -181,7 +181,7 @@ public class ContractGrammar001 {
 
   @Test(enabled = true, description = "Library contract")
   public void test3Grammar003() {
-    String filePath = "framework/src/test/resources/soliditycode/contractGrammar001test3Grammar003.sol";
+    String filePath = "src/test/resources/soliditycode/contractGrammar001test3Grammar003.sol";
     String contractName = "Set";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -227,7 +227,7 @@ public class ContractGrammar001 {
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "framework/src/test/resources/soliditycode/contractGrammar001test4Grammar004.sol";
+    String filePath = "src/test/resources/soliditycode/contractGrammar001test4Grammar004.sol";
     String contractName = "Search";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -292,7 +292,7 @@ public class ContractGrammar001 {
 
   @Test(enabled = true, description = "Solidity assembly")
   public void test5Grammar006() {
-    String filePath = "framework/src/test/resources/soliditycode/contractGrammar001test5Grammar006.sol";
+    String filePath = "src/test/resources/soliditycode/contractGrammar001test5Grammar006.sol";
     String contractName = "InfoFeed";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

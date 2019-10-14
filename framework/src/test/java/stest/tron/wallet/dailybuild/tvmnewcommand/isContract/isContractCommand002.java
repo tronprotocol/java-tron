@@ -80,7 +80,7 @@ public class isContractCommand002 {
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "framework/src/test/resources/soliditycode/TvmIsContract001.sol";
+    String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
     String contractName = "testIsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -155,7 +155,7 @@ public class isContractCommand002 {
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "framework/src/test/resources/soliditycode/TvmIsContract002.sol";
+    String filePath = "src/test/resources/soliditycode/TvmIsContract002.sol";
     String contractName = "testIsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

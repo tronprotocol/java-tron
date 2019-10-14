@@ -75,7 +75,7 @@ public class ContractScenario007 {
     logger.info("before balance is " + Long.toString(account.getBalance()));
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    String filePath = "./framework/src/test/resources/soliditycode/contractScenario007.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario007.sol";
     String contractName = "ERC721Token";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

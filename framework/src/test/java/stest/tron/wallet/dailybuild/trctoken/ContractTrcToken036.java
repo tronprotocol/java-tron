@@ -110,7 +110,7 @@ public class ContractTrcToken036 {
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
 
     // deploy transferTokenContract
-    //    String filePath = "framework/src/test/resources/soliditycode/contractTrcToken036.sol";
+    //    String filePath = "src/test/resources/soliditycode/contractTrcToken036.sol";
     //    String contractName = "IllegalDecorate";
     //    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     //    String code = retMap.get("byteCode").toString();
@@ -215,7 +215,7 @@ public class ContractTrcToken036 {
     Assert.assertTrue(beforeAssetIssueUserAddress + 10 == afterAssetIssueUserAddress);
     Assert.assertTrue(user001AddressAddressBalance + 10 == afteruser001AddressAddressBalance);
 
-    String filePath = "framework/src/test/resources/soliditycode/contractTrcToken036.sol";
+    String filePath = "src/test/resources/soliditycode/contractTrcToken036.sol";
     String contractName1 = "IllegalDecorate1";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
@@ -323,7 +323,7 @@ public class ContractTrcToken036 {
 
   @Test(enabled = false, description = "Trigger transferTokenWithView contract")
   public void deploy04TransferTokenContract() {
-    String filePath2 = "framework/src/test/resources/soliditycode/contractTrcToken036.sol";
+    String filePath2 = "src/test/resources/soliditycode/contractTrcToken036.sol";
     String contractName2 = "IllegalDecorate2";
     HashMap retMap2 = PublicMethed.getBycodeAbi(filePath2, contractName2);
 
@@ -419,7 +419,7 @@ public class ContractTrcToken036 {
 
   @Test(enabled = false, description = "Trigger transferTokenWithNoPayable contract")
   public void deploy05TransferTokenContract() {
-    String filePath = "framework/src/test/resources/soliditycode/contractTrcToken036.sol";
+    String filePath = "src/test/resources/soliditycode/contractTrcToken036.sol";
     String contractName3 = "IllegalDecorate3";
     HashMap retMap3 = PublicMethed.getBycodeAbi(filePath, contractName3);
 
