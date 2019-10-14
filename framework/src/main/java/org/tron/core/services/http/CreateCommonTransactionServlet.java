@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,7 @@ public class CreateCommonTransactionServlet extends RateLimiterServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       boolean visible = Util.getVisiblePost(contract);
-      ContractType type = getContractType(request);
+      ContractType type = ContractType.valueOf(Util.getContractType(contract));
       Message.Builder build = getBuilder(type);
       JsonFormat.merge(contract, build, visible);
       Transaction tx = wallet.createTransactionCapsule(build.build(), type).getInstance();
@@ -48,11 +47,6 @@ public class CreateCommonTransactionServlet extends RateLimiterServlet {
         logger.debug("IOException: {}", ioe.getMessage());
       }
     }
-  }
-
-  private ContractType getContractType(HttpServletRequest request) {
-    String type = request.getParameter("contractType");
-    return ContractType.valueOf(type);
   }
 
   private Message.Builder getBuilder(ContractType type) throws NoSuchMethodException,
