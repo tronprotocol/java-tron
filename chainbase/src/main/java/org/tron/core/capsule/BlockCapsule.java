@@ -57,11 +57,13 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   private List<TransactionCapsule> transactions = new ArrayList<>();
   private StringBuffer toStringBuff = new StringBuffer();
 
-  public BlockCapsule() {
+  public BlockCapsule(BlockId parentBlockId) {
     // blockheader raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
     BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
         .setVersion(ChainConstant.BLOCK_VERSION)
+        .setNumber(parentBlockId.getNum() + 1)
+        .setParentHash(parentBlockId.getByteString())
         .build();
 
     // block header
