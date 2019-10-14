@@ -147,7 +147,7 @@ public class WalletTestMutiSign004 {
 
     Long maxFeeLimit = 1000000000L;
     //String contractName = "StorageAndCpu" + Integer.toString(randNum);
-    String filePath = "./framework/src/test/resources/soliditycode/walletTestMutiSign004.sol";
+    String filePath = "./src/test/resources/soliditycode/walletTestMutiSign004.sol";
     String contractName = "timeoutTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

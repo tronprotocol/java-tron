@@ -18,6 +18,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -74,7 +75,7 @@ public class ContractScenario005 {
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
 
-    String filePath = "./framework/src/test/resources/soliditycode/contractScenario005.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario005.sol";
     String contractName = "Crowdsale";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -89,7 +90,13 @@ public class ContractScenario005 {
         .getTransactionInfoById(txid, blockingStubFull);
     logger.info("Txid is " + txid);
     logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
-    Assert.assertEquals(1, infoById.get().getResultValue());
+    byte[] contractAddress = null;
+    contractAddress = infoById.get().getContractAddress().toByteArray();
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
+
+    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
+    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
+    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
     accountResource = PublicMethed.getAccountResource(contract005Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();

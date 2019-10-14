@@ -182,7 +182,7 @@ public class ContractOriginEnergyLimit004 {
     logger.info("before deploy, dev energy usage is " + Long.toString(devEnergyUsageBefore));
     logger.info("before deploy, dev balance is " + Long.toString(devBalanceBefore));
 
-    String filePath = "framework/src/test/resources/soliditycode/contractOriginEnergyLimit004.sol";
+    String filePath = "src/test/resources/soliditycode/contractOriginEnergyLimit004.sol";
     String contractName = "findArgsContractTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

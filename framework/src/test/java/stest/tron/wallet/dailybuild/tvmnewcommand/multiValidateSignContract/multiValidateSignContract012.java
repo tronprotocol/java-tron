@@ -74,7 +74,7 @@ public class multiValidateSignContract012 {
             testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "framework/src/test/resources/soliditycode/multivalidatesign005.sol";
+    String filePath = "src/test/resources/soliditycode/multivalidatesign005.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

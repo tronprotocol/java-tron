@@ -89,7 +89,7 @@ public class ContractScenario014 {
             blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "framework/src/test/resources/soliditycode/ClearAbi001.sol";
+    String filePath = "src/test/resources/soliditycode/ClearAbi001.sol";
     String contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

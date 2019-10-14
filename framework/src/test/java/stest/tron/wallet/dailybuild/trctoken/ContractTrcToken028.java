@@ -111,7 +111,7 @@ public class ContractTrcToken028 {
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
     // deploy transferTokenContract
     int originEnergyLimit = 50000;
-    String filePath = "framework/src/test/resources/soliditycode/contractTrcToken028.sol";
+    String filePath = "src/test/resources/soliditycode/contractTrcToken028.sol";
     String contractName = "token";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
