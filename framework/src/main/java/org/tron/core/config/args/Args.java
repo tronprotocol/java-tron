@@ -503,6 +503,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long changedDelegation;
+
+  @Getter
+  @Setter
   private int agreeNodeCount;
 
   @Getter
@@ -591,6 +595,7 @@ public class Args {
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
     INSTANCE.shieldedTransInPendingMaxCounts = 10;
+    INSTANCE.changedDelegation = 0;
     INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     INSTANCE.checkMsgCount = 1;
   }
@@ -1036,6 +1041,10 @@ public class Args {
         config.hasPath("rate.limiter") ? getRateLimiterFromConfig(config)
             : new RateLimiterInitialization();
 
+    INSTANCE.changedDelegation =
+        config.hasPath("committee.changedDelegation") ? config
+            .getInt("committee.changedDelegation") : 0;
+
     INSTANCE.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
         .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     INSTANCE.agreeNodeCount = INSTANCE.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
@@ -1468,6 +1477,7 @@ public class Args {
     DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
     DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
+    DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

@@ -122,6 +122,9 @@ public class DBConfig {
   @Getter
   @Setter
   private static int longRunningTime;
+  @Getter
+  @Setter
+  private static long changedDelegation;
 
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
