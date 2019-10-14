@@ -94,7 +94,7 @@ public class MappingFixTest {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String filePath = "./src/test/resources/soliditycode/SolidityMappingFix.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/SolidityMappingFix.sol";
     String contractName = "Tests";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

@@ -57,7 +57,7 @@ public class HttpTestClearAbiContract001 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 
-    String filePath = "src/test/resources/soliditycode/TriggerConstant003.sol";
+    String filePath = "framework/src/test/resources/soliditycode/TriggerConstant003.sol";
     contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

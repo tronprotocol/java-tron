@@ -96,7 +96,7 @@ public class ExtCodeHashTest011 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./src/test/resources/soliditycode/extCodeHash11.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/extCodeHash11.sol";
     String contractName = "Counter";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -159,7 +159,7 @@ public class ExtCodeHashTest011 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./src/test/resources/soliditycode/extCodeHash11.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/extCodeHash11.sol";
     String contractName = "Counter1";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -234,7 +234,7 @@ public class ExtCodeHashTest011 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./src/test/resources/soliditycode/extCodeHash11.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/extCodeHash11.sol";
     String contractName = "Counter2";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -303,7 +303,7 @@ public class ExtCodeHashTest011 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./src/test/resources/soliditycode/extCodeHash11.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/extCodeHash11.sol";
     String contractName = "Counter2";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

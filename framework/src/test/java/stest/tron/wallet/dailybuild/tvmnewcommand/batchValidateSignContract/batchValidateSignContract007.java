@@ -95,7 +95,7 @@ public class batchValidateSignContract007 {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String filePath = "src/test/resources/soliditycode/batchvalidatesign007.sol";
+    String filePath = "framework/src/test/resources/soliditycode/batchvalidatesign007.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

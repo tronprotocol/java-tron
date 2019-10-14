@@ -88,7 +88,7 @@ public class Create2Test003 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "./src/test/resources/soliditycode/create2contract.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/create2contract.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

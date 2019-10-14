@@ -100,7 +100,7 @@ public class ContractUnknownException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     logger.info("beforeenergyLimit:" + beforeenergyLimit);
-    String filePath = "src/test/resources/soliditycode/contractUnknownException.sol";
+    String filePath = "framework/src/test/resources/soliditycode/contractUnknownException.sol";
     String contractName = "testA";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -161,7 +161,7 @@ public class ContractUnknownException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     logger.info("beforeenergyLimit:" + beforeenergyLimit);
-    String filePath = "src/test/resources/soliditycode/contractUnknownException.sol";
+    String filePath = "framework/src/test/resources/soliditycode/contractUnknownException.sol";
     String contractName = "testB";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -228,7 +228,7 @@ public class ContractUnknownException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     logger.info("beforeenergyLimit:" + beforeenergyLimit);
-    String filePath = "src/test/resources/soliditycode/contractUnknownException.sol";
+    String filePath = "framework/src/test/resources/soliditycode/contractUnknownException.sol";
     String contractName = "testC";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -293,7 +293,7 @@ public class ContractUnknownException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     logger.info("beforeenergyLimit:" + beforeenergyLimit);
-    String filePath = "src/test/resources/soliditycode/contractUnknownException.sol";
+    String filePath = "framework/src/test/resources/soliditycode/contractUnknownException.sol";
     String contractName = "testD";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

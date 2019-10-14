@@ -84,7 +84,7 @@ public class ContractScenario015 {
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/ClearAbi001.sol";
+    String filePath = "framework/src/test/resources/soliditycode/ClearAbi001.sol";
     String contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

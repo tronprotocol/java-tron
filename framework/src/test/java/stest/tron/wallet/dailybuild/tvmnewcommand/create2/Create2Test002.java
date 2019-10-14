@@ -99,7 +99,7 @@ public class Create2Test002 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./src/test/resources/soliditycode/create2contract.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/create2contract.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

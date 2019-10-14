@@ -92,7 +92,7 @@ public class ExtCodeHashTest010 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./src/test/resources/soliditycode/ExtCodeHashTest010.sol";
+    String filePath = "./framework/src/test/resources/soliditycode/ExtCodeHashTest010.sol";
     String contractName = "Counter";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
