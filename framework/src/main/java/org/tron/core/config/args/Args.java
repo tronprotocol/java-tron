@@ -500,6 +500,10 @@ public class Args {
   @Setter
   private RateLimiterInitialization rateLimiterInitialization;
 
+  @Getter
+  @Setter
+  private long changedDelegation;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -582,6 +586,7 @@ public class Args {
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
     INSTANCE.shieldedTransInPendingMaxCounts = 10;
+    INSTANCE.changedDelegation = 0;
   }
 
   /**
@@ -1025,6 +1030,10 @@ public class Args {
         config.hasPath("rate.limiter") ? getRateLimiterFromConfig(config)
             : new RateLimiterInitialization();
 
+    INSTANCE.changedDelegation =
+        config.hasPath("committee.changedDelegation") ? config
+            .getInt("committee.changedDelegation") : 0;
+
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
@@ -1447,6 +1456,7 @@ public class Args {
     DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
     DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
+    DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

@@ -44,6 +44,7 @@ public class Util {
   public static final String VISIBLE = "visible";
   public static final String TRANSACTION = "transaction";
   public static final String VALUE = "value";
+  public static final String CONTRACT_TYPE = "contractType";
 
   public static String printErrorMsg(Exception e) {
     JSONObject jsonObject = new JSONObject();
@@ -277,6 +278,15 @@ public class Util {
     }
 
     return visible;
+  }
+
+  public static String getContractType(final String input) {
+    String contractType = null;
+    JSONObject jsonObject = JSON.parseObject(input);
+    if (jsonObject.containsKey(CONTRACT_TYPE)) {
+      contractType = jsonObject.getString(CONTRACT_TYPE);
+    }
+    return contractType;
   }
 
   public static String getHexAddress(final String address) {

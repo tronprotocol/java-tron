@@ -128,6 +128,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -582,6 +583,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowProtoFilterNum(DBConfig.getAllowProtoFilterNum());
     }
+
+    try {
+      this.getChangeDelegation();
+    } catch (IllegalArgumentException e) {
+      this.saveChangeDelegation(DBConfig.getChangedDelegation());
+    }
+
   }
 
   public String intArrayToString(int[] a) {
@@ -1762,7 +1770,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(getUnchecked(CHANGE_DELEGATION))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElse(0L);
+        .orElseThrow(() -> new IllegalArgumentException("not found CHANGE_DELEGATION"));
   }
 
   public boolean allowChangeDelegation() {
