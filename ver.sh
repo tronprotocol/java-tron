@@ -1,4 +1,5 @@
 #!/bin/bash
+# ceshi
 set -x 
 currentBranch=`git rev-parse --abbrev-ref HEAD`
 
