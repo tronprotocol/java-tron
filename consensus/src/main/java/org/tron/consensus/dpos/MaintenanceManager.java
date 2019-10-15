@@ -50,6 +50,8 @@ public class MaintenanceManager {
   private final List<ByteString> currentWitness = new ArrayList<>();
   @Getter
   private long beforeMaintenanceTime;
+  @Getter
+  private long maintenanceBlockNum;
 
   public void init() {
     currentWitness.addAll(consensusDelegate.getActiveWitnesses());
@@ -67,6 +69,7 @@ public class MaintenanceManager {
         updateWitnessValue(currentWitness);
         //pbft sr msg
         pbftManager.srPrePrepare(block, currentWitness);
+        maintenanceBlockNum = blockNum;
       }
       consensusDelegate.updateNextMaintenanceTime(blockTime);
     }

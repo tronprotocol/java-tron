@@ -12,7 +12,7 @@ import org.tron.common.utils.ByteArray;
 @Component
 public class CommonDataBase extends TronDatabase<byte[]> {
 
-  private static final byte[] CURRENT_SR_LIST = "CURRENT_SR_LIST".getBytes();
+  private static final String CURRENT_SR_LIST = "CURRENT_SR_LIST";
   private static final byte[] LATEST_PBFT_BLOCK_NUM = "LATEST_PBFT_BLOCK_NUM".getBytes();
 
   public CommonDataBase() {
@@ -39,15 +39,15 @@ public class CommonDataBase extends TronDatabase<byte[]> {
     return dbSource.getData(key) != null;
   }
 
-  public List<String> getCurrentSrList() {
-    return Optional.ofNullable(get(CURRENT_SR_LIST))
+  public List<String> getCurrentSrList(long cycle) {
+    return Optional.ofNullable(get(buildKey(cycle)))
         .map(ByteArray::toStr)
         .map(str -> JSON.parseArray(str, String.class))
         .orElse(Lists.newArrayList());
   }
 
-  public void saveCurrentSrList(String currentSrList) {
-    this.put(CURRENT_SR_LIST, ByteArray.fromString(currentSrList));
+  public void saveCurrentSrList(long cycle, String currentSrList) {
+    this.put(buildKey(cycle), ByteArray.fromString(currentSrList));
   }
 
   public void saveLatestPbftBlockNum(long number) {
@@ -63,5 +63,9 @@ public class CommonDataBase extends TronDatabase<byte[]> {
     return Optional.ofNullable(get(LATEST_PBFT_BLOCK_NUM))
         .map(ByteArray::toLong)
         .orElse(0L);
+  }
+
+  private byte[] buildKey(long cycle) {
+    return (cycle + "_" + CURRENT_SR_LIST).getBytes();
   }
 }

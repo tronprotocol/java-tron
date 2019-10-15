@@ -397,9 +397,15 @@ message BlockHeader {
     bytes witness_address = 9;
     int32 version = 10;
     bytes accountStateRoot = 11;
+    SrList currentSrList = 12;
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
+}
+
+message SrList {
+  repeated bytes currentSrList = 1;
+  repeated bytes pre_srs_signature = 2;
 }
 
 // block

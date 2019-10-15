@@ -9,6 +9,7 @@ import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftBlockMessage;
 import org.tron.consensus.pbft.message.PbftSrMessage;
 import org.tron.core.db.CommonDataBase;
+import org.tron.core.store.DynamicPropertiesStore;
 
 @Slf4j(topic = "pbft")
 @Component
@@ -18,6 +19,9 @@ public class PbftMessageAction {
 
   @Autowired
   private CommonDataBase commonDataBase;
+
+  @Autowired
+  private DynamicPropertiesStore dynamicPropertiesStore;
 
   public void action(PbftBaseMessage message) {
     switch (message.getType()) {
@@ -34,8 +38,9 @@ public class PbftMessageAction {
       case PBFT_SR_MSG: {
         PbftSrMessage srMessage = (PbftSrMessage) message;
         String srString = srMessage.getPbftMessage().getRawData().getData().toStringUtf8();
-        commonDataBase.saveCurrentSrList(srString);
-        logger.info("sr commit msg :{}, {}", srMessage.getBlockNum(),
+        long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
+        commonDataBase.saveCurrentSrList(cycle, srString);
+        logger.info("sr commit msg :{}, {}, {}", cycle, srMessage.getBlockNum(),
             JSON.parseArray(srString, String.class));
       }
       break;
