@@ -18,7 +18,7 @@ public class BlockGenerate {
 
   public Block getSignedBlock(ByteString witness, long time, byte[] privateKey) {
 
-    BlockCapsule blockCapsule = manager.generateBlock(System.currentTimeMillis() + 1000);
+    BlockCapsule blockCapsule = manager.generateBlock(null, System.currentTimeMillis() + 1000);
     Block block = blockCapsule.getInstance();
 
     BlockHeader.raw raw = block.getBlockHeader().getRawData().toBuilder()

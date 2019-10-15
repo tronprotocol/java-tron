@@ -40,7 +40,11 @@ public class BlockHandleImpl implements BlockHandle {
   }
 
   public Block produce(Miner miner, long timeout) {
-    return manager.generateBlock(miner, timeout).getInstance();
+    BlockCapsule blockCapsule = manager.generateBlock(miner, timeout);
+    if (blockCapsule != null) {
+      return blockCapsule.getInstance();
+    }
+    return null;
   }
 
   public void complete(Block block) {
