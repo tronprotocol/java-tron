@@ -86,7 +86,7 @@ public class Create2Test020 {
         .sendcoin(contractExcAddress, 500000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "framework/src/test/resources/soliditycode/create2contract22.sol";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -215,7 +215,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract";
-    String filePath = "framework/src/test/resources/soliditycode/create2contract22.sol";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -321,7 +321,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract";
-    String filePath = "framework/src/test/resources/soliditycode/create2contract22.sol";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -427,7 +427,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract";
-    String filePath = "framework/src/test/resources/soliditycode/create2contract22.sol";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -532,7 +532,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract1";
-    String filePath = "framework/src/test/resources/soliditycode/create2contract22.sol";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -651,7 +651,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract2";
-    String filePath = "framework/src/test/resources/soliditycode/create2contract22.sol";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -771,7 +771,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract3";
-    String filePath = "framework/src/test/resources/soliditycode/create2contract22.sol";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();

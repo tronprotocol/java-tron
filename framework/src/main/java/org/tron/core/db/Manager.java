@@ -1065,6 +1065,8 @@ public class Manager {
                   + block.getMerkleRoot());
           throw new BadBlockException("The merkle hash is not validated");
         }
+
+        consensus.receiveBlock(block.getInstance());
       }
 
       if (block.getTransactions().stream().filter(tran -> isShieldedTransaction(tran.getInstance()))
@@ -1360,7 +1362,7 @@ public class Manager {
 
     long postponedTrxCount = 0;
 
-    BlockCapsule blockCapsule = new BlockCapsule();
+    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockId());
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());

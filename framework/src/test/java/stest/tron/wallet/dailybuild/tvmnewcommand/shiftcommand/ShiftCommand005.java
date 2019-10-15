@@ -88,7 +88,7 @@ public class ShiftCommand005 {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "framework/src/test/resources/soliditycode/ShiftCommand001.sol";
+    String filePath = "src/test/resources/soliditycode/ShiftCommand001.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -864,7 +864,7 @@ public class ShiftCommand005 {
       + "is 0x01")
   public void testShiftRight11() {
 
-    String filePath = "framework/src/test/resources/soliditycode/ShiftCommand001.sol";
+    String filePath = "src/test/resources/soliditycode/ShiftCommand001.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -950,7 +950,7 @@ public class ShiftCommand005 {
       + "is 0x0101")
   public void testShiftRight12() {
 
-    String filePath = "framework/src/test/resources/soliditycode/TvmNewCommand043.sol";
+    String filePath = "src/test/resources/soliditycode/TvmNewCommand043.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

@@ -115,7 +115,7 @@ public class ContractTrcToken026 {
 
     // deploy transferTokenContract
     int originEnergyLimit = 50000;
-    String filePath = "framework/src/test/resources/soliditycode/contractTrcToken026.sol";
+    String filePath = "src/test/resources/soliditycode/contractTrcToken026.sol";
     String contractName = "B";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

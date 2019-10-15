@@ -20,6 +20,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.net.TronNetService;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
@@ -84,15 +85,15 @@ public class SolidityNode {
 
     appT.initServices(cfgArgs);
     appT.startServices();
-//    appT.startup();
+    appT.startup();
 
     //Disable peer discovery for solidity node
     DiscoverServer discoverServer = context.getBean(DiscoverServer.class);
     discoverServer.close();
-    ChannelManager channelManager = context.getBean(ChannelManager.class);
-    channelManager.close();
     NodeManager nodeManager = context.getBean(NodeManager.class);
     nodeManager.close();
+    TronNetService tronNetService = context.getBean(TronNetService.class);
+    tronNetService.stop();
 
     SolidityNode node = new SolidityNode(appT.getDbManager());
     node.start();

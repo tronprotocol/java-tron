@@ -68,11 +68,13 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this;
   }
 
-  public BlockCapsule() {
+  public BlockCapsule(BlockId parentBlockId) {
     // blockheader raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
     BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
         .setVersion(ChainConstant.BLOCK_VERSION)
+        .setNumber(parentBlockId.getNum() + 1)
+        .setParentHash(parentBlockId.getByteString())
         .build();
 
     // block header

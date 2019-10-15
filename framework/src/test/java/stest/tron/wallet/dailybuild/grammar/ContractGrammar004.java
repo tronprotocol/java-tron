@@ -91,7 +91,7 @@ public class ContractGrammar004 {
     Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    String filePath = "./framework/src/test/resources/soliditycode/walletTestMutiSign004.sol";
+    String filePath = "./src/test/resources/soliditycode/walletTestMutiSign004.sol";
     String contractName = "timeoutTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -139,7 +139,7 @@ public class ContractGrammar004 {
 
   @Test(enabled = true, description = "ContractResult is OUT_OF_MEMORY")
   public void test2Grammar002() {
-    String filePath = "./framework/src/test/resources/soliditycode/testOutOfMem.sol";
+    String filePath = "./src/test/resources/soliditycode/testOutOfMem.sol";
     String contractName = "Test";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -250,7 +250,7 @@ public class ContractGrammar004 {
   @Test(enabled = true, description = "ContractResult is OUT_OF_ENERGY")
   public void test4Grammar004() {
 
-    String filePath = "framework/src/test/resources/soliditycode/contractUnknownException.sol";
+    String filePath = "src/test/resources/soliditycode/contractUnknownException.sol";
     String contractName = "testC";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -291,7 +291,7 @@ public class ContractGrammar004 {
   @Test(enabled = true, description = "ContractResult is ILLEGAL_OPERATION")
   public void test5Grammar005() {
 
-    String filePath = "framework/src/test/resources/soliditycode/assertExceptiontest1DivideInt.sol";
+    String filePath = "src/test/resources/soliditycode/assertExceptiontest1DivideInt.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -335,7 +335,7 @@ public class ContractGrammar004 {
   public void test6Grammar006() {
 
     String filePath =
-        "framework/src/test/resources/soliditycode/requireExceptiontest1TestRequireContract.sol";
+        "src/test/resources/soliditycode/requireExceptiontest1TestRequireContract.sol";
     String contractName = "TestThrowsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -372,7 +372,7 @@ public class ContractGrammar004 {
   @Test(enabled = true, description = "ContractResult is SUCCESS")
   public void test7Grammar007() {
 
-    String filePath = "framework/src/test/resources/soliditycode/assertExceptiontest1DivideInt.sol";
+    String filePath = "src/test/resources/soliditycode/assertExceptiontest1DivideInt.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -416,7 +416,7 @@ public class ContractGrammar004 {
 
   @Test(enabled = true, description = "ContractResult is TRANSFER_FAILED")
   public void test8Grammar008() {
-    String filePath = "framework/src/test/resources/soliditycode/TransferFailed001.sol";
+    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
     String contractName = "EnergyOfTransferFailedTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

@@ -85,7 +85,7 @@ public class ContractScenario014 {
     logger.info("contract014Address : == " + contract014Key);
     //Deploy contract1, contract1 has a function to transaction 5 sun to target account
     String contractName = "Contract1";
-    String filePath = "./framework/src/test/resources/soliditycode/contractScenario014.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario014.sol";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
@@ -100,7 +100,7 @@ public class ContractScenario014 {
     //Deploy contract2, contract2 has a function to call contract1 transaction sun function.
     // and has a revert function.
     contractName = "contract2";
-    String filePath1 = "./framework/src/test/resources/soliditycode/contractScenario014.sol";
+    String filePath1 = "./src/test/resources/soliditycode/contractScenario014.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath1, contractName);
 
     String code1 = retMap1.get("byteCode").toString();
@@ -117,7 +117,7 @@ public class ContractScenario014 {
 
     //Deploy contract3, trigger contrct2 function.
     contractName = "contract3";
-    String filePath2 = "./framework/src/test/resources/soliditycode/contractScenario014.sol";
+    String filePath2 = "./src/test/resources/soliditycode/contractScenario014.sol";
     HashMap retMap2 = PublicMethed.getBycodeAbi(filePath2, contractName);
 
     String code2 = retMap2.get("byteCode").toString();
