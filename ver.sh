@@ -1,4 +1,5 @@
 #!/bin/bash
+# for test 
 set -x 
 currentBranch=`git rev-parse --abbrev-ref HEAD`
 
