@@ -46,11 +46,14 @@ public class PbftSrMessage extends PbftBaseMessage {
     Raw.Builder rawBuilder = Raw.newBuilder();
     PbftMessage.Builder builder = PbftMessage.newBuilder();
     byte[] publicKey = ecKey.getAddress();
+    ByteString data = ByteString.copyFromUtf8(JSON.toJSONString(srStringList));
+    byte[] dataSign = ecKey.sign(Sha256Hash.hash(data.toByteArray())).toByteArray();
     rawBuilder.setBlockNum(block.getNum())
         .setPbftMsgType(Type.PREPREPARE)
         .setTime(System.currentTimeMillis())
         .setPublicKey(ByteString.copyFrom(publicKey == null ? new byte[0] : publicKey))
-        .setData(ByteString.copyFromUtf8(JSON.toJSONString(srStringList)));
+        .setData(data)
+        .setDataSign(ByteString.copyFrom(dataSign));
     Raw raw = rawBuilder.build();
     byte[] hash = Sha256Hash.hash(raw.toByteArray());
     ECDSASignature signature = ecKey.sign(hash);
