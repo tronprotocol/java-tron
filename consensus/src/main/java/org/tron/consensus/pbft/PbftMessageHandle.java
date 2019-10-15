@@ -88,7 +88,7 @@ public class PbftMessageHandle {
     //Into the preparation phase, if not the sr node does not need to be prepared
     if (!checkIsCanSendMsg(message)) {
       return;
-    }Args.java
+    }
     PbftBaseMessage paMessage = message.buildPrePareMessage();
     forwardMessage(paMessage);
   }
