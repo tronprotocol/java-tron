@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.consensus.base.BlockHandle;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.base.State;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
@@ -38,8 +39,8 @@ public class BlockHandleImpl implements BlockHandle {
     return manager;
   }
 
-  public Block produce(long timeout) {
-    return manager.generateBlock(timeout).getInstance();
+  public Block produce(Miner miner, long timeout) {
+    return manager.generateBlock(miner, timeout).getInstance();
   }
 
   public void complete(Block block) {

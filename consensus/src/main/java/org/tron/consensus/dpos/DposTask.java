@@ -100,7 +100,8 @@ public class DposTask {
       long pTime = dposSlot.getTime(slot);
       long timeout =
           pTime + BLOCK_PRODUCED_INTERVAL / 2 * dposService.getBlockProduceTimeoutPercent() / 100;
-      Block block = dposService.getBlockHandle().produce(timeout);
+      Block block = dposService.getBlockHandle()
+          .produce(dposService.getMiners().get(pWitness), timeout);
       if (block == null) {
         return State.PRODUCE_BLOCK_FAILED;
       }
