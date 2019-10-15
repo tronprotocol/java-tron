@@ -113,7 +113,7 @@ public class ContractLinkage005 {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String filePath = "./framework/src/test/resources/soliditycode/contractLinkage005.sol";
+    String filePath = "./src/test/resources/soliditycode/contractLinkage005.sol";
     String contractName = "timeoutTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

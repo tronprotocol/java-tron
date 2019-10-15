@@ -109,7 +109,7 @@ public class ContractScenario011 {
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "KittyCore";
-    String filePath = "./framework/src/test/resources/soliditycode/contractScenario011.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario011.sol";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
@@ -151,7 +151,7 @@ public class ContractScenario011 {
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "SaleClockAuction";
-    String filePath = "./framework/src/test/resources/soliditycode/contractScenario011.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario011.sol";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
@@ -202,7 +202,7 @@ public class ContractScenario011 {
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "SiringClockAuction";
-    String filePath = "./framework/src/test/resources/soliditycode/contractScenario011.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario011.sol";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
@@ -242,7 +242,7 @@ public class ContractScenario011 {
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "GeneScienceInterface";
-    String filePath = "./framework/src/test/resources/soliditycode/contractScenario011.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario011.sol";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();

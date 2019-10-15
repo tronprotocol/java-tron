@@ -84,7 +84,7 @@ public class ShiftCommand001 {
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "framework/src/test/resources/soliditycode/TvmOldCommand001.sol";
+    String filePath = "src/test/resources/soliditycode/TvmOldCommand001.sol";
     String contractName = "binaryRightContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -158,7 +158,7 @@ public class ShiftCommand001 {
 
   @Test(enabled = true, description = "Trigger new ShiftLeft ShiftRight ShiftRightSigned")
   public void test2NewInstruction() {
-    String filePath = "framework/src/test/resources/soliditycode/ShiftCommand001.sol";
+    String filePath = "src/test/resources/soliditycode/ShiftCommand001.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
