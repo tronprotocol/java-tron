@@ -1445,6 +1445,12 @@ public class Manager {
 
   }
 
+  private void setSrList(BlockCapsule blockCapsule) {
+    long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
+    List<String> srList = commonDataBase.getCurrentSrList(cycle);
+
+  }
+
   private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
     Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
     byte[] owner = TransactionCapsule.getOwner(contract);
