@@ -69,13 +69,6 @@ public class StateManager {
     if (miner == null) {
       return State.NOT_MY_TURN;
     }
-    if (consensusDelegate.getAllowMultiSign() == 1) {
-      byte[] privateKeyAddress = miner.getPrivateKeyAddress().toByteArray();
-      AccountCapsule account = consensusDelegate.getAccount(scheduledWitness.toByteArray());
-      if (!Arrays.equals(privateKeyAddress, account.getWitnessPermissionAddress())) {
-        return State.PERMISSION_ERROR;
-      }
-    }
     return State.OK;
   }
 
