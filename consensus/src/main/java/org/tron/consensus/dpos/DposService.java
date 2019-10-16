@@ -166,7 +166,7 @@ public class DposService implements ConsensusInterface {
       if (addressList.size() != localAddressList.size()) {
         return false;
       }
-      if (preCycleSrSignSet.size() < MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1) {
+      if (preCycleSrSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
         return false;
       }
       if (!ListUtils.subtract(localAddressList, addressList).isEmpty()) {
