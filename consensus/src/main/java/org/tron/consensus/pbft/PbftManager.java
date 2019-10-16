@@ -2,6 +2,8 @@ package org.tron.consensus.pbft;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,9 @@ public class PbftManager {
 
   @Autowired
   private MaintenanceManager maintenanceManager;
+
+  private ExecutorService executorService = Executors.newFixedThreadPool(10,
+      r -> new Thread(r, "Pbft"));
 
   @PostConstruct
   public void init() {
@@ -49,28 +54,30 @@ public class PbftManager {
   }
 
   public boolean doAction(PbftBaseMessage msg) {
-    logger.info("receive pbft msg: {}", msg);
-    switch (msg.getPbftMessage().getRawData().getPbftMsgType()) {
-      case PREPREPARE:
-        pbftMessageHandle.onPrePrepare(msg);
-        break;
-      case PREPARE:
-        // prepare
-        pbftMessageHandle.onPrepare(msg);
-        break;
-      case COMMIT:
-        // commit
-        pbftMessageHandle.onCommit(msg);
-        break;
-      case REQUEST:
-        pbftMessageHandle.onRequestData(msg);
-        break;
-      case VIEW_CHANGE:
-        pbftMessageHandle.onChangeView(msg);
-        break;
-      default:
-        break;
-    }
+    executorService.submit(() -> {
+      logger.info("receive pbft msg: {}", msg);
+      switch (msg.getPbftMessage().getRawData().getPbftMsgType()) {
+        case PREPREPARE:
+          pbftMessageHandle.onPrePrepare(msg);
+          break;
+        case PREPARE:
+          // prepare
+          pbftMessageHandle.onPrepare(msg);
+          break;
+        case COMMIT:
+          // commit
+          pbftMessageHandle.onCommit(msg);
+          break;
+        case REQUEST:
+          pbftMessageHandle.onRequestData(msg);
+          break;
+        case VIEW_CHANGE:
+          pbftMessageHandle.onChangeView(msg);
+          break;
+        default:
+          break;
+      }
+    });
     return true;
   }
 

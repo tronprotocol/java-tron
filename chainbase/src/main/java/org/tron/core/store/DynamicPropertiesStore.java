@@ -128,6 +128,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
+  private static final byte[] SR_LIST_CURRENT_CYCLE = "SR_LIST_CURRENT_CYCLE".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -1775,6 +1776,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowChangeDelegation() {
     return getChangeDelegation() == 1;
+  }
+
+  public long getSrListCurrentCycle() {
+    return Optional.ofNullable(getUnchecked(SR_LIST_CURRENT_CYCLE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveSrListCurrentCycle(long cycle) {
+    this.put(SR_LIST_CURRENT_CYCLE, new BytesCapsule(ByteArray.fromLong(cycle)));
   }
 
   private static class DynamicResourceProperties {

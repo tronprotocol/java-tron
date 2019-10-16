@@ -3,6 +3,7 @@ package org.tron.core.db;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -71,6 +72,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
+import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -135,6 +137,7 @@ import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.SrList;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -327,7 +330,7 @@ public class Manager {
 
   @Autowired
   @Getter
-  private CommonDataBase commonDataBase;
+  private PbftSignDataStore pbftSignDataStore;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -1440,15 +1443,30 @@ public class Manager {
         pendingTransactions.size(), repushTransactions.size(), postponedTrxCount);
 
     blockCapsule.setMerkleRoot();
-
+    setSrList(blockCapsule);
     return blockCapsule;
 
   }
 
   private void setSrList(BlockCapsule blockCapsule) {
     long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
-    List<String> srList = commonDataBase.getCurrentSrList(cycle);
-
+    if (cycle == dynamicPropertiesStore.getSrListCurrentCycle()) {
+      return;
+    }
+    PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getSrSignData(cycle);
+    if (pbftSignCapsule == null) {
+      return;
+    }
+    String srListString = pbftSignCapsule.getInstance().getData().toStringUtf8();
+    List<String> srList = JSON.parseArray(srListString, String.class);
+    SrList.Builder builder = SrList.newBuilder();
+    builder.setCycle(cycle);
+    for (String sr : srList) {
+      builder.addCurrentSrList(ByteString.copyFromUtf8(sr));
+    }
+    builder.addAllPreSrsSignature(pbftSignCapsule.getInstance().getSignList());
+    blockCapsule.getInstance().getBlockHeader().getRawData().toBuilder()
+        .setCurrentSrList(builder.build());
   }
 
   private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {

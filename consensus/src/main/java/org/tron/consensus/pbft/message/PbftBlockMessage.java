@@ -37,11 +37,14 @@ public class PbftBlockMessage extends PbftBaseMessage {
     Raw.Builder rawBuilder = Raw.newBuilder();
     PbftMessage.Builder builder = PbftMessage.newBuilder();
     byte[] publicKey = ecKey.getAddress();
+    byte[] dataSign = ecKey.sign(Sha256Hash.hash(blockCapsule.getBlockId().getByteString()
+        .toByteArray())).toByteArray();
     rawBuilder.setBlockNum(blockCapsule.getNum())
         .setPbftMsgType(Type.PREPREPARE)
         .setTime(System.currentTimeMillis())
         .setPublicKey(ByteString.copyFrom(publicKey == null ? new byte[0] : publicKey))
-        .setData(blockCapsule.getBlockId().getByteString());
+        .setData(blockCapsule.getBlockId().getByteString())
+        .setDataSign(ByteString.copyFrom(dataSign));
     Raw raw = rawBuilder.build();
     byte[] hash = Sha256Hash.hash(raw.toByteArray());
     ECDSASignature signature = ecKey.sign(hash);

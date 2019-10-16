@@ -404,8 +404,9 @@ message BlockHeader {
 }
 
 message SrList {
-  repeated bytes currentSrList = 1;
-  repeated bytes pre_srs_signature = 2;
+  int64 cycle = 1;
+  repeated bytes currentSrList = 2;
+  repeated bytes pre_srs_signature = 3;
 }
 
 // block
@@ -650,6 +651,7 @@ message PbftMessage {
     int64 time = 3;
     bytes publicKey = 4;
     bytes data = 5;
+    bytes data_sign = 6;
   }
   Raw raw_data = 1;
   bytes sign = 2;
@@ -658,4 +660,9 @@ message PbftMessage {
 message PbftMessageList {
   int64 blockNum = 1;
   repeated PbftMessage pbftMessage = 2;
+}
+
+message DataSign {
+  bytes data = 1;
+  repeated bytes sign = 2;
 }

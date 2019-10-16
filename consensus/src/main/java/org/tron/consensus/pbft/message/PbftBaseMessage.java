@@ -92,7 +92,11 @@ public abstract class PbftBaseMessage extends Message {
     byte[] sigAddress = ECKey.signatureToAddress(hash, TransactionCapsule
         .getBase64FromByteString(getPbftMessage().getSign()));
     byte[] witnessAccountAddress = getPbftMessage().getRawData().getPublicKey().toByteArray();
-    return Arrays.equals(sigAddress, witnessAccountAddress);
+    byte[] dataHash = Sha256Hash.hash(getPbftMessage().getRawData().getData().toByteArray());
+    byte[] dataSignAddress = ECKey.signatureToAddress(dataHash,
+        TransactionCapsule.getBase64FromByteString(getPbftMessage().getRawData().getDataSign()));
+    return Arrays.equals(sigAddress, witnessAccountAddress) && Arrays
+        .equals(dataSignAddress, witnessAccountAddress);
   }
 
   public PbftBaseMessage buildPrePareMessage() {
@@ -110,11 +114,14 @@ public abstract class PbftBaseMessage extends Message {
     PbftMessage.Builder builder = PbftMessage.newBuilder();
     Raw.Builder rawBuilder = Raw.newBuilder();
     byte[] publicKey = ecKey.getAddress();
+    byte[] dataSign = ecKey.sign(Sha256Hash.hash(getPbftMessage().getRawData().getData()
+        .toByteArray())).toByteArray();
     rawBuilder.setBlockNum(getPbftMessage().getRawData().getBlockNum())
         .setPbftMsgType(type)
         .setTime(System.currentTimeMillis())
         .setPublicKey(ByteString.copyFrom(publicKey == null ? new byte[0] : publicKey))
-        .setData(getPbftMessage().getRawData().getData());
+        .setData(getPbftMessage().getRawData().getData())
+        .setDataSign(ByteString.copyFrom(dataSign));
     Raw raw = rawBuilder.build();
     byte[] hash = Sha256Hash.hash(raw.toByteArray());
     ECDSASignature signature = ecKey.sign(hash);

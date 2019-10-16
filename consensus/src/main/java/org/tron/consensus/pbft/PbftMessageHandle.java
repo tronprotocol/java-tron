@@ -2,11 +2,14 @@ package org.tron.consensus.pbft;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +53,15 @@ public class PbftMessageHandle {
   private Map<String, Long> timeOuts = Maps.newConcurrentMap();
   //Successfully processed request
   private Map<String, PbftBaseMessage> doneMsg = Maps.newConcurrentMap();
+
+  private LoadingCache<String, List<ByteString>> dataSignCache = CacheBuilder.newBuilder()
+      .initialCapacity(100).maximumSize(1000).expireAfterWrite(10, TimeUnit.MINUTES).build(
+          new CacheLoader<String, List<ByteString>>() {
+            @Override
+            public List<ByteString> load(String s) throws Exception {
+              return new ArrayList<>();
+            }
+          });
 
   private Timer timer;
 
@@ -139,11 +151,13 @@ public class PbftMessageHandle {
     commitVotes.add(key);
     //The number of votes plus 1
     long agCou = agreeCommit.incrementAndGet(message.getDataKey());
+    dataSignCache.getUnchecked(message.getDataKey())
+        .add(message.getPbftMessage().getRawData().getDataSign());
     if (agCou >= Param.getInstance().getAgreeNodeCount()) {
       remove(message.getNo());
       //commit,
       if (!isSyncing()) {
-        pbftMessageAction.action(message);
+        pbftMessageAction.action(message, dataSignCache.getUnchecked(message.getDataKey()));
       }
     }
   }

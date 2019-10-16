@@ -2,29 +2,39 @@ package org.tron.consensus.dpos;
 
 
 import static org.tron.consensus.base.Constant.SOLIDIFIED_THRESHOLD;
+import static org.tron.core.config.args.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
+import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
+import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.ListUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.BlockHandle;
 import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.SrList;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -133,6 +143,58 @@ public class DposService implements ConsensusInterface {
       return false;
     }
 
+    return validSrList(block);
+  }
+
+  private boolean validSrList(Block block) {
+    //valid sr list
+    long startTime = System.currentTimeMillis();
+    SrList srList = block.getBlockHeader().getRawData().getCurrentSrList();
+    List<ByteString> addressList = srList.getCurrentSrListList();
+    List<ByteString> preCycleSrSignList = srList.getPreSrsSignatureList();
+    if (addressList.size() != 0) {
+      long cycle = block.getBlockHeader().getRawData().getCurrentSrList().getCycle();
+      if (cycle != consensusDelegate.getCurrentCycleNumber()) {
+        return false;
+      }
+      if (cycle <= consensusDelegate.getSrListCurrentCycle()) {
+        return false;
+      }
+      List<ByteString> localAddressList = consensusDelegate.getActiveWitnesses();
+      Set<ByteString> addressSet = Sets.newHashSet(addressList);
+      Set<ByteString> preCycleSrSignSet = Sets.newHashSet(preCycleSrSignList);
+      if (addressList.size() != localAddressList.size()) {
+        return false;
+      }
+      if (preCycleSrSignSet.size() < MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1) {
+        return false;
+      }
+      if (!ListUtils.subtract(localAddressList, addressList).isEmpty()) {
+        return false;
+      }
+      ByteString data = ByteString.copyFromUtf8(JSON.toJSONString(addressList));
+      byte[] dataHash = Sha256Hash.hash(data.toByteArray());
+      for (ByteString sign : preCycleSrSignList) {
+        try {
+          byte[] srAddress = ECKey.signatureToAddress(dataHash,
+              TransactionCapsule.getBase64FromByteString(sign));
+          if (!addressSet.contains(ByteString.copyFrom(srAddress))) {
+            return false;
+          }
+          preCycleSrSignSet.remove(sign);
+        } catch (SignatureException e) {
+          logger.error("block {} valid sr list sign fail!",
+              block.getBlockHeader().getRawData().getNumber(), e);
+          return false;
+        }
+      }
+      if (preCycleSrSignSet.size() != 0) {
+        return false;
+      }
+      consensusDelegate.saveSrListCurrentCycle(cycle);
+    }
+    logger.info("block {} validSrList spend time : {}",
+        block.getBlockHeader().getRawData().getNumber(), (System.currentTimeMillis() - startTime));
     return true;
   }
 

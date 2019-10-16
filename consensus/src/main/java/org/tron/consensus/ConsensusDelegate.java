@@ -148,4 +148,17 @@ public class ConsensusDelegate {
   public boolean allowChangeDelegation() {
     return dynamicPropertiesStore.allowChangeDelegation();
   }
+
+  public long getSrListCurrentCycle() {
+    return dynamicPropertiesStore.getSrListCurrentCycle();
+  }
+
+  public void saveSrListCurrentCycle(long cycle) {
+    dynamicPropertiesStore.saveSrListCurrentCycle(cycle);
+  }
+
+  public long getCurrentCycleNumber() {
+    return dynamicPropertiesStore.getCurrentCycleNumber();
+  }
+
 }
