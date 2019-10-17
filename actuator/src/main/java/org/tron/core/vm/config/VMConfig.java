@@ -17,6 +17,8 @@
  */
 package org.tron.core.vm.config;
 
+import static org.tron.common.utils.DBConfig.ENERGY_LIMIT_HARD_FORK;
+
 import lombok.Setter;
 
 /**
@@ -32,9 +34,6 @@ public class VMConfig {
 
   @Setter
   private static boolean vmTrace = false;
-
-  @Setter
-  private static boolean ENERGY_LIMIT_HARD_FORK = false;
 
   @Setter
   private static boolean ALLOW_TVM_TRANSFER_TRC10 = false;
