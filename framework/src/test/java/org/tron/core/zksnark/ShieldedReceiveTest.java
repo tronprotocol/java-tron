@@ -1522,7 +1522,6 @@ public class ShieldedReceiveTest extends BlockGenerate {
           newContract
               .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
-          //newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
           for (SpendDescription spendDescription : shieldedTransferContract
               .getSpendDescriptionList()) {
@@ -1554,14 +1553,9 @@ public class ShieldedReceiveTest extends BlockGenerate {
           newContract
               .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-          //for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
-          //  newContract
-          //          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-          //}
           break;
         case RECEIVE_DESCRIPTION:
           newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-          //newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
               .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
@@ -2522,14 +2516,14 @@ public class ShieldedReceiveTest extends BlockGenerate {
         receiveNote2.getNote().getPaymentAddress());
   }
 
-  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM}
+  public enum TestColumn { CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM }
 
   public enum TestSignMissingColumn {
     FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION,
     RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT
   }
 
-  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF}
+  public enum TestReceiveMissingColumn { CV, CM, EPK, C_ENC, C_OUT, ZKPROOF }
 
   @AllArgsConstructor
   class TransactionHash {

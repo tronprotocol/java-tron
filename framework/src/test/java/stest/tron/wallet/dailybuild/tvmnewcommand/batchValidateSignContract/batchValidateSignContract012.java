@@ -33,8 +33,7 @@ public class batchValidateSignContract012 {
 
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
-  private final byte[] testNetAccountAddress = PublicMethed
-      .getFinalAddress(testNetAccountKey);
+  private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   byte[] contractAddress = null;
   String txid;
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -47,8 +46,8 @@ public class batchValidateSignContract012 {
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
@@ -65,18 +64,13 @@ public class batchValidateSignContract012 {
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-        .usePlaintext(true)
-        .build();
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1).usePlaintext(true).build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
     txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress,
-            testNetAccountKey,
-            blockingStubFull);
+            testNetAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/batchvalidatesign005.sol";
     String contractName = "Demo";
@@ -84,8 +78,7 @@ public class batchValidateSignContract012 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed
-        .deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100, null, contractExcKey,
             contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
@@ -104,26 +97,23 @@ public class batchValidateSignContract012 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String argsStr = PublicMethed.parametersString(parameters);
 
-    String input = AbiUtil.parseParameters(
-        "batchvalidatesign(bytes32,bytes[],address[])", argsStr);
+    String input = AbiUtil.parseParameters("batchvalidatesign(bytes32,bytes[],address[])", argsStr);
     String method = "testArray2(bytes)";
-    txid = PublicMethed.triggerContract(contractAddress,
-        method, AbiUtil.parseParameters(method, Arrays.asList(input)), true,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    txid = PublicMethed.triggerContract(contractAddress, method,
+        AbiUtil.parseParameters(method, Arrays.asList(input)), true, 0, maxFeeLimit,
+        contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.getTransactionById(txid, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    logger
-        .info(
-            "infoById:" + ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()));
-    Assert
-        .assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()).equals(
-            "0000000000000000000000000000000000000000000000000000000000000001"
-                + "0000000000000000000000000000000000000000000000000000000000000040"
-                + "0000000000000000000000000000000000000000000000000000000000000020"
-                + "0101010101010101010101010101010100000000000000000000000000000000"));
+    logger.info(
+        "infoById:" + ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())
+        .equals("0000000000000000000000000000000000000000000000000000000000000001"
+            + "0000000000000000000000000000000000000000000000000000000000000040"
+            + "0000000000000000000000000000000000000000000000000000000000000020"
+            + "0101010101010101010101010101010100000000000000000000000000000000"));
   }
 
   @Test(enabled = true, description = "Trigger precompile multivalidatesign function with incor"
@@ -143,26 +133,23 @@ public class batchValidateSignContract012 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String argsStr = PublicMethed.parametersString(parameters);
 
-    String input = AbiUtil.parseParameters(
-        "batchvalidatesign(bytes32,bytes[],address[])", argsStr);
+    String input = AbiUtil.parseParameters("batchvalidatesign(bytes32,bytes[],address[])", argsStr);
     String method = "testArray2(bytes)";
-    txid = PublicMethed.triggerContract(contractAddress,
-        method, AbiUtil.parseParameters(method, Arrays.asList(input)), true,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    txid = PublicMethed.triggerContract(contractAddress, method,
+        AbiUtil.parseParameters(method, Arrays.asList(input)), true, 0, maxFeeLimit,
+        contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.getTransactionById(txid, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    logger
-        .info(
-            "infoById:" + ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()));
-    Assert
-        .assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()).equals(
-            "0000000000000000000000000000000000000000000000000000000000000001"
-                + "0000000000000000000000000000000000000000000000000000000000000040"
-                + "0000000000000000000000000000000000000000000000000000000000000020"
-                + "0001010101010101010101010101010100000000000000000000000000000000"));
+    logger.info(
+        "infoById:" + ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())
+        .equals("0000000000000000000000000000000000000000000000000000000000000001"
+            + "0000000000000000000000000000000000000000000000000000000000000040"
+            + "0000000000000000000000000000000000000000000000000000000000000020"
+            + "0001010101010101010101010101010100000000000000000000000000000000"));
   }
 
   /**
@@ -170,11 +157,9 @@ public class batchValidateSignContract012 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull)
-        .getBalance();
-    PublicMethed
-        .sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
-            blockingStubFull);
+    long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
+        blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
