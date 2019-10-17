@@ -310,7 +310,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         }
         // todo add other contract
         default: {
-          long start = System.currentTimeMillis();
           Class<? extends GeneratedMessageV3> clazz = TransactionFactory
               .getContract(contract.getType());
           if (clazz == null) {
