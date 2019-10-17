@@ -110,7 +110,7 @@ public class TransferAssetActuator extends AbstractActuator {
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     if (!this.any.is(TransferAssetContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [TransferAssetContract],real type[" + any
+          "contract type error, expected type [TransferAssetContract], real type[" + any
               .getClass() + "]");
     }
     final TransferAssetContract transferAssetContract;
@@ -137,7 +137,7 @@ public class TransferAssetActuator extends AbstractActuator {
 //      throw new ContractValidateException("Invalid assetName");
 //    }
     if (amount <= 0) {
-      throw new ContractValidateException("Amount must greater than 0.");
+      throw new ContractValidateException("Amount must be greater than 0.");
     }
 
     if (Arrays.equals(ownerAddress, toAddress)) {
@@ -151,7 +151,7 @@ public class TransferAssetActuator extends AbstractActuator {
 
     if (!Commons.getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store)
         .has(assetName)) {
-      throw new ContractValidateException("No asset !");
+      throw new ContractValidateException("No asset!");
     }
 
     Map<String, Long> asset;
@@ -161,12 +161,12 @@ public class TransferAssetActuator extends AbstractActuator {
       asset = ownerAccount.getAssetMapV2();
     }
     if (asset.isEmpty()) {
-      throw new ContractValidateException("Owner no asset!");
+      throw new ContractValidateException("Owner has no asset!");
     }
 
     Long assetBalance = asset.get(ByteArray.toStr(assetName));
     if (null == assetBalance || assetBalance <= 0) {
-      throw new ContractValidateException("assetBalance must greater than 0.");
+      throw new ContractValidateException("assetBalance must be greater than 0.");
     }
     if (amount > assetBalance) {
       throw new ContractValidateException("assetBalance is not sufficient.");

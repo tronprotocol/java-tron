@@ -81,7 +81,7 @@ public class TransferActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(TransferContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [TransferContract],real type[" + any
+          "contract type error, expected type [TransferContract],real type[" + any
               .getClass() + "]");
     }
     long fee = calcFee();
@@ -105,7 +105,7 @@ public class TransferActuator extends AbstractActuator {
     }
 
     if (Arrays.equals(toAddress, ownerAddress)) {
-      throw new ContractValidateException("Cannot transfer trx to yourself.");
+      throw new ContractValidateException("Cannot transfer TRX to yourself.");
     }
 
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
@@ -117,7 +117,7 @@ public class TransferActuator extends AbstractActuator {
     long balance = ownerAccount.getBalance();
 
     if (amount <= 0) {
-      throw new ContractValidateException("Amount must greater than 0.");
+      throw new ContractValidateException("Amount must be greater than 0.");
     }
 
     try {
@@ -129,7 +129,7 @@ public class TransferActuator extends AbstractActuator {
       if (dynamicStore.getAllowTvmSolidity059() == 1
           && toAccount != null
           && toAccount.getType() == AccountType.Contract) {
-        throw new ContractValidateException("Cannot transfer trx to smartContract.");
+        throw new ContractValidateException("Cannot transfer TRX to smartContract.");
       }
 
       if (balance < Math.addExact(amount, fee)) {
