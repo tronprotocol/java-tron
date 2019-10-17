@@ -4,6 +4,8 @@ import com.google.protobuf.ByteString;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.consensus.base.Param;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
@@ -17,8 +19,9 @@ public class BlockGenerate {
   }
 
   public Block getSignedBlock(ByteString witness, long time, byte[] privateKey) {
-
-    BlockCapsule blockCapsule = manager.generateBlock(System.currentTimeMillis() + 1000);
+    Param param = new Param();
+    Miner miner = param.new Miner(privateKey, witness, witness);
+    BlockCapsule blockCapsule = manager.generateBlock(miner, System.currentTimeMillis() + 1000);
     Block block = blockCapsule.getInstance();
 
     BlockHeader.raw raw = block.getBlockHeader().getRawData().toBuilder()

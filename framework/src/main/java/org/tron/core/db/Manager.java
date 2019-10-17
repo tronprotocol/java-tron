@@ -62,6 +62,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.consensus.Consensus;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.actuator.AbstractActuator;
@@ -1057,6 +1058,8 @@ public class Manager {
                   + block.getMerkleRoot());
           throw new BadBlockException("The merkle hash is not validated");
         }
+
+        consensus.receiveBlock(block.getInstance());
       }
 
       if (block.getTransactions().stream().filter(tran -> isShieldedTransaction(tran.getInstance()))
@@ -1348,16 +1351,25 @@ public class Manager {
   /**
    * Generate a block.
    */
-  public synchronized BlockCapsule generateBlock(long timeout) {
+  public synchronized BlockCapsule generateBlock(Miner miner, long timeout) {
 
     long postponedTrxCount = 0;
 
-    BlockCapsule blockCapsule = new BlockCapsule();
+    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockId());
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
 
     accountStateCallBack.preExecute(blockCapsule);
+
+    if (getDynamicPropertiesStore().getAllowMultiSign() == 1) {
+      byte[] privateKeyAddress = miner.getPrivateKeyAddress().toByteArray();
+      AccountCapsule witnessAccount = getAccountStore().get(miner.getWitnessAddress().toByteArray());
+      if (!Arrays.equals(privateKeyAddress, witnessAccount.getWitnessPermissionAddress())) {
+        logger.warn("Witness permission is wrong");
+        return null;
+      }
+    }
 
     TransactionRetCapsule transationRetCapsule = new TransactionRetCapsule(blockCapsule);
 

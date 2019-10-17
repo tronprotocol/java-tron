@@ -100,7 +100,7 @@ public class Create2Test016 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./framework/src/test/resources/soliditycode/create2CallContract.sol";
+    String filePath = "./src/test/resources/soliditycode/create2CallContract.sol";
     String contractName = "callerContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -162,7 +162,7 @@ public class Create2Test016 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./framework/src/test/resources/soliditycode/create2contract.sol";
+    String filePath = "./src/test/resources/soliditycode/create2contract.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -232,7 +232,7 @@ public class Create2Test016 {
 
     Long callValue = Long.valueOf(0);
 
-    String filePath = "./framework/src/test/resources/soliditycode/create2contract.sol";
+    String filePath = "./src/test/resources/soliditycode/create2contract.sol";
     String contractName = "TestConstract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

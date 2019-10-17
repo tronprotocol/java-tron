@@ -210,11 +210,11 @@ public class TransferActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("Invalid ownerAddress");
+      fail("Invalid ownerAddress!");
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalid ownerAddress", e.getMessage());
+      Assert.assertEquals("Invalid ownerAddress!", e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
@@ -242,7 +242,7 @@ public class TransferActuatorTest {
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalid toAddress", e.getMessage());
+      Assert.assertEquals("Invalid toAddress!", e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
@@ -269,7 +269,7 @@ public class TransferActuatorTest {
 
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Cannot transfer trx to yourself.", e.getMessage());
+      Assert.assertEquals("Cannot transfer TRX to yourself.", e.getMessage());
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
@@ -358,7 +358,7 @@ public class TransferActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue("Amount must greater than 0.".equals(e.getMessage()));
+      Assert.assertTrue("Amount must be greater than 0.".equals(e.getMessage()));
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()
@@ -383,7 +383,7 @@ public class TransferActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue("Amount must greater than 0.".equals(e.getMessage()));
+      Assert.assertTrue("Amount must be greater than 0.".equals(e.getMessage()));
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AccountCapsule toAccount = dbManager.getAccountStore()

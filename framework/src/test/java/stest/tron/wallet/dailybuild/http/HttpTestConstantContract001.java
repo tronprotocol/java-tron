@@ -41,7 +41,7 @@ public class HttpTestConstantContract001 {
     response = HttpMethed.sendCoin(httpnode, fromAddress, assetOwnerAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    String filePath = "framework/src/test/resources/soliditycode/constantContract001.sol";
+    String filePath = "src/test/resources/soliditycode/constantContract001.sol";
     contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

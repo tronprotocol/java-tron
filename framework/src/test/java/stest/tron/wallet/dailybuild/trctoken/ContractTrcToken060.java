@@ -28,19 +28,21 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ContractTrcToken060 {
 
-  private static final long now = System.currentTimeMillis();
-  private static final long TotalSupply = 1000L;
-  private static String tokenName = "testAssetIssue_" + Long.toString(now);
-  private static ByteString assetAccountId = null;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
+
+  private static final long now = System.currentTimeMillis();
+  private static String tokenName = "testAssetIssue_" + Long.toString(now);
+  private static ByteString assetAccountId = null;
+  private static final long TotalSupply = 1000L;
   private byte[] transferTokenContractAddress = null;
 
   private String description = Configuration.getByPath("testng.conf")
@@ -111,7 +113,7 @@ public class ContractTrcToken060 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountBefore: "
         + devAssetCountBefore);
 
-    String filePath = "./framework/src/test/resources/soliditycode/contractTrcToken060.sol";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken060.sol";
     String contractName = "tokenTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -153,7 +155,7 @@ public class ContractTrcToken060 {
     logger.info("after AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountAfter: "
         + devAssetCountAfter);
 
-    Assert.assertTrue(PublicMethed.transferAsset(transferTokenContractAddress,
+    Assert.assertFalse(PublicMethed.transferAsset(transferTokenContractAddress,
         assetAccountId.toByteArray(), 100L, dev001Address, dev001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long contractAssetCount = PublicMethed.getAssetIssueValue(transferTokenContractAddress,
@@ -163,7 +165,7 @@ public class ContractTrcToken060 {
 
     Assert.assertEquals(Long.valueOf(tokenValue),
         Long.valueOf(devAssetCountBefore - devAssetCountAfter));
-    Assert.assertEquals(Long.valueOf(100L + tokenValue), contractAssetCount);
+    Assert.assertEquals(Long.valueOf(tokenValue), contractAssetCount);
 
     // get and verify the msg.value and msg.id
 

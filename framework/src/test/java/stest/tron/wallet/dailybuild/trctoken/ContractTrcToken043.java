@@ -30,20 +30,22 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ContractTrcToken043 {
 
-  private static final long now = System.currentTimeMillis();
-  private static final long TotalSupply = 1000L;
-  private static String tokenName = "testAssetIssue_" + Long.toString(now);
-  private static ByteString assetAccountId = null;
-  private static ByteString assetAccountUser = null;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
+
+  private static final long now = System.currentTimeMillis();
+  private static String tokenName = "testAssetIssue_" + Long.toString(now);
+  private static ByteString assetAccountId = null;
+  private static ByteString assetAccountUser = null;
+  private static final long TotalSupply = 1000L;
   private byte[] transferTokenContractAddress = null;
   private byte[] resultContractAddress = null;
 
@@ -136,7 +138,7 @@ public class ContractTrcToken043 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8()
         + ", devAssetCountBefore: " + devAssetCountBefore);
 
-    String filePath = "./framework/src/test/resources/soliditycode/contractTrcToken043.sol";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken043.sol";
     String contractName = "transferTokenContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -209,7 +211,7 @@ public class ContractTrcToken043 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8()
         + ", devAssetCountBefore: " + devAssetCountBefore);
 
-    String filePath = "./framework/src/test/resources/soliditycode/contractTrcToken043.sol";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken043.sol";
     String contractName = "Result";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -408,7 +410,6 @@ public class ContractTrcToken043 {
         1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
@@ -472,7 +473,7 @@ public class ContractTrcToken043 {
         ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Assert.assertTrue(PublicMethed
+    Assert.assertFalse(PublicMethed
         .sendcoin(transferTokenContractAddress, 5000000, fromAddress, testKey002,
             blockingStubFull));
     Assert.assertTrue(PublicMethed

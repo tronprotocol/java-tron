@@ -93,7 +93,7 @@ public class ContractTrcToken078 {
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "./framework/src/test/resources/soliditycode/contractTrcToken078.sol";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName = "callerContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -110,7 +110,7 @@ public class ContractTrcToken078 {
     logger.info("infoById : " + infoById);
     contractAddress = infoById.get().getContractAddress().toByteArray();
 
-    String filePath1 = "./framework/src/test/resources/soliditycode/contractTrcToken078.sol";
+    String filePath1 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName1 = "calledContract";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath1, contractName1);
 
@@ -128,7 +128,7 @@ public class ContractTrcToken078 {
     byte[] contractAddress1;
     contractAddress1 = infoById.get().getContractAddress().toByteArray();
 
-    String filePath2 = "./framework/src/test/resources/soliditycode/contractTrcToken078.sol";
+    String filePath2 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName2 = "c";
     HashMap retMap2 = PublicMethed.getBycodeAbi(filePath2, contractName2);
 
@@ -175,7 +175,7 @@ public class ContractTrcToken078 {
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "./framework/src/test/resources/soliditycode/contractTrcToken078.sol";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName = "callerContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -192,7 +192,7 @@ public class ContractTrcToken078 {
     logger.info("infoById : " + infoById);
     contractAddress = infoById.get().getContractAddress().toByteArray();
 
-    String filePath1 = "./framework/src/test/resources/soliditycode/contractTrcToken078.sol";
+    String filePath1 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName1 = "calledContract";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath1, contractName1);
 
@@ -209,7 +209,7 @@ public class ContractTrcToken078 {
     byte[] contractAddress1;
     contractAddress1 = infoById.get().getContractAddress().toByteArray();
 
-    String filePath2 = "./framework/src/test/resources/soliditycode/contractTrcToken078.sol";
+    String filePath2 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName2 = "c";
     HashMap retMap2 = PublicMethed.getBycodeAbi(filePath2, contractName2);
 

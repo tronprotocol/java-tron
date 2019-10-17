@@ -74,7 +74,7 @@ public class ContractScenario005 {
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
 
-    String filePath = "./framework/src/test/resources/soliditycode/contractScenario005.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario005.sol";
     String contractName = "Crowdsale";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

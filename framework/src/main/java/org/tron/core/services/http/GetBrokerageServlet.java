@@ -18,7 +18,7 @@ import org.tron.core.db.Manager;
 
 @Component
 @Slf4j(topic = "API")
-public class GetBrokerageServlet extends HttpServlet {
+public class GetBrokerageServlet extends RateLimiterServlet {
 
   @Autowired
   private Manager manager;

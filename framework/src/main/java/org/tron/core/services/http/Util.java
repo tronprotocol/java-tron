@@ -36,6 +36,7 @@ import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 
 @Slf4j(topic = "API")
 public class Util {
@@ -44,6 +45,7 @@ public class Util {
   public static final String VISIBLE = "visible";
   public static final String TRANSACTION = "transaction";
   public static final String VALUE = "value";
+  public static final String CONTRACT_TYPE = "contractType";
 
   public static String printErrorMsg(Exception e) {
     JSONObject jsonObject = new JSONObject();
@@ -178,10 +180,23 @@ public class Util {
       try {
         JSONObject contractJson = null;
         Any contractParameter = contract.getParameter();
-        Class clazz = TransactionFactory.getContract(contract.getType());
-        if (clazz != null) {
-          contractJson = JSONObject
-              .parseObject(JsonFormat.printToString(contractParameter.unpack(clazz), selfType));
+        switch (contract.getType()) {
+          case CreateSmartContract:
+            CreateSmartContract deployContract = contractParameter
+                .unpack(CreateSmartContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(deployContract,
+                selfType));
+            byte[] ownerAddress = deployContract.getOwnerAddress().toByteArray();
+            byte[] contractAddress = generateContractAddress(transaction, ownerAddress);
+            jsonTransaction.put("contract_address", ByteArray.toHexString(contractAddress));
+            break;
+          default:
+            Class clazz = TransactionFactory.getContract(contract.getType());
+            if (clazz != null) {
+              contractJson = JSONObject
+                  .parseObject(JsonFormat.printToString(contractParameter.unpack(clazz), selfType));
+            }
+            break;
         }
 
         JSONObject parameter = new JSONObject();
@@ -277,6 +292,15 @@ public class Util {
     }
 
     return visible;
+  }
+
+  public static String getContractType(final String input) {
+    String contractType = null;
+    JSONObject jsonObject = JSON.parseObject(input);
+    if (jsonObject.containsKey(CONTRACT_TYPE)) {
+      contractType = jsonObject.getString(CONTRACT_TYPE);
+    }
+    return contractType;
   }
 
   public static String getHexAddress(final String address) {
