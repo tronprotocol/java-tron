@@ -19,7 +19,7 @@ public class BlockGenerate {
   }
 
   public Block getSignedBlock(ByteString witness, long time, byte[] privateKey) {
-    Param param = new Param();
+    Param param = Param.getInstance();
     Miner miner = param.new Miner(privateKey, witness, witness);
     BlockCapsule blockCapsule = manager.generateBlock(miner, System.currentTimeMillis() + 1000);
     Block block = blockCapsule.getInstance();

@@ -15,6 +15,8 @@
 
 package org.tron.core.capsule;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
@@ -34,6 +36,7 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.BadItemException;
@@ -42,6 +45,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.SrList;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "capsule")
@@ -303,6 +307,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block.getBlockHeader().getRawData().getTimestamp();
   }
 
+  public SrList getSrList() {
+    return this.block.getBlockHeader().getRawData().getCurrentSrList();
+  }
+
   @Override
   public String toString() {
     toStringBuff.setLength(0);
@@ -322,6 +330,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       toStringBuff.append("txs size=").append(getTransactions().size()).append("\n");
     } else {
       toStringBuff.append("txs are empty\n");
+    }
+    if (getSrList().getCurrentSrListList().size() > 0) {
+      List<String> srAddressList = Lists.transform(getSrList().getCurrentSrListList(),
+          (Function<ByteString, String>) bytes -> WalletUtil.encode58Check(bytes.toByteArray()));
+      toStringBuff.append("srAddressList=").append(srAddressList);
     }
     toStringBuff.append("]");
     return toStringBuff.toString();
