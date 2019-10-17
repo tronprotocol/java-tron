@@ -1,6 +1,6 @@
 package org.tron.consensus.base;
 
-import org.tron.protos.Protocol.Block;
+import org.tron.core.capsule.BlockCapsule;
 
 public interface ConsensusInterface {
 
@@ -8,10 +8,10 @@ public interface ConsensusInterface {
 
   void stop();
 
-  void receiveBlock(Block block);
+  void receiveBlock(BlockCapsule block);
 
-  boolean validBlock(Block block);
+  boolean validBlock(BlockCapsule block);
 
-  boolean applyBlock(Block block);
+  boolean applyBlock(BlockCapsule block);
 
 }

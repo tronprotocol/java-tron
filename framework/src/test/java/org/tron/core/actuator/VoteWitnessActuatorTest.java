@@ -19,6 +19,7 @@ import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -176,7 +177,7 @@ public class VoteWitnessActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS)).getVotesList()
               .get(0).getVoteAddress().toByteArray());
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      maintenanceManager.applyBlock(Block.newBuilder().build());
+      maintenanceManager.applyBlock(new BlockCapsule(Block.newBuilder().build()));
       WitnessCapsule witnessCapsule = dbManager.getWitnessStore()
           .get(StringUtil.hexString2ByteString(WITNESS_ADDRESS).toByteArray());
       Assert.assertEquals(10 + 1, witnessCapsule.getVoteCount());

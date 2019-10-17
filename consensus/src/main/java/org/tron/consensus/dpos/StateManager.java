@@ -4,7 +4,6 @@ import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_I
 import static org.tron.core.config.args.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -13,9 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.ConsensusDelegate;
-import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.base.State;
-import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
@@ -29,7 +28,7 @@ public class StateManager {
   private DposService dposService;
 
   @Setter
-  private volatile Block currentBlock;
+  private volatile BlockId currentBlockId;
 
   private AtomicInteger dupBlockCount = new AtomicInteger(0);
 
@@ -64,16 +63,13 @@ public class StateManager {
     return State.OK;
   }
 
-  public State getState(ByteString scheduledWitness) {
-    Miner miner = dposService.getMiners().get(scheduledWitness);
-    if (miner == null) {
-      return State.NOT_MY_TURN;
+  public void receiveBlock(BlockCapsule blockCapsule) {
+    if (blockCapsule.generatedByMyself) {
+      currentBlockId = blockCapsule.getBlockId();
+      return;
     }
-    return State.OK;
-  }
 
-  public void receiveBlock(Block block) {
-    if (block.equals(currentBlock)) {
+    if (blockCapsule.getBlockId().equals(currentBlockId)) {
       return;
     }
 
@@ -81,12 +77,11 @@ public class StateManager {
       return;
     }
 
-    long blockTime = block.getBlockHeader().getRawData().getTimestamp();
-    if (System.currentTimeMillis() - blockTime > BLOCK_PRODUCED_INTERVAL) {
+    if (System.currentTimeMillis() - blockCapsule.getTimeStamp() > BLOCK_PRODUCED_INTERVAL) {
       return;
     }
 
-    ByteString witness = block.getBlockHeader().getRawData().getWitnessAddress();
+    ByteString witness = blockCapsule.getWitnessAddress();
     if (!dposService.getMiners().containsKey(witness)) {
       return;
     }
@@ -99,7 +94,7 @@ public class StateManager {
 
     dupBlockTime.set(System.currentTimeMillis());
 
-    logger.warn("Dup block produced: {}", block);
+    logger.warn("Dup block produced: {}", blockCapsule);
   }
 
   private boolean isDupWitness() {

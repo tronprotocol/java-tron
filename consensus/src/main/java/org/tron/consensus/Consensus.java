@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.dpos.DposService;
-import org.tron.protos.Protocol.Block;
+import org.tron.core.capsule.BlockCapsule;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -27,16 +27,16 @@ public class Consensus {
     consensusInterface.stop();
   }
 
-  public void receiveBlock(Block block) {
-    consensusInterface.receiveBlock(block);
+  public void receiveBlock(BlockCapsule blockCapsule) {
+    consensusInterface.receiveBlock(blockCapsule);
   }
 
-  public boolean validBlock(Block block) {
-    return consensusInterface.validBlock(block);
+  public boolean validBlock(BlockCapsule blockCapsule) {
+    return consensusInterface.validBlock(blockCapsule);
   }
 
-  public boolean applyBlock(Block block) {
-    return consensusInterface.applyBlock(block);
+  public boolean applyBlock(BlockCapsule blockCapsule) {
+    return consensusInterface.applyBlock(blockCapsule);
   }
 
 }

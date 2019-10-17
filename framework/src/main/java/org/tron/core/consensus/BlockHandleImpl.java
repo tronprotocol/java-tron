@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
+import org.tron.consensus.Consensus;
 import org.tron.consensus.base.BlockHandle;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.base.State;
@@ -27,6 +28,9 @@ public class BlockHandleImpl implements BlockHandle {
   @Autowired
   private TronNetService tronNetService;
 
+  @Autowired
+  private Consensus consensus;
+
   @Override
   public State getState() {
     if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
@@ -39,24 +43,18 @@ public class BlockHandleImpl implements BlockHandle {
     return manager;
   }
 
-  public Block produce(Miner miner, long timeout) {
-    BlockCapsule blockCapsule = manager.generateBlock(miner, timeout);
-    if (blockCapsule != null) {
-      return blockCapsule.getInstance();
-    }
-    return null;
-  }
-
-  public void complete(Block block) {
+  public BlockCapsule produce(Miner miner, long blockTime, long timeout) {
+    BlockCapsule blockCapsule = manager.generateBlock(miner, blockTime, timeout);
+    consensus.receiveBlock(blockCapsule);
     try {
-      BlockCapsule blockCapsule = new BlockCapsule(block);
-      blockCapsule.generatedByMyself = true;
       BlockMessage blockMessage = new BlockMessage(blockCapsule);
       tronNetService.fastForward(blockMessage);
       manager.pushBlock(blockCapsule);
       tronNetService.broadcast(blockMessage);
     } catch (Exception e) {
       logger.error("Push block failed.", e);
+      return null;
     }
+    return blockCapsule;
   }
 }
