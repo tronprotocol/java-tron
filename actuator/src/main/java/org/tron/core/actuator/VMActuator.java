@@ -111,6 +111,9 @@ public class VMActuator implements Actuator2 {
     ContractType contractType = this.trx.getRawData().getContract(0).getType();
     //Prepare Repository
     repository = RepositoryImpl.createRoot(context.getStoreFactory());
+
+    enableEventLinstener = context.isEventPluginLoaded();
+
     //set executorType type
     if (Objects.nonNull(blockCap)) {
       this.executorType = ExecutorType.ET_NORMAL_TYPE;
