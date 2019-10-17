@@ -84,7 +84,7 @@ public class GetTransactionsFromThis2Test {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testgetTransactionsFromThis2() {
     //Create a transfer.
     Assert.assertTrue(PublicMethed.sendcoin(toAddress, 1000000, fromAddress,
@@ -115,7 +115,7 @@ public class GetTransactionsFromThis2Test {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testgetTransactionsFromThisByInvaildAddress2() {
     //Invaild address.
     ByteString addressBs = ByteString.copyFrom(INVAILD_ADDRESS);
