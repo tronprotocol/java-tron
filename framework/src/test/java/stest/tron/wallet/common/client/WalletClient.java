@@ -705,14 +705,6 @@ public class WalletClient {
     return rpcCli.listNodes();
   }
 
-  public static Optional<TransactionList> getTransactionsFromThis(byte[] address) {
-    return rpcCli.getTransactionsFromThis(address);
-  }
-
-  public static Optional<TransactionList> getTransactionsToThis(byte[] address) {
-    return rpcCli.getTransactionsToThis(address);
-  }
-
   public static Block getBlock(long blockNum) {
     return rpcCli.getBlock(blockNum);
   }

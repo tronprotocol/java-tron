@@ -305,35 +305,6 @@ public class GrpcClient {
         return Optional.ofNullable(transactionList);
     }*/
 
-  /**
-   * constructor.
-   */
-
-  public Optional<TransactionList> getTransactionsFromThis(byte[] address) {
-    ByteString addressBs = ByteString.copyFrom(address);
-    Account account = Account.newBuilder().setAddress(addressBs).build();
-    AccountPaginated.Builder builder = AccountPaginated.newBuilder().setAccount(account);
-    builder.setLimit(1000);
-    builder.setOffset(0);
-    TransactionList transactionList = blockingStubExtension
-        .getTransactionsFromThis(builder.build());
-    return Optional.ofNullable(transactionList);
-  }
-
-  /**
-   * constructor.
-   */
-
-  public Optional<TransactionList> getTransactionsToThis(byte[] address) {
-    ByteString addressBs = ByteString.copyFrom(address);
-    Account account = Account.newBuilder().setAddress(addressBs).build();
-    AccountPaginated.Builder builder = AccountPaginated.newBuilder().setAccount(account);
-    builder.setLimit(1000);
-    builder.setOffset(0);
-    TransactionList transactionList = blockingStubExtension.getTransactionsToThis(builder.build());
-    return Optional.ofNullable(transactionList);
-  }
-
   /*    public Optional<Transaction> getTransactionById(String txID){
         ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txID));
         BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();

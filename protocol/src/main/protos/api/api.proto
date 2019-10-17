@@ -865,32 +865,6 @@ service WalletSolidity {
 };
 
 service WalletExtension {
-  //Please use GetTransactionsFromThis2 instead of this function.
-  rpc GetTransactionsFromThis (AccountPaginated) returns (TransactionList) {
-    option (google.api.http) = {
-      post: "/walletextension/gettransactionsfromthis"
-      body: "*"
-      additional_bindings {
-        get: "/walletextension/gettransactionsfromthis"
-      }
-    };
-  }
-  //Use this function instead of GetTransactionsFromThis.
-  rpc GetTransactionsFromThis2 (AccountPaginated) returns (TransactionListExtention) {
-  }
-  //Please use GetTransactionsToThis2 instead of this function.
-  rpc GetTransactionsToThis (AccountPaginated) returns (TransactionList) {
-    option (google.api.http) = {
-      post: "/walletextension/gettransactionstothis"
-      body: "*"
-      additional_bindings {
-        get: "/walletextension/gettransactionstothis"
-      }
-    };
-  }
-  //Use this function instead of GetTransactionsToThis.
-  rpc GetTransactionsToThis2 (AccountPaginated) returns (TransactionListExtention) {
-  }
 };
 
 // the api of tron's db
