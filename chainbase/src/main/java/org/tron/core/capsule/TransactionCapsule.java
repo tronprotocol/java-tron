@@ -323,7 +323,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             logger.error("not exist [{}] field,{}", OWNER_ADDRESS, clazz);
             return null;
           }
-          logger.info("getOwner spend time : {}", (System.currentTimeMillis() - start));
           break;
         }
       }
