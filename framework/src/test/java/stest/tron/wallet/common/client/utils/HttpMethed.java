@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -282,6 +283,31 @@ public class HttpMethed {
       return null;
     }
     return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static String sendCoin(String httpNode, byte[] fromAddress, byte[] toAddress,
+      Long amount, String notes, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/createtransaction";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("to_address", ByteArray.toHexString(toAddress));
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(fromAddress));
+      userBaseObj2.addProperty("amount", amount);
+      userBaseObj2.addProperty("extra_data", Base64.toBase64String(notes.getBytes()));
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
+      response = broadcastTransaction(httpNode, transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseStringContent(transactionString);
+    return responseContent.getString("txID");
   }
 
   /**
