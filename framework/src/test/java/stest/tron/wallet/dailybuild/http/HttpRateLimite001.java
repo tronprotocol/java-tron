@@ -105,9 +105,8 @@ public class HttpRateLimite001 {
     Assert.assertTrue(endTimesStap - startTimeStamp > 4000);
   }
 
-  @Test(enabled = true, description = "Rate limit QpsStrategy for "
-      + "getTransactionsFromThisFromSolidity "
-      + "interface on real solidity")
+  @Test(enabled = false, description = "Rate limit QpsStrategy for "
+      + "getTransactionsFromThisFromSolidity " + "interface on real solidity")
   public void test6QpsStrategyForgetTransactionsToThisFromSolidity() {
     Long startTimeStamp = System.currentTimeMillis();
     Integer repeatTimes = 0;
