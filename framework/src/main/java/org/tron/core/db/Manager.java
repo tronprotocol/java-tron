@@ -1478,8 +1478,7 @@ public class Manager {
       builder.addCurrentSrList(ByteString.copyFromUtf8(sr));
     }
     builder.addAllPreSrsSignature(pbftSignCapsule.getInstance().getSignList());
-    blockCapsule.getInstance().getBlockHeader().getRawData().toBuilder()
-        .setCurrentSrList(builder.build());
+    blockCapsule.setSrList(builder);
   }
 
   private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {

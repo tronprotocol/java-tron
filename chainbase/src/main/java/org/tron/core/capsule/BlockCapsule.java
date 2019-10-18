@@ -232,6 +232,15 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
 
+  public void setSrList(SrList.Builder builder) {
+    BlockHeader.raw blockHeaderRaw =
+        this.block.getBlockHeader().getRawData().toBuilder()
+            .setCurrentSrList(builder).build();
+
+    this.block = this.block.toBuilder().setBlockHeader(
+        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
+  }
+
   /* only for genisis */
   public void setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw =
