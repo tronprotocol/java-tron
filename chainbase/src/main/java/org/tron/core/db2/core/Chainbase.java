@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
+import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.ItemNotFoundException;
@@ -159,12 +160,12 @@ public class Chainbase implements IRevokingDB {
               .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
           .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
     }
-//    else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
-//      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
-//          .map(e -> Maps
-//              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
-//          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
-//    }
+    else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    }
 
     levelDBMap.putAll(collection);
 
