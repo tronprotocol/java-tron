@@ -242,7 +242,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     DelegatedResourceStore delegatedResourceStore = chainBaseManager.getDelegatedResourceStore();
     if (!this.any.is(UnfreezeBalanceContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UnfreezeBalanceContract],real type[" + any
+          "contract type error, expected type [UnfreezeBalanceContract], real type[" + any
               .getClass() + "]");
     }
     final UnfreezeBalanceContract unfreezeBalanceContract;
@@ -261,7 +261,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+          "Account[" + readableOwnerAddress + "] does not exist");
     }
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
@@ -282,7 +282,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           && receiverCapsule == null) {
         String readableReceiverAddress = StringUtil.createReadableString(receiverAddress);
         throw new ContractValidateException(
-            "Receiver Account[" + readableReceiverAddress + "] not exists");
+            "Receiver Account[" + readableReceiverAddress + "] does not exist");
       }
 
       byte[] key = DelegatedResourceCapsule
@@ -292,7 +292,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           .get(key);
       if (delegatedResourceCapsule == null) {
         throw new ContractValidateException(
-            "delegated Resource not exists");
+            "delegated Resource does not exist");
       }
 
       switch (unfreezeBalanceContract.getResource()) {

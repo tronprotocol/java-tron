@@ -13,7 +13,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
-import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -45,14 +44,17 @@ public class BlockHandleImpl implements BlockHandle {
 
   public BlockCapsule produce(Miner miner, long blockTime, long timeout) {
     BlockCapsule blockCapsule = manager.generateBlock(miner, blockTime, timeout);
-    consensus.receiveBlock(blockCapsule);
+    if (blockCapsule == null) {
+      return null;
+    }
     try {
+      consensus.receiveBlock(blockCapsule);
       BlockMessage blockMessage = new BlockMessage(blockCapsule);
       tronNetService.fastForward(blockMessage);
       manager.pushBlock(blockCapsule);
       tronNetService.broadcast(blockMessage);
     } catch (Exception e) {
-      logger.error("Push block failed.", e);
+      logger.error("Handle block {} failed.", blockCapsule.getBlockId().getString(), e);
       return null;
     }
     return blockCapsule;
