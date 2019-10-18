@@ -58,8 +58,8 @@ public class UpdateSettingContractActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     ContractStore contractStore = chainBaseManager.getContractStore();
     if (!this.any.is(UpdateSettingContract.class)) {
-      throw new ContractValidateException("contract type error,expected type "
-          + "[UpdateSettingContract],real type[" + any.getClass() + "]");
+      throw new ContractValidateException("contract type error, expected type "
+          + "[UpdateSettingContract], real type[" + any.getClass() + "]");
     }
     final UpdateSettingContract contract;
     try {
@@ -77,7 +77,7 @@ public class UpdateSettingContractActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+          "Account[" + readableOwnerAddress + "] does not exist");
     }
 
     long newPercent = contract.getConsumeUserResourcePercent();
@@ -91,7 +91,7 @@ public class UpdateSettingContractActuator extends AbstractActuator {
 
     if (deployedContract == null) {
       throw new ContractValidateException(
-          "Contract not exists");
+          "Contract does not exist");
     }
 
     byte[] deployedContractOwnerAddress = deployedContract.getInstance().getOriginAddress()

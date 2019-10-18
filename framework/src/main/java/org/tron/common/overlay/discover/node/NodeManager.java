@@ -102,9 +102,9 @@ public class NodeManager implements EventHandler {
   }
 
   public boolean isNodeAlive(NodeHandler nodeHandler) {
-    return nodeHandler.getState().equals(State.Alive)
-        || nodeHandler.getState().equals(State.Active)
-        || nodeHandler.getState().equals(State.EvictCandidate);
+    return nodeHandler.getState().equals(State.ALIVE)
+        || nodeHandler.getState().equals(State.ACTIVE)
+        || nodeHandler.getState().equals(State.EVICTCANDIDATE);
   }
 
   private void dbRead() {

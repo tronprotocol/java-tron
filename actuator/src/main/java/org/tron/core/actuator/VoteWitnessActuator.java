@@ -62,7 +62,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     WitnessStore witnessStore = chainBaseManager.getWitnessStore();
     if (!this.any.is(VoteWitnessContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [VoteWitnessContract],real type[" + any
+          "contract type error, expected type [VoteWitnessContract], real type[" + any
               .getClass() + "]");
     }
     final VoteWitnessContract contract;
@@ -158,7 +158,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     votesCapsule.clearNewVotes();
 
     voteContract.getVotesList().forEach(vote -> {
-      logger.debug("countVoteAccount,address[{}]",
+      logger.debug("countVoteAccount, address[{}]",
           ByteArray.toHexString(vote.getVoteAddress().toByteArray()));
 
       votesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount());

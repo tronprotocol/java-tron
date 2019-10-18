@@ -14,12 +14,9 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.Manager;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
-import org.tron.core.db.accountstate.AccountStateEntity;
 import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.trie.TrieImpl;
-import org.tron.core.trie.TrieImpl.Node;
-import org.tron.core.trie.TrieImpl.ScanAction;
 
 
 @Slf4j(topic = "AccountState")
@@ -109,24 +106,6 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
 
   public void exceptionFinish() {
     execute = false;
-  }
-
-  private void printErrorLog(TrieImpl trie) {
-    trie.scanTree(new ScanAction() {
-      @Override
-      public void doOnNode(byte[] hash, Node node) {
-
-      }
-
-      @Override
-      public void doOnValue(byte[] nodeHash, Node node, byte[] key, byte[] value) {
-        try {
-          logger.info("account info : {}", AccountStateEntity.parse(value));
-        } catch (Exception e) {
-          logger.error("", e);
-        }
-      }
-    });
   }
 
 }

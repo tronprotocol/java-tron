@@ -32,8 +32,7 @@ public class batchValidateSignContract005 {
 
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
-  private final byte[] testNetAccountAddress = PublicMethed
-      .getFinalAddress(testNetAccountKey);
+  private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   byte[] contractAddress = null;
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
@@ -46,8 +45,8 @@ public class batchValidateSignContract005 {
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
@@ -64,19 +63,14 @@ public class batchValidateSignContract005 {
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-        .usePlaintext(true)
-        .build();
+    channelFull1 = ManagedChannelBuilder.forTarget(fullnode1).usePlaintext(true).build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
     txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
-            testNetAccountKey,
-            blockingStubFull);
+            testNetAccountKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/batchvalidatesign001.sol";
     String contractName = "Demo";
@@ -84,8 +78,7 @@ public class batchValidateSignContract005 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed
-        .deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100, null, contractExcKey,
             contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
@@ -110,11 +103,12 @@ public class batchValidateSignContract005 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
+              + " : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-          .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
+      Assert.assertEquals("00000000000000000000000000000000",
+          PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
     }
@@ -139,11 +133,12 @@ public class batchValidateSignContract005 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
+              + " : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-          .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
+      Assert.assertEquals("00000000000000000000000000000000",
+          PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
     }
@@ -168,11 +163,12 @@ public class batchValidateSignContract005 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
+              + " : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-          .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
+      Assert.assertEquals("00000000000000000000000000000000",
+          PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
     }
@@ -192,11 +188,12 @@ public class batchValidateSignContract005 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
+              + " : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-          .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
+      Assert.assertEquals("00000000000000000000000000000000",
+          PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
     }
@@ -216,11 +213,12 @@ public class batchValidateSignContract005 {
     logger.info("transactionExtention:" + transactionExtention);
     if (transactionExtention.getResult().getCode().toString().equals("CONTRACT_EXE_ERROR")) {
       Assert.assertEquals(
-          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
+          "class org.tron.common.runtime.vm.program.Program$OutOfTimeException"
+              + " : CPU timeout for 'ISZERO' operation executing",
           transactionExtention.getResult().getMessage().toStringUtf8());
     } else {
-      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-          .bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
+      Assert.assertEquals("00000000000000000000000000000000",
+          PublicMethed.bytes32ToString(transactionExtention.getConstantResult(0).toByteArray()));
       Assert.assertEquals("SUCESS",
           transactionExtention.getTransaction().getRet(0).getRet().toString());
     }
@@ -231,11 +229,9 @@ public class batchValidateSignContract005 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull)
-        .getBalance();
-    PublicMethed
-        .sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
-            blockingStubFull);
+    long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
+        blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

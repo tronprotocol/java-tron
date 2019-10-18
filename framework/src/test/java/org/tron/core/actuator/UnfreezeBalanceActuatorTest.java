@@ -357,7 +357,7 @@ public class UnfreezeBalanceActuatorTest {
       Assert.fail();
     } catch (ContractValidateException e) {
       Assert.assertEquals(e.getMessage(),
-          "Receiver Account[a0abd4b9367799eaa3197fecb144eb71de1e049150] not exists");
+          "Receiver Account[a0abd4b9367799eaa3197fecb144eb71de1e049150] does not exist");
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -670,7 +670,7 @@ public class UnfreezeBalanceActuatorTest {
       Assert.fail();
     } catch (ContractValidateException e) {
       Assert.assertEquals(e.getMessage(),
-          "Receiver Account[a0abd4b9367799eaa3197fecb144eb71de1e049150] not exists");
+          "Receiver Account[a0abd4b9367799eaa3197fecb144eb71de1e049150] does not exist");
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -820,7 +820,7 @@ public class UnfreezeBalanceActuatorTest {
       fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists", e.getMessage());
+      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] does not exist", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

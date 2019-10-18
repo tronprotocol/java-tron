@@ -32,7 +32,8 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class deployMainGateway {
 
 
-  private final String testDepositTrx = "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb7";
+  private final String testDepositTrx = "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096"
+      + "c6bacb7";
   private final byte[] testDepositAddress = PublicMethed.getFinalAddress(testDepositTrx);
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] depositAddress = ecKey1.getAddress();
@@ -57,7 +58,6 @@ public class deployMainGateway {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-//    PublicMethed.printAddress(testKeyFordeposit);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -89,8 +89,8 @@ public class deployMainGateway {
         .deployContractWithConstantParame(contractName, abi, code, "constructor(address)",
             parame, "",
             maxFeeLimit,
-            0L, 100, null, testKeyFordeposit, depositAddress
-            , blockingStubFull);
+            0L, 100, null, testKeyFordeposit, depositAddress,
+            blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = PublicMethed
