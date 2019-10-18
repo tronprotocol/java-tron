@@ -37,6 +37,8 @@ public class UpdateAssetActuator extends AbstractActuator {
       final UpdateAssetContract updateAssetContract = this.any
           .unpack(UpdateAssetContract.class);
 
+      logger.info("### UpdateAssetActuator: {}", updateAssetContract.toString());
+
       long newLimit = updateAssetContract.getNewLimit();
       long newPublicLimit = updateAssetContract.getNewPublicLimit();
       byte[] ownerAddress = updateAssetContract.getOwnerAddress().toByteArray();

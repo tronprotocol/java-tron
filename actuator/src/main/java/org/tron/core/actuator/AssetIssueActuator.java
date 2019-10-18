@@ -55,6 +55,9 @@ public class AssetIssueActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     try {
       AssetIssueContract assetIssueContract = any.unpack(AssetIssueContract.class);
+
+      logger.info("### AssetIssueActuator: {}", assetIssueContract);
+
       byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
       AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
       AssetIssueCapsule assetIssueCapsuleV2 = new AssetIssueCapsule(assetIssueContract);
