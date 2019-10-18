@@ -58,63 +58,60 @@ public class MaintenanceManager {
     tryRemoveThePowerOfTheGr();
 
     Map<ByteString, Long> countWitness = countVote(votesStore);
-    if (countWitness.isEmpty()) {
-      logger.warn("No vote, no change to witness.");
-      return;
-    }
+    if (!countWitness.isEmpty()) {
+      List<ByteString> currentWits = consensusDelegate.getActiveWitnesses();
 
-    List<ByteString> currentWits = consensusDelegate.getActiveWitnesses();
+      List<ByteString> newWitnessAddressList = new ArrayList<>();
+      consensusDelegate.getAllWitnesses()
+          .forEach(witnessCapsule -> newWitnessAddressList.add(witnessCapsule.getAddress()));
 
-    List<ByteString> newWitnessAddressList = new ArrayList<>();
-    consensusDelegate.getAllWitnesses()
-        .forEach(witnessCapsule -> newWitnessAddressList.add(witnessCapsule.getAddress()));
-
-    countWitness.forEach((address, voteCount) -> {
-      byte[] witnessAddress = address.toByteArray();
-      WitnessCapsule witnessCapsule = consensusDelegate.getWitness(witnessAddress);
-      if (witnessCapsule == null) {
-        logger.warn("Witness capsule is null. address is {}", Hex.toHexString(witnessAddress));
-        return;
-      }
-      AccountCapsule account = consensusDelegate.getAccount(witnessAddress);
-      if (account == null) {
-        logger.warn("Witness account is null. address is {}", Hex.toHexString(witnessAddress));
-        return;
-      }
-      witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
-      consensusDelegate.saveWitness(witnessCapsule);
-      logger.info("address is {} , countVote is {}", witnessCapsule.createReadableString(),
-          witnessCapsule.getVoteCount());
-    });
-
-    dposService.sortWitness(newWitnessAddressList);
-
-    if (newWitnessAddressList.size() > MAX_ACTIVE_WITNESS_NUM) {
-      consensusDelegate
-          .saveActiveWitnesses(newWitnessAddressList.subList(0, MAX_ACTIVE_WITNESS_NUM));
-    } else {
-      consensusDelegate.saveActiveWitnesses(newWitnessAddressList);
-    }
-
-    incentiveManager.reward(newWitnessAddressList);
-
-    List<ByteString> newWits = consensusDelegate.getActiveWitnesses();
-    if (!CollectionUtils.isEqualCollection(currentWits, newWits)) {
-      currentWits.forEach(address -> {
-        WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address.toByteArray());
-        witnessCapsule.setIsJobs(false);
+      countWitness.forEach((address, voteCount) -> {
+        byte[] witnessAddress = address.toByteArray();
+        WitnessCapsule witnessCapsule = consensusDelegate.getWitness(witnessAddress);
+        if (witnessCapsule == null) {
+          logger.warn("Witness capsule is null. address is {}", Hex.toHexString(witnessAddress));
+          return;
+        }
+        AccountCapsule account = consensusDelegate.getAccount(witnessAddress);
+        if (account == null) {
+          logger.warn("Witness account is null. address is {}", Hex.toHexString(witnessAddress));
+          return;
+        }
+        witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
         consensusDelegate.saveWitness(witnessCapsule);
+        logger.info("address is {} , countVote is {}", witnessCapsule.createReadableString(),
+            witnessCapsule.getVoteCount());
       });
-      newWits.forEach(address -> {
-        WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address.toByteArray());
-        witnessCapsule.setIsJobs(true);
-        consensusDelegate.saveWitness(witnessCapsule);
-      });
-    }
 
-    logger.info("Update witness success. \nbefore: {} \nafter: {}",
-        StringUtil.getAddressStringList(currentWits),
-        StringUtil.getAddressStringList(newWits));
+      dposService.sortWitness(newWitnessAddressList);
+
+      if (newWitnessAddressList.size() > MAX_ACTIVE_WITNESS_NUM) {
+        consensusDelegate
+            .saveActiveWitnesses(newWitnessAddressList.subList(0, MAX_ACTIVE_WITNESS_NUM));
+      } else {
+        consensusDelegate.saveActiveWitnesses(newWitnessAddressList);
+      }
+
+      incentiveManager.reward(newWitnessAddressList);
+
+      List<ByteString> newWits = consensusDelegate.getActiveWitnesses();
+      if (!CollectionUtils.isEqualCollection(currentWits, newWits)) {
+        currentWits.forEach(address -> {
+          WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address.toByteArray());
+          witnessCapsule.setIsJobs(false);
+          consensusDelegate.saveWitness(witnessCapsule);
+        });
+        newWits.forEach(address -> {
+          WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address.toByteArray());
+          witnessCapsule.setIsJobs(true);
+          consensusDelegate.saveWitness(witnessCapsule);
+        });
+      }
+
+      logger.info("Update witness success. \nbefore: {} \nafter: {}",
+          StringUtil.getAddressStringList(currentWits),
+          StringUtil.getAddressStringList(newWits));
+    }
 
     DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
     DelegationStore delegationStore = consensusDelegate.getDelegationStore();
