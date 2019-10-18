@@ -26,8 +26,9 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
   @Override
   public AssetIssueCapsule get(byte[] key) {
-    logger.info("#### AssetIssueCapsule.get key = {}, db: {}, name: {}", Hex.toHexString(key), getClass(), getDbName());
-    return super.getUnchecked(key);
+    AssetIssueCapsule assetIssueCapsule = super.getUnchecked(key);
+    logger.info("#### AssetIssueCapsule.get key = {}, db: {}, assetIssueCapsule: {}", Hex.toHexString(key), getClass(), assetIssueCapsule);
+    return assetIssueCapsule;
   }
 
   /**
