@@ -819,7 +819,7 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
     if (isShieldedTransaction(trx.getInstance()) && !Args.getInstance()
-        .isFullNodeAllowShieldedTransaction()) {
+        .isFullNodeAllowShieldedTransactionArgs()) {
       return true;
     }
 
@@ -1067,7 +1067,7 @@ public class Manager {
           throw new BadBlockException("The merkle hash is not validated");
         }
 
-        consensus.receiveBlock(block.getInstance());
+        consensus.receiveBlock(block);
       }
 
       if (block.getTransactions().stream().filter(tran -> isShieldedTransaction(tran.getInstance()))
@@ -1359,11 +1359,12 @@ public class Manager {
   /**
    * Generate a block.
    */
-  public synchronized BlockCapsule generateBlock(Miner miner, long timeout) {
+  public synchronized BlockCapsule generateBlock(Miner miner, long blockTime, long timeout) {
 
     long postponedTrxCount = 0;
 
-    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockId());
+    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockNum() + 1, getHeadBlockId(), blockTime,
+        miner.getWitnessAddress());
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
@@ -1372,7 +1373,8 @@ public class Manager {
 
     if (getDynamicPropertiesStore().getAllowMultiSign() == 1) {
       byte[] privateKeyAddress = miner.getPrivateKeyAddress().toByteArray();
-      AccountCapsule witnessAccount = getAccountStore().get(miner.getWitnessAddress().toByteArray());
+      AccountCapsule witnessAccount = getAccountStore()
+          .get(miner.getWitnessAddress().toByteArray());
       if (!Arrays.equals(privateKeyAddress, witnessAccount.getWitnessPermissionAddress())) {
         logger.warn("Witness permission is wrong");
         return null;
@@ -1450,6 +1452,7 @@ public class Manager {
         pendingTransactions.size(), repushTransactions.size(), postponedTrxCount);
 
     blockCapsule.setMerkleRoot();
+    blockCapsule.sign(miner.getPrivateKey());
 
     return blockCapsule;
 
@@ -1509,7 +1512,7 @@ public class Manager {
     // todo set revoking db max size.
 
     // checkWitness
-    if (!consensus.validBlock(block.getInstance())) {
+    if (!consensus.validBlock(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
     //reset BlockEnergyUsage

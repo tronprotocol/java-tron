@@ -77,7 +77,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     DelegationService delegationService = chainBaseManager.getDelegationService();
     if (!this.any.is(WithdrawBalanceContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [WithdrawBalanceContract],real type[" + any
+          "contract type error, expected type [WithdrawBalanceContract], real type[" + any
               .getClass() + "]");
     }
     final WithdrawBalanceContract withdrawBalanceContract;
@@ -115,7 +115,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
       throw new ContractValidateException("The last withdraw time is "
-          + latestWithdrawTime + ",less than 24 hours");
+          + latestWithdrawTime + ", less than 24 hours");
     }
 
     if (accountCapsule.getAllowance() <= 0 &&

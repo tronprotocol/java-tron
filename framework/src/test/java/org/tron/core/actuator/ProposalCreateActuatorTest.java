@@ -271,10 +271,10 @@ public class ProposalCreateActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
+      fail("Bad chain parameter value, valid range is [0,100_000_000_000_000_000L]");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Bad chain parameter value,valid range is [0,100000000000000000]",
+      Assert.assertEquals("Bad chain parameter value, valid range is [0,100000000000000000]",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);

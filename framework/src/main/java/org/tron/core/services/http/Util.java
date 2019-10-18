@@ -127,10 +127,10 @@ public class Util {
     String string = JsonFormat.printToString(transactionExtention, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     if (transactionExtention.getResult().getResult()) {
-      JSONObject transactionOjbect = printTransactionToJSON(
+      JSONObject transactionObject = printTransactionToJSON(
           transactionExtention.getTransaction(), selfType);
-      transactionOjbect.put(VISIBLE, selfType);
-      jsonObject.put(TRANSACTION, transactionOjbect);
+      transactionObject.put(VISIBLE, selfType);
+      jsonObject.put(TRANSACTION, transactionObject);
     }
     return jsonObject.toJSONString();
   }

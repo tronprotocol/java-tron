@@ -96,7 +96,7 @@ public class UpdateAssetActuator extends AbstractActuator {
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     if (!this.any.is(UpdateAssetContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UpdateAssetContract],real type[" + any
+          "contract type error, expected type [UpdateAssetContract],real type[" + any
               .getClass() + "]");
     }
     final UpdateAssetContract updateAssetContract;
@@ -119,26 +119,26 @@ public class UpdateAssetActuator extends AbstractActuator {
 
     AccountCapsule account = accountStore.get(ownerAddress);
     if (account == null) {
-      throw new ContractValidateException("Account has not existed");
+      throw new ContractValidateException("Account does not exist");
     }
 
     if (dynamicStore.getAllowSameTokenName() == 0) {
       if (account.getAssetIssuedName().isEmpty()) {
-        throw new ContractValidateException("Account has not issue any asset");
+        throw new ContractValidateException("Account has not issued any asset");
       }
 
       if (assetIssueStore.get(account.getAssetIssuedName().toByteArray())
           == null) {
-        throw new ContractValidateException("Asset not exists in AssetIssueStore");
+        throw new ContractValidateException("Asset is not existed in AssetIssueStore");
       }
     } else {
       if (account.getAssetIssuedID().isEmpty()) {
-        throw new ContractValidateException("Account has not issue any asset");
+        throw new ContractValidateException("Account has not issued any asset");
       }
 
       if (assetIssueV2Store.get(account.getAssetIssuedID().toByteArray())
           == null) {
-        throw new ContractValidateException("Asset not exists  in AssetIssueV2Store");
+        throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
       }
     }
 

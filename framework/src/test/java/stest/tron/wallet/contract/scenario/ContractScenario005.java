@@ -60,7 +60,7 @@ public class ContractScenario005 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void deployIcoContract() {
     Assert.assertTrue(PublicMethed.sendcoin(contract005Address, 200000000L, fromAddress,
         testKey002, blockingStubFull));

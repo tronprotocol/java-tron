@@ -68,25 +68,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this;
   }
 
-  public BlockCapsule(BlockId parentBlockId) {
-    // blockheader raw
-    BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
-    BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
-        .setVersion(ChainConstant.BLOCK_VERSION)
-        .setNumber(parentBlockId.getNum() + 1)
-        .setParentHash(parentBlockId.getByteString())
-        .build();
-
-    // block header
-    BlockHeader.Builder blockHeaderBuild = BlockHeader.newBuilder();
-    BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
-
-    // block
-    Block.Builder blockBuild = Block.newBuilder();
-    this.block = blockBuild.setBlockHeader(blockHeader).build();
-    initTxs();
-  }
-
   public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
     // blockheader raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();

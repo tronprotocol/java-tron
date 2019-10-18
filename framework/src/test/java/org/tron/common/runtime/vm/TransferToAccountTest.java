@@ -144,7 +144,8 @@ public class TransferToAccountTest {
    */
   @Test
   public void TransferTokenTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     //  1. Test deploy with tokenValue and tokenId */
     long id = createAsset("testToken1");
     byte[] contractAddress = deployTransferContract(id);
@@ -160,7 +161,8 @@ public class TransferToAccountTest {
         .parseMethod(selectorStr,
             "\"" + Wallet.encode58Check(Hex.decode(TRANSFER_TO)) + "\"" + "," + id + ",9"));
 
-    //  2. Test trigger with tokenValue and tokenId, also test internal transaction transferToken function */
+    //  2. Test trigger with tokenValue and tokenId,
+    //  also test internal transaction transferToken function */
     long triggerCallValue = 100;
     long feeLimit = 100000000;
     long tokenValue = 8;
@@ -250,9 +252,9 @@ public class TransferToAccountTest {
 
     selectorStr = "transferTokenTo(address,trcToken,uint256)";
     ecKey = new ECKey(Utils.getRandom());
-    String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc" +
-        Hex.toHexString(new DataWord(id).getData()) +
-        "0000000000000000000000000000000011111111111111111111111111111111";
+    String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc"
+        + Hex.toHexString(new DataWord(id).getData())
+        + "0000000000000000000000000000000011111111111111111111111111111111";
     byte[] triggerData = TvmTestUtils.parseAbi(selectorStr, params);
 
     transaction = TvmTestUtils
@@ -273,7 +275,8 @@ public class TransferToAccountTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
             0, feeLimit, 0, 0);
-    TransactionContext context = new TransactionContext(new BlockCapsule(dbManager.getHeadBlockId()),
+    TransactionContext context = new TransactionContext(new BlockCapsule(dbManager.getHeadBlockNum() + 1,
+        dbManager.getHeadBlockId(), 0, ByteString.EMPTY),
         new TransactionCapsule(transaction),
         StoreFactory.getInstance(), true,
         false);
@@ -292,7 +295,8 @@ public class TransferToAccountTest {
   }
 
   private byte[] deployTransferContract(long id)
-      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+      throws ContractExeException, ReceiptCheckErrException,
+      ContractValidateException, VMIllegalException {
     String contractName = "TestTransferTo";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =

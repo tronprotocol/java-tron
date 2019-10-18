@@ -250,7 +250,8 @@ public class UpdateAsset2Test {
     Account search = PublicMethed.queryAccount(priKey, blockingStubFull);
 
     try {
-      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract
+      AssetIssueContractOuterClass.AssetIssueContract.Builder builder =
+          AssetIssueContractOuterClass.AssetIssueContract
           .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
@@ -357,7 +358,8 @@ public class UpdateAsset2Test {
     }
     final ECKey ecKey = temKey;
 
-    AssetIssueContractOuterClass.TransferAssetContract.Builder builder = AssetIssueContractOuterClass.TransferAssetContract
+    AssetIssueContractOuterClass.TransferAssetContract.Builder builder =
+        AssetIssueContractOuterClass.TransferAssetContract
         .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
@@ -399,7 +401,8 @@ public class UpdateAsset2Test {
     }
     final ECKey ecKey = temKey;
 
-    AssetIssueContractOuterClass.UnfreezeAssetContract.Builder builder = AssetIssueContractOuterClass.UnfreezeAssetContract
+    AssetIssueContractOuterClass.UnfreezeAssetContract.Builder builder =
+        AssetIssueContractOuterClass.UnfreezeAssetContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
@@ -439,7 +442,8 @@ public class UpdateAsset2Test {
     }
     final ECKey ecKey = temKey;
 
-    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder = AssetIssueContractOuterClass.ParticipateAssetIssueContract
+    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder =
+        AssetIssueContractOuterClass.ParticipateAssetIssueContract
         .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);

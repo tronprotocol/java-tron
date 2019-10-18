@@ -91,7 +91,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(UnfreezeAssetContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UnfreezeAssetContract],real type[" + any
+          "contract type error, expected type [UnfreezeAssetContract], real type[" + any
               .getClass() + "]");
     }
     final UnfreezeAssetContract unfreezeAssetContract;
@@ -110,7 +110,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+          "Account[" + readableOwnerAddress + "] does not exist");
     }
 
     if (accountCapsule.getFrozenSupplyCount() <= 0) {
@@ -119,11 +119,11 @@ public class UnfreezeAssetActuator extends AbstractActuator {
 
     if (dynamicStore.getAllowSameTokenName() == 0) {
       if (accountCapsule.getAssetIssuedName().isEmpty()) {
-        throw new ContractValidateException("this account did not issue any asset");
+        throw new ContractValidateException("this account has not issued any asset");
       }
     } else {
       if (accountCapsule.getAssetIssuedID().isEmpty()) {
-        throw new ContractValidateException("this account did not issue any asset");
+        throw new ContractValidateException("this account has not issued any asset");
       }
     }
 

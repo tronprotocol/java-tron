@@ -4,8 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.ConsensusDelegate;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -17,11 +17,11 @@ public class StatisticManager {
   @Autowired
   private DposSlot dposSlot;
 
-  public void applyBlock(Block block) {
+  public void applyBlock(BlockCapsule blockCapsule) {
     WitnessCapsule wc;
-    long blockNum = block.getBlockHeader().getRawData().getNumber();
-    long blockTime = block.getBlockHeader().getRawData().getTimestamp();
-    byte[] blockWitness = block.getBlockHeader().getRawData().getWitnessAddress().toByteArray();
+    long blockNum = blockCapsule.getNum();
+    long blockTime = blockCapsule.getTimeStamp();
+    byte[] blockWitness = blockCapsule.getWitnessAddress().toByteArray();
     wc = consensusDelegate.getWitness(blockWitness);
     wc.setTotalProduced(wc.getTotalProduced() + 1);
     wc.setLatestBlockNum(blockNum);
