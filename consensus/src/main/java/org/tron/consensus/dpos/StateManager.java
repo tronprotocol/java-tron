@@ -15,7 +15,6 @@ import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.State;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
 @Component

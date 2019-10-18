@@ -24,7 +24,6 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.GenesisBlock;
-import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
 @Component

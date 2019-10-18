@@ -13,7 +13,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
-import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -55,7 +54,7 @@ public class BlockHandleImpl implements BlockHandle {
       manager.pushBlock(blockCapsule);
       tronNetService.broadcast(blockMessage);
     } catch (Exception e) {
-      logger.error("Push block failed.", e);
+      logger.error("Handle block {} failed.", blockCapsule.getBlockId().getString(), e);
       return null;
     }
     return blockCapsule;
