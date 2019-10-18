@@ -133,9 +133,9 @@ public class Chainbase implements IRevokingDB {
       if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
         result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
       }
-//      else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
-//        result.addAll(((RocksDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
-//      }
+      else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+        result.addAll(((RocksDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
+      }
     }
 
     return result;
