@@ -445,7 +445,7 @@ public class Args {
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
-  private boolean fullNodeAllowShieldedTransaction;
+  private boolean fullNodeAllowShieldedTransactionArgs;
 
   @Getter
   @Setter
@@ -580,7 +580,7 @@ public class Args {
     INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
-    INSTANCE.fullNodeAllowShieldedTransaction = true;
+    INSTANCE.fullNodeAllowShieldedTransactionArgs = true;
     INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
@@ -993,7 +993,7 @@ public class Args {
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
-    INSTANCE.fullNodeAllowShieldedTransaction =
+    INSTANCE.fullNodeAllowShieldedTransactionArgs =
         !config.hasPath("node.fullNodeAllowShieldedTransaction")
             || config.getBoolean("node.fullNodeAllowShieldedTransaction");
 
@@ -1023,7 +1023,7 @@ public class Args {
             .getInt("node.shieldedTransInPendingMaxCounts") : 10;
 
     if (INSTANCE.isWitness()) {
-      INSTANCE.fullNodeAllowShieldedTransaction = true;
+      INSTANCE.fullNodeAllowShieldedTransactionArgs = true;
     }
 
     INSTANCE.rateLimiterInitialization =
@@ -1429,7 +1429,7 @@ public class Args {
       DBConfig.setGenesisBlock(cfgArgs.getGenesisBlock());
     }
 
-    DBConfig.setOutputDirectory(cfgArgs.getOutputDirectory());
+    DBConfig.setOutputDirectoryConfig(cfgArgs.getOutputDirectory());
     DBConfig.setRocksDbSettings(cfgArgs.getRocksDBCustomSettings());
     DBConfig.setAllowMultiSign(cfgArgs.getAllowMultiSign());
     DBConfig.setMaintenanceTimeInterval(cfgArgs.getMaintenanceTimeInterval());
@@ -1445,7 +1445,7 @@ public class Args {
     DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
     DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
     DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
-    DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransaction());
+    DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransactionArgs());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
     DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
     DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
@@ -1460,7 +1460,7 @@ public class Args {
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
-    this.fullNodeAllowShieldedTransaction = fullNodeAllowShieldedTransaction;
+    this.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
     DBConfig.setFullNodeAllowShieldedTransaction(fullNodeAllowShieldedTransaction);
   }
 
