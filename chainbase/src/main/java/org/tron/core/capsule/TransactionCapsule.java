@@ -310,7 +310,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         }
         // todo add other contract
         default: {
-          long start = System.currentTimeMillis();
           Class<? extends GeneratedMessageV3> clazz = TransactionFactory
               .getContract(contract.getType());
           if (clazz == null) {
@@ -323,7 +322,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             logger.error("not exist [{}] field,{}", OWNER_ADDRESS, clazz);
             return null;
           }
-          logger.info("getOwner spend time : {}", (System.currentTimeMillis() - start));
           break;
         }
       }

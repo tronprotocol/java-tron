@@ -9,13 +9,12 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.ConsensusDelegate;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.base.State;
-import org.tron.protos.Protocol.Block;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.protos.Protocol.BlockHeader;
 
 @Slf4j(topic = "consensus")
@@ -92,27 +91,21 @@ public class DposTask {
       }
 
       ByteString pWitness = dposSlot.getScheduledWitness(slot);
-      state = stateManager.getState(pWitness);
-      if (!State.OK.equals(state)) {
-        return state;
+
+      Miner miner = dposService.getMiners().get(pWitness);
+      if (miner == null) {
+        return State.NOT_MY_TURN;
       }
 
       long pTime = dposSlot.getTime(slot);
       long timeout =
           pTime + BLOCK_PRODUCED_INTERVAL / 2 * dposService.getBlockProduceTimeoutPercent() / 100;
-      Block block = dposService.getBlockHandle()
-          .produce(dposService.getMiners().get(pWitness), timeout);
-      if (block == null) {
+      BlockCapsule blockCapsule = dposService.getBlockHandle().produce(miner, pTime, timeout);
+      if (blockCapsule == null) {
         return State.PRODUCE_BLOCK_FAILED;
       }
 
-      Block sBlock = getSignedBlock(block, pWitness, pTime);
-
-      stateManager.setCurrentBlock(sBlock);
-
-      dposService.getBlockHandle().complete(sBlock);
-
-      BlockHeader.raw raw = sBlock.getBlockHeader().getRawData();
+      BlockHeader.raw raw = blockCapsule.getInstance().getBlockHeader().getRawData();
       logger.info("Produce block successfully, num: {}, time: {}, witness: {}, ID:{}, parentID:{}",
           raw.getNumber(),
           new DateTime(raw.getTimestamp()),
@@ -122,28 +115,6 @@ public class DposTask {
     }
 
     return State.OK;
-  }
-
-  public Block getSignedBlock(Block block, ByteString witness, long time) {
-    BlockHeader.raw raw = block.getBlockHeader().getRawData().toBuilder()
-        .setParentHash(ByteString.copyFrom(consensusDelegate.getLatestBlockHeaderHash().getBytes()))
-        .setNumber(consensusDelegate.getLatestBlockHeaderNumber() + 1)
-        .setTimestamp(time)
-        .setWitnessAddress(witness)
-        .build();
-
-    ECKey ecKey = ECKey.fromPrivate(dposService.getMiners().get(witness).getPrivateKey());
-    ECDSASignature signature = ecKey.sign(Sha256Hash.of(raw.toByteArray()).getBytes());
-    ByteString sign = ByteString.copyFrom(signature.toByteArray());
-
-    BlockHeader blockHeader = block.getBlockHeader().toBuilder()
-        .setRawData(raw)
-        .setWitnessSignature(sign)
-        .build();
-
-    Block signedBlock = block.toBuilder().setBlockHeader(blockHeader).build();
-
-    return signedBlock;
   }
 
 }

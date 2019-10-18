@@ -19,12 +19,12 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
-import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -39,9 +39,9 @@ public class MaintenanceManager {
   @Setter
   private DposService dposService;
 
-  public void applyBlock(Block block) {
-    long blockNum = block.getBlockHeader().getRawData().getNumber();
-    long blockTime = block.getBlockHeader().getRawData().getTimestamp();
+  public void applyBlock(BlockCapsule blockCapsule) {
+    long blockNum = blockCapsule.getNum();
+    long blockTime = blockCapsule.getTimeStamp();
     boolean flag = consensusDelegate.getNextMaintenanceTime() <= blockTime;
     if (flag) {
       if (blockNum != 1) {

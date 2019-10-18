@@ -83,7 +83,10 @@ public class HttpTestMortgageMechanism01 {
     response = HttpMethed.getReward(httpnode, witnessAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue((new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0"))==0)||(new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0")))==1);
+    Assert.assertTrue((
+        new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0")) == 0)
+        || (new BigInteger(responseContent.getString("reward"))
+        .compareTo(new BigInteger("0"))) == 1);
   }
 
   /**
@@ -94,7 +97,10 @@ public class HttpTestMortgageMechanism01 {
     response = HttpMethed.getRewardFromSolidity(httpSoliditynode, witnessAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue((new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0"))==0)||(new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0")))==1);
+    Assert.assertTrue((
+        new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0")) == 0)
+        || (new BigInteger(responseContent.getString("reward"))
+        .compareTo(new BigInteger("0"))) == 1);
   }
 
   /**

@@ -86,16 +86,16 @@ public class ZenUtils {
     }
   }
 
-  public static String getMemo(byte[] meno) {
-    int index = meno.length;
+  public static String getMemo(byte[] memo) {
+    int index = memo.length;
     for (; index > 0; --index) {
-      if (meno[index - 1] != 0) {
+      if (memo[index - 1] != 0) {
         break;
       }
     }
 
     byte[] inputCheck = new byte[index];
-    System.arraycopy(meno, 0, inputCheck, 0, index);
+    System.arraycopy(memo, 0, inputCheck, 0, index);
     return new String(inputCheck, Charset.forName("UTF-8"));
   }
 
