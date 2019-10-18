@@ -811,7 +811,7 @@ public class Manager {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
     if (isShieldedTransaction(trx.getInstance()) && !Args.getInstance()
-        .isFullNodeAllowShieldedTransaction()) {
+        .isFullNodeAllowShieldedTransactionArgs()) {
       return true;
     }
 

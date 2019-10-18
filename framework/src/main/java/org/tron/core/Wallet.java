@@ -1464,7 +1464,7 @@ public class Wallet {
   }
 
   public boolean getFullNodeAllowShieldedTransaction() {
-    return Args.getInstance().isFullNodeAllowShieldedTransaction();
+    return Args.getInstance().isFullNodeAllowShieldedTransactionArgs();
   }
 
   public BytesMessage getNullifier(ByteString id) {
