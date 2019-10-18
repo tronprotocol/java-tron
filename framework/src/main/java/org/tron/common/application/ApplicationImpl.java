@@ -107,11 +107,6 @@ public class ApplicationImpl implements Application {
   }
 
   private void closeAllStore() {
-//    if (dbManager.getRevokingStore().getClass() == SnapshotManager.class) {
-//      ((SnapshotManager) dbManager.getRevokingStore()).getDbs().forEach(IRevokingDB::close);
-//    } else {
-//      dbManager.closeAllStore();
-//    }
     dbManager.closeAllStore();
   }
 
