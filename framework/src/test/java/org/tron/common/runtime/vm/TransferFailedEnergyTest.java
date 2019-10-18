@@ -23,157 +23,160 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 public class TransferFailedEnergyTest extends VMTestBase {
-/*
-pragma solidity ^0.5.4;
-contract EnergyOfTransferFailedTest {
-    constructor() payable public {
+  /*
+  pragma solidity ^0.5.4;
+  contract EnergyOfTransferFailedTest {
+      constructor() payable public {
 
-    }
-    // InsufficientBalance
-    function testTransferTrxInsufficientBalance() payable public{
-        msg.sender.transfer(10);
-    }
+      }
+      // InsufficientBalance
+      function testTransferTrxInsufficientBalance() payable public{
+          msg.sender.transfer(10);
+      }
 
-    function testSendTrxInsufficientBalance() payable public{
-        msg.sender.send(10);
-    }
+      function testSendTrxInsufficientBalance() payable public{
+          msg.sender.send(10);
+      }
 
-    function testTransferTokenInsufficientBalance(trcToken tokenId) payable public{
-        msg.sender.transferToken(10, tokenId);
-    }
+      function testTransferTokenInsufficientBalance(trcToken tokenId) payable public{
+          msg.sender.transferToken(10, tokenId);
+      }
 
-    function testCallTrxInsufficientBalance(address payable caller) public {
-        caller.call.value(10)(abi.encodeWithSignature("test()"));
-    }
+      function testCallTrxInsufficientBalance(address payable caller) public {
+          caller.call.value(10)(abi.encodeWithSignature("test()"));
+      }
 
-    function testCreateTrxInsufficientBalance() payable public {
-        (new Caller).value(10)();
-    }
+      function testCreateTrxInsufficientBalance() payable public {
+          (new Caller).value(10)();
+      }
 
-    // NonexistentTarget
-    function testTransferTrxNonexistentTarget(address payable nonexistentTarget) payable public {
-        require(address(this).balance >= 10);
-        nonexistentTarget.transfer(10);
-    }
+      // NonexistentTarget
+      function testTransferTrxNonexistentTarget(address payable nonexistentTarget) payable public {
+          require(address(this).balance >= 10);
+          nonexistentTarget.transfer(10);
+      }
 
-    function testTransferTokenNonexistentTarget(address payable nonexistentTarget, trcToken tokenId) payable public {
-        require(address(this).balance >= 10);
-        nonexistentTarget.transferToken(10, tokenId);
-    }
+      function testTransferTokenNonexistentTarget(address payable nonexistentTarget,
+       trcToken tokenId) payable public {
+          require(address(this).balance >= 10);
+          nonexistentTarget.transferToken(10, tokenId);
+      }
 
-    function testCallTrxNonexistentTarget(address payable nonexistentTarget) payable public {
-        require(address(this).balance >= 10);
-        nonexistentTarget.call.value(10)(abi.encodeWithSignature("test()"));
-    }
+      function testCallTrxNonexistentTarget(address payable nonexistentTarget) payable public {
+          require(address(this).balance >= 10);
+          nonexistentTarget.call.value(10)(abi.encodeWithSignature("test()"));
+      }
 
-    function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
-         selfdestruct(nonexistentTarget);
-    }
+      function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
+           selfdestruct(nonexistentTarget);
+      }
 
-    // target is self
-    function testTransferTrxSelf() payable public{
-        require(address(this).balance >= 10);
-        address payable self = address(uint160(address(this)));
-        self.transfer(10);
-    }
+      // target is self
+      function testTransferTrxSelf() payable public{
+          require(address(this).balance >= 10);
+          address payable self = address(uint160(address(this)));
+          self.transfer(10);
+      }
 
-    function testSendTrxSelf() payable public{
-        require(address(this).balance >= 10);
-        address payable self = address(uint160(address(this)));
-        self.send(10);
-    }
+      function testSendTrxSelf() payable public{
+          require(address(this).balance >= 10);
+          address payable self = address(uint160(address(this)));
+          self.send(10);
+      }
 
-    function testTransferTokenSelf(trcToken tokenId) payable public{
-        require(address(this).balance >= 10);
-        address payable self = address(uint160(address(this)));
-        self.transferToken(10, tokenId);
-    }
-}
-
-
-
-contract Caller {
-    constructor() payable public {}
-    function test() payable public {}
-}
- */
-
-/*
-// 0.4.25
-contract EnergyOfTransferFailedTest {
-
-    constructor() payable public {
-
-    }
-
-    // InsufficientBalance
-    function testTransferTrxInsufficientBalance() payable public{
-        msg.sender.transfer(10);
-    }
-
-    function testSendTrxInsufficientBalance() payable public{
-        msg.sender.send(10);
-    }
-
-    function testTransferTokenInsufficientBalance(trcToken tokenId) payable public{
-        msg.sender.transferToken(10, tokenId);
-    }
-
-    function testCallTrxInsufficientBalance(address caller) payable public {
-        caller.call.value(10)(abi.encodeWithSignature("test()"));
-    }
-
-    function testCreateTrxInsufficientBalance() payable public {
-        (new Caller).value(10)();
-    }
-
-    // NonexistentTarget
-    function testTransferTrxNonexistentTarget(address nonexistentTarget) payable public {
-        require(address(this).balance >= 10);
-        nonexistentTarget.transfer(10);
-    }
-
-    function testTransferTokenNonexistentTarget(address nonexistentTarget, trcToken tokenId) payable public {
-        require(address(this).balance >= 10);
-        nonexistentTarget.transferToken(10, tokenId);
-    }
-
-    function testCallTrxNonexistentTarget(address nonexistentTarget) public {
-        require(address(this).balance >= 10);
-        nonexistentTarget.call.value(10)(abi.encodeWithSignature("test()"));
-    }
-
-    function testSuicideNonexistentTarget(address nonexistentTarget) public {
-         selfdestruct(nonexistentTarget);
-    }
-
-    // target is self
-    function testTransferTrxSelf() payable public{
-        require(address(this).balance >= 10);
-        address self = address(uint160(address(this)));
-        self.transfer(10);
-    }
-
-    function testSendTrxSelf() payable public{
-        require(address(this).balance >= 10);
-        address self = address(uint160(address(this)));
-        self.send(10);
-    }
-
-    function testTransferTokenSelf(trcToken tokenId) payable public{
-        require(address(this).balance >= 10);
-        address self = address(uint160(address(this)));
-        self.transferToken(10, tokenId);
-    }
-}
+      function testTransferTokenSelf(trcToken tokenId) payable public{
+          require(address(this).balance >= 10);
+          address payable self = address(uint160(address(this)));
+          self.transferToken(10, tokenId);
+      }
+  }
 
 
 
-contract Caller {
-    constructor() payable public {}
-    function test() payable public {}
-}
- */
+  contract Caller {
+      constructor() payable public {}
+      function test() payable public {}
+  }
+   */
+
+  /*
+  // 0.4.25
+  contract EnergyOfTransferFailedTest {
+
+      constructor() payable public {
+
+      }
+
+      // InsufficientBalance
+      function testTransferTrxInsufficientBalance() payable public{
+          msg.sender.transfer(10);
+      }
+
+      function testSendTrxInsufficientBalance() payable public{
+          msg.sender.send(10);
+      }
+
+      function testTransferTokenInsufficientBalance(trcToken tokenId) payable public{
+          msg.sender.transferToken(10, tokenId);
+      }
+
+      function testCallTrxInsufficientBalance(address caller) payable public {
+          caller.call.value(10)(abi.encodeWithSignature("test()"));
+      }
+
+      function testCreateTrxInsufficientBalance() payable public {
+          (new Caller).value(10)();
+      }
+
+      // NonexistentTarget
+      function testTransferTrxNonexistentTarget(address nonexistentTarget) payable public {
+          require(address(this).balance >= 10);
+          nonexistentTarget.transfer(10);
+      }
+
+      function testTransferTokenNonexistentTarget(address nonexistentTarget,
+       trcToken tokenId) payable public {
+          require(address(this).balance >= 10);
+          nonexistentTarget.transferToken(10, tokenId);
+      }
+
+      function testCallTrxNonexistentTarget(address nonexistentTarget) public {
+          require(address(this).balance >= 10);
+          nonexistentTarget.call.value(10)(abi.encodeWithSignature("test()"));
+      }
+
+      function testSuicideNonexistentTarget(address nonexistentTarget) public {
+           selfdestruct(nonexistentTarget);
+      }
+
+      // target is self
+      function testTransferTrxSelf() payable public{
+          require(address(this).balance >= 10);
+          address self = address(uint160(address(this)));
+          self.transfer(10);
+      }
+
+      function testSendTrxSelf() payable public{
+          require(address(this).balance >= 10);
+          address self = address(uint160(address(this)));
+          self.send(10);
+      }
+
+      function testTransferTokenSelf(trcToken tokenId) payable public{
+          require(address(this).balance >= 10);
+          address self = address(uint160(address(this)));
+          self.transferToken(10, tokenId);
+      }
+  }
+
+
+
+
+  contract Caller {
+      constructor() payable public {}
+      function test() payable public {}
+  }
+  */
 
   private static final String nonExistAddress = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";  // 21 char
   TestCase[] testCasesAfterAllowTvmConstantinop = {
@@ -213,7 +216,8 @@ contract Caller {
 
   @Test
   public void testTransferFailedAfterAllowTvmConstantinopl()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     ConfigLoader.disable = false;
     manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
     manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
@@ -227,7 +231,7 @@ contract Caller {
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
 
-//     deploy contract
+    // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, code, value, fee, consumeUserResourcePercent, null);
     byte[] addressWithSufficientBalance = Wallet.generateContractAddress(trx);
@@ -251,7 +255,8 @@ contract Caller {
 
   @Test
   public void testTransferFailedBeforeAllowTvmConstantinopl()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     ConfigLoader.disable = false;
     manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
     manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(0);
@@ -265,7 +270,7 @@ contract Caller {
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
 
-//     deploy contract
+    // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, code, value, fee, consumeUserResourcePercent, null);
     byte[] addressWithSufficientBalance = Wallet.generateContractAddress(trx);
@@ -288,7 +293,8 @@ contract Caller {
   }
 
   private void checkResult(TestCase testCase, byte[] factoryAddress)
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
     String hexInput = AbiUtil.parseMethod(testCase.getMethod(), testCase.getParams());
     long fee = 100000000;
     long allEnergy = 1000000;

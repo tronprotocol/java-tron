@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.protos.Protocol.Block;
+import org.tron.core.capsule.BlockCapsule;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -18,11 +18,11 @@ public class IncentiveManager {
   @Autowired
   private ConsensusDelegate consensusDelegate;
 
-  public void applyBlock(Block block) {
+  public void applyBlock(BlockCapsule blockCapsule) {
     if (consensusDelegate.allowChangeDelegation()) {
       return;
     }
-    byte[] witness = block.getBlockHeader().getRawData().getWitnessAddress().toByteArray();
+    byte[] witness = blockCapsule.getWitnessAddress().toByteArray();
     AccountCapsule account = consensusDelegate.getAccount(witness);
     account.setAllowance(account.getAllowance() + consensusDelegate.getWitnessPayPerBlock());
     consensusDelegate.saveAccount(account);
