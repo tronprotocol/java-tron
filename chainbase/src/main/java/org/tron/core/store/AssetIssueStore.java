@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
 
   @Override
   public AssetIssueCapsule get(byte[] key) {
+    logger.info("#### AssetIssueCapsule.get key = {}", Hex.toHexString(key));
     return super.getUnchecked(key);
   }
 

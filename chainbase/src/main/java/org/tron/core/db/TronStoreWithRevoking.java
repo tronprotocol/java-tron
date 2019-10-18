@@ -14,6 +14,7 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
@@ -29,6 +30,8 @@ import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
 import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
 
 
 @Slf4j(topic = "DB")
@@ -96,6 +99,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public void put(byte[] key, T item) {
+    if (getClass() == AssetIssueStore.class || getClass() == AssetIssueV2Store.class) {
+      logger.info("### put db: {} , key : {}, value: {} ", getClass(), Hex.toHexString(key), item);
+    }
     if (Objects.isNull(key) || Objects.isNull(item)) {
       return;
     }
@@ -110,6 +116,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public T get(byte[] key) throws ItemNotFoundException, BadItemException {
+    if (getClass() == AssetIssueStore.class || getClass() == AssetIssueV2Store.class) {
+      logger.info("### get db: {} , key : {}", getClass(), Hex.toHexString(key));
+    }
     return of(revokingDB.get(key));
   }
 
