@@ -140,26 +140,27 @@ public class ContractScenario012 {
     receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     //Send some trx to the contract account.
-    Assert.assertTrue(PublicMethed.sendcoin(contractAddress, 1000000000L, toAddress,
-        testKey003, blockingStubFull));
     Account account = PublicMethed.queryAccount(contractAddress, blockingStubFull);
     logger.info("contract Balance : -- " + account.getBalance());
     receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
-    //In smart contract, you can't create account
+    //In smart contract, you can create account
     txid = PublicMethed.triggerContract(contractAddress,
         "sendToAddress2(address)", receiveAddressParam, false,
-        0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+        1000000000L, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("infobyid : --- " + infoById);
     logger.info("result is " + infoById.get().getResultValue());
     logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
     Assert.assertFalse(infoById.get().getContractAddress().isEmpty());
+
+    Account account2 = PublicMethed.queryAccount(receiverAddress, blockingStubFull);
+    Assert.assertEquals(5L, account2.getBalance());
 
   }
 
