@@ -129,7 +129,9 @@ public class TransferActuator extends AbstractActuator {
       if (dynamicStore.getAllowTvmSolidity059() == 1
           && toAccount != null
           && toAccount.getType() == AccountType.Contract) {
+
         throw new ContractValidateException("Cannot transfer TRX to a smartContract.");
+
       }
 
       if (balance < Math.addExact(amount, fee)) {

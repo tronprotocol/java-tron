@@ -330,10 +330,10 @@ public class VMActuator implements Actuator2 {
 
       if (VMConfig.getEnergyLimitHardFork()) {
         if (callValue < 0) {
-          throw new ContractValidateException("callValue must >= 0");
+          throw new ContractValidateException("callValue must be >= 0");
         }
         if (tokenValue < 0) {
-          throw new ContractValidateException("tokenValue must >= 0");
+          throw new ContractValidateException("tokenValue must be >= 0");
         }
         if (newSmartContract.getOriginEnergyLimit() <= 0) {
           throw new ContractValidateException("The originEnergyLimit must be > 0");
@@ -432,10 +432,10 @@ public class VMActuator implements Actuator2 {
 
     if (VMConfig.getEnergyLimitHardFork()) {
       if (callValue < 0) {
-        throw new ContractValidateException("callValue must >= 0");
+        throw new ContractValidateException("callValue must be >= 0");
       }
       if (tokenValue < 0) {
-        throw new ContractValidateException("tokenValue must >= 0");
+        throw new ContractValidateException("tokenValue must be >= 0");
       }
     }
 
@@ -579,7 +579,7 @@ public class VMActuator implements Actuator2 {
         // tokenid can only be 0
         // or (MIN_TOKEN_ID, Long.Max]
         if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
-          throw new ContractValidateException("tokenId must > " + VMConstant.MIN_TOKEN_ID);
+          throw new ContractValidateException("tokenId must be > " + VMConstant.MIN_TOKEN_ID);
         }
         // tokenid can only be 0 when tokenvalue = 0,
         // or (MIN_TOKEN_ID, Long.Max]

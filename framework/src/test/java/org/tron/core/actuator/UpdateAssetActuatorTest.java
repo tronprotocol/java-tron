@@ -343,10 +343,10 @@ public class UpdateAssetActuatorTest {
       actuator.validate();
       actuator.execute(ret);
 
-      fail("Account has not existed");
+      fail("Account does not exist");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account has not existed", e.getMessage());
+      Assert.assertEquals("Account does not exist", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -368,10 +368,10 @@ public class UpdateAssetActuatorTest {
       actuator.validate();
       actuator.execute(ret);
 
-      fail("Account has not issue any asset");
+      fail("Account has not issued any asset");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account has not issue any asset", e.getMessage());
+      Assert.assertEquals("Account has not issued any asset", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {

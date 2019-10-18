@@ -11,7 +11,7 @@ public class ProposalUtil {
   protected static final long LONG_VALUE = 100_000_000_000_000_000L;
   protected static final String BAD_PARAM_ID = "Bad chain parameter id";
   private static final String LONG_VALUE_ERROR =
-      "Bad chain parameter value,valid range is [0," + LONG_VALUE + "]";
+      "Bad chain parameter value, valid range is [0," + LONG_VALUE + "]";
 
   public static void validator(DynamicPropertiesStore dynamicPropertiesStore, ForkUtils forkUtils,
       long code, long value)
@@ -21,7 +21,7 @@ public class ProposalUtil {
       case MAINTENANCE_TIME_INTERVAL: {
         if (value < 3 * 27 * 1000 || value > 24 * 3600 * 1000) {
           throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [3 * 27 * 1000,24 * 3600 * 1000]");
+              "Bad chain parameter value, valid range is [3 * 27 * 1000,24 * 3600 * 1000]");
         }
         return;
       }
@@ -63,7 +63,7 @@ public class ProposalUtil {
       case MAX_CPU_TIME_OF_ONE_TX:
         if (value < 10 || value > 100) {
           throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [10,100]");
+              "Bad chain parameter value, valid range is [10,100]");
         }
         break;
       case ALLOW_UPDATE_ACCOUNT_NAME: {
@@ -146,7 +146,7 @@ public class ProposalUtil {
         }
         if (value < 0 || value > 100_000_000_000L) {
           throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [0,100_000_000_000L]");
+              "Bad chain parameter value, valid range is [0,100_000_000_000L]");
         }
         break;
       }
@@ -156,7 +156,7 @@ public class ProposalUtil {
         }
         if (value < 0 || value > 100_000_000_000L) {
           throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [0,100_000_000_000L]");
+              "Bad chain parameter value, valid range is [0,100_000_000_000L]");
         }
         break;
       }
@@ -217,7 +217,7 @@ public class ProposalUtil {
         }
         if (value < 1 || value > 1_000) {
           throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [1,1_000]");
+              "Bad chain parameter value, valid range is [1,1_000]");
         }
         break;
       }
@@ -227,7 +227,7 @@ public class ProposalUtil {
         }
         if (value < 1 || value > 10_000L) {
           throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [1,10_000]");
+              "Bad chain parameter value, valid range is [1,10_000]");
         }
         break;
       }
@@ -267,11 +267,11 @@ public class ProposalUtil {
         }
         if (!dynamicPropertiesStore.supportShieldedTransaction()) {
           throw new ContractValidateException(
-              "Shielded Transaction is not activated,Can't set Shielded Transaction fee");
+              "Shielded Transaction is not activated, can not set Shielded Transaction fee");
         }
         if (value < 0 || value > 10_000_000_000L) {
           throw new ContractValidateException(
-              "Bad SHIELD_TRANSACTION_FEE parameter value,valid range is [0,10_000_000_000L]");
+              "Bad SHIELD_TRANSACTION_FEE parameter value, valid range is [0,10_000_000_000L]");
         }
         break;
       }
@@ -337,7 +337,7 @@ public class ProposalUtil {
           return parameters;
         }
       }
-      throw new ContractValidateException("not support code : " + code);
+      throw new ContractValidateException("Does not support code : " + code);
     }
 
     public static ProposalType getEnumOrNull(long code) {

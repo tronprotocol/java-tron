@@ -62,12 +62,12 @@ public class UpdateBrokerageActuator extends AbstractActuator {
     WitnessStore witnessStore = chainBaseManager.getWitnessStore();
     if (!dynamicStore.allowChangeDelegation()) {
       throw new ContractValidateException(
-          "contract type error,unexpected type [UpdateBrokerageContract]");
+          "contract type error, unexpected type [UpdateBrokerageContract]");
     }
 
     if (!this.any.is(UpdateBrokerageContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UpdateBrokerageContract],real type[" + any
+          "contract type error, expected type [UpdateBrokerageContract], real type[" + any
               .getClass() + "]");
     }
     final UpdateBrokerageContract updateBrokerageContract;
@@ -90,12 +90,12 @@ public class UpdateBrokerageActuator extends AbstractActuator {
 
     WitnessCapsule witnessCapsule = witnessStore.get(ownerAddress);
     if (witnessCapsule == null) {
-      throw new ContractValidateException("Not exist witness:" + Hex.toHexString(ownerAddress));
+      throw new ContractValidateException("Not existed witness:" + Hex.toHexString(ownerAddress));
     }
 
     AccountCapsule account = accountStore.get(ownerAddress);
     if (account == null) {
-      throw new ContractValidateException("Account has not existed");
+      throw new ContractValidateException("Account does not exist");
     }
 
     return true;
