@@ -181,7 +181,7 @@ public class DposService implements ConsensusInterface {
         return false;
       }
       List<String> addressStingList = addressList.stream()
-          .map(sr -> ByteArray.toHexString(sr.toByteArray())).collect(Collectors.toList());
+          .map(sr -> sr.toStringUtf8()).collect(Collectors.toList());
       ByteString data = ByteString.copyFromUtf8(JSON.toJSONString(addressStingList));
       byte[] dataHash = Sha256Hash.hash(data.toByteArray());
       for (ByteString sign : preCycleSrSignList) {
