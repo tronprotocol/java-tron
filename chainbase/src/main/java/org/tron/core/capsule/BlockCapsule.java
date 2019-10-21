@@ -15,7 +15,6 @@
 
 package org.tron.core.capsule;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
@@ -31,6 +30,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteUtil;
@@ -323,8 +323,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     }
     if (getSrList().getCurrentSrListList().size() > 0) {
       List<String> srAddressList = Lists.transform(getSrList().getCurrentSrListList(),
-          (Function<ByteString, String>) bytes -> WalletUtil.encode58Check(bytes.toByteArray()));
-      toStringBuff.append("srAddressList=").append(srAddressList);
+          bytes -> WalletUtil.encode58Check(Hex.decode(bytes.toStringUtf8())));
+      toStringBuff.append("srAddressList=").append(srAddressList).append("\n");
     }
     toStringBuff.append("]");
     return toStringBuff.toString();

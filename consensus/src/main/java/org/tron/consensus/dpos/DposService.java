@@ -171,12 +171,6 @@ public class DposService implements ConsensusInterface {
       if (preCycleSrSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
         return false;
       }
-      for (ByteString bs : addressList) {
-        logger.info("addressList:{}", bs.toStringUtf8());
-      }
-      for (ByteString bs : localAddressList) {
-        logger.info("localAddressList:{}", Hex.toHexString(bs.toByteArray()));
-      }
       if (!SetUtils.isEqualSet(Sets.newHashSet(localAddressList), addressSet)) {
         return false;
       }
