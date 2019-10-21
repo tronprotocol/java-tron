@@ -1455,8 +1455,8 @@ public class Manager {
         pendingTransactions.size(), repushTransactions.size(), postponedTrxCount);
 
     blockCapsule.setMerkleRoot();
-    blockCapsule.sign(miner.getPrivateKey());
     setSrList(blockCapsule);
+    blockCapsule.sign(miner.getPrivateKey());
     return blockCapsule;
 
   }
