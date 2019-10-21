@@ -8,6 +8,7 @@ import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DelegationService;
+import org.tron.core.db.KhaosDatabase;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -113,5 +114,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private DelegationStore delegationStore;
+
+  @Autowired
+  @Getter
+  private KhaosDatabase khaosDb;
 
 }
