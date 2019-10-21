@@ -230,10 +230,8 @@ public class Wallet {
       throws ContractValidateException {
     try {
       boolean constant = isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
-      if (constant) {
-        if (!Args.getInstance().isSupportConstant()) {
-          throw new ContractValidateException("this node don't support constant");
-        }
+      if (constant && !Args.getInstance().isSupportConstant()) {
+        throw new ContractValidateException("this node don't support constant");
       }
       return constant;
     } catch (ContractValidateException e) {
@@ -2415,7 +2413,7 @@ public class Wallet {
       }
 
       int inputCount = entry.getInputsCount();
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append(entry.getName());
       sb.append("(");
       for (int k = 0; k < inputCount; k++) {
@@ -2432,12 +2430,11 @@ public class Wallet {
           .arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0,
               4);
       if (Arrays.equals(funcSelector, selector)) {
-        if (entry.getConstant() == true || entry.getStateMutability()
+        if (entry.getConstant() || entry.getStateMutability()
             .equals(StateMutabilityType.View)) {
           return true;
-        } else {
-          return false;
         }
+        return false;
       }
     }
 
