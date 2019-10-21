@@ -229,10 +229,8 @@ public class Wallet {
       throws ContractValidateException {
     try {
       boolean constant = isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
-      if (constant) {
-        if (!Args.getInstance().isSupportConstant()) {
-          throw new ContractValidateException("This node does not support constant");
-        }
+      if (constant && !Args.getInstance().isSupportConstant()) {
+        throw new ContractValidateException("This node does not support constant");
       }
       return constant;
     } catch (ContractValidateException e) {
