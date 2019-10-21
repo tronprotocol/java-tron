@@ -2,7 +2,6 @@ package org.tron.consensus.dpos;
 
 
 import static org.tron.consensus.base.Constant.SOLIDIFIED_THRESHOLD;
-import static org.tron.core.config.args.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Sets;
@@ -18,8 +17,9 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.collections4.SetUtils;
 import org.joda.time.DateTime;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
@@ -161,7 +161,9 @@ public class DposService implements ConsensusInterface {
         return false;
       }
       List<ByteString> localAddressList = consensusDelegate.getActiveWitnesses();
-      Set<ByteString> addressSet = Sets.newHashSet(addressList);
+      Set<ByteString> addressSet = addressList.stream()
+          .map(bytes -> ByteString.copyFrom(Hex.decode(bytes.toStringUtf8())))
+          .collect(Collectors.toSet());
       Set<ByteString> preCycleSrSignSet = Sets.newHashSet(preCycleSrSignList);
       if (addressList.size() != localAddressList.size()) {
         return false;
@@ -169,7 +171,8 @@ public class DposService implements ConsensusInterface {
       if (preCycleSrSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
         return false;
       }
-      if (!ListUtils.subtract(localAddressList, addressList).isEmpty()) {
+
+      if (!SetUtils.isEqualSet(Sets.newHashSet(localAddressList), addressSet)) {
         return false;
       }
       ByteString data = ByteString.copyFromUtf8(JSON.toJSONString(addressList));
