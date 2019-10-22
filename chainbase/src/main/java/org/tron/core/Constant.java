@@ -140,7 +140,7 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_SAME_TOKEN_NAME = "committee.allowSameTokenName";
 
-  public static final String COMMITTEE_ALLOW_VM_TRANSFER_TRC10 = "committee.allowTvmTransferTrc10";
+  public static final String COMMITTEE_ALLOW_TVM_TRANSFER_TRC10 = "committee.allowTvmTransferTrc10";
 
   public static final String COMMITTEE_ALLOW_TVM_CONSTANTINOPLE = "committee.allowTvmConstantinople";
 
@@ -210,8 +210,6 @@ public class Constant {
 
   public static final String COMMITTEE_CHANGED_DELEGATION = "committee.changedDelegation";
 
-  public static final String PRIVATE_KEY = "private.key";
-
   public static final String USE_NATIVE_QUEUE = "event.subscribe.native.useNativeQueue";
 
   public static final String NATIVE_QUEUE_BIND_PORT = "event.subscribe.native.bindport";
@@ -222,6 +220,10 @@ public class Constant {
   public static final String EVENT_SUBSCRIBE_SERVER = "event.subscribe.server";
   public static final String EVENT_SUBSCIBE_DB_CONFIG = "event.subscribe.dbconfig";
   public static final String EVENT_SUBSCRIBE_TOPICS = "event.subscribe.topics";
+  public static final String EVENT_SUBSCRIBE_FROM_BLOCK = "event.subscribe.filter.fromblock";
+  public static final String EVENT_SUBSCRIBE_TO_BLOCK = "event.subscribe.filter.toblock";
+  public static final String EVENT_SUBSCRIBE_CONTRACT_ADDRESS = "event.subscribe.filter.contractAddress";
+  public static final String EVENT_SUBSCRIBE_CONTRACT_TOPIC = "event.subscribe.filter.contractTopic";
 
   public static final String NODE_DISCOVERY_BIND_IP = "node.discovery.bind.ip";
 
@@ -231,5 +233,8 @@ public class Constant {
   public static final String NODE_BACKUP_PRIORITY = "node.backup.priority";
   public static final String NODE_BACKUP_PORT = "node.backup.port";
   public static final String NODE_BACKUP_MEMBERS = "node.backup.members";
+
+  public static final String STORAGE_BACKUP_ENABLE = "storage.backup.enable";
+  public static final String STORAGE_BACKUP_PROP_PATH = "storage.backup.propPath";
 
 }
