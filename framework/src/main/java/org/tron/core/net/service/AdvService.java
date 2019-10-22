@@ -85,7 +85,7 @@ public class AdvService {
       try {
         consumerInvToFetch();
       } catch (Exception exception) {
-        logger.error("Fetch thread error.", exception);
+        logger.error("Fetch thread error.", exception.getMessage());
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
