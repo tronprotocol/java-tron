@@ -100,7 +100,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public void put(byte[] key, T item) {
     if (getClass() == AssetIssueStore.class || getClass() == AssetIssueV2Store.class) {
-      logger.info("### put db: {} , key : {}, value: {} ", getClass(), Hex.toHexString(key), item);
+      logger.info("### put db: {} , key : {}, item: {}, date: {} ", getClass(), Hex.toHexString(key), item,
+          item == null? null : item.getData());
     }
     if (Objects.isNull(key) || Objects.isNull(item)) {
       return;
@@ -111,6 +112,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public void delete(byte[] key) {
+    if (getClass() == AssetIssueStore.class || getClass() == AssetIssueV2Store.class) {
+      logger.info("### delete db: {} , key : {}", getClass(), Hex.toHexString(key));
+    }
     revokingDB.delete(key);
   }
 
@@ -161,6 +165,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public void reset() {
+    logger.info("### reset db: {}", getClass());
     revokingDB.reset();
   }
 
