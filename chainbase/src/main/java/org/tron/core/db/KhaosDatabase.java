@@ -251,6 +251,7 @@ public class KhaosDatabase extends TronDatabase {
     private BlockId id;
     private Boolean invalid;
     private long num;
+
     public KhaosBlock(BlockCapsule blk) {
       this.blk = blk;
       this.id = blk.getBlockId();
