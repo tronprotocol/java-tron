@@ -4,12 +4,16 @@ import org.tron.core.ChainBaseManager;
 
 public class StoreFactory {
 
-  private static final StoreFactory INSTANCE = new StoreFactory();
+  private static StoreFactory INSTANCE;
 
   private ChainBaseManager chainBaseManager;
 
-  public StoreFactory() {
+  private StoreFactory() {
 
+  }
+
+  public static void init() {
+    INSTANCE = new StoreFactory();
   }
 
 

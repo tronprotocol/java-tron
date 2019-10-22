@@ -1842,6 +1842,7 @@ public class Manager {
   }
 
   private void prepareStoreFactory() {
+    StoreFactory.init();
     StoreFactory.getInstance().setChainBaseManager(chainBaseManager);
   }
 
