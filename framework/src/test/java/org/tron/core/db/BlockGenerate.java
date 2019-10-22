@@ -19,6 +19,14 @@ public class BlockGenerate {
   }
 
   public Block getSignedBlock(ByteString witness, long time, byte[] privateKey) {
+    long blockTime = System.currentTimeMillis() / 3000 * 3000;
+    if (time != 0) {
+      blockTime = time;
+    } else {
+      if (manager.getHeadBlockId().getNum() != 0) {
+        blockTime = manager.getHeadBlockTimeStamp() + 3000;
+      }
+    }
     Param param = new Param();
     Miner miner = param.new Miner(privateKey, witness, witness);
     BlockCapsule blockCapsule = manager.generateBlock(miner, time, System.currentTimeMillis() + 1000);
@@ -28,7 +36,7 @@ public class BlockGenerate {
         .setParentHash(ByteString
             .copyFrom(manager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()))
         .setNumber(manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1)
-        .setTimestamp(time)
+        .setTimestamp(blockTime)
         .setWitnessAddress(witness)
         .build();
 
