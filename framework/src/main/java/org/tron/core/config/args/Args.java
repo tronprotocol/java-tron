@@ -1270,8 +1270,8 @@ public class Args {
   }
 
   private static void bindIp(final com.typesafe.config.Config config) {
-    String path = "node.discovery.bind.ip";
-    if (!config.hasPath(path) || config.getString("path")
+    String bindIpPath = "node.discovery.bind.ip";
+    if (!config.hasPath(bindIpPath) || config.getString(bindIpPath)
         .trim().isEmpty()) {
       if (INSTANCE.nodeDiscoveryBindIp == null) {
         logger.info("Bind address wasn't set, Punching to identify it...");
@@ -1284,14 +1284,14 @@ public class Args {
         }
       }
     } else {
-      INSTANCE.nodeDiscoveryBindIp = config.getString("path").trim();
+      INSTANCE.nodeDiscoveryBindIp = config.getString(bindIpPath).trim();
     }
   }
 
   private static void externalIp(final com.typesafe.config.Config config) {
-    String path = "node.discovery.external.ip";
-    if (!config.hasPath(path) || config
-        .getString(path).trim().isEmpty()) {
+    String externalIpPath = "node.discovery.external.ip";
+    if (!config.hasPath(externalIpPath) || config
+        .getString(externalIpPath).trim().isEmpty()) {
       if (INSTANCE.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
         BufferedReader in = null;
@@ -1325,7 +1325,7 @@ public class Args {
         }
       }
     } else {
-      INSTANCE.nodeExternalIp = config.getString("path").trim();
+      INSTANCE.nodeExternalIp = config.getString(externalIpPath).trim();
     }
   }
 
