@@ -543,7 +543,6 @@ public class Args {
     INSTANCE.nodeExternalIp = "";
     INSTANCE.nodeDiscoveryPublicHomeNode = false;
     INSTANCE.nodeP2pPingInterval = 0L;
-    //INSTANCE.syncNodeCount = 0;
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.rpcPort = 0;
     INSTANCE.rpcOnSolidityPort = 0;
@@ -602,7 +601,7 @@ public class Args {
 
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
 
-    if (config.hasPath("net.type") && "testnet".equalsIgnoreCase(config.getString("net.type"))) {
+    if (config.hasPath(Constant.NET_TYPE) && Constant.TESTNET.equalsIgnoreCase(config.getString(Constant.NET_TYPE))) {
       Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
     } else {
@@ -624,18 +623,18 @@ public class Args {
       }
       INSTANCE.localWitnesses.initWitnessAccountAddress();
       logger.debug("Got privateKey from cmd");
-    } else if (config.hasPath("localwitness")) {
+    } else if (config.hasPath(Constant.LOCA_LWITENSS)) {
       INSTANCE.localWitnesses = new LocalWitnesses();
-      List<String> localwitness = config.getStringList("localwitness");
+      List<String> localwitness = config.getStringList(Constant.LOCA_LWITENSS);
       if (localwitness.size() > 1) {
         logger.warn("localwitness size must be one, get the first one");
         localwitness = localwitness.subList(0, 1);
       }
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
 
-      if (config.hasPath("localWitnessAccountAddress")) {
+      if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
         byte[] bytes = Commons
-            .decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+            .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
         if (bytes != null) {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from config.conf");
@@ -646,11 +645,11 @@ public class Args {
       INSTANCE.localWitnesses.initWitnessAccountAddress();
 
       logger.debug("Got privateKey from config.conf");
-    } else if (config.hasPath("localwitnesskeystore")) {
+    } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
       INSTANCE.localWitnesses = new LocalWitnesses();
       List<String> privateKeys = new ArrayList<String>();
       if (INSTANCE.isWitness()) {
-        List<String> localwitness = config.getStringList("localwitnesskeystore");
+        List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS_KEYSTORE);
         if (localwitness.size() > 0) {
           String fileName = System.getProperty("user.dir") + "/" + localwitness.get(0);
           String password;
@@ -681,9 +680,9 @@ public class Args {
       }
       INSTANCE.localWitnesses.setPrivateKeys(privateKeys);
 
-      if (config.hasPath("localWitnessAccountAddress")) {
+      if (config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
         byte[] bytes = Commons
-            .decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+            .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
         if (bytes != null) {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from config.conf");
@@ -699,20 +698,20 @@ public class Args {
       logger.warn("This is a witness node,but localWitnesses is null");
     }
 
-    if (config.hasPath("vm.supportConstant")) {
-      INSTANCE.supportConstant = config.getBoolean("vm.supportConstant");
+    if (config.hasPath(Constant.VM_SUPPORT_CONSTANT)) {
+      INSTANCE.supportConstant = config.getBoolean(Constant.VM_SUPPORT_CONSTANT);
     }
 
-    if (config.hasPath("vm.minTimeRatio")) {
-      INSTANCE.minTimeRatio = config.getDouble("vm.minTimeRatio");
+    if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {
+      INSTANCE.minTimeRatio = config.getDouble(Constant.VM_MIN_TIME_RATIO);
     }
 
-    if (config.hasPath("vm.maxTimeRatio")) {
-      INSTANCE.maxTimeRatio = config.getDouble("vm.maxTimeRatio");
+    if (config.hasPath(Constant.VM_MAX_TIME_RATIO)) {
+      INSTANCE.maxTimeRatio = config.getDouble(Constant.VM_MAX_TIME_RATIO);
     }
 
-    if (config.hasPath("vm.longRunningTime")) {
-      INSTANCE.longRunningTime = config.getInt("vm.longRunningTime");
+    if (config.hasPath(Constant.VM_LONG_RUNNING_TIME)) {
+      INSTANCE.longRunningTime = config.getInt(Constant.VM_LONG_RUNNING_TIME);
     }
 
     INSTANCE.storage = new Storage();
@@ -725,7 +724,7 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbEngineFromConfig(config)));
 
-    if ("ROCKSDB".equals(INSTANCE.storage.getDbEngine().toUpperCase())
+    if (Constant.ROCKSDB.equals(INSTANCE.storage.getDbEngine().toUpperCase())
         && INSTANCE.storage.getDbVersion() == 1) {
       throw new RuntimeException("db.version = 1 is not supported by ROCKSDB engine.");
     }
@@ -764,17 +763,17 @@ public class Args {
         .filter(seedNode -> 0 != seedNode.size())
         .orElse(config.getStringList("seed.node.ip.list")));
 
-    if (config.hasPath("genesis.block")) {
+    if (config.hasPath(Constant.GENESIS_BLOCK)) {
       INSTANCE.genesisBlock = new GenesisBlock();
 
-      INSTANCE.genesisBlock.setTimestamp(config.getString("genesis.block.timestamp"));
-      INSTANCE.genesisBlock.setParentHash(config.getString("genesis.block.parentHash"));
+      INSTANCE.genesisBlock.setTimestamp(config.getString(Constant.GENESIS_BLOCK_TIMESTAMP));
+      INSTANCE.genesisBlock.setParentHash(config.getString(Constant.GENESIS_BLOCK_PARENTHASH));
 
-      if (config.hasPath("genesis.block.assets")) {
+      if (config.hasPath(Constant.GENESIS_BLOCK_ASSETS)) {
         INSTANCE.genesisBlock.setAssets(getAccountsFromConfig(config));
         AccountStore.setAccount(config);
       }
-      if (config.hasPath("genesis.block.witnesses")) {
+      if (config.hasPath(Constant.GENESIS_BLOCK_WITNESSES)) {
         INSTANCE.genesisBlock.setWitnesses(getWitnessesFromConfig(config));
       }
     } else {
