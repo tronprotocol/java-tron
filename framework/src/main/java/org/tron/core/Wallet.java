@@ -421,7 +421,6 @@ public class Wallet {
     long balance = getBalance(address);
     return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
   } */
-
   private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
     if (selector == null || selector.length != 4
@@ -449,15 +448,9 @@ public class Wallet {
       sb.append(")");
 
       byte[] funcSelector = new byte[4];
-      System
-          .arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0,
-              4);
+      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
       if (Arrays.equals(funcSelector, selector)) {
-        if (entry.getConstant() || entry.getStateMutability()
-            .equals(StateMutabilityType.View)) {
-          return true;
-        }
-        return false;
+        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
       }
     }
 
