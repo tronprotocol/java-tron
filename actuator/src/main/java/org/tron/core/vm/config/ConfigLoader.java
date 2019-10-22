@@ -3,7 +3,6 @@ package org.tron.core.vm.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DBConfig;
-import org.tron.core.exception.TypeMismatchNamingException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 
@@ -15,12 +14,7 @@ public class ConfigLoader {
 
   public static void load(StoreFactory storeFactory) {
     if (!disable) {
-      DynamicPropertiesStore ds = null;
-      try {
-        ds = storeFactory.getStore(DynamicPropertiesStore.class);
-      } catch (TypeMismatchNamingException e) {
-        logger.error("can not get DynamicPropertiesStore", e);
-      }
+      DynamicPropertiesStore ds = storeFactory.getChainBaseManager().getDynamicPropertiesStore();
       VMConfig.setVmTrace(DBConfig.isVmTrace());
       if (ds != null) {
         VMConfig.initVmHardFork(checkForEnergyLimit(ds));
