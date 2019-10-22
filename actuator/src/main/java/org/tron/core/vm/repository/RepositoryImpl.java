@@ -15,6 +15,7 @@ import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -28,7 +29,6 @@ import org.tron.core.db.KhaosDatabase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
-import org.tron.core.exception.TypeMismatchNamingException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -96,22 +96,18 @@ public class RepositoryImpl implements Repository {
 
   protected void init(StoreFactory storeFactory, RepositoryImpl parent) {
     if (storeFactory != null) {
-      try {
-        this.storeFactory = storeFactory;
-        dynamicPropertiesStore = storeFactory.getStore(DynamicPropertiesStore.class);
-        accountStore = storeFactory.getStore(AccountStore.class);
-        codeStore = storeFactory.getStore(CodeStore.class);
-        contractStore = storeFactory.getStore(ContractStore.class);
-        assetIssueStore = storeFactory.getStore(AssetIssueStore.class);
-        assetIssueV2Store = storeFactory.getStore(AssetIssueV2Store.class);
-        storageRowStore = storeFactory.getStore(StorageRowStore.class);
-        blockStore = storeFactory.getStore(BlockStore.class);
-        khaosDb = storeFactory.getStore(KhaosDatabase.class);
-        blockIndexStore = storeFactory.getStore(BlockIndexStore.class);
-
-      } catch (TypeMismatchNamingException e) {
-        logger.error("Repository init error", e);
-      }
+      this.storeFactory = storeFactory;
+      ChainBaseManager manager = storeFactory.getChainBaseManager();
+      dynamicPropertiesStore = manager.getDynamicPropertiesStore();
+      accountStore = manager.getAccountStore();
+      codeStore = manager.getCodeStore();
+      contractStore = manager.getContractStore();
+      assetIssueStore = manager.getAssetIssueStore();
+      assetIssueV2Store = manager.getAssetIssueV2Store();
+      storageRowStore = manager.getStorageRowStore();
+      blockStore = manager.getBlockStore();
+      khaosDb = manager.getKhaosDb();
+      blockIndexStore = manager.getBlockIndexStore();
     }
     this.parent = parent;
   }

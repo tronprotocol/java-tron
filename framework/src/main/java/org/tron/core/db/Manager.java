@@ -1850,30 +1850,8 @@ public class Manager {
   }
 
   private void prepareStoreFactory() {
-    StoreFactory.getInstance().setAccountStore(accountStore)
-        .setAccountIdIndexStore(accountIdIndexStore)
-        .setAccountIndexStore(accountIndexStore)
-        .setDynamicPropertiesStore(dynamicPropertiesStore)
-        .setAssetIssueStore(assetIssueStore)
-        .setContractStore(contractStore)
-        .setAssetIssueV2Store(assetIssueV2Store)
-        .setWitnessStore(witnessStore)
-        .setVotesStore(votesStore)
-        .setProofStore(proofStore)
-        .setNullifierStore(nullifierStore)
-        .setDelegatedResourceAccountIndexStore(delegatedResourceAccountIndexStore)
-        .setDelegatedResourceStore(delegatedResourceStore)
-        .setExchangeStore(exchangeStore)
-        .setExchangeV2Store(exchangeV2Store)
-        .setProposalStore(proposalStore)
-        .setCodeStore(codeStore)
-        .setStorageRowStore(storageRowStore)
-        .setBlockStore(blockStore)
-        .setKhaosDb(khaosDb)
-        .setBlockIndexStore(blockIndexStore)
-        .setMerkleContainer(merkleContainer)
-        .setChainBaseManager(chainBaseManager)
-        .setDelegationService(delegationService);
+    StoreFactory.init();
+    StoreFactory.getInstance().setChainBaseManager(chainBaseManager);
   }
 
   private static class ValidateSignTask implements Callable<Boolean> {
