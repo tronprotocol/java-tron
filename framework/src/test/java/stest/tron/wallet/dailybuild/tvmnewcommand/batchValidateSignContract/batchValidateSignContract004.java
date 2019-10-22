@@ -247,6 +247,7 @@ public class batchValidateSignContract004 {
             maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     if (infoById.get().getResultValue() == 0) {
