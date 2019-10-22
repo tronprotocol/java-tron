@@ -2425,6 +2425,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     boolean ok = dbManager.pushTransaction(transactionCap);
     Assert.assertTrue(ok);
 
+    Thread.sleep(500);
     //package transaction to block
     block = getSignedBlock(witnessCapsule.getAddress(), System.currentTimeMillis(), privateKey);
     dbManager.pushBlock(new BlockCapsule(block));

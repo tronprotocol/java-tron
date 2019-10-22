@@ -27,8 +27,6 @@ public class FastForward {
 
   private ChannelManager channelManager;
 
-  private BackupManager backupManager;
-
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
   private Args args = Args.getInstance();
@@ -42,12 +40,12 @@ public class FastForward {
     logger.info("Fast forward config, isWitness: {}, keySize: {}, fastForwardNodes: {}",
         args.isWitness(), keySize, fastForwardNodes.size());
 
-    if (!args.isWitness() || keySize == 0 || fastForwardNodes.size() == 0) {
+    if (!args.isWitness() || keySize == 0 || fastForwardNodes.isEmpty()) {
       return;
     }
 
     channelManager = ctx.getBean(ChannelManager.class);
-    backupManager = ctx.getBean(BackupManager.class);
+    BackupManager backupManager = ctx.getBean(BackupManager.class);
     WitnessScheduleStore witnessScheduleStore = ctx.getBean(WitnessScheduleStore.class);
 
     executorService.scheduleWithFixedDelay(() -> {
@@ -58,8 +56,8 @@ public class FastForward {
         } else {
           disconnect();
         }
-      } catch (Throwable t) {
-        logger.info("Execute failed.", t);
+      } catch (Exception e) {
+        logger.info("Execute failed.", e);
       }
     }, 30, 100, TimeUnit.SECONDS);
   }
