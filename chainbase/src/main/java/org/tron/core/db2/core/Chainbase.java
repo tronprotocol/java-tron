@@ -132,8 +132,7 @@ public class Chainbase implements IRevokingDB {
     if (snapshot.getPrevious() == null && tmp != 0) {
       if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
         result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
-      }
-      else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
         result.addAll(((RocksDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
       }
     }
@@ -159,8 +158,7 @@ public class Chainbase implements IRevokingDB {
           .map(e -> Maps
               .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
           .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
-    }
-    else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
       ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
           .map(e -> Maps
               .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))

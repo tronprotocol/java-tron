@@ -93,7 +93,7 @@ public class TransactionTrace {
     this.contractStore = storeFactory.getChainBaseManager().getContractStore();
     this.codeStore = storeFactory.getChainBaseManager().getCodeStore();
     this.accountStore = storeFactory.getChainBaseManager().getAccountStore();
-    
+
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.energyProcessor = new EnergyProcessor(dynamicPropertiesStore, accountStore);
     this.runtime = runtime;
