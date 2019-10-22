@@ -2378,8 +2378,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
 
     //sometimes generate block failed, try several times.
 
-    Block block = getSignedBlock(witnessCapsule.getAddress(), System.currentTimeMillis(),
-        privateKey);
+    Block block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     //create transactions
@@ -2427,7 +2426,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
 
     Thread.sleep(500);
     //package transaction to block
-    block = getSignedBlock(witnessCapsule.getAddress(), System.currentTimeMillis(), privateKey);
+    block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());

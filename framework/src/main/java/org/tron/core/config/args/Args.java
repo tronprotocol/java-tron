@@ -1183,7 +1183,7 @@ public class Args {
     triggerConfig.setTriggerName(triggerName);
 
     String enabled = triggerObject.get("enable").unwrapped().toString();
-    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled) ? true : false);
+    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled));
 
     String topic = triggerObject.get("topic").unwrapped().toString();
     triggerConfig.setTopic(topic);
@@ -1258,7 +1258,7 @@ public class Args {
 
   private static void bindIp(final com.typesafe.config.Config config) {
     if (!config.hasPath(Constant.NODE_DISCOVERY_BIND_IP) || config.getString(Constant.NODE_DISCOVERY_BIND_IP)
-        .trim().isEmpty()) {
+            .trim().isEmpty()) {
       if (INSTANCE.nodeDiscoveryBindIp == null) {
         logger.info("Bind address wasn't set, Punching to identify it...");
         try (Socket s = new Socket("www.baidu.com", 80)) {
@@ -1276,13 +1276,13 @@ public class Args {
 
   private static void externalIp(final com.typesafe.config.Config config) {
     if (!config.hasPath(Constant.NODE_DISCOVERY_EXTENNAL_IP) || config
-        .getString(Constant.NODE_DISCOVERY_EXTENNAL_IP).trim().isEmpty()) {
+            .getString(Constant.NODE_DISCOVERY_EXTENNAL_IP).trim().isEmpty()) {
       if (INSTANCE.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
         BufferedReader in = null;
         try {
           in = new BufferedReader(new InputStreamReader(
-              new URL(Constant.AMAZONAWS_URL).openStream()));
+                  new URL(Constant.AMAZONAWS_URL).openStream()));
           INSTANCE.nodeExternalIp = in.readLine();
           if (INSTANCE.nodeExternalIp == null || INSTANCE.nodeExternalIp.trim().isEmpty()) {
             throw new IOException("Invalid address: '" + INSTANCE.nodeExternalIp + "'");
@@ -1296,8 +1296,8 @@ public class Args {
         } catch (IOException e) {
           INSTANCE.nodeExternalIp = INSTANCE.nodeDiscoveryBindIp;
           logger.warn(
-              "Can't get external IP. Fall back to peer.bind.ip: " + INSTANCE.nodeExternalIp + " :"
-                  + e);
+                  "Can't get external IP. Fall back to peer.bind.ip: " + INSTANCE.nodeExternalIp + " :"
+                          + e);
         } finally {
           if (in != null) {
             try {
