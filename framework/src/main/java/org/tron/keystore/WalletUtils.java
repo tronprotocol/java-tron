@@ -71,19 +71,19 @@ public class WalletUtils {
     return fileName;
   }
 
-  public static void updateWalletFile(
-      String password, ECKey ecKeyPair, File source, boolean useFullScrypt)
-      throws CipherException, IOException {
-
-    WalletFile walletFile = objectMapper.readValue(source, WalletFile.class);
-    if (useFullScrypt) {
-      walletFile = Wallet.createStandard(password, ecKeyPair);
-    } else {
-      walletFile = Wallet.createLight(password, ecKeyPair);
-    }
-
-    objectMapper.writeValue(source, walletFile);
-  }
+//  public static void updateWalletFile(
+//      String password, ECKey ecKeyPair, File source, boolean useFullScrypt)
+//      throws CipherException, IOException {
+//
+//    WalletFile walletFile = objectMapper.readValue(source, WalletFile.class);
+//    if (useFullScrypt) {
+//      walletFile = Wallet.createStandard(password, ecKeyPair);
+//    } else {
+//      walletFile = Wallet.createLight(password, ecKeyPair);
+//    }
+//
+//    objectMapper.writeValue(source, walletFile);
+//  }
 
   //    /**
 //     * Generates a BIP-39 compatible Ethereum wallet. The private key for the wallet can

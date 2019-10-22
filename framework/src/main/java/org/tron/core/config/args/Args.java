@@ -1196,7 +1196,7 @@ public class Args {
     triggerConfig.setTriggerName(triggerName);
 
     String enabled = triggerObject.get("enable").unwrapped().toString();
-    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled) ? true : false);
+    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled));
 
     String topic = triggerObject.get("topic").unwrapped().toString();
     triggerConfig.setTopic(topic);
@@ -1270,7 +1270,8 @@ public class Args {
   }
 
   private static void bindIp(final com.typesafe.config.Config config) {
-    if (!config.hasPath("node.discovery.bind.ip") || config.getString("node.discovery.bind.ip")
+    String bindIpPath = "node.discovery.bind.ip";
+    if (!config.hasPath(bindIpPath) || config.getString(bindIpPath)
         .trim().isEmpty()) {
       if (INSTANCE.nodeDiscoveryBindIp == null) {
         logger.info("Bind address wasn't set, Punching to identify it...");
@@ -1283,13 +1284,14 @@ public class Args {
         }
       }
     } else {
-      INSTANCE.nodeDiscoveryBindIp = config.getString("node.discovery.bind.ip").trim();
+      INSTANCE.nodeDiscoveryBindIp = config.getString(bindIpPath).trim();
     }
   }
 
   private static void externalIp(final com.typesafe.config.Config config) {
-    if (!config.hasPath("node.discovery.external.ip") || config
-        .getString("node.discovery.external.ip").trim().isEmpty()) {
+    String externalIpPath = "node.discovery.external.ip";
+    if (!config.hasPath(externalIpPath) || config
+        .getString(externalIpPath).trim().isEmpty()) {
       if (INSTANCE.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
         BufferedReader in = null;
@@ -1323,7 +1325,7 @@ public class Args {
         }
       }
     } else {
-      INSTANCE.nodeExternalIp = config.getString("node.discovery.external.ip").trim();
+      INSTANCE.nodeExternalIp = config.getString(externalIpPath).trim();
     }
   }
 
