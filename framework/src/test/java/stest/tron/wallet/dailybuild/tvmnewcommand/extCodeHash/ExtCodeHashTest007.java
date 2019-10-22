@@ -82,7 +82,7 @@ public class ExtCodeHashTest007 {
   public void test01DeployTestContractOld() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
             blockingStubFull), 0, 1,
@@ -250,6 +250,7 @@ public class ExtCodeHashTest007 {
             maxFeeLimit, 0L, 0, 10000,
             "0", 0, null, dev001Key,
             dev001Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);

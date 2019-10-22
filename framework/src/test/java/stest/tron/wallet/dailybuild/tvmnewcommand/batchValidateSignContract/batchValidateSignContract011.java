@@ -439,7 +439,7 @@ public class batchValidateSignContract011 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "150 signatures with 2nd、32nd incorrect signatures"
+  @Test(enabled = true, description = "40 signatures with 2nd、32nd incorrect signatures"
       + " test multivalidatesign")
   public void test06Incorrect2ndAnd32ndIncorrectSignatures() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
@@ -457,7 +457,7 @@ public class batchValidateSignContract011 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 150; i++) {
+    for (int i = 0; i < 40; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       if (i == 1 || i == 31) {
@@ -474,6 +474,7 @@ public class batchValidateSignContract011 {
         .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
             maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -519,7 +520,7 @@ public class batchValidateSignContract011 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "88 signatures with 9th、11th、28th、32nd incorrect address"
+  @Test(enabled = true, description = "44 signatures with 9th、11th、28th、32nd incorrect address"
       + " test multivalidatesign")
   public void test07IncorrectAddress() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
@@ -537,7 +538,7 @@ public class batchValidateSignContract011 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 88; i++) {
+    for (int i = 0; i < 44; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
