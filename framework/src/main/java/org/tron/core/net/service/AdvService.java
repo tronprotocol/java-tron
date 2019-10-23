@@ -76,16 +76,16 @@ public class AdvService {
     spreadExecutor.scheduleWithFixedDelay(() -> {
       try {
         consumerInvToSpread();
-      } catch (Throwable t) {
-        logger.error("Spread thread error.", t);
+      } catch (Exception exception) {
+        logger.error("Spread thread error.", exception.getMessage());
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
 
     fetchExecutor.scheduleWithFixedDelay(() -> {
       try {
         consumerInvToFetch();
-      } catch (Throwable t) {
-        logger.error("Fetch thread error.", t);
+      } catch (Exception exception) {
+        logger.error("Fetch thread error.", exception.getMessage());
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
