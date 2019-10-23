@@ -975,8 +975,7 @@ public class Args {
         config.getInt(Constant.ENERGY_LIMIT_BLOCK_NUM) : 4727890L;
 
     INSTANCE.vmTrace =
-        config.hasPath(Constant.VM_TRACE) ? config
-            .getBoolean(Constant.VM_TRACE) : false;
+        config.hasPath(Constant.VM_TRACE) && config.getBoolean(Constant.VM_TRACE);
 
     INSTANCE.saveInternalTx =
         config.hasPath(Constant.VM_SAVE_INTERNAL_TX) && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
