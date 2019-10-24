@@ -4834,6 +4834,45 @@ public class PublicMethed {
   /**
    * constructor.
    */
+  public static TransactionExtention triggerConstantContractForExtentionOnSolidity(
+      byte[] contractAddress, String method, String argsStr, Boolean isHex, long callValue,
+      long feeLimit, String tokenId, long tokenValue, byte[] ownerAddress, String priKey,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    if (argsStr.equalsIgnoreCase("#")) {
+      logger.info("argsstr is #");
+      argsStr = "";
+    }
+
+    byte[] owner = ownerAddress;
+    byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
+
+    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setData(ByteString.copyFrom(input));
+    builder.setCallValue(callValue);
+    builder.setTokenId(Long.parseLong(tokenId));
+    builder.setCallTokenValue(tokenValue);
+    TriggerSmartContract triggerContract = builder.build();
+
+    TransactionExtention transactionExtention = blockingStubSolidity
+        .triggerConstantContract(triggerContract);
+    return transactionExtention;
+
+  }
+
+  /**
+   * constructor.
+   */
   public static String clearContractAbi(byte[] contractAddress,
       byte[] ownerAddress,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
