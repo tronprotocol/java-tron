@@ -301,6 +301,13 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block.getBlockHeader().getRawData().getCurrentSrList();
   }
 
+  public BlockCapsule cleanTransactions(PbftSignCapsule pbftSignCapsule) {
+    BlockHeader blockHeader = this.block.getBlockHeader().toBuilder()
+        .addAllSrsSignature(pbftSignCapsule.getInstance().getSignList()).build();
+    this.block = this.block.toBuilder().setBlockHeader(blockHeader).clearTransactions().build();
+    return this;
+  }
+
   @Override
   public String toString() {
     toStringBuff.setLength(0);

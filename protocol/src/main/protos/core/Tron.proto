@@ -398,9 +398,11 @@ message BlockHeader {
     int32 version = 10;
     bytes accountStateRoot = 11;
     SrList currentSrList = 12;
+    bytes chainId = 13;
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
+  repeated bytes srs_signature = 3;
 }
 
 message SrList {
@@ -461,6 +463,7 @@ message Items {
   repeated Block blocks = 2;
   repeated BlockHeader block_headers = 3;
   repeated Transaction transactions = 4;
+  bytes uuid = 5;
 }
 
 // DynamicProperties
@@ -511,6 +514,7 @@ message HelloMessage {
   BlockId genesisBlockId = 4;
   BlockId solidBlockId = 5;
   BlockId headBlockId = 6;
+  bytes chainId = 7;
 }
 
 message InternalTransaction {
@@ -665,4 +669,14 @@ message PbftMessageList {
 message DataSign {
   bytes data = 1;
   repeated bytes sign = 2;
+}
+
+message DownloadHeader {
+  message BlockId {
+    bytes hash = 1;
+    int64 number = 2;
+  }
+  BlockId headerId = 1;
+  BlockId solidityId = 2;
+  bytes uuid = 3;
 }

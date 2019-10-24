@@ -11,6 +11,7 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.PbftMessageFactory;
 import org.tron.core.net.message.TronMessageFactory;
+import org.tron.core.spv.message.HeaderMessageFactory;
 
 @Component
 @Scope("prototype")
@@ -20,6 +21,7 @@ public class MessageCodec extends ByteToMessageDecoder {
   private P2pMessageFactory p2pMessageFactory = new P2pMessageFactory();
   private TronMessageFactory tronMessageFactory = new TronMessageFactory();
   private PbftMessageFactory pbftMessageFactory = new PbftMessageFactory();
+  private HeaderMessageFactory headerMessageFactory = new HeaderMessageFactory();
 
   @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out)
@@ -50,6 +52,9 @@ public class MessageCodec extends ByteToMessageDecoder {
     }
     if (MessageTypes.inPbftRange(type)) {
       return pbftMessageFactory.create(encoded);
+    }
+    if (MessageTypes.inHeaderRange(type)) {
+      return headerMessageFactory.create(encoded);
     }
     throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + encoded[0]);
   }

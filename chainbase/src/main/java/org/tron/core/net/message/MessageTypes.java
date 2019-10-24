@@ -15,8 +15,6 @@ public enum MessageTypes {
 
   BLOCKS(0x04),
 
-  BLOCKHEADERS(0x05),
-
   INVENTORY(0x06),
 
   FETCH_INV_DATA(0x07),
@@ -32,6 +30,12 @@ public enum MessageTypes {
   BLOCK_INVENTORY(0x12),
 
   TRX_INVENTORY(0x13),
+
+  DOWNLOAD_BLOCK_HEADER(0x14),
+
+  BLOCK_HEADERS(0x15),
+
+  NOT_DATA_DOWNLOAD(0x16),
 
   P2P_HELLO(0x20),
 
@@ -91,6 +95,10 @@ public enum MessageTypes {
 
   public static boolean inPbftRange(byte code) {
     return code >= PBFT_BLOCK_MSG.asByte() && code <= PBFT_SR_MSG.asByte();
+  }
+
+  public static boolean inHeaderRange(byte code) {
+    return code <= NOT_DATA_DOWNLOAD.asByte() && code >= DOWNLOAD_BLOCK_HEADER.asByte();
   }
 
   @Override
