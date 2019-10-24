@@ -121,7 +121,7 @@ public class SnapshotManager implements RevokingDatabase {
     --size;
   }
 
-  public void merge() {
+  synchronized public void merge() {
     if (activeSession <= 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
     }

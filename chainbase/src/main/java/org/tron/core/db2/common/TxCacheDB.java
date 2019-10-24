@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
 
   // > 65_536(= 2^16) blocks, that is the number of the reference block
-  private final int BLOCK_COUNT = 70_000;
+  private static final int BLOCK_COUNT = 70_000;
 
   private Map<Key, Long> db = new WeakHashMap<>();
   private Multimap<Long, Key> blockNumMap = ArrayListMultimap.create();
