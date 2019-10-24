@@ -382,8 +382,8 @@ public class MerkleContainerTest {
         .println("kkkkkk" + ByteArray
             .toHexString(merkleTreeWitnessInfo.getVouchers(0).getRt().toByteArray()));
     Assert.assertEquals(
-            ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(0).getRt().toByteArray()),
-            ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(1).getRt().toByteArray())
+        ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(0).getRt().toByteArray()),
+        ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(1).getRt().toByteArray())
     );
 
   }

@@ -2516,14 +2516,14 @@ public class ShieldedReceiveTest extends BlockGenerate {
         receiveNote2.getNote().getPaymentAddress());
   }
 
-  public enum TestColumn { CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM }
+  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM}
 
   public enum TestSignMissingColumn {
     FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION,
     RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT
   }
 
-  public enum TestReceiveMissingColumn { CV, CM, EPK, C_ENC, C_OUT, ZKPROOF }
+  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF}
 
   @AllArgsConstructor
   class TransactionHash {

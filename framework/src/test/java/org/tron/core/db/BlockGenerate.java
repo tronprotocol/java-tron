@@ -29,7 +29,8 @@ public class BlockGenerate {
     }
     Param param = new Param();
     Miner miner = param.new Miner(privateKey, witness, witness);
-    BlockCapsule blockCapsule = manager.generateBlock(miner, time, System.currentTimeMillis() + 1000);
+    BlockCapsule blockCapsule = manager
+        .generateBlock(miner, time, System.currentTimeMillis() + 1000);
     Block block = blockCapsule.getInstance();
 
     BlockHeader.raw raw = block.getBlockHeader().getRawData().toBuilder()

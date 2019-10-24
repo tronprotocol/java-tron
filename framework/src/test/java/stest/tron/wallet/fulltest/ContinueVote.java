@@ -172,7 +172,7 @@ public class ContinueVote {
       final long count = Long.parseLong(value);
       WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder =
           WitnessContract.VoteWitnessContract.Vote
-          .newBuilder();
+              .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
       logger.info("address ====== " + ByteArray.toHexString(address));
       if (address == null) {

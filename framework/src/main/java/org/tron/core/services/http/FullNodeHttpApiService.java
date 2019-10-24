@@ -389,7 +389,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
-      context.addServlet(new ServletHolder(createCommonTransactionServlet), "/createCommonTransaction");
+      context.addServlet(new ServletHolder(createCommonTransactionServlet),
+          "/createCommonTransaction");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

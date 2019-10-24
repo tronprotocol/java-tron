@@ -409,7 +409,7 @@ public class AttackSendcoin {
 
     BalanceContract.WithdrawBalanceContract.Builder builder =
         BalanceContract.WithdrawBalanceContract
-        .newBuilder();
+            .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
     BalanceContract.WithdrawBalanceContract contract = builder.build();
