@@ -236,8 +236,8 @@ public class BandwidthProcessorTest {
 
     org.tron.protos.Protocol.Transaction.Contract contract =
         org.tron.protos.Protocol.Transaction.Contract
-        .newBuilder()
-        .setType(Protocol.Transaction.Contract.ContractType.TransferAssetContract).setParameter(
+            .newBuilder()
+            .setType(Protocol.Transaction.Contract.ContractType.TransferAssetContract).setParameter(
             Any.pack(transferAssetContract)).build();
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);

@@ -87,7 +87,7 @@ public class TransferAssetIssue {
 
     AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder =
         AssetIssueContractOuterClass.ParticipateAssetIssueContract
-        .newBuilder();
+            .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(from);
@@ -139,7 +139,7 @@ public class TransferAssetIssue {
 
     AssetIssueContractOuterClass.TransferAssetContract.Builder builder =
         AssetIssueContractOuterClass.TransferAssetContract
-        .newBuilder();
+            .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);

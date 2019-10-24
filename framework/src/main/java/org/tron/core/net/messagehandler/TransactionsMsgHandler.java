@@ -37,7 +37,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   @Autowired
   private AdvService advService;
 
-//  private static int TIME_OUT = 10 * 60 * 1000;
+  //  private static int TIME_OUT = 10 * 60 * 1000;
   private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(MAX_TRX_SIZE);
 
   private BlockingQueue<Runnable> queue = new LinkedBlockingQueue();
