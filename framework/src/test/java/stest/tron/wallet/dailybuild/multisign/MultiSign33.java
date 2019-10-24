@@ -126,6 +126,7 @@ public class MultiSign33 {
         .accountPermissionUpdateWithPermissionId(accountPermissionJson1, test001Address, dev001Key,
             blockingStubFull, 0,
             permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
@@ -153,6 +154,7 @@ public class MultiSign33 {
         .accountPermissionUpdateWithPermissionId(accountPermissionJson2, test001Address, dev001Key,
             blockingStubFull, 0,
             permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
