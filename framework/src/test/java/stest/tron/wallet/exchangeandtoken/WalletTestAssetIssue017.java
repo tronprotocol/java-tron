@@ -85,7 +85,7 @@ public class WalletTestAssetIssue017 {
     try {
       AssetIssueContractOuterClass.AssetIssueContract.Builder builder =
           AssetIssueContractOuterClass.AssetIssueContract
-          .newBuilder();
+              .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);

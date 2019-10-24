@@ -112,8 +112,9 @@ public class batchValidateSignContract004 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -175,8 +176,9 @@ public class batchValidateSignContract004 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -243,8 +245,9 @@ public class batchValidateSignContract004 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -311,8 +314,9 @@ public class batchValidateSignContract004 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -380,8 +384,9 @@ public class batchValidateSignContract004 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -450,8 +455,9 @@ public class batchValidateSignContract004 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;

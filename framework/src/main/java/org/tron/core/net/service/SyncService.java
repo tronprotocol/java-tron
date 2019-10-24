@@ -65,8 +65,8 @@ public class SyncService {
           fetchFlag = false;
           startFetchSyncBlock();
         }
-      } catch (Throwable t) {
-        logger.error("Fetch sync block error.", t);
+      } catch (Exception e) {
+        logger.error("Fetch sync block error.", e);
       }
     }, 10, 1, TimeUnit.SECONDS);
 
@@ -76,8 +76,8 @@ public class SyncService {
           handleFlag = false;
           handleSyncBlock();
         }
-      } catch (Throwable t) {
-        logger.error("Handle sync block error.", t);
+      } catch (Exception e) {
+        logger.error("Handle sync block error.", e);
       }
     }, 10, 1, TimeUnit.SECONDS);
   }
@@ -135,11 +135,11 @@ public class SyncService {
     fetchFlag = true;
   }
 
-  private LinkedList<BlockId> getBlockChainSummary(PeerConnection peer) throws Exception {
+  private LinkedList<BlockId> getBlockChainSummary(PeerConnection peer) throws P2pException {
 
     BlockId beginBlockId = peer.getBlockBothHave();
     List<BlockId> blockIds = new ArrayList<>(peer.getSyncBlockToFetch());
-    LinkedList<BlockId> forkList = new LinkedList<>();
+    List<BlockId> forkList = new LinkedList<>();
     LinkedList<BlockId> summary = new LinkedList<>();
     long syncBeginNumber = tronNetDelegate.getSyncBeginNumber();
     long low = syncBeginNumber < 0 ? 0 : syncBeginNumber;
@@ -157,8 +157,8 @@ public class SyncService {
           throw new P2pException(TypeEnum.SYNC_FAILED,
               "can't find blockId: " + beginBlockId.getString());
         }
-        highNoFork = forkList.peekLast().getNum();
-        forkList.pollLast();
+        highNoFork =  ((LinkedList<BlockId>)forkList).peekLast().getNum();
+        ((LinkedList)forkList).pollLast();
         Collections.reverse(forkList);
         high = highNoFork + forkList.size();
       }

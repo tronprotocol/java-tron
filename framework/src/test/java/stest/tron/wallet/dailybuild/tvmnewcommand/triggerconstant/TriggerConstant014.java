@@ -35,25 +35,38 @@ public class TriggerConstant014 {
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
-  byte[] contractAddress = null;
-  byte[] returnAddressBytes = null;
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contractExcAddress = ecKey1.getAddress();
-  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  private ManagedChannel channelSolidity = null;
+
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
+
+  private ManagedChannel channelSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+
+  private ManagedChannel channelRealSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubRealSolidity = null;
+
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
+
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+  private String realSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
+
+  byte[] contractAddress = null;
+  byte[] returnAddressBytes = null;
+
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] contractExcAddress = ecKey1.getAddress();
+  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
 
   @BeforeSuite
   public void beforeSuite() {
@@ -81,6 +94,10 @@ public class TriggerConstant014 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+    channelRealSolidity = ManagedChannelBuilder.forTarget(realSoliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubRealSolidity = WalletSolidityGrpc.newBlockingStub(channelRealSolidity);
   }
 
   @Test(enabled = true, description = "TriggerContract a non-constant function created by create2")
@@ -222,6 +239,47 @@ public class TriggerConstant014 {
             containsString("Attempt to call a state modifying opcode inside STATICCALL"));
   }
 
+  @Test(enabled = true, description = "TriggerConstantContract a non-constant function "
+      + "created by create2 on solidity")
+  public void test16TriggerConstantContractOnSolidity() {
+    String returnAddress = Base58.encode58Check(returnAddressBytes);
+    logger.info("returnAddress:" + returnAddress);
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtentionOnSolidity(returnAddressBytes,
+            "plusOne()", "#", false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubSolidity);
+    System.out.println("Code = " + transactionExtention.getResult().getCode());
+    System.out
+        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+
+    Assert
+        .assertThat(transactionExtention.getResult().getCode().toString(),
+            containsString("CONTRACT_EXE_ERROR"));
+    Assert
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+  }
+
+  @Test(enabled = true, description = "TriggerConstantContract a non-constant function "
+      + "created by create2 on real solidity")
+  public void test16TriggerConstantContractOnRealSolidity() {
+    String returnAddress = Base58.encode58Check(returnAddressBytes);
+    logger.info("returnAddress:" + returnAddress);
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtentionOnSolidity(returnAddressBytes,
+            "plusOne()", "#", false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubRealSolidity);
+    System.out.println("Code = " + transactionExtention.getResult().getCode());
+    System.out
+        .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+
+    Assert
+        .assertThat(transactionExtention.getResult().getCode().toString(),
+            containsString("CONTRACT_EXE_ERROR"));
+    Assert
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+  }
 
   /**
    * constructor.

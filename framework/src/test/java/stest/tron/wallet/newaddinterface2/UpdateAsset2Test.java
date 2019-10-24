@@ -252,7 +252,7 @@ public class UpdateAsset2Test {
     try {
       AssetIssueContractOuterClass.AssetIssueContract.Builder builder =
           AssetIssueContractOuterClass.AssetIssueContract
-          .newBuilder();
+              .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -360,7 +360,7 @@ public class UpdateAsset2Test {
 
     AssetIssueContractOuterClass.TransferAssetContract.Builder builder =
         AssetIssueContractOuterClass.TransferAssetContract
-        .newBuilder();
+            .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -403,7 +403,7 @@ public class UpdateAsset2Test {
 
     AssetIssueContractOuterClass.UnfreezeAssetContract.Builder builder =
         AssetIssueContractOuterClass.UnfreezeAssetContract
-        .newBuilder();
+            .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess);
@@ -444,7 +444,7 @@ public class UpdateAsset2Test {
 
     AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder =
         AssetIssueContractOuterClass.ParticipateAssetIssueContract
-        .newBuilder();
+            .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(from);
