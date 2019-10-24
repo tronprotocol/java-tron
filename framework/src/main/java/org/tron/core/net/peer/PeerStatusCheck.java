@@ -26,8 +26,8 @@ public class PeerStatusCheck {
     peerStatusCheckExecutor.scheduleWithFixedDelay(() -> {
       try {
         statusCheck();
-      } catch (Throwable t) {
-        logger.error("Unhandled exception", t);
+      } catch (Exception e) {
+        logger.error("Unhandled exception", e);
       }
     }, 5, 2, TimeUnit.SECONDS);
   }
