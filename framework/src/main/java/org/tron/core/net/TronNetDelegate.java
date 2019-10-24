@@ -3,7 +3,7 @@ package org.tron.core.net;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.Getter;
@@ -142,7 +142,7 @@ public class TronNetDelegate {
     return dbManager.containBlockInMainChain(id);
   }
 
-  public LinkedList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) throws P2pException {
+  public List<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) throws P2pException {
     try {
       return dbManager.getBlockChainHashesOnFork(forkBlockHash);
     } catch (NonCommonBlockException e) {

@@ -95,12 +95,12 @@ public class AdvService {
     fetchExecutor.shutdown();
   }
 
-  synchronized public void addInvToCache(Item item) {
+  public synchronized void addInvToCache(Item item) {
     invToFetchCache.put(item, System.currentTimeMillis());
     invToFetch.remove(item);
   }
 
-  synchronized public boolean addInv(Item item) {
+  public synchronized boolean addInv(Item item) {
 
     if (fastForward && item.getType().equals(InventoryType.TRX)) {
       return false;
@@ -215,7 +215,7 @@ public class AdvService {
     }
   }
 
-  synchronized private void consumerInvToFetch() {
+  private synchronized void consumerInvToFetch() {
     Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.isIdle())
         .collect(Collectors.toList());
@@ -248,7 +248,7 @@ public class AdvService {
     invSender.sendFetch();
   }
 
-  synchronized private void consumerInvToSpread() {
+  private synchronized void consumerInvToSpread() {
 
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
