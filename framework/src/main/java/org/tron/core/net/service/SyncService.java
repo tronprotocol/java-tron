@@ -112,9 +112,7 @@ public class SyncService {
   }
 
   public void processBlock(PeerConnection peer, BlockMessage blockMessage) {
-    synchronized (blockJustReceived) {
-      blockJustReceived.put(blockMessage, peer);
-    }
+    blockJustReceived.put(blockMessage, peer);
     handleFlag = true;
     if (peer.isIdle()) {
       if (peer.getRemainNum() > 0
@@ -219,10 +217,8 @@ public class SyncService {
 
   private synchronized void handleSyncBlock() {
 
-    synchronized (blockJustReceived) {
-      blockWaitToProcess.putAll(blockJustReceived);
-      blockJustReceived.clear();
-    }
+    blockWaitToProcess.putAll(blockJustReceived);
+    blockJustReceived.clear();
 
     final boolean[] isProcessed = {true};
 
