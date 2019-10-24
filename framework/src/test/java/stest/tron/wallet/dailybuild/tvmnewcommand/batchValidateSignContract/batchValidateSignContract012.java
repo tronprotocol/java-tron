@@ -99,9 +99,9 @@ public class batchValidateSignContract012 {
 
     String input = AbiUtil.parseParameters("batchvalidatesign(bytes32,bytes[],address[])", argsStr);
     String method = "testArray2(bytes)";
-    txid = PublicMethed.triggerContract(contractAddress, method,
+    txid = PublicMethed.triggerContractBoth(contractAddress, method,
         AbiUtil.parseParameters(method, Arrays.asList(input)), true, 0, maxFeeLimit,
-        contractExcAddress, contractExcKey, blockingStubFull);
+        contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
     PublicMethed.getTransactionById(txid, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -135,9 +135,9 @@ public class batchValidateSignContract012 {
 
     String input = AbiUtil.parseParameters("batchvalidatesign(bytes32,bytes[],address[])", argsStr);
     String method = "testArray2(bytes)";
-    txid = PublicMethed.triggerContract(contractAddress, method,
+    txid = PublicMethed.triggerContractBoth(contractAddress, method,
         AbiUtil.parseParameters(method, Arrays.asList(input)), true, 0, maxFeeLimit,
-        contractExcAddress, contractExcKey, blockingStubFull);
+        contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
     PublicMethed.getTransactionById(txid, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;

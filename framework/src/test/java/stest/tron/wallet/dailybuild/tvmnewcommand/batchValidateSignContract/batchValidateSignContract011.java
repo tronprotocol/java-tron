@@ -108,8 +108,9 @@ public class batchValidateSignContract011 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -184,8 +185,9 @@ public class batchValidateSignContract011 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -254,8 +256,9 @@ public class batchValidateSignContract011 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -325,8 +328,9 @@ public class batchValidateSignContract011 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -397,8 +401,9 @@ public class batchValidateSignContract011 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -471,8 +476,9 @@ public class batchValidateSignContract011 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -551,8 +557,9 @@ public class batchValidateSignContract011 {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -629,8 +636,9 @@ public class batchValidateSignContract011 {
         .asList("0x" + Hex.toHexString(Hash.sha3(incorrecttxid.getBytes())), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
-        .triggerContract(contractAddress, "testArray(bytes32,bytes[],address[])", input, false, 0,
-            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false
+            , 0,
+            maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
