@@ -20,7 +20,7 @@ public class Parameter {
     }
   }
 
-  public class ChainConstant {
+  public static class ChainConstant {
 
     public static final long TRANSFER_FEE = 0; // free
     public static final int BLOCK_PRODUCED_INTERVAL = 3000; //ms,produce block period, must be divisible by 60. millisecond
@@ -31,7 +31,7 @@ public class Parameter {
   }
 
   @Deprecated
-  public class ForkBlockVersionConsts {
+  public static class ForkBlockVersionConsts {
 
     public static final int START_NEW_TRANSACTION = 4;
     public static final int ENERGY_LIMIT = 5;

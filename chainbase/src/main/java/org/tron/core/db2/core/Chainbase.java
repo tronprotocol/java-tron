@@ -29,7 +29,7 @@ public class Chainbase implements IRevokingDB {
     mode.set(true);
   }
 
-  synchronized public String getDbName() {
+  public synchronized String getDbName() {
     return head.getDbName();
   }
 
@@ -38,7 +38,7 @@ public class Chainbase implements IRevokingDB {
     this.mode.set(mode);
   }
 
-  synchronized private Snapshot head() {
+  private synchronized Snapshot head() {
     if (mode.get() == null || mode.get()) {
       return head;
     } else {

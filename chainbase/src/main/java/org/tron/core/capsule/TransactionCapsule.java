@@ -148,7 +148,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public TransactionCapsule(TransferContract contract, AccountStore accountStore) {
-    Transaction.Contract.Builder contractBuilder = Transaction.Contract.newBuilder();
 
     AccountCapsule owner = accountStore.get(contract.getOwnerAddress().toByteArray());
     if (owner == null || owner.getBalance() < contract.getAmount()) {

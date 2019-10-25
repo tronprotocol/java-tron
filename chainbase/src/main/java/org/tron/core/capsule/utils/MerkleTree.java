@@ -84,7 +84,7 @@ public class MerkleTree {
   }
 
   @Getter
-  public class Leaf {
+  public static class Leaf {
 
     private Sha256Hash hash;
     private Leaf left, right;

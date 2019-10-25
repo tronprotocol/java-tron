@@ -2,7 +2,7 @@ package org.tron.core.config;
 
 public class Parameter {
 
-  public class ChainConstant {
+  public static class ChainConstant {
 
     public static final int WITNESS_STANDBY_LENGTH = 127;
     public static final int SOLIDIFIED_THRESHOLD = 70; // 70%
@@ -21,7 +21,7 @@ public class Parameter {
     public static final int BLOCK_VERSION = 15;
   }
 
-  public class NodeConstant {
+  public static class NodeConstant {
 
     public static final long SYNC_RETURN_BATCH_NUM = 1000;
     public static final long SYNC_FETCH_BATCH_NUM = 2000;
@@ -33,7 +33,7 @@ public class Parameter {
     public static final int MAX_HTTP_CONNECT_NUMBER = 50;
   }
 
-  public class NetConstants {
+  public static class NetConstants {
 
     public static final long GRPC_IDLE_TIME_OUT = 60000L;
     public static final long ADV_TIME_OUT = 20000L;
@@ -49,14 +49,14 @@ public class Parameter {
     public static final int MAX_TRX_FETCH_PER_PEER = 1000;
   }
 
-  public class DatabaseConstants {
+  public static class DatabaseConstants {
 
     public static final int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
     public static final int PROPOSAL_COUNT_LIMIT_MAX = 1000;
     public static final int EXCHANGE_COUNT_LIMIT_MAX = 1000;
   }
 
-  public class AdaptiveResourceLimitConstants {
+  public static class AdaptiveResourceLimitConstants {
 
     public static final int CONTRACT_RATE_NUMERATOR = 99;
     public static final int CONTRACT_RATE_DENOMINATOR = 100;
