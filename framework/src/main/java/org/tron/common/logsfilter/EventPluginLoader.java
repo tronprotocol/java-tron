@@ -135,11 +135,7 @@ public class EventPluginLoader {
 
   private void setSingleTriggerConfig(TriggerConfig triggerConfig) {
     if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
-      if (triggerConfig.isEnabled()) {
-        blockLogTriggerEnable = true;
-      } else {
-        blockLogTriggerEnable = false;
-      }
+      blockLogTriggerEnable = triggerConfig.isEnabled();
 
       if (!useNativeQueue) {
         setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
@@ -147,11 +143,7 @@ public class EventPluginLoader {
 
     } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
-      if (triggerConfig.isEnabled()) {
-        transactionLogTriggerEnable = true;
-      } else {
-        transactionLogTriggerEnable = false;
-      }
+      transactionLogTriggerEnable = triggerConfig.isEnabled();
 
       if (!useNativeQueue) {
         setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
@@ -159,11 +151,7 @@ public class EventPluginLoader {
 
     } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
-      if (triggerConfig.isEnabled()) {
-        contractEventTriggerEnable = true;
-      } else {
-        contractEventTriggerEnable = false;
-      }
+      contractEventTriggerEnable = triggerConfig.isEnabled();
 
       if (!useNativeQueue) {
         setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
@@ -171,11 +159,7 @@ public class EventPluginLoader {
 
     } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
-      if (triggerConfig.isEnabled()) {
-        contractLogTriggerEnable = true;
-      } else {
-        contractLogTriggerEnable = false;
-      }
+      contractLogTriggerEnable = triggerConfig.isEnabled();
 
       if (!useNativeQueue) {
         setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
