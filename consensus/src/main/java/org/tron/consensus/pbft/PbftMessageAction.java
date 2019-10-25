@@ -37,6 +37,9 @@ public class PbftMessageAction {
         if (blockNum - checkPoint >= Param.getInstance().getCheckMsgCount()) {
           checkPoint = blockNum;
           commonDataBase.saveLatestPbftBlockNum(blockNum);
+          Raw raw = blockMessage.getPbftMessage().getRawData();
+          pbftSignDataStore
+              .putBlockSignData(blockNum, new PbftSignCapsule(raw.getData(), dataSignList));
           logger.info("commit msg block num is:{}", blockNum);
         }
       }
