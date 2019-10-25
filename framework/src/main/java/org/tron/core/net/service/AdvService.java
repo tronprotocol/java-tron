@@ -131,7 +131,7 @@ public class AdvService {
   }
 
   public Message getMessage(Item item) {
-    if (item.getType().equals(InventoryType.TRX)) {
+    if (item.getType() == InventoryType.TRX) {
       return trxCache.getIfPresent(item);
     } else {
       return blockCache.getIfPresent(item);
