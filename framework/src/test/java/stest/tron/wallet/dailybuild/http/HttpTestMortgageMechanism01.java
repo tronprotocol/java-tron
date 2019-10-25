@@ -1,6 +1,5 @@
 package stest.tron.wallet.dailybuild.http;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import java.math.BigInteger;
 import lombok.extern.slf4j.Slf4j;
@@ -15,27 +14,24 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class HttpTestMortgageMechanism01 {
 
+  private static final long now = System.currentTimeMillis();
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String witnessKey = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final byte[] witnessAddress = PublicMethed.getFinalAddress(witnessKey);
+  Long amount = 2048000000L;
+  String description = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetDescription");
+  String url = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetUrl");
   private JSONObject responseContent;
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(1);
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
-
-
-  Long amount = 2048000000L;
-
-  String description = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetDescription");
-  String url = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetUrl");
-  private static final long now = System.currentTimeMillis();
 
   /**
    * constructor.
@@ -45,7 +41,7 @@ public class HttpTestMortgageMechanism01 {
     response = HttpMethed.getBrokerage(httpnode, witnessAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals("20",responseContent.getString("brokerage"));
+    Assert.assertEquals("20", responseContent.getString("brokerage"));
   }
 
   /**
@@ -57,7 +53,7 @@ public class HttpTestMortgageMechanism01 {
     response = HttpMethed.getBrokerageFromSolidity(httpSoliditynode, witnessAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals("20",responseContent.getString("brokerage"));
+    Assert.assertEquals("20", responseContent.getString("brokerage"));
   }
 
   /**
@@ -83,7 +79,10 @@ public class HttpTestMortgageMechanism01 {
     response = HttpMethed.getReward(httpnode, witnessAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue((new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0"))==0)||(new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0")))==1);
+    Assert.assertTrue((
+        new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0")) == 0)
+        || (new BigInteger(responseContent.getString("reward"))
+        .compareTo(new BigInteger("0"))) == 1);
   }
 
   /**
@@ -94,7 +93,10 @@ public class HttpTestMortgageMechanism01 {
     response = HttpMethed.getRewardFromSolidity(httpSoliditynode, witnessAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue((new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0"))==0)||(new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0")))==1);
+    Assert.assertTrue((
+        new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0")) == 0)
+        || (new BigInteger(responseContent.getString("reward"))
+        .compareTo(new BigInteger("0"))) == 1);
   }
 
   /**

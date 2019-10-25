@@ -42,7 +42,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
   @Autowired
   private AdvService advService;
 
-  private int MAX_SIZE = 1_000_000;
+  private static final int MAX_SIZE = 1_000_000;
 
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
@@ -69,7 +69,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         }
       }
 
-      if (type.equals(InventoryType.BLOCK)) {
+      if (type == InventoryType.BLOCK) {
         BlockId blockId = ((BlockMessage) message).getBlockCapsule().getBlockId();
         if (peer.getBlockBothHave().getNum() < blockId.getNum()) {
           peer.setBlockBothHave(blockId);
@@ -86,7 +86,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         }
       }
     }
-    if (transactions.size() > 0) {
+    if (!transactions.isEmpty()) {
       peer.sendMessage(new TransactionsMessage(transactions));
     }
   }

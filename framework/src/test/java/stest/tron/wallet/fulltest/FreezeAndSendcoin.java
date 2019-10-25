@@ -289,8 +289,9 @@ public class FreezeAndSendcoin {
     }
     ECKey ecKey = temKey;
 
-    BalanceContract.WithdrawBalanceContract.Builder builder = BalanceContract.WithdrawBalanceContract
-        .newBuilder();
+    BalanceContract.WithdrawBalanceContract.Builder builder =
+        BalanceContract.WithdrawBalanceContract
+            .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
     BalanceContract.WithdrawBalanceContract contract = builder.build();

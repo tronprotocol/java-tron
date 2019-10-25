@@ -159,14 +159,14 @@ public final class VMUtils {
   public static boolean validateForSmartContract(Repository deposit, byte[] ownerAddress,
       byte[] toAddress, long amount) throws ContractValidateException {
     if (!Commons.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalid ownerAddress");
+      throw new ContractValidateException("Invalid ownerAddress!");
     }
     if (!Commons.addressValid(toAddress)) {
-      throw new ContractValidateException("Invalid toAddress");
+      throw new ContractValidateException("Invalid toAddress!");
     }
 
     if (Arrays.equals(toAddress, ownerAddress)) {
-      throw new ContractValidateException("Cannot transfer trx to yourself.");
+      throw new ContractValidateException("Cannot transfer TRX to yourself.");
     }
 
     AccountCapsule ownerAccount = deposit.getAccount(ownerAddress);
@@ -177,13 +177,13 @@ public final class VMUtils {
     AccountCapsule toAccount = deposit.getAccount(toAddress);
     if (toAccount == null) {
       throw new ContractValidateException(
-          "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
+          "Validate InternalTransfer error, no ToAccount. And not allowed to create an account in a smartContract.");
     }
 
     long balance = ownerAccount.getBalance();
 
     if (amount < 0) {
-      throw new ContractValidateException("Amount must greater than or equals 0.");
+      throw new ContractValidateException("Amount must be greater than or equals 0.");
     }
 
     try {

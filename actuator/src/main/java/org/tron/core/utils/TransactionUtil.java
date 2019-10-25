@@ -34,7 +34,7 @@ public class TransactionUtil {
 
   public static boolean validAccountName(byte[] accountName) {
     if (ArrayUtils.isEmpty(accountName)) {
-      return true;   //accountname can empty
+      return true;   //account name can be empty
     }
 
     return accountName.length <= 200;

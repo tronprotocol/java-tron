@@ -83,8 +83,9 @@ public class Fuzzytest {
     ECKey ecKey = temKey;
     //Protocol.Account search = queryAccount(ecKey, blockingStubFull);
     try {
-      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract
-          .newBuilder();
+      AssetIssueContractOuterClass.AssetIssueContract.Builder builder =
+          AssetIssueContractOuterClass.AssetIssueContract
+              .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);

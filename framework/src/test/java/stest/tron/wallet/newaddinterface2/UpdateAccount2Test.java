@@ -457,7 +457,8 @@ public class UpdateAccount2Test {
     ECKey ecKey = temKey;
 
     try {
-      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract
+      AssetIssueContractOuterClass.AssetIssueContract.Builder builder =
+          AssetIssueContractOuterClass.AssetIssueContract
           .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
@@ -661,7 +662,8 @@ public class UpdateAccount2Test {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    BalanceContract.UnfreezeBalanceContract.Builder builder = BalanceContract.UnfreezeBalanceContract
+    BalanceContract.UnfreezeBalanceContract.Builder builder =
+        BalanceContract.UnfreezeBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
@@ -700,7 +702,8 @@ public class UpdateAccount2Test {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    BalanceContract.UnfreezeBalanceContract.Builder builder = BalanceContract.UnfreezeBalanceContract
+    BalanceContract.UnfreezeBalanceContract.Builder builder =
+        BalanceContract.UnfreezeBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
@@ -757,7 +760,8 @@ public class UpdateAccount2Test {
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       long count = Long.parseLong(value);
-      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder = WitnessContract.VoteWitnessContract.Vote
+      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder =
+          WitnessContract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] addRess = WalletClient.decodeFromBase58Check(addressBase58);
       if (addRess == null) {
@@ -806,7 +810,8 @@ public class UpdateAccount2Test {
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       long count = Long.parseLong(value);
-      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder = WitnessContract.VoteWitnessContract.Vote
+      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder =
+          WitnessContract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] addRess = WalletClient.decodeFromBase58Check(addressBase58);
       if (addRess == null) {

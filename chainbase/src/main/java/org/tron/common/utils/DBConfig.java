@@ -28,7 +28,7 @@ public class DBConfig {
   private static String dbEngine;
   @Getter
   @Setter
-  private static String outputDirectory;
+  private static String outputDirectoryConfig;
   @Getter
   @Setter
   private static Map<String, Property> propertyMap;
@@ -157,10 +157,10 @@ public class DBConfig {
   }
 
   public static String getOutputDirectory() {
-    if (!outputDirectory.equals("") && !outputDirectory.endsWith(File.separator)) {
-      return outputDirectory + File.separator;
+    if (!outputDirectoryConfig.equals("") && !outputDirectoryConfig.endsWith(File.separator)) {
+      return outputDirectoryConfig + File.separator;
     }
-    return outputDirectory;
+    return outputDirectoryConfig;
   }
 
   public static Options getOptionsByDbName(String dbName) {

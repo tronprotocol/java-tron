@@ -61,8 +61,6 @@ public class TronDice {
     PublicMethed.printAddress(testKey002);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract008Address,
         blockingStubFull);
-
-
   }
 
   @Test(enabled = true, threadPoolSize = 30, invocationCount = 30)

@@ -49,9 +49,11 @@ public class TrieImpl implements Trie<byte[]> {
   public TrieImpl(byte[] root) {
     this(new ConcurrentHashDB(), root);
   }
+
   public TrieImpl(DB<byte[], BytesCapsule> cache) {
     this(cache, null);
   }
+
   public TrieImpl(DB<byte[], BytesCapsule> cache, byte[] root) {
     this.cache = cache;
     setRoot(root);

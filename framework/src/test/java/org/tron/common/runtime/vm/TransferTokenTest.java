@@ -127,7 +127,8 @@ public class TransferTokenTest {
    */
   @Test
   public void TransferTokenTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     /*  1. Test deploy with tokenValue and tokenId */
     long id = createAsset("testToken1");
     byte[] contractAddress = deployTransferTokenContract(id);
@@ -138,12 +139,14 @@ public class TransferTokenTest {
     Assert.assertEquals(1000, dbManager.getAccountStore().get(contractAddress).getBalance());
 
     String selectorStr = "TransferTokenTo(address,trcToken,uint256)";
-    String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc" +
-        Hex.toHexString(new DataWord(id).getData()) +
-        "0000000000000000000000000000000000000000000000000000000000000009"; //TRANSFER_TO, 100001, 9
+    String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc"
+        + Hex.toHexString(new DataWord(id).getData())
+        //TRANSFER_TO, 100001, 9
+        + "0000000000000000000000000000000000000000000000000000000000000009";
     byte[] triggerData = TvmTestUtils.parseAbi(selectorStr, params);
 
-    /*  2. Test trigger with tokenValue and tokenId, also test internal transaction transferToken function */
+    /*  2. Test trigger with tokenValue and tokenId,
+     also test internal transaction transferToken function */
     long triggerCallValue = 100;
     long feeLimit = 100000000;
     long tokenValue = 8;
@@ -169,7 +172,8 @@ public class TransferTokenTest {
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(contractAddress, changeAccountCapsule);
     String selectorStr2 = "suicide(address)";
-    String params2 = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc"; //TRANSFER_TO
+    //TRANSFER_TO
+    String params2 = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc";
     byte[] triggerData2 = TvmTestUtils.parseAbi(selectorStr2, params2);
     Transaction transaction2 = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
@@ -185,7 +189,8 @@ public class TransferTokenTest {
   }
 
   private byte[] deployTransferTokenContract(long id)
-      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+      throws ContractExeException, ReceiptCheckErrException,
+      ContractValidateException, VMIllegalException {
     String contractName = "TransferWhenDeployContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
@@ -221,16 +226,18 @@ public class TransferTokenTest {
    */
   @Test
   public void TransferTokenSingleInstructionTimeTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     long id = createAsset("testPerformanceToken");
     byte[] contractAddress = deployTransferTokenPerformanceContract(id);
     long triggerCallValue = 100;
     long feeLimit = 1000_000_000;
     long tokenValue = 0;
     String selectorStr = "trans(address,trcToken,uint256)";
-    String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc" +
-        Hex.toHexString(new DataWord(id).getData()) +
-        "0000000000000000000000000000000000000000000000000000000000000002"; //TRANSFER_TO, 100001, 9
+    String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc"
+        + Hex.toHexString(new DataWord(id).getData())
+        + "0000000000000000000000000000000000000000000000000000000000000002";
+    //TRANSFER_TO, 100001, 9
     byte[] triggerData = TvmTestUtils.parseAbi(selectorStr, params);
     Transaction transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
@@ -246,18 +253,20 @@ public class TransferTokenTest {
   }
 
   private byte[] deployTransferTokenPerformanceContract(long id)
-      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+      throws ContractExeException, ReceiptCheckErrException,
+      ContractValidateException, VMIllegalException {
     String contractName = "TransferTokenPerformanceContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
         "[]";
     String code =
-        "608060405260f0806100126000396000f300608060405260043610603e5763ffffffff7c01000000000000000000000"
-            + "0000000000000000000000000000000000060003504166385d73c0a81146043575b600080fd5b606873ffffff"
-            + "ffffffffffffffffffffffffffffffffff60043516602435604435606a565b005b60005b8181101560be57604"
-            + "05173ffffffffffffffffffffffffffffffffffffffff85169060009060019086908381818185878a84d09450"
-            + "5050505015801560b6573d6000803e3d6000fd5b50600101606d565b505050505600a165627a7a7230582047d"
-            + "6ab00891da9d46ef58e3d5709bac950887f450e3493518219f47829b474350029";
+        "608060405260f0806100126000396000f300608060405260043610603e5763ffffffff7c01000000000000000"
+            + "0000000000000000000000000000000000000000060003504166385d73c0a81146043575b600080fd5b"
+            + "606873ffffffffffffffffffffffffffffffffffffffff60043516602435604435606a565b005b60005"
+            + "b8181101560be5760405173ffffffffffffffffffffffffffffffffffffffff85169060009060019086"
+            + "908381818185878a84d094505050505015801560b6573d6000803e3d6000fd5b50600101606d565b505"
+            + "050505600a165627a7a7230582047d6ab00891da9d46ef58e3d5709bac950887f450e3493518219f478"
+            + "29b474350029";
 
     long value = 1000;
     long feeLimit = 100000000;

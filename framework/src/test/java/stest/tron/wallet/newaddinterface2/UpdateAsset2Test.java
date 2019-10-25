@@ -250,8 +250,9 @@ public class UpdateAsset2Test {
     Account search = PublicMethed.queryAccount(priKey, blockingStubFull);
 
     try {
-      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract
-          .newBuilder();
+      AssetIssueContractOuterClass.AssetIssueContract.Builder builder =
+          AssetIssueContractOuterClass.AssetIssueContract
+              .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -357,8 +358,9 @@ public class UpdateAsset2Test {
     }
     final ECKey ecKey = temKey;
 
-    AssetIssueContractOuterClass.TransferAssetContract.Builder builder = AssetIssueContractOuterClass.TransferAssetContract
-        .newBuilder();
+    AssetIssueContractOuterClass.TransferAssetContract.Builder builder =
+        AssetIssueContractOuterClass.TransferAssetContract
+            .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -399,8 +401,9 @@ public class UpdateAsset2Test {
     }
     final ECKey ecKey = temKey;
 
-    AssetIssueContractOuterClass.UnfreezeAssetContract.Builder builder = AssetIssueContractOuterClass.UnfreezeAssetContract
-        .newBuilder();
+    AssetIssueContractOuterClass.UnfreezeAssetContract.Builder builder =
+        AssetIssueContractOuterClass.UnfreezeAssetContract
+            .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess);
@@ -439,8 +442,9 @@ public class UpdateAsset2Test {
     }
     final ECKey ecKey = temKey;
 
-    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder = AssetIssueContractOuterClass.ParticipateAssetIssueContract
-        .newBuilder();
+    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder =
+        AssetIssueContractOuterClass.ParticipateAssetIssueContract
+            .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(from);

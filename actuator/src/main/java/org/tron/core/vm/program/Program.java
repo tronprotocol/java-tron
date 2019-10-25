@@ -391,16 +391,16 @@ public class Program {
     return pc;
   }
 
+  public void setPC(DataWord pc) {
+    this.setPC(pc.intValue());
+  }
+
   public void setPC(int pc) {
     this.pc = pc;
 
     if (this.pc >= ops.length) {
       stop();
     }
-  }
-
-  public void setPC(DataWord pc) {
-    this.setPC(pc.intValue());
   }
 
   public boolean isStopped() {

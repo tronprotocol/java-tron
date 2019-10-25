@@ -66,103 +66,103 @@ public class MerkleContainerTest {
   @Test
   public void test() {
     //add
-//    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-//        new IncrementalMerkleTreeCapsule());
-//    String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
-//    PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
-//    compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
-//    PedersenHash a = compressCapsule1.getInstance();
-//
-//    String s2 = "3daa00c9a1966a37531c829b9b1cd928f8172d35174e1aecd31ba0ed36863017";
-//    PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
-//    byte[] bytes2 = ByteArray.fromHexString(s2);
-//    ZksnarkUtils.sort(bytes2);
-//    compressCapsule2.setContent(ByteString.copyFrom(bytes2));
-//    PedersenHash b = compressCapsule2.getInstance();
-//
-//    String s3 = "c013c63be33194974dc555d445bac616fca794a0369f9d84fbb5a8556699bf62";
-//    PedersenHashCapsule compressCapsule3 = new PedersenHashCapsule();
-//    byte[] bytes3 = ByteArray.fromHexString(s3);
-//    ZksnarkUtils.sort(bytes3);
-//    compressCapsule3.setContent(ByteString.copyFrom(bytes3));
-//    PedersenHash c = compressCapsule3.getInstance();
-//
-//    tree.append(a);
-//    tree.append(b);
-//    IncrementalMerkleVoucherContainer witness1 = tree.toVoucher();
-//    witness1.append(c);
-//
-//    System.out.println(ByteArray.toHexString(witness1.root().getContent().toByteArray()));
-//
-//    tree.append(c);
-//
-//    //root
-//    //todo : need check
-//    Assert.assertEquals("9e337370cb3598c6ffcbce991a05ff343fdcc6c9960c0a2ffbdedc007866f06d",
-//        ByteArray.toHexString(tree.getMerkleTreeKey()));
-//
-//    //save
-//    merkleContainer.putMerkleTreeIntoStore(tree.getMerkleTreeKey(), tree.getTreeCapsule());
-//
-//    //get
-//    Assert.assertEquals(true, merkleContainer.merkleRootExist(tree.getMerkleTreeKey()));
-//
-//    tree = merkleContainer.getMerkleTree(tree.getMerkleTreeKey()).toMerkleTreeContainer();
-//    Assert.assertEquals(3, tree.size());
-//
-//    //other
-//    Assert.assertEquals(false, tree.isComplete());
-//    Assert.assertEquals(0, tree.nextDepth(0));
-//    Assert.assertEquals(96, tree.DynamicMemoryUsage());
-//    tree.wfcheck();
-//
-//    //saveCmIntoMerkleTree
-//    byte[] hash = {0x01};
-//    IncrementalMerkleTreeContainer newTree = merkleContainer
-//        .saveCmIntoMerkleTree(tree.getMerkleTreeKey(), ByteArray.fromHexString(s1),
-//            ByteArray.fromHexString(s2), hash);
-//    //todo : need check
-//    Assert.assertEquals("c06bcab726d37d35f049a1db7e1c238beb949bde46a02eaf2a435a3a03c1413d",
-//        ByteArray.toHexString(newTree.getMerkleTreeKey()));
-//
-//    Assert.assertEquals(3, tree.size());
-//    Assert.assertEquals(5, newTree.size());
-//    Assert.assertEquals(s2, ByteArray.toHexString(newTree.last().getContent().toByteArray()));
-//
-//    Assert.assertEquals("0100000000",
-//        ByteArray.toHexString(
-//            merkleContainer.getVoucher(hash, 0).toMerkleVoucherContainer().getMerkleVoucherKey()));
-//    Assert.assertEquals("0100000001",
-//        ByteArray.toHexString(
-//            merkleContainer.getVoucher(hash, 1).toMerkleVoucherContainer().getMerkleVoucherKey()));
-//
-//    //path
-//    MerklePath path = tree.path();
-//    //todo:need to check path
-//    Assert.assertEquals(false, path.getIndex().get(0));
-//    Assert.assertEquals(true, path.getIndex().get(1));
-//
-//    //todo:need to check witness
-//    //witness test
-//    IncrementalMerkleVoucherContainer witness = tree.toVoucher();
-//    //witness
-//    witness.append(a);
-//    Assert.assertEquals(true, path.getIndex().get(1));
-//
-//    Assert.assertEquals("ae308012692c14afb26cff2dc0178302b2fffcfd1c2e542c0ca9889a5db4cd6b",
-//        ByteArray.toHexString(witness.getRootArray()));
-//
-//    witness.element();
-//    witness.path();
-//
-//    witness.getVoucherCapsule().setOutputPoint(ByteString.copyFrom(hash), 1);
-//
-//    //save
-//    merkleContainer
-//        .putMerkleVoucherIntoStore(witness.getMerkleVoucherKey(), witness.getVoucherCapsule());
-//
-//    IncrementalMerkleTreeContainer bestMerkleRoot = merkleContainer.getBestMerkle();
-//    Assert.assertEquals(1, bestMerkleRoot.size());
+    /*IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
+    PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
+    compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
+    PedersenHash a = compressCapsule1.getInstance();
+
+    String s2 = "3daa00c9a1966a37531c829b9b1cd928f8172d35174e1aecd31ba0ed36863017";
+    PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
+    byte[] bytes2 = ByteArray.fromHexString(s2);
+    ZksnarkUtils.sort(bytes2);
+    compressCapsule2.setContent(ByteString.copyFrom(bytes2));
+    PedersenHash b = compressCapsule2.getInstance();
+
+    String s3 = "c013c63be33194974dc555d445bac616fca794a0369f9d84fbb5a8556699bf62";
+    PedersenHashCapsule compressCapsule3 = new PedersenHashCapsule();
+    byte[] bytes3 = ByteArray.fromHexString(s3);
+    ZksnarkUtils.sort(bytes3);
+    compressCapsule3.setContent(ByteString.copyFrom(bytes3));
+    PedersenHash c = compressCapsule3.getInstance();
+
+    tree.append(a);
+    tree.append(b);
+    IncrementalMerkleVoucherContainer witness1 = tree.toVoucher();
+    witness1.append(c);
+
+    System.out.println(ByteArray.toHexString(witness1.root().getContent().toByteArray()));
+
+    tree.append(c);
+
+    //root
+    //todo : need check
+    Assert.assertEquals("9e337370cb3598c6ffcbce991a05ff343fdcc6c9960c0a2ffbdedc007866f06d",
+        ByteArray.toHexString(tree.getMerkleTreeKey()));
+
+    //save
+    merkleContainer.putMerkleTreeIntoStore(tree.getMerkleTreeKey(), tree.getTreeCapsule());
+
+    //get
+    Assert.assertEquals(true, merkleContainer.merkleRootExist(tree.getMerkleTreeKey()));
+
+    tree = merkleContainer.getMerkleTree(tree.getMerkleTreeKey()).toMerkleTreeContainer();
+    Assert.assertEquals(3, tree.size());
+
+    //other
+    Assert.assertEquals(false, tree.isComplete());
+    Assert.assertEquals(0, tree.nextDepth(0));
+    Assert.assertEquals(96, tree.DynamicMemoryUsage());
+    tree.wfcheck();
+
+    //saveCmIntoMerkleTree
+    byte[] hash = {0x01};
+    IncrementalMerkleTreeContainer newTree = merkleContainer
+        .saveCmIntoMerkleTree(tree.getMerkleTreeKey(), ByteArray.fromHexString(s1),
+            ByteArray.fromHexString(s2), hash);
+    //todo : need check
+    Assert.assertEquals("c06bcab726d37d35f049a1db7e1c238beb949bde46a02eaf2a435a3a03c1413d",
+        ByteArray.toHexString(newTree.getMerkleTreeKey()));
+
+    Assert.assertEquals(3, tree.size());
+    Assert.assertEquals(5, newTree.size());
+    Assert.assertEquals(s2, ByteArray.toHexString(newTree.last().getContent().toByteArray()));
+
+    Assert.assertEquals("0100000000",
+        ByteArray.toHexString(
+            merkleContainer.getVoucher(hash, 0).toMerkleVoucherContainer().getMerkleVoucherKey()));
+    Assert.assertEquals("0100000001",
+        ByteArray.toHexString(
+            merkleContainer.getVoucher(hash, 1).toMerkleVoucherContainer().getMerkleVoucherKey()));
+
+    //path
+    MerklePath path = tree.path();
+    //todo:need to check path
+    Assert.assertEquals(false, path.getIndex().get(0));
+    Assert.assertEquals(true, path.getIndex().get(1));
+
+    //todo:need to check witness
+    //witness test
+    IncrementalMerkleVoucherContainer witness = tree.toVoucher();
+    //witness
+    witness.append(a);
+    Assert.assertEquals(true, path.getIndex().get(1));
+
+    Assert.assertEquals("ae308012692c14afb26cff2dc0178302b2fffcfd1c2e542c0ca9889a5db4cd6b",
+        ByteArray.toHexString(witness.getRootArray()));
+
+    witness.element();
+    witness.path();
+
+    witness.getVoucherCapsule().setOutputPoint(ByteString.copyFrom(hash), 1);
+
+    //save
+    merkleContainer
+        .putMerkleVoucherIntoStore(witness.getMerkleVoucherKey(), witness.getVoucherCapsule());
+
+    IncrementalMerkleTreeContainer bestMerkleRoot = merkleContainer.getBestMerkle();
+    Assert.assertEquals(1, bestMerkleRoot.size());*/
 
   }
 
@@ -173,9 +173,9 @@ public class MerkleContainerTest {
         .build();
     ReceiveDescription receiveDescription2 = ReceiveDescription.newBuilder().setNoteCommitment(cm2)
         .build();
-    ShieldedTransferContract contract = ShieldedTransferContract.newBuilder().
-        addReceiveDescription(receiveDescription1).
-        addReceiveDescription(receiveDescription2).build();
+    ShieldedTransferContract contract = ShieldedTransferContract.newBuilder()
+        .addReceiveDescription(receiveDescription1)
+        .addReceiveDescription(receiveDescription2).build();
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(ContractType.ShieldedTransferContract)
             .setParameter(
@@ -210,8 +210,8 @@ public class MerkleContainerTest {
         String cm3 = "30a0d08406b9e3693ee4c062bd1e6816f95bf14f5a13aafa1d57942c6c1d4250";
         String cm4 = "12fc3e7298eb327a88abcc406fbe595e45dddd9b4209803b2e0baa3a8663ecaa";
         Transaction transaction2 = createTransaction(cm3, cm4);
-        Block block = Block.newBuilder().addTransactions(0, transaction).
-            addTransactions(1, transaction2).build();
+        Block block = Block.newBuilder().addTransactions(0, transaction)
+            .addTransactions(1, transaction2).build();
         Sha256Hash blockKey = Sha256Hash.of(ByteArray.fromLong(blockNum));
         BlockId blockId = new BlockId(blockKey, blockNum);
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
@@ -278,8 +278,8 @@ public class MerkleContainerTest {
         String cm3 = "0830165f36a69e416d51cc09cc5668692dee35d98539d3317999fdf87d8fcac7";
         String cm4 = "02372c746664e0898576972ca6d0500c7c8ec42f144622349d133b06e837faf0";
         Transaction transaction2 = createTransaction(cm3, cm4);
-        Block block = Block.newBuilder().addTransactions(0, transaction).
-            addTransactions(1, transaction2).build();
+        Block block = Block.newBuilder().addTransactions(0, transaction)
+            .addTransactions(1, transaction2).build();
         Sha256Hash blockKey = Sha256Hash.of(ByteArray.fromLong(blockNum));
         BlockId blockId = new BlockId(blockKey, blockNum);
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
@@ -348,25 +348,27 @@ public class MerkleContainerTest {
         .fromHexString("59051fde6f2e47306f17fca57a4aab3c12d948b7980fd4163c93520b69a7b982"));
     OutputPoint outputPoint1 = OutputPoint.newBuilder().setHash(txId1).setIndex(0).build();
     //blockNum:103,txNum:2
-    ByteString txId2 = ByteString.copyFrom(ByteArray.
-        fromHexString("7f8726373dcddf40409ace76b904369848f0a6d89ba5db851ed9515a80b52f34"));
+    ByteString txId2 = ByteString.copyFrom(ByteArray
+        .fromHexString("7f8726373dcddf40409ace76b904369848f0a6d89ba5db851ed9515a80b52f34"));
     OutputPoint outputPoint2 = OutputPoint.newBuilder().setHash(txId2).setIndex(0).build();
     int number = 0;
-    OutputPointInfo outputPointInfo = OutputPointInfo.newBuilder().addOutPoints(outputPoint1).
-        addOutPoints(outputPoint2).setBlockNum(number).build();
+    OutputPointInfo outputPointInfo = OutputPointInfo.newBuilder().addOutPoints(outputPoint1)
+        .addOutPoints(outputPoint2).setBlockNum(number).build();
     //  Args.getInstance().setAllowShieldedTransaction(1);
     Wallet wallet = context.getBean(Wallet.class);
     IncrementalMerkleVoucherInfo merkleTreeWitnessInfo = wallet
         .getMerkleTreeVoucherInfo(outputPointInfo);
 
-//    Assert.assertEquals(txId1, merkleTreeWitnessInfo.getWitness1().getOutputPoint().getHash());
+    //Assert.assertEquals(txId1, merkleTreeWitnessInfo.getWitness1().getOutputPoint().getHash());
     Assert.assertEquals(0, merkleTreeWitnessInfo.getVouchers(0).getOutputPoint().getIndex());
-//    Assert
-//        .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness1()).
-//            toMerkleVoucherContainer().size());
-//    Assert
-//        .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness2()).
-//            toMerkleVoucherContainer().size());
+    //Assert
+    //    .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness1
+    //    ()).
+    //        toMerkleVoucherContainer().size());
+    //Assert
+    //    .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness2
+    //    ()).
+    //        toMerkleVoucherContainer().size());
 
     IncrementalMerkleVoucherCapsule capsule1 = new IncrementalMerkleVoucherCapsule(
         merkleTreeWitnessInfo.getVouchers(0));
@@ -379,11 +381,10 @@ public class MerkleContainerTest {
     System.out
         .println("kkkkkk" + ByteArray
             .toHexString(merkleTreeWitnessInfo.getVouchers(0).getRt().toByteArray()));
-    Assert
-        .assertEquals(
-            ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(0).getRt().toByteArray()),
-            ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(1).getRt().toByteArray())
-        );
+    Assert.assertEquals(
+        ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(0).getRt().toByteArray()),
+        ByteArray.toHexString(merkleTreeWitnessInfo.getVouchers(1).getRt().toByteArray())
+    );
 
   }
 

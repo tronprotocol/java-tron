@@ -7,7 +7,6 @@ import org.tron.common.utils.ForkUtils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.TypeMismatchNamingException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol;
@@ -25,14 +24,9 @@ public class ActuatorCreator {
   private ChainBaseManager chainBaseManager;
 
   private ActuatorCreator(StoreFactory storeFactory) {
-    try {
-      dynamicPropertiesStore = storeFactory.getStore(DynamicPropertiesStore.class);
-      chainBaseManager = storeFactory.getChainBaseManager();
-      forkUtils.setDynamicPropertiesStore(dynamicPropertiesStore);
-    } catch (TypeMismatchNamingException e) {
-      logger.error("ActuatorCreator error", e);
-    }
-
+    chainBaseManager = storeFactory.getChainBaseManager();
+    dynamicPropertiesStore = storeFactory.getChainBaseManager().getDynamicPropertiesStore();
+    forkUtils.setDynamicPropertiesStore(dynamicPropertiesStore);
   }
 
   public static ActuatorCreator getINSTANCE() {

@@ -28,7 +28,6 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TypeMismatchNamingException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.CodeStore;
@@ -90,16 +89,10 @@ public class TransactionTrace {
         trxType = TrxType.TRX_PRECOMPILED_TYPE;
     }
     this.storeFactory = storeFactory;
-
-    try {
-      this.dynamicPropertiesStore = storeFactory.getStore(DynamicPropertiesStore.class);
-      this.contractStore = storeFactory.getStore(ContractStore.class);
-      this.codeStore = storeFactory.getStore(CodeStore.class);
-      this.accountStore = storeFactory.getStore(AccountStore.class);
-
-    } catch (TypeMismatchNamingException e) {
-      logger.error("getStroageError", e);
-    }
+    this.dynamicPropertiesStore = storeFactory.getChainBaseManager().getDynamicPropertiesStore();
+    this.contractStore = storeFactory.getChainBaseManager().getContractStore();
+    this.codeStore = storeFactory.getChainBaseManager().getCodeStore();
+    this.accountStore = storeFactory.getChainBaseManager().getAccountStore();
 
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.energyProcessor = new EnergyProcessor(dynamicPropertiesStore, accountStore);

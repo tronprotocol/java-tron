@@ -20,57 +20,58 @@ import stest.tron.wallet.common.client.utils.DataWord;
 
 @Slf4j
 public class Create2Test extends VMTestBase {
-/*
-pragma solidity 0.5.0;
-contract Factory {
-    event Deployed(address addr, uint256 salt);
-    function deploy(bytes memory code, uint256 salt) public returns(address){
-        address addr;
-        assembly {
-            addr := create2(0, add(code, 0x20), mload(code), salt)
-            if iszero(extcodesize(addr)) {
-                revert(0, 0)
-            }
-        }
-        emit Deployed(addr, salt);
-        return addr;
-    }
-}
+  /*
+  pragma solidity 0.5.0;
+  contract Factory {
+      event Deployed(address addr, uint256 salt);
+      function deploy(bytes memory code, uint256 salt) public returns(address){
+          address addr;
+          assembly {
+              addr := create2(0, add(code, 0x20), mload(code), salt)
+              if iszero(extcodesize(addr)) {
+                  revert(0, 0)
+              }
+          }
+          emit Deployed(addr, salt);
+          return addr;
+      }
+  }
 
 
 
-contract TestConstract {
-    uint public i;
-    constructor () public {
-    }
-    function plusOne() public returns(uint){
-        i++;
-    }
-}
- */
+  contract TestConstract {
+      uint public i;
+      constructor () public {
+      }
+      function plusOne() public returns(uint){
+          i++;
+      }
+  }
+   */
 
   /*
-contract:TestConstract
-deploy script:
-deploycontract TestConstract_0.5.0 [{"constant":false,"inputs":[],"name":"plusOne","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"i","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}] 608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b5060d7806100396000396000f3fe608060405260043610602c5760003560e01c63ffffffff16806368e5c066146031578063e5aa3d5814606d575b600080fd5b348015603c57600080fd5b50d38015604857600080fd5b50d28015605457600080fd5b50605b6097565b60408051918252519081900360200190f35b348015607857600080fd5b50d38015608457600080fd5b50d28015609057600080fd5b50605b60a5565b600080546001019081905590565b6000548156fea165627a7a72305820c637cddbfa24b6530000f2e54d90e0f6c15907835674109287f64303446f9afb0029 # # false 1000000000 100 10000000 0 0 #
-tirgger script:
-triggercontract Txxxxxxxxxxx plusOne() # false 1000000000 0 0 #
-triggercontract Txxxxxxxxxxx i() # false 1000000000 0 0 #
+  contract:TestConstract
+  deploy script:
+  deploycontract TestConstract_0.5.0 [{"constant":false,"inputs":[],"name":"plusOne","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"i","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}] 608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b5060d7806100396000396000f3fe608060405260043610602c5760003560e01c63ffffffff16806368e5c066146031578063e5aa3d5814606d575b600080fd5b348015603c57600080fd5b50d38015604857600080fd5b50d28015605457600080fd5b50605b6097565b60408051918252519081900360200190f35b348015607857600080fd5b50d38015608457600080fd5b50d28015609057600080fd5b50605b60a5565b600080546001019081905590565b6000548156fea165627a7a72305820c637cddbfa24b6530000f2e54d90e0f6c15907835674109287f64303446f9afb0029 # # false 1000000000 100 10000000 0 0 #
+  tirgger script:
+  triggercontract Txxxxxxxxxxx plusOne() # false 1000000000 0 0 #
+  triggercontract Txxxxxxxxxxx i() # false 1000000000 0 0 #
 
 
-contract:Factory
-deploy script:
-deploycontract Factory_0.5.0 [{"constant":false,"inputs":[{"name":"code","type":"bytes"},{"name":"salt","type":"uint256"}],"name":"deploy","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"addr","type":"address"},{"indexed":false,"name":"salt","type":"uint256"}],"name":"Deployed","type":"event"}] 608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b506101c18061003a6000396000f3fe6080604052600436106100245760003560e01c63ffffffff1680639c4ae2d014610029575b600080fd5b34801561003557600080fd5b50d3801561004257600080fd5b50d2801561004f57600080fd5b506100f86004803603604081101561006657600080fd5b81019060208101813564010000000081111561008157600080fd5b82018360208201111561009357600080fd5b803590602001918460018302840111640100000000831117156100b557600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295505091359250610121915050565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b600080828451602086016000f59050803b151561013d57600080fd5b6040805173ffffffffffffffffffffffffffffffffffffffff831681526020810185905281517fb03c53b28e78a88e31607a27e1fa48234dce28d5d9d9ec7b295aeb02e674a1e1929181900390910190a1939250505056fea165627a7a7230582079653f6506bd7d3bdf4954ec98c452c5455d2b11444642db00b38fa422b25a650029 # # false 1000000000 100 10000000 0 0 #
-tirgger script:
-triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 1000000000 0 0 #
+  contract:Factory
+  deploy script:
+  deploycontract Factory_0.5.0 [{"constant":false,"inputs":[{"name":"code","type":"bytes"},{"name":"salt","type":"uint256"}],"name":"deploy","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"addr","type":"address"},{"indexed":false,"name":"salt","type":"uint256"}],"name":"Deployed","type":"event"}] 608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b506101c18061003a6000396000f3fe6080604052600436106100245760003560e01c63ffffffff1680639c4ae2d014610029575b600080fd5b34801561003557600080fd5b50d3801561004257600080fd5b50d2801561004f57600080fd5b506100f86004803603604081101561006657600080fd5b81019060208101813564010000000081111561008157600080fd5b82018360208201111561009357600080fd5b803590602001918460018302840111640100000000831117156100b557600080fd5b91908080601f0160208091040260200160405190810160405280939291908181526020018383808284376000920191909152509295505091359250610121915050565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b600080828451602086016000f59050803b151561013d57600080fd5b6040805173ffffffffffffffffffffffffffffffffffffffff831681526020810185905281517fb03c53b28e78a88e31607a27e1fa48234dce28d5d9d9ec7b295aeb02e674a1e1929181900390910190a1939250505056fea165627a7a7230582079653f6506bd7d3bdf4954ec98c452c5455d2b11444642db00b38fa422b25a650029 # # false 1000000000 100 10000000 0 0 #
+  tirgger script:
+  triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 1000000000 0 0 #
 
 
 
-*/
+  */
 
   @Test
   public void testCreate2()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
     manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
     String contractName = "Factory_0";

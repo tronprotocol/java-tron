@@ -1,7 +1,7 @@
 package org.tron.consensus.base;
 
 import org.tron.consensus.base.Param.Miner;
-import org.tron.protos.Protocol.Block;
+import org.tron.core.capsule.BlockCapsule;
 
 public interface BlockHandle {
 
@@ -9,8 +9,6 @@ public interface BlockHandle {
 
   Object getLock();
 
-  Block produce(Miner miner, long timeout);
-
-  void complete(Block block);
+  BlockCapsule produce(Miner miner, long blockTime, long timeout);
 
 }

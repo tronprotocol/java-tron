@@ -36,6 +36,7 @@ import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 
 @Slf4j(topic = "API")
 public class Util {
@@ -126,10 +127,10 @@ public class Util {
     String string = JsonFormat.printToString(transactionExtention, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     if (transactionExtention.getResult().getResult()) {
-      JSONObject transactionOjbect = printTransactionToJSON(
+      JSONObject transactionObject = printTransactionToJSON(
           transactionExtention.getTransaction(), selfType);
-      transactionOjbect.put(VISIBLE, selfType);
-      jsonObject.put(TRANSACTION, transactionOjbect);
+      transactionObject.put(VISIBLE, selfType);
+      jsonObject.put(TRANSACTION, transactionObject);
     }
     return jsonObject.toJSONString();
   }
@@ -179,10 +180,23 @@ public class Util {
       try {
         JSONObject contractJson = null;
         Any contractParameter = contract.getParameter();
-        Class clazz = TransactionFactory.getContract(contract.getType());
-        if (clazz != null) {
-          contractJson = JSONObject
-              .parseObject(JsonFormat.printToString(contractParameter.unpack(clazz), selfType));
+        switch (contract.getType()) {
+          case CreateSmartContract:
+            CreateSmartContract deployContract = contractParameter
+                .unpack(CreateSmartContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(deployContract,
+                selfType));
+            byte[] ownerAddress = deployContract.getOwnerAddress().toByteArray();
+            byte[] contractAddress = generateContractAddress(transaction, ownerAddress);
+            jsonTransaction.put("contract_address", ByteArray.toHexString(contractAddress));
+            break;
+          default:
+            Class clazz = TransactionFactory.getContract(contract.getType());
+            if (clazz != null) {
+              contractJson = JSONObject
+                  .parseObject(JsonFormat.printToString(contractParameter.unpack(clazz), selfType));
+            }
+            break;
         }
 
         JSONObject parameter = new JSONObject();

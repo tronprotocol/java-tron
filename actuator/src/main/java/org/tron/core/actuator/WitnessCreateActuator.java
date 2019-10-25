@@ -59,7 +59,7 @@ public class WitnessCreateActuator extends AbstractActuator {
     WitnessStore witnessStore = chainBaseManager.getWitnessStore();
     if (!this.any.is(WitnessCreateContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [WitnessCreateContract],real type[" + any
+          "contract type error, expected type [WitnessCreateContract],real type[" + any
               .getClass() + "]");
     }
     final WitnessCreateContract contract;

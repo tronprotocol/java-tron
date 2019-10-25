@@ -9,7 +9,7 @@ public class RocksDbSettings {
 
   @Setter
   @Getter
-  private static RocksDbSettings settings;
+  private static RocksDbSettings rocksDbSettings;
 
   @Getter
   private int levelNumber;
@@ -45,10 +45,10 @@ public class RocksDbSettings {
   }
 
   public static RocksDbSettings getSettings() {
-    if (settings == null) {
+    if (rocksDbSettings == null) {
       return getDefaultSettings();
     }
-    return settings;
+    return rocksDbSettings;
   }
 
   public static RocksDbSettings initCustomSettings(int levelNumber, int compactThreads,
@@ -56,7 +56,7 @@ public class RocksDbSettings {
       double maxBytesForLevelMultiplier, int level0FileNumCompactionTrigger,
       long targetFileSizeBase,
       int targetFileSizeMultiplier) {
-    settings = new RocksDbSettings()
+    rocksDbSettings = new RocksDbSettings()
         .withMaxOpenFiles(-1)
         .withEnableStatistics(false)
         .withLevelNumber(levelNumber)
@@ -67,7 +67,7 @@ public class RocksDbSettings {
         .withLevel0FileNumCompactionTrigger(level0FileNumCompactionTrigger)
         .withTargetFileSizeBase(targetFileSizeBase)
         .withTargetFileSizeMultiplier(targetFileSizeMultiplier);
-    return settings;
+    return rocksDbSettings;
   }
 
   public static void loggingSettings() {
@@ -75,10 +75,12 @@ public class RocksDbSettings {
         "level number: %d, CompactThreads: %d, Blocksize: %d, maxBytesForLevelBase: %d,"
             + " withMaxBytesForLevelMultiplier: %f, level0FileNumCompactionTrigger: %d, "
             + "withTargetFileSizeBase: %d, withTargetFileSizeMultiplier: %d",
-        settings.getLevelNumber(),
-        settings.getCompactThreads(), settings.getBlockSize(), settings.getMaxBytesForLevelBase(),
-        settings.getMaxBytesForLevelMultiplier(), settings.getLevel0FileNumCompactionTrigger(),
-        settings.getTargetFileSizeBase(), settings.getTargetFileSizeMultiplier()));
+        rocksDbSettings.getLevelNumber(),
+        rocksDbSettings.getCompactThreads(), rocksDbSettings.getBlockSize(),
+        rocksDbSettings.getMaxBytesForLevelBase(),
+        rocksDbSettings.getMaxBytesForLevelMultiplier(),
+        rocksDbSettings.getLevel0FileNumCompactionTrigger(),
+        rocksDbSettings.getTargetFileSizeBase(), rocksDbSettings.getTargetFileSizeMultiplier()));
   }
 
   public RocksDbSettings withMaxOpenFiles(int maxOpenFiles) {

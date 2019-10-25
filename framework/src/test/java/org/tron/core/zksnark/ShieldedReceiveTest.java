@@ -1522,7 +1522,6 @@ public class ShieldedReceiveTest extends BlockGenerate {
           newContract
               .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
-          //newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
           for (SpendDescription spendDescription : shieldedTransferContract
               .getSpendDescriptionList()) {
@@ -1554,14 +1553,9 @@ public class ShieldedReceiveTest extends BlockGenerate {
           newContract
               .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-          //for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
-          //  newContract
-          //          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-          //}
           break;
         case RECEIVE_DESCRIPTION:
           newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-          //newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
               .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
@@ -2384,8 +2378,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
 
     //sometimes generate block failed, try several times.
 
-    Block block = getSignedBlock(witnessCapsule.getAddress(), System.currentTimeMillis(),
-        privateKey);
+    Block block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     //create transactions
@@ -2431,8 +2424,9 @@ public class ShieldedReceiveTest extends BlockGenerate {
     boolean ok = dbManager.pushTransaction(transactionCap);
     Assert.assertTrue(ok);
 
+    Thread.sleep(500);
     //package transaction to block
-    block = getSignedBlock(witnessCapsule.getAddress(), System.currentTimeMillis(), privateKey);
+    block = getSignedBlock(witnessCapsule.getAddress(), 0, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());

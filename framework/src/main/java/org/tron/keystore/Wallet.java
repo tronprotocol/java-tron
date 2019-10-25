@@ -125,7 +125,7 @@ public class Wallet {
   private static byte[] generateAes128CtrDerivedKey(
       byte[] password, byte[] salt, int c, String prf) throws CipherException {
 
-    if (!prf.equals("hmac-sha256")) {
+    if (!"hmac-sha256".equals(prf)) {
       throw new CipherException("Unsupported prf:" + prf);
     }
 

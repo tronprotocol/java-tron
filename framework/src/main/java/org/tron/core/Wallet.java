@@ -229,10 +229,8 @@ public class Wallet {
       throws ContractValidateException {
     try {
       boolean constant = isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
-      if (constant) {
-        if (!Args.getInstance().isSupportConstant()) {
-          throw new ContractValidateException("This node does not support constant");
-        }
+      if (constant && !Args.getInstance().isSupportConstant()) {
+        throw new ContractValidateException("This node does not support constant");
       }
       return constant;
     } catch (ContractValidateException e) {
@@ -423,7 +421,6 @@ public class Wallet {
     long balance = getBalance(address);
     return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
   } */
-
   private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
     if (selector == null || selector.length != 4
@@ -438,7 +435,7 @@ public class Wallet {
       }
 
       int inputCount = entry.getInputsCount();
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       sb.append(entry.getName());
       sb.append("(");
       for (int k = 0; k < inputCount; k++) {
@@ -451,16 +448,9 @@ public class Wallet {
       sb.append(")");
 
       byte[] funcSelector = new byte[4];
-      System
-          .arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0,
-              4);
+      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
       if (Arrays.equals(funcSelector, selector)) {
-        if (entry.getConstant() == true || entry.getStateMutability()
-            .equals(StateMutabilityType.View)) {
-          return true;
-        } else {
-          return false;
-        }
+        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
       }
     }
 
@@ -1464,7 +1454,7 @@ public class Wallet {
   }
 
   public boolean getFullNodeAllowShieldedTransaction() {
-    return Args.getInstance().isFullNodeAllowShieldedTransaction();
+    return Args.getInstance().isFullNodeAllowShieldedTransactionArgs();
   }
 
   public BytesMessage getNullifier(ByteString id) {

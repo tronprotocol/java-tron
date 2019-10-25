@@ -463,7 +463,7 @@ public class TransferFailed005 {
         accountExcAddress, accountExcKey, blockingStubFull);
     Assert.assertEquals(response_code.CONTRACT_EXE_ERROR, return1.getResult().getCode());
     Assert.assertEquals(
-        "class org.tron.common.runtime.vm.program.Program$StaticCallModificationException "
+        "class org.tron.core.vm.program.Program$StaticCallModificationException "
             + ": Attempt to call a state modifying opcode inside STATICCALL",
         return1.getResult().getMessage().toStringUtf8());
 

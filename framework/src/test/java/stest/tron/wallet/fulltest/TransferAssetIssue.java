@@ -85,8 +85,9 @@ public class TransferAssetIssue {
     }
     final ECKey ecKey = temKey;
 
-    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder = AssetIssueContractOuterClass.ParticipateAssetIssueContract
-        .newBuilder();
+    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder =
+        AssetIssueContractOuterClass.ParticipateAssetIssueContract
+            .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(from);
@@ -136,8 +137,9 @@ public class TransferAssetIssue {
     }
     final ECKey ecKey = temKey;
 
-    AssetIssueContractOuterClass.TransferAssetContract.Builder builder = AssetIssueContractOuterClass.TransferAssetContract
-        .newBuilder();
+    AssetIssueContractOuterClass.TransferAssetContract.Builder builder =
+        AssetIssueContractOuterClass.TransferAssetContract
+            .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);

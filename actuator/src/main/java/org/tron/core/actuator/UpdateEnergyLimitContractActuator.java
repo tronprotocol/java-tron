@@ -52,7 +52,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
   public boolean validate() throws ContractValidateException {
     if (!DBConfig.getEnergyLimitHardFork()) {
       throw new ContractValidateException(
-          "contract type error,unexpected type [UpdateEnergyLimitContract]");
+          "contract type error, unexpected type [UpdateEnergyLimitContract]");
     }
     if (this.any == null) {
       throw new ContractValidateException("No contract!");
@@ -64,7 +64,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     ContractStore contractStore = chainBaseManager.getContractStore();
     if (!this.any.is(UpdateEnergyLimitContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UpdateEnergyLimitContract],real type["
+          "contract type error, expected type [UpdateEnergyLimitContract],real type["
               + contract
               .getClass() + "]");
     }
@@ -84,13 +84,13 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
     if (accountCapsule == null) {
       throw new ContractValidateException(
-          "Account[" + readableOwnerAddress + "] not exists");
+          "Account[" + readableOwnerAddress + "] does not exist");
     }
 
     long newOriginEnergyLimit = contract.getOriginEnergyLimit();
     if (newOriginEnergyLimit <= 0) {
       throw new ContractValidateException(
-          "origin energy limit must > 0");
+          "origin energy limit must be > 0");
     }
 
     byte[] contractAddress = contract.getContractAddress().toByteArray();
@@ -98,7 +98,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
     if (deployedContract == null) {
       throw new ContractValidateException(
-          "Contract not exists");
+          "Contract does not exist");
     }
 
     byte[] deployedContractOwnerAddress = deployedContract.getInstance().getOriginAddress()

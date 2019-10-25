@@ -22,8 +22,8 @@ import org.tron.consensus.base.BlockHandle;
 import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.GenesisBlock;
-import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -104,21 +104,21 @@ public class DposService implements ConsensusInterface {
   }
 
   @Override
-  public void receiveBlock(Block block) {
-    stateManager.receiveBlock(block);
+  public void receiveBlock(BlockCapsule blockCapsule) {
+    stateManager.receiveBlock(blockCapsule);
   }
 
   @Override
-  public boolean validBlock(Block block) {
+  public boolean validBlock(BlockCapsule blockCapsule) {
     if (consensusDelegate.getLatestBlockHeaderNumber() == 0) {
       return true;
     }
-    ByteString witnessAddress = block.getBlockHeader().getRawData().getWitnessAddress();
-    long timeStamp = block.getBlockHeader().getRawData().getTimestamp();
+    ByteString witnessAddress = blockCapsule.getWitnessAddress();
+    long timeStamp = blockCapsule.getTimeStamp();
     long bSlot = dposSlot.getAbSlot(timeStamp);
     long hSlot = dposSlot.getAbSlot(consensusDelegate.getLatestBlockHeaderTimestamp());
     if (bSlot <= hSlot) {
-      logger.warn("ValidBlock failed: bSlot: {} <= hSlot: {}", block, hSlot);
+      logger.warn("ValidBlock failed: bSlot: {} <= hSlot: {}", bSlot, hSlot);
       return false;
     }
 
@@ -135,10 +135,10 @@ public class DposService implements ConsensusInterface {
   }
 
   @Override
-  public boolean applyBlock(Block block) {
-    statisticManager.applyBlock(block);
-    incentiveManager.applyBlock(block);
-    maintenanceManager.applyBlock(block);
+  public boolean applyBlock(BlockCapsule blockCapsule) {
+    statisticManager.applyBlock(blockCapsule);
+    incentiveManager.applyBlock(blockCapsule);
+    maintenanceManager.applyBlock(blockCapsule);
     updateSolidBlock();
     return true;
   }
