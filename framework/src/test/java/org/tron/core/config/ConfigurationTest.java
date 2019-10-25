@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.typesafe.config.Config;
 import java.lang.reflect.Field;
+import java.net.URL;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
@@ -76,6 +77,15 @@ public class ConfigurationTest {
   @Test
   public void getShouldReturnConfiguration() {
     Config config = Configuration.getByFileName(Constant.TEST_CONF, Constant.TEST_CONF);
+    assertTrue(config.hasPath("storage"));
+    assertTrue(config.hasPath("seed.node"));
+    assertTrue(config.hasPath("genesis.block"));
+  }
+
+  @Test
+  public void getConfigurationWhenOnlyConfFileName() {
+    URL res = getClass().getClassLoader().getResource(Constant.TEST_CONF);
+    Config config = Configuration.getByFileName("", res.getPath());
     assertTrue(config.hasPath("storage"));
     assertTrue(config.hasPath("seed.node"));
     assertTrue(config.hasPath("genesis.block"));
