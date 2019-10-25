@@ -636,8 +636,8 @@ public class batchValidateSignContract011 {
         .asList("0x" + Hex.toHexString(Hash.sha3(incorrecttxid.getBytes())), signatures, addresses);
     String input = PublicMethed.parametersString(parameters);
     txid = PublicMethed
-        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false
-            , 0,
+        .triggerContractBoth(contractAddress, "testArray(bytes32,bytes[],address[])", input, false,
+            0,
             maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull, blockingStubFull1);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);

@@ -2,7 +2,6 @@ package stest.tron.wallet.dailybuild.multisign;
 
 import static org.hamcrest.core.StringContains.containsString;
 
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.List;
