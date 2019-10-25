@@ -2,7 +2,6 @@ package stest.tron.wallet.common.client.utils;
 
 import static org.tron.common.utils.Hash.sha3;
 
-
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.primitives.Longs;

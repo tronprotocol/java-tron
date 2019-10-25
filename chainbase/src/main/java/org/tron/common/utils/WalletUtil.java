@@ -119,12 +119,8 @@ public class WalletUtil {
           .arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0,
               4);
       if (Arrays.equals(funcSelector, selector)) {
-        if (entry.getConstant() == true || entry.getStateMutability()
-            .equals(StateMutabilityType.View)) {
-          return true;
-        } else {
-          return false;
-        }
+        return entry.getConstant() == true || entry.getStateMutability()
+            .equals(StateMutabilityType.View);
       }
     }
 

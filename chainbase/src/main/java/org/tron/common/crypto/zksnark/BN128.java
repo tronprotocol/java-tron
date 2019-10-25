@@ -228,11 +228,7 @@ public abstract class BN128<T extends Field<T>> {
     }
 
     // check whether point is on the curve
-    if (!isOnCurve()) {
-      return false;
-    }
-
-    return true;
+    return isOnCurve();
   }
 
   @Override

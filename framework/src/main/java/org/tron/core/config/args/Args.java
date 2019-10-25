@@ -600,7 +600,8 @@ public class Args {
 
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
 
-    if (config.hasPath(Constant.NET_TYPE) && Constant.TESTNET.equalsIgnoreCase(config.getString(Constant.NET_TYPE))) {
+    if (config.hasPath(Constant.NET_TYPE) && Constant.TESTNET
+        .equalsIgnoreCase(config.getString(Constant.NET_TYPE))) {
       Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
     } else {
@@ -780,31 +781,38 @@ public class Args {
     }
 
     INSTANCE.needSyncCheck =
-        config.hasPath(Constant.BLOCK_NEED_SYNC_CHECK) && config.getBoolean(Constant.BLOCK_NEED_SYNC_CHECK);
+        config.hasPath(Constant.BLOCK_NEED_SYNC_CHECK) && config
+            .getBoolean(Constant.BLOCK_NEED_SYNC_CHECK);
 
     INSTANCE.nodeDiscoveryEnable =
-        config.hasPath(Constant.NODE_DISCOVERY_ENABLE) && config.getBoolean(Constant.NODE_DISCOVERY_ENABLE);
+        config.hasPath(Constant.NODE_DISCOVERY_ENABLE) && config
+            .getBoolean(Constant.NODE_DISCOVERY_ENABLE);
 
     INSTANCE.nodeDiscoveryPersist =
-        config.hasPath(Constant.NODE_DISCOVERY_PERSIST) && config.getBoolean(Constant.NODE_DISCOVERY_PERSIST);
+        config.hasPath(Constant.NODE_DISCOVERY_PERSIST) && config
+            .getBoolean(Constant.NODE_DISCOVERY_PERSIST);
 
     INSTANCE.nodeConnectionTimeout =
-        config.hasPath(Constant.NODE_CONNECTION_TIMEOUT) ? config.getInt(Constant.NODE_CONNECTION_TIMEOUT) * 1000
+        config.hasPath(Constant.NODE_CONNECTION_TIMEOUT) ?
+            config.getInt(Constant.NODE_CONNECTION_TIMEOUT) * 1000
             : 0;
 
     INSTANCE.nodeChannelReadTimeout =
-        config.hasPath(Constant.NODE_CHANNEL_READ_TIMEOUT) ? config.getInt(Constant.NODE_CHANNEL_READ_TIMEOUT)
+        config.hasPath(Constant.NODE_CHANNEL_READ_TIMEOUT) ? config
+            .getInt(Constant.NODE_CHANNEL_READ_TIMEOUT)
             : 0;
 
     INSTANCE.nodeMaxActiveNodes =
-        config.hasPath(Constant.NODE_MAX_ACTIVE_NODES) ? config.getInt(Constant.NODE_MAX_ACTIVE_NODES) : 30;
+        config.hasPath(Constant.NODE_MAX_ACTIVE_NODES) ? config
+            .getInt(Constant.NODE_MAX_ACTIVE_NODES) : 30;
 
     INSTANCE.nodeMaxActiveNodesWithSameIp =
         config.hasPath(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAMEIP) ? config
             .getInt(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAMEIP) : 2;
 
     INSTANCE.minParticipationRate =
-        config.hasPath(Constant.NODE_MIN_PARTICIPATION_RATE) ? config.getInt(Constant.NODE_MIN_PARTICIPATION_RATE)
+        config.hasPath(Constant.NODE_MIN_PARTICIPATION_RATE) ? config
+            .getInt(Constant.NODE_MIN_PARTICIPATION_RATE)
             : 0;
 
     INSTANCE.nodeListenPort =
@@ -818,7 +826,8 @@ public class Args {
             .getBoolean(Constant.NODE_DISCOVERY_PUBLIC_HOME_NODE);
 
     INSTANCE.nodeP2pPingInterval =
-        config.hasPath(Constant.NODE_P2P_PING_INTERVAL) ? config.getLong(Constant.NODE_P2P_PING_INTERVAL) : 0;
+        config.hasPath(Constant.NODE_P2P_PING_INTERVAL) ? config
+            .getLong(Constant.NODE_P2P_PING_INTERVAL) : 0;
 
     INSTANCE.nodeP2pVersion =
         config.hasPath(Constant.NODE_P2P_VERSION) ? config.getInt(Constant.NODE_P2P_VERSION) : 0;
@@ -827,32 +836,38 @@ public class Args {
         config.hasPath(Constant.NODE_RPC_PORT) ? config.getInt(Constant.NODE_RPC_PORT) : 50051;
 
     INSTANCE.rpcOnSolidityPort =
-        config.hasPath(Constant.NODE_RPC_SOLIDITY_PORT) ? config.getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50061;
+        config.hasPath(Constant.NODE_RPC_SOLIDITY_PORT) ? config
+            .getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50061;
 
     INSTANCE.fullNodeHttpPort =
-        config.hasPath(Constant.NODE_HTTP_FULLNODE_PORT) ? config.getInt(Constant.NODE_HTTP_FULLNODE_PORT) : 8090;
+        config.hasPath(Constant.NODE_HTTP_FULLNODE_PORT) ? config
+            .getInt(Constant.NODE_HTTP_FULLNODE_PORT) : 8090;
 
     INSTANCE.solidityHttpPort =
-        config.hasPath(Constant.NODE_HTTP_SOLIDITY_PORT) ? config.getInt(Constant.NODE_HTTP_SOLIDITY_PORT) : 8091;
+        config.hasPath(Constant.NODE_HTTP_SOLIDITY_PORT) ? config
+            .getInt(Constant.NODE_HTTP_SOLIDITY_PORT) : 8091;
 
     INSTANCE.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
             : Runtime.getRuntime().availableProcessors() / 2;
 
     INSTANCE.solidityThreads =
-        config.hasPath(Constant.NODE_SOLIDITY_THREADS) ? config.getInt(Constant.NODE_SOLIDITY_THREADS)
+        config.hasPath(Constant.NODE_SOLIDITY_THREADS) ? config
+            .getInt(Constant.NODE_SOLIDITY_THREADS)
             : Runtime.getRuntime().availableProcessors();
 
     INSTANCE.maxConcurrentCallsPerConnection =
         config.hasPath(Constant.NODE_RPC_MAX_CONCURRENT_CALLS_PER_CONNECTION) ?
-            config.getInt(Constant.NODE_RPC_MAX_CONCURRENT_CALLS_PER_CONNECTION) : Integer.MAX_VALUE;
+            config.getInt(Constant.NODE_RPC_MAX_CONCURRENT_CALLS_PER_CONNECTION)
+            : Integer.MAX_VALUE;
 
     INSTANCE.flowControlWindow = config.hasPath(Constant.NODE_RPC_FLOW_CONTROL_WINDOW) ?
         config.getInt(Constant.NODE_RPC_FLOW_CONTROL_WINDOW)
         : NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
 
-    INSTANCE.maxConnectionIdleInMillis = config.hasPath(Constant.NODE_RPC_MAX_CONNECTION_IDLE_IN_MILLIS) ?
-        config.getLong(Constant.NODE_RPC_MAX_CONNECTION_IDLE_IN_MILLIS) : Long.MAX_VALUE;
+    INSTANCE.maxConnectionIdleInMillis =
+        config.hasPath(Constant.NODE_RPC_MAX_CONNECTION_IDLE_IN_MILLIS) ?
+            config.getLong(Constant.NODE_RPC_MAX_CONNECTION_IDLE_IN_MILLIS) : Long.MAX_VALUE;
 
     INSTANCE.blockProducedTimeOut = config.hasPath(Constant.NODE_PRODUCED_TIMEOUT) ?
         config.getInt(Constant.NODE_PRODUCED_TIMEOUT) : BLOCK_PRODUCE_TIMEOUT_PERCENT;
@@ -870,14 +885,16 @@ public class Args {
     INSTANCE.netMaxTrxPerSecond = config.hasPath(Constant.NODE_NET_MAX_TRX_PER_SECOND) ?
         config.getInt(Constant.NODE_NET_MAX_TRX_PER_SECOND) : NetConstants.NET_MAX_TRX_PER_SECOND;
 
-    INSTANCE.maxConnectionAgeInMillis = config.hasPath(Constant.NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS) ?
-        config.getLong(Constant.NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS) : Long.MAX_VALUE;
+    INSTANCE.maxConnectionAgeInMillis =
+        config.hasPath(Constant.NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS) ?
+            config.getLong(Constant.NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS) : Long.MAX_VALUE;
 
     INSTANCE.maxMessageSize = config.hasPath(Constant.NODE_RPC_MAX_MESSAGE_SIZE) ?
         config.getInt(Constant.NODE_RPC_MAX_MESSAGE_SIZE) : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
 
     INSTANCE.maxHeaderListSize = config.hasPath(Constant.NODE_RPC_MAX_HEADER_LIST_ISZE) ?
-        config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_ISZE) : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
+        config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_ISZE)
+        : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
 
     INSTANCE.maintenanceTimeInterval =
         config.hasPath(Constant.BLOCK_MAINTENANCE_TIME_INTERVAL) ? config
@@ -923,25 +940,31 @@ public class Args {
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY059) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY059) : 0;
 
-    INSTANCE.tcpNettyWorkThreadNum = config.hasPath(Constant.NODE_TCP_NETTY_WORK_THREAD_NUM) ? config
-        .getInt(Constant.NODE_TCP_NETTY_WORK_THREAD_NUM) : 0;
+    INSTANCE.tcpNettyWorkThreadNum =
+        config.hasPath(Constant.NODE_TCP_NETTY_WORK_THREAD_NUM) ? config
+            .getInt(Constant.NODE_TCP_NETTY_WORK_THREAD_NUM) : 0;
 
-    INSTANCE.udpNettyWorkThreadNum = config.hasPath(Constant.NODE_UDP_NETTY_WORK_THREAD_NUM) ? config
-        .getInt(Constant.NODE_UDP_NETTY_WORK_THREAD_NUM) : 1;
+    INSTANCE.udpNettyWorkThreadNum =
+        config.hasPath(Constant.NODE_UDP_NETTY_WORK_THREAD_NUM) ? config
+            .getInt(Constant.NODE_UDP_NETTY_WORK_THREAD_NUM) : 1;
 
     if (StringUtils.isEmpty(INSTANCE.trustNodeAddr)) {
       INSTANCE.trustNodeAddr =
-          config.hasPath(Constant.NODE_TRUST_NODE) ? config.getString(Constant.NODE_TRUST_NODE) : null;
+          config.hasPath(Constant.NODE_TRUST_NODE) ? config.getString(Constant.NODE_TRUST_NODE)
+              : null;
     }
 
     INSTANCE.validateSignThreadNum = config.hasPath(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) ? config
-        .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) : Runtime.getRuntime().availableProcessors() / 2;
+        .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
+        : Runtime.getRuntime().availableProcessors() / 2;
 
     INSTANCE.walletExtensionApi =
-        config.hasPath(Constant.NODE_WALLET_EXTENSION_API) && config.getBoolean(Constant.NODE_WALLET_EXTENSION_API);
+        config.hasPath(Constant.NODE_WALLET_EXTENSION_API) && config
+            .getBoolean(Constant.NODE_WALLET_EXTENSION_API);
 
     INSTANCE.connectFactor =
-        config.hasPath(Constant.NODE_CONNECT_FACTOR) ? config.getDouble(Constant.NODE_CONNECT_FACTOR) : 0.3;
+        config.hasPath(Constant.NODE_CONNECT_FACTOR) ? config
+            .getDouble(Constant.NODE_CONNECT_FACTOR) : 0.3;
 
     INSTANCE.activeConnectFactor = config.hasPath(Constant.NODE_ACTIVE_CONNECT_FACTOR) ?
         config.getDouble(Constant.NODE_ACTIVE_CONNECT_FACTOR) : 0.1;
@@ -952,12 +975,12 @@ public class Args {
         config.getDouble(Constant.NODE_MAX_CONNECT_NUMBER_FACTOR) : 0.8;
     INSTANCE.receiveTcpMinDataLength = config.hasPath(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH) ?
         config.getLong(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH) : 2048;
-    INSTANCE.isOpenFullTcpDisconnect = config.hasPath(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT) && config
-        .getBoolean(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT);
+    INSTANCE.isOpenFullTcpDisconnect =
+        config.hasPath(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT) && config
+            .getBoolean(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT);
     INSTANCE.needToUpdateAsset =
-        config.hasPath(Constant.STORAGE_NEEDTO_UPDATE_ASSET) ? config
-            .getBoolean(Constant.STORAGE_NEEDTO_UPDATE_ASSET)
-            : true;
+        !config.hasPath(Constant.STORAGE_NEEDTO_UPDATE_ASSET) || config
+            .getBoolean(Constant.STORAGE_NEEDTO_UPDATE_ASSET);
     INSTANCE.trxReferenceBlock = config.hasPath(Constant.TRX_REFERENCE_BLOCK) ?
         config.getString(Constant.TRX_REFERENCE_BLOCK) : "head";
 
@@ -977,7 +1000,8 @@ public class Args {
         config.hasPath(Constant.VM_TRACE) && config.getBoolean(Constant.VM_TRACE);
 
     INSTANCE.saveInternalTx =
-        config.hasPath(Constant.VM_SAVE_INTERNAL_TX) && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
+        config.hasPath(Constant.VM_SAVE_INTERNAL_TX) && config
+            .getBoolean(Constant.VM_SAVE_INTERNAL_TX);
 
     INSTANCE.allowShieldedTransaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
@@ -1255,8 +1279,9 @@ public class Args {
   }
 
   private static void bindIp(final com.typesafe.config.Config config) {
-    if (!config.hasPath(Constant.NODE_DISCOVERY_BIND_IP) || config.getString(Constant.NODE_DISCOVERY_BIND_IP)
-            .trim().isEmpty()) {
+    if (!config.hasPath(Constant.NODE_DISCOVERY_BIND_IP) || config
+        .getString(Constant.NODE_DISCOVERY_BIND_IP)
+        .trim().isEmpty()) {
       if (INSTANCE.nodeDiscoveryBindIp == null) {
         logger.info("Bind address wasn't set, Punching to identify it...");
         try (Socket s = new Socket("www.baidu.com", 80)) {
@@ -1274,13 +1299,13 @@ public class Args {
 
   private static void externalIp(final com.typesafe.config.Config config) {
     if (!config.hasPath(Constant.NODE_DISCOVERY_EXTENNAL_IP) || config
-            .getString(Constant.NODE_DISCOVERY_EXTENNAL_IP).trim().isEmpty()) {
+        .getString(Constant.NODE_DISCOVERY_EXTENNAL_IP).trim().isEmpty()) {
       if (INSTANCE.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
         BufferedReader in = null;
         try {
           in = new BufferedReader(new InputStreamReader(
-                  new URL(Constant.AMAZONAWS_URL).openStream()));
+              new URL(Constant.AMAZONAWS_URL).openStream()));
           INSTANCE.nodeExternalIp = in.readLine();
           if (INSTANCE.nodeExternalIp == null || INSTANCE.nodeExternalIp.trim().isEmpty()) {
             throw new IOException("Invalid address: '" + INSTANCE.nodeExternalIp + "'");
@@ -1294,8 +1319,8 @@ public class Args {
         } catch (IOException e) {
           INSTANCE.nodeExternalIp = INSTANCE.nodeDiscoveryBindIp;
           logger.warn(
-                  "Can't get external IP. Fall back to peer.bind.ip: " + INSTANCE.nodeExternalIp + " :"
-                          + e);
+              "Can't get external IP. Fall back to peer.bind.ip: " + INSTANCE.nodeExternalIp + " :"
+                  + e);
         } finally {
           if (in != null) {
             try {
@@ -1347,7 +1372,8 @@ public class Args {
 
   private static void initRocksDbBackupProperty(Config config) {
     boolean enable =
-        config.hasPath(Constant.STORAGE_BACKUP_ENABLE) && config.getBoolean(Constant.STORAGE_BACKUP_ENABLE);
+        config.hasPath(Constant.STORAGE_BACKUP_ENABLE) && config
+            .getBoolean(Constant.STORAGE_BACKUP_ENABLE);
     String propPath = config.hasPath(Constant.STORAGE_BACKUP_PROP_PATH)
         ? config.getString(Constant.STORAGE_BACKUP_PROP_PATH) : "prop.properties";
     String bak1path = config.hasPath("storage.backup.bak1path")

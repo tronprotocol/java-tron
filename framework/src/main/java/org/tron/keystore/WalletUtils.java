@@ -45,8 +45,7 @@ public class WalletUtils {
 
   public static String generateNewWalletFile(
       String password, File destinationDirectory, boolean useFullScrypt)
-      throws CipherException, IOException, InvalidAlgorithmParameterException,
-      NoSuchAlgorithmException, NoSuchProviderException {
+      throws CipherException, IOException {
 
     ECKey ecKeyPair = new ECKey(Utils.getRandom());
     return generateWalletFile(password, ecKeyPair, destinationDirectory, useFullScrypt);
@@ -183,11 +182,7 @@ public class WalletUtils {
     if (StringUtils.isEmpty(password)) {
       return false;
     }
-    if (password.length() < 6) {
-      return false;
-    }
-    //Other rule;
-    return true;
+    return password.length() >= 6;
   }
 
   public static String inputPassword() {

@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.zip.Deflater;
@@ -92,7 +93,7 @@ public final class VMUtils {
     try {
       out = new FileOutputStream(file);
       if (data != null) {
-        out.write(data.getBytes("UTF-8"));
+        out.write(data.getBytes(StandardCharsets.UTF_8));
       }
     } catch (Exception e) {
       logger.error(format("Cannot write to file '%s': ", file.getAbsolutePath()), e);
@@ -132,7 +133,7 @@ public final class VMUtils {
   }
 
   public static byte[] compress(String content) throws IOException {
-    return compress(content.getBytes("UTF-8"));
+    return compress(content.getBytes(StandardCharsets.UTF_8));
   }
 
   public static byte[] decompress(byte[] data) throws IOException {

@@ -239,10 +239,7 @@ public class Value {
     }
 
     Value V = (Value) obj;
-    if (Arrays.equals(this.any, V.getAny())) {
-      return true;
-    }
-    return false;
+    return Arrays.equals(this.any, V.getAny());
   }
 
 //    public static Value create(byte[] any, Type type) {

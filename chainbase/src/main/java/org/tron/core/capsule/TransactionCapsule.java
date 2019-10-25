@@ -489,10 +489,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
     }
     long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
-    if (weight >= permission.getThreshold()) {
-      return true;
-    }
-    return false;
+    return weight >= permission.getThreshold();
   }
 
   public void resetResult() {

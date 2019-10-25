@@ -146,7 +146,7 @@ public class OpActions {
       write,
       put,
       remove,
-      clear;
+      clear
     }
   }
 }

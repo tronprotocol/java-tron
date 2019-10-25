@@ -391,7 +391,7 @@ public class TrieImpl implements Trie<byte[]> {
           nodeList.add(n);
           break;
         }
-        node = (Node) n.branchNodeGetChild(trieKey.getHex(0));
+        node = n.branchNodeGetChild(trieKey.getHex(0));
         if (node == null) {
           return null;
         }
@@ -421,7 +421,7 @@ public class TrieImpl implements Trie<byte[]> {
     int i = 0;
     for (Node n : nodeList) {
       List<Node> cpList = new ArrayList<>();
-      nodeMap.put(childrenHash(n, cpList, 0, i == 0 ? true : false), cpList.get(0));
+      nodeMap.put(childrenHash(n, cpList, 0, i == 0), cpList.get(0));
       ++i;
     }
     return nodeMap;
@@ -546,10 +546,7 @@ public class TrieImpl implements Trie<byte[]> {
       }
       ++i;
     }
-    if (trieKey.getLength() != 0) {
-      return false;
-    }
-    return true;
+    return trieKey.getLength() == 0;
   }
 
   public Node getRoot() {
