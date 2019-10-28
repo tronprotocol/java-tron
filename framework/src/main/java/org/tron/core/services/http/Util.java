@@ -15,6 +15,7 @@ import java.security.InvalidParameterException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Base64;
 import org.eclipse.jetty.util.StringUtil;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -46,6 +47,7 @@ public class Util {
   public static final String TRANSACTION = "transaction";
   public static final String VALUE = "value";
   public static final String CONTRACT_TYPE = "contractType";
+  public static final String EXTRA_DATA = "extra_data";
 
   public static String printErrorMsg(Exception e) {
     JSONObject jsonObject = new JSONObject();
@@ -326,6 +328,19 @@ public class Util {
             .setPermissionId(permissionId);
         raw.clearContract();
         raw.addContract(contract);
+        return transaction.toBuilder().setRawData(raw).build();
+      }
+    }
+    return transaction;
+  }
+
+  public static Transaction setTransactionExtraData(JSONObject jsonObject,
+      Transaction transaction) {
+    if (jsonObject.containsKey(EXTRA_DATA)) {
+      String data = jsonObject.getString(EXTRA_DATA);
+      if (data.length() > 0) {
+        Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+        raw.setData(ByteString.copyFrom(Base64.decode(data)));
         return transaction.toBuilder().setRawData(raw).build();
       }
     }

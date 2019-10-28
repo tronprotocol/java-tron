@@ -38,6 +38,7 @@ public class TransferAssetServlet extends RateLimiterServlet {
           .getInstance();
       JSONObject jsonObject = JSONObject.parseObject(contract);
       tx = Util.setTransactionPermissionId(jsonObject, tx);
+      tx = Util.setTransactionExtraData(jsonObject, tx);
       response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
