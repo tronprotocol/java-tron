@@ -21,12 +21,7 @@ public class ListExchangesServlet extends RateLimiterServlet {
       boolean visible = Util.getVisible(request);
       response.getWriter().println(JsonFormat.printToString(wallet.getExchangeList(), visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 

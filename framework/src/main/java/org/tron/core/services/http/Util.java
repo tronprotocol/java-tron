@@ -8,6 +8,8 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
@@ -392,4 +394,15 @@ public class Util {
     System.arraycopy(meno, 0, inputCheck, 0, index);
     return new String(inputCheck, Charset.forName("UTF-8"));
   }
+
+  public static void processError(Exception e) {
+    logger.debug("Exception: {}", e.getMessage());
+    try {
+      response.getWriter().println(Util.printErrorMsg(e));
+    } catch (IOException ioe) {
+      logger.debug("IOException: {}", ioe.getMessage());
+    }
+  }
+
+
 }

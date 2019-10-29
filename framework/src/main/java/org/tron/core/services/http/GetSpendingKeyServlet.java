@@ -27,12 +27,7 @@ public class GetSpendingKeyServlet extends RateLimiterServlet {
       System.out.println("b58 is: " + base58check + ", hex is: " + hexString);
       response.getWriter().println(JsonFormat.printToString(reply, visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 
@@ -46,12 +41,7 @@ public class GetSpendingKeyServlet extends RateLimiterServlet {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 }

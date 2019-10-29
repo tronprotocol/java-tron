@@ -59,12 +59,7 @@ public class ScanAndMarkNoteByIvkServlet extends RateLimiterServlet {
 
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 
@@ -83,12 +78,7 @@ public class ScanAndMarkNoteByIvkServlet extends RateLimiterServlet {
 
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 }

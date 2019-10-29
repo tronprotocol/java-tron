@@ -31,12 +31,7 @@ public class GenerateAddressServlet extends RateLimiterServlet {
       jsonAddress.put("privateKey", priKeyStr);
       response.getWriter().println(jsonAddress.toJSONString());
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 

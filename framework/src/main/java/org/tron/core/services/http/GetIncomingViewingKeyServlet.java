@@ -38,12 +38,7 @@ public class GetIncomingViewingKeyServlet extends RateLimiterServlet {
           .println(JsonFormat.printToString(ivk, visible));
 
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 
@@ -59,12 +54,7 @@ public class GetIncomingViewingKeyServlet extends RateLimiterServlet {
       response.getWriter()
           .println(JsonFormat.printToString(ivk, visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 }

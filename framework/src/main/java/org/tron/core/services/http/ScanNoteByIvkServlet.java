@@ -51,12 +51,7 @@ public class ScanNoteByIvkServlet extends RateLimiterServlet {
               ivkDecryptParameters.getIvk().toByteArray());
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 
@@ -71,12 +66,7 @@ public class ScanNoteByIvkServlet extends RateLimiterServlet {
           .scanNoteByIvk(startNum, endNum, ByteArray.fromHexString(ivk));
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 }

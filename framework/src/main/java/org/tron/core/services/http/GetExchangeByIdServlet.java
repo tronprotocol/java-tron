@@ -33,12 +33,7 @@ public class GetExchangeByIdServlet extends RateLimiterServlet {
               .printToString(wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(id))),
                   visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 
@@ -51,12 +46,7 @@ public class GetExchangeByIdServlet extends RateLimiterServlet {
                   .getExchangeById(ByteString.copyFrom(ByteArray.fromLong(Long.parseLong(input)))),
               visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e);
     }
   }
 }
