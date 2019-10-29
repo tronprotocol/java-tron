@@ -7,7 +7,6 @@ import static org.tron.core.services.http.Util.setTransactionPermissionId;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
-import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
