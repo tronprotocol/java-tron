@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +20,7 @@ public class GetChainParametersServlet extends RateLimiterServlet {
       boolean visible = Util.getVisible(request);
       response.getWriter().println(JsonFormat.printToString(wallet.getChainParameters(), visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 
