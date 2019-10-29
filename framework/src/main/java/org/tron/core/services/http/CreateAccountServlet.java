@@ -37,7 +37,7 @@ public class CreateAccountServlet extends RateLimiterServlet {
       tx = Util.setTransactionPermissionId(input, tx);
       response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

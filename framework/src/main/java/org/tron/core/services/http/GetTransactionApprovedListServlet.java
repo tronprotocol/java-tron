@@ -37,7 +37,7 @@ public class GetTransactionApprovedListServlet extends RateLimiterServlet {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

@@ -32,7 +32,7 @@ public class GetBrokerageServlet extends RateLimiterServlet {
       }
       response.getWriter().println("{\"brokerage\": " + value + "}");
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 

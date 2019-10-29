@@ -41,7 +41,7 @@ public class TransferAssetServlet extends RateLimiterServlet {
       tx = Util.setTransactionExtraData(jsonObject, tx);
       response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

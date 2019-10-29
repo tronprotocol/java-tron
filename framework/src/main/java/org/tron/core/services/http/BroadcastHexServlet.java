@@ -40,7 +40,7 @@ public class BroadcastHexServlet extends RateLimiterServlet {
 
       response.getWriter().println(json.toJSONString());
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

@@ -94,7 +94,7 @@ public class DeployContractServlet extends RateLimiterServlet {
       tx = setTransactionPermissionId(jsonObject, txBuilder.build());
       response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

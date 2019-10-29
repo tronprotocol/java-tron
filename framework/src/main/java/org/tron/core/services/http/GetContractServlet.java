@@ -37,7 +37,7 @@ public class GetContractServlet extends RateLimiterServlet {
           .parseObject(JsonFormat.printToString(smartContract, visible));
       response.getWriter().println(jsonSmartContract.toJSONString());
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 
@@ -61,7 +61,7 @@ public class GetContractServlet extends RateLimiterServlet {
           .parseObject(JsonFormat.printToString(smartContract, visible));
       response.getWriter().println(jsonSmartContract.toJSONString());
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

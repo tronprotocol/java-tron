@@ -34,7 +34,7 @@ public class GetShieldTransactionHashServlet extends RateLimiterServlet {
       BytesMessage result = wallet.getShieldTransactionHash(transaction);
       response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

@@ -51,7 +51,7 @@ public class ScanNoteByIvkServlet extends RateLimiterServlet {
               ivkDecryptParameters.getIvk().toByteArray());
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 
@@ -66,7 +66,7 @@ public class ScanNoteByIvkServlet extends RateLimiterServlet {
           .scanNoteByIvk(startNum, endNum, ByteArray.fromHexString(ivk));
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

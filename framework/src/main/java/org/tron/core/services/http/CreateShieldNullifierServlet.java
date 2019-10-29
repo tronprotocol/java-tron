@@ -36,7 +36,7 @@ public class CreateShieldNullifierServlet extends RateLimiterServlet {
       BytesMessage result = wallet.createShieldNullifier(build.build());
       response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

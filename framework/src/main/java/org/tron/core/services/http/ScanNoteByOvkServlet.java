@@ -35,7 +35,7 @@ public class ScanNoteByOvkServlet extends RateLimiterServlet {
               ovkDecryptParameters.getOvk().toByteArray());
       response.getWriter().println(ScanNoteByIvkServlet.convertOutput(notes, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 
@@ -49,7 +49,7 @@ public class ScanNoteByOvkServlet extends RateLimiterServlet {
           .scanNoteByOvk(startBlockIndex, endBlockIndex, ByteArray.fromHexString(ovk));
       response.getWriter().println(ScanNoteByIvkServlet.convertOutput(notes, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

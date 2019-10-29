@@ -36,7 +36,7 @@ public class GetAccountResourceServlet extends RateLimiterServlet {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 
@@ -59,7 +59,7 @@ public class GetAccountResourceServlet extends RateLimiterServlet {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

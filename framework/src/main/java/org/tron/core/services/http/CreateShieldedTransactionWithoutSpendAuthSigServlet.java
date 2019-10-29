@@ -47,7 +47,7 @@ public class CreateShieldedTransactionWithoutSpendAuthSigServlet extends RateLim
 
       response.getWriter().println(jsonObject.toJSONString());
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

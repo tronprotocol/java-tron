@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import javax.servlet.http.HttpServletResponse;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -395,7 +397,7 @@ public class Util {
     return new String(inputCheck, Charset.forName("UTF-8"));
   }
 
-  public static void processError(Exception e) {
+  public static void processError(Exception e, HttpServletResponse response) {
     logger.debug("Exception: {}", e.getMessage());
     try {
       response.getWriter().println(Util.printErrorMsg(e));

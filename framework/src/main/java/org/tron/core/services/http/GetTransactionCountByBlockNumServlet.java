@@ -24,7 +24,7 @@ public class GetTransactionCountByBlockNumServlet extends RateLimiterServlet {
       long count = wallet.getTransactionCountByBlockNum(num);
       response.getWriter().println("{\"count\": " + count + "}");
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 
@@ -39,7 +39,7 @@ public class GetTransactionCountByBlockNumServlet extends RateLimiterServlet {
       long count = wallet.getTransactionCountByBlockNum(build.getNum());
       response.getWriter().println("{\"count\": " + count + "}");
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

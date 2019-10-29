@@ -41,7 +41,7 @@ public class GetZenPaymentAddressServlet extends RateLimiterServlet {
           .println(JsonFormat.printToString(s, visible));
 
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 
@@ -59,7 +59,7 @@ public class GetZenPaymentAddressServlet extends RateLimiterServlet {
           .println(JsonFormat.printToString(s, visible));
 
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

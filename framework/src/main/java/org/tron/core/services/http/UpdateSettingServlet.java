@@ -41,7 +41,7 @@ public class UpdateSettingServlet extends RateLimiterServlet {
 
       response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

@@ -37,7 +37,7 @@ public class BroadcastServlet extends RateLimiterServlet {
       res.put("txid", transactionID);
       response.getWriter().println(res.toJSONString());
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

@@ -39,7 +39,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
       jsonAddress.put("value", hexString);
       response.getWriter().println(jsonAddress.toJSONString());
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 
@@ -69,7 +69,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
       jsonAddress.put("value", hexString);
       response.getWriter().println(jsonAddress.toJSONString());
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }

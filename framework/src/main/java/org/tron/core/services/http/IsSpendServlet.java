@@ -36,7 +36,7 @@ public class IsSpendServlet extends RateLimiterServlet {
       SpendResult result = wallet.isSpend(build.build());
       response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {
-      Util.processError(e);
+      Util.processError(e, response);
     }
   }
 }
