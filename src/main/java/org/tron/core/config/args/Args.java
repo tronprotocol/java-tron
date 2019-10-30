@@ -592,12 +592,7 @@ public class Args {
     } else if (config.hasPath("localwitness")) {
       INSTANCE.localWitnesses = new LocalWitnesses();
       List<String> localwitness = config.getStringList("localwitness");
-//      if (localwitness.size() > 1) {
-//        logger.warn("localwitness size must be one, get the first one");
-//        localwitness = localwitness.subList(0, 1);
-//      }
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
-
       if (config.hasPath("localWitnessAccountAddress")) {
         byte[] bytes = Wallet.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
         if (bytes != null) {
