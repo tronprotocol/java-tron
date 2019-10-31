@@ -411,12 +411,13 @@ public class WitnessService implements Service {
       if (null == witnessCapsule) {
         logger.info("WitnessCapsule is null, privateKey: {}, witness: {}", pKey,
             Hex.toHexString(address));
-        witnessCapsule = new WitnessCapsule(ByteString.copyFrom(privateKey));
+        witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
       }
       this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
       this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
       this.privateKeyToAddressMap.put(privateKey, address);
     }
+    logger.info("PrivateKeys size = {}", privateKeys.size());
   }
 
   @Override
