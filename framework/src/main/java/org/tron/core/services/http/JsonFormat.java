@@ -755,7 +755,8 @@ public class JsonFormat {
 
     //Normal String
     if (HttpSelfFormatFieldName.isNameStringFormat(fliedName)) {
-      return new String(input.toByteArray());
+      String result = new String(input.toByteArray());
+      return result.replaceAll("\"", "\\\\\"");
     }
 
     //HEX

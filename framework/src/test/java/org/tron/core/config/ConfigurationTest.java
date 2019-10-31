@@ -85,7 +85,7 @@ public class ConfigurationTest {
   @Test
   public void getConfigurationWhenOnlyConfFileName() {
     URL res = getClass().getClassLoader().getResource(Constant.TEST_CONF);
-    Config config = Configuration.getByFileName("", res.getPath() );
+    Config config = Configuration.getByFileName("", res.getPath());
     assertTrue(config.hasPath("storage"));
     assertTrue(config.hasPath("seed.node"));
     assertTrue(config.hasPath("genesis.block"));

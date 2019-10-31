@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import javax.servlet.http.HttpServletResponse;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -8,6 +10,8 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
@@ -15,6 +19,7 @@ import java.security.InvalidParameterException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Base64;
 import org.eclipse.jetty.util.StringUtil;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -46,6 +51,7 @@ public class Util {
   public static final String TRANSACTION = "transaction";
   public static final String VALUE = "value";
   public static final String CONTRACT_TYPE = "contractType";
+  public static final String EXTRA_DATA = "extra_data";
 
   public static String printErrorMsg(Exception e) {
     JSONObject jsonObject = new JSONObject();
@@ -332,6 +338,19 @@ public class Util {
     return transaction;
   }
 
+  public static Transaction setTransactionExtraData(JSONObject jsonObject,
+      Transaction transaction) {
+    if (jsonObject.containsKey(EXTRA_DATA)) {
+      String data = jsonObject.getString(EXTRA_DATA);
+      if (data.length() > 0) {
+        Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+        raw.setData(ByteString.copyFrom(Base64.decode(data)));
+        return transaction.toBuilder().setRawData(raw).build();
+      }
+    }
+    return transaction;
+  }
+
   public static boolean getVisibleOnlyForSign(JSONObject jsonObject) {
     boolean visible = false;
     if (jsonObject.containsKey(VISIBLE)) {
@@ -377,4 +396,15 @@ public class Util {
     System.arraycopy(meno, 0, inputCheck, 0, index);
     return new String(inputCheck, Charset.forName("UTF-8"));
   }
+
+  public static void processError(Exception e, HttpServletResponse response) {
+    logger.debug("Exception: {}", e.getMessage());
+    try {
+      response.getWriter().println(Util.printErrorMsg(e));
+    } catch (IOException ioe) {
+      logger.debug("IOException: {}", ioe.getMessage());
+    }
+  }
+
+
 }
