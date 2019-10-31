@@ -38,13 +38,12 @@ dependencies {
     compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
     compile "org.fusesource.jansi:jansi:$jansiVersion"
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    compile "com.madgag.spongycastle:core:1.58.0.0"
-    compile "com.madgag.spongycastle:prov:1.58.0.0"
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
     compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.5'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
     compile project(":protocol")
+    compile project(":common")
     compile 'org.reflections:reflections:0.9.11'
 }
 
