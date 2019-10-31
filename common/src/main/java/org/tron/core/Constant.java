@@ -76,7 +76,7 @@ public class Constant {
   // Configuration items
   public static final String NET_TYPE = "net.type";
   public static final String TESTNET = "testnet";
-  public static final String LOCA_LWITENSS = "localwitness";
+  public static final String LOCAL_WITENSS = "localwitness";
   public static final String LOCAL_WITNESS_ACCOUNT_ADDRESS = "localWitnessAccountAddress";
   public static final String LOCAL_WITNESS_KEYSTORE = "localwitnesskeystore";
   public static final String VM_SUPPORT_CONSTANT = "vm.supportConstant";
