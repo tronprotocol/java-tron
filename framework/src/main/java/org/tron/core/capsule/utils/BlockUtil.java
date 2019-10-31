@@ -64,17 +64,4 @@ public class BlockUtil {
   public static boolean isParentOf(BlockCapsule blockCapsule1, BlockCapsule blockCapsule2) {
     return blockCapsule1.getBlockId().equals(blockCapsule2.getParentHash());
   }
-//
-//  public static BlockCapsule createTestBlockCapsule(Manager dbManager, long time,
-//      long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
-//    WitnessController witnessController = dbManager.getWitnessController();
-//    ByteString witnessAddress =
-//        witnessController.getScheduledWitness(witnessController.getSlotAtTime(time));
-//    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
-//        witnessAddress);
-//    blockCapsule.generatedByMyself = true;
-//    blockCapsule.setMerkleRoot();
-//    blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
-//    return blockCapsule;
-//  }
 }
