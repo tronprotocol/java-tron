@@ -208,11 +208,7 @@ def binaryRelease(taskName, jarName, mainClass) {
         }
     }
 }
-startScripts {
-    doLast {
-        delete unixScript
-    }
-}
+
 def createScript(project, mainClass, name) {
     project.tasks.create(name: name, type: CreateStartScripts) {
         unixStartScriptGenerator.template = resources.text.fromFile('../gradle/unixStartScript.txt')
