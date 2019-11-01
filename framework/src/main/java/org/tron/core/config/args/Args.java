@@ -49,7 +49,6 @@ import org.tron.common.utils.DBConfig;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.backup.DbBackupConfig;
@@ -623,9 +622,9 @@ public class Args {
       }
       INSTANCE.localWitnesses.initWitnessAccountAddress();
       logger.debug("Got privateKey from cmd");
-    } else if (config.hasPath(Constant.LOCA_LWITENSS)) {
+    } else if (config.hasPath(Constant.LOCAL_WITENSS)) {
       INSTANCE.localWitnesses = new LocalWitnesses();
-      List<String> localwitness = config.getStringList(Constant.LOCA_LWITENSS);
+      List<String> localwitness = config.getStringList(Constant.LOCAL_WITENSS);
       if (localwitness.size() > 1) {
         logger.warn("localwitness size must be one, get the first one");
         localwitness = localwitness.subList(0, 1);

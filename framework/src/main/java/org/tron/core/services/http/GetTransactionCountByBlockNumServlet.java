@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,12 +23,7 @@ public class GetTransactionCountByBlockNumServlet extends RateLimiterServlet {
       long count = wallet.getTransactionCountByBlockNum(num);
       response.getWriter().println("{\"count\": " + count + "}");
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 
@@ -44,12 +38,7 @@ public class GetTransactionCountByBlockNumServlet extends RateLimiterServlet {
       long count = wallet.getTransactionCountByBlockNum(build.getNum());
       response.getWriter().println("{\"count\": " + count + "}");
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 }
