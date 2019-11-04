@@ -29,7 +29,7 @@ public class ValidateAddressServlet extends RateLimiterServlet {
         msg = "Hex string format";
       } else if (input.length() == 34) {
         //base58check
-        address = DecodeUtil.decodeFromBase58Check(input);
+        address = Commons.decodeFromBase58Check(input);
         msg = "Base58check format";
       } else if (input.length() == 28) {
         //base64

@@ -1306,7 +1306,7 @@ public class JsonFormat {
         throws InvalidEscapeSequence {
       //Address base58 -> ByteString
       if (HttpSelfFormatFieldName.isAddressFormat(fliedName)) {
-        return ByteString.copyFrom(DecodeUtil.decodeFromBase58Check(input));
+        return ByteString.copyFrom(Commons.decodeFromBase58Check(input));
       }
 
       //Normal String -> ByteString

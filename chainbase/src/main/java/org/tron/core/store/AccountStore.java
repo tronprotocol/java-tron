@@ -34,7 +34,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     for (int i = 0; i < list.size(); i++) {
       ConfigObject obj = (ConfigObject) list.get(i);
       String accountName = obj.get("accountName").unwrapped().toString();
-      byte[] address = DecodeUtil.decodeFromBase58Check(obj.get("address").unwrapped().toString());
+      byte[] address = Commons.decodeFromBase58Check(obj.get("address").unwrapped().toString());
       assertsAddress.put(accountName, address);
     }
   }
