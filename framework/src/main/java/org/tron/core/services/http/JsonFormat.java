@@ -52,7 +52,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Wallet;
 
 

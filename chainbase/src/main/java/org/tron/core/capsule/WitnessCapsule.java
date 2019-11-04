@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.protos.Protocol.Witness;
 
