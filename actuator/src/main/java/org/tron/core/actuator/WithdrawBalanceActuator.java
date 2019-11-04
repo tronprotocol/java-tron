@@ -6,6 +6,7 @@ import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
@@ -17,6 +18,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
@@ -29,7 +31,12 @@ public class WithdrawBalanceActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+  public boolean execute(Object result) throws ContractExeException {
+    TransactionResultCapsule ret = (TransactionResultCapsule)result;
+    if (Objects.isNull(ret)){
+      throw new RuntimeException("TransactionResultCapsule is null");
+    }
+
     long fee = calcFee();
     final WithdrawBalanceContract withdrawBalanceContract;
     AccountStore accountStore = chainBaseManager.getAccountStore();

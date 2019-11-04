@@ -52,6 +52,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Wallet;
 
 
@@ -1305,7 +1306,7 @@ public class JsonFormat {
         throws InvalidEscapeSequence {
       //Address base58 -> ByteString
       if (HttpSelfFormatFieldName.isAddressFormat(fliedName)) {
-        return ByteString.copyFrom(Commons.decodeFromBase58Check(input));
+        return ByteString.copyFrom(DecodeUtil.decodeFromBase58Check(input));
       }
 
       //Normal String -> ByteString

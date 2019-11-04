@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toList;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.Commons;
@@ -31,7 +32,12 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule result) throws ContractExeException {
+  public boolean execute(Object object) throws ContractExeException {
+    TransactionResultCapsule result = (TransactionResultCapsule)object;
+    if (Objects.isNull(result)){
+      throw new RuntimeException("TransactionResultCapsule is null");
+    }
+
     AccountStore accountStore = chainBaseManager.getAccountStore();
     long fee = calcFee();
     final AccountPermissionUpdateContract accountPermissionUpdateContract;

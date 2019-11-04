@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
@@ -23,7 +24,12 @@ public class SetAccountIdActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+  public boolean execute(Object result) throws ContractExeException {
+    TransactionResultCapsule ret = (TransactionResultCapsule)result;
+    if (Objects.isNull(ret)){
+      throw new RuntimeException("TransactionResultCapsule is null");
+    }
+
     final SetAccountIdContract setAccountIdContract;
     final long fee = calcFee();
     AccountStore accountStore = chainBaseManager.getAccountStore();

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
@@ -33,7 +34,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     for (int i = 0; i < list.size(); i++) {
       ConfigObject obj = (ConfigObject) list.get(i);
       String accountName = obj.get("accountName").unwrapped().toString();
-      byte[] address = Commons.decodeFromBase58Check(obj.get("address").unwrapped().toString());
+      byte[] address = DecodeUtil.decodeFromBase58Check(obj.get("address").unwrapped().toString());
       assertsAddress.put(accountName, address);
     }
   }

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 
 
 @Component
@@ -28,7 +29,7 @@ public class ValidateAddressServlet extends RateLimiterServlet {
         msg = "Hex string format";
       } else if (input.length() == 34) {
         //base58check
-        address = Commons.decodeFromBase58Check(input);
+        address = DecodeUtil.decodeFromBase58Check(input);
         msg = "Base58check format";
       } else if (input.length() == 28) {
         //base64
