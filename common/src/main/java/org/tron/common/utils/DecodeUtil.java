@@ -61,23 +61,6 @@ public class DecodeUtil {
     return true;
   }
 
-  public static byte[] decodeFromBase58Check(String addressBase58) {
-    if (StringUtils.isEmpty(addressBase58)) {
-      logger.warn("Warning: Address is empty !!");
-      return null;
-    }
-    byte[] address = decode58Check(addressBase58);
-    if (address == null) {
-      return null;
-    }
-
-    if (!addressValid(address)) {
-      return null;
-    }
-
-    return address;
-  }
-
   public static String createReadableString(byte[] bytes) {
     return ByteArray.toHexString(bytes);
   }

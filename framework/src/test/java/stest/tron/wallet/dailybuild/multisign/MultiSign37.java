@@ -305,7 +305,7 @@ public class MultiSign37 {
         .accountPermissionUpdateWithPermissionId(accountPermissionJson1, test001Address, dev001Key,
             blockingStubFull, 0,
             permissionKeyString));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
@@ -340,6 +340,7 @@ public class MultiSign37 {
             containsString("ENOUGH_PERMISSION"));
     Return returnResult2 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction2, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("returnResult2:" + returnResult2);
     Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     long balance3 = test001AddressAccount3.getBalance();
