@@ -1,0 +1,50 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+//option java_outer_classname = "Contract"; //Specify the class name of the generated Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+import "core/Tron.proto";
+
+message AccountCreateContract {
+  bytes owner_address = 1;
+  bytes account_address = 2;
+  AccountType type = 3;
+}
+
+// Update account name. Account name is not unique now.
+message AccountUpdateContract {
+  bytes account_name = 1;
+  bytes owner_address = 2;
+}
+
+// Set account id if the account has no id. Account id is unique and case insensitive.
+message SetAccountIdContract {
+  bytes account_id = 1;
+  bytes owner_address = 2;
+}
+
+message AccountPermissionUpdateContract {
+  bytes owner_address = 1;
+  Permission owner = 2; //Empty is invalidate
+  Permission witness = 3; //Can be empty
+  repeated Permission actives = 4; //Empty is invalidate
+}
+

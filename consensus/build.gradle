@@ -1,0 +1,65 @@
+description = "consensus – a distributed consensus arithmetic for blockchain."
+
+// Dependency versions
+// ---------------------------------------
+def junitVersion = "4.12"
+def mockitoVersion = "2.1.0"
+def testNgVersion = "6.11"
+def slf4jVersion = "1.7.25"
+// --------------------------------------
+
+dependencies {
+    compile project(":chainbase")
+    compile project(":protocol")
+    testImplementation "junit:junit:$junitVersion"
+    testImplementation "org.mockito:mockito-core:$mockitoVersion"
+    testImplementation "org.testng:testng:$testNgVersion"
+    compile "org.slf4j:jcl-over-slf4j:$slf4jVersion"
+    compile "com.madgag.spongycastle:core:1.58.0.0"
+    compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
+}
+
+test {
+
+    testLogging {
+        // showing skipped occasionally should prevent CI timeout due to lack of standard output
+        events = ["skipped", "failed"] // "started", "passed"
+        // showStandardStreams = true
+        exceptionFormat = "full"
+
+        debug.events = ["skipped", "failed"]
+        debug.exceptionFormat = "full"
+
+        info.events = ["failed", "skipped"]
+        info.exceptionFormat = "full"
+
+        warn.events = ["failed", "skipped"]
+        warn.exceptionFormat = "full"
+    }
+
+    maxHeapSize = "1200m"
+
+    if (System.getenv("CI") == null) {
+        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    }
+}
+
+task testng(type: Test) {
+    useTestNG()
+    testLogging {
+        events = ["skipped", "failed"]
+        exceptionFormat = "full"
+
+        debug.events = ["skipped", "failed"]
+        debug.exceptionFormat = "full"
+
+        info.events = ["failed", "skipped"]
+        info.exceptionFormat = "full"
+
+        warn.events = ["failed", "skipped"]
+        warn.exceptionFormat = "full"
+    }
+}
+
+check.dependsOn testng
