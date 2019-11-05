@@ -2,6 +2,8 @@ package org.tron.common.utils;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Set;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -125,6 +127,10 @@ public class DBConfig {
   @Getter
   @Setter
   private static long changedDelegation;
+
+  @Getter
+  @Setter
+  private static Set<String> actuatorSet;
 
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
