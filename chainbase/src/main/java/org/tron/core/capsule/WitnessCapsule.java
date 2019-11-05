@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.protos.Protocol.Witness;
 
 @Slf4j(topic = "capsule")
@@ -20,7 +20,7 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
     final Witness.Builder witnessBuilder = Witness.newBuilder();
     this.witness = witnessBuilder
         .setPubKey(pubKey)
-        .setAddress(ByteString.copyFrom(Commons.computeAddress(pubKey.toByteArray())))
+        .setAddress(ByteString.copyFrom(DecodeUtil.computeAddress(pubKey.toByteArray())))
         .setUrl(url).build();
   }
 

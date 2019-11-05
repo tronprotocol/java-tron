@@ -6,6 +6,7 @@ import static org.tron.core.actuator.ActuatorConstant.PROPOSAL_EXCEPTION_STR;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -31,7 +32,12 @@ public class ProposalDeleteActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+  public boolean execute(Object result) throws ContractExeException {
+    TransactionResultCapsule ret = (TransactionResultCapsule)result;
+    if (Objects.isNull(ret)){
+      throw new RuntimeException("TransactionResultCapsule is null");
+    }
+
     long fee = calcFee();
     ProposalStore proposalStore = chainBaseManager.getProposalStore();
     try {
