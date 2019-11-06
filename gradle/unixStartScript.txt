@@ -87,7 +87,12 @@ case "`uname`" in
     ;;
 esac
 
-CLASSPATH=$classpath
+for file in `ls \$APP_HOME/lib`
+do
+    CLASSPATH='\$APP_HOME'/lib/\$file:\$CLASSPATH
+done
+
+#CLASSPATH=$classpath
 
 # Determine the Java command to use to start the JVM.
 if [ -n "\$JAVA_HOME" ] ; then
