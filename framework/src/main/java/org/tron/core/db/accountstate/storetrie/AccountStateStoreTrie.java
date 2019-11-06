@@ -36,16 +36,16 @@ public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> i
     return getAccount(key, trieService.getFullAccountStateRootHash());
   }
 
-  public AccountStateEntity getSolidityAccount(byte[] key) {
-    return getAccount(key, trieService.getSolidityAccountStateRootHash());
-  }
-
   public AccountStateEntity getAccount(byte[] key, byte[] rootHash) {
     TrieImpl trie = new TrieImpl(this, rootHash);
     byte[] value = trie.get(RLP.encodeElement(key));
     return ArrayUtils.isEmpty(value) ? null : AccountStateEntity.parse(value);
   }
 
+  public AccountStateEntity getSolidityAccount(byte[] key) {
+    return getAccount(key, trieService.getSolidityAccountStateRootHash());
+  }
+  
   @Override
   public boolean isEmpty() {
     return super.size() <= 0;

@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.discover.table;
 
 import java.util.ArrayList;
@@ -69,10 +70,6 @@ public class NodeBucket {
   }
 
   public List<NodeEntry> getNodes() {
-//        List<NodeEntry> nodes = new ArrayList<>();
-//        for (NodeEntry e : this.nodes) {
-//            nodes.add(e);
-//        }
     return nodes;
   }
 }

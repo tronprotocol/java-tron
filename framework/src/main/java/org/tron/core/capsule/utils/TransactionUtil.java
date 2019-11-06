@@ -41,13 +41,4 @@ public class TransactionUtil {
     return new TransactionCapsule(transferContract,
         Contract.ContractType.TransferContract).getInstance();
   }
-
-  /**
-   * Get sender.
-   */
- /* public static byte[] getSender(Transaction tx) {
-    byte[] pubKey = tx.getRawData().getVin(0).getRawData().getPubKey().toByteArray();
-    return ECKey.computeAddress(pubKey);
-  } */
-
 }

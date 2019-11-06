@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,12 +34,7 @@ public class ScanNoteByOvkServlet extends RateLimiterServlet {
               ovkDecryptParameters.getOvk().toByteArray());
       response.getWriter().println(ScanNoteByIvkServlet.convertOutput(notes, visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 
@@ -54,12 +48,7 @@ public class ScanNoteByOvkServlet extends RateLimiterServlet {
           .scanNoteByOvk(startBlockIndex, endBlockIndex, ByteArray.fromHexString(ovk));
       response.getWriter().println(ScanNoteByIvkServlet.convertOutput(notes, visible));
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 }

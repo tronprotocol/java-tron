@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Value;
+import org.tron.core.db.ByteArrayWrapper;
 
 /**
  * Recursive Length Prefix (RLP) encoding. <p> The purpose of RLP is to encode arbitrarily nested
