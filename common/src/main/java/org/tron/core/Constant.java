@@ -237,5 +237,5 @@ public class Constant {
   public static final String STORAGE_BACKUP_ENABLE = "storage.backup.enable";
   public static final String STORAGE_BACKUP_PROP_PATH = "storage.backup.propPath";
 
-  public static final String ACTUATOR_WHITELIST = "actuator.list";
+  public static final String ACTUATOR_WHITELIST = "actuator.whitelist";
 }
