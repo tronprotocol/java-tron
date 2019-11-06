@@ -159,8 +159,8 @@ public class SyncService {
           throw new P2pException(TypeEnum.SYNC_FAILED,
               "can't find blockId: " + beginBlockId.getString());
         }
-        highNoFork =  ((LinkedList<BlockId>)forkList).peekLast().getNum();
-        ((LinkedList)forkList).pollLast();
+        highNoFork = ((LinkedList<BlockId>) forkList).peekLast().getNum();
+        ((LinkedList) forkList).pollLast();
         Collections.reverse(forkList);
         high = highNoFork + forkList.size();
       }
