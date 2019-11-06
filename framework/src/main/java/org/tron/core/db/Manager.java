@@ -1571,6 +1571,11 @@ public class Manager {
       delegationService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
           getDynamicPropertiesStore().getWitnessPayPerBlock());
       delegationService.payStandbyWitness();
+    } else {
+      byte[] witness = block.getWitnessAddress().toByteArray();
+      AccountCapsule account = getAccountStore().get(witness);
+      account.setAllowance(account.getAllowance() + dynamicPropertiesStore.getWitnessPayPerBlock());
+      getAccountStore().put(account.createDbKey(), account);
     }
   }
 

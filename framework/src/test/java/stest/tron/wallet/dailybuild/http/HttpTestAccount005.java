@@ -2,8 +2,6 @@ package stest.tron.wallet.dailybuild.http;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import org.spongycastle.util.encoders.Base64;
-import org.tron.common.utils.ByteUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -11,6 +9,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Utils;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.HttpMethed;
@@ -38,7 +37,8 @@ public class HttpTestAccount005 {
   public void test01TransferWithNotes() {
     PublicMethed.printAddress(toAddressKey);
     //Send trx to test account
-    String txid = HttpMethed.sendCoin(httpnode, fromAddress, toAddress, amount, sendText, testKey002);
+    String txid = HttpMethed
+        .sendCoin(httpnode, fromAddress, toAddress, amount, sendText, testKey002);
     HttpMethed.waitToProduceOneBlock(httpnode);
     HttpResponse response = HttpMethed.getTransactionById(httpnode, txid);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -47,8 +47,8 @@ public class HttpTestAccount005 {
     JSONObject rawDataObject = JSON.parseObject(rawData);
     Assert.assertTrue(rawDataObject.containsKey("data"));
     String hexData = rawDataObject.getString("data");
-    String recoveredString  = new String(ByteUtil.hexToBytes(hexData));
-    Assert.assertEquals(sendText,recoveredString);
+    String recoveredString = new String(ByteUtil.hexToBytes(hexData));
+    Assert.assertEquals(sendText, recoveredString);
   }
 
   /**
