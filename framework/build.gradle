@@ -4,7 +4,7 @@ plugins {
 
 apply plugin: 'application'
 apply plugin: 'checkstyle'
-apply plugin: 'com.github.johnrengelman.shadow'
+//apply plugin: 'com.github.johnrengelman.shadow'
 
 mainClassName = 'org.tron.program.FullNode'
 
@@ -133,12 +133,6 @@ run {
     }
 }
 
-shadowJar {
-    baseName = 'java-tron'
-    classifier = null
-    version = null
-}
-
 test {
     testLogging {
         exceptionFormat = 'full'
@@ -214,10 +208,58 @@ def binaryRelease(taskName, jarName, mainClass) {
         }
     }
 }
-
-artifacts {
-    archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
-            binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
-            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))
+startScripts {
+    doLast {
+        delete unixScript
+    }
 }
+def createScript(project, mainClass, name) {
+    project.tasks.create(name: name, type: CreateStartScripts) {
+        unixStartScriptGenerator.template = resources.text.fromFile('../gradle/unixStartScript.txt')
+        windowsStartScriptGenerator.template = resources.text.fromFile('../gradle/windowsStartScript.txt')
+        outputDir       = new File(project.buildDir, 'scripts')
+        mainClassName   = mainClass
+        applicationName = name
+        classpath       = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime
+        defaultJvmOpts = ['-XX:+UseConcMarkSweepGC',
+                          '-XX:+PrintGCDetails',
+                          '-Xloggc:./gc.log',
+                          '-XX:+PrintGCDateStamps',
+                          '-XX:+CMSParallelRemarkEnabled',
+                          '-XX:ReservedCodeCacheSize=256m',
+                          '-XX:+CMSScavengeBeforeRemark'
+        ]
+    }
+    project.tasks[name].dependsOn(project.jar)
+    project.applicationDistribution.with {
+        into("bin") {
+            from(project.tasks[name])
+            fileMode = 0755
+        }
+    }
+}
+
+//distZip {
+//    doLast {
+//        file("$destinationDir/$archiveName").renameTo("$destinationDir/"+'java-tron-'+version+'-bin.zip')
+//    }
+//}
+configurations.archives.artifacts.removeAll {it.type == 'tar'}
+applicationName = 'java-tron'
+startScripts.enabled = false
+run.enabled = false
+tasks.distTar.enabled = false
+
+createScript(project, 'org.tron.program.SolidityNode', 'SolidityNode')
+createScript(project, 'org.tron.program.FullNode', 'FullNode')
+createScript(project, 'org.tron.program.KeystoreFactory', 'KeystoreFactory')
+createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
+
+
+task copyToParent(type: Copy) {
+    into "../build/distributions"
+    from "$buildDir/distributions"
+    include "*.zip"
+}
+
+build.finalizedBy(copyToParent)

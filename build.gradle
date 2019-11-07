@@ -1,17 +1,15 @@
 allprojects {
-    apply plugin: "java"
+    version = "1.0.0"
 }
 
 subprojects {
+    apply plugin: "java"
     apply plugin: "jacoco"
     apply plugin: "maven"
     apply plugin: "maven-publish"
 
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
-
-    group 'tronprotocol'
-    version '1.0.0'
 
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
@@ -23,7 +21,7 @@ subprojects {
         }
         dependencies {
             classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
-            classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
+//            classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
         }
     }
 
@@ -57,16 +55,7 @@ subprojects {
     }
 
     artifacts {
-        archives jar
+//        archives jar
         archives sourcesJar
     }
 }
-
-task copyToParent(type: Copy) {
-    into "$buildDir/libs"
-    subprojects {
-        from tasks.withType(Jar)
-    }
-}
-
-build.finalizedBy(copyToParent)
