@@ -82,6 +82,14 @@ public class MessageQueue {
     this.channel = channel;
   }
 
+  public void fastSend(Message msg) {
+    ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
+      if (!future.isSuccess() && !channel.isDisconnect()) {
+        logger.error("Fast send to {} failed, {}", ctx.channel().remoteAddress(), msg);
+      }
+    });
+  }
+
   public boolean sendMessage(Message msg) {
     long now = System.currentTimeMillis();
     if (msg instanceof PingMessage) {
