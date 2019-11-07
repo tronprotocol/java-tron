@@ -22,7 +22,6 @@ import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
-import org.tron.core.db2.core.ISession;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
