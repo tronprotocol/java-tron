@@ -55,7 +55,7 @@ subprojects {
     }
 
     artifacts {
-        archives jar
+//        archives jar
         archives sourcesJar
     }
 }
