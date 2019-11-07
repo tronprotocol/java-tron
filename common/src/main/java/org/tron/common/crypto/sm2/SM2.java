@@ -4,31 +4,32 @@ import org.spongycastle.asn1.ASN1InputStream;
 import org.spongycastle.asn1.ASN1Integer;
 import org.spongycastle.asn1.DLSequence;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
+import org.spongycastle.crypto.CipherParameters;
 import org.spongycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.crypto.generators.ECKeyPairGenerator;
-import org.spongycastle.crypto.params.ECDomainParameters;
-import org.spongycastle.crypto.params.ECKeyGenerationParameters;
-import org.spongycastle.crypto.params.ECPrivateKeyParameters;
-import org.spongycastle.crypto.params.ECPublicKeyParameters;
-import org.spongycastle.crypto.signers.ECDSASigner;
-import org.spongycastle.crypto.signers.HMacDSAKCalculator;
-import org.spongycastle.crypto.signers.SM2Signer;
+import org.spongycastle.crypto.params.*;
+import org.spongycastle.crypto.signers.*;
 import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
-import org.spongycastle.math.ec.ECCurve;
-import org.spongycastle.math.ec.ECPoint;
+import org.spongycastle.jce.spec.ECParameterSpec;
+import org.spongycastle.jce.spec.ECPrivateKeySpec;
+import org.spongycastle.math.ec.*;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.ECSignatureFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.ByteUtil;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.security.*;
+import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
 
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
@@ -45,8 +46,10 @@ public class SM2 {
     private static BigInteger SM2_GX = new BigInteger("32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7", 16);
     private static BigInteger SM2_GY = new BigInteger("BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0", 16);
 
-    private static ECDomainParameters ecc_spec;
+    private static ECDomainParameters ecc_param;
+    private static ECParameterSpec ecc_spec;
     private static ECCurve.Fp curve;
+    private static ECPoint ecc_point_g;
 
     private static final SecureRandom secureRandom;
 
@@ -55,18 +58,19 @@ public class SM2 {
     static {
         secureRandom = new SecureRandom();
         curve = new ECCurve.Fp(SM2_P, SM2_A, SM2_B);
-        ECPoint ecc_point_g = curve.createPoint(SM2_GX, SM2_GY);
-        ecc_spec = new ECDomainParameters(curve, ecc_point_g, SM2_N);
+        ecc_point_g = curve.createPoint(SM2_GX, SM2_GY);
+        ecc_param = new ECDomainParameters(curve, ecc_point_g, SM2_N);
+        ecc_spec = new ECParameterSpec(curve, ecc_point_g, SM2_N);
     }
 
     protected final ECPoint pub;
 
     private final PrivateKey privKey;
 
-    // this provider will be used when selecting a Signature instance
-    // https://docs.oracle.com/javase/8/docs/technotes/guides/security
-    // /SunProviders.html
-    private final Provider provider;
+    private SM2KeyPair keyPair;
+
+//    private final DSAKCalculator kCalculator = new RandomDSAKCalculator();
+//    private byte[] userID;
 
     public SM2() {
         this(secureRandom);
@@ -83,35 +87,154 @@ public class SM2 {
      *
      * <p>All private key operations will use the provider.
      */
-    public SM2(Provider provider, SecureRandom secureRandom) {
-        this.provider = provider;
+    public SM2(SecureRandom secureRandom) {
 
-        final KeyPairGenerator keyPairGen = org.tron.common.crypto.jce.ECKeyPairGenerator.getInstance(provider, secureRandom);
-        final KeyPair keyPair = keyPairGen.generateKeyPair();
+        ECKeyGenerationParameters ecKeyGenerationParameters = new ECKeyGenerationParameters(ecc_param, secureRandom);
+        ECKeyPairGenerator keyPairGenerator = new ECKeyPairGenerator();
+        keyPairGenerator.init(ecKeyGenerationParameters);
+        AsymmetricCipherKeyPair kp = keyPairGenerator.generateKeyPair();
+        ECPrivateKeyParameters ecpriv = (ECPrivateKeyParameters) kp.getPrivate();
+        ECPublicKeyParameters ecpub = (ECPublicKeyParameters) kp.getPublic();
 
-        this.privKey = keyPair.getPrivate();
+        BigInteger privateKey = ecpriv.getD();
+        this.privKey = privateKeyFromBigInteger(privateKey);
+        this.pub = ecpub.getQ();
+        this.keyPair = new SM2KeyPair(pub.getEncoded(false),privateKey.toByteArray());
 
-        final PublicKey pubKey = keyPair.getPublic();
-        if (pubKey instanceof BCECPublicKey) {
-            pub = ((BCECPublicKey) pubKey).getQ();
-        } else if (pubKey instanceof ECPublicKey) {
-            pub = extractPublicKey((ECPublicKey) pubKey);
-        } else {
-            throw new AssertionError(
-                    "Expected Provider " + provider.getName()
-                            + " to produce a subtype of ECPublicKey, found "
-                            + pubKey.getClass());
-        }
+//        CipherParameters privateKeyParameters = new ECPrivateKeyParameters(privateKey, ecc_param);
+//        CipherParameters baseParam;
+//
+//        if (privateKeyParameters instanceof ParametersWithID)
+//        {
+//            baseParam = ((ParametersWithID)privateKeyParameters).getParameters();
+//            userID = ((ParametersWithID)privateKeyParameters).getID();
+//        }
+//        else
+//        {
+//            baseParam = privateKeyParameters;
+//            userID = new byte[0];
+//        }
+//        this.kCalculator.init(SM2_N, secureRandom);
+    }
+
+
+//    /**
+//     * Pair a private key with a public EC point.
+//     *
+//     * <p>All private key operations will use the provider.
+//     */
+//
+//    public SM2(@Nullable PrivateKey privKey, ECPoint pub) {
+//
+//        if (privKey == null || isECPrivateKey(privKey)) {
+//            this.privKey = privKey;
+//        } else {
+//            throw new IllegalArgumentException(
+//                    "Expected EC private key, given a private key object with" +
+//                            " class "
+//                            + privKey.getClass().toString() +
+//                            " and algorithm "
+//                            + privKey.getAlgorithm());
+//        }
+//
+//        if (pub == null) {
+//            throw new IllegalArgumentException("Public key may not be null");
+//        } else {
+//            this.pub = pub;
+//        }
+//    }
+
+    /**
+     * Pair a private key integer with a public EC point
+     *
+     */
+    public SM2(@Nullable BigInteger priv, ECPoint pub) {
+
+        this.privKey = privateKeyFromBigInteger(priv);
+        this.pub = pub;
+        this.keyPair = new SM2KeyPair(pub.getEncoded(false), priv.toByteArray());
+
     }
 
     /**
-     * Generates an entirely new keypair with the given {@link SecureRandom} object. <p> BouncyCastle
-     * will be used as the Java Security Provider
+     * Convert a BigInteger into a PrivateKey object
      *
-     * @param secureRandom -
+     * @param priv
+     * @return
      */
-    public SM2(SecureRandom secureRandom) {
-        this(TronCastleProvider.getInstance(), secureRandom);
+    private static PrivateKey privateKeyFromBigInteger(BigInteger priv) {
+        if (priv == null) {
+            return null;
+        } else {
+            try {
+                return ECKeyFactory
+                        .getInstance(TronCastleProvider.getInstance())
+                        .generatePrivate(new ECPrivateKeySpec(priv,
+                                ecc_spec));
+            } catch (InvalidKeySpecException ex) {
+                throw new AssertionError("Assumed correct key spec statically");
+            }
+        }
+    }
+
+    /* Test if a generic private key is an EC private key
+     *
+     * it is not sufficient to check that privKey is a subtype of ECPrivateKey
+     * as the SunPKCS11 Provider will return a generic PrivateKey instance
+     * a fallback that covers this case is to check the key algorithm
+     */
+    private static boolean isECPrivateKey(PrivateKey privKey) {
+        return privKey instanceof ECPrivateKey || privKey.getAlgorithm()
+                .equals("EC");
+    }
+
+
+    /**
+     * Signs the given hash and returns the R and S components as BigIntegers and putData them in
+     * SM2Signature
+     *
+     * @param input to sign
+     * @return SM2Signature signature that contains the R and S components
+     */
+    public SM2.SM2Signature signHash(byte[] input) {
+        if (input.length != 32) {
+            throw new IllegalArgumentException("Expected 32 byte input to " +
+                    "SM2 signature, not " + input.length);
+        }
+        // No decryption of private key required.
+        SM2Signer signer = getSigner();
+        BigInteger[] componets =  signer.generateHashSignature(input);
+        return new SM2.SM2Signature(componets[0], componets[1]);
+    }
+
+
+    /**
+     * Signs the given hash and returns the R and S components as BigIntegers and putData them in
+     * SM2Signature
+     *
+     * @param msg to sign
+     * @return SM2Signature signature that contains the R and S components
+     */
+    public SM2.SM2Signature signMessage(byte[] msg) {
+        if (null == msg) {
+            throw new IllegalArgumentException("Expected 32 byte input to " +
+                    "SM2 signature, not " + msg.length);
+        }
+        // No decryption of private key required.
+        SM2Signer signer = getSigner();
+        BigInteger[] componets =  signer.generateSignature(msg);
+        return new SM2.SM2Signature(componets[0], componets[1]);
+    }
+
+    private SM2Signer getSigner() {
+        if (this.keyPair == null) {
+            throw new ECKey.MissingPrivateKeyException();
+        }
+        SM2Signer signer = new SM2Signer();
+        BigInteger d = byte2BigInteger(this.keyPair.getPrivatekey());
+        ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
+        signer.init(true,privateKeyParameters);
+        return signer;
     }
 
 
@@ -121,13 +244,15 @@ public class SM2 {
      * @return
      */
     public SM2KeyPair generateKeyPair() {
-        ECKeyGenerationParameters ecKeyGenerationParameters = new ECKeyGenerationParameters(ecc_spec, new SecureRandom());
+        ECKeyGenerationParameters ecKeyGenerationParameters = new ECKeyGenerationParameters(ecc_param, new SecureRandom());
         ECKeyPairGenerator keyPairGenerator = new ECKeyPairGenerator();
         keyPairGenerator.init(ecKeyGenerationParameters);
         AsymmetricCipherKeyPair kp = keyPairGenerator.generateKeyPair();
         ECPrivateKeyParameters ecpriv = (ECPrivateKeyParameters) kp.getPrivate();
         ECPublicKeyParameters ecpub = (ECPublicKeyParameters) kp.getPublic();
+
         BigInteger privateKey = ecpriv.getD();
+
         ECPoint publickey = ecpub.getQ();
 
         return new SM2KeyPair(publickey.getEncoded(false),privateKey.toByteArray());
@@ -191,7 +316,7 @@ public class SM2 {
        }
        SM2Signer signer = new SM2Signer();
        BigInteger d = byte2BigInteger(privateKey);
-       ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_spec);
+       ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
        signer.init(true,privateKeyParameters);
        return signer.generateSignature(msg);
     }
@@ -216,51 +341,10 @@ public class SM2 {
             throw new Exception("the length of plaintext is 0");
         }
         SM2Signer signer = new SM2Signer();
-        ECPublicKeyParameters ecPub = new ECPublicKeyParameters(byte2ECPoint(publicKey),ecc_spec);
+        ECPublicKeyParameters ecPub = new ECPublicKeyParameters(byte2ECPoint(publicKey),ecc_param);
         signer.init(false, ecPub);
         return signer.verifySignature(msg, signVaule[0], signVaule[1]);
     }
-
-    /**
-     * Signs the given hash and returns the R and S components as BigIntegers and putData them in
-     * SM2Signature
-     *
-     * @param input to sign
-     * @return SM2Signature signature that contains the R and S components
-     */
-    public SM2.SM2Signature doSign(byte[] input) {
-        if (input.length != 32) {
-            throw new IllegalArgumentException("Expected 32 byte input to " +
-                    "ECDSA signature, not " + input.length);
-        }
-        // No decryption of private key required.
-        if (privKey == null) {
-            throw new ECKey.MissingPrivateKeyException();
-        }
-        if (privKey instanceof BCECPrivateKey) {
-            ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new
-                    SHA256Digest()));
-            ECPrivateKeyParameters privKeyParams = new ECPrivateKeyParameters
-                    (((BCECPrivateKey) privKey).getD(), CURVE);
-            signer.init(true, privKeyParams);
-            BigInteger[] components = signer.generateSignature(input);
-            return new ECKey.ECDSASignature(components[0], components[1])
-                    .toCanonicalised();
-        } else {
-            try {
-                final Signature ecSig = ECSignatureFactory.getRawInstance
-                        (provider);
-                ecSig.initSign(privKey);
-                ecSig.update(input);
-                final byte[] derSignature = ecSig.sign();
-                return ECKey.ECDSASignature.decodeFromDER(derSignature)
-                        .toCanonicalised();
-            } catch (SignatureException | InvalidKeyException ex) {
-                throw new RuntimeException("ECKey signing error", ex);
-            }
-        }
-    }
-
 
     public static class SM2Signature {
 

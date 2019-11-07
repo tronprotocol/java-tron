@@ -4,12 +4,16 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.spongycastle.asn1.sec.SECNamedCurves;
+import org.spongycastle.jce.provider.BouncyCastleProvider;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2KeyPair;
 
 import java.math.BigInteger;
+import java.util.Enumeration;
 import java.util.Random;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
@@ -139,5 +143,17 @@ public class SM2Test {
             System.out.println(String.format("%s byte data expand the time %s:ms",testData[i],t2-t1));
         }
     }
+
+    @Test
+    public void scTest(){
+        //BouncyCastleProvider cp = new BouncyCastleProvider();
+        Set s = BouncyCastleProvider.CONFIGURATION.getAcceptableNamedCurves();
+        System.out.println(s);
+        Enumeration e =  SECNamedCurves.getNames();
+        while (e.hasMoreElements()) {
+            System.out.println(e.nextElement());
+        }
+    }
+
 
 }
