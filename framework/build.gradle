@@ -239,12 +239,12 @@ def createScript(project, mainClass, name) {
     }
 }
 
-distZip {
-    doLast {
-        file("$destinationDir/$archiveName").renameTo("$destinationDir/"+'java-tron-'+version+'-bin.zip')
-    }
-}
-configurations.archives.artifacts.removeAll {it.type == 'tar' || it.type == 'zip'}
+//distZip {
+//    doLast {
+//        file("$destinationDir/$archiveName").renameTo("$destinationDir/"+'java-tron-'+version+'-bin.zip')
+//    }
+//}
+configurations.archives.artifacts.removeAll {it.type == 'tar'}
 applicationName = 'java-tron'
 startScripts.enabled = false
 run.enabled = false
