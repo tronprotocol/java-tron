@@ -191,7 +191,7 @@ public class AdvService {
     }
 
     peers.forEach(peer -> {
-      peer.sendMessage(msg);
+      peer.fastSend(msg);
       peer.getAdvInvSpread().put(item, System.currentTimeMillis());
       peer.setFastForwardBlock(msg.getBlockId());
     });
@@ -314,8 +314,10 @@ public class AdvService {
         }
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
+          peer.fastSend(new InventoryMessage(value, key));
+        } else {
+          peer.sendMessage(new InventoryMessage(value, key));
         }
-        peer.sendMessage(new InventoryMessage(value, key));
       }));
     }
 
@@ -323,8 +325,10 @@ public class AdvService {
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
+          peer.fastSend(new FetchInvDataMessage(value, key));
+        } else {
+          peer.sendMessage(new FetchInvDataMessage(value, key));
         }
-        peer.sendMessage(new FetchInvDataMessage(value, key));
       }));
     }
   }

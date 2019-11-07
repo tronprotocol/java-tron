@@ -24,10 +24,12 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -502,6 +504,10 @@ public class Args {
   @Getter
   @Setter
   private long changedDelegation;
+
+  @Getter
+  @Setter
+  private Set<String> actuatorSet;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -1037,7 +1043,12 @@ public class Args {
       initRocksDbSettings(config);
     }
 
-    logConfig();
+      INSTANCE.actuatorSet =
+              config.hasPath(Constant.ACTUATOR_WHITELIST) ?
+                      new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
+                      : Collections.emptySet();
+
+      logConfig();
     initDBConfig(INSTANCE);
   }
 
@@ -1442,6 +1453,7 @@ public class Args {
     DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
+    DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
