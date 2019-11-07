@@ -21,7 +21,7 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 public class ExampleActuator extends AbstractActuator {
 
   public ExampleActuator() {
-    super(ContractType.AccountCreateContract, AccountContract.AccountCreateContract.class);
+    super(null, null);
     logger.info("ExampleActuator construct successfully.");
   }
 
