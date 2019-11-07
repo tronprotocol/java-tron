@@ -22,6 +22,7 @@ public class ExampleActuator extends AbstractActuator {
 
   public ExampleActuator() {
     super(ContractType.AccountCreateContract, AccountContract.AccountCreateContract.class);
+    logger.info("ExampleActuator construct successfully.");
   }
 
   @Override
