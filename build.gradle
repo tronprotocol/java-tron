@@ -1,15 +1,15 @@
+allprojects {
+    version = "1.0.0"
+}
+
 subprojects {
     apply plugin: "java"
-    apply plugin: "java-library"
     apply plugin: "jacoco"
     apply plugin: "maven"
     apply plugin: "maven-publish"
 
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
-
-    group 'com.github.tronprotocol'
-    version '1.0.0'
 
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
