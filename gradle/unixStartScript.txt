@@ -43,15 +43,19 @@ cd "\$SAVED" >/dev/null
 APP_NAME="${applicationName}"
 APP_BASE_NAME=`basename "\$0"`
 
-UNAME=\$(uname -s)
-if [ x"\$UNAME" == x"Linux" ];then
-    TOTAL=\$(cat /proc/meminfo  |grep MemTotal |awk -F ' ' '{print \$2}')
-    MEM=\$(echo "\$TOTAL/1024/1024*0.8" | bc |awk -F. '{print \$1"g"}')
-    JAVA_OPTS='"-Xmx\$MEM" "-Xms\$MEM"'
-fi
+#UNAME=\$(uname -s)
+#if [ x"\$UNAME" == x"Linux" ];then
+#    TOTAL=\$(cat /proc/meminfo  |grep MemTotal |awk -F ' ' '{print \$2}')
+#    MEM=\$(echo "\$TOTAL/1024/1024*0.8" | bc |awk -F. '{print \$1"g"}')
+#    JAVA_OPTS='"-Xmx\$MEM" "-Xms\$MEM"'
+#fi
 
 # Add default JVM options here. You can also use JAVA_OPTS and ${optsEnvironmentVar} to pass JVM options to this script.
 DEFAULT_JVM_OPTS=${defaultJvmOpts}
+for line in \$(cat \$APP_HOME/bin/java-tron.vmoptions)
+do
+    DEFAULT_JVM_OPTS="\$DEFAULT_JVM_OPTS \$line"
+done
 
 # Use the maximum available, or set MAX_FD != -1 to use that value.
 MAX_FD="maximum"
