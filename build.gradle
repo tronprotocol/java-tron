@@ -1,3 +1,8 @@
+allprojects {
+    version = "1.0.0"
+    apply plugin: "java"    
+}
+
 subprojects {
     apply plugin: "java"
     apply plugin: "jacoco"
@@ -20,7 +25,7 @@ subprojects {
         }
         dependencies {
             classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
-//            classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
+            classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
         }
     }
 
@@ -58,3 +63,12 @@ subprojects {
         archives sourcesJar
     }
 }
+
+task copyToParent(type: Copy) {
+    into "$buildDir/libs"
+    subprojects {
+        from tasks.withType(Jar)
+    }
+}
+
+build.finalizedBy(copyToParent) 
