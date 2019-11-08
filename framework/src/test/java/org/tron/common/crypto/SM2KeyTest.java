@@ -22,11 +22,10 @@ import org.tron.core.Wallet;
 @Slf4j
 public class SM2KeyTest {
 
-    private String privString = "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";
+    private String privString = "128B2FA8BD433C6C068C8D803DFF79792A519A55171B1B650C23661D15897263";
     private BigInteger privateKey = new BigInteger(privString, 16);
 
-    private String pubString = "040947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f698ccc"
-            + "8ad75aa17564ae80a20bb044ee7a6d903e8e8df624b089c95d66a0570f051e5a05b";
+    private String pubString = "040ae4c7798aa0f119471bee11825be46202bb79e2a5844495e97c04ff4df2548a7c0240f88f1cd4e16352a73c17b7f16f07353e53a176d684a9fe0c6bb798e857";
     private String compressedPubString =
             "030947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f6" + "98ccc8ad";
     private byte[] pubKey = Hex.decode(pubString);
@@ -46,11 +45,12 @@ public class SM2KeyTest {
         assertNotNull(key.getPrivKeyBytes());
         logger.info(Hex.toHexString(key.getPrivKeyBytes()) + " :Generated privkey");
         logger.info(Hex.toHexString(key.getPubKey()) + " :Generated pubkey");
+        logger.info("private key in bigInteger form: " + key.getPrivKey());
     }
 
     @Test
     public void testFromPrivateKey() {
-        ECKey key = ECKey.fromPrivate(privateKey);
+        SM2 key = SM2.fromPrivate(privateKey);
         assertTrue(key.isPubKeyCanonical());
         assertTrue(key.hasPrivKey());
         assertArrayEquals(pubKey, key.getPubKey());

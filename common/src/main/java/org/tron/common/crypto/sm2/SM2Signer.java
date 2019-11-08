@@ -22,8 +22,10 @@ import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.math.ec.FixedPointCombMultiplier;
 import org.spongycastle.util.BigIntegers;
 
+import javax.annotation.Nullable;
+
 public class SM2Signer
-        implements DSA, ECConstants
+        implements  ECConstants
 {
     private final DSAKCalculator kCalculator = new RandomDSAKCalculator();
 
@@ -79,15 +81,17 @@ public class SM2Signer
         curveLength = (ecParams.getCurve().getFieldSize() + 7) / 8;
     }
 
+
     /**
      * generate the signature for the message
      *
-     * @param message
+     * @param message  plaintext
+     * @param userID  user ID
      * @return
      */
-    public BigInteger[] generateSignature(byte[] message)
+    public BigInteger[] generateSignature(byte[] message, @Nullable String userID)
     {
-        byte[] eHash = generateSM3Hash(message);
+        byte[] eHash = generateSM3Hash(message,userID);
         return generateHashSignature(eHash);
     }
     /**
@@ -97,10 +101,12 @@ public class SM2Signer
      * @return
      */
 
-    public byte[] generateSM3Hash(byte[] message)
+    public byte[] generateSM3Hash(byte[] message,@Nullable String userID)
     {
+        if(userID != null) {
+            this.userID = userID.getBytes();
+        }
         SM3Digest digest = new SM3Digest();
-
         byte[] z = getZ(digest);
 
         digest.update(z, 0, z.length);
@@ -169,7 +175,7 @@ public class SM2Signer
      * @param s
      * @return
      */
-    public boolean verifySignature(byte[] message, BigInteger r, BigInteger s)
+    public boolean verifySignature(byte[] message, BigInteger r, BigInteger s, @Nullable String userID)
     {
         BigInteger n = ecParams.getN();
 
@@ -199,8 +205,10 @@ public class SM2Signer
 //
 //        // B3
 //        digest.doFinal(eHash, 0);
-
-        byte[] eHash = generateSM3Hash(message);
+        if(userID != null) {
+            this.userID = userID.getBytes();
+        }
+        byte[] eHash = generateSM3Hash(message,userID);
 
         // B4
         BigInteger e = calculateE(eHash);
@@ -272,6 +280,7 @@ public class SM2Signer
 
     private byte[] getZ(Digest digest)
     {
+
         addUserID(digest, userID);
 
         addFieldElement(digest, ecParams.getCurve().getA());

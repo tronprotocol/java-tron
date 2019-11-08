@@ -46,12 +46,19 @@ import static org.tron.common.utils.DecodeUtil.computeAddress;
  */
 @Slf4j(topic = "crypto")
 public class SM2 implements Serializable {
-    private static BigInteger SM2_N = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123", 16);
-    private static BigInteger SM2_P = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF", 16);
-    private static BigInteger SM2_A = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC", 16);
-    private static BigInteger SM2_B = new BigInteger("28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93", 16);
-    private static BigInteger SM2_GX = new BigInteger("32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7", 16);
-    private static BigInteger SM2_GY = new BigInteger("BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0", 16);
+//    private static BigInteger SM2_N = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123", 16);
+//    private static BigInteger SM2_P = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF", 16);
+//    private static BigInteger SM2_A = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC", 16);
+//    private static BigInteger SM2_B = new BigInteger("28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93", 16);
+//    private static BigInteger SM2_GX = new BigInteger("32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7", 16);
+//    private static BigInteger SM2_GY = new BigInteger("BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0", 16);
+
+    private static BigInteger SM2_N = new BigInteger("8542D69E4C044F18E8B92435BF6FF7DD297720630485628D5AE74EE7C32E79B7", 16);
+    private static BigInteger SM2_P = new BigInteger("8542D69E4C044F18E8B92435BF6FF7DE457283915C45517D722EDB8B08F1DFC3", 16);
+    private static BigInteger SM2_A = new BigInteger("787968B4FA32C3FD2417842E73BBFEFF2F3C848B6831D7E0EC65228B3937E498", 16);
+    private static BigInteger SM2_B = new BigInteger("63E4C6D3B23B0C849CF84241484BFE48F61D59A5B16BA06E6E12D1DA27C5249A", 16);
+    private static BigInteger SM2_GX = new BigInteger("421DEBD61B62EAB6746434EBC3CC315E32220B3BADD50BDC4C4E6C147FEDD43D", 16);
+    private static BigInteger SM2_GY = new BigInteger("0680512BCBB42C07D47349D2153B70C4E5D7FDFCBFA36EA1A85841B9E46E09A2", 16);
 
     private static ECDomainParameters ecc_param;
     private static ECParameterSpec ecc_spec;
@@ -499,18 +506,19 @@ public class SM2 implements Serializable {
      * Takes the message of data and returns the SM2 signature
      *
      * @param message -
+     * @param userID
      * @return -
      * @throws IllegalStateException if this ECKey does not have the private part.
      */
-    public SM2Signature signMessage(byte[] message) {
-        SM2Signature sig = signMsg(message);
+    public SM2Signature signMessage(byte[] message, @Nullable String userID) {
+        SM2Signature sig = signMsg(message, userID);
         // Now we have to work backwards to figure out the recId needed to
         // recover the signature.
         int recId = -1;
         byte[] thisKey = this.pub.getEncoded(/* compressed */ false);
 
         SM2Signer signer = getSigner();
-        byte[] messageHash = signer.generateSM3Hash(message);
+        byte[] messageHash = signer.generateSM3Hash(message, userID);
         for (int i = 0; i < 4; i++) {
             byte[] k = recoverPubBytesFromSignature(i, sig, messageHash);
             if (k != null && Arrays.equals(k, thisKey)) {
@@ -531,16 +539,17 @@ public class SM2 implements Serializable {
      * SM2Signature
      *
      * @param msg to sign
+     * @param userID
      * @return SM2Signature signature that contains the R and S components
      */
-    public SM2.SM2Signature signMsg(byte[] msg) {
+    public SM2.SM2Signature signMsg(byte[] msg,@Nullable String userID) {
         if (null == msg) {
             throw new IllegalArgumentException("Expected 32 byte input to " +
                     "SM2 signature, not " + msg.length);
         }
         // No decryption of private key required.
         SM2Signer signer = getSigner();
-        BigInteger[] componets =  signer.generateSignature(msg);
+        BigInteger[] componets =  signer.generateSignature(msg, userID);
         return new SM2.SM2Signature(componets[0], componets[1]);
     }
 
@@ -665,7 +674,7 @@ public class SM2 implements Serializable {
                 .getCurve().decodePoint(pub),ecc_param);
         signer.init(false, params);
         try {
-            return signer.verifySignature(data, signature.r, signature.s);
+            return signer.verifyHashSignature(data, signature.r, signature.s);
         } catch (NullPointerException npe) {
             // Bouncy Castle contains a bug that can cause NPEs given
             // specially crafted signatures.
@@ -686,6 +695,50 @@ public class SM2 implements Serializable {
      */
     public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
         return verify(data, SM2Signature.decodeFromDER(signature), pub);
+    }
+
+    /**
+     * <p>Verifies the given SM2 signature against the message bytes using the public key bytes.</p>
+     * <p> <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
+     * larger than 520 bytes.</p>
+     *
+     * @param msg the message data to verify.
+     * @param signature signature.
+     * @param pub The public key bytes to use.
+     * @return -
+     */
+    public static boolean verifyMessage(byte[] msg, SM2Signature signature,
+                                 byte[] pub, @Nullable String userID) {
+//        ECDSASigner signer = new ECDSASigner();
+//        ECPublicKeyParameters params = new ECPublicKeyParameters(ecc_param
+//                .getCurve().decodePoint(pub), ecc_param);
+//        signer.init(false, params);
+        SM2Signer signer = new SM2Signer();
+        ECPublicKeyParameters params = new ECPublicKeyParameters(ecc_param
+                .getCurve().decodePoint(pub),ecc_param);
+        signer.init(false, params);
+        try {
+            return signer.verifySignature(msg, signature.r, signature.s, userID);
+        } catch (NullPointerException npe) {
+            // Bouncy Castle contains a bug that can cause NPEs given
+            // specially crafted signatures.
+            // Those signatures are inherently invalid/attack sigs so we just
+            // fail them here rather than crash the thread.
+            logger.error("Caught NPE inside bouncy castle", npe);
+            return false;
+        }
+    }
+
+    /**
+     * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.
+     *
+     * @param msg the message data to verify.
+     * @param signature signature.
+     * @param pub The public key bytes to use.
+     * @return -
+     */
+    public static boolean verifyMessage(byte[] msg, byte[] signature, byte[] pub, @Nullable String userID) {
+        return verifyMessage(msg, SM2Signature.decodeFromDER(signature), pub, userID);
     }
 
 
@@ -1038,7 +1091,7 @@ public class SM2 implements Serializable {
        BigInteger d = byte2BigInteger(privateKey);
        ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
        signer.init(true,privateKeyParameters);
-       return signer.generateSignature(msg);
+       return signer.generateSignature(msg,null);
     }
 
     public boolean verify(byte[] publicKey, BigInteger[] signVaule, byte[] msg) throws Exception {
@@ -1063,7 +1116,7 @@ public class SM2 implements Serializable {
         SM2Signer signer = new SM2Signer();
         ECPublicKeyParameters ecPub = new ECPublicKeyParameters(byte2ECPoint(publicKey),ecc_param);
         signer.init(false, ecPub);
-        return signer.verifySignature(msg, signVaule[0], signVaule[1]);
+        return signer.verifySignature(msg, signVaule[0], signVaule[1],null);
     }
 
 
