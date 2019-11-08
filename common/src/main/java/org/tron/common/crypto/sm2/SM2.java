@@ -81,7 +81,7 @@ public class SM2 implements Serializable {
 
     private final PrivateKey privKey;
 
-    private final SM2KeyPair keyPair;
+//    private final SM2KeyPair keyPair;
 
     // Transient because it's calculated on demand.
     private transient byte[] pubKeyHash;
@@ -117,7 +117,7 @@ public class SM2 implements Serializable {
         BigInteger privateKey = ecpriv.getD();
         this.privKey = privateKeyFromBigInteger(privateKey);
         this.pub = ecpub.getQ();
-        this.keyPair = new SM2KeyPair(pub.getEncoded(false),privateKey.toByteArray());
+//        this.keyPair = new SM2KeyPair(pub.getEncoded(false),privateKey.toByteArray());
 
 //        CipherParameters privateKeyParameters = new ECPrivateKeyParameters(privateKey, ecc_param);
 //        CipherParameters baseParam;
@@ -136,42 +136,45 @@ public class SM2 implements Serializable {
     }
 
 
-//    /**
-//     * Pair a private key with a public EC point.
-//     *
-//     * <p>All private key operations will use the provider.
-//     */
-//
-//    public SM2(@Nullable PrivateKey privKey, ECPoint pub) {
-//
-//        if (privKey == null || isECPrivateKey(privKey)) {
-//            this.privKey = privKey;
-//        } else {
-//            throw new IllegalArgumentException(
-//                    "Expected EC private key, given a private key object with" +
-//                            " class "
-//                            + privKey.getClass().toString() +
-//                            " and algorithm "
-//                            + privKey.getAlgorithm());
-//        }
-//
-//        if (pub == null) {
-//            throw new IllegalArgumentException("Public key may not be null");
-//        } else {
-//            this.pub = pub;
-//        }
-//    }
+    /**
+     * Pair a private key with a public EC point.
+     *
+     * <p>All private key operations will use the provider.
+     */
+
+    public SM2(@Nullable PrivateKey privKey, ECPoint pub) {
+
+        if (privKey == null || isECPrivateKey(privKey)) {
+            this.privKey = privKey;
+        } else {
+            throw new IllegalArgumentException(
+                    "Expected EC private key, given a private key object with" +
+                            " class "
+                            + privKey.getClass().toString() +
+                            " and algorithm "
+                            + privKey.getAlgorithm());
+        }
+
+        if (pub == null) {
+            throw new IllegalArgumentException("Public key may not be null");
+        } else {
+            this.pub = pub;
+        }
+    }
 
     /**
      * Pair a private key integer with a public EC point
      *
      */
     public SM2(@Nullable BigInteger priv, ECPoint pub) {
+        this(
+                privateKeyFromBigInteger(priv),
+                pub
+        );
 
-        this.privKey = privateKeyFromBigInteger(priv);
-        this.pub = pub;
-        this.keyPair = new SM2KeyPair(pub.getEncoded(false), priv.toByteArray());
-
+//        this.privKey = privateKeyFromBigInteger(priv);
+//        this.pub = pub;
+//        this.keyPair = new SM2KeyPair(pub.getEncoded(false), priv.toByteArray());
     }
 
     /**
@@ -300,7 +303,7 @@ public class SM2 implements Serializable {
      * @return -
      */
     public static SM2 fromPublicOnly(ECPoint pub) {
-        return new SM2(null, pub);
+        return new SM2((PrivateKey) null, pub);
     }
 
     /**
@@ -311,7 +314,7 @@ public class SM2 implements Serializable {
      * @return -
      */
     public static SM2 fromPublicOnly(byte[] pub) {
-        return new SM2(null, ecc_param.getCurve().decodePoint(pub));
+        return new SM2((PrivateKey) null, ecc_param.getCurve().decodePoint(pub));
     }
 
     /**
@@ -554,11 +557,8 @@ public class SM2 implements Serializable {
     }
 
     private SM2Signer getSigner() {
-        if (this.keyPair == null) {
-            throw new ECKey.MissingPrivateKeyException();
-        }
         SM2Signer signer = new SM2Signer();
-        BigInteger d = byte2BigInteger(this.keyPair.getPrivatekey());
+        BigInteger d = getPrivKey();
         ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
         signer.init(true,privateKeyParameters);
         return signer;
@@ -812,7 +812,7 @@ public class SM2 implements Serializable {
         if (!pub.isCompressed()) {
             return this;
         } else {
-            return new SM2(byte2BigInteger(this.keyPair.getPrivatekey()), decompressPoint(pub));
+            return new SM2(this.privKey, decompressPoint(pub));
         }
     }
 
@@ -823,7 +823,7 @@ public class SM2 implements Serializable {
         if (pub.isCompressed()) {
             return this;
         } else {
-            return new SM2(byte2BigInteger(this.keyPair.getPrivatekey()), compressPoint(pub));
+            return new SM2(this.privKey, compressPoint(pub));
         }
     }
 
@@ -1011,113 +1011,113 @@ public class SM2 implements Serializable {
 
 
 
-    /**
-     * generate the key pair of SM2
-     *
-     * @return
-     */
-    public SM2KeyPair generateKeyPair() {
-        ECKeyGenerationParameters ecKeyGenerationParameters = new ECKeyGenerationParameters(ecc_param, new SecureRandom());
-        ECKeyPairGenerator keyPairGenerator = new ECKeyPairGenerator();
-        keyPairGenerator.init(ecKeyGenerationParameters);
-        AsymmetricCipherKeyPair kp = keyPairGenerator.generateKeyPair();
-        ECPrivateKeyParameters ecpriv = (ECPrivateKeyParameters) kp.getPrivate();
-        ECPublicKeyParameters ecpub = (ECPublicKeyParameters) kp.getPublic();
-
-        BigInteger privateKey = ecpriv.getD();
-
-        ECPoint publickey = ecpub.getQ();
-
-        return new SM2KeyPair(publickey.getEncoded(false),privateKey.toByteArray());
-    }
-
-    /**
-     * transfer byte array to BigInteger
-     *
-     * @param b byte array input
-     * @return output the big integer
-     */
-    public static BigInteger byte2BigInteger(byte[] b) {
-        if (b[0] < 0) {
-            byte[] tmp = new byte[b.length + 1];
-            tmp[0] = 0;
-            System.arraycopy(b, 0, tmp, 1, b.length);
-            return new BigInteger(tmp);
-        }
-        return new BigInteger(b);
-    }
-
-    /**
-     * transfer the byte array to ECPoint
-     *
-     * @param publicKey
-     * @return
-     */
-    public static ECPoint byte2ECPoint(byte[] publicKey) {
-        byte[] formatedPubKey;
-        if (publicKey.length == 64) {
-            formatedPubKey = new byte[55];
-            formatedPubKey[0] = 0x04;
-            System.arraycopy(publicKey,0,formatedPubKey,1,publicKey.length);
-        } else {
-            formatedPubKey = publicKey;
-        }
-        ECPoint userKey = curve.decodePoint(formatedPubKey);
-        return userKey;
-    }
-
-    /**
-     * generate the signature
-     *
-     * @param privateKey
-     * @param msg
-     * @return output the signature r and s
-     * @throws Exception
-     */
-    public BigInteger[] sign(byte[] privateKey, byte[] msg) throws Exception {
-       if (null == privateKey) {
-           throw new Exception("private key is null");
-       }
-       if (privateKey.length == 0) {
-           throw new Exception("the length of private is 0");
-       }
-       if (null == msg) {
-           throw new Exception("plaintext is null");
-       }
-       if (msg.length == 0) {
-           throw new Exception("the length of plaintext is 0");
-       }
-       SM2Signer signer = new SM2Signer();
-       BigInteger d = byte2BigInteger(privateKey);
-       ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
-       signer.init(true,privateKeyParameters);
-       return signer.generateSignature(msg,null);
-    }
-
-    public boolean verify(byte[] publicKey, BigInteger[] signVaule, byte[] msg) throws Exception {
-        if (null == publicKey) {
-            throw new Exception("public key is null");
-        }
-        if (publicKey.length == 0) {
-            throw new Exception("the length of public key is 0");
-        }
-        if (null == signVaule) {
-            throw new Exception("signValue is null");
-        }
-        if (signVaule.length != 2) {
-            throw new Exception("length of signValue is not 2");
-        }
-        if (null == msg) {
-            throw new Exception("plaintext is null");
-        }
-        if (msg.length == 0) {
-            throw new Exception("the length of plaintext is 0");
-        }
-        SM2Signer signer = new SM2Signer();
-        ECPublicKeyParameters ecPub = new ECPublicKeyParameters(byte2ECPoint(publicKey),ecc_param);
-        signer.init(false, ecPub);
-        return signer.verifySignature(msg, signVaule[0], signVaule[1],null);
-    }
+//    /**
+//     * generate the key pair of SM2
+//     *
+//     * @return
+//     */
+//    public SM2KeyPair generateKeyPair() {
+//        ECKeyGenerationParameters ecKeyGenerationParameters = new ECKeyGenerationParameters(ecc_param, new SecureRandom());
+//        ECKeyPairGenerator keyPairGenerator = new ECKeyPairGenerator();
+//        keyPairGenerator.init(ecKeyGenerationParameters);
+//        AsymmetricCipherKeyPair kp = keyPairGenerator.generateKeyPair();
+//        ECPrivateKeyParameters ecpriv = (ECPrivateKeyParameters) kp.getPrivate();
+//        ECPublicKeyParameters ecpub = (ECPublicKeyParameters) kp.getPublic();
+//
+//        BigInteger privateKey = ecpriv.getD();
+//
+//        ECPoint publickey = ecpub.getQ();
+//
+//        return new SM2KeyPair(publickey.getEncoded(false),privateKey.toByteArray());
+//    }
+//
+//    /**
+//     * transfer byte array to BigInteger
+//     *
+//     * @param b byte array input
+//     * @return output the big integer
+//     */
+//    public static BigInteger byte2BigInteger(byte[] b) {
+//        if (b[0] < 0) {
+//            byte[] tmp = new byte[b.length + 1];
+//            tmp[0] = 0;
+//            System.arraycopy(b, 0, tmp, 1, b.length);
+//            return new BigInteger(tmp);
+//        }
+//        return new BigInteger(b);
+//    }
+//
+//    /**
+//     * transfer the byte array to ECPoint
+//     *
+//     * @param publicKey
+//     * @return
+//     */
+//    public static ECPoint byte2ECPoint(byte[] publicKey) {
+//        byte[] formatedPubKey;
+//        if (publicKey.length == 64) {
+//            formatedPubKey = new byte[55];
+//            formatedPubKey[0] = 0x04;
+//            System.arraycopy(publicKey,0,formatedPubKey,1,publicKey.length);
+//        } else {
+//            formatedPubKey = publicKey;
+//        }
+//        ECPoint userKey = curve.decodePoint(formatedPubKey);
+//        return userKey;
+//    }
+//
+//    /**
+//     * generate the signature
+//     *
+//     * @param privateKey
+//     * @param msg
+//     * @return output the signature r and s
+//     * @throws Exception
+//     */
+//    public BigInteger[] sign(byte[] privateKey, byte[] msg) throws Exception {
+//       if (null == privateKey) {
+//           throw new Exception("private key is null");
+//       }
+//       if (privateKey.length == 0) {
+//           throw new Exception("the length of private is 0");
+//       }
+//       if (null == msg) {
+//           throw new Exception("plaintext is null");
+//       }
+//       if (msg.length == 0) {
+//           throw new Exception("the length of plaintext is 0");
+//       }
+//       SM2Signer signer = new SM2Signer();
+//       BigInteger d = byte2BigInteger(privateKey);
+//       ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
+//       signer.init(true,privateKeyParameters);
+//       return signer.generateSignature(msg,null);
+//    }
+//
+//    public boolean verify(byte[] publicKey, BigInteger[] signVaule, byte[] msg) throws Exception {
+//        if (null == publicKey) {
+//            throw new Exception("public key is null");
+//        }
+//        if (publicKey.length == 0) {
+//            throw new Exception("the length of public key is 0");
+//        }
+//        if (null == signVaule) {
+//            throw new Exception("signValue is null");
+//        }
+//        if (signVaule.length != 2) {
+//            throw new Exception("length of signValue is not 2");
+//        }
+//        if (null == msg) {
+//            throw new Exception("plaintext is null");
+//        }
+//        if (msg.length == 0) {
+//            throw new Exception("the length of plaintext is 0");
+//        }
+//        SM2Signer signer = new SM2Signer();
+//        ECPublicKeyParameters ecPub = new ECPublicKeyParameters(byte2ECPoint(publicKey),ecc_param);
+//        signer.init(false, ecPub);
+//        return signer.verifySignature(msg, signVaule[0], signVaule[1],null);
+//    }
 
 
 
