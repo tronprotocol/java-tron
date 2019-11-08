@@ -44,15 +44,11 @@ dependencies {
 
     testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
 
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
-
     compile "com.madgag.spongycastle:core:1.58.0.0"
     compile "com.madgag.spongycastle:prov:1.58.0.0"
 
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
 
-
-    compile "com.cedarsoftware:java-util:1.8.0"
 
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
 
@@ -208,11 +204,7 @@ def binaryRelease(taskName, jarName, mainClass) {
         }
     }
 }
-startScripts {
-    doLast {
-        delete unixScript
-    }
-}
+
 def createScript(project, mainClass, name) {
     project.tasks.create(name: name, type: CreateStartScripts) {
         unixStartScriptGenerator.template = resources.text.fromFile('../gradle/unixStartScript.txt')
@@ -221,14 +213,14 @@ def createScript(project, mainClass, name) {
         mainClassName   = mainClass
         applicationName = name
         classpath       = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime
-        defaultJvmOpts = ['-XX:+UseConcMarkSweepGC',
-                          '-XX:+PrintGCDetails',
-                          '-Xloggc:./gc.log',
-                          '-XX:+PrintGCDateStamps',
-                          '-XX:+CMSParallelRemarkEnabled',
-                          '-XX:ReservedCodeCacheSize=256m',
-                          '-XX:+CMSScavengeBeforeRemark'
-        ]
+//        defaultJvmOpts = ['-XX:+UseConcMarkSweepGC',
+//                          '-XX:+PrintGCDetails',
+//                          '-Xloggc:./gc.log',
+//                          '-XX:+PrintGCDateStamps',
+//                          '-XX:+CMSParallelRemarkEnabled',
+//                          '-XX:ReservedCodeCacheSize=256m',
+//                          '-XX:+CMSScavengeBeforeRemark'
+//        ]
     }
     project.tasks[name].dependsOn(project.jar)
     project.applicationDistribution.with {
@@ -238,7 +230,9 @@ def createScript(project, mainClass, name) {
         }
     }
 }
-
+applicationDistribution.from("../gradle/java-tron.vmoptions") {
+    into "bin"
+}
 //distZip {
 //    doLast {
 //        file("$destinationDir/$archiveName").renameTo("$destinationDir/"+'java-tron-'+version+'-bin.zip')

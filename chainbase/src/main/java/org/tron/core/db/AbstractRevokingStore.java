@@ -28,8 +28,8 @@ import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.db.common.SourceInter;
+import org.tron.core.db2.ISession;
 import org.tron.core.db2.common.IRevokingDB;
-import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
