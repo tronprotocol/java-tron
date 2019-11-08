@@ -33,16 +33,13 @@ import org.tron.protos.Protocol.Transaction;
 @Component
 public class FetchInvDataMsgHandler implements TronMsgHandler {
 
+  private static final int MAX_SIZE = 1_000_000;
   @Autowired
   private TronNetDelegate tronNetDelegate;
-
   @Autowired
   private SyncService syncService;
-
   @Autowired
   private AdvService advService;
-
-  private static final int MAX_SIZE = 1_000_000;
 
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {

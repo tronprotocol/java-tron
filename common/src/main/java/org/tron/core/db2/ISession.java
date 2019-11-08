@@ -1,4 +1,4 @@
-package org.tron.core.db2.core;
+package org.tron.core.db2;
 
 public interface ISession extends AutoCloseable {
 

@@ -108,6 +108,10 @@ public class PeerConnection extends Channel {
     msgQueue.sendMessage(message);
   }
 
+  public void fastSend(Message message) {
+    msgQueue.fastSend(message);
+  }
+
   public void onConnect() {
     if (getHelloMessage().getHeadBlockId().getNum() > tronNetDelegate.getHeadBlockId().getNum()) {
       setTronState(TronState.SYNCING);
