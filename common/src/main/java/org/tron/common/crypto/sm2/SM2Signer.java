@@ -87,6 +87,18 @@ public class SM2Signer
      */
     public BigInteger[] generateSignature(byte[] message)
     {
+        byte[] eHash = generateSM3Hash(message);
+        return generateHashSignature(eHash);
+    }
+    /**
+     * generate the signature for the message
+     *
+     * @param message
+     * @return
+     */
+
+    public byte[] generateSM3Hash(byte[] message)
+    {
         SM3Digest digest = new SM3Digest();
 
         byte[] z = getZ(digest);
@@ -97,7 +109,7 @@ public class SM2Signer
         byte[] eHash = new byte[digest.getDigestSize()];
 
         digest.doFinal(eHash, 0);
-        return generateHashSignature(eHash);
+        return eHash;
     }
 
     /**
@@ -149,7 +161,14 @@ public class SM2Signer
         return new BigInteger[]{ r, s };
     }
 
-
+    /**
+     * verify the message signature
+     *
+      * @param message
+     * @param r
+     * @param s
+     * @return
+     */
     public boolean verifySignature(byte[] message, BigInteger r, BigInteger s)
     {
         BigInteger n = ecParams.getN();
@@ -169,20 +188,70 @@ public class SM2Signer
 
         ECPoint q = ((ECPublicKeyParameters)ecKey).getQ();
 
-        SM3Digest digest = new SM3Digest();
+//        SM3Digest digest = new SM3Digest();
+//
+//        byte[] z = getZ(digest);
+//
+//        digest.update(z, 0, z.length);
+//        digest.update(message, 0, message.length);
+//
+//        byte[] eHash = new byte[digest.getDigestSize()];
+//
+//        // B3
+//        digest.doFinal(eHash, 0);
 
-        byte[] z = getZ(digest);
-
-        digest.update(z, 0, z.length);
-        digest.update(message, 0, message.length);
-
-        byte[] eHash = new byte[digest.getDigestSize()];
-
-        // B3
-        digest.doFinal(eHash, 0);
+        byte[] eHash = generateSM3Hash(message);
 
         // B4
         BigInteger e = calculateE(eHash);
+
+        // B5
+        BigInteger t = r.add(s).mod(n);
+        if (t.equals(ZERO))
+        {
+            return false;
+        }
+        else
+        {
+            // B6
+            ECPoint x1y1 = ecParams.getG().multiply(s);
+            x1y1 = x1y1.add(q.multiply(t)).normalize();
+
+            // B7
+            return r.equals(e.add(x1y1.getAffineXCoord().toBigInteger()).mod(n));
+        }
+    }
+
+    /**
+     * verfify the hash signature
+     *
+     * @param hash
+     * @param r
+     * @param s
+     * @return
+     */
+    public boolean verifyHashSignature(byte[] hash, BigInteger r, BigInteger s)
+    {
+        BigInteger n = ecParams.getN();
+
+        // 5.3.1 Draft RFC:  SM2 Public Key Algorithms
+        // B1
+        if (r.compareTo(ONE) < 0 || r.compareTo(n) >= 0)
+        {
+            return false;
+        }
+
+        // B2
+        if (s.compareTo(ONE) < 0 || s.compareTo(n) >= 0)
+        {
+            return false;
+        }
+
+        ECPoint q = ((ECPublicKeyParameters)ecKey).getQ();
+
+
+        // B4
+        BigInteger e = calculateE(hash);
 
         // B5
         BigInteger t = r.add(s).mod(n);

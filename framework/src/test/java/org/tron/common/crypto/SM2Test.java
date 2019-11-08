@@ -110,25 +110,25 @@ public class SM2Test {
         }
     }
 
-    @Test
-    public void invalidParamVerify() {
-        byte[] testData = null;
-        byte[] zeroData = new byte[0];
-        byte[] publicKey = sm2KeyPair.getPublickey();
-
-        try {
-            sm2.verify(null, null, null);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            assertEquals("public key is null", e.getMessage());
-        }
-        try {
-            sm2.verify(publicKey, null, null);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            assertEquals("signValue is null", e.getMessage());
-        }
-    }
+//    @Test
+//    public void invalidParamVerify() {
+//        byte[] testData = null;
+//        byte[] zeroData = new byte[0];
+//        byte[] publicKey = sm2KeyPair.getPublickey();
+//
+//        try {
+//            sm2.verify(null, null, null);
+//        } catch (Exception e) {
+//            System.out.println(e.getMessage());
+//            assertEquals("public key is null", e.getMessage());
+//        }
+//        try {
+//            sm2.verify(publicKey, null, null);
+//        } catch (Exception e) {
+//            System.out.println(e.getMessage());
+//            assertEquals("signValue is null", e.getMessage());
+//        }
+//    }
     @Test
     public void diffSizeDataSignWithVerity() throws Exception {
         int[] testData = {1, 16, 32, 64, 128, 256, 512, 1024, 2048, 1048576, 2097152};
