@@ -30,7 +30,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
       jsonObject.put("value", input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
-      byte[] address = wallet.createAdresss(build.getValue().toByteArray());
+      byte[] address = wallet.createAddress(build.getValue().toByteArray());
       String base58check = Wallet.encode58Check(address);
       String hexString = ByteArray.toHexString(address);
       JSONObject jsonAddress = new JSONObject();
@@ -60,7 +60,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
       }
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
-      byte[] address = wallet.createAdresss(build.getValue().toByteArray());
+      byte[] address = wallet.createAddress(build.getValue().toByteArray());
       String base58check = Wallet.encode58Check(address);
       String hexString = ByteArray.toHexString(address);
       JSONObject jsonAddress = new JSONObject();
