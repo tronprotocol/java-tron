@@ -2360,7 +2360,6 @@ public class Wallet {
     if (!Args.getInstance().isSupportConstant()) {
       throw new ContractValidateException("this node does not support constant");
     }
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
     Block headBlock;
     List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore()

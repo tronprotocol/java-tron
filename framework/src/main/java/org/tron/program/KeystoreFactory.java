@@ -19,6 +19,7 @@ import org.tron.keystore.WalletUtils;
 public class KeystoreFactory {
 
   private static final String FilePath = "Wallet";
+  private static final String DIRECTORY_EXCEPTION = "Make directory faild!";
 
   public static void main(String[] args) {
     Args.setParam(args, Constant.TESTNET_CONF);
@@ -52,13 +53,13 @@ public class KeystoreFactory {
     File file = new File(FilePath);
     if (!file.exists()) {
       if (!file.mkdir()) {
-        throw new IOException("Make directory faild!");
+        throw new IOException(DIRECTORY_EXCEPTION);
       }
     } else {
       if (!file.isDirectory()) {
         if (file.delete()) {
           if (!file.mkdir()) {
-            throw new IOException("Make directory faild!");
+            throw new IOException(DIRECTORY_EXCEPTION);
           }
         } else {
           throw new IOException("File is exists and can not delete!");
@@ -90,13 +91,13 @@ public class KeystoreFactory {
     File file = new File(FilePath);
     if (!file.exists()) {
       if (!file.mkdir()) {
-        throw new IOException("Make directory faild!");
+        throw new IOException(DIRECTORY_EXCEPTION);
       }
     } else {
       if (!file.isDirectory()) {
         if (file.delete()) {
           if (!file.mkdir()) {
-            throw new IOException("Make directory faild!");
+            throw new IOException(DIRECTORY_EXCEPTION);
           }
         } else {
           throw new IOException("File is exists and can not delete!");
