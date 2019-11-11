@@ -145,19 +145,20 @@ public class Args {
   private String storageDbSynchronous = "";
 
   @Parameter(names = {
-          "--contract-parse-enable"}, description = "enable contract parses in "
-          + "java-tron or not.(true or false)")
+      "--contract-parse-enable"},
+          description = "enable contract parses in java-tron or not.(true or false)")
   private String contractParseEnable = "";
 
-  @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
+  @Parameter(names = {"--storage-index-directory"},
+          description = "Storage index directory")
   private String storageIndexDirectory = "";
 
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
   private String storageIndexSwitch = "";
 
   @Parameter(names = {
-          "--storage-transactionHistory-switch"}, description = "Storage "
-          + "transaction history switch.(on or off)")
+      "--storage-transactionHistory-switch"},
+          description = "Storage transaction history switch.(on or off)")
   private String storageTransactionHistoreSwitch = "";
 
   @Getter
@@ -1288,8 +1289,7 @@ public class Args {
         file.getParentFile().mkdirs();
         try (Writer w = new FileWriter(file)) {
           props.store(w,
-                  "Generated NodeID. To use your own nodeId please refer "
-                          + "to 'peer.privateKey' config option.");
+              "Generated NodeID. To use your own nodeId please refer to 'peer.privateKey' config option.");
         }
         logger.info("New nodeID generated: " + props.getProperty("nodeId"));
         logger.info("Generated nodeID and its private key stored in " + file);
