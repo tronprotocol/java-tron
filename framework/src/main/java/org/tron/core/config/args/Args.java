@@ -905,7 +905,7 @@ public class Args {
     INSTANCE.maxConnectionAgeInMillis =
             config.hasPath(Constant.NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS)
                     ? config.getLong(Constant.NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS)
-                    : Long.MAX_VALUE;
+                      : Long.MAX_VALUE;
 
     INSTANCE.maxMessageSize = config.hasPath(Constant.NODE_RPC_MAX_MESSAGE_SIZE)
             ? config.getInt(Constant.NODE_RPC_MAX_MESSAGE_SIZE) : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
