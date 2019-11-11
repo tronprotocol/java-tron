@@ -206,7 +206,7 @@ public class RpcApiService implements Service {
           .maxMessageSize(args.getMaxMessageSize())
           .maxHeaderListSize(args.getMaxHeaderListSize());
 
-      // add a rate limiter interceptor
+      // add a ratelimiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
 
       apiServer = serverBuilder.build();
@@ -825,8 +825,8 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionSign(TransactionSign req,
         StreamObserver<Transaction> responseObserver) {
-      TransactionCapsule result = wallet.getTransactionSign(req);
-      responseObserver.onNext(result.getInstance());
+      TransactionCapsule retur = wallet.getTransactionSign(req);
+      responseObserver.onNext(retur.getInstance());
       responseObserver.onCompleted();
     }
 
@@ -889,7 +889,7 @@ public class RpcApiService implements Service {
     @Override
     public void createAddress(BytesMessage req,
         StreamObserver<BytesMessage> responseObserver) {
-      byte[] address = wallet.createAddress(req.getValue().toByteArray());
+      byte[] address = wallet.createAdresss(req.getValue().toByteArray());
       BytesMessage.Builder builder = BytesMessage.newBuilder();
       builder.setValue(ByteString.copyFrom(address));
       responseObserver.onNext(builder.build());
@@ -911,10 +911,10 @@ public class RpcApiService implements Service {
         transactionCapsule = createTransactionCapsule(builder.build(),
             ContractType.TransferContract);
         transactionCapsule.sign(privateKey);
-        GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
+        GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
         responseBuild.setTransaction(transactionCapsule.getInstance());
         responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
-        responseBuild.setResult(result);
+        responseBuild.setResult(retur);
       } catch (ContractValidateException e) {
         returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getMessage()));
@@ -944,10 +944,10 @@ public class RpcApiService implements Service {
         transactionCapsule = createTransactionCapsule(builder.build(),
             ContractType.TransferAssetContract);
         transactionCapsule.sign(privateKey);
-        GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
+        GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
         responseBuild.setTransaction(transactionCapsule.getInstance());
         responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
-        responseBuild.setResult(result);
+        responseBuild.setResult(retur);
       } catch (ContractValidateException e) {
         returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getMessage()));
@@ -1002,8 +1002,8 @@ public class RpcApiService implements Service {
     @Override
     public void broadcastTransaction(Transaction req,
         StreamObserver<GrpcAPI.Return> responseObserver) {
-      GrpcAPI.Return result = wallet.broadcastTransaction(req);
-      responseObserver.onNext(result);
+      GrpcAPI.Return retur = wallet.broadcastTransaction(req);
+      responseObserver.onNext(retur);
       responseObserver.onCompleted();
     }
 
@@ -1719,7 +1719,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("When run constant call in VM, have Runtime Exception: " + e.getMessage());
+        logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));

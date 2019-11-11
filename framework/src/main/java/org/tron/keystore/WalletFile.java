@@ -113,11 +113,11 @@ public class WalletFile {
   public static class Crypto {
 
     private String cipher;
-    private String cipherText;
-    private CipherParams cipherParams;
+    private String ciphertext;
+    private CipherParams cipherparams;
 
     private String kdf;
-    private KdfParams kdfParams;
+    private KdfParams kdfparams;
 
     private String mac;
 
@@ -132,20 +132,20 @@ public class WalletFile {
       this.cipher = cipher;
     }
 
-    public String getCipherText() {
-      return cipherText;
+    public String getCiphertext() {
+      return ciphertext;
     }
 
-    public void setCipherText(String cipherText) {
-      this.cipherText = cipherText;
+    public void setCiphertext(String ciphertext) {
+      this.ciphertext = ciphertext;
     }
 
-    public CipherParams getCipherParams() {
-      return cipherParams;
+    public CipherParams getCipherparams() {
+      return cipherparams;
     }
 
-    public void setCipherParams(CipherParams cipherParams) {
-      this.cipherParams = cipherParams;
+    public void setCipherparams(CipherParams cipherparams) {
+      this.cipherparams = cipherparams;
     }
 
     public String getKdf() {
@@ -156,8 +156,8 @@ public class WalletFile {
       this.kdf = kdf;
     }
 
-    public KdfParams getKdfParams() {
-      return kdfParams;
+    public KdfParams getKdfparams() {
+      return kdfparams;
     }
 
     @JsonTypeInfo(
@@ -172,8 +172,8 @@ public class WalletFile {
     //  @JsonDeserialize(using = KdfParamsDeserialiser.class)
     // Also add the following to the ObjectMapperFactory
     // objectMapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
-    public void setKdfParams(KdfParams kdfParams) {
-      this.kdfParams = kdfParams;
+    public void setKdfparams(KdfParams kdfparams) {
+      this.kdfparams = kdfparams;
     }
 
     public String getMac() {
@@ -203,14 +203,14 @@ public class WalletFile {
           : that.getCipher() != null) {
         return false;
       }
-      if (getCipherText() != null
-          ? !getCipherText().equals(that.getCipherText())
-          : that.getCipherText() != null) {
+      if (getCiphertext() != null
+          ? !getCiphertext().equals(that.getCiphertext())
+          : that.getCiphertext() != null) {
         return false;
       }
-      if (getCipherParams() != null
-          ? !getCipherParams().equals(that.getCipherParams())
-          : that.getCipherParams() != null) {
+      if (getCipherparams() != null
+          ? !getCipherparams().equals(that.getCipherparams())
+          : that.getCipherparams() != null) {
         return false;
       }
       if (getKdf() != null
@@ -218,9 +218,9 @@ public class WalletFile {
           : that.getKdf() != null) {
         return false;
       }
-      if (getKdfParams() != null
-          ? !getKdfParams().equals(that.getKdfParams())
-          : that.getKdfParams() != null) {
+      if (getKdfparams() != null
+          ? !getKdfparams().equals(that.getKdfparams())
+          : that.getKdfparams() != null) {
         return false;
       }
       return getMac() != null
@@ -230,10 +230,10 @@ public class WalletFile {
     @Override
     public int hashCode() {
       int result = getCipher() != null ? getCipher().hashCode() : 0;
-      result = 31 * result + (getCipherText() != null ? getCipherText().hashCode() : 0);
-      result = 31 * result + (getCipherParams() != null ? getCipherParams().hashCode() : 0);
+      result = 31 * result + (getCiphertext() != null ? getCiphertext().hashCode() : 0);
+      result = 31 * result + (getCipherparams() != null ? getCipherparams().hashCode() : 0);
       result = 31 * result + (getKdf() != null ? getKdf().hashCode() : 0);
-      result = 31 * result + (getKdfParams() != null ? getKdfParams().hashCode() : 0);
+      result = 31 * result + (getKdfparams() != null ? getKdfparams().hashCode() : 0);
       result = 31 * result + (getMac() != null ? getMac().hashCode() : 0);
       return result;
     }

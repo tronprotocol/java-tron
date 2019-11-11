@@ -714,7 +714,7 @@ public class Wallet {
         if (permission.getType() != PermissionType.Active) {
           throw new PermissionException("Permission type is error");
         }
-        //check operations
+        //check oprations
         if (!checkPermissionOprations(permission, contract)) {
           throw new PermissionException("Permission denied!");
         }
@@ -765,7 +765,7 @@ public class Wallet {
       byte[] owner = TransactionCapsule.getOwner(contract);
       AccountCapsule account = dbManager.getAccountStore().get(owner);
       if (account == null) {
-        throw new PermissionException("Account does not exist!");
+        throw new PermissionException("Account is not exist!");
       }
 
       if (trx.getSignatureCount() > 0) {
@@ -801,7 +801,7 @@ public class Wallet {
     return Sha256Hash.hash(passPhrase);
   }
 
-  public byte[] createAddress(byte[] passPhrase) {
+  public byte[] createAdresss(byte[] passPhrase) {
     byte[] privateKey = pass2Key(passPhrase);
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     return ecKey.getAddress();
@@ -1506,7 +1506,7 @@ public class Wallet {
           .equals(ByteArray.toHexString(treeRoot))) {
         treeCapsule = new IncrementalMerkleTreeCapsule();
       } else {
-        throw new RuntimeException("tree is null, treeRoot:" + ByteArray.toHexString(treeRoot));
+        throw new RuntimeException("tree is null,treeRoot:" + ByteArray.toHexString(treeRoot));
       }
 
     }
@@ -1576,7 +1576,7 @@ public class Wallet {
     }
 
     if (!found) {
-      throw new RuntimeException("cm not found");
+      throw new RuntimeException("not found cm");
     }
 
     return witness;
@@ -1711,7 +1711,7 @@ public class Wallet {
     List<IncrementalMerkleVoucherContainer> witnessList = Lists.newArrayList();
     for (OutputPoint outputPoint : request.getOutPointsList()) {
       Long blockNum1 = getBlockNumber(outputPoint);
-      logger.debug("blockNum:" + blockNum1 + ", opIndex:" + opIndex++);
+      logger.debug("blockNum:" + blockNum1 + ",opIndex:" + opIndex++);
       if (blockNum1 + 100 < largeBlockNum) {
         throw new RuntimeException(
             "blockNum:" + blockNum1 + " + 100 < largeBlockNum:" + largeBlockNum);
@@ -1749,8 +1749,9 @@ public class Wallet {
         return IncrementalMerkleTree
             .parseFrom(dbManager.getMerkleTreeIndexStore().get(blockNum));
       }
-    } catch (Exception ex) { }
-
+    } catch (Exception ex) {
+      return null;
+    }
     return null;
   }
 
@@ -1767,11 +1768,11 @@ public class Wallet {
   public void checkCmNumber(List<SpendNote> shieldedSpends, List<ReceiveNote> shieldedReceives)
       throws ContractValidateException {
     if (!shieldedSpends.isEmpty() && shieldedSpends.size() > 1) {
-      throw new ContractValidateException("The number of spend note must <= 1");
+      throw new ContractValidateException("The number of spend note must <=1");
     }
 
     if (!shieldedReceives.isEmpty() && shieldedReceives.size() > 2) {
-      throw new ContractValidateException("The number of receive note must <= 2");
+      throw new ContractValidateException("The number of receive note must <=2");
     }
   }
 
@@ -2030,7 +2031,7 @@ public class Wallet {
       throw new BadItemException("spendingKey is null");
     }
     if (ByteArray.toHexString(spendingKey.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of spendingKey's hexString should be 64");
+      throw new BadItemException("the length of spendingKey's hexstring should be 64");
     }
 
     ExpandedSpendingKey expandedSpendingKey = null;
@@ -2056,7 +2057,7 @@ public class Wallet {
       throw new BadItemException("ask is null");
     }
     if (ByteArray.toHexString(ask.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of ask's hexString should be 64");
+      throw new BadItemException("the length of ask's hexstring should be 64");
     }
 
     byte[] ak = ExpandedSpendingKey.getAkFromAsk(ask.toByteArray());
@@ -2072,7 +2073,7 @@ public class Wallet {
       throw new BadItemException("nsk is null");
     }
     if (ByteArray.toHexString(nsk.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of nsk's hexString should be 64");
+      throw new BadItemException("the length of nsk's hexstring should be 64");
     }
 
     byte[] nk = ExpandedSpendingKey.getNkFromNsk(nsk.toByteArray());
@@ -2205,12 +2206,12 @@ public class Wallet {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
     byte[] result = new byte[64];
-    SpendSigParams spendSigParams = new SpendSigParams(
+    SpendSigParams spendSigPasrams = new SpendSigParams(
         spendAuthSigParameters.getAsk().toByteArray(),
         spendAuthSigParameters.getAlpha().toByteArray(),
         spendAuthSigParameters.getTxHash().toByteArray(),
         result);
-    JLibrustzcash.librustzcashSaplingSpendSig(spendSigParams);
+    JLibrustzcash.librustzcashSaplingSpendSig(spendSigPasrams);
 
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(result)).build();
   }
@@ -2294,11 +2295,11 @@ public class Wallet {
     return nodeListBuilder.build();
   }
 
-  public Transaction deployContract(TransactionCapsule trxCap) {
+  public Transaction deployContract(CreateSmartContract createSmartContract,
+      TransactionCapsule trxCap) {
 
     // do nothing, so can add some useful function later
-    // trxCap contract para cacheUnpackValue has value
-
+    // trxcap contract para cacheUnpackValue has value
     return trxCap.getInstance();
   }
 
@@ -2336,10 +2337,10 @@ public class Wallet {
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress()
         .toByteArray();
-    byte[] isContractExist = contractStore
+    byte[] isContractExiste = contractStore
         .findContractByHash(contractAddress);
 
-    if (ArrayUtils.isEmpty(isContractExist)) {
+    if (ArrayUtils.isEmpty(isContractExiste)) {
       throw new ContractValidateException(
           "No contract or not a smart contract");
     }
@@ -2359,6 +2360,7 @@ public class Wallet {
     if (!Args.getInstance().isSupportConstant()) {
       throw new ContractValidateException("this node does not support constant");
     }
+    DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
     Block headBlock;
     List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore()
@@ -2577,7 +2579,7 @@ public class Wallet {
           }
         } // end of ReceiveDescriptionList
       } // end of transaction
-    } //end of block list
+    } //end of blocklist
     return builder.build();
   }
 
@@ -2679,9 +2681,9 @@ public class Wallet {
           if (notePlaintext.isPresent()) {
             OutgoingPlaintext decryptedOutCtUnwrapped = notePlaintext.get();
             //decode c_enc with pkd、esk
-            Encryption.EncCiphertext cipherText = new Encryption.EncCiphertext();
-            cipherText.setData(r.getCEnc().toByteArray());
-            Optional<Note> foo = Note.decrypt(cipherText,
+            Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
+            ciphertext.setData(r.getCEnc().toByteArray());
+            Optional<Note> foo = Note.decrypt(ciphertext,
                 r.getEpk().toByteArray(),
                 decryptedOutCtUnwrapped.getEsk(),
                 decryptedOutCtUnwrapped.getPkD(),
@@ -2710,7 +2712,7 @@ public class Wallet {
           }
         } // end of ReceiveDescriptionList
       } // end of transaction
-    } //end of block list
+    } //end of blocklist
     return builder.build();
   }
 }

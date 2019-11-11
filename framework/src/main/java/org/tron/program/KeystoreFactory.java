@@ -90,16 +90,16 @@ public class KeystoreFactory {
     File file = new File(FilePath);
     if (!file.exists()) {
       if (!file.mkdir()) {
-        throw new IOException("Make directory failed!");
+        throw new IOException("Make directory faild!");
       }
     } else {
       if (!file.isDirectory()) {
         if (file.delete()) {
           if (!file.mkdir()) {
-            throw new IOException("Make directory failed!");
+            throw new IOException("Make directory faild!");
           }
         } else {
-          throw new IOException("File exists and can not be deleted !");
+          throw new IOException("File is exists and can not delete!");
         }
       }
     }
@@ -112,7 +112,7 @@ public class KeystoreFactory {
   private void help() {
     System.out.println("You can enter the following command: ");
     System.out.println("GenKeystore");
-    System.out.println("ImportPrivateKey");
+    System.out.println("ImportPrivatekey");
     System.out.println("Exit or Quit");
     System.out.println("Input any one of then, you will get more tips.");
   }
