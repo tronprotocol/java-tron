@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.overlay.discover.table.KademliaOptions;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
@@ -83,7 +84,7 @@ public class Node implements Serializable {
 
   public static byte[] getNodeId() {
     Random gen = new Random();
-    byte[] id = new byte[64];
+    byte[] id = new byte[KademliaOptions.NODE_ID_LEN];
     gen.nextBytes(id);
     return id;
   }
