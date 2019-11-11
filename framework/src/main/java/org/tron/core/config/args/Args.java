@@ -144,8 +144,7 @@ public class Args {
           description = "Storage db is synchronous or not.(true or false)")
   private String storageDbSynchronous = "";
 
-  @Parameter(names = {
-      "--contract-parse-enable"},
+  @Parameter(names = {"--contract-parse-enable"},
           description = "enable contract parses in java-tron or not.(true or false)")
   private String contractParseEnable = "";
 
@@ -156,8 +155,7 @@ public class Args {
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
   private String storageIndexSwitch = "";
 
-  @Parameter(names = {
-      "--storage-transactionHistory-switch"},
+  @Parameter(names = {"--storage-transactionHistory-switch"},
           description = "Storage transaction history switch.(on or off)")
   private String storageTransactionHistoreSwitch = "";
 
