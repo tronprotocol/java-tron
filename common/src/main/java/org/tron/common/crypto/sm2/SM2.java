@@ -513,7 +513,7 @@ public class SM2 implements Serializable {
      * @return -
      * @throws IllegalStateException if this ECKey does not have the private part.
      */
-    public SM2Signature signMessage(byte[] message, @Nullable String userID) {
+    public SM2Signature signMessage(String message, @Nullable String userID) {
         SM2Signature sig = signMsg(message, userID);
         // Now we have to work backwards to figure out the recId needed to
         // recover the signature.
@@ -545,10 +545,10 @@ public class SM2 implements Serializable {
      * @param userID
      * @return SM2Signature signature that contains the R and S components
      */
-    public SM2.SM2Signature signMsg(byte[] msg,@Nullable String userID) {
+    public SM2.SM2Signature signMsg(String msg,@Nullable String userID) {
         if (null == msg) {
-            throw new IllegalArgumentException("Expected 32 byte input to " +
-                    "SM2 signature, not " + msg.length);
+            throw new IllegalArgumentException("Expected signature message of " +
+                    "SM2 is null");
         }
         // No decryption of private key required.
         SM2Signer signer = getSigner();
@@ -556,7 +556,7 @@ public class SM2 implements Serializable {
         return new SM2.SM2Signature(componets[0], componets[1]);
     }
 
-    private SM2Signer getSigner() {
+    public SM2Signer getSigner() {
         SM2Signer signer = new SM2Signer();
         BigInteger d = getPrivKey();
         ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
@@ -707,7 +707,7 @@ public class SM2 implements Serializable {
      * @param pub The public key bytes to use.
      * @return -
      */
-    public static boolean verifyMessage(byte[] msg, SM2Signature signature,
+    public static boolean verifyMessage(String msg, SM2Signature signature,
                                  byte[] pub, @Nullable String userID) {
 //        ECDSASigner signer = new ECDSASigner();
 //        ECPublicKeyParameters params = new ECPublicKeyParameters(ecc_param
@@ -737,7 +737,7 @@ public class SM2 implements Serializable {
      * @param pub The public key bytes to use.
      * @return -
      */
-    public static boolean verifyMessage(byte[] msg, byte[] signature, byte[] pub, @Nullable String userID) {
+    public static boolean verifyMessage(String msg, byte[] signature, byte[] pub, @Nullable String userID) {
         return verifyMessage(msg, SM2Signature.decodeFromDER(signature), pub, userID);
     }
 

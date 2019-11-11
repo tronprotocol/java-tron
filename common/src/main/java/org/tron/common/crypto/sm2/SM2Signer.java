@@ -89,7 +89,7 @@ public class SM2Signer
      * @param userID  user ID
      * @return
      */
-    public BigInteger[] generateSignature(byte[] message, @Nullable String userID)
+    public BigInteger[] generateSignature(String message, @Nullable String userID)
     {
         byte[] eHash = generateSM3Hash(message,userID);
         return generateHashSignature(eHash);
@@ -101,16 +101,18 @@ public class SM2Signer
      * @return
      */
 
-    public byte[] generateSM3Hash(byte[] message,@Nullable String userID)
+    public byte[] generateSM3Hash(String message,@Nullable String userID)
     {
         if(userID != null) {
             this.userID = userID.getBytes();
         }
+        byte[] msg = message.getBytes();
+
         SM3Digest digest = new SM3Digest();
         byte[] z = getZ(digest);
 
         digest.update(z, 0, z.length);
-        digest.update(message, 0, message.length);
+        digest.update(msg, 0, msg.length);
 
         byte[] eHash = new byte[digest.getDigestSize()];
 
@@ -146,7 +148,6 @@ public class SM2Signer
             {
                 // A3
                 k = kCalculator.nextK();
-
                 // A4
                 ECPoint p = basePointMultiplier.multiply(ecParams.getG(), k).normalize();
 
@@ -175,7 +176,7 @@ public class SM2Signer
      * @param s
      * @return
      */
-    public boolean verifySignature(byte[] message, BigInteger r, BigInteger s, @Nullable String userID)
+    public boolean verifySignature(String message, BigInteger r, BigInteger s, @Nullable String userID)
     {
         BigInteger n = ecParams.getN();
 

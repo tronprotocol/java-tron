@@ -13,10 +13,13 @@ import java.security.Security;
 import java.security.SignatureException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Test;
+import org.spongycastle.crypto.digests.SM3Digest;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.sm2.SM2;
+import org.tron.common.crypto.sm2.SM2Signer;
 import org.tron.core.Wallet;
 
 @Slf4j
@@ -27,18 +30,18 @@ public class SM2KeyTest {
 
     private String pubString = "040ae4c7798aa0f119471bee11825be46202bb79e2a5844495e97c04ff4df2548a7c0240f88f1cd4e16352a73c17b7f16f07353e53a176d684a9fe0c6bb798e857";
     private String compressedPubString =
-            "030947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f6" + "98ccc8ad";
+            "030ae4c7798aa0f119471bee11825be46202bb79e2a5844495e97c04ff4df2548a";
     private byte[] pubKey = Hex.decode(pubString);
     private byte[] compressedPubKey = Hex.decode(compressedPubString);
-    private String address = "cd2a3d9f938e13cd947ec05abc7fe734df8dd826";
-
+    private String address = "22e7cc851aaa2b979a15435077da95d7f92ce58b";
+    private String IDa = "ALICE123@YAHOO.COM";
     @Test
     public void testHashCode() {
-        assertEquals(-351262686, ECKey.fromPrivate(privateKey).hashCode());
+        assertEquals(-862895238, SM2.fromPrivate(privateKey).hashCode());
     }
 
     @Test
-    public void testECKey() {
+    public void testSM2() {
         SM2 key = new SM2();
         assertTrue(key.isPubKeyCanonical());
         assertNotNull(key.getPubKey());
@@ -58,21 +61,21 @@ public class SM2KeyTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testPrivatePublicKeyBytesNoArg() {
-        new ECKey((BigInteger) null, null);
+        new SM2((BigInteger) null, null);
         fail("Expecting an IllegalArgumentException for using only null-parameters");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testInvalidPrivateKey() throws Exception {
-        new ECKey(Security.getProvider("SunEC"),
+        new SM2(
                 KeyPairGenerator.getInstance("RSA").generateKeyPair().getPrivate(),
-                ECKey.fromPublicOnly(pubKey).getPubKeyPoint());
+                SM2.fromPublicOnly(pubKey).getPubKeyPoint());
         fail("Expecting an IllegalArgumentException for using an non EC private key");
     }
 
     @Test
     public void testIsPubKeyOnly() {
-        ECKey key = ECKey.fromPublicOnly(pubKey);
+        SM2 key = SM2.fromPublicOnly(pubKey);
         assertTrue(key.isPubKeyCanonical());
         assertTrue(key.isPubKeyOnly());
         assertArrayEquals(key.getPubKey(), pubKey);
@@ -80,51 +83,138 @@ public class SM2KeyTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testSignIncorrectInputSize() {
-        ECKey key = new ECKey();
+        SM2 key = new SM2();
         String message = "The quick brown fox jumps over the lazy dog.";
-        ECDSASignature sig = key.doSign(message.getBytes());
+        SM2.SM2Signature sig = key.sign(message.getBytes());
         fail("Expecting an IllegalArgumentException for a non 32-byte input");
     }
 
     @Test(expected = SignatureException.class)
     public void testBadBase64Sig() throws SignatureException {
         byte[] messageHash = new byte[32];
-        ECKey.signatureToKey(messageHash, "This is not valid Base64!");
+        SM2.signatureToKey(messageHash, "This is not valid Base64!");
         fail("Expecting a SignatureException for invalid Base64");
     }
 
     @Test(expected = SignatureException.class)
     public void testInvalidSignatureLength() throws SignatureException {
         byte[] messageHash = new byte[32];
-        ECKey.signatureToKey(messageHash, "abcdefg");
+        SM2.signatureToKey(messageHash, "abcdefg");
         fail("Expecting a SignatureException for invalid signature length");
     }
 
     @Test
+    public void testSM3Hash(){
+        SM2 key = SM2.fromPrivate(privateKey);
+        SM2Signer signer = key.getSigner();
+        String message = "message digest";
+        byte[] hash = signer.generateSM3Hash(message,IDa);
+        assertEquals("B524F552CD82B8B028476E005C377FB19A87E6FC682D48BB5D42E3D9B9EFFE76", Hex.toHexString(hash).toUpperCase());
+
+    }
+
+    @Test
+    public void testValidMsgSignature(){
+        SM2 key = SM2.fromPrivate(privateKey);
+        String message = "message digest";
+
+        SM2.SM2Signature sign = key.signMsg(message,IDa);
+        byte[] signByte = sign.toByteArray();
+        //System.out.println(Hex.toHexString(signByte));
+        assertTrue(SM2.verifyMessage(message, sign, pubKey, IDa));
+    }
+    @Test
+    public void testValidMsgSignature2(){
+        SM2 key = SM2.fromPrivate(privateKey);
+        String message = "message digest";
+
+        SM2.SM2Signature sign = key.signMessage(message,IDa);
+        byte[] signByte = sign.toByteArray();
+        //System.out.println(Hex.toHexString(signByte));
+        assertTrue(SM2.verifyMessage(message, sign, pubKey, IDa));
+    }
+
+    @Test
+    public void testValidHashSignature(){
+        SM2 key = SM2.fromPrivate(privateKey);
+        byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC682D48BB5D42E3D9B9EFFE76");
+        SM2.SM2Signature sign = key.sign(hash);
+        byte[] signByte = sign.toByteArray();
+        //System.out.println(Hex.toHexString(signByte));
+        assertTrue(SM2.verify(hash,sign,pubKey));
+
+    }
+
+    @Test
+    public void testValidHashSignature2(){
+        SM2 key = SM2.fromPrivate(privateKey);
+        byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC682D48BB5D42E3D9B9EFFE76");
+        SM2.SM2Signature sign = key.signHash(hash);
+        byte[] signByte = sign.toByteArray();
+        //System.out.println(Hex.toHexString(signByte));
+        assertTrue(SM2.verify(hash,sign,pubKey));
+
+    }
+
+    @Test
+    public void testSignatureToKeyBytes() throws SignatureException {
+        SM2 key = SM2.fromPrivate(privateKey);
+        byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC682D48BB5D42E3D9B9EFFE76");
+        SM2.SM2Signature sign = key.sign(hash);
+        byte[] pubKeys = SM2.signatureToKeyBytes(hash,sign);
+//        System.out.println(Hex.toHexString(pubKeys));
+//        System.out.println(Hex.toHexString(pubKey));
+        assertEquals(Hex.toHexString(pubKey), Hex.toHexString(pubKeys));
+    }
+
+    @Test(expected = SignatureException.class)
+    public void testSignatureToKeyBytes2() throws SignatureException {
+        SM2 key = SM2.fromPrivate(privateKey);
+        byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC682D48BB5D42E3D9B9EFFE76");
+        SM2.SM2Signature sign = key.signHash(hash);
+        byte[] pubKeys = SM2.signatureToKeyBytes(hash,sign);
+        fail("the signature lacks the v value.");
+    }
+
+    @Test
+    public void testSignatureToAddress() throws SignatureException {
+        SM2 key = SM2.fromPrivate(privateKey);
+        byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC682D48BB5D42E3D9B9EFFE76");
+        SM2.SM2Signature sign = key.sign(hash);
+        byte[] addr = SM2.signatureToAddress(hash,sign);
+        addr = Arrays.copyOfRange(addr,1,addr.length);
+//        System.out.println(Hex.toHexString(addr));
+//        System.out.println(address);
+        assertEquals(address, Hex.toHexString(addr));
+    }
+
+    @Test
     public void testPublicKeyFromPrivate() {
-        byte[] pubFromPriv = ECKey.publicKeyFromPrivate(privateKey, false);
+        byte[] pubFromPriv = SM2.publicKeyFromPrivate(privateKey, false);
         assertArrayEquals(pubKey, pubFromPriv);
     }
 
     @Test
     public void testPublicKeyFromPrivateCompressed() {
-        byte[] pubFromPriv = ECKey.publicKeyFromPrivate(privateKey, true);
+        byte[] pubFromPriv = SM2.publicKeyFromPrivate(privateKey, true);
+        //System.out.println(Hex.toHexString(pubFromPriv));
         assertArrayEquals(compressedPubKey, pubFromPriv);
     }
 
     @Test
     public void testGetAddress() {
-        ECKey key = ECKey.fromPublicOnly(pubKey);
+        SM2 key = SM2.fromPublicOnly(pubKey);
         // Addresses are prefixed with a constant.
         byte[] prefixedAddress = key.getAddress();
         byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
+        //System.out.println(Hex.toHexString(unprefixedAddress));
         assertArrayEquals(Hex.decode(address), unprefixedAddress);
         assertEquals(Wallet.getAddressPreFixByte(), prefixedAddress[0]);
     }
 
     @Test
     public void testGetAddressFromPrivateKey() {
-        ECKey key = ECKey.fromPrivate(privateKey);
+        SM2 key = SM2.fromPrivate(privateKey);
         // Addresses are prefixed with a constant.
         byte[] prefixedAddress = key.getAddress();
         byte[] unprefixedAddress = Arrays.copyOfRange(key.getAddress(), 1, prefixedAddress.length);
@@ -134,25 +224,25 @@ public class SM2KeyTest {
 
     @Test
     public void testToString() {
-        ECKey key = ECKey.fromPrivate(BigInteger.TEN); // An example private key.
-        assertEquals("pub:04a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba42"
-                + "5419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7", key.toString());
+        SM2 key = SM2.fromPrivate(BigInteger.TEN); // An example private key.
+        assertEquals("pub:04850765e3283983470d4d4e2c503ed592dae86ce2955e31e975736baf5176c693130fcd6c3c43fbe67b084b05d0727d73af8306ff27da82f4bfccb1d663b04e83"
+                , key.toString());
     }
 
     @Test
-    public void testIsPubKeyCanonicalCorect() {
+    public void testIsPubKeyCanonicalCorrect() {
         // Test correct prefix 4, right length 65
         byte[] canonicalPubkey1 = new byte[65];
         canonicalPubkey1[0] = 0x04;
-        assertTrue(ECKey.isPubKeyCanonical(canonicalPubkey1));
+        assertTrue(SM2.isPubKeyCanonical(canonicalPubkey1));
         // Test correct prefix 2, right length 33
         byte[] canonicalPubkey2 = new byte[33];
         canonicalPubkey2[0] = 0x02;
-        assertTrue(ECKey.isPubKeyCanonical(canonicalPubkey2));
+        assertTrue(SM2.isPubKeyCanonical(canonicalPubkey2));
         // Test correct prefix 3, right length 33
         byte[] canonicalPubkey3 = new byte[33];
         canonicalPubkey3[0] = 0x03;
-        assertTrue(ECKey.isPubKeyCanonical(canonicalPubkey3));
+        assertTrue(SM2.isPubKeyCanonical(canonicalPubkey3));
     }
 
     @Test
@@ -160,60 +250,75 @@ public class SM2KeyTest {
         // Test correct prefix 4, but wrong length !65
         byte[] nonCanonicalPubkey1 = new byte[64];
         nonCanonicalPubkey1[0] = 0x04;
-        assertFalse(ECKey.isPubKeyCanonical(nonCanonicalPubkey1));
+        assertFalse(SM2.isPubKeyCanonical(nonCanonicalPubkey1));
         // Test correct prefix 2, but wrong length !33
         byte[] nonCanonicalPubkey2 = new byte[32];
         nonCanonicalPubkey2[0] = 0x02;
-        assertFalse(ECKey.isPubKeyCanonical(nonCanonicalPubkey2));
+        assertFalse(SM2.isPubKeyCanonical(nonCanonicalPubkey2));
         // Test correct prefix 3, but wrong length !33
         byte[] nonCanonicalPubkey3 = new byte[32];
         nonCanonicalPubkey3[0] = 0x03;
-        assertFalse(ECKey.isPubKeyCanonical(nonCanonicalPubkey3));
+        assertFalse(SM2.isPubKeyCanonical(nonCanonicalPubkey3));
     }
 
     @Test
     public void testIsPubKeyCanonicalWrongPrefix() {
         // Test wrong prefix 4, right length 65
         byte[] nonCanonicalPubkey4 = new byte[65];
-        assertFalse(ECKey.isPubKeyCanonical(nonCanonicalPubkey4));
+        assertFalse(SM2.isPubKeyCanonical(nonCanonicalPubkey4));
         // Test wrong prefix 2, right length 33
         byte[] nonCanonicalPubkey5 = new byte[33];
-        assertFalse(ECKey.isPubKeyCanonical(nonCanonicalPubkey5));
+        assertFalse(SM2.isPubKeyCanonical(nonCanonicalPubkey5));
         // Test wrong prefix 3, right length 33
         byte[] nonCanonicalPubkey6 = new byte[33];
-        assertFalse(ECKey.isPubKeyCanonical(nonCanonicalPubkey6));
+        assertFalse(SM2.isPubKeyCanonical(nonCanonicalPubkey6));
     }
 
     @Test
     public void testGetPrivKeyBytes() {
-        ECKey key = new ECKey();
+        SM2 key = new SM2();
         assertNotNull(key.getPrivKeyBytes());
         assertEquals(32, key.getPrivKeyBytes().length);
     }
 
     @Test
     public void testEqualsObject() {
-        ECKey key0 = new ECKey();
-        ECKey key1 = ECKey.fromPrivate(privateKey);
-        ECKey key2 = ECKey.fromPrivate(privateKey);
+        SM2 key0 = new SM2();
+        SM2 key1 = SM2.fromPrivate(privateKey);
+        SM2 key2 = SM2.fromPrivate(privateKey);
 
         assertFalse(key0.equals(key1));
         assertTrue(key1.equals(key1));
         assertTrue(key1.equals(key2));
     }
 
-    @Test
-    public void decryptAECSIC() {
-        ECKey key = ECKey.fromPrivate(
-                Hex.decode("abb51256c1324a1350598653f46aa3ad693ac3cf5d05f36eba3f495a1f51590f"));
-        byte[] payload = key.decryptAES(Hex.decode("84a727bc81fa4b13947dc9728b88fd08"));
-        System.out.println(Hex.toHexString(payload));
-    }
+//    @Test
+//    public void decryptAECSIC() {
+//        SM2 key = SM2.fromPrivate(
+//                Hex.decode("abb51256c1324a1350598653f46aa3ad693ac3cf5d05f36eba3f495a1f51590f"));
+//        byte[] payload = key.decryptAES(Hex.decode("84a727bc81fa4b13947dc9728b88fd08"));
+//        System.out.println(Hex.toHexString(payload));
+//    }
 
     @Test
     public void testNodeId() {
-        ECKey key = ECKey.fromPublicOnly(pubKey);
+        SM2 key = SM2.fromPublicOnly(pubKey);
 
-        assertEquals(key, ECKey.fromNodeId(key.getNodeId()));
+        assertEquals(key, SM2.fromNodeId(key.getNodeId()));
+    }
+
+    @Test
+    public  void testSM3(){
+        String message = "F4A38489E32B45B6F876E3AC2168CA392362DC8F23459C1D1146FC3DBFB7BC9A6D65737361676520646967657374";
+        SM3Digest digest = new SM3Digest();
+        byte[] msg = message.getBytes();
+        digest.update(msg,0,msg.length);
+
+        byte[] eHash = new byte[digest.getDigestSize()];
+
+        digest.doFinal(eHash, 0);
+
+        System.out.println(Hex.toHexString(eHash));
+
     }
 }
