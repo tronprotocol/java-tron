@@ -311,14 +311,14 @@ public class SM2KeyTest {
     public  void testSM3(){
         String message = "F4A38489E32B45B6F876E3AC2168CA392362DC8F23459C1D1146FC3DBFB7BC9A6D65737361676520646967657374";
         SM3Digest digest = new SM3Digest();
-        byte[] msg = message.getBytes();
+        byte[] msg = Hex.decode(message);
         digest.update(msg,0,msg.length);
 
         byte[] eHash = new byte[digest.getDigestSize()];
 
         digest.doFinal(eHash, 0);
 
-        System.out.println(Hex.toHexString(eHash));
+        assertEquals("b524f552cd82b8b028476e005c377fb19a87e6fc682d48bb5d42e3d9b9effe76",Hex.toHexString(eHash));
 
     }
 }
