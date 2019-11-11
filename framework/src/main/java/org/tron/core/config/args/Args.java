@@ -1043,12 +1043,12 @@ public class Args {
       initRocksDbSettings(config);
     }
 
-      INSTANCE.actuatorSet =
-              config.hasPath(Constant.ACTUATOR_WHITELIST) ?
-                      new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
-                      : Collections.emptySet();
+    INSTANCE.actuatorSet =
+            config.hasPath(Constant.ACTUATOR_WHITELIST) ?
+                    new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
+                    : Collections.emptySet();
 
-      logConfig();
+    logConfig();
     initDBConfig(INSTANCE);
   }
 
