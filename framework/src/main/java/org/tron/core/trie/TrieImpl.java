@@ -896,8 +896,8 @@ public class TrieImpl implements Trie<byte[]> {
     /***********  Dump methods  ************/
 
     public String dumpStruct(String indent, String prefix) {
-      String ret = indent + prefix + getType() + (dirty ? " *" : "") +
-          (hash == null ? "" : "(hash: " + Hex.toHexString(hash).substring(0, 6) + ")");
+      String ret = indent + prefix + getType() + (dirty ? " *" : "")
+          + (hash == null ? "" : "(hash: " + Hex.toHexString(hash).substring(0, 6) + ")");
       if (getType() == NodeType.BranchNode) {
         byte[] value = branchNodeGetValue();
         ret += (value == null ? "" : " [T] = " + Hex.toHexString(value)) + "\n";
