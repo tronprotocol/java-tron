@@ -176,6 +176,14 @@ public class JsonFormat {
     merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
   }
 
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   */
+  public static void merge(CharSequence input, Message.Builder builder, boolean selfType)
+      throws ParseException {
+    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
+  }
+
   public static String printErrorMsg(Exception ex) {
     StringBuilder text = new StringBuilder();
     text.append("{");
@@ -393,14 +401,6 @@ public class JsonFormat {
       // the number is negative, then set it again using setBit().
       return BigInteger.valueOf(value & 0x7FFFFFFFFFFFFFFFL).setBit(63).toString();
     }
-  }
-
-  /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   */
-  public static void merge(CharSequence input, Message.Builder builder, boolean selfType)
-      throws ParseException {
-    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
   }
 
   /**

@@ -76,6 +76,7 @@ public class SyncPool {
       try {
         logActivePeers();
       } catch (Throwable t) {
+        logger.error("Exception in sync worker", t);
       }
     }, 30, 10, TimeUnit.SECONDS);
   }
@@ -141,7 +142,8 @@ public class SyncPool {
       }
       activePeers.add(peerConnection);
       activePeers
-          .sort(Comparator.comparingDouble(c -> c.getNodeStatistics().pingMessageLatency.getAvrg()));
+          .sort(Comparator.comparingDouble(
+              c -> c.getNodeStatistics().pingMessageLatency.getAvrg()));
       peerConnection.onConnect();
     }
   }
