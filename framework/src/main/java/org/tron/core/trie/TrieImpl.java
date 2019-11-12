@@ -34,8 +34,8 @@ import org.tron.core.db2.common.DB;
  */
 public class TrieImpl implements Trie<byte[]> {
 
-  private final static Object NULL_NODE = new Object();
-  private final static int MIN_BRANCHES_CONCURRENTLY = 3;
+  private static final Object NULL_NODE = new Object();
+  private static final int MIN_BRANCHES_CONCURRENTLY = 3;
   private static final Logger logger = LoggerFactory.getLogger(TrieImpl.class);
   private static ExecutorService executor;
   private DB<byte[], BytesCapsule> cache;

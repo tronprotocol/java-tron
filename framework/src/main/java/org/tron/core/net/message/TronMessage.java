@@ -16,7 +16,6 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.tron.core.net.message;
-
 import org.tron.common.overlay.message.Message;
 
 public abstract class TronMessage extends Message {
