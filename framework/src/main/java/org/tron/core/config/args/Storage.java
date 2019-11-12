@@ -168,7 +168,8 @@ public class Storage {
 
   public static String getTransactionHistoreSwitchFromConfig(final Config config) {
     return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)
-        ? config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) : DEFAULT_TRANSACTIONHISTORY_SWITCH;
+        ? config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)
+        : DEFAULT_TRANSACTIONHISTORY_SWITCH;
   }
 
   private static Property createProperty(final ConfigObject conf) {

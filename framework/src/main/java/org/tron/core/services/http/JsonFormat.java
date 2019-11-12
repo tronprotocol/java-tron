@@ -184,6 +184,24 @@ public class JsonFormat {
     merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
   }
 
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   * Extensions will be recognized if they are registered in {@code extensionRegistry}.
+   */
+  public static void merge(Readable input,
+      ExtensionRegistry extensionRegistry,
+      Message.Builder builder, boolean selfType) throws IOException {
+    // Read the entire input to a String then parse that.
+
+    // If StreamTokenizer were not quite so crippled, or if there were a kind
+    // of Reader that could read in chunks that match some particular regex,
+    // or if we wanted to write a custom Reader to tokenize our stream, then
+    // we would not have to read to one big String. Alas, none of these is
+    // the case. Oh well.
+
+    merge(toStringBuilder(input), extensionRegistry, builder, selfType);
+  }
+
   public static String printErrorMsg(Exception ex) {
     StringBuilder text = new StringBuilder();
     text.append("{");
@@ -401,24 +419,6 @@ public class JsonFormat {
       // the number is negative, then set it again using setBit().
       return BigInteger.valueOf(value & 0x7FFFFFFFFFFFFFFFL).setBit(63).toString();
     }
-  }
-
-  /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   * Extensions will be recognized if they are registered in {@code extensionRegistry}.
-   */
-  public static void merge(Readable input,
-      ExtensionRegistry extensionRegistry,
-      Message.Builder builder, boolean selfType) throws IOException {
-    // Read the entire input to a String then parse that.
-
-    // If StreamTokenizer were not quite so crippled, or if there were a kind
-    // of Reader that could read in chunks that match some particular regex,
-    // or if we wanted to write a custom Reader to tokenize our stream, then
-    // we would not have to read to one big String. Alas, none of these is
-    // the case. Oh well.
-
-    merge(toStringBuilder(input), extensionRegistry, builder, selfType);
   }
 
   /**

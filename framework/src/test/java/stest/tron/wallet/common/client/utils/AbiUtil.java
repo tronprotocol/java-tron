@@ -178,6 +178,10 @@ public class AbiUtil {
     }
   }
 
+  public static String parseMethod(String methodSign, List<Object> parameters) {
+    return parseSelector(methodSign) + parseParameters(methodSign, parameters);
+  }
+
   public static String parseParameters(String methodSign, List<Object> parameters) {
     String[] inputArr = new String[parameters.size()];
     int i = 0;
@@ -203,10 +207,6 @@ public class AbiUtil {
   public static String parseParameters(String methodSign, String input) {
     byte[] encodedParms = encodeInput(methodSign, input);
     return Hex.toHexString(encodedParms);
-  }
-
-  public static String parseMethod(String methodSign, List<Object> parameters) {
-    return parseSelector(methodSign) + parseParameters(methodSign, parameters);
   }
 
   public static String parseSelector(String methodSign) {
@@ -261,7 +261,7 @@ public class AbiUtil {
     System.out.println(parseMethod(byteMethod1, bytesValue1));
   }
 
-  static abstract class Coder {
+  abstract static class Coder {
 
     boolean dynamic = false;
 

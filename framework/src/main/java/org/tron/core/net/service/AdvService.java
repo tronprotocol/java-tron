@@ -242,7 +242,7 @@ public class AdvService {
             invSender.add(item, peer);
             peer.getAdvInvRequest().put(item, now);
             invToFetch.remove(item);
-      });
+          });
     });
 
     invSender.sendFetch();
