@@ -142,6 +142,19 @@ public class JsonFormat {
   }
 
   /**
+   * Like {@code print()}, but writes directly to a {@code String} and returns it.
+   */
+  public static String printToString(UnknownFieldSet fields, boolean selfType) {
+    try {
+      StringBuilder text = new StringBuilder();
+      print(fields, text, selfType);
+      return text.toString();
+    } catch (IOException e) {
+      throw new RuntimeException(WRITING_STRING_BUILDER_EXCEPTION, e);
+    }
+  }
+
+  /**
    * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
    */
   public static void merge(Readable input, Message.Builder builder) throws IOException {
@@ -156,16 +169,11 @@ public class JsonFormat {
   }
 
   /**
-   * Like {@code print()}, but writes directly to a {@code String} and returns it.
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
    */
-  public static String printToString(UnknownFieldSet fields, boolean selfType) {
-    try {
-      StringBuilder text = new StringBuilder();
-      print(fields, text, selfType);
-      return text.toString();
-    } catch (IOException e) {
-      throw new RuntimeException(WRITING_STRING_BUILDER_EXCEPTION, e);
-    }
+  public static void merge(Readable input, Message.Builder builder, boolean selfType)
+      throws IOException {
+    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
   }
 
   public static String printErrorMsg(Exception ex) {
@@ -385,14 +393,6 @@ public class JsonFormat {
       // the number is negative, then set it again using setBit().
       return BigInteger.valueOf(value & 0x7FFFFFFFFFFFFFFFL).setBit(63).toString();
     }
-  }
-
-  /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   */
-  public static void merge(Readable input, Message.Builder builder, boolean selfType)
-      throws IOException {
-    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
   }
 
   /**

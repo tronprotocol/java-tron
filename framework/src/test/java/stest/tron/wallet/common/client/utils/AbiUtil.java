@@ -170,6 +170,14 @@ public class AbiUtil {
     return parseMethod(methodSign, params, false);
   }
 
+  public static String parseMethod(String methodSign, String input, boolean isHex) {
+    if (isHex) {
+      return parseSelector(methodSign) + input;
+    } else {
+      return parseSelector(methodSign) + parseParameters(methodSign, input);
+    }
+  }
+
   public static String parseParameters(String methodSign, List<Object> parameters) {
     String[] inputArr = new String[parameters.size()];
     int i = 0;
@@ -197,18 +205,14 @@ public class AbiUtil {
     return Hex.toHexString(encodedParms);
   }
 
+  public static String parseMethod(String methodSign, List<Object> parameters) {
+    return parseSelector(methodSign) + parseParameters(methodSign, parameters);
+  }
+
   public static String parseSelector(String methodSign) {
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
     return Hex.toHexString(selector);
-  }
-
-  public static String parseMethod(String methodSign, String input, boolean isHex) {
-    if (isHex) {
-      return parseSelector(methodSign) + input;
-    } else {
-      return parseSelector(methodSign) + parseParameters(methodSign, input);
-    }
   }
 
   public static byte[] encodeInput(String methodSign, String input) {
@@ -229,10 +233,6 @@ public class AbiUtil {
     }
 
     return pack(coders, items);
-  }
-
-  public static String parseMethod(String methodSign, List<Object> parameters) {
-    return parseSelector(methodSign) + parseParameters(methodSign, parameters);
   }
 
   public static void main(String[] args) {

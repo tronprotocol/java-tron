@@ -727,8 +727,8 @@ public class Manager {
           this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
         throw new BalanceInsufficientException("reduceAssetAmount failed !");
       }
-    } else if (amount > 0 &&
-        !account.addAssetAmountV2(AssetID.getBytes(), amount,
+    } else if (amount > 0
+        && !account.addAssetAmountV2(AssetID.getBytes(), amount,
             this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
       throw new BalanceInsufficientException("addAssetAmount failed !");
     }
@@ -753,7 +753,8 @@ public class Manager {
       byte[] blockHash = this.recentBlockStore.get(refBlockNumBytes).getData();
       if (!Arrays.equals(blockHash, refBlockHash)) {
         String str = String.format(
-            "Tapos failed, different block hash, %s, %s , recent block %s, solid block %s head block %s",
+            "Tapos failed, different block hash, %s, %s , recent block %s, "
+                + "solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
             Hex.toHexString(blockHash),
             getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
@@ -761,8 +762,8 @@ public class Manager {
         throw new TaposException(str);
       }
     } catch (ItemNotFoundException e) {
-      String str = String.
-          format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
+      String str = String
+          .format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
               ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
               getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
       logger.info(str);
@@ -778,8 +779,8 @@ public class Manager {
     }
     long transactionExpiration = transactionCapsule.getExpiration();
     long headBlockTime = getHeadBlockTimeStamp();
-    if (transactionExpiration <= headBlockTime ||
-        transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
+    if (transactionExpiration <= headBlockTime
+        || transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
       throw new TransactionExpirationException(
           "transaction expiration, transaction expiration time is " + transactionExpiration
               + ", but headBlockTime is " + headBlockTime);
@@ -1283,14 +1284,6 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
-
-/*
-    VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
-    VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
-    VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
-    VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
-    VMConfig.initAllowTvmSolidity059(dynamicPropertiesStore.getAllowTvmSolidity059());
-*/
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
@@ -1812,8 +1805,8 @@ public class Manager {
   }
 
   private void reorgContractTrigger() {
-    if (eventPluginLoaded &&
-        (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+    if (eventPluginLoaded
+        && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
             || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
       logger.info("switchfork occured, post reorgContractTrigger");
       try {
@@ -1830,8 +1823,8 @@ public class Manager {
   }
 
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
-    if (eventPluginLoaded &&
-        (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+    if (eventPluginLoaded
+        && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
             || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {

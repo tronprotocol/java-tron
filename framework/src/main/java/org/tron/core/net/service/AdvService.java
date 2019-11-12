@@ -261,8 +261,8 @@ public class AdvService {
     InvSender invSender = new InvSender();
 
     invToSpread.forEach((item, time) -> peers.forEach(peer -> {
-      if (peer.getAdvInvReceive().getIfPresent(item) == null &&
-          peer.getAdvInvSpread().getIfPresent(item) == null) {
+      if (peer.getAdvInvReceive().getIfPresent(item) == null
+          && peer.getAdvInvSpread().getIfPresent(item) == null) {
         peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
         invSender.add(item, peer);
       }
@@ -274,7 +274,8 @@ public class AdvService {
 
   class InvSender {
 
-    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send = new HashMap<>();
+    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
+        = new HashMap<>();
 
     public void clear() {
       this.send.clear();
