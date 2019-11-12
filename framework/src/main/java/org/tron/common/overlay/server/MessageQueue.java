@@ -26,8 +26,8 @@ import org.tron.protos.Protocol.ReasonCode;
 @Scope("prototype")
 public class MessageQueue {
 
-  private static ScheduledExecutorService sendTimer = Executors.
-      newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
+  private static ScheduledExecutorService sendTimer =
+      Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
   private volatile boolean sendMsgFlag = false;
   private volatile long sendTime;
   private volatile long sendPing;
@@ -143,14 +143,14 @@ public class MessageQueue {
   }
 
   private boolean needToLog(Message msg) {
-    if (msg instanceof PingMessage ||
-        msg instanceof PongMessage ||
-        msg instanceof TransactionsMessage) {
+    if (msg instanceof PingMessage
+        || msg instanceof PongMessage
+        || msg instanceof TransactionsMessage) {
       return false;
     }
 
-    if (msg instanceof InventoryMessage &&
-        ((InventoryMessage) msg).getInventoryType().equals(InventoryType.TRX)) {
+    if (msg instanceof InventoryMessage
+        && ((InventoryMessage) msg).getInventoryType().equals(InventoryType.TRX)) {
       return false;
     }
 

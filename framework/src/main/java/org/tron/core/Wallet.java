@@ -294,10 +294,10 @@ public class Wallet {
     System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
     byte[] hash0 = Sha256Hash.hash(decodeData);
     byte[] hash1 = Sha256Hash.hash(hash0);
-    if (hash1[0] == decodeCheck[decodeData.length] &&
-        hash1[1] == decodeCheck[decodeData.length + 1] &&
-        hash1[2] == decodeCheck[decodeData.length + 2] &&
-        hash1[3] == decodeCheck[decodeData.length + 3]) {
+    if (hash1[0] == decodeCheck[decodeData.length]
+        && hash1[1] == decodeCheck[decodeData.length + 1]
+        && hash1[2] == decodeCheck[decodeData.length + 2]
+        && hash1[3] == decodeCheck[decodeData.length + 3]) {
       return decodeData;
     }
     return null;
@@ -379,24 +379,6 @@ public class Wallet {
     boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
     return b;
   }
-
-//  public ShieldAddress generateShieldAddress() {
-//    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
-//    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
-//
-//    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
-//    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
-//
-//    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
-//    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
-//
-//    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
-//    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
-//
-//    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
-//    builder.setPublicAddress(ByteString.copyFrom(addPublic));
-//    return builder.build();
-//  }
 
   public static String makeUpperCamelMethod(String originName) {
     return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)

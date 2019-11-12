@@ -1,8 +1,6 @@
 package org.tron.core;
 
-
 import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;

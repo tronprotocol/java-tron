@@ -1,8 +1,6 @@
 package org.tron.common.runtime.vm;
 
-
 import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;

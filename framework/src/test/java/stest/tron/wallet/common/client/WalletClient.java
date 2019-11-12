@@ -253,9 +253,8 @@ public class WalletClient {
 
   public static Transaction participateAssetIssueTransaction(byte[] to, byte[] assertName,
       byte[] owner, long amount) {
-    AssetIssueContractOuterClass.ParticipateAssetIssueContract contract = participateAssetIssueContract(
-        to, assertName,
-        owner, amount);
+    AssetIssueContractOuterClass.ParticipateAssetIssueContract contract =
+        participateAssetIssueContract(to, assertName, owner, amount);
     return rpcCli.createParticipateAssetIssueTransaction(contract);
   }
 
@@ -326,8 +325,8 @@ public class WalletClient {
 
   public static AssetIssueContractOuterClass.TransferAssetContract createTransferAssetContract(
       byte[] to, byte[] assertName, byte[] owner, long amount) {
-    AssetIssueContractOuterClass.TransferAssetContract.Builder builder = AssetIssueContractOuterClass.TransferAssetContract
-        .newBuilder();
+    AssetIssueContractOuterClass.TransferAssetContract.Builder builder =
+        AssetIssueContractOuterClass.TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(owner);
@@ -345,8 +344,8 @@ public class WalletClient {
 
   public static AssetIssueContractOuterClass.ParticipateAssetIssueContract participateAssetIssueContract(
       byte[] to, byte[] assertName, byte[] owner, long amount) {
-    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder = AssetIssueContractOuterClass.ParticipateAssetIssueContract
-        .newBuilder();
+    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder =
+        AssetIssueContractOuterClass.ParticipateAssetIssueContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(owner);

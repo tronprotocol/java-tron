@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import javax.annotation.PostConstruct;
@@ -63,7 +62,8 @@ public abstract class RateLimiterServlet extends HttpServlet {
         success = true;
       } catch (Exception e) {
         logger.warn(
-            "failure to add the rate limiter strategy. servlet = {}, strategy name = {}, params = \"{}\".",
+            "failure to add the rate limiter strategy. servlet = {}, "
+                + "strategy name = {}, params = \"{}\".",
             getClass().getSimpleName(), cName, params);
       }
     }
