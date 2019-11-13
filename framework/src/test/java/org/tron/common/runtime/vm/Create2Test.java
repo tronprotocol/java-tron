@@ -86,7 +86,8 @@ public class Create2Test extends VMTestBase {
 
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
+        contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
+        null);
     byte[] factoryAddress = Wallet.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
@@ -100,7 +101,8 @@ public class Create2Test extends VMTestBase {
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
-    byte[] actualContract = MUtil.convertToTronAddress(Arrays.copyOfRange(returnValue, 12, 32));
+    byte[] actualContract = MUtil.convertToTronAddress(Arrays.copyOfRange(returnValue,
+        12, 32));
     byte[] expectedContract = Wallet
         .generateContractAddress2(address, new DataWord(salt).getData(), Hex.decode(testCode));
     // check deployed contract

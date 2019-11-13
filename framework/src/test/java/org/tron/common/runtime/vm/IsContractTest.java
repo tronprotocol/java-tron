@@ -19,7 +19,7 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class IsContractTest extends VMTestBase {
-/*
+ /*
 
 pragma solidity >=0.4.22 <0.6.0;
 
@@ -69,11 +69,12 @@ contract isTestCtr {
     }
 }
 
-*/
+ */
 
   @Test
   public void testIsContract()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -95,7 +96,8 @@ contract isTestCtr {
     Assert.assertNull(runtime.getRuntimeError());
 
     trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
+        "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
+        null);
     byte[] factoryAddressOther = Wallet.generateContractAddress(trx);
     String factoryAddressStrOther = Wallet.encode58Check(factoryAddressOther);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
@@ -129,7 +131,8 @@ contract isTestCtr {
         "0000000000000000000000000000000000000000000000000000000000000000");
 
     // trigger deployed contract
-    String precompileContractAddr = "0000000000000000000000000000000000000000000000000000000000010001";
+    String precompileContractAddr =
+        "0000000000000000000000000000000000000000000000000000000000010001";
     hexInput = AbiUtil.parseMethod(methodByAddr, precompileContractAddr, true);
     result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),

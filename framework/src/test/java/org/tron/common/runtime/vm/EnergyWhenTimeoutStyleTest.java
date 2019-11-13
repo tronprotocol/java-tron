@@ -81,7 +81,8 @@ public class EnergyWhenTimeoutStyleTest {
 
   @Test
   public void endlessLoopTest()
-      throws ContractExeException, ContractValidateException, ReceiptCheckErrException, VMIllegalException {
+      throws ContractExeException, ContractValidateException, ReceiptCheckErrException,
+      VMIllegalException {
 
     long value = 0;
     long feeLimit = 1000_000_000L;
@@ -104,7 +105,7 @@ public class EnergyWhenTimeoutStyleTest {
 
     byte[] contractAddress = result.getContractAddress();
 
-    /* =================================== CALL setVote(uint256) =================================== */
+    /* =================================== CALL setVote(uint256) =============================== */
     String params = "0000000000000000000000000000000000000000000000000000000000000003";
     byte[] triggerData = TvmTestUtils.parseAbi("setVote(uint256)", params);
     boolean haveException = false;
@@ -123,7 +124,8 @@ public class EnergyWhenTimeoutStyleTest {
 
   public TVMTestResult deployEndlessLoopContract(long value, long feeLimit,
       long consumeUserResourcePercent)
-      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException,
+      VMIllegalException {
     String contractName = "EndlessLoopContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"getVote\",\"outputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_vote\",\"type\":\"uint256\"}],\"name\":\"setVote\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";

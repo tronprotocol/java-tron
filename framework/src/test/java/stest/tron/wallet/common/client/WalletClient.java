@@ -39,6 +39,7 @@ import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
@@ -63,8 +64,6 @@ class WitnessComparator implements Comparator {
 }
 
 public class WalletClient {
-
-
   private static final Logger logger = LoggerFactory.getLogger("WalletClient");
   private static final String FilePath = "Wallet";
   private static GrpcClient rpcCli;
@@ -73,18 +72,6 @@ public class WalletClient {
   private static byte addressPreFixByte = CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
   private ECKey ecKey = null;
   private boolean loginState = false;
-
-  //  static {
-  //    new Timer().schedule(new TimerTask() {
-  //      @Override
-  //      public void run() {
-  //        String fullnode = selectFullNode();
-  //        if(!"".equals(fullnode)) {
-  //          rpcCli = new GrpcClient(fullnode);
-  //        }
-  //      }
-  //    }, 3 * 60 * 1000, 3 * 60 * 1000);
-  //  }
 
   /**
    * Creates a new WalletClient with a random ECKey or no ECKey.
@@ -361,10 +348,10 @@ public class WalletClient {
    * constructor.
    */
 
-  public static AssetIssueContractOuterClass.ParticipateAssetIssueContract participateAssetIssueContract(
+  public static ParticipateAssetIssueContract participateAssetIssueContract(
       byte[] to, byte[] assertName, byte[] owner, long amount) {
-    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder =
-        AssetIssueContractOuterClass.ParticipateAssetIssueContract.newBuilder();
+    ParticipateAssetIssueContract.Builder builder =
+        ParticipateAssetIssueContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(owner);
