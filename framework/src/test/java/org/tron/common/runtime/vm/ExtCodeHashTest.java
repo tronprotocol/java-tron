@@ -18,22 +18,6 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class ExtCodeHashTest extends VMTestBase {
-/*
-pragma solidity ^0.5.0;
-contract TestExtCodeHash {
-
-    function getCodeHashByAddr(address _addr) public view returns (bytes32 _hash) {
-        assembly {
-                _hash := extcodehash(_addr)
-            }
-    }
-    function getCodeHashByUint(uint256 _addr) public view returns (bytes32 _hash) {
-        assembly {
-                _hash := extcodehash(_addr)
-            }
-    }
-}
-*/
 
   @Test
   public void testExtCodeHash()
@@ -49,7 +33,8 @@ contract TestExtCodeHash {
 
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
+        contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
+        null);
     byte[] factoryAddress = Wallet.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());

@@ -1304,7 +1304,8 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
-          "frozenDuration must be less than " + maxFrozenSupplyTime + " days " + "and more than "
+          "frozenDuration must be less than " + maxFrozenSupplyTime
+              + " days " + "and more than "
               + minFrozenSupplyTime + " days", e.getMessage());
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -1351,7 +1352,8 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
-          "frozenDuration must be less than " + maxFrozenSupplyTime + " days " + "and more than "
+          "frozenDuration must be less than " + maxFrozenSupplyTime
+              + " days " + "and more than "
               + minFrozenSupplyTime + " days", e.getMessage());
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -1399,7 +1401,8 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
-          "frozenDuration must be less than " + maxFrozenSupplyTime + " days " + "and more than "
+          "frozenDuration must be less than " + maxFrozenSupplyTime
+              + " days " + "and more than "
               + minFrozenSupplyTime + " days", e.getMessage());
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -1532,7 +1535,8 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Start time should be greater than HeadBlockTime", e.getMessage());
+      Assert.assertEquals("Start time should be greater than HeadBlockTime",
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1560,7 +1564,8 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Start time should be greater than HeadBlockTime", e.getMessage());
+      Assert.assertEquals("Start time should be greater than HeadBlockTime",
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
