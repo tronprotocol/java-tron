@@ -25,11 +25,11 @@ public class GetTransactionFeeByIdServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
-      TransactionInfo reply = wallet
+      TransactionInfo result = wallet
           .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(input)));
 
-      if (reply != null) {
-        response.getWriter().println(Util.printTransactionFee(JsonFormat.printToString(reply, visible)));
+      if (result != null) {
+        response.getWriter().println(Util.printTransactionFee(JsonFormat.printToString(result, visible)));
       } else {
         response.getWriter().println("{}");
       }
@@ -46,9 +46,10 @@ public class GetTransactionFeeByIdServlet extends RateLimiterServlet {
       boolean visible = Util.getVisiblePost(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
-      TransactionInfo reply = wallet.getTransactionInfoById(build.getValue());
-      if (reply != null) {
-        response.getWriter().println(Util.printTransactionFee(JsonFormat.printToString(reply, visible)));
+      TransactionInfo result = wallet.getTransactionInfoById(build.getValue());
+      
+      if (result != null) {
+        response.getWriter().println(Util.printTransactionFee(JsonFormat.printToString(result, visible)));
       } else {
         response.getWriter().println("{}");
       }
