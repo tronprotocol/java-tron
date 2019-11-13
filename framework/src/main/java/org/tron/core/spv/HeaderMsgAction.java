@@ -24,6 +24,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.spv.message.BlockHeaderMessage;
 import org.tron.core.spv.message.DownloadHeaderMessage;
 import org.tron.core.spv.message.NotDataDownloadMessage;
+import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.DownloadHeader;
 import org.tron.protos.Protocol.Items;
 import org.tron.protos.Protocol.ReasonCode;
@@ -93,7 +94,11 @@ public class HeaderMsgAction {
 
   public void processBlockHeadersMsg(PeerConnection peer, TronMessage msg) throws P2pException {
     BlockHeaderMessage blockHeaderMessage = (BlockHeaderMessage) msg;
-    validMsg(blockHeaderMessage.getItems());
+    Items items = blockHeaderMessage.getItems();
+    validMsg(items);
+    for (BlockHeader header : items.getBlockHeadersList()) {
+      headerManager.pushBlockHeader(header);
+    }
   }
 
   public void processNotDataDownload(PeerConnection peer, TronMessage msg) throws P2pException {
