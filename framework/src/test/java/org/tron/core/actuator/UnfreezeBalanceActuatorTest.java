@@ -161,7 +161,8 @@ public class UnfreezeBalanceActuatorTest {
       Assert.assertEquals(owner.getTronPower(), 0L);
 
       long totalNetWeightAfter = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-      Assert.assertEquals(totalNetWeightBefore, totalNetWeightAfter + frozenBalance / 1000_000L);
+      Assert.assertEquals(totalNetWeightBefore,
+          totalNetWeightAfter + frozenBalance / 1000_000L);
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -279,14 +280,15 @@ public class UnfreezeBalanceActuatorTest {
       //check DelegatedResourceAccountIndex
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
           .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
-      Assert.assertEquals(0, delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
+      Assert.assertEquals(0,
+          delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
+      Assert.assertEquals(0,
+          delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
 
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
           .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
+      Assert.assertEquals(0,
+              delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
       Assert.assertEquals(0,
           delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
 
@@ -378,13 +380,15 @@ public class UnfreezeBalanceActuatorTest {
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
           .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
-      Assert.assertEquals(0, delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
+          .assertEquals(0,
+              delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
+      Assert.assertEquals(0,
+          delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
 
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
           .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
+      Assert.assertEquals(0,
+              delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
       Assert.assertEquals(0,
           delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
 
@@ -431,8 +435,8 @@ public class UnfreezeBalanceActuatorTest {
 
     //init DelegatedResourceAccountIndex
     {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex = new DelegatedResourceAccountIndexCapsule(
-          owner.getAddress());
+      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex =
+          new DelegatedResourceAccountIndexCapsule(owner.getAddress());
       delegatedResourceAccountIndex
           .addToAccount(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)));
       dbManager.getDelegatedResourceAccountIndexStore()
@@ -440,8 +444,8 @@ public class UnfreezeBalanceActuatorTest {
     }
 
     {
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex = new DelegatedResourceAccountIndexCapsule(
-          receiver.getAddress());
+      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndex =
+          new DelegatedResourceAccountIndexCapsule(receiver.getAddress());
       delegatedResourceAccountIndex
           .addFromAccount(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
       dbManager.getDelegatedResourceAccountIndexStore()
@@ -489,16 +493,16 @@ public class UnfreezeBalanceActuatorTest {
       //check DelegatedResourceAccountIndex
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
           .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
-      Assert.assertEquals(0, delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
+      Assert.assertEquals(0,
+          delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
+      Assert.assertEquals(0,
+          delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
 
       DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
           .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
-      Assert
-          .assertEquals(0,
+      Assert.assertEquals(0,
+              delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
+      Assert.assertEquals(0,
               delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
 
       receiver = dbManager.getAccountStore().get(receiver.createDbKey());
@@ -820,7 +824,8 @@ public class UnfreezeBalanceActuatorTest {
       fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] does not exist", e.getMessage());
+      Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] does not exist",
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -909,7 +914,8 @@ public class UnfreezeBalanceActuatorTest {
     List<Vote> oldVotes = new ArrayList<Vote>();
     VotesCapsule votesCapsule = new VotesCapsule(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), oldVotes);
-    votesCapsule.addNewVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), 100);
+    votesCapsule.addNewVotes(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        100);
     dbManager.getVotesStore().put(ByteArray.fromHexString(OWNER_ADDRESS), votesCapsule);
     accountCapsule.setFrozen(1_000_000_000L, now);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);

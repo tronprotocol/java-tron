@@ -106,6 +106,7 @@ public class ProposalControllerTest {
     try {
       proposalCapsule = dbManager.getProposalStore().get(key);
     } catch (Exception ex) {
+      System.out.println(ex.getMessage());
     }
     Assert.assertEquals(State.DISAPPROVED, proposalCapsule.getState());
 
@@ -127,6 +128,7 @@ public class ProposalControllerTest {
     try {
       proposalCapsule = dbManager.getProposalStore().get(key);
     } catch (Exception ex) {
+      System.out.println(ex.getMessage());
     }
     Assert.assertEquals(State.APPROVED, proposalCapsule.getState());
   }
@@ -175,6 +177,7 @@ public class ProposalControllerTest {
     try {
       proposalCapsule3 = dbManager.getProposalStore().get(proposalCapsule3.createDbKey());
     } catch (Exception ex) {
+      System.out.println(ex.getMessage());
     }
     Assert.assertEquals(State.DISAPPROVED, proposalCapsule3.getState());
 
