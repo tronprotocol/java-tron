@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionFeeByIdServlet extends RateLimiterServlet {
+public class GetTransactionReceiptByIdServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -47,7 +47,7 @@ public class GetTransactionFeeByIdServlet extends RateLimiterServlet {
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
       TransactionInfo result = wallet.getTransactionInfoById(build.getValue());
-      
+
       if (result != null) {
         response.getWriter().println(Util.printTransactionFee(JsonFormat.printToString(result, visible)));
       } else {
