@@ -108,12 +108,12 @@ public class SM2KeyTest {
 
     @Test
     public void testSM3Hash(){
-        SM2 key = SM2.fromPrivate(privateKey);
-        SM2Signer signer = key.getSigner();
+        //SM2 key = SM2.fromPrivate(privateKey);
+        SM2 key = SM2.fromPublicOnly(pubKey);
+        SM2Signer signer = key.getSM2SignerForHash();
         String message = "message digest";
         byte[] hash = signer.generateSM3Hash(message,IDa);
         assertEquals("10D51CB90C0C0522E94875A2BEA7AB72299EBE7192E64EFE0573B1C77110E5C9", Hex.toHexString(hash).toUpperCase());
-
     }
 
     @Test

@@ -556,13 +556,29 @@ public class SM2 implements Serializable {
         return new SM2.SM2Signature(componets[0], componets[1]);
     }
 
-    public SM2Signer getSigner() {
+    private SM2Signer getSigner() {
         SM2Signer signer = new SM2Signer();
         BigInteger d = getPrivKey();
         ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
-        signer.init(true,privateKeyParameters);
+//        ECPublicKeyParameters publicKeyParameters = new ECPublicKeyParameters(pub,ecc_param);
+        signer.init(true, privateKeyParameters);
         return signer;
     }
+
+    /**
+     * used to generate the SM3 hash for SM2 signature generation or verification
+     *
+     * @return
+     */
+    public SM2Signer getSM2SignerForHash() {
+        SM2Signer signer = new SM2Signer();
+        //BigInteger d = getPrivKey();
+        //ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
+        ECPublicKeyParameters publicKeyParameters = new ECPublicKeyParameters(pub,ecc_param);
+        signer.init(false, publicKeyParameters);
+        return signer;
+    }
+
 
     /**
      * <p>Given the components of a signature and a selector value, recover and return the public key
