@@ -61,7 +61,8 @@ public class BlockMsgHandler implements TronMsgHandler {
       long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
       processBlock(peer, blockMessage.getBlockCapsule());
       logger.info(
-          "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, txs/process {}/{}ms, witness: {}",
+          "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, "
+              + "txs/process {}/{}ms, witness: {}",
           blockId.getNum(),
           interval,
           peer.getInetAddress(),

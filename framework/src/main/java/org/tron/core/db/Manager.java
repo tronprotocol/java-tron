@@ -727,8 +727,8 @@ public class Manager {
           this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
         throw new BalanceInsufficientException("reduceAssetAmount failed !");
       }
-    } else if (amount > 0 &&
-        !account.addAssetAmountV2(AssetID.getBytes(), amount,
+    } else if (amount > 0
+        && !account.addAssetAmountV2(AssetID.getBytes(), amount,
             this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
       throw new BalanceInsufficientException("addAssetAmount failed !");
     }
@@ -753,7 +753,8 @@ public class Manager {
       byte[] blockHash = this.recentBlockStore.get(refBlockNumBytes).getData();
       if (!Arrays.equals(blockHash, refBlockHash)) {
         String str = String.format(
-            "Tapos failed, different block hash, %s, %s , recent block %s, solid block %s head block %s",
+            "Tapos failed, different block hash, %s, %s , recent block %s, "
+                + "solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
             Hex.toHexString(blockHash),
             getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
@@ -761,8 +762,8 @@ public class Manager {
         throw new TaposException(str);
       }
     } catch (ItemNotFoundException e) {
-      String str = String.
-          format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
+      String str = String
+          .format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
               ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
               getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
       logger.info(str);
@@ -778,8 +779,8 @@ public class Manager {
     }
     long transactionExpiration = transactionCapsule.getExpiration();
     long headBlockTime = getHeadBlockTimeStamp();
-    if (transactionExpiration <= headBlockTime ||
-        transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
+    if (transactionExpiration <= headBlockTime
+        || transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
       throw new TransactionExpirationException(
           "transaction expiration, transaction expiration time is " + transactionExpiration
               + ", but headBlockTime is " + headBlockTime);
@@ -873,7 +874,8 @@ public class Manager {
   }
 
   public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
-      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
+      throws ContractValidateException, AccountResourceInsufficientException,
+      TooBigTransactionResultException {
     BandwidthProcessor processor = new BandwidthProcessor(this);
     processor.consume(trx, trace);
   }
@@ -937,8 +939,8 @@ public class Manager {
   private void switchFork(BlockCapsule newHead)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
-      TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
-      NonCommonBlockException, ReceiptCheckErrException,
+      TooBigTransactionException, TooBigTransactionResultException, DupTransactionException,
+      TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
       VMIllegalException, ZksnarkException, BadBlockException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
@@ -947,7 +949,8 @@ public class Manager {
               newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (NonCommonBlockException e) {
       logger.info(
-          "there is not the most recent common ancestor, need to remove all blocks in the fork chain.");
+          "there is not the most recent common ancestor, need to remove all "
+              + "blocks in the fork chain.");
       BlockCapsule tmp = newHead;
       while (tmp != null) {
         khaosDb.removeBlk(tmp.getBlockId());
@@ -1038,7 +1041,8 @@ public class Manager {
   public synchronized void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
-      TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
+      TaposException, TooBigTransactionException, TooBigTransactionResultException,
+      DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException {
     long start = System.currentTimeMillis();
@@ -1257,7 +1261,8 @@ public class Manager {
    */
   public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
+      AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
     if (trxCap == null) {
       return null;
@@ -1283,14 +1288,6 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
-
-/*
-    VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
-    VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
-    VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
-    VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
-    VMConfig.initAllowTvmSolidity059(dynamicPropertiesStore.getAllowTvmSolidity059());
-*/
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
@@ -1355,8 +1352,8 @@ public class Manager {
 
     long postponedTrxCount = 0;
 
-    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockNum() + 1, getHeadBlockId(), blockTime,
-        miner.getWitnessAddress());
+    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockNum() + 1, getHeadBlockId(),
+        blockTime, miner.getWitnessAddress());
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
@@ -1500,7 +1497,8 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
+      ZksnarkException, BadBlockException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1812,8 +1810,8 @@ public class Manager {
   }
 
   private void reorgContractTrigger() {
-    if (eventPluginLoaded &&
-        (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+    if (eventPluginLoaded
+        && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
             || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
       logger.info("switchfork occured, post reorgContractTrigger");
       try {
@@ -1830,8 +1828,8 @@ public class Manager {
   }
 
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
-    if (eventPluginLoaded &&
-        (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+    if (eventPluginLoaded
+        && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
             || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {

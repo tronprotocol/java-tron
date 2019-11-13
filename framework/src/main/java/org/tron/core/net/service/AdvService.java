@@ -239,10 +239,10 @@ public class AdvService {
               && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
           .sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
           .findFirst().ifPresent(peer -> {
-        invSender.add(item, peer);
-        peer.getAdvInvRequest().put(item, now);
-        invToFetch.remove(item);
-      });
+            invSender.add(item, peer);
+            peer.getAdvInvRequest().put(item, now);
+            invToFetch.remove(item);
+          });
     });
 
     invSender.sendFetch();
@@ -261,8 +261,8 @@ public class AdvService {
     InvSender invSender = new InvSender();
 
     invToSpread.forEach((item, time) -> peers.forEach(peer -> {
-      if (peer.getAdvInvReceive().getIfPresent(item) == null &&
-          peer.getAdvInvSpread().getIfPresent(item) == null) {
+      if (peer.getAdvInvReceive().getIfPresent(item) == null
+          && peer.getAdvInvSpread().getIfPresent(item) == null) {
         peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
         invSender.add(item, peer);
       }
@@ -274,7 +274,8 @@ public class AdvService {
 
   class InvSender {
 
-    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send = new HashMap<>();
+    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
+        = new HashMap<>();
 
     public void clear() {
       this.send.clear();
