@@ -564,7 +564,8 @@ public class AssetIssueActuatorTest {
 
   @Test
   /*
-   * Asset name length must between 1 to 32 and can not contain space and other unreadable character, and can not contain chinese characters.
+   * Asset name length must between 1 to 32 and can not contain space and other unreadable
+   * character, and can not contain chinese characters.
    */
   public void assetNameTest() {
     long nowTime = new Date().getTime();

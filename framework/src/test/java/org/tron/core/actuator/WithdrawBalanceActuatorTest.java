@@ -182,11 +182,6 @@ public class WithdrawBalanceActuatorTest {
 
   @Test
   public void notWitness() {
-//    long now = System.currentTimeMillis();
-//    AccountCapsule accountCapsule = dbManager.getAccountStore()
-//        .get(ByteArray.fromHexString(OWNER_ADDRESS));
-//    accountCapsule.setFrozen(1_000_000_000L, now);
-//    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     WithdrawBalanceActuator actuator = new WithdrawBalanceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(OWNER_ADDRESS));

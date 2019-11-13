@@ -1257,7 +1257,8 @@ public class TransferAssetActuatorTest {
 
   @Test
   /**
-   * SameTokenName close,Asset name length must between 1 to 32 and can not contain space and other unreadable character, and can not contain chinese characters.
+   * SameTokenName close,Asset name length must between 1 to 32 and can not contain space and
+   * other unreadable character, and can not contain chinese characters.
    */
 
   //asset name validation which is unnecessary has been removed!

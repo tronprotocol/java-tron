@@ -19,7 +19,7 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class IsContractTest extends VMTestBase {
- /*
+  /*
 
 pragma solidity >=0.4.22 <0.6.0;
 
@@ -69,7 +69,7 @@ contract isTestCtr {
     }
 }
 
- */
+  */
 
   @Test
   public void testIsContract()

@@ -1278,8 +1278,8 @@ public class ShieldedTransferActuatorTest {
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       //set note nullifiers
-      ShieldedTransferContract shieldContract = transactionCap.getInstance().getRawData().
-          getContract(0).getParameter().unpack(ShieldedTransferContract.class);
+      ShieldedTransferContract shieldContract = transactionCap.getInstance().getRawData()
+          .getContract(0).getParameter().unpack(ShieldedTransferContract.class);
       dbManager.getNullfierStore().put(
           new BytesCapsule(shieldContract.getSpendDescription(0).getNullifier().toByteArray()));
 

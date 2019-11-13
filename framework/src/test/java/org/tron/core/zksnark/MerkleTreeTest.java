@@ -144,9 +144,6 @@ public class MerkleTreeTest {
       Assert.assertEquals(root_tests.getString(i),
           PedersenHash2String(tree.root()));
 
-      // Check serialization of tree
-//      expect_ser_test_vector(ser_tests[i], tree, tree);
-
       boolean first = true; // The first witness can never form a path
       for (IncrementalMerkleVoucherCapsule wit : witnesses) {
         // Append the same commitment to all the witnesses

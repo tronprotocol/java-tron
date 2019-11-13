@@ -92,6 +92,7 @@ public class ProposalControllerTest {
     try {
       proposalCapsule = dbManager.getProposalStore().get(key);
     } catch (Exception ex) {
+      System.out.println(ex.getMessage());
     }
     Assert.assertEquals(State.DISAPPROVED, proposalCapsule.getState());
 

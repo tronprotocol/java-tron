@@ -833,11 +833,6 @@ public class UnfreezeBalanceActuatorTest {
 
   @Test
   public void noFrozenBalance() {
-//    long now = System.currentTimeMillis();
-//    AccountCapsule accountCapsule = dbManager.getAccountStore()
-//        .get(ByteArray.fromHexString(OWNER_ADDRESS));
-//    accountCapsule.setFrozen(1_000_000_000L, now);
-//    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContractForBandwidth(OWNER_ADDRESS));
