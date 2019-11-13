@@ -41,7 +41,7 @@ public abstract class FastByteComparisons {
   }
 
   /**
-   * <p>Uses reflection to gracefully fall back to the Java implementation if {@code Unsafe} isn't
+   * Uses reflection to gracefully fall back to the Java implementation if {@code Unsafe} isn't
    * available.
    */
   private static class LexicographicalComparerHolder {
@@ -76,9 +76,9 @@ public abstract class FastByteComparisons {
       public int compareTo(byte[] buffer1, int offset1, int length1,
           byte[] buffer2, int offset2, int length2) {
         // Short circuit equal case
-        if (buffer1 == buffer2 &&
-            offset1 == offset2 &&
-            length1 == length2) {
+        if (buffer1 == buffer2
+            && offset1 == offset2
+            && length1 == length2) {
           return 0;
         }
         int end1 = offset1 + length1;

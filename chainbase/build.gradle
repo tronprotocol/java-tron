@@ -38,13 +38,12 @@ dependencies {
     compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
     compile "org.fusesource.jansi:jansi:$jansiVersion"
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    compile "com.madgag.spongycastle:core:1.58.0.0"
-    compile "com.madgag.spongycastle:prov:1.58.0.0"
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
     compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.5'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
     compile project(":protocol")
+    compile project(":common")
     compile 'org.reflections:reflections:0.9.11'
     compile 'com.alibaba:fastjson:1.2.60'
 }
@@ -52,20 +51,20 @@ dependencies {
 
 test {
 
-    testLogging  {
+    testLogging {
         // showing skipped occasionally should prevent CI timeout due to lack of standard output
-        events=["skipped", "failed"] // "started", "passed"
+        events = ["skipped", "failed"] // "started", "passed"
         // showStandardStreams = true
-        exceptionFormat="full"
+        exceptionFormat = "full"
 
         debug.events = ["skipped", "failed"]
-        debug.exceptionFormat="full"
+        debug.exceptionFormat = "full"
 
         info.events = ["failed", "skipped"]
-        info.exceptionFormat="full"
+        info.exceptionFormat = "full"
 
         warn.events = ["failed", "skipped"]
-        warn.exceptionFormat="full"
+        warn.exceptionFormat = "full"
     }
 
     maxHeapSize = "1200m"
@@ -77,18 +76,18 @@ test {
 
 task testng(type: Test) {
     useTestNG()
-    testLogging  {
-        events=["skipped", "failed"]
-        exceptionFormat="full"
+    testLogging {
+        events = ["skipped", "failed"]
+        exceptionFormat = "full"
 
         debug.events = ["skipped", "failed"]
-        debug.exceptionFormat="full"
+        debug.exceptionFormat = "full"
 
         info.events = ["failed", "skipped"]
-        info.exceptionFormat="full"
+        info.exceptionFormat = "full"
 
         warn.events = ["failed", "skipped"]
-        warn.exceptionFormat="full"
+        warn.exceptionFormat = "full"
     }
 }
 

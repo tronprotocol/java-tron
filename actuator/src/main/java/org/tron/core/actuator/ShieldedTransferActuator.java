@@ -8,6 +8,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.utils.Commons;
@@ -53,8 +54,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule ret)
+  public boolean execute(Object result)
       throws ContractExeException {
+    TransactionResultCapsule ret = (TransactionResultCapsule)result;
+    if (Objects.isNull(ret)){
+      throw new RuntimeException("TransactionResultCapsule is null");
+    }
+
     long fee = 0;
     long shieldedTransactionFee = calcFee();
     AccountStore accountStore = chainBaseManager.getAccountStore();

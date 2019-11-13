@@ -26,20 +26,20 @@ dependencies {
 
 test {
 
-    testLogging  {
+    testLogging {
         // showing skipped occasionally should prevent CI timeout due to lack of standard output
-        events=["skipped", "failed"] // "started", "passed"
+        events = ["skipped", "failed"] // "started", "passed"
         // showStandardStreams = true
-        exceptionFormat="full"
+        exceptionFormat = "full"
 
         debug.events = ["skipped", "failed"]
-        debug.exceptionFormat="full"
+        debug.exceptionFormat = "full"
 
         info.events = ["failed", "skipped"]
-        info.exceptionFormat="full"
+        info.exceptionFormat = "full"
 
         warn.events = ["failed", "skipped"]
-        warn.exceptionFormat="full"
+        warn.exceptionFormat = "full"
     }
 
     maxHeapSize = "1200m"
@@ -51,18 +51,18 @@ test {
 
 task testng(type: Test) {
     useTestNG()
-    testLogging  {
-        events=["skipped", "failed"]
-        exceptionFormat="full"
+    testLogging {
+        events = ["skipped", "failed"]
+        exceptionFormat = "full"
 
         debug.events = ["skipped", "failed"]
-        debug.exceptionFormat="full"
+        debug.exceptionFormat = "full"
 
         info.events = ["failed", "skipped"]
-        info.exceptionFormat="full"
+        info.exceptionFormat = "full"
 
         warn.events = ["failed", "skipped"]
-        warn.exceptionFormat="full"
+        warn.exceptionFormat = "full"
     }
 }
 

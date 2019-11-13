@@ -459,7 +459,7 @@ public class UpdateAccount2Test {
     try {
       AssetIssueContractOuterClass.AssetIssueContract.Builder builder =
           AssetIssueContractOuterClass.AssetIssueContract
-          .newBuilder();
+              .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(TotalSupply);
@@ -664,7 +664,7 @@ public class UpdateAccount2Test {
     final ECKey ecKey = temKey;
     BalanceContract.UnfreezeBalanceContract.Builder builder =
         BalanceContract.UnfreezeBalanceContract
-        .newBuilder();
+            .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess);
@@ -704,7 +704,7 @@ public class UpdateAccount2Test {
     final ECKey ecKey = temKey;
     BalanceContract.UnfreezeBalanceContract.Builder builder =
         BalanceContract.UnfreezeBalanceContract
-        .newBuilder();
+            .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess);
@@ -762,7 +762,7 @@ public class UpdateAccount2Test {
       long count = Long.parseLong(value);
       WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder =
           WitnessContract.VoteWitnessContract.Vote
-          .newBuilder();
+              .newBuilder();
       byte[] addRess = WalletClient.decodeFromBase58Check(addressBase58);
       if (addRess == null) {
         return false;
@@ -812,7 +812,7 @@ public class UpdateAccount2Test {
       long count = Long.parseLong(value);
       WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder =
           WitnessContract.VoteWitnessContract.Vote
-          .newBuilder();
+              .newBuilder();
       byte[] addRess = WalletClient.decodeFromBase58Check(addressBase58);
       if (addRess == null) {
         continue;

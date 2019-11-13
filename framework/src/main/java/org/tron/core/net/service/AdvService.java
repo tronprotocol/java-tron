@@ -76,16 +76,16 @@ public class AdvService {
     spreadExecutor.scheduleWithFixedDelay(() -> {
       try {
         consumerInvToSpread();
-      } catch (Throwable t) {
-        logger.error("Spread thread error.", t);
+      } catch (Exception exception) {
+        logger.error("Spread thread error.", exception.getMessage());
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
 
     fetchExecutor.scheduleWithFixedDelay(() -> {
       try {
         consumerInvToFetch();
-      } catch (Throwable t) {
-        logger.error("Fetch thread error.", t);
+      } catch (Exception exception) {
+        logger.error("Fetch thread error.", exception.getMessage());
       }
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
@@ -95,12 +95,12 @@ public class AdvService {
     fetchExecutor.shutdown();
   }
 
-  synchronized public void addInvToCache(Item item) {
+  public synchronized void addInvToCache(Item item) {
     invToFetchCache.put(item, System.currentTimeMillis());
     invToFetch.remove(item);
   }
 
-  synchronized public boolean addInv(Item item) {
+  public synchronized boolean addInv(Item item) {
 
     if (fastForward && item.getType().equals(InventoryType.TRX)) {
       return false;
@@ -131,7 +131,7 @@ public class AdvService {
   }
 
   public Message getMessage(Item item) {
-    if (item.getType().equals(InventoryType.TRX)) {
+    if (item.getType() == InventoryType.TRX) {
       return trxCache.getIfPresent(item);
     } else {
       return blockCache.getIfPresent(item);
@@ -215,7 +215,7 @@ public class AdvService {
     }
   }
 
-  synchronized private void consumerInvToFetch() {
+  private synchronized void consumerInvToFetch() {
     Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.isIdle())
         .collect(Collectors.toList());
@@ -248,7 +248,7 @@ public class AdvService {
     invSender.sendFetch();
   }
 
-  synchronized private void consumerInvToSpread() {
+  private synchronized void consumerInvToSpread() {
 
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())

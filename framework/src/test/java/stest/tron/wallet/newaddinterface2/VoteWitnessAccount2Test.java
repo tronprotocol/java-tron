@@ -201,7 +201,7 @@ public class VoteWitnessAccount2Test {
 
       WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder =
           WitnessContract.VoteWitnessContract.Vote
-          .newBuilder();
+              .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
       logger.info("address ====== " + ByteArray.toHexString(address));
       String value = witness.get(addressBase58);
@@ -330,7 +330,7 @@ public class VoteWitnessAccount2Test {
 
       WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder =
           WitnessContract.VoteWitnessContract.Vote
-          .newBuilder();
+              .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
       logger.info("address ====== " + ByteArray.toHexString(address));
       String value = witness.get(addressBase58);

@@ -4,13 +4,17 @@ import com.google.common.collect.Maps;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.utils.DBConfig;
 import org.tron.core.db.common.iterator.DBIterator;
 
 public class LevelDB implements DB<byte[], byte[]>, Flusher {
 
   @Getter
   private LevelDbDataSourceImpl db;
+  private WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
+      .sync(DBConfig.isDbSync());
 
   public LevelDB(LevelDbDataSourceImpl db) {
     this.db = db;
@@ -56,7 +60,7 @@ public class LevelDB implements DB<byte[], byte[]>, Flusher {
     Map<byte[], byte[]> rows = batch.entrySet().stream()
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
         .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll);
-    db.updateByBatch(rows);
+    db.updateByBatch(rows, writeOptions);
   }
 
   @Override

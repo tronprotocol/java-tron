@@ -19,10 +19,12 @@
 package org.tron.core.db.common;
 
 import java.util.Map;
+import org.tron.common.storage.WriteOptionsWrapper;
 
 
 public interface BatchSourceInter<K, V> extends SourceInter<K, V> {
 
   void updateByBatch(Map<K, V> rows);
 
+  void updateByBatch(Map<K, V> rows, WriteOptionsWrapper writeOptions);
 }

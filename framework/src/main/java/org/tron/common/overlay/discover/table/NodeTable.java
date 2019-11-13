@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.discover.table;
 
 import java.util.ArrayList;
@@ -29,8 +30,6 @@ public class NodeTable {
   private final Node node;  // our node
   private transient NodeBucket[] buckets;
   private transient List<NodeEntry> nodes;
-//  private Map<Node, Node> evictedCandidates = new HashMap<>();
-//  private Map<Node, Date> expectedPongs = new HashMap<>();
 
   public NodeTable(Node n) {
     this.node = n;

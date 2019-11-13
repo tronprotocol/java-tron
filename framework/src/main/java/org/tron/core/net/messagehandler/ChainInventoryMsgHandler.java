@@ -39,7 +39,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
 
     peer.setNeedSyncFromPeer(true);
 
-    peer.setSyncChainRequested(null); //todo thread sec
+    peer.setSyncChainRequested(null);
 
     Deque<BlockId> blockIdWeGet = new LinkedList<>(chainInventoryMessage.getBlockIds());
 
@@ -68,10 +68,6 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
         logger.info("Block {} from {} is processed", blockId.getString(), peer.getNode().getHost());
       }
     }
-
-    //if (chainInventoryMessage.getRemainNum() == 0 && peer.getSyncBlockToFetch().isEmpty()) {
-    //  peer.setNeedSyncFromPeer(false);
-    //}
 
     if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty()) ||
         (chainInventoryMessage.getRemainNum() != 0

@@ -200,6 +200,7 @@ public class MultiSign32 {
         .accountPermissionUpdateWithPermissionId(accountPermissionJson1, test001Address, dev001Key,
             blockingStubFull, 0,
             permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();

@@ -102,7 +102,13 @@ public class VMActuator implements Actuator2 {
   }
 
   @Override
-  public void validate(TransactionContext context) throws ContractValidateException {
+  public void validate(Object object) throws ContractValidateException {
+
+    TransactionContext context = (TransactionContext) object;
+    if (Objects.isNull(context)){
+      throw new RuntimeException("TransactionContext is null");
+    }
+
     //Load Config
     ConfigLoader.load(context.getStoreFactory());
     trx = context.getTrxCap().getInstance();
@@ -140,7 +146,12 @@ public class VMActuator implements Actuator2 {
   }
 
   @Override
-  public void execute(TransactionContext context) throws ContractExeException {
+  public void execute(Object object) throws ContractExeException {
+    TransactionContext context = (TransactionContext) object;
+    if (Objects.isNull(context)){
+      throw new RuntimeException("TransactionContext is null");
+    }
+
     ProgramResult result = context.getProgramResult();
     try {
       if (vm != null) {
