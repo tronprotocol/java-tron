@@ -51,6 +51,13 @@ public class Util {
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
 
+  public static String printTransactionFee(String transactionFee) {
+    JSONObject jsonObject = new JSONObject();
+    JSONObject receipt = JSONObject.parseObject(transactionFee);
+    jsonObject.put("Receipt", receipt.get("receipt"));
+    return jsonObject.toJSONString();
+  }
+
   public static String printErrorMsg(Exception e) {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("Error", e.getClass() + " : " + e.getMessage());
