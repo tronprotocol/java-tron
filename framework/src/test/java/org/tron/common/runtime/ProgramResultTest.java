@@ -47,7 +47,7 @@ public class ProgramResultTest {
   private static DepositImpl deposit;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath, "--debug", "--support-constant"},
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);

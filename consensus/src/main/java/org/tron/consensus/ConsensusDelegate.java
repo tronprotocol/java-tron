@@ -5,7 +5,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.AccountStore;
@@ -121,24 +120,12 @@ public class ConsensusDelegate {
     return dynamicPropertiesStore.getNextMaintenanceTime();
   }
 
-  public long getWitnessPayPerBlock() {
-    return dynamicPropertiesStore.getWitnessPayPerBlock();
-  }
-
   public long getLatestSolidifiedBlockNum() {
     return dynamicPropertiesStore.getLatestSolidifiedBlockNum();
   }
 
   public void saveLatestSolidifiedBlockNum(long num) {
     dynamicPropertiesStore.saveLatestSolidifiedBlockNum(num);
-  }
-
-  public Sha256Hash getLatestBlockHeaderHash() {
-    return dynamicPropertiesStore.getLatestBlockHeaderHash();
-  }
-
-  public long getAllowMultiSign() {
-    return dynamicPropertiesStore.getAllowMultiSign();
   }
 
   public void applyBlock(boolean flag) {

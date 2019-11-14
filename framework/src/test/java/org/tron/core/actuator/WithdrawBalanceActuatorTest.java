@@ -324,7 +324,8 @@ public class WithdrawBalanceActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert
-          .assertEquals("The last withdraw time is " + now + ", less than 24 hours", e.getMessage());
+          .assertEquals("The last withdraw time is " + now + ", less than 24 hours",
+              e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

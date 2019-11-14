@@ -3,21 +3,14 @@ package stest.tron.wallet.account;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.io.IOException;
-import java.math.BigInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Utils;
-import org.tron.core.exception.CancelException;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 import stest.tron.wallet.common.client.Configuration;
@@ -25,8 +18,9 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class BrokerageTest001 {
+
   private String witnessKey001 = Configuration.getByPath("testng.conf")
-       .getString("witness.key1");
+      .getString("witness.key1");
   private byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
 
   private String fullnode = Configuration.getByPath("testng.conf")
@@ -87,7 +81,7 @@ public class BrokerageTest001 {
     Assert.assertEquals(20, blockingStubFull.getBrokerageInfo(bytesMessage).getNum());
 
     // getBrokerageInfo from solidity node
-    Assert.assertEquals(20 ,blockingStubSolidyty.getBrokerageInfo(bytesMessage).getNum());
+    Assert.assertEquals(20, blockingStubSolidyty.getBrokerageInfo(bytesMessage).getNum());
   }
 
   @Test
@@ -124,7 +118,7 @@ public class BrokerageTest001 {
     return true;
   }
 
-  public void getBrokerage(){
+  public void getBrokerage() {
 
   }
 }

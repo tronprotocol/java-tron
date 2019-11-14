@@ -149,15 +149,6 @@ public class Commons {
     }
   }
 
-  public static byte[] computeAddress(ECPoint pubPoint) {
-    return computeAddress(pubPoint.getEncoded(/* uncompressed */ false));
-  }
-
-  public static byte[] computeAddress(byte[] pubBytes) {
-    return sha3omit12(
-        Arrays.copyOfRange(pubBytes, 1, pubBytes.length));
-  }
-
   public static void adjustAssetBalanceV2(AccountCapsule account, String AssetID, long amount,
       AccountStore accountStore, AssetIssueStore assetIssueStore,
       DynamicPropertiesStore dynamicPropertiesStore)

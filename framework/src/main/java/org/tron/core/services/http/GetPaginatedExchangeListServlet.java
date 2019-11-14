@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -20,7 +19,19 @@ public class GetPaginatedExchangeListServlet extends RateLimiterServlet {
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-
+    try {
+      boolean visible = Util.getVisible(request);
+      long offset = Long.parseLong(request.getParameter("offset"));
+      long limit = Long.parseLong(request.getParameter("limit"));
+      ExchangeList reply = wallet.getPaginatedExchangeList(offset, limit);
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (Exception e) {
+      Util.processError(e, response);
+    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
@@ -38,12 +49,7 @@ public class GetPaginatedExchangeListServlet extends RateLimiterServlet {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 }

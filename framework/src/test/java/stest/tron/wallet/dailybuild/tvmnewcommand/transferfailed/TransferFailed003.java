@@ -626,7 +626,7 @@ public class TransferFailed003 {
     Assert.assertEquals(
         "REVERT opcode executed",
         ByteArray.toStr(infoById.get().getResMessage().toByteArray()));
-    Assert.assertTrue(afterBalance + fee == beforeBalance);
+    Assert.assertEquals(afterBalance + fee, beforeBalance.longValue());
     Assert.assertEquals(testNetAccountCountBefore, testNetAccountCountAfter);
     Assert.assertEquals(contractAccountCountBefore, contractAccountCountAfter);
 

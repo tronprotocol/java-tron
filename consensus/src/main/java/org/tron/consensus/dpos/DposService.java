@@ -55,9 +55,6 @@ public class DposService implements ConsensusInterface {
   private DposSlot dposSlot;
 
   @Autowired
-  private IncentiveManager incentiveManager;
-
-  @Autowired
   private StateManager stateManager;
 
   @Autowired
@@ -251,7 +248,6 @@ public class DposService implements ConsensusInterface {
   @Override
   public boolean applyBlock(BlockCapsule blockCapsule) {
     statisticManager.applyBlock(blockCapsule);
-    incentiveManager.applyBlock(blockCapsule);
     maintenanceManager.applyBlock(blockCapsule);
     updateSolidBlock();
     return true;

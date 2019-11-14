@@ -26,10 +26,10 @@ import org.tron.common.overlay.discover.table.KademliaOptions;
 
 public class DiscoveryExecutor {
 
-  ScheduledExecutorService discoverer = Executors.newSingleThreadScheduledExecutor();
-  ScheduledExecutorService refresher = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService discoverer = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService refresher = Executors.newSingleThreadScheduledExecutor();
 
-  NodeManager nodeManager;
+  private NodeManager nodeManager;
 
   public DiscoveryExecutor(NodeManager nodeManager) {
     this.nodeManager = nodeManager;

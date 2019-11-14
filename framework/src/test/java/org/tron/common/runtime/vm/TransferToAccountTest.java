@@ -275,8 +275,9 @@ public class TransferToAccountTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
             0, feeLimit, 0, 0);
-    TransactionContext context = new TransactionContext(new BlockCapsule(dbManager.getHeadBlockNum() + 1,
-        dbManager.getHeadBlockId(), 0, ByteString.EMPTY),
+    TransactionContext context = new TransactionContext(
+        new BlockCapsule(dbManager.getHeadBlockNum() + 1,
+            dbManager.getHeadBlockId(), 0, ByteString.EMPTY),
         new TransactionCapsule(transaction),
         StoreFactory.getInstance(), true,
         false);
