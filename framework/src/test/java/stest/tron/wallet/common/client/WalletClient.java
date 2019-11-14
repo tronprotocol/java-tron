@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,13 +47,6 @@ import org.tron.protos.contract.WitnessContract;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
-
-class WitnessComparator implements Comparator {
-
-  public int compare(Object o1, Object o2) {
-    return Long.compare(((Witness) o2).getVoteCount(), ((Witness) o1).getVoteCount());
-  }
-}
 
 public class WalletClient {
   private static final Logger logger = LoggerFactory.getLogger("WalletClient");
