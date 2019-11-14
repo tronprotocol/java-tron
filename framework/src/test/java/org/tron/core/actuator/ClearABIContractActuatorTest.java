@@ -46,7 +46,8 @@ public class ClearABIContractActuatorTest {
   private static final String CONTRACT_ADDRESS = "111111";
   private static final String NO_EXIST_CONTRACT_ADDRESS = "2222222";
   private static final ABI SOURCE_ABI = jsonStr2Abi(
-      "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]");
+      "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\""
+          + ":\"constructor\"}]");
   private static final ABI TARGET_ABI = ABI.getDefaultInstance();
   private static TronApplicationContext context;
   private static Manager dbManager;

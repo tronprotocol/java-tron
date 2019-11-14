@@ -50,7 +50,7 @@ public class ContractEventParserAbi extends ContractEventParser {
   }
 
   /**
-   * parse Event Data into map<String, Object> If parser failed, then return {"0",
+   * parse Event Data into map, If parser failed, then return {"0",
    * Hex.toHexString(data)} Only support basic solidity type, String, Bytes. Fixed Array or dynamic
    * Array are not support yet (then return {"0": Hex.toHexString(data)}).
    */

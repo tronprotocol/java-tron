@@ -81,7 +81,7 @@ public class ContractEventParser {
   }
 
   /**
-   * support: uint<m> (m ∈ [8, 256], m % 8 == 0), int<m> (m ∈ [8, 256], m % 8 == 0) uint (solidity
+   * support: uint m, (m ∈ [8, 256], m % 8 == 0), int m, (m ∈ [8, 256], m % 8 == 0) uint (solidity
    * abi will auto convert to uint256) int (solidity abi will auto convert to int256) bool
    *
    * otherwise, returns hexString

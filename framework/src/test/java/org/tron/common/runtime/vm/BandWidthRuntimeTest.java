@@ -54,16 +54,6 @@ import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
-/**
- * pragma solidity ^0.4.24;
- *
- * contract ForI{
- *
- * uint256 public balances;
- *
- * function setCoin(uint receiver) public { for(uint i=0;i<receiver;i++){ balances = balances++; } }
- * }
- */
 public class BandWidthRuntimeTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
@@ -226,8 +216,20 @@ public class BandWidthRuntimeTest {
     long balance = owner.getBalance();
 
     String contractName = "foriContract";
-    String code = "608060405234801561001057600080fd5b50610105806100206000396000f3006080604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680637bb98a6814604e578063866edb47146076575b600080fd5b348015605957600080fd5b50606060a0565b6040518082815260200191505060405180910390f35b348015608157600080fd5b50609e6004803603810190808035906020019092919050505060a6565b005b60005481565b60008090505b8181101560d55760008081548092919060010191905055600081905550808060010191505060ac565b50505600a165627a7a72305820f4020a69fb8504d7db776726b19e5101c3216413d7ab8e91a11c4f55f772caed0029";
-    String abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"balances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"receiver\",\"type\":\"uint256\"}],\"name\":\"setCoin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+    String code = "608060405234801561001057600080fd5b50610105806100206000396000f30060806040526004"
+        + "36106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffff"
+        + "ffff1680637bb98a6814604e578063866edb47146076575b600080fd5b348015605957600080fd5b506060"
+        + "60a0565b6040518082815260200191505060405180910390f35b348015608157600080fd5b50609e600480"
+        + "3603810190808035906020019092919050505060a6565b005b60005481565b60008090505b8181101560d5"
+        + "5760008081548092919060010191905055600081905550808060010191505060ac565b50505600a165627a"
+        + "7a72305820f4020a69fb8504d7db776726b19e5101c3216413d7ab8e91a11c4f55f772caed0029";
+
+    String abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"balances\",\"outputs\":"
+        + "[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":"
+        + "\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":"
+        + "\"receiver\",\"type\":\"uint256\"}],\"name\":\"setCoin\",\"outputs\":[],\"payable\""
+        + ":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+
     CreateSmartContract smartContract = TvmTestUtils.createSmartContract(
         Commons.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0,
         100);

@@ -100,8 +100,12 @@ public class ManagerTest extends BlockGenerate {
 
   @Test
   public void setBlockReference()
-      throws ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadBlockException,
-      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException {
+      throws ContractExeException, UnLinkedBlockException, ValidateScheduleException,
+      BadBlockException, ContractValidateException, ValidateSignatureException,
+      AccountResourceInsufficientException, TransactionExpirationException,
+      TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException,
+      NonCommonBlockException, ReceiptCheckErrException, VMIllegalException,
+      TooBigTransactionResultException, ZksnarkException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -126,7 +130,8 @@ public class ManagerTest extends BlockGenerate {
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
     if (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       dbManager.pushBlock(blockCapsule);
-      Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+      Assert.assertEquals(1,
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
       dbManager.setBlockReference(trx);
       Assert.assertEquals(1,
           ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
@@ -137,7 +142,8 @@ public class ManagerTest extends BlockGenerate {
     }
 
     dbManager.pushBlock(blockCapsule);
-    Assert.assertEquals(1, dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+    Assert.assertEquals(1,
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
     dbManager.setBlockReference(trx);
     Assert.assertEquals(1,
         ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
@@ -155,7 +161,8 @@ public class ManagerTest extends BlockGenerate {
     }
 
     if (isUnlinked) {
-      Assert.assertEquals("getBlockIdByNum is error", dbManager.getHeadBlockNum(), 0);
+      Assert.assertEquals("getBlockIdByNum is error",
+          dbManager.getHeadBlockNum(), 0);
     } else {
       try {
         Assert.assertEquals(
@@ -187,7 +194,8 @@ public class ManagerTest extends BlockGenerate {
     witnessCapsulef.setIsJobs(true);
     WitnessCapsule witnessCapsules =
         new WitnessCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString("0x0012")), "www.tron.net/second");
+            ByteString.copyFrom(ByteArray.fromHexString("0x0012")),
+            "www.tron.net/second");
     witnessCapsules.setIsJobs(true);
     WitnessCapsule witnessCapsulet =
         new WitnessCapsule(
@@ -215,7 +223,8 @@ public class ManagerTest extends BlockGenerate {
                   ByteArray.toHexString(witnessAddress.toByteArray()));
             });
     int sizeTis = dbManager.getWitnesses().size();
-    Assert.assertEquals("update add witness size is ", 2, sizeTis - sizePrv);
+    Assert.assertEquals("update add witness size is ",
+        2, sizeTis - sizePrv);
   }
 
   @Test
@@ -224,7 +233,9 @@ public class ManagerTest extends BlockGenerate {
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException {
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
+      ZksnarkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -300,7 +311,8 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
+      ZksnarkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -401,7 +413,9 @@ public class ManagerTest extends BlockGenerate {
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException {
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
+      ZksnarkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");

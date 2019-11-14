@@ -99,8 +99,6 @@ public class MerkleTreeTest {
     JSONArray path_tests = readFile("merkle_path_sapling.json");
     JSONArray commitment_tests = readFile("merkle_commitments_sapling.json");
     int path_i = 0;
-//    MerkleContainer merkleContainer = new MerkleContainer();
-//    merkleContainer.getCurrentMerkle();
     IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeCapsule()
         .toMerkleTreeContainer();
     tree.toVoucher().setDEPTH(4);
@@ -114,6 +112,7 @@ public class MerkleTreeTest {
       tree.last();
       Assert.fail("The tree doesn't have a 'last' element added since it's blank.");
     } catch (Exception ex) {
+      System.out.println(ex.getMessage());
     }
     // The tree is empty.
     Assert.assertEquals(0, tree.size());
@@ -145,9 +144,6 @@ public class MerkleTreeTest {
       Assert.assertEquals(root_tests.getString(i),
           PedersenHash2String(tree.root()));
 
-      // Check serialization of tree
-//      expect_ser_test_vector(ser_tests[i], tree, tree);
-
       boolean first = true; // The first witness can never form a path
       for (IncrementalMerkleVoucherCapsule wit : witnesses) {
         // Append the same commitment to all the witnesses
@@ -157,13 +153,13 @@ public class MerkleTreeTest {
             wit.toMerkleVoucherContainer().path();
             Assert.fail("The first witness can never form a path");
           } catch (Exception ex) {
-
+            System.out.println(ex.getMessage());
           }
           try {
             wit.toMerkleVoucherContainer().element();
             Assert.fail("The first witness can never form a path");
           } catch (Exception ex) {
-
+            System.out.println(ex.getMessage());
           }
         } else {
           MerklePath path = wit.toMerkleVoucherContainer().path();
@@ -179,14 +175,14 @@ public class MerkleTreeTest {
       tree.append(new PedersenHashCapsule().getInstance());
       Assert.fail("Tree should be full now");
     } catch (Exception ex) {
-
+      System.out.println(ex.getMessage());
     }
     for (IncrementalMerkleVoucherCapsule wit : witnesses) {
       try {
         wit.toMerkleVoucherContainer().append(new PedersenHashCapsule().getInstance());
         Assert.fail("Tree should be full now");
       } catch (Exception ex) {
-
+        System.out.println(ex.getMessage());
       }
     }
 
