@@ -928,6 +928,25 @@ public class RpcApiService implements Service {
       return responseBuild.build();
     }
 
+    @Override
+    public void easyTransfer(EasyTransferMessage req,
+        StreamObserver<EasyTransferResponse> responseObserver) {
+      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
+      EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void easyTransferAsset(EasyTransferAssetMessage req,
+        StreamObserver<EasyTransferResponse> responseObserver) {
+      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
+      EasyTransferResponse response = easyTransferAsset(privateKey, req.getToAddress(),
+          req.getAssetId(), req.getAmount());
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+    }
+
     private EasyTransferResponse easyTransferAsset(byte[] privateKey, ByteString toAddress,
         String assetId, long amount) {
       TransactionCapsule transactionCapsule;
@@ -959,25 +978,6 @@ public class RpcApiService implements Service {
       }
 
       return responseBuild.build();
-    }
-
-    @Override
-    public void easyTransfer(EasyTransferMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
-      EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
-      responseObserver.onNext(response);
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void easyTransferAsset(EasyTransferAssetMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
-      EasyTransferResponse response = easyTransferAsset(privateKey, req.getToAddress(),
-          req.getAssetId(), req.getAmount());
-      responseObserver.onNext(response);
-      responseObserver.onCompleted();
     }
 
     @Override
@@ -1309,24 +1309,6 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ProposalDeleteContract, responseObserver);
     }
-
-//    @Override
-//    public void buyStorage(Contract.BuyStorageContract request,
-//        StreamObserver<TransactionExtention> responseObserver) {
-//      createTransactionExtention(request, ContractType.BuyStorageContract, responseObserver);
-//    }
-//
-//    @Override
-//    public void buyStorageBytes(Contract.BuyStorageBytesContract request,
-//        StreamObserver<TransactionExtention> responseObserver) {
-//      createTransactionExtention(request, ContractType.BuyStorageBytesContract, responseObserver);
-//    }
-//
-//    @Override
-//    public void sellStorage(Contract.SellStorageContract request,
-//        StreamObserver<TransactionExtention> responseObserver) {
-//      createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
-//    }
 
     @Override
     public void exchangeCreate(ExchangeCreateContract request,
@@ -1852,45 +1834,6 @@ public class RpcApiService implements Service {
           responseObserver);
     }
 
-//    @Override
-//    public void getNullifier(BytesMessage request, StreamObserver<BytesMessage> responseObserver) {
-//      ByteString id = request.getValue();
-//      if (null != id) {
-//        BytesMessage trxId = wallet.getNullifier(id);
-//
-//        responseObserver.onNext(trxId);
-//      } else {
-//        responseObserver.onNext(null);
-//      }
-//      responseObserver.onCompleted();
-//    }
-
-//    @Override
-//    public void getMerklePath(BytesMessage request, StreamObserver<MerklePath> responseObserver) {
-//      ByteString rt = request.getValue();
-//      if (null != rt) {
-//        MerklePath merklePath = wallet.getMerklePath(rt);
-//
-//        responseObserver.onNext(merklePath);
-//      } else {
-//        responseObserver.onNext(null);
-//      }
-//      responseObserver.onCompleted();
-//    }
-
-//    @Override
-//    public void getBestMerkleRoot(EmptyMessage request,
-//        StreamObserver<BytesMessage> responseObserver) {
-//      byte[] rt = wallet.getBestMerkleRoot();
-//      if (rt == null) {
-//        responseObserver.onNext(null);
-//      } else {
-//        responseObserver
-//            .onNext(BytesMessage.newBuilder().setValue(ByteString.copyFrom(rt)).build());
-//      }
-//      responseObserver.onCompleted();
-//    }
-
     @Override
     public void getMerkleTreeVoucherInfo(OutputPointInfo request,
         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
@@ -1905,41 +1848,6 @@ public class RpcApiService implements Service {
 
       responseObserver.onCompleted();
     }
-
-//    @Override
-//    public void getZKBlockByLimitNext(BlockLimit request,
-//        StreamObserver<BlockListExtention> responseObserver) {
-//      long startNum = request.getStartNum();
-//      long endNum = request.getEndNum();
-//
-//      if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
-//        responseObserver.onNext(blocklist2Extention(
-//            wallet.getZKBlocksByLimitNext(startNum, endNum - startNum)));
-//      } else {
-//        responseObserver.onNext(null);
-//      }
-//      responseObserver.onCompleted();
-//    }
-//
-//    @Override
-//    public void getMerkleTreeOfBlock(NumberMessage request,
-//        StreamObserver<BlockIncrementalMerkleTree> responseObserver) {
-//      long blockNumber = request.getNum();
-//      if (blockNumber >= 0) {
-//        BlockIncrementalMerkleTree.Builder builder = BlockIncrementalMerkleTree.newBuilder();
-//        builder.setNumber(blockNumber);
-//        IncrementalMerkleTree tree = wallet.getMerkleTreeOfBlock(blockNumber);
-//        if (tree != null) {
-//          builder.setMerkleTree(tree);
-//          responseObserver.onNext(builder.build());
-//        } else {
-//          responseObserver.onNext(null);
-//        }
-//      } else {
-//        responseObserver.onNext(null);
-//      }
-//      responseObserver.onCompleted();
-//    }
 
     @Override
     public void createShieldedTransaction(PrivateParameters request,

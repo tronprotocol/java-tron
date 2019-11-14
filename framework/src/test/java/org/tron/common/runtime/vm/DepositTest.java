@@ -122,13 +122,16 @@ public class DepositTest {
     long engeryLiimt = 100000000;
 
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent, null, engeryLiimt);
+        contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent,
+        null, engeryLiimt);
     Runtime runtime = TvmTestUtils
-        .processTransactionAndReturnRuntime(aTrx, DepositImpl.createRoot(manager), null);
+        .processTransactionAndReturnRuntime(aTrx, DepositImpl.createRoot(manager),
+            null);
     Assert.assertNull(runtime.getRuntimeError());
 
     Transaction bTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractB, address, bABI, bCode, value, fee, consumeUserResourcePercent, null, engeryLiimt);
+        contractB, address, bABI, bCode, value, fee, consumeUserResourcePercent,
+        null, engeryLiimt);
     runtime = TvmTestUtils
         .processTransactionAndReturnRuntime(bTrx, DepositImpl.createRoot(manager), null);
     Assert.assertNull(runtime.getRuntimeError());
@@ -167,8 +170,10 @@ public class DepositTest {
     System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
     System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
 
-    Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(), new DataWord(1).getData());
-    Assert.assertEquals(checkN2.getRuntime().getResult().getHReturn(), new DataWord(0).getData());
+    Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(),
+        new DataWord(1).getData());
+    Assert.assertEquals(checkN2.getRuntime().getResult().getHReturn(),
+        new DataWord(0).getData());
 
     // tigger contractA
     // callBcallA(address,uint256,uint256)
@@ -189,9 +194,11 @@ public class DepositTest {
             aAddress, checkN2Data, 0, fee, manager, null);
     System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
     System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
-    Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(), new DataWord(100).getData());
+    Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(),
+        new DataWord(100).getData());
     Assert
-        .assertEquals(checkN2.getRuntime().getResult().getHReturn(), new DataWord(1000).getData());
+        .assertEquals(checkN2.getRuntime().getResult().getHReturn(),
+            new DataWord(1000).getData());
     DBConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
@@ -219,13 +226,16 @@ public class DepositTest {
     long consumeUserResourcePercent = 0;
 
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent, null);
+        contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent,
+        null);
     Deposit rootDeposit = DepositImpl.createRoot(manager);
-    Runtime runtime = TvmTestUtils.processTransactionAndReturnRuntime(aTrx, rootDeposit, null);
+    Runtime runtime = TvmTestUtils.processTransactionAndReturnRuntime(aTrx, rootDeposit,
+        null);
     Assert.assertNull(runtime.getRuntimeError());
 
     Transaction bTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractB, address, bABI, bCode, value, fee, consumeUserResourcePercent, null);
+        contractB, address, bABI, bCode, value, fee, consumeUserResourcePercent,
+        null);
     rootDeposit = DepositImpl.createRoot(manager);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(bTrx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
@@ -285,9 +295,11 @@ public class DepositTest {
             aAddress, checkN2Data, 0, fee, manager, null);
     System.out.println(Hex.toHexString(checkN1.getRuntime().getResult().getHReturn()));
     System.out.println(Hex.toHexString(checkN2.getRuntime().getResult().getHReturn()));
-    Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(), new DataWord(100).getData());
+    Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(),
+        new DataWord(100).getData());
     Assert
-        .assertEquals(checkN2.getRuntime().getResult().getHReturn(), new DataWord(1000).getData());
+        .assertEquals(checkN2.getRuntime().getResult().getHReturn(),
+            new DataWord(1000).getData());
     DBConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 

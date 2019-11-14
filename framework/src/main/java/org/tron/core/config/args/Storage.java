@@ -131,44 +131,45 @@ public class Storage {
   private Map<String, Property> propertyMap;
 
   public static int getDbVersionFromConfig(final Config config) {
-    return config.hasPath(DB_VERSION_CONFIG_KEY) ?
-        config.getInt(DB_VERSION_CONFIG_KEY) : DEFAULT_DB_VERSION;
+    return config.hasPath(DB_VERSION_CONFIG_KEY)
+        ? config.getInt(DB_VERSION_CONFIG_KEY) : DEFAULT_DB_VERSION;
   }
 
   public static String getDbEngineFromConfig(final Config config) {
-    return config.hasPath(DB_ENGINE_CONFIG_KEY) ?
-        config.getString(DB_ENGINE_CONFIG_KEY) : DEFAULT_DB_ENGINE;
+    return config.hasPath(DB_ENGINE_CONFIG_KEY)
+        ? config.getString(DB_ENGINE_CONFIG_KEY) : DEFAULT_DB_ENGINE;
   }
 
   public static Boolean getDbVersionSyncFromConfig(final Config config) {
-    return config.hasPath(DB_SYNC_CONFIG_KEY) ?
-        config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
+    return config.hasPath(DB_SYNC_CONFIG_KEY)
+        ? config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
   }
 
   public static Boolean getContractParseSwitchFromConfig(final Config config) {
-    return config.hasPath(EVENT_SUBSCRIB_CONTRACT_PARSE) ?
-        config.getBoolean(EVENT_SUBSCRIB_CONTRACT_PARSE) : DEFAULT_EVENT_SUBSCRIB_CONTRACT_PARSE;
+    return config.hasPath(EVENT_SUBSCRIB_CONTRACT_PARSE)
+        ? config.getBoolean(EVENT_SUBSCRIB_CONTRACT_PARSE) : DEFAULT_EVENT_SUBSCRIB_CONTRACT_PARSE;
   }
 
   public static String getDbDirectoryFromConfig(final Config config) {
-    return config.hasPath(DB_DIRECTORY_CONFIG_KEY) ?
-        config.getString(DB_DIRECTORY_CONFIG_KEY) : DEFAULT_DB_DIRECTORY;
+    return config.hasPath(DB_DIRECTORY_CONFIG_KEY)
+        ? config.getString(DB_DIRECTORY_CONFIG_KEY) : DEFAULT_DB_DIRECTORY;
   }
 
   public static String getIndexDirectoryFromConfig(final Config config) {
-    return config.hasPath(INDEX_DIRECTORY_CONFIG_KEY) ?
-        config.getString(INDEX_DIRECTORY_CONFIG_KEY) : DEFAULT_INDEX_DIRECTORY;
+    return config.hasPath(INDEX_DIRECTORY_CONFIG_KEY)
+        ? config.getString(INDEX_DIRECTORY_CONFIG_KEY) : DEFAULT_INDEX_DIRECTORY;
   }
 
   public static String getIndexSwitchFromConfig(final Config config) {
     return config.hasPath(INDEX_SWITCH_CONFIG_KEY)
-        && StringUtils.isNotEmpty(config.getString(INDEX_SWITCH_CONFIG_KEY)) ?
-        config.getString(INDEX_SWITCH_CONFIG_KEY) : DEFAULT_INDEX_SWTICH;
+        && StringUtils.isNotEmpty(config.getString(INDEX_SWITCH_CONFIG_KEY))
+        ? config.getString(INDEX_SWITCH_CONFIG_KEY) : DEFAULT_INDEX_SWTICH;
   }
 
   public static String getTransactionHistoreSwitchFromConfig(final Config config) {
-    return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) ?
-        config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) : DEFAULT_TRANSACTIONHISTORY_SWITCH;
+    return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)
+        ? config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)
+        : DEFAULT_TRANSACTIONHISTORY_SWITCH;
   }
 
   private static Property createProperty(final ConfigObject conf) {

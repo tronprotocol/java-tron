@@ -69,8 +69,8 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       }
     }
 
-    if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty()) ||
-        (chainInventoryMessage.getRemainNum() != 0
+    if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty())
+        || (chainInventoryMessage.getRemainNum() != 0
             && peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM)) {
       syncService.setFetchFlag(true);
     } else {
