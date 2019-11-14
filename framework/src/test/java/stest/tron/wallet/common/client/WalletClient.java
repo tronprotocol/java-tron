@@ -49,6 +49,13 @@ import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
+class WitnessComparator implements Comparator {
+
+  public int compare(Object o1, Object o2) {
+    return Long.compare(((Witness) o2).getVoteCount(), ((Witness) o1).getVoteCount());
+  }
+}
+
 public class WalletClient {
   private static final Logger logger = LoggerFactory.getLogger("WalletClient");
   private static final String FilePath = "Wallet";
@@ -740,21 +747,6 @@ public class WalletClient {
   public byte[] getAddress() {
     return ecKey.getAddress();
   }
-
-  /*    public static Optional<AccountList> listAccounts() {
-        Optional<AccountList> result = rpcCli.listAccounts();
-        if (result.isPresent()) {
-            AccountList accountList = result.get();
-            List<Account> list = accountList.getAccountsList();
-            List<Account> newList = new ArrayList();
-            newList.addAll(list);
-            newList.sort(new AccountComparator());
-            AccountList.Builder builder = AccountList.newBuilder();
-            newList.forEach(account -> builder.addAccounts(account));
-            result = Optional.of(builder.build());
-        }
-        return result;
-    }*/
 
   private Transaction signTransaction(Transaction transaction) {
     if (this.ecKey == null || this.ecKey.getPrivKey() == null) {
