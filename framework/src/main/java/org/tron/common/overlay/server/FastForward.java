@@ -104,14 +104,13 @@ public class FastForward {
 
     // todo, just to solve the compatibility problem
     if (msg.getAddress() == null || msg.getAddress().isEmpty()) {
-      logger.info("Address is null.");
+      logger.info("HelloMessage from {}, address is empty.", channel.getInetAddress());
       return true;
-    } else {
-      logger.info(" {} ", msg.getAddress());
     }
 
     if (!witnessScheduleStore.getActiveWitnesses().contains(msg.getAddress())){
-      logger.error("Address {} Not in the witness schedule store.",
+      logger.error("HelloMessage from {}, {} is not a schedule witness.",
+          channel.getInetAddress(),
           ByteArray.toHexString(msg.getAddress().toByteArray()));
       return false;
     }
@@ -128,7 +127,7 @@ public class FastForward {
         return Arrays.equals(sigAddress, witnessPermissionAddress);
       }
     } catch (Exception e) {
-      logger.error("Check hello message failed, {}", message);
+      logger.error("Check hello message failed, msg: {}, {}", message, e);
       return false;
     }
   }
