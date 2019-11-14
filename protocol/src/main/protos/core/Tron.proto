@@ -504,6 +504,8 @@ message HelloMessage {
   BlockId genesisBlockId = 4;
   BlockId solidBlockId = 5;
   BlockId headBlockId = 6;
+  bytes address = 7;
+  bytes signature = 8;
 }
 
 message InternalTransaction {
