@@ -6,7 +6,6 @@ import static org.tron.consensus.base.Constant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -39,12 +38,15 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
+import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.storage.rocksdb.RocksDbSettings;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.parameter.RateLimiterInitialization;
+import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
@@ -53,7 +55,6 @@ import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.db.backup.DbBackupConfig;
 import org.tron.core.store.AccountStore;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
@@ -63,105 +64,21 @@ import org.tron.program.Version;
 @Slf4j(topic = "app")
 @NoArgsConstructor
 @Component
-public class Args {
+public class Args extends CommonParameter {
 
   private static final Args INSTANCE = new Args();
 
-  @Parameter(names = {"-c", "--config"}, description = "Config File")
-  private String shellConfFileName = "";
-
-  @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
-  private String outputDirectory = "output-directory";
-
   @Getter
-  @Parameter(names = {"--log-config"})
-  private String logbackPath = "";
-
-  @Getter
-  @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
-  private boolean help = false;
+  @Setter
+  private List<Node> activeNodes;
 
   @Getter
   @Setter
-  @Parameter(names = {"-w", "--witness"})
-  private boolean witness = false;
+  private List<Node> passiveNodes;
 
   @Getter
   @Setter
-  @Parameter(names = {"--support-constant"})
-  private boolean supportConstant = false;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--debug"})
-  private boolean debug = false;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--min-time-ratio"})
-  private double minTimeRatio = 0.0;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--max-time-ratio"})
-  private double maxTimeRatio = calcMaxTimeRatio();
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--long-running-time"})
-  private int longRunningTime = 10;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--max-connect-number"})
-  private int maxHttpConnectNumber = 50;
-
-  @Getter
-  @Parameter(description = "--seed-nodes")
-  private List<String> seedNodes = new ArrayList<>();
-
-  @Parameter(names = {"-p", "--private-key"}, description = "private-key")
-  private String privateKey = "";
-
-  @Parameter(names = {"--witness-address"}, description = "witness-address")
-  private String witnessAddress = "";
-
-  @Parameter(names = {"--password"}, description = "password")
-  private String password;
-
-  @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
-  private String storageDbDirectory = "";
-
-  @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
-  private String storageDbVersion = "";
-
-  @Parameter(names = {
-          "--storage-db-engine"}, description = "Storage db engine.(leveldb or rocksdb)")
-  private String storageDbEngine = "";
-
-  @Parameter(names = {
-          "--storage-db-synchronous"},
-          description = "Storage db is synchronous or not.(true or false)")
-  private String storageDbSynchronous = "";
-
-  @Parameter(names = {"--contract-parse-enable"},
-          description = "enable contract parses in java-tron or not.(true or false)")
-  private String contractParseEnable = "";
-
-  @Parameter(names = {"--storage-index-directory"},
-          description = "Storage index directory")
-  private String storageIndexDirectory = "";
-
-  @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
-  private String storageIndexSwitch = "";
-
-  @Parameter(names = {"--storage-transactionHistory-switch"},
-          description = "Storage transaction history switch.(on or off)")
-  private String storageTransactionHistoreSwitch = "";
-
-  @Getter
-  @Parameter(names = {"--fast-forward"})
-  private boolean fastForward = false;
+  private List<Node> fastForwardNodes;
 
   @Getter
   private Storage storage;
@@ -177,339 +94,13 @@ public class Args {
 
   @Getter
   @Setter
-  private String chainId;
-
-  @Getter
-  @Setter
   private LocalWitnesses localWitnesses = new LocalWitnesses();
-
-  @Getter
-  @Setter
-  private boolean needSyncCheck;
-
-  @Getter
-  @Setter
-  private boolean nodeDiscoveryEnable;
-
-  @Getter
-  @Setter
-  private boolean nodeDiscoveryPersist;
-
-  @Getter
-  @Setter
-  private int nodeConnectionTimeout;
-
-  @Getter
-  @Setter
-  private List<Node> activeNodes;
-
-  @Getter
-  @Setter
-  private List<Node> passiveNodes;
-
-  @Getter
-  @Setter
-  private List<Node> fastForwardNodes;
-
-  @Getter
-  @Setter
-  private int nodeChannelReadTimeout;
-
-  @Getter
-  @Setter
-  private int nodeMaxActiveNodes;
-
-  @Getter
-  @Setter
-  private int nodeMaxActiveNodesWithSameIp;
-
-  @Getter
-  @Setter
-  private int minParticipationRate;
-
-  @Getter
-  @Setter
-  private int nodeListenPort;
-
-  @Getter
-  @Setter
-  private String nodeDiscoveryBindIp;
-
-  @Getter
-  @Setter
-  private String nodeExternalIp;
-
-  @Getter
-  @Setter
-  private boolean nodeDiscoveryPublicHomeNode;
-
-  @Getter
-  @Setter
-  private long nodeP2pPingInterval;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--save-internaltx"})
-  private boolean saveInternalTx;
-
-  @Getter
-  @Setter
-  private int nodeP2pVersion;
-
-  @Getter
-  @Setter
-  private String p2pNodeId;
-
-  //If you are running a solidity node for java tron, this flag is set to true
-  @Getter
-  @Setter
-  private boolean solidityNode = false;
-
-  @Getter
-  @Setter
-  private int rpcPort;
-
-  @Getter
-  @Setter
-  private int rpcOnSolidityPort;
-
-  @Getter
-  @Setter
-  private int fullNodeHttpPort;
-
-  @Getter
-  @Setter
-  private int solidityHttpPort;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
-  private int rpcThreadNum;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--solidity-thread"}, description = "Num of solidity thread")
-  private int solidityThreads;
-
-  @Getter
-  @Setter
-  private int maxConcurrentCallsPerConnection;
-
-  @Getter
-  @Setter
-  private int flowControlWindow;
-
-  @Getter
-  @Setter
-  private long maxConnectionIdleInMillis;
-
-  @Getter
-  @Setter
-  private int blockProducedTimeOut;
-
-  @Getter
-  @Setter
-  private long netMaxTrxPerSecond;
-
-  @Getter
-  @Setter
-  private long maxConnectionAgeInMillis;
-
-  @Getter
-  @Setter
-  private int maxMessageSize;
-
-  @Getter
-  @Setter
-  private int maxHeaderListSize;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
-  private int validateSignThreadNum;
-
-  @Getter
-  @Setter
-  private long maintenanceTimeInterval; // (ms)
-
-  @Getter
-  @Setter
-  private long proposalExpireTime; // (ms)
-
-  @Getter
-  @Setter
-  private int checkFrozenTime; // for test only
-
-  @Getter
-  @Setter
-  private long allowCreationOfContracts; //committee parameter
-
-  @Getter
-  @Setter
-  private long allowAdaptiveEnergy; //committee parameter
-
-  @Getter
-  @Setter
-  private long allowDelegateResource; //committee parameter
-
-  @Getter
-  @Setter
-  private long allowSameTokenName; //committee parameter
-
-  @Getter
-  @Setter
-  private long allowTvmTransferTrc10; //committee parameter
-
-  @Getter
-  @Setter
-  private long allowTvmConstantinople; //committee parameter
-
-  @Getter
-  @Setter
-  private long allowTvmSolidity059; //committee parameter
-
-  @Getter
-  @Setter
-  private int tcpNettyWorkThreadNum;
-
-  @Getter
-  @Setter
-  private int udpNettyWorkThreadNum;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--trust-node"}, description = "Trust node addr")
-  private String trustNodeAddr;
-
-  @Getter
-  @Setter
-  private boolean walletExtensionApi;
-
-  @Getter
-  @Setter
-  private int backupPriority;
-
-  @Getter
-  @Setter
-  private int backupPort;
-
-  @Getter
-  @Setter
-  private List<String> backupMembers;
-
-  @Getter
-  @Setter
-  private double connectFactor;
-
-  @Getter
-  @Setter
-  private double activeConnectFactor;
-
-  @Getter
-  @Setter
-  private double disconnectNumberFactor;
-
-  @Getter
-  @Setter
-  private double maxConnectNumberFactor;
-
-  @Getter
-  @Setter
-  private long receiveTcpMinDataLength;
-
-  @Getter
-  @Setter
-  private boolean isOpenFullTcpDisconnect;
-
-  @Getter
-  @Setter
-  private int allowMultiSign;
-
-  @Getter
-  @Setter
-  private boolean vmTrace;
-
-  @Getter
-  @Setter
-  private boolean needToUpdateAsset;
-
-  @Getter
-  @Setter
-  private String trxReferenceBlock;
-
-  @Getter
-  @Setter
-  private int minEffectiveConnection;
-
-  @Getter
-  @Setter
-  private long allowShieldedTransaction; //committee parameter
-
-  // full node used this parameter to close shielded transaction
-  @Getter
-  @Setter
-  private boolean fullNodeAllowShieldedTransactionArgs;
-
-  @Getter
-  @Setter
-  private long blockNumForEneryLimit;
-
-  @Getter
-  @Setter
-  @Parameter(names = {"--es"})
-  private boolean eventSubscribe = false;
 
   @Getter
   private EventPluginConfig eventPluginConfig;
 
   @Getter
   private FilterQuery eventFilter;
-
-  @Getter
-  @Setter
-  private long trxExpirationTimeInMilliseconds; // (ms)
-
-  @Getter
-  private DbBackupConfig dbBackupConfig;
-
-  @Getter
-  private RocksDbSettings rocksDBCustomSettings;
-
-  @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
-  private boolean version;
-
-
-  @Getter
-  @Setter
-  private String zenTokenId;
-
-  @Getter
-  @Setter
-  private long allowProtoFilterNum;
-
-  @Getter
-  @Setter
-  private long allowAccountStateRoot;
-
-  @Getter
-  @Setter
-  private int validContractProtoThreadNum;
-
-  @Getter
-  @Setter
-  private int shieldedTransInPendingMaxCounts;
-
-  @Getter
-  @Setter
-  private RateLimiterInitialization rateLimiterInitialization;
-
-  @Getter
-  @Setter
-  private long changedDelegation;
-
-  @Getter
-  @Setter
-  private Set<String> actuatorSet;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -1360,11 +951,6 @@ public class Args {
     }
   }
 
-  private static double calcMaxTimeRatio() {
-    //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
-    return 5.0;
-  }
-
   private static void initRocksDbSettings(Config config) {
     String prefix = "storage.dbSettings.";
     int levelNumber = config.hasPath(prefix + "levelNumber")
@@ -1465,32 +1051,7 @@ public class Args {
 
     DBConfig.setOutputDirectoryConfig(cfgArgs.getOutputDirectory());
     DBConfig.setRocksDbSettings(cfgArgs.getRocksDBCustomSettings());
-    DBConfig.setAllowMultiSign(cfgArgs.getAllowMultiSign());
-    DBConfig.setMaintenanceTimeInterval(cfgArgs.getMaintenanceTimeInterval());
-    DBConfig.setAllowAdaptiveEnergy(cfgArgs.getAllowAdaptiveEnergy());
-    DBConfig.setAllowDelegateResource(cfgArgs.getAllowDelegateResource());
-    DBConfig.setAllowTvmTransferTrc10(cfgArgs.getAllowTvmTransferTrc10());
-    DBConfig.setAllowTvmConstantinople(cfgArgs.getAllowTvmConstantinople());
-    DBConfig.setAllowTvmSolidity059(cfgArgs.getAllowTvmSolidity059());
-    DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
-    DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
-    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
-    DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
-    DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
-    DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
-    DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransactionArgs());
-    DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
-    DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
-    DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
-    DBConfig.setVmTrace(cfgArgs.isVmTrace());
-    DBConfig.setDebug(cfgArgs.isDebug());
-    DBConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
-    DBConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
-    DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
-    DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
-    DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
-    DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
   }
 

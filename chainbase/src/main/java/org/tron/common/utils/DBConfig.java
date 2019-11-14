@@ -9,7 +9,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
-import org.tron.common.storage.rocksdb.RocksDbSettings;
+import org.tron.common.setting.RocksDbSettings;
 import org.tron.core.config.args.GenesisBlock;
 
 public class DBConfig {

@@ -1,4 +1,4 @@
-package org.tron.core.config.args;
+package org.tron.common.parameter;
 
 import com.typesafe.config.ConfigObject;
 import java.util.HashMap;
