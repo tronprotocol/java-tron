@@ -292,15 +292,15 @@ public class LibrustzcashTest {
 
     long startGenerate = System.currentTimeMillis();
     LongStream.range(0L, count).forEach(l -> {
-          generatePool.execute(() -> {
-                    try {
-                                  benchmarkCreateSpend();
-                                } catch (Exception ex) {
-                                  ex.printStackTrace();
-                                  logger.error("", ex);
-                                }
-                              });
-                    });
+      generatePool.execute(() -> {
+        try {
+          benchmarkCreateSpend();
+        } catch (Exception ex) {
+          ex.printStackTrace();
+          logger.error("", ex);
+        }
+      });
+    });
 
     countDownLatch.await();
 

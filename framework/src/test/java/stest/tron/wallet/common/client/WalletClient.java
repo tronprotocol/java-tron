@@ -49,20 +49,6 @@ import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
-/*class AccountComparator implements Comparator {
-
-  public int compare(Object o1, Object o2) {
-    return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
-  }
-}*/
-
-class WitnessComparator implements Comparator {
-
-  public int compare(Object o1, Object o2) {
-    return Long.compare(((Witness) o2).getVoteCount(), ((Witness) o1).getVoteCount());
-  }
-}
-
 public class WalletClient {
   private static final Logger logger = LoggerFactory.getLogger("WalletClient");
   private static final String FilePath = "Wallet";

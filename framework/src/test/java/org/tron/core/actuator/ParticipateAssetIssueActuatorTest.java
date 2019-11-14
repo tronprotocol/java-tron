@@ -147,6 +147,16 @@ public class ParticipateAssetIssueActuatorTest {
             .build());
   }
 
+  private Any getContract(long count, ByteString assetName) {
+    return Any.pack(
+        ParticipateAssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+            .setAssetName(assetName)
+            .setAmount(count)
+            .build());
+  }
+
   private Any getContractWithOwner(long count, String ownerAddress) {
     String assertName = ASSET_NAME;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
@@ -174,16 +184,6 @@ public class ParticipateAssetIssueActuatorTest {
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toAddress)))
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName)))
-            .setAmount(count)
-            .build());
-  }
-
-  private Any getContract(long count, ByteString assetName) {
-    return Any.pack(
-        ParticipateAssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
-            .setAssetName(assetName)
             .setAmount(count)
             .build());
   }
@@ -1106,8 +1106,8 @@ public class ParticipateAssetIssueActuatorTest {
 
     // 1 byte readable character ok.
     assetName = "t";
-    initAssetIssue(dbManager.getDynamicPropertiesStore().
-            getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(dbManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
         assetName);
     actuator = new ParticipateAssetIssueActuator();

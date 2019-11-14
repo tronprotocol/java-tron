@@ -136,7 +136,7 @@ public class AdaptorTest {
     long t0 = System.currentTimeMillis();
     CountDownLatch latch = new CountDownLatch(20);
     for (int i = 0; i < 20; i++) {
-      Thread thread = new Thread(new MyThread(latch, strategy));
+      Thread thread = new Thread(new AdaptorThread(latch, strategy));
       thread.start();
     }
 
@@ -150,25 +150,4 @@ public class AdaptorTest {
   }
 }
 
-class MyThread implements Runnable {
-
-  private CountDownLatch latch;
-  private QpsStrategy strategy;
-
-  public MyThread(CountDownLatch latch, QpsStrategy strategy) {
-    this.latch = latch;
-    this.strategy = strategy;
-  }
-
-  @Override
-  public void run() {
-    strategy.acquire();
-    try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-
-    }
-    latch.countDown();
-  }
-}
 

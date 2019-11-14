@@ -41,6 +41,8 @@ public class AbiUtil {
         return new CoderDynamicBytes();
       case "trcToken":
         return new CoderNumber();
+      default:
+        System.out.println(type);
     }
 
     if (paramTypeBytes.matcher(type).find()) {
