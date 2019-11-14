@@ -49,7 +49,7 @@ public class ContractEventParser {
   // don't support these type yet : bytes32[10][10]  OR  bytes32[][10]
   protected static Type basicType(String type) {
     if (!Pattern.matches("^.*\\[\\d*\\]$", type)) {
-      // ignore not valide type such as "int92", "bytes33", these types will be compiled failed.
+      // ignore not valid type such as "int92", "bytes33", these types will be compiled failed.
       if (type.startsWith("int") || type.startsWith("uint") || type.startsWith("trcToken")) {
         return Type.INT_NUMBER;
       } else if ("bool".equals(type)) {

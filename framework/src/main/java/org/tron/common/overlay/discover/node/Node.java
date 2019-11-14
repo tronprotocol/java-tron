@@ -33,11 +33,11 @@ public class Node implements Serializable {
 
   private boolean isFakeNodeId = false;
 
-  public Node(String enodeURL) {
+  public Node(String encodeURL) {
     try {
-      URI uri = new URI(enodeURL);
-      if (!"enode".equals(uri.getScheme())) {
-        throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT");
+      URI uri = new URI(encodeURL);
+      if (!"encode".equals(uri.getScheme())) {
+        throw new RuntimeException("expecting URL in the format encode://PUBKEY@HOST:PORT");
       }
       this.id = Hex.decode(uri.getUserInfo());
       this.host = uri.getHost();
@@ -45,7 +45,7 @@ public class Node implements Serializable {
       this.bindPort = uri.getPort();
       this.isFakeNodeId = true;
     } catch (URISyntaxException e) {
-      throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT", e);
+      throw new RuntimeException("expecting URL in the format encode://PUBKEY@HOST:PORT", e);
     }
   }
 
@@ -67,18 +67,18 @@ public class Node implements Serializable {
     this.bindPort = bindPort;
   }
 
-  public static Node instanceOf(String addressOrEnode) {
+  public static Node instanceOf(String addressOrEncode) {
     try {
-      URI uri = new URI(addressOrEnode);
-      if ("enode".equals(uri.getScheme())) {
-        return new Node(addressOrEnode);
+      URI uri = new URI(addressOrEncode);
+      if ("encode".equals(uri.getScheme())) {
+        return new Node(addressOrEncode);
       }
     } catch (URISyntaxException e) {
       // continue
     }
 
     final String generatedNodeId = Hex.toHexString(getNodeId());
-    final Node node = new Node("enode://" + generatedNodeId + "@" + addressOrEnode);
+    final Node node = new Node("encode://" + generatedNodeId + "@" + addressOrEncode);
     return node;
   }
 
@@ -98,7 +98,7 @@ public class Node implements Serializable {
   }
 
   public String getEnodeURL() {
-    return new StringBuilder("enode://")
+    return new StringBuilder("encode://")
         .append(ByteArray.toHexString(id)).append("@")
         .append(host).append(":")
         .append(port).toString();

@@ -34,7 +34,7 @@ public class MessageQueue {
   private Thread sendMsgThread;
   private Channel channel;
   private ChannelHandlerContext ctx = null;
-  private Queue<MessageRoundtrip> requestQueue = new ConcurrentLinkedQueue<>();
+  private Queue<MessageRoundTrip> requestQueue = new ConcurrentLinkedQueue<>();
   private BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<>();
   private ScheduledFuture<?> sendTask;
 
@@ -104,7 +104,7 @@ public class MessageQueue {
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(msg);
     sendTime = System.currentTimeMillis();
     if (msg.getAnswerMessage() != null) {
-      requestQueue.add(new MessageRoundtrip(msg));
+      requestQueue.add(new MessageRoundTrip(msg));
     } else {
       msgQueue.offer(msg);
     }
@@ -116,7 +116,7 @@ public class MessageQueue {
       logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
     }
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
-    MessageRoundtrip rt = requestQueue.peek();
+    MessageRoundTrip rt = requestQueue.peek();
     if (rt != null && rt.getMsg().getAnswerMessage() == msg.getClass()) {
       requestQueue.remove();
       if (rt.getMsg() instanceof PingMessage) {
@@ -158,7 +158,7 @@ public class MessageQueue {
   }
 
   private void send() {
-    MessageRoundtrip rt = requestQueue.peek();
+    MessageRoundTrip rt = requestQueue.peek();
     if (!sendMsgFlag || rt == null) {
       return;
     }
