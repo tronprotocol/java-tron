@@ -18,7 +18,7 @@ public class GetPaginatedAssetIssueListOnSolidityServlet
   private WalletOnSolidity walletOnSolidity;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-
+    walletOnSolidity.futureGet(() -> super.doGet(request, response));
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
