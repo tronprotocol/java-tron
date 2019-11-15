@@ -314,7 +314,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getTransactionInfoByIdServlet), "/gettransactioninfobyid");
       context.addServlet(
-              new ServletHolder(getTransactionReceiptByIdServlet), "/gettransactionreceiptbyid");
+          new ServletHolder(getTransactionReceiptByIdServlet), "/gettransactionreceiptbyid");
       context.addServlet(
           new ServletHolder(getTransactionCountByBlockNumServlet),
           "/gettransactioncountbyblocknum");

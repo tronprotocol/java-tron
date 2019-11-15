@@ -60,12 +60,12 @@ public class InternalTransactionCallTest {
    * bAddress, uint256 _number) { bAddress.call(bytes4(sha3("setValue(uint256)")), _number); // B's
    * storage is set, A is not modified }
    *
-   * function callcodeTest(address bAddress, uint256 _number) {
-   *  bAddress.callcode(bytes4(sha3("setValue(uint256)")),
+   * function callcodeTest(address bAddress, uint256 _number)
+   * { bAddress.callcode(bytes4(sha3("setValue(uint256)")),
    * _number); // A's storage is set, B is not modified }
    *
-   * function delegatecallTest(address bAddress, uint256 _number) {
-   *  bAddress.delegatecall(bytes4(sha3("setValue(uint256)")),
+   * function delegatecallTest(address bAddress, uint256 _number)
+   * { bAddress.delegatecall(bytes4(sha3("setValue(uint256)")),
    * _number); // A's storage is set, B is not modified } }
    *
    * contract B { uint256 public numberForB; address public senderForB;

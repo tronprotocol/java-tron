@@ -329,8 +329,8 @@ public class AccountCapsuleTest {
         Wallet.getAddressPreFixString() + "cc6a17a49648a8ad32055c06f60fa14ae46df912cc";
     accountCapsule = new AccountCapsule(accountCapsule.getInstance().toBuilder()
         .setWitnessPermission(Permission.newBuilder().addKeys(Key.newBuilder()
-                .setAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessPermissionAddress)))
-                .build()).build()).build());
+            .setAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessPermissionAddress)))
+            .build()).build()).build());
 
     Assert.assertTrue(
         Arrays.equals(ByteArray.fromHexString(witnessPermissionAddress),

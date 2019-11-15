@@ -2,7 +2,6 @@ package org.tron.common.overlay.message;
 
 import com.google.protobuf.ByteString;
 import lombok.Getter;
-import lombok.Setter;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;

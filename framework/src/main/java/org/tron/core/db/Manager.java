@@ -729,7 +729,7 @@ public class Manager {
       }
     } else if (amount > 0
         && !account.addAssetAmountV2(AssetID.getBytes(), amount,
-            this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
+        this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
       throw new BalanceInsufficientException("addAssetAmount failed !");
     }
     accountStore.put(account.getAddress().toByteArray(), account);
@@ -1812,7 +1812,7 @@ public class Manager {
   private void reorgContractTrigger() {
     if (eventPluginLoaded
         && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-            || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
+        || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
       logger.info("switchfork occured, post reorgContractTrigger");
       try {
         BlockCapsule oldHeadBlock = getBlockById(
@@ -1830,7 +1830,7 @@ public class Manager {
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
     if (eventPluginLoaded
         && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-            || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
+        || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
         ContractTriggerCapsule contractEventTriggerCapsule = new ContractTriggerCapsule(trigger);
