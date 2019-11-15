@@ -155,7 +155,7 @@ public class Constant {
 
   public static final String STORAGE_NEEDTO_UPDATE_ASSET = "storage.needToUpdateAsset";
 
-  public static final String  TRX_REFERENCE_BLOCK = "trx.reference.block";
+  public static final String TRX_REFERENCE_BLOCK = "trx.reference.block";
 
   public static final String TRX_EXPIRATION_TIME_IN_MILLIS_SECONDS = "trx.expiration.timeInMilliseconds";
 
