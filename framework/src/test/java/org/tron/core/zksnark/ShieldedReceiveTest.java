@@ -476,7 +476,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     long maxTime = 0;
     double totalTime = 0.0;
 
-    String [] result = generateSpendAndOutputParams();
+    String[] result = generateSpendAndOutputParams();
     String spend = result[0];
     String dataToBeSigned = result[1];
 
@@ -508,7 +508,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     long maxTime = 0;
     double totalTime = 0.0;
 
-    String [] result = generateSpendAndOutputParams();
+    String[] result = generateSpendAndOutputParams();
     String outputParams = result[2];
 
     for (int i = 0; i < count; i++) {

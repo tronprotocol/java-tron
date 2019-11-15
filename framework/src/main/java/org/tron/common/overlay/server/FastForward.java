@@ -123,7 +123,8 @@ public class FastForward {
       if (manager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
         return Arrays.equals(sigAddress, msg.getAddress().toByteArray());
       } else {
-        byte[] witnessPermissionAddress = manager.getAccountStore().get(msg.getAddress().toByteArray())
+        byte[] witnessPermissionAddress = manager.getAccountStore()
+            .get(msg.getAddress().toByteArray())
             .getWitnessPermissionAddress();
         return Arrays.equals(sigAddress, witnessPermissionAddress);
       }

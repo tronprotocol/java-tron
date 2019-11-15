@@ -176,7 +176,7 @@ public class TransferToAccountTest {
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(9,
         dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
-        .get(String.valueOf(id)).longValue());
+            .get(String.valueOf(id)).longValue());
     Assert.assertEquals(100 + tokenValue - 9,
         dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
             .longValue());

@@ -49,6 +49,7 @@ import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 public class WalletClient {
+
   private static final Logger logger = LoggerFactory.getLogger("WalletClient");
   private static final String FilePath = "Wallet";
   private static GrpcClient rpcCli;

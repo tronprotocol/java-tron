@@ -58,6 +58,7 @@ public class WireTrafficStats implements Runnable {
 
   @ChannelHandler.Sharable
   static class TrafficStatHandler extends ChannelDuplexHandler {
+
     private AtomicLong outSize = new AtomicLong();
     private AtomicLong inSize = new AtomicLong();
     private AtomicLong outPackets = new AtomicLong();
