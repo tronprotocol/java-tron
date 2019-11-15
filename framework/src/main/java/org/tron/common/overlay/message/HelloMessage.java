@@ -1,6 +1,8 @@
 package org.tron.common.overlay.message;
 
 import com.google.protobuf.ByteString;
+import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
@@ -12,6 +14,7 @@ import org.tron.protos.Protocol.HelloMessage.Builder;
 
 public class HelloMessage extends P2pMessage {
 
+  @Getter
   private Protocol.HelloMessage helloMessage;
 
   public HelloMessage(byte type, byte[] rawData) throws Exception {
@@ -54,6 +57,11 @@ public class HelloMessage extends P2pMessage {
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();
+    this.data = this.helloMessage.toByteArray();
+  }
+
+  public void setHelloMessage(Protocol.HelloMessage helloMessage) {
+    this.helloMessage = helloMessage;
     this.data = this.helloMessage.toByteArray();
   }
 
