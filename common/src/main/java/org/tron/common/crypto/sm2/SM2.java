@@ -513,7 +513,7 @@ public class SM2 implements Serializable {
      * @return -
      * @throws IllegalStateException if this ECKey does not have the private part.
      */
-    public SM2Signature signMessage(String message, @Nullable String userID) {
+    public SM2Signature signMessage(byte[] message, @Nullable String userID) {
         SM2Signature sig = signMsg(message, userID);
         // Now we have to work backwards to figure out the recId needed to
         // recover the signature.
@@ -545,7 +545,7 @@ public class SM2 implements Serializable {
      * @param userID
      * @return SM2Signature signature that contains the R and S components
      */
-    public SM2.SM2Signature signMsg(String msg,@Nullable String userID) {
+    public SM2.SM2Signature signMsg(byte[] msg,@Nullable String userID) {
         if (null == msg) {
             throw new IllegalArgumentException("Expected signature message of " +
                     "SM2 is null");
@@ -671,7 +671,7 @@ public class SM2 implements Serializable {
 
     /**
      * <p>Verifies the given SM2 signature against the message bytes using the public key bytes.</p>
-     * <p> <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
+     * <p> <p>When using native SM2 verification, data must be 32 bytes, and no element may be
      * larger than 520 bytes.</p>
      *
      * @param data Hash of the data to verify.
@@ -681,10 +681,6 @@ public class SM2 implements Serializable {
      */
     public static boolean verify(byte[] data, SM2Signature signature,
                                  byte[] pub) {
-//        ECDSASigner signer = new ECDSASigner();
-//        ECPublicKeyParameters params = new ECPublicKeyParameters(ecc_param
-//                .getCurve().decodePoint(pub), ecc_param);
-//        signer.init(false, params);
         SM2Signer signer = new SM2Signer();
         ECPublicKeyParameters params = new ECPublicKeyParameters(ecc_param
                 .getCurve().decodePoint(pub),ecc_param);
@@ -714,21 +710,15 @@ public class SM2 implements Serializable {
     }
 
     /**
-     * <p>Verifies the given SM2 signature against the message bytes using the public key bytes.</p>
-     * <p> <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
-     * larger than 520 bytes.</p>
+     * <p>Verifies the given SM2 signature against the message bytes using the public key bytes.
      *
      * @param msg the message data to verify.
      * @param signature signature.
      * @param pub The public key bytes to use.
      * @return -
      */
-    public static boolean verifyMessage(String msg, SM2Signature signature,
+    public static boolean verifyMessage(byte[] msg, SM2Signature signature,
                                  byte[] pub, @Nullable String userID) {
-//        ECDSASigner signer = new ECDSASigner();
-//        ECPublicKeyParameters params = new ECPublicKeyParameters(ecc_param
-//                .getCurve().decodePoint(pub), ecc_param);
-//        signer.init(false, params);
         SM2Signer signer = new SM2Signer();
         ECPublicKeyParameters params = new ECPublicKeyParameters(ecc_param
                 .getCurve().decodePoint(pub),ecc_param);
@@ -753,7 +743,7 @@ public class SM2 implements Serializable {
      * @param pub The public key bytes to use.
      * @return -
      */
-    public static boolean verifyMessage(String msg, byte[] signature, byte[] pub, @Nullable String userID) {
+    public static boolean verifyMessage(byte[] msg, byte[] signature, byte[] pub, @Nullable String userID) {
         return verifyMessage(msg, SM2Signature.decodeFromDER(signature), pub, userID);
     }
 
@@ -954,7 +944,7 @@ public class SM2 implements Serializable {
 
 
     /**
-     * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
+     * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.
      *
      * @param data Hash of the data to verify.
      * @param signature signature.
@@ -1024,118 +1014,6 @@ public class SM2 implements Serializable {
     public int hashCode() {
         return Arrays.hashCode(getPubKey());
     }
-
-
-
-//    /**
-//     * generate the key pair of SM2
-//     *
-//     * @return
-//     */
-//    public SM2KeyPair generateKeyPair() {
-//        ECKeyGenerationParameters ecKeyGenerationParameters = new ECKeyGenerationParameters(ecc_param, new SecureRandom());
-//        ECKeyPairGenerator keyPairGenerator = new ECKeyPairGenerator();
-//        keyPairGenerator.init(ecKeyGenerationParameters);
-//        AsymmetricCipherKeyPair kp = keyPairGenerator.generateKeyPair();
-//        ECPrivateKeyParameters ecpriv = (ECPrivateKeyParameters) kp.getPrivate();
-//        ECPublicKeyParameters ecpub = (ECPublicKeyParameters) kp.getPublic();
-//
-//        BigInteger privateKey = ecpriv.getD();
-//
-//        ECPoint publickey = ecpub.getQ();
-//
-//        return new SM2KeyPair(publickey.getEncoded(false),privateKey.toByteArray());
-//    }
-//
-//    /**
-//     * transfer byte array to BigInteger
-//     *
-//     * @param b byte array input
-//     * @return output the big integer
-//     */
-//    public static BigInteger byte2BigInteger(byte[] b) {
-//        if (b[0] < 0) {
-//            byte[] tmp = new byte[b.length + 1];
-//            tmp[0] = 0;
-//            System.arraycopy(b, 0, tmp, 1, b.length);
-//            return new BigInteger(tmp);
-//        }
-//        return new BigInteger(b);
-//    }
-//
-//    /**
-//     * transfer the byte array to ECPoint
-//     *
-//     * @param publicKey
-//     * @return
-//     */
-//    public static ECPoint byte2ECPoint(byte[] publicKey) {
-//        byte[] formatedPubKey;
-//        if (publicKey.length == 64) {
-//            formatedPubKey = new byte[55];
-//            formatedPubKey[0] = 0x04;
-//            System.arraycopy(publicKey,0,formatedPubKey,1,publicKey.length);
-//        } else {
-//            formatedPubKey = publicKey;
-//        }
-//        ECPoint userKey = curve.decodePoint(formatedPubKey);
-//        return userKey;
-//    }
-//
-//    /**
-//     * generate the signature
-//     *
-//     * @param privateKey
-//     * @param msg
-//     * @return output the signature r and s
-//     * @throws Exception
-//     */
-//    public BigInteger[] sign(byte[] privateKey, byte[] msg) throws Exception {
-//       if (null == privateKey) {
-//           throw new Exception("private key is null");
-//       }
-//       if (privateKey.length == 0) {
-//           throw new Exception("the length of private is 0");
-//       }
-//       if (null == msg) {
-//           throw new Exception("plaintext is null");
-//       }
-//       if (msg.length == 0) {
-//           throw new Exception("the length of plaintext is 0");
-//       }
-//       SM2Signer signer = new SM2Signer();
-//       BigInteger d = byte2BigInteger(privateKey);
-//       ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
-//       signer.init(true,privateKeyParameters);
-//       return signer.generateSignature(msg,null);
-//    }
-//
-//    public boolean verify(byte[] publicKey, BigInteger[] signVaule, byte[] msg) throws Exception {
-//        if (null == publicKey) {
-//            throw new Exception("public key is null");
-//        }
-//        if (publicKey.length == 0) {
-//            throw new Exception("the length of public key is 0");
-//        }
-//        if (null == signVaule) {
-//            throw new Exception("signValue is null");
-//        }
-//        if (signVaule.length != 2) {
-//            throw new Exception("length of signValue is not 2");
-//        }
-//        if (null == msg) {
-//            throw new Exception("plaintext is null");
-//        }
-//        if (msg.length == 0) {
-//            throw new Exception("the length of plaintext is 0");
-//        }
-//        SM2Signer signer = new SM2Signer();
-//        ECPublicKeyParameters ecPub = new ECPublicKeyParameters(byte2ECPoint(publicKey),ecc_param);
-//        signer.init(false, ecPub);
-//        return signer.verifySignature(msg, signVaule[0], signVaule[1],null);
-//    }
-
-
 
 
     public static class SM2Signature {
@@ -1292,6 +1170,5 @@ public class SM2 implements Serializable {
             return result;
         }
     }
-
 
 }

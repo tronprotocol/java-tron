@@ -112,7 +112,7 @@ public class SM2KeyTest {
         SM2 key = SM2.fromPublicOnly(pubKey);
         SM2Signer signer = key.getSM2SignerForHash();
         String message = "message digest";
-        byte[] hash = signer.generateSM3Hash(message,IDa);
+        byte[] hash = signer.generateSM3Hash(message.getBytes(),IDa);
         assertEquals("10D51CB90C0C0522E94875A2BEA7AB72299EBE7192E64EFE0573B1C77110E5C9", Hex.toHexString(hash).toUpperCase());
     }
 
@@ -121,20 +121,20 @@ public class SM2KeyTest {
         SM2 key = SM2.fromPrivate(privateKey);
         String message = "message digest";
 
-        SM2.SM2Signature sign = key.signMsg(message,IDa);
+        SM2.SM2Signature sign = key.signMsg(message.getBytes(),IDa);
         byte[] signByte = sign.toByteArray();
         //System.out.println(Hex.toHexString(signByte));
-        assertTrue(SM2.verifyMessage(message, sign, pubKey, IDa));
+        assertTrue(SM2.verifyMessage(message.getBytes(), sign, pubKey, IDa));
     }
     @Test
     public void testValidMsgSignature2(){
         SM2 key = SM2.fromPrivate(privateKey);
         String message = "message digest";
 
-        SM2.SM2Signature sign = key.signMessage(message,IDa);
+        SM2.SM2Signature sign = key.signMessage(message.getBytes(),IDa);
         byte[] signByte = sign.toByteArray();
         //System.out.println(Hex.toHexString(signByte));
-        assertTrue(SM2.verifyMessage(message, sign, pubKey, IDa));
+        assertTrue(SM2.verifyMessage(message.getBytes(), sign, pubKey, IDa));
     }
 
     @Test
@@ -142,13 +142,13 @@ public class SM2KeyTest {
         SM2 key = SM2.fromPrivate(privateKey);
         String message = "message digest";
 
-        SM2.SM2Signature sign = key.signMsg(message,IDa);
+        SM2.SM2Signature sign = key.signMsg(message.getBytes(),IDa);
         byte[] signByte = sign.toByteArray();
         //System.out.println(Hex.toHexString(signByte));
-        assertTrue(SM2.verifyMessage(message, sign, pubKey, IDa));
+        assertTrue(SM2.verifyMessage(message.getBytes(), sign, pubKey, IDa));
         BigInteger sNeg = sign.s.negate().mod(SM2_N);
         SM2.SM2Signature sign2 = new SM2.SM2Signature(sign.r, sNeg);
-        assertFalse(SM2.verifyMessage(message,sign2,pubKey,IDa));
+        assertFalse(SM2.verifyMessage(message.getBytes(),sign2,pubKey,IDa));
 
     }
 
