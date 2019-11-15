@@ -212,6 +212,25 @@ public class WalletClient {
    * constructor.
    */
 
+  public Account queryAccount() {
+    byte[] address;
+    if (this.ecKey == null) {
+      String pubKey = loadPubKey(); //04 PubKey[128]
+      if (StringUtils.isEmpty(pubKey)) {
+        logger.warn("Warning: QueryAccount failed, no wallet address !!");
+        return null;
+      }
+      byte[] pubKeyAsc = pubKey.getBytes();
+      byte[] pubKeyHex = Hex.decode(pubKeyAsc);
+      this.ecKey = ECKey.fromPublicOnly(pubKeyHex);
+    }
+    return queryAccount(getAddress());
+  }
+
+  /**
+   * constructor.
+   */
+
   public static Transaction createTransferAssetTransaction(byte[] to, byte[] assertName,
       byte[] owner, long amount) {
     AssetIssueContractOuterClass.TransferAssetContract contract = createTransferAssetContract(to,
@@ -699,25 +718,6 @@ public class WalletClient {
 
   public static Optional<BlockList> getBlockByLatestNum(long num) {
     return rpcCli.getBlockByLatestNum(num);
-  }
-
-  /**
-   * constructor.
-   */
-
-  public Account queryAccount() {
-    byte[] address;
-    if (this.ecKey == null) {
-      String pubKey = loadPubKey(); //04 PubKey[128]
-      if (StringUtils.isEmpty(pubKey)) {
-        logger.warn("Warning: QueryAccount failed, no wallet address !!");
-        return null;
-      }
-      byte[] pubKeyAsc = pubKey.getBytes();
-      byte[] pubKeyHex = Hex.decode(pubKeyAsc);
-      this.ecKey = ECKey.fromPublicOnly(pubKeyHex);
-    }
-    return queryAccount(getAddress());
   }
 
   public boolean login(String password) {
