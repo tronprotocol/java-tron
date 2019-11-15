@@ -49,6 +49,7 @@ import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 public class WalletClient {
+
   private static final Logger logger = LoggerFactory.getLogger("WalletClient");
   private static final String FilePath = "Wallet";
   private static GrpcClient rpcCli;
@@ -205,25 +206,6 @@ public class WalletClient {
 
   public static Account queryAccount(byte[] address) {
     return rpcCli.queryAccount(address);//call rpc
-  }
-
-  /**
-   * constructor.
-   */
-
-  public Account queryAccount() {
-    byte[] address;
-    if (this.ecKey == null) {
-      String pubKey = loadPubKey(); //04 PubKey[128]
-      if (StringUtils.isEmpty(pubKey)) {
-        logger.warn("Warning: QueryAccount failed, no wallet address !!");
-        return null;
-      }
-      byte[] pubKeyAsc = pubKey.getBytes();
-      byte[] pubKeyHex = Hex.decode(pubKeyAsc);
-      this.ecKey = ECKey.fromPublicOnly(pubKeyHex);
-    }
-    return queryAccount(getAddress());
   }
 
   /**
@@ -717,6 +699,25 @@ public class WalletClient {
 
   public static Optional<BlockList> getBlockByLatestNum(long num) {
     return rpcCli.getBlockByLatestNum(num);
+  }
+
+  /**
+   * constructor.
+   */
+
+  public Account queryAccount() {
+    byte[] address;
+    if (this.ecKey == null) {
+      String pubKey = loadPubKey(); //04 PubKey[128]
+      if (StringUtils.isEmpty(pubKey)) {
+        logger.warn("Warning: QueryAccount failed, no wallet address !!");
+        return null;
+      }
+      byte[] pubKeyAsc = pubKey.getBytes();
+      byte[] pubKeyHex = Hex.decode(pubKeyAsc);
+      this.ecKey = ECKey.fromPublicOnly(pubKeyHex);
+    }
+    return queryAccount(getAddress());
   }
 
   public boolean login(String password) {

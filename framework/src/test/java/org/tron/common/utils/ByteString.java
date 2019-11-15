@@ -18,8 +18,8 @@ public class ByteString {
     com.google.protobuf.ByteString one = com.google.protobuf.ByteString.copyFromUtf8("1111");
     com.google.protobuf.ByteString one2 = com.google.protobuf.ByteString.copyFromUtf8("1111");
     com.google.protobuf.ByteString two = com.google.protobuf.ByteString.copyFromUtf8("2222");
-    com.google.protobuf.ByteString [] array = {one, two};
-    com.google.protobuf.ByteString [] array2 = {two, one2};
+    com.google.protobuf.ByteString[] array = {one, two};
+    com.google.protobuf.ByteString[] array2 = {two, one2};
 
     list1.addAll(Arrays.asList(array));
     list2.addAll(Arrays.asList(array2));
