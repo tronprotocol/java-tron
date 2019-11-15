@@ -94,9 +94,9 @@ public class FastForward {
     }
   }
 
-  public boolean checkHelloMessage (HelloMessage message, Channel channel) {
-    if (!args.isFastForward() ||
-        channelManager.getTrustNodes().getIfPresent(channel.getInetAddress()) != null) {
+  public boolean checkHelloMessage(HelloMessage message, Channel channel) {
+    if (!args.isFastForward()
+            || channelManager.getTrustNodes().getIfPresent(channel.getInetAddress()) != null) {
       return true;
     }
 
@@ -108,7 +108,7 @@ public class FastForward {
       return true;
     }
 
-    if (!witnessScheduleStore.getActiveWitnesses().contains(msg.getAddress())){
+    if (!witnessScheduleStore.getActiveWitnesses().contains(msg.getAddress())) {
       logger.error("HelloMessage from {}, {} is not a schedule witness.",
           channel.getInetAddress(),
           ByteArray.toHexString(msg.getAddress().toByteArray()));
@@ -117,7 +117,8 @@ public class FastForward {
 
     try {
       Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(msg.getTimestamp()));
-      String sig = TransactionCapsule.getBase64FromByteString(msg.getSignature());
+      String sig =
+              TransactionCapsule.getBase64FromByteString(msg.getSignature());
       byte[] sigAddress = ECKey.signatureToAddress(hash.getBytes(), sig);
       if (manager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
         return Arrays.equals(sigAddress, msg.getAddress().toByteArray());
@@ -133,11 +134,11 @@ public class FastForward {
   }
 
   private boolean isActiveWitness() {
-    return args.isWitness() &&
-        keySize > 0 &&
-        fastForwardNodes.size() > 0 &&
-        witnessScheduleStore.getActiveWitnesses().contains(witnessAddress) &&
-        backupManager.getStatus().equals(BackupStatusEnum.MASTER);
+    return args.isWitness()
+            && keySize > 0
+            && fastForwardNodes.size() > 0
+            && witnessScheduleStore.getActiveWitnesses().contains(witnessAddress)
+            && backupManager.getStatus().equals(BackupStatusEnum.MASTER);
   }
 
   private void connect() {
