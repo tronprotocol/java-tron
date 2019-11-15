@@ -33,8 +33,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
-    TransactionResultCapsule result = (TransactionResultCapsule)object;
-    if (Objects.isNull(result)){
+    TransactionResultCapsule result = (TransactionResultCapsule) object;
+    if (Objects.isNull(result)) {
       throw new RuntimeException("TransactionResultCapsule is null");
     }
 
