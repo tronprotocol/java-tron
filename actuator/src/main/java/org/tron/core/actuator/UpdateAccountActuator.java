@@ -24,8 +24,8 @@ public class UpdateAccountActuator extends AbstractActuator {
   @Override
   public boolean execute(Object result) throws ContractExeException {
 
-    TransactionResultCapsule ret = (TransactionResultCapsule)result;
-    if (Objects.isNull(ret)){
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
       throw new RuntimeException("TransactionResultCapsule is null");
     }
 

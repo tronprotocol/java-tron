@@ -311,7 +311,8 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     UpdateAssetActuator actuator = new UpdateAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS_INVALID, DESCRIPTION, URL, 500L, 8000L));
+        .setAny(getContract(OWNER_ADDRESS_INVALID, DESCRIPTION, URL,
+            500L, 8000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -336,7 +337,8 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     UpdateAssetActuator actuator = new UpdateAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS_NOTEXIST, DESCRIPTION, URL, 500L, 8000L));
+        .setAny(getContract(OWNER_ADDRESS_NOTEXIST, DESCRIPTION, URL,
+            500L, 8000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -361,7 +363,8 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     UpdateAssetActuator actuator = new UpdateAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(SECOND_ACCOUNT_ADDRESS, DESCRIPTION, URL, 500L, 8000L));
+        .setAny(getContract(SECOND_ACCOUNT_ADDRESS, DESCRIPTION, URL,
+            500L, 8000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -390,7 +393,8 @@ public class UpdateAssetActuatorTest {
     String localUrl = "";
     UpdateAssetActuator actuator = new UpdateAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS, DESCRIPTION, localUrl, 500L, 8000L));
+        .setAny(getContract(OWNER_ADDRESS, DESCRIPTION, localUrl,
+            500L, 8000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -418,12 +422,14 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     String localDescription =
         "abchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuv"
-            + "wxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghij"
-            + "klmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyz";
+            + "wxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijkl"
+            + "mnopqrstuvwxyzabchefghijklmnopqrstuvwxyzabchefghijklmnopqrstuvwxyzab"
+            + "chefghijklmnopqrstuvwxyz";
 
     UpdateAssetActuator actuator = new UpdateAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS, localDescription, URL, 500L, 8000L));
+        .setAny(getContract(OWNER_ADDRESS, localDescription, URL,
+            500L, 8000L));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

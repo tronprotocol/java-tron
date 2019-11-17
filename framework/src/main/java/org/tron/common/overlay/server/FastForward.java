@@ -3,6 +3,7 @@ package org.tron.common.overlay.server;
 import com.google.protobuf.ByteString;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,9 +14,17 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.store.WitnessScheduleStore;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -25,7 +34,13 @@ public class FastForward {
   @Autowired
   private ApplicationContext ctx;
 
+  private Manager manager;
+
   private ChannelManager channelManager;
+
+  private WitnessScheduleStore witnessScheduleStore;
+
+  private BackupManager backupManager;
 
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
@@ -36,6 +51,10 @@ public class FastForward {
   private int keySize = args.getLocalWitnesses().getPrivateKeys().size();
 
   public void init() {
+    manager = ctx.getBean(Manager.class);
+    channelManager = ctx.getBean(ChannelManager.class);
+    witnessScheduleStore = ctx.getBean(WitnessScheduleStore.class);
+    backupManager = ctx.getBean(BackupManager.class);
 
     logger.info("Fast forward config, isWitness: {}, keySize: {}, fastForwardNodes: {}",
         args.isWitness(), keySize, fastForwardNodes.size());
@@ -43,10 +62,6 @@ public class FastForward {
     if (!args.isWitness() || keySize == 0 || fastForwardNodes.isEmpty()) {
       return;
     }
-
-    channelManager = ctx.getBean(ChannelManager.class);
-    BackupManager backupManager = ctx.getBean(BackupManager.class);
-    WitnessScheduleStore witnessScheduleStore = ctx.getBean(WitnessScheduleStore.class);
 
     executorService.scheduleWithFixedDelay(() -> {
       try {
@@ -60,6 +75,70 @@ public class FastForward {
         logger.info("Execute failed.", e);
       }
     }, 30, 100, TimeUnit.SECONDS);
+  }
+
+  public void fillHelloMessage(HelloMessage message, Channel channel) {
+    if (isActiveWitness()) {
+      fastForwardNodes.forEach(node -> {
+        InetAddress address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
+        if (address.equals(channel.getInetAddress())) {
+          ECKey ecKey = ECKey
+              .fromPrivate(ByteArray.fromHexString(args.getLocalWitnesses().getPrivateKey()));
+          Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(message.getTimestamp()));
+          ECDSASignature signature = ecKey.sign(hash.getBytes());
+          ByteString sig = ByteString.copyFrom(signature.toByteArray());
+          message.setHelloMessage(message.getHelloMessage().toBuilder()
+              .setAddress(witnessAddress).setSignature(sig).build());
+        }
+      });
+    }
+  }
+
+  public boolean checkHelloMessage(HelloMessage message, Channel channel) {
+    if (!args.isFastForward()
+        || channelManager.getTrustNodes().getIfPresent(channel.getInetAddress()) != null) {
+      return true;
+    }
+
+    Protocol.HelloMessage msg = message.getHelloMessage();
+
+    // todo, just to solve the compatibility problem
+    if (msg.getAddress() == null || msg.getAddress().isEmpty()) {
+      logger.info("HelloMessage from {}, address is empty.", channel.getInetAddress());
+      return true;
+    }
+
+    if (!witnessScheduleStore.getActiveWitnesses().contains(msg.getAddress())) {
+      logger.error("HelloMessage from {}, {} is not a schedule witness.",
+          channel.getInetAddress(),
+          ByteArray.toHexString(msg.getAddress().toByteArray()));
+      return false;
+    }
+
+    try {
+      Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(msg.getTimestamp()));
+      String sig = TransactionCapsule.getBase64FromByteString(msg.getSignature());
+      byte[] sigAddress = ECKey.signatureToAddress(hash.getBytes(), sig);
+      if (manager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
+        return Arrays.equals(sigAddress, msg.getAddress().toByteArray());
+      } else {
+        byte[] witnessPermissionAddress = manager.getAccountStore()
+            .get(msg.getAddress().toByteArray())
+            .getWitnessPermissionAddress();
+        return Arrays.equals(sigAddress, witnessPermissionAddress);
+      }
+    } catch (Exception e) {
+      logger.error("Check hello message failed, msg: {}, {}", message, e);
+      return false;
+    }
+  }
+
+  private boolean isActiveWitness() {
+    return args.isWitness()
+        && keySize > 0
+        && fastForwardNodes.size() > 0
+        && witnessScheduleStore.getActiveWitnesses().contains(witnessAddress)
+        && backupManager.getStatus().equals(BackupStatusEnum.MASTER);
   }
 
   private void connect() {

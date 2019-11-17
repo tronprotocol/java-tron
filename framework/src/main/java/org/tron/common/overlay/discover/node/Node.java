@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.overlay.discover.table.KademliaOptions;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
@@ -32,41 +33,11 @@ public class Node implements Serializable {
 
   private boolean isFakeNodeId = false;
 
-  public int getReputation() {
-    return reputation;
-  }
-
-  public void setReputation(int reputation) {
-    this.reputation = reputation;
-  }
-
-  public static Node instanceOf(String addressOrEnode) {
+  public Node(String encodeURL) {
     try {
-      URI uri = new URI(addressOrEnode);
-      if ("enode".equals(uri.getScheme())) {
-        return new Node(addressOrEnode);
-      }
-    } catch (URISyntaxException e) {
-      // continue
-    }
-
-    final String generatedNodeId = Hex.toHexString(getNodeId());
-    final Node node = new Node("enode://" + generatedNodeId + "@" + addressOrEnode);
-    return node;
-  }
-
-  public String getEnodeURL() {
-    return new StringBuilder("enode://")
-        .append(ByteArray.toHexString(id)).append("@")
-        .append(host).append(":")
-        .append(port).toString();
-  }
-
-  public Node(String enodeURL) {
-    try {
-      URI uri = new URI(enodeURL);
-      if (!"enode".equals(uri.getScheme())) {
-        throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT");
+      URI uri = new URI(encodeURL);
+      if (!"encode".equals(uri.getScheme())) {
+        throw new RuntimeException("expecting URL in the format encode://PUBKEY@HOST:PORT");
       }
       this.id = Hex.decode(uri.getUserInfo());
       this.host = uri.getHost();
@@ -74,7 +45,7 @@ public class Node implements Serializable {
       this.bindPort = uri.getPort();
       this.isFakeNodeId = true;
     } catch (URISyntaxException e) {
-      throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT", e);
+      throw new RuntimeException("expecting URL in the format encode://PUBKEY@HOST:PORT", e);
     }
   }
 
@@ -94,6 +65,43 @@ public class Node implements Serializable {
     this.host = host;
     this.port = port;
     this.bindPort = bindPort;
+  }
+
+  public static Node instanceOf(String addressOrEncode) {
+    try {
+      URI uri = new URI(addressOrEncode);
+      if ("encode".equals(uri.getScheme())) {
+        return new Node(addressOrEncode);
+      }
+    } catch (URISyntaxException e) {
+      // continue
+    }
+
+    final String generatedNodeId = Hex.toHexString(getNodeId());
+    final Node node = new Node("encode://" + generatedNodeId + "@" + addressOrEncode);
+    return node;
+  }
+
+  public static byte[] getNodeId() {
+    Random gen = new Random();
+    byte[] id = new byte[KademliaOptions.NODE_ID_LEN];
+    gen.nextBytes(id);
+    return id;
+  }
+
+  public int getReputation() {
+    return reputation;
+  }
+
+  public void setReputation(int reputation) {
+    this.reputation = reputation;
+  }
+
+  public String getEnodeURL() {
+    return new StringBuilder("encode://")
+        .append(ByteArray.toHexString(id)).append("@")
+        .append(host).append(":")
+        .append(port).toString();
   }
 
   public boolean isConnectible() {
@@ -137,13 +145,6 @@ public class Node implements Serializable {
       return null;
     }
     return new String(id);
-  }
-
-  public static byte[] getNodeId() {
-    Random gen = new Random();
-    byte[] id = new byte[64];
-    gen.nextBytes(id);
-    return id;
   }
 
   @Override

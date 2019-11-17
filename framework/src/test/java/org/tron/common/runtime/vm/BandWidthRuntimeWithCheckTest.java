@@ -228,17 +228,40 @@ public class BandWidthRuntimeWithCheckTest {
   }
 
   private byte[] createContract()
-      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException, ContractExeException, ReceiptCheckErrException, VMIllegalException {
+      throws ContractValidateException, AccountResourceInsufficientException,
+      TooBigTransactionResultException, ContractExeException, ReceiptCheckErrException,
+      VMIllegalException {
     AccountCapsule owner = dbManager.getAccountStore()
         .get(Commons.decodeFromBase58Check(OwnerAddress));
     long energy = owner.getEnergyUsage();
     long balance = owner.getBalance();
 
     String contractName = "Fibonacci";
-    String code = "608060405234801561001057600080fd5b506101ba806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633c7fdc701461005157806361047ff414610092575b600080fd5b34801561005d57600080fd5b5061007c600480360381019080803590602001909291905050506100d3565b6040518082815260200191505060405180910390f35b34801561009e57600080fd5b506100bd60048036038101908080359060200190929190505050610124565b6040518082815260200191505060405180910390f35b60006100de82610124565b90507f71e71a8458267085d5ab16980fd5f114d2d37f232479c245d523ce8d23ca40ed8282604051808381526020018281526020019250505060405180910390a1919050565b60008060008060008086141561013d5760009450610185565b600186141561014f5760019450610185565b600093506001925060009150600290505b85811115156101815782840191508293508192508080600101915050610160565b8194505b505050509190505600a165627a7a7230582071f3cf655137ce9dc32d3307fb879e65f3960769282e6e452a5f0023ea046ed20029";
-    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],\"name\":\"fibonacciNotify\",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],\"name\":\"fibonacci\",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"input\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"result\",\"type\":\"uint256\"}],\"name\":\"Notify\",\"type\":\"event\"}]";
+    String code = "608060405234801561001057600080fd5b506101ba806100206000396000f3006080604052600436"
+        + "1061004c576000357c0100000000000000000000000000000000000000000000000000000000900463fffff"
+        + "fff1680633c7fdc701461005157806361047ff414610092575b600080fd5b34801561005d57600080fd5b506"
+        + "1007c600480360381019080803590602001909291905050506100d3565b60405180828152602001915050604"
+        + "05180910390f35b34801561009e57600080fd5b506100bd60048036038101908080359060200190929190505"
+        + "050610124565b6040518082815260200191505060405180910390f35b60006100de82610124565b90507f71e"
+        + "71a8458267085d5ab16980fd5f114d2d37f232479c245d523ce8d23ca40ed82826040518083815260200182"
+        + "81526020019250505060405180910390a1919050565b60008060008060008086141561013d5760009450610"
+        + "185565b600186141561014f5760019450610185565b600093506001925060009150600290505b858111151"
+        + "56101815782840191508293508192508080600101915050610160565b8194505b505050509190505600a16"
+        + "5627a7a7230582071f3cf655137ce9dc32d3307fb879e65f3960769282e6e452a5f0023ea046ed20029";
+
+    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],"
+        + "\"name\":\"fibonacciNotify\",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],"
+        + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
+        + "{\"constant\":true,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],"
+        + "\"name\":\"fibonacci\",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],"
+        + "\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\""
+        + ":false,\"inputs\":[{\"indexed\":false,\"name\":\"input\",\"type\":\"uint256\"},"
+        + "{\"indexed\":false,\"name\":\"result\",\"type\":\"uint256\"}],\"name\":\"Notify\","
+        + "\"type\":\"event\"}]";
+
     CreateSmartContract smartContract = TvmTestUtils.createSmartContract(
-        Commons.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0, 100);
+        Commons.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0,
+        100);
     Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
         Contract.newBuilder().setParameter(Any.pack(smartContract))
             .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)).build();
@@ -263,7 +286,8 @@ public class BandWidthRuntimeWithCheckTest {
     Assert.assertEquals(50000, energy);
     Assert.assertEquals(3852900, balance);
     Assert
-        .assertEquals(88529 * Constant.SUN_PER_ENERGY, balance + energy * Constant.SUN_PER_ENERGY);
+        .assertEquals(88529 * Constant.SUN_PER_ENERGY,
+            balance + energy * Constant.SUN_PER_ENERGY);
     if (trace.getRuntimeError() != null) {
       return trace.getRuntimeResult().getContractAddress();
     }

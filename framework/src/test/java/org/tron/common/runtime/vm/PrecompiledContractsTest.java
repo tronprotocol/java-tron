@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -50,10 +51,6 @@ public class PrecompiledContractsTest {
   // common
   private static final DataWord voteContractAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010001");
-  //  private static final DataWord freezeBalanceAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010002");
-//  private static final DataWord unFreezeBalanceAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010003");
   private static final DataWord withdrawBalanceAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000010004");
   private static final DataWord proposalApproveAddr = new DataWord(
@@ -171,20 +168,23 @@ public class PrecompiledContractsTest {
 
   //@Test
   public void voteWitnessNativeTest()
-      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, ContractValidateException, ContractExeException {
+      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException,
+      InstantiationException, ContractValidateException, ContractExeException {
     PrecompiledContract contract = createPrecompiledContract(voteContractAddr, OWNER_ADDRESS);
     Repository deposit = RepositoryImpl.createRoot(StoreFactory.getInstance());
     byte[] witnessAddressBytes = new byte[32];
     byte[] witnessAddressBytes21 = Hex.decode(WITNESS_ADDRESS);
     System.arraycopy(witnessAddressBytes21, 0, witnessAddressBytes,
-        witnessAddressBytes.length - witnessAddressBytes21.length, witnessAddressBytes21.length);
+        witnessAddressBytes.length - witnessAddressBytes21.length,
+        witnessAddressBytes21.length);
 
     DataWord voteCount = new DataWord(
         "0000000000000000000000000000000000000000000000000000000000000001");
     byte[] voteCountBytes = voteCount.getData();
     byte[] data = new byte[witnessAddressBytes.length + voteCountBytes.length];
     System.arraycopy(witnessAddressBytes, 0, data, 0, witnessAddressBytes.length);
-    System.arraycopy(voteCountBytes, 0, data, witnessAddressBytes.length, voteCountBytes.length);
+    System.arraycopy(voteCountBytes, 0, data, witnessAddressBytes.length,
+        voteCountBytes.length);
 
     long frozenBalance = 1_000_000_000_000L;
     long duration = 3;
@@ -226,7 +226,8 @@ public class PrecompiledContractsTest {
       byte[] data4Create = new byte[64];
       System.arraycopy(key.getData(), 0, data4Create, 0, key.getData().length);
       System
-          .arraycopy(value.getData(), 0, data4Create, key.getData().length, value.getData().length);
+          .arraycopy(value.getData(), 0, data4Create,
+              key.getData().length, value.getData().length);
       PrecompiledContract createContract = createPrecompiledContract(proposalCreateAddr,
           WITNESS_ADDRESS);
 
@@ -287,9 +288,6 @@ public class PrecompiledContractsTest {
 
   @Test
   public void convertFromTronBytesAddressNativeTest() {
-//    PrecompiledContract contract = createPrecompiledContract(convertFromTronBytesAddressAddr, WITNESS_ADDRESS);
-//    byte[] solidityAddress = contract.execute(new DataWord(WITNESS_ADDRESS).getData()).getRight();
-//    Assert.assertArrayEquals(solidityAddress,new DataWord(Hex.decode(WITNESS_ADDRESS_BASE)).getData());
   }
 
   //@Test
@@ -302,7 +300,8 @@ public class PrecompiledContractsTest {
 
     byte[] data = new byte[35];
     System.arraycopy(word1.getData(), 0, data, 0, word1.getData().length);
-    System.arraycopy(Arrays.copyOfRange(word2.getData(), 0, 3), 0, data, word1.getData().length, 3);
+    System.arraycopy(Arrays.copyOfRange(word2.getData(), 0, 3), 0,
+        data, word1.getData().length, 3);
     PrecompiledContract contract = createPrecompiledContract(convertFromTronBase58AddressAddr,
         WITNESS_ADDRESS);
 

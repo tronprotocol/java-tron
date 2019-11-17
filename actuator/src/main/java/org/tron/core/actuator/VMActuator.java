@@ -105,7 +105,7 @@ public class VMActuator implements Actuator2 {
   public void validate(Object object) throws ContractValidateException {
 
     TransactionContext context = (TransactionContext) object;
-    if (Objects.isNull(context)){
+    if (Objects.isNull(context)) {
       throw new RuntimeException("TransactionContext is null");
     }
 
@@ -148,7 +148,7 @@ public class VMActuator implements Actuator2 {
   @Override
   public void execute(Object object) throws ContractExeException {
     TransactionContext context = (TransactionContext) object;
-    if (Objects.isNull(context)){
+    if (Objects.isNull(context)) {
       throw new RuntimeException("TransactionContext is null");
     }
 

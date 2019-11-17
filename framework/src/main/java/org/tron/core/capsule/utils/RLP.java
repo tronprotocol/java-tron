@@ -1229,7 +1229,7 @@ public class RLP {
     }
 
     public byte[] getEncoded() {
-      byte encoded[][] = new byte[cnt][];
+      byte[][] encoded = new byte[cnt][];
       for (int i = 0; i < cnt; i++) {
         encoded[i] = encodeElement(getBytes(i));
       }

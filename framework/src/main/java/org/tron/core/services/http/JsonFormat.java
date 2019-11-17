@@ -202,6 +202,29 @@ public class JsonFormat {
     merge(toStringBuilder(input), extensionRegistry, builder, selfType);
   }
 
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   * Extensions will be recognized if they are registered in {@code extensionRegistry}.
+   */
+  public static void merge(CharSequence input,
+      ExtensionRegistry extensionRegistry,
+      Message.Builder builder, boolean selfType) throws ParseException {
+    Tokenizer tokenizer = new Tokenizer(input);
+
+    // Based on the state machine @ http://json.org/
+
+    tokenizer.consume("{"); // Needs to happen when the object starts.
+    while (!tokenizer.tryConsume("}")) { // Continue till the object is done
+      mergeField(tokenizer, extensionRegistry, builder, selfType);
+    }
+    // Test to make sure the tokenizer has reached the end of the stream.
+    if (!tokenizer.atEnd()) {
+      throw tokenizer.parseException(
+          "Expecting the end of the stream, but there seems to be more data!  "
+              + "Check the input for a valid JSON format.");
+    }
+  }
+
   public static String printErrorMsg(Exception ex) {
     StringBuilder text = new StringBuilder();
     text.append("{");
@@ -421,28 +444,6 @@ public class JsonFormat {
     }
   }
 
-  /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   * Extensions will be recognized if they are registered in {@code extensionRegistry}.
-   */
-  public static void merge(CharSequence input,
-      ExtensionRegistry extensionRegistry,
-      Message.Builder builder, boolean selfType) throws ParseException {
-    Tokenizer tokenizer = new Tokenizer(input);
-
-    // Based on the state machine @ http://json.org/
-
-    tokenizer.consume("{"); // Needs to happen when the object starts.
-    while (!tokenizer.tryConsume("}")) { // Continue till the object is done
-      mergeField(tokenizer, extensionRegistry, builder, selfType);
-    }
-    // Test to make sure the tokenizer has reached the end of the stream.
-    if (!tokenizer.atEnd()) {
-      throw tokenizer.parseException(
-          "Expecting the end of the stream, but there seems to be more data!  "
-              + "Check the input for a valid JSON format.");
-    }
-  }
 
   // TODO(chrisn): See if working around java.io.Reader#read(CharBuffer)
   // overhead is worthwhile

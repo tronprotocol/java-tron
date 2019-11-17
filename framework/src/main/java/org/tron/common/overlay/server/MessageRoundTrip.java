@@ -2,13 +2,13 @@ package org.tron.common.overlay.server;
 
 import org.tron.common.overlay.message.Message;
 
-public class MessageRoundtrip {
+public class MessageRoundTrip {
 
   private final Message msg;
   private long time = 0;
   private long retryTimes = 0;
 
-  public MessageRoundtrip(Message msg) {
+  public MessageRoundTrip(Message msg) {
     this.msg = msg;
     saveTime();
   }
