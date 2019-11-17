@@ -22,6 +22,7 @@ import static java.util.Arrays.copyOfRange;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.ByteUtil.isNullOrZeroArray;
 import static org.tron.common.utils.ByteUtil.isSingleZero;
+import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -141,7 +142,7 @@ public class Hash {
   public static byte[] sha3omit12(byte[] input) {
     byte[] hash = sha3(input);
     byte[] address = copyOfRange(hash, 11, hash.length);
-    address[0] = Commons.addressPreFixByte;
+    address[0] = addressPreFixByte;
     return address;
   }
 

@@ -1,6 +1,7 @@
 package org.tron.common.utils;
 
-import static org.tron.common.utils.Hash.sha3omit12;
+import static java.util.Arrays.copyOfRange;
+import static org.tron.common.utils.Hash.sha3;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
 import java.util.Arrays;
@@ -66,6 +67,19 @@ public class DecodeUtil {
 
   public static byte[] computeAddress(ECPoint pubPoint) {
     return computeAddress(pubPoint.getEncoded(/* uncompressed */ false));
+  }
+
+  /**
+   * Calculates RIGTMOST160(SHA3(input)). This is used in address calculations. *
+   *
+   * @param input - data
+   * @return - add_pre_fix + 20 right bytes of the hash keccak of the data
+   */
+  private static byte[] sha3omit12(byte[] input) {
+    byte[] hash = sha3(input);
+    byte[] address = copyOfRange(hash, 11, hash.length);
+    address[0] = DecodeUtil.addressPreFixByte;
+    return address;
   }
 
   public static byte[] computeAddress(byte[] pubBytes) {

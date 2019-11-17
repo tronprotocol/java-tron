@@ -1,5 +1,9 @@
 package org.tron.common.utils;
 
+
+import static org.tron.common.utils.Hash.sha3omit12;
+
+import  org.tron.common.utils.Hash;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
@@ -40,7 +44,7 @@ public class WalletUtil {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return sha3omit12(combined);
 
   }
 
@@ -48,7 +52,7 @@ public class WalletUtil {
   // for `CREATE2`
   public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
     byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return Hash.sha3omit12(mergedData);
+    return sha3omit12(mergedData);
   }
 
   // for `CREATE`
@@ -58,7 +62,7 @@ public class WalletUtil {
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
     System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
 
-    return Hash.sha3omit12(combined);
+    return sha3omit12(combined);
   }
 
 
