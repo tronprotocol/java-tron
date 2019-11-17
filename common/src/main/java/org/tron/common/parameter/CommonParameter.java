@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.setting.RocksDbSettings;
 
@@ -420,6 +421,9 @@ public class CommonParameter {
 
   @Getter
   protected RocksDbSettings rocksDBCustomSettings;
+
+  @Getter
+  protected GenesisBlock genesisBlock;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

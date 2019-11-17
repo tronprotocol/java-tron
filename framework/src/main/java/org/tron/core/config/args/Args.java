@@ -38,6 +38,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
+import org.tron.common.args.Account;
+import org.tron.common.args.GenesisBlock;
+import org.tron.common.args.Witness;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.logsfilter.EventPluginConfig;
@@ -88,9 +91,6 @@ public class Args extends CommonParameter {
 
   @Getter
   private SeedNode seedNode;
-
-  @Getter
-  private GenesisBlock genesisBlock;
 
   @Getter
   @Setter
@@ -1051,7 +1051,32 @@ public class Args extends CommonParameter {
 
     DBConfig.setOutputDirectoryConfig(cfgArgs.getOutputDirectory());
     DBConfig.setRocksDbSettings(cfgArgs.getRocksDBCustomSettings());
+    DBConfig.setAllowMultiSign(cfgArgs.getAllowMultiSign());
+    DBConfig.setMaintenanceTimeInterval(cfgArgs.getMaintenanceTimeInterval());
+    DBConfig.setAllowAdaptiveEnergy(cfgArgs.getAllowAdaptiveEnergy());
+    DBConfig.setAllowDelegateResource(cfgArgs.getAllowDelegateResource());
+    DBConfig.setAllowTvmTransferTrc10(cfgArgs.getAllowTvmTransferTrc10());
+    DBConfig.setAllowTvmConstantinople(cfgArgs.getAllowTvmConstantinople());
+    DBConfig.setAllowTvmSolidity059(cfgArgs.getAllowTvmSolidity059());
+    DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
+    DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
+    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
+    DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
+    DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
+    DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
+    DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransactionArgs());
+    DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
+    DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
+    DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
+    DBConfig.setVmTrace(cfgArgs.isVmTrace());
+    DBConfig.setDebug(cfgArgs.isDebug());
+    DBConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
+    DBConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
+    DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
+    DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
+    DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
+    DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
   }
 
