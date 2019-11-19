@@ -40,6 +40,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.Protocol.Account;
 
 @Slf4j(topic = "API")
 public class Util {
@@ -411,5 +412,28 @@ public class Util {
     }
   }
 
+  public static String convertOutput(Account account){
+    if (account.getAssetIssuedID().isEmpty()) {
+      return JsonFormat.printToString(account, false);
+    } else {
+      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
+      String assetId = accountJson.get("asset_issued_ID").toString();
+      accountJson.put(
+              "asset_issued_ID", ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
+      return accountJson.toJSONString();
+    }
+  }
+
+  public static void printAccount(Account reply, HttpServletResponse response, Boolean visible) throws java.io.IOException{
+    if (reply != null) {
+      if (visible) {
+        response.getWriter().println(JsonFormat.printToString(reply, true));
+      } else {
+        response.getWriter().println(convertOutput(reply));
+      }
+    } else {
+      response.getWriter().println("{}");
+    }
+  }
 
 }
