@@ -15,13 +15,12 @@
 
 package org.tron.common.args;
 
-import static org.tron.common.utils.DecodeUtil.addressValid;
-
 import com.google.protobuf.ByteString;
 import java.io.Serializable;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.protos.Protocol.AccountType;
 
@@ -49,7 +48,7 @@ public class Account implements Serializable {
    * Account address is a 21-bits hex string.
    */
   public void setAddress(final byte[] address) {
-    if (!addressValid(address)) {
+    if (!DecodeUtil.addressValid(address)) {
       throw new IllegalArgumentException(
           "The address(" + StringUtil.createReadableString(address) + ") must be a 21 bytes.");
     }

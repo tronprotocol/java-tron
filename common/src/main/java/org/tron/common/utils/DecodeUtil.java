@@ -75,7 +75,7 @@ public class DecodeUtil {
    * @param input - data
    * @return - add_pre_fix + 20 right bytes of the hash keccak of the data
    */
-  private static byte[] sha3omit12(byte[] input) {
+  public static byte[] sha3omit12(byte[] input) {
     byte[] hash = sha3(input);
     byte[] address = copyOfRange(hash, 11, hash.length);
     address[0] = DecodeUtil.addressPreFixByte;
