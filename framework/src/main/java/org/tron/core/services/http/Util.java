@@ -96,8 +96,8 @@ public class Util {
     List<Transaction> transactions = list.getTransactionList();
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
     JSONArray jsonArray = new JSONArray();
-    transactions.stream().forEach(
-            transaction -> jsonArray.add(printTransactionToJSON(transaction, selfType))
+    transactions.stream().forEach(transaction -> jsonArray
+            .add(printTransactionToJSON(transaction, selfType))
     );
     jsonObject.put(TRANSACTION, jsonArray);
 
@@ -107,9 +107,8 @@ public class Util {
   public static JSONArray printTransactionListToJSON(List<TransactionCapsule> list,
       boolean selfType) {
     JSONArray transactions = new JSONArray();
-    list.stream().forEach(
-            transactionCapsule -> transactions.add(printTransactionToJSON(transactionCapsule.getInstance(), selfType))
-    );
+    list.stream().forEach(transactionCapsule -> transactions
+                    .add(printTransactionToJSON(transactionCapsule.getInstance(), selfType)));
     return transactions;
   }
 
