@@ -69,10 +69,6 @@ public class Commons {
     adjustBalance(accountStore, account, amount);
   }
 
-  public static String createReadableString(byte[] bytes) {
-    return ByteArray.toHexString(bytes);
-  }
-
   /**
    * judge balance.
    */
@@ -86,7 +82,7 @@ public class Commons {
 
     if (amount < 0 && balance < -amount) {
       throw new BalanceInsufficientException(
-          createReadableString(account.createDbKey()) + " insufficient balance");
+          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
     }
     account.setBalance(Math.addExact(balance, amount));
     accountStore.put(account.getAddress().toByteArray(), account);
