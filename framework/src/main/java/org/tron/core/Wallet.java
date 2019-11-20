@@ -551,11 +551,11 @@ public class Wallet {
   /**
    * Broadcast a transaction.
    */
-  public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
+  public GrpcAPI.Return broadcastTransaction(Transaction signedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
-    TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+    TransactionCapsule trx = new TransactionCapsule(signedTransaction);
     try {
-      Message message = new TransactionMessage(signaturedTransaction.toByteArray());
+      Message message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger
@@ -686,7 +686,7 @@ public class Wallet {
       }
       if (permissionId != 0) {
         if (permission.getType() != PermissionType.Active) {
-          throw new PermissionException("Permission type is error");
+          throw new PermissionException("Permission type is wrong!");
         }
         //check operations
         if (!checkPermissionOprations(permission, contract)) {
@@ -1109,9 +1109,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(issueCapsule -> {
-          builder.addAssetIssue(issueCapsule.getInstance());
-        });
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
   }
@@ -1249,9 +1247,7 @@ public class Wallet {
           .stream()
           .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
           .forEach(
-              issueCapsule -> {
-                builder.addAssetIssue(issueCapsule.getInstance());
-              });
+              issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
       // check count
       if (builder.getAssetIssueCount() > 1) {
@@ -1273,7 +1269,7 @@ public class Wallet {
           // check count
           if (builder.getAssetIssueCount() > 1) {
             throw new NonUniqueObjectException(
-                "To get more than one asset, please use getAssetIssuebyid syntax");
+                "To get more than one asset, please use getAssetIssueById syntax");
           }
         }
       }
@@ -1297,9 +1293,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
-        .forEach(issueCapsule -> {
-          builder.addAssetIssue(issueCapsule.getInstance());
-        });
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
   }
@@ -1473,7 +1467,7 @@ public class Wallet {
     //Get the tree in blockNum-1 position
     byte[] treeRoot = dbManager.getMerkleTreeIndexStore().get(blockNumber - 1);
     if (treeRoot == null) {
-      throw new RuntimeException("treeRoot is null,blockNumber:" + (blockNumber - 1));
+      throw new RuntimeException("treeRoot is null, blockNumber:" + (blockNumber - 1));
     }
 
     IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
@@ -1986,7 +1980,7 @@ public class Wallet {
     try {
       transactionCapsule = builder.buildWithoutAsk();
     } catch (ZksnarkException e) {
-      logger.error("createShieldedTransaction except, error is " + e.toString());
+      logger.error("createShieldedTransaction exception, error is " + e.toString());
       throw new ZksnarkException(e.toString());
     }
     return transactionCapsule;
@@ -2368,7 +2362,7 @@ public class Wallet {
     ProgramResult result = context.getProgramResult();
     if (result.getException() != null) {
       RuntimeException e = result.getException();
-      logger.warn("Constant call has error {}", e.getMessage());
+      logger.warn("Constant call has an error {}", e.getMessage());
       throw e;
     }
 
