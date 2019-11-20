@@ -217,12 +217,12 @@ public class RpcApiService implements Service {
       logger.debug(e.getMessage(), e);
     }
 
-    logger.info("RpcApiService started, listening on " + port);
+    logger.info("RpcApiService has started, listening on " + port);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       System.err.println("*** shutting down gRPC server since JVM is shutting down");
       //server.this.stop();
-      System.err.println("*** server shut down");
+      System.err.println("*** server is shutdown");
     }));
   }
 
@@ -1068,7 +1068,7 @@ public class RpcApiService implements Service {
 
         Preconditions.checkNotNull(witness, "witness[" + readableWitnessAddress + "] not exists");
         Preconditions.checkArgument(vote.getVoteCount() <= 0,
-            "VoteAddress[" + readableWitnessAddress + "],VotesCount[" + vote
+            "VoteAddress[" + readableWitnessAddress + "], VotesCount[" + vote
                 .getVoteCount() + "] <= 0");
       });
     }

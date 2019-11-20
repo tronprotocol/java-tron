@@ -70,9 +70,9 @@ public class Util {
     List<Block> blocks = list.getBlockList();
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
     JSONArray jsonArray = new JSONArray();
-    blocks.stream().forEach(block -> {
-      jsonArray.add(printBlockToJSON(block, selfType));
-    });
+    blocks.stream().forEach(block ->
+      jsonArray.add(printBlockToJSON(block, selfType))
+    );
     jsonObject.put("block", jsonArray);
 
     return jsonObject.toJSONString();
@@ -98,9 +98,9 @@ public class Util {
     List<Transaction> transactions = list.getTransactionList();
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
     JSONArray jsonArray = new JSONArray();
-    transactions.stream().forEach(transaction -> {
-      jsonArray.add(printTransactionToJSON(transaction, selfType));
-    });
+    transactions.stream().forEach(transaction ->
+      jsonArray.add(printTransactionToJSON(transaction, selfType))
+    );
     jsonObject.put(TRANSACTION, jsonArray);
 
     return jsonObject.toJSONString();
@@ -109,9 +109,9 @@ public class Util {
   public static JSONArray printTransactionListToJSON(List<TransactionCapsule> list,
       boolean selfType) {
     JSONArray transactions = new JSONArray();
-    list.stream().forEach(transactionCapsule -> {
-      transactions.add(printTransactionToJSON(transactionCapsule.getInstance(), selfType));
-    });
+    list.stream().forEach(transactionCapsule ->
+      transactions.add(printTransactionToJSON(transactionCapsule.getInstance(), selfType))
+    );
     return transactions;
   }
 
@@ -285,7 +285,7 @@ public class Util {
   public static void checkBodySize(String body) throws Exception {
     Args args = Args.getInstance();
     if (body.getBytes().length > args.getMaxMessageSize()) {
-      throw new Exception("body size is too big, limit is " + args.getMaxMessageSize());
+      throw new Exception("body size is too big, the limit is " + args.getMaxMessageSize());
     }
   }
 
@@ -386,21 +386,21 @@ public class Util {
   public static long getJsonLongValue(JSONObject jsonObject, String key, boolean required) {
     BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
     if (required && bigDecimal == null) {
-      throw new InvalidParameterException("key [" + key + "] not exist");
+      throw new InvalidParameterException("key [" + key + "] does not exist");
     }
     return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
   }
 
-  public static String getMemo(byte[] meno) {
-    int index = meno.length;
+  public static String getMemo(byte[] memo) {
+    int index = memo.length;
     for (; index > 0; --index) {
-      if (meno[index - 1] != 0) {
+      if (memo[index - 1] != 0) {
         break;
       }
     }
 
     byte[] inputCheck = new byte[index];
-    System.arraycopy(meno, 0, inputCheck, 0, index);
+    System.arraycopy(memo, 0, inputCheck, 0, index);
     return new String(inputCheck, Charset.forName("UTF-8"));
   }
 
