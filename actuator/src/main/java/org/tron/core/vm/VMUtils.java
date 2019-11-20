@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.config.VMConfig;
@@ -158,10 +159,10 @@ public final class VMUtils {
 
   public static boolean validateForSmartContract(Repository deposit, byte[] ownerAddress,
       byte[] toAddress, long amount) throws ContractValidateException {
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress!");
     }
-    if (!Commons.addressValid(toAddress)) {
+    if (!DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress!");
     }
 
@@ -212,10 +213,10 @@ public final class VMUtils {
     long fee = 0;
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-    if (!Commons.addressValid(toAddress)) {
+    if (!DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
 //    if (!TransactionUtil.validAssetName(assetName)) {

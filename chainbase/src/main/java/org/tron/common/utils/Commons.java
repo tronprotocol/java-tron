@@ -46,27 +46,6 @@ public class Commons {
     return null;
   }
 
-  public static boolean addressValid(byte[] address) {
-    if (ArrayUtils.isEmpty(address)) {
-      logger.warn("Warning: Address is empty !!");
-      return false;
-    }
-    if (address.length != ADDRESS_SIZE / 2) {
-      logger.warn(
-          "Warning: Address length need " + ADDRESS_SIZE + " but " + address.length
-              + " !!");
-      return false;
-    }
-
-    if (address[0] != addressPreFixByte) {
-      logger.warn("Warning: Address need prefix with " + addressPreFixByte + " but "
-          + address[0] + " !!");
-      return false;
-    }
-    //Other rule;
-    return true;
-  }
-
   public static byte[] decodeFromBase58Check(String addressBase58) {
     if (StringUtils.isEmpty(addressBase58)) {
       logger.warn("Warning: Address is empty !!");
@@ -77,7 +56,7 @@ public class Commons {
       return null;
     }
 
-    if (!addressValid(address)) {
+    if (!DecodeUtil.addressValid(address)) {
       return null;
     }
 

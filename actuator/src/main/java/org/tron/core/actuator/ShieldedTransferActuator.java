@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -404,13 +405,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException("to_amount should not be less than 0");
     }
 
-    if (hasTransparentFrom && !Commons.addressValid(ownerAddress)) {
+    if (hasTransparentFrom && !DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid transparent_from_address");
     }
     if (!hasTransparentFrom && fromAmount != 0) {
       throw new ContractValidateException("no transparent_from_address, from_amount should be 0");
     }
-    if (hasTransparentTo && !Commons.addressValid(toAddress)) {
+    if (hasTransparentTo && !DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid transparent_to_address");
     }
     if (!hasTransparentTo && toAmount != 0) {
@@ -467,7 +468,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     ByteString owner = any.unpack(ShieldedTransferContract.class).getTransparentFromAddress();
-    if (Commons.addressValid(owner.toByteArray())) {
+    if (DecodeUtil.addressValid(owner.toByteArray())) {
       return owner;
     } else {
       return null;

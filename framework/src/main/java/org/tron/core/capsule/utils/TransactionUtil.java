@@ -17,7 +17,7 @@ package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -29,7 +29,7 @@ public class TransactionUtil {
   public static Transaction newGenesisTransaction(byte[] key, long value)
       throws IllegalArgumentException {
 
-    if (!Commons.addressValid(key)) {
+    if (!DecodeUtil.addressValid(key)) {
       throw new IllegalArgumentException("Invalid address");
     }
     TransferContract transferContract = TransferContract.newBuilder()

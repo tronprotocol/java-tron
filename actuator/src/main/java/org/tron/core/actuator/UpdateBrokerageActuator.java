@@ -5,7 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -86,7 +86,7 @@ public class UpdateBrokerageActuator extends AbstractActuator {
     byte[] ownerAddress = updateBrokerageContract.getOwnerAddress().toByteArray();
     int brokerage = updateBrokerageContract.getBrokerage();
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 
