@@ -132,18 +132,6 @@ public class Hash {
     }
   }
 
-  /**
-   * Calculates RIGTMOST160(SHA3(input)). This is used in address calculations. *
-   *
-   * @param input - data
-   * @return - add_pre_fix + 20 right bytes of the hash keccak of the data
-   */
-  public static byte[] sha3omit12(byte[] input) {
-    byte[] hash = sha3(input);
-    byte[] address = copyOfRange(hash, 11, hash.length);
-    address[0] = DecodeUtil.addressPreFixByte;
-    return address;
-  }
 
   public static byte[] encodeElement(byte[] srcData) {
 

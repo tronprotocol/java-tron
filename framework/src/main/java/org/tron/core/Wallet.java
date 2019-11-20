@@ -19,7 +19,6 @@
 package org.tron.core;
 
 import static org.tron.common.utils.Commons.ADDRESS_SIZE;
-import static org.tron.common.utils.Commons.addressPreFixByte;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
@@ -92,6 +91,7 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
@@ -284,11 +284,11 @@ public class Wallet {
   }
 
   public static byte getAddressPreFixByte() {
-    return addressPreFixByte;
+    return DecodeUtil.addressPreFixByte;
   }
 
   public static void setAddressPreFixByte(byte addressPreFixByte) {
-    Commons.addressPreFixByte = addressPreFixByte;
+    DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
 
   public static boolean addressValid(byte[] address) {
@@ -302,9 +302,9 @@ public class Wallet {
               + " !!");
       return false;
     }
-    if (address[0] != addressPreFixByte) {
-      logger.warn("Warning: Address requires a prefix with " + addressPreFixByte + " but "
-          + address[0] + " !!");
+    if (address[0] != DecodeUtil.addressPreFixByte) {
+      logger.warn("Warning: Address requires a prefix with " + DecodeUtil.addressPreFixByte
+          + " but " + address[0] + " !!");
       return false;
     }
     //Other rule;
@@ -349,7 +349,7 @@ public class Wallet {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
   }
 
@@ -359,7 +359,7 @@ public class Wallet {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
   }
 
@@ -370,13 +370,13 @@ public class Wallet {
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
     System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
   }
 
   // for `CREATE2`
   public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
     byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return Hash.sha3omit12(mergedData);
+    return DecodeUtil.sha3omit12(mergedData);
   }
 
   public static byte[] tryDecodeFromBase58Check(String address) {

@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.args.GenesisBlock;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 
