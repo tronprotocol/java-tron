@@ -44,7 +44,8 @@ public class CreateCommonTransactionServlet extends RateLimiterServlet {
   }
 
   private Message.Builder getBuilder(ContractType type) throws NoSuchMethodException,
-      IllegalAccessException, InvocationTargetException, InstantiationException, ContractValidateException {
+      IllegalAccessException, InvocationTargetException, InstantiationException,
+      ContractValidateException {
     Class clazz = TransactionFactory.getContract(type);
     if (clazz != null) {
       Constructor<GeneratedMessageV3> constructor = clazz.getDeclaredConstructor();

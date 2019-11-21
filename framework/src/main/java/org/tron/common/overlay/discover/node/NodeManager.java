@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.net.udp.handler.EventHandler;
 import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.net.udp.message.Message;
+import org.tron.common.net.udp.message.discover.DiscoverMessageInspector;
 import org.tron.common.net.udp.message.discover.FindNodeMessage;
 import org.tron.common.net.udp.message.discover.NeighborsMessage;
 import org.tron.common.net.udp.message.discover.PingMessage;
@@ -196,6 +197,10 @@ public class NodeManager implements EventHandler {
   @Override
   public void handleEvent(UdpEvent udpEvent) {
     Message m = udpEvent.getMessage();
+    if (!DiscoverMessageInspector.valid(m)) {
+      return;
+    }
+
     InetSocketAddress sender = udpEvent.getAddress();
 
     Node n = new Node(m.getFrom().getId(), sender.getHostString(), sender.getPort(),

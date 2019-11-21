@@ -1,8 +1,10 @@
 package org.tron.common.utils;
 
+
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -40,7 +42,7 @@ public class WalletUtil {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
   }
 
@@ -48,7 +50,7 @@ public class WalletUtil {
   // for `CREATE2`
   public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
     byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return Hash.sha3omit12(mergedData);
+    return DecodeUtil.sha3omit12(mergedData);
   }
 
   // for `CREATE`
@@ -58,7 +60,7 @@ public class WalletUtil {
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
     System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
   }
 
 
@@ -115,9 +117,7 @@ public class WalletUtil {
       sb.append(")");
 
       byte[] funcSelector = new byte[4];
-      System
-          .arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0,
-              4);
+      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
       if (Arrays.equals(funcSelector, selector)) {
         if (entry.getConstant() == true || entry.getStateMutability()
             .equals(StateMutabilityType.View)) {

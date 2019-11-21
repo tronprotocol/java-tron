@@ -129,20 +129,6 @@ public class JsonFormat {
   }
 
   /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   */
-  public static void merge(Readable input, Message.Builder builder) throws IOException {
-    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, true);
-  }
-
-  /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   */
-  public static void merge(CharSequence input, Message.Builder builder) throws ParseException {
-    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, true);
-  }
-
-  /**
    * Like {@code print()}, but writes directly to a {@code String} and returns it.
    */
   public static String printToString(Message message) {
@@ -165,6 +151,77 @@ public class JsonFormat {
       return text.toString();
     } catch (IOException e) {
       throw new RuntimeException(WRITING_STRING_BUILDER_EXCEPTION, e);
+    }
+  }
+
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   */
+  public static void merge(Readable input, Message.Builder builder) throws IOException {
+    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, true);
+  }
+
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   */
+  public static void merge(CharSequence input, Message.Builder builder) throws ParseException {
+    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, true);
+  }
+
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   */
+  public static void merge(Readable input, Message.Builder builder, boolean selfType)
+      throws IOException {
+    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
+  }
+
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   */
+  public static void merge(CharSequence input, Message.Builder builder, boolean selfType)
+      throws ParseException {
+    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
+  }
+
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   * Extensions will be recognized if they are registered in {@code extensionRegistry}.
+   */
+  public static void merge(Readable input,
+      ExtensionRegistry extensionRegistry,
+      Message.Builder builder, boolean selfType) throws IOException {
+    // Read the entire input to a String then parse that.
+
+    // If StreamTokenizer were not quite so crippled, or if there were a kind
+    // of Reader that could read in chunks that match some particular regex,
+    // or if we wanted to write a custom Reader to tokenize our stream, then
+    // we would not have to read to one big String. Alas, none of these is
+    // the case. Oh well.
+
+    merge(toStringBuilder(input), extensionRegistry, builder, selfType);
+  }
+
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   * Extensions will be recognized if they are registered in {@code extensionRegistry}.
+   */
+  public static void merge(CharSequence input,
+      ExtensionRegistry extensionRegistry,
+      Message.Builder builder, boolean selfType) throws ParseException {
+    Tokenizer tokenizer = new Tokenizer(input);
+
+    // Based on the state machine @ http://json.org/
+
+    tokenizer.consume("{"); // Needs to happen when the object starts.
+    while (!tokenizer.tryConsume("}")) { // Continue till the object is done
+      mergeField(tokenizer, extensionRegistry, builder, selfType);
+    }
+    // Test to make sure the tokenizer has reached the end of the stream.
+    if (!tokenizer.atEnd()) {
+      throw tokenizer.parseException(
+          "Expecting the end of the stream, but there seems to be more data!  "
+              + "Check the input for a valid JSON format.");
     }
   }
 
@@ -387,62 +444,6 @@ public class JsonFormat {
     }
   }
 
-  /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   */
-  public static void merge(Readable input, Message.Builder builder, boolean selfType)
-      throws IOException {
-    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
-  }
-
-  /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   */
-  public static void merge(CharSequence input, Message.Builder builder, boolean selfType)
-      throws ParseException {
-    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
-  }
-
-  /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   * Extensions will be recognized if they are registered in {@code extensionRegistry}.
-   */
-  public static void merge(Readable input,
-      ExtensionRegistry extensionRegistry,
-      Message.Builder builder, boolean selfType) throws IOException {
-    // Read the entire input to a String then parse that.
-
-    // If StreamTokenizer were not quite so crippled, or if there were a kind
-    // of Reader that could read in chunks that match some particular regex,
-    // or if we wanted to write a custom Reader to tokenize our stream, then
-    // we would not have to read to one big String. Alas, none of these is
-    // the case. Oh well.
-
-    merge(toStringBuilder(input), extensionRegistry, builder, selfType);
-  }
-
-  /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   * Extensions will be recognized if they are registered in {@code extensionRegistry}.
-   */
-  public static void merge(CharSequence input,
-      ExtensionRegistry extensionRegistry,
-      Message.Builder builder, boolean selfType) throws ParseException {
-    Tokenizer tokenizer = new Tokenizer(input);
-
-    // Based on the state machine @ http://json.org/
-
-    tokenizer.consume("{"); // Needs to happen when the object starts.
-    while (!tokenizer.tryConsume("}")) { // Continue till the object is done
-      mergeField(tokenizer, extensionRegistry, builder, selfType);
-    }
-    // Test to make sure the tokenizer has reached the end of the stream.
-    if (!tokenizer.atEnd()) {
-      throw tokenizer.parseException(
-          "Expecting the end of the stream, but there seems to be more data!  "
-              + "Check the input for a valid JSON format.");
-    }
-  }
 
   // TODO(chrisn): See if working around java.io.Reader#read(CharBuffer)
   // overhead is worthwhile
@@ -1203,97 +1204,6 @@ public class JsonFormat {
     }
 
     static ByteString unescapeBytes(CharSequence input) throws InvalidEscapeSequence {
-//    byte[] result = new byte[input.length()];
-//    int pos = 0;
-//    for (int i = 0; i < input.length(); i++) {
-//      char c = input.charAt(i);
-//      if (c == '\\') {
-//        if (i + 1 < input.length()) {
-//          ++i;
-//          c = input.charAt(i);
-//          if (isOctal(c)) {
-//            // Octal escape.
-//            int code = digitValue(c);
-//            if ((i + 1 < input.length()) && isOctal(input.charAt(i + 1))) {
-//              ++i;
-//              code = code * 8 + digitValue(input.charAt(i));
-//            }
-//            if ((i + 1 < input.length()) && isOctal(input.charAt(i + 1))) {
-//              ++i;
-//              code = code * 8 + digitValue(input.charAt(i));
-//            }
-//            result[pos++] = (byte) code;
-//          } else {
-//            switch (c) {
-//              case 'a':
-//                result[pos++] = 0x07;
-//                break;
-//              case 'b':
-//                result[pos++] = '\b';
-//                break;
-//              case 'f':
-//                result[pos++] = '\f';
-//                break;
-//              case 'n':
-//                result[pos++] = '\n';
-//                break;
-//              case 'r':
-//                result[pos++] = '\r';
-//                break;
-//              case 't':
-//                result[pos++] = '\t';
-//                break;
-//              case 'v':
-//                result[pos++] = 0x0b;
-//                break;
-//              case '\\':
-//                result[pos++] = '\\';
-//                break;
-//              case '\'':
-//                result[pos++] = '\'';
-//                break;
-//              case '"':
-//                result[pos++] = '\"';
-//                break;
-//
-//              case 'x':
-//                // hex escape
-//                int code = 0;
-//                if ((i + 1 < input.length()) && isHex(input.charAt(i + 1))) {
-//                  ++i;
-//                  code = digitValue(input.charAt(i));
-//                } else {
-//                 throw new InvalidEscapeSequence("Invalid escape sequence: '\\x' with no digits");
-//                }
-//                if ((i + 1 < input.length()) && isHex(input.charAt(i + 1))) {
-//                  ++i;
-//                  code = code * 16 + digitValue(input.charAt(i));
-//                }
-//                result[pos++] = (byte) code;
-//                break;
-//              case 'u':
-//                // UTF8 escape
-//                code = (16 * 3 * digitValue(input.charAt(i+1))) +
-//                    (16 * 2 * digitValue(input.charAt(i+2))) +
-//                    (16 * digitValue(input.charAt(i+3))) +
-//                    digitValue(input.charAt(i+4));
-//                i = i+4;
-//                result[pos++] = (byte) code;
-//                break;
-//
-//              default:
-//                throw new InvalidEscapeSequence("Invalid escape sequence: '\\" + c
-//                    + "'");
-//            }
-//          }
-//        } else {
-//          throw new InvalidEscapeSequence("Invalid escape sequence: '\\' at end of string.");
-//        }
-//      } else {
-//        result[pos++] = (byte) c;
-//      }
-//    }
-//    return ByteString.copyFrom(result, 0, pos);
       try {
         return ByteString.copyFrom(ByteArray.fromHexString(input.toString()));
       } catch (Exception e) {

@@ -202,6 +202,7 @@ public class SolidityNode {
     try {
       Thread.sleep(time);
     } catch (Exception e1) {
+      logger.error(e1.getMessage());
     }
   }
 

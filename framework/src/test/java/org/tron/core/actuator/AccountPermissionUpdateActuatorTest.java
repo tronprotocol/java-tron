@@ -923,7 +923,6 @@ public class AccountPermissionUpdateActuatorTest {
       if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
           || contractType == ContractType.ClearABIContract
           || contractType == ContractType.UpdateBrokerageContract
-        //    || contractType == ContractType.CancelDeferredTransactionContract
           ) {
         continue;
       }
@@ -951,7 +950,6 @@ public class AccountPermissionUpdateActuatorTest {
           || contractType == ContractType.AccountPermissionUpdateContract
           || contractType == ContractType.ClearABIContract
           || contractType == ContractType.UpdateBrokerageContract
-        //||contractType == ContractType.CancelDeferredTransactionContract
           ) {
         continue;
       }

@@ -68,6 +68,7 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.core.Wallet;
 import org.tron.core.zen.address.DiversifierT;
@@ -2799,7 +2800,7 @@ public class PublicMethed {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
   }
 
@@ -5095,7 +5096,7 @@ public class PublicMethed {
     System.arraycopy(temp, 0, salt, 24, 8);
 
     byte[] mergedData = ByteUtil.merge(address, salt, sha3(code));
-    String create2Address = Base58.encode58Check(Hash.sha3omit12(mergedData));
+    String create2Address = Base58.encode58Check(DecodeUtil.sha3omit12(mergedData));
 
     logger.info("create2 Address: " + create2Address);
 

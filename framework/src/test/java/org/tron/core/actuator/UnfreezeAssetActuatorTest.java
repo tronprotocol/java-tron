@@ -79,23 +79,10 @@ public class UnfreezeAssetActuatorTest {
    */
   @Before
   public void createAccountCapsule() {
-//    AccountCapsule ownerCapsule =
-//        new AccountCapsule(
-//            ByteString.copyFromUtf8("owner"),
-//            StringUtil.hexString2ByteString(OWNER_ADDRESS),
-//            AccountType.Normal,
-//            initBalance);
-//    ownerCapsule.setAssetIssuedName(assetName.getBytes());
-//    dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
   }
 
   @Before
   public void createAsset() {
-//    AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
-//    builder.setName(ByteString.copyFromUtf8(assetName));
-//    builder.setId(assetID);
-//    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(builder.build());
-//    dbManager.getAssetIssueStore().put(assetName.getBytes(),assetIssueCapsule);
   }
 
   private Any getContract(String ownerAddress) {

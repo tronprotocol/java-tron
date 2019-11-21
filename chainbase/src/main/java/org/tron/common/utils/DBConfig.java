@@ -3,14 +3,13 @@ package org.tron.common.utils;
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
-
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
-import org.tron.common.storage.rocksdb.RocksDbSettings;
-import org.tron.core.config.args.GenesisBlock;
+import org.tron.common.setting.RocksDbSettings;
+import org.tron.common.args.GenesisBlock;
 
 public class DBConfig {
 

@@ -23,6 +23,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -46,8 +47,8 @@ public class TransferAssetActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)result;
-    if (Objects.isNull(ret)){
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
       throw new RuntimeException("TransactionResultCapsule is null");
     }
 
@@ -133,10 +134,10 @@ public class TransferAssetActuator extends AbstractActuator {
     byte[] assetName = transferAssetContract.getAssetName().toByteArray();
     long amount = transferAssetContract.getAmount();
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-    if (!Commons.addressValid(toAddress)) {
+    if (!DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
 //    if (!TransactionUtil.validAssetName(assetName)) {

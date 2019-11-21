@@ -507,10 +507,7 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertNotNull(exchangeCapsule2);
       Assert.assertEquals(exchangeId, exchangeCapsule2.getID());
       Assert.assertEquals(1000000, exchangeCapsule2.getCreateTime());
-//      Assert.assertTrue(Arrays.equals(tokenId.getBytes(), exchangeCapsule2.getFirstTokenId()));
-//      Assert.assertEquals(tokenId, ByteArray.toStr(exchangeCapsule2.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance + quant, exchangeCapsule2.getFirstTokenBalance());
-//      Assert.assertEquals("def", ByteArray.toStr(exchangeCapsule2.getSecondTokenId()));
       Assert.assertEquals(199998001L, exchangeCapsule2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);

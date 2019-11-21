@@ -19,7 +19,6 @@
 package org.tron.core;
 
 import static org.tron.common.utils.Commons.ADDRESS_SIZE;
-import static org.tron.common.utils.Commons.addressPreFixByte;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
@@ -88,11 +87,11 @@ import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
@@ -240,6 +239,42 @@ public class Wallet {
     }
   }
 
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
+
+    if (selector == null || selector.length != 4
+        || abi.getEntrysList().size() == 0) {
+      return false;
+    }
+
+    for (int i = 0; i < abi.getEntrysCount(); i++) {
+      ABI.Entry entry = abi.getEntrys(i);
+      if (entry.getType() != ABI.Entry.EntryType.Function) {
+        continue;
+      }
+
+      int inputCount = entry.getInputsCount();
+      StringBuilder sb = new StringBuilder();
+      sb.append(entry.getName());
+      sb.append("(");
+      for (int k = 0; k < inputCount; k++) {
+        ABI.Entry.Param param = entry.getInputs(k);
+        sb.append(param.getType());
+        if (k + 1 < inputCount) {
+          sb.append(",");
+        }
+      }
+      sb.append(")");
+
+      byte[] funcSelector = new byte[4];
+      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
+      if (Arrays.equals(funcSelector, selector)) {
+        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
+      }
+    }
+
+    return false;
+  }
+
   public static String getAddressPreFixString() {
     return addressPreFixString;
   }
@@ -249,11 +284,11 @@ public class Wallet {
   }
 
   public static byte getAddressPreFixByte() {
-    return addressPreFixByte;
+    return DecodeUtil.addressPreFixByte;
   }
 
   public static void setAddressPreFixByte(byte addressPreFixByte) {
-    Commons.addressPreFixByte = addressPreFixByte;
+    DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
 
   public static boolean addressValid(byte[] address) {
@@ -267,9 +302,9 @@ public class Wallet {
               + " !!");
       return false;
     }
-    if (address[0] != addressPreFixByte) {
-      logger.warn("Warning: Address requires a prefix with " + addressPreFixByte + " but "
-          + address[0] + " !!");
+    if (address[0] != DecodeUtil.addressPreFixByte) {
+      logger.warn("Warning: Address requires a prefix with " + DecodeUtil.addressPreFixByte
+          + " but " + address[0] + " !!");
       return false;
     }
     //Other rule;
@@ -294,10 +329,10 @@ public class Wallet {
     System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
     byte[] hash0 = Sha256Hash.hash(decodeData);
     byte[] hash1 = Sha256Hash.hash(hash0);
-    if (hash1[0] == decodeCheck[decodeData.length] &&
-        hash1[1] == decodeCheck[decodeData.length + 1] &&
-        hash1[2] == decodeCheck[decodeData.length + 2] &&
-        hash1[3] == decodeCheck[decodeData.length + 3]) {
+    if (hash1[0] == decodeCheck[decodeData.length]
+        && hash1[1] == decodeCheck[decodeData.length + 1]
+        && hash1[2] == decodeCheck[decodeData.length + 2]
+        && hash1[3] == decodeCheck[decodeData.length + 3]) {
       return decodeData;
     }
     return null;
@@ -314,7 +349,7 @@ public class Wallet {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
   }
 
@@ -324,14 +359,8 @@ public class Wallet {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
-  }
-
-  // for `CREATE2`
-  public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
-    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return Hash.sha3omit12(mergedData);
   }
 
   // for `CREATE`
@@ -341,7 +370,13 @@ public class Wallet {
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
     System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
+  }
+
+  // for `CREATE2`
+  public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
+    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
+    return DecodeUtil.sha3omit12(mergedData);
   }
 
   public static byte[] tryDecodeFromBase58Check(String address) {
@@ -380,81 +415,20 @@ public class Wallet {
     return b;
   }
 
-//  public ShieldAddress generateShieldAddress() {
-//    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
-//    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
-//
-//    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
-//    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
-//
-//    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
-//    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
-//
-//    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
-//    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
-//
-//    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
-//    builder.setPublicAddress(ByteString.copyFrom(addPublic));
-//    return builder.build();
-//  }
-
   public static String makeUpperCamelMethod(String originName) {
     return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)
         .replace("_", "");
   }
 
   private static byte[] getSelector(byte[] data) {
-    if (data == null ||
-        data.length < 4) {
+    if (data == null
+        || data.length < 4) {
       return null;
     }
 
     byte[] ret = new byte[4];
     System.arraycopy(data, 0, ret, 0, 4);
     return ret;
-  }
-
-  /**
-   * Create a transaction.
-   */
-  /*public Transaction createTransaction(byte[] address, String to, long amount) {
-    long balance = getBalance(address);
-    return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
-  } */
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
-
-    if (selector == null || selector.length != 4
-        || abi.getEntrysList().size() == 0) {
-      return false;
-    }
-
-    for (int i = 0; i < abi.getEntrysCount(); i++) {
-      ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != ABI.Entry.EntryType.Function) {
-        continue;
-      }
-
-      int inputCount = entry.getInputsCount();
-      StringBuilder sb = new StringBuilder();
-      sb.append(entry.getName());
-      sb.append("(");
-      for (int k = 0; k < inputCount; k++) {
-        ABI.Entry.Param param = entry.getInputs(k);
-        sb.append(param.getType());
-        if (k + 1 < inputCount) {
-          sb.append(",");
-        }
-      }
-      sb.append(")");
-
-      byte[] funcSelector = new byte[4];
-      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
-      if (Arrays.equals(funcSelector, selector)) {
-        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
-      }
-    }
-
-    return false;
   }
 
   public byte[] getAddress() {
@@ -577,11 +551,11 @@ public class Wallet {
   /**
    * Broadcast a transaction.
    */
-  public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
+  public GrpcAPI.Return broadcastTransaction(Transaction signedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
-    TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+    TransactionCapsule trx = new TransactionCapsule(signedTransaction);
     try {
-      Message message = new TransactionMessage(signaturedTransaction.toByteArray());
+      Message message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger
@@ -712,7 +686,7 @@ public class Wallet {
       }
       if (permissionId != 0) {
         if (permission.getType() != PermissionType.Active) {
-          throw new PermissionException("Permission type is error");
+          throw new PermissionException("Permission type is wrong!");
         }
         //check operations
         if (!checkPermissionOprations(permission, contract)) {
@@ -1135,9 +1109,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(issueCapsule -> {
-          builder.addAssetIssue(issueCapsule.getInstance());
-        });
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
   }
@@ -1275,9 +1247,7 @@ public class Wallet {
           .stream()
           .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
           .forEach(
-              issueCapsule -> {
-                builder.addAssetIssue(issueCapsule.getInstance());
-              });
+              issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
       // check count
       if (builder.getAssetIssueCount() > 1) {
@@ -1299,7 +1269,7 @@ public class Wallet {
           // check count
           if (builder.getAssetIssueCount() > 1) {
             throw new NonUniqueObjectException(
-                "To get more than one asset, please use getAssetIssuebyid syntax");
+                "To get more than one asset, please use getAssetIssueById syntax");
           }
         }
       }
@@ -1323,9 +1293,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
-        .forEach(issueCapsule -> {
-          builder.addAssetIssue(issueCapsule.getInstance());
-        });
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
   }
@@ -1359,6 +1327,7 @@ public class Wallet {
     try {
       block = dbManager.getBlockStore().get(blockId.toByteArray()).getInstance();
     } catch (StoreException e) {
+      logger.error(e.getMessage());
     }
     return block;
   }
@@ -1430,6 +1399,7 @@ public class Wallet {
       proposalCapsule = dbManager.getProposalStore()
           .get(proposalId.toByteArray());
     } catch (StoreException e) {
+      logger.error(e.getMessage());
     }
     if (proposalCapsule != null) {
       return proposalCapsule.getInstance();
@@ -1487,7 +1457,8 @@ public class Wallet {
 
   //in:outPoint,out:blockNumber
   private IncrementalMerkleVoucherContainer createWitness(OutputPoint outPoint, Long blockNumber)
-      throws ItemNotFoundException, BadItemException, InvalidProtocolBufferException, ZksnarkException {
+      throws ItemNotFoundException, BadItemException,
+      InvalidProtocolBufferException, ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
@@ -1496,7 +1467,7 @@ public class Wallet {
     //Get the tree in blockNum-1 position
     byte[] treeRoot = dbManager.getMerkleTreeIndexStore().get(blockNumber - 1);
     if (treeRoot == null) {
-      throw new RuntimeException("treeRoot is null,blockNumber:" + (blockNumber - 1));
+      throw new RuntimeException("treeRoot is null, blockNumber:" + (blockNumber - 1));
     }
 
     IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
@@ -1723,7 +1694,8 @@ public class Wallet {
 
     int synBlockNum = request.getBlockNum();
     if (synBlockNum != 0) {
-      //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
+      // According to the blockNum in the request, obtain the block before [block2+1,
+      // blockNum], and update the two witnesses.
       updateWitnesses(witnessList, largeBlockNum + 1, synBlockNum);
     }
 
@@ -1749,7 +1721,9 @@ public class Wallet {
         return IncrementalMerkleTree
             .parseFrom(dbManager.getMerkleTreeIndexStore().get(blockNum));
       }
-    } catch (Exception ex) { }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+    }
 
     return null;
   }
@@ -2006,7 +1980,7 @@ public class Wallet {
     try {
       transactionCapsule = builder.buildWithoutAsk();
     } catch (ZksnarkException e) {
-      logger.error("createShieldedTransaction except, error is " + e.toString());
+      logger.error("createShieldedTransaction exception, error is " + e.toString());
       throw new ZksnarkException(e.toString());
     }
     return transactionCapsule;
@@ -2388,7 +2362,7 @@ public class Wallet {
     ProgramResult result = context.getProgramResult();
     if (result.getException() != null) {
       RuntimeException e = result.getException();
-      logger.warn("Constant call has error {}", e.getMessage());
+      logger.warn("Constant call has an error {}", e.getMessage());
       throw e;
     }
 
@@ -2416,7 +2390,8 @@ public class Wallet {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       logger.error(
-          "Get contract failed, the account does not exist or the account does not have a code hash!");
+          "Get contract failed, the account does not exist or the account "
+              + "does not have a code hash!");
       return null;
     }
 

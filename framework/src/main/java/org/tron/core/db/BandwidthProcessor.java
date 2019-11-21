@@ -64,7 +64,8 @@ public class BandwidthProcessor extends ResourceProcessor {
 
   @Override
   public void consume(TransactionCapsule trx, TransactionTrace trace)
-      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
+      throws ContractValidateException, AccountResourceInsufficientException,
+      TooBigTransactionResultException {
     List<Contract> contracts = trx.getInstance().getRawData().getContractList();
     if (trx.getResultSerializedSize() > Constant.MAX_RESULT_SIZE_IN_TX * contracts.size()) {
       throw new TooBigTransactionResultException();
@@ -164,8 +165,8 @@ public class BandwidthProcessor extends ResourceProcessor {
     if (bytes * createNewAccountBandwidthRatio <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
-      newNetUsage = increase(newNetUsage, bytes * createNewAccountBandwidthRatio, latestConsumeTime,
-          now);
+      newNetUsage = increase(newNetUsage, bytes * createNewAccountBandwidthRatio,
+          latestConsumeTime, now);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
       accountCapsule.setLatestOperationTime(latestOperationTime);
       accountCapsule.setNetUsage(newNetUsage);
@@ -228,7 +229,8 @@ public class BandwidthProcessor extends ResourceProcessor {
       throw new RuntimeException(ex.getMessage());
     }
 
-    AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
+    AssetIssueCapsule assetIssueCapsule;
+    AssetIssueCapsule assetIssueCapsuleV2;
     assetIssueCapsule = Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
         dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store())
         .get(assetName.toByteArray());
@@ -256,7 +258,8 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long freeAssetNetLimit = assetIssueCapsule.getFreeAssetNetLimit();
 
-    long freeAssetNetUsage, latestAssetOperationTime;
+    long freeAssetNetUsage;
+    long latestAssetOperationTime;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       freeAssetNetUsage = accountCapsule
           .getFreeAssetNetUsage(tokenName);

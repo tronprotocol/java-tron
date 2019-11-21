@@ -608,8 +608,8 @@ public class RLP {
    */
   private static void verifyLength(int suppliedLength, int availableLength) {
     if (suppliedLength > availableLength) {
-      throw new RuntimeException(String.format("Length parsed from RLP (%s bytes) is greater " +
-          "than possible size of data (%s bytes)", suppliedLength, availableLength));
+      throw new RuntimeException(String.format("Length parsed from RLP (%s bytes) is greater "
+          + "than possible size of data (%s bytes)", suppliedLength, availableLength));
     }
   }
 
@@ -1229,7 +1229,7 @@ public class RLP {
     }
 
     public byte[] getEncoded() {
-      byte encoded[][] = new byte[cnt][];
+      byte[][] encoded = new byte[cnt][];
       for (int i = 0; i < cnt; i++) {
         encoded[i] = encodeElement(getBytes(i));
       }

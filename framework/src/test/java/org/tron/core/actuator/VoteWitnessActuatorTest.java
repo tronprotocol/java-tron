@@ -131,6 +131,15 @@ public class VoteWitnessActuatorTest {
             .build());
   }
 
+  private Any getContract(String ownerAddress, long frozenBalance, long duration) {
+    return Any.pack(
+        FreezeBalanceContract.newBuilder()
+            .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
+            .setFrozenBalance(frozenBalance)
+            .setFrozenDuration(duration)
+            .build());
+  }
+
   private Any getRepeateContract(String address, String voteaddress, Long value, int times) {
     VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
     builder.setOwnerAddress(StringUtil.hexString2ByteString(address));
@@ -140,15 +149,6 @@ public class VoteWitnessActuatorTest {
           .setVoteCount(value).build());
     }
     return Any.pack(builder.build());
-  }
-
-  private Any getContract(String ownerAddress, long frozenBalance, long duration) {
-    return Any.pack(
-        FreezeBalanceContract.newBuilder()
-            .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
-            .setFrozenBalance(frozenBalance)
-            .setFrozenDuration(duration)
-            .build());
   }
 
   /**

@@ -441,12 +441,11 @@ public class DepositImpl implements Deposit {
       accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value,
           this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
     }
-//    accountCapsule.getAssetMap().put(new String(tokenIdWithoutLeadingZero), Math.addExact(balance, value));
+
     Key key = Key.create(address);
     Value V = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
-//    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
     return accountCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
   }
 

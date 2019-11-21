@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.overlay.server;
 
 import io.netty.buffer.ByteBuf;
@@ -44,14 +45,22 @@ import org.tron.protos.Protocol.ReasonCode;
 @Scope("prototype")
 public class HandshakeHandler extends ByteToMessageDecoder {
 
-  protected Channel channel;
+  private Channel channel;
+
   @Autowired
-  protected NodeManager nodeManager;
+  private NodeManager nodeManager;
+
   @Autowired
-  protected ChannelManager channelManager;
+  private ChannelManager channelManager;
+
   @Autowired
-  protected Manager manager;
+  private Manager manager;
+
+  @Autowired
+  private FastForward fastForward;
+
   private byte[] remoteId;
+
   private P2pMessageFactory messageFactory = new P2pMessageFactory();
 
   @Autowired
@@ -104,9 +113,9 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   }
 
   protected void sendHelloMsg(ChannelHandlerContext ctx, long time) {
-
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
         manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+    fastForward.fillHelloMessage(message, channel);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
     logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
@@ -115,6 +124,11 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
 
     channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
+
+    if (!fastForward.checkHelloMessage(msg, channel)) {
+      channel.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
+      return;
+    }
 
     if (remoteId.length != 64) {
       InetAddress address = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();

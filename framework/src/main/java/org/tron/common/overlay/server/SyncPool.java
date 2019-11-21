@@ -76,6 +76,7 @@ public class SyncPool {
       try {
         logActivePeers();
       } catch (Throwable t) {
+        logger.error("Exception in sync worker", t);
       }
     }, 30, 10, TimeUnit.SECONDS);
   }
@@ -140,8 +141,9 @@ public class SyncPool {
         activePeersCount.incrementAndGet();
       }
       activePeers.add(peerConnection);
-      activePeers.
-          sort(Comparator.comparingDouble(c -> c.getNodeStatistics().pingMessageLatency.getAvrg()));
+      activePeers
+          .sort(Comparator.comparingDouble(
+              c -> c.getNodeStatistics().pingMessageLatency.getAvrg()));
       peerConnection.onConnect();
     }
   }
@@ -193,8 +195,8 @@ public class SyncPool {
 
       InetAddress inetAddress = handler.getInetSocketAddress().getAddress();
 
-      return !((handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost()) &&
-          handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort())
+      return !((handler.getNode().getHost().equals(nodeManager.getPublicHomeNode().getHost())
+          && handler.getNode().getPort() == nodeManager.getPublicHomeNode().getPort())
           || (channelManager.getRecentlyDisconnected().getIfPresent(inetAddress) != null)
           || (channelManager.getBadPeers().getIfPresent(inetAddress) != null)
           || (channelManager.getConnectionNum(inetAddress) >= maxActivePeersWithSameIp)
