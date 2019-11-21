@@ -10,7 +10,7 @@ public class ContractLogTriggerCapsule extends TriggerCapsule {
 
   @Getter
   @Setter
-  ContractLogTrigger contractLogTrigger;
+  private ContractLogTrigger contractLogTrigger;
 
   public ContractLogTriggerCapsule(ContractLogTrigger contractLogTrigger) {
     this.contractLogTrigger = contractLogTrigger;
