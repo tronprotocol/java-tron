@@ -49,7 +49,6 @@ public class RepositoryImpl implements Repository {
 
   //for energycal
   private long precision = Parameter.ChainConstant.PRECISION;
-  ;
   private long windowSize = Parameter.ChainConstant.WINDOW_SIZE_MS /
       BLOCK_PRODUCED_INTERVAL;
 

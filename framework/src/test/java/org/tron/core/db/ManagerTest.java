@@ -535,12 +535,6 @@ public class ManagerTest extends BlockGenerate {
     return blockCapsule;
   }
 
-  private BlockCapsule createTestBlockCapsuleError(
-      long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
-    long time = System.currentTimeMillis();
-    return createTestBlockCapsuleError(time, number, hash, addressToProvateKeys);
-  }
-
   private BlockCapsule createTestBlockCapsuleError(long time,
       long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));

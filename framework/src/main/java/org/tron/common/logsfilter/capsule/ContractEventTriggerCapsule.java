@@ -14,7 +14,7 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
 
   @Getter
   @Setter
-  ContractEventTrigger contractEventTrigger;
+  private ContractEventTrigger contractEventTrigger;
   @Getter
   @Setter
   private List<byte[]> topicList;

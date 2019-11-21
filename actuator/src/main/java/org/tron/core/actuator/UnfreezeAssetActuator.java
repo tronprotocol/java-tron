@@ -72,11 +72,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
 
       accountStore.put(ownerAddress, accountCapsule);
       ret.setStatus(fee, code.SUCESS);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (ArithmeticException e) {
+    } catch (InvalidProtocolBufferException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
