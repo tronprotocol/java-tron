@@ -90,11 +90,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
       accountStore.put(ownerAddress, ownerAccount);
       accountStore.put(toAddress, toAccount);
       ret.setStatus(fee, Protocol.Transaction.Result.code.SUCESS);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (ArithmeticException e) {
+    } catch (InvalidProtocolBufferException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());

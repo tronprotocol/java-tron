@@ -266,11 +266,7 @@ public class Args extends CommonParameter {
             ECKey ecKeyPair = credentials.getEcKeyPair();
             String prikey = ByteArray.toHexString(ecKeyPair.getPrivKeyBytes());
             privateKeys.add(prikey);
-          } catch (IOException e) {
-            logger.error(e.getMessage());
-            logger.error("Witness node start faild!");
-            exit(-1);
-          } catch (CipherException e) {
+          } catch (IOException | CipherException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
             exit(-1);

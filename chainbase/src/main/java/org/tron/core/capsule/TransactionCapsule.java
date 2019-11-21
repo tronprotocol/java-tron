@@ -633,13 +633,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         isVerified = false;
         throw new ValidateSignatureException("sig error");
       }
-    } catch (SignatureException e) {
-      isVerified = false;
-      throw new ValidateSignatureException(e.getMessage());
-    } catch (PermissionException e) {
-      isVerified = false;
-      throw new ValidateSignatureException(e.getMessage());
-    } catch (SignatureFormatException e) {
+    } catch (SignatureException | PermissionException | SignatureFormatException e) {
       isVerified = false;
       throw new ValidateSignatureException(e.getMessage());
     }
