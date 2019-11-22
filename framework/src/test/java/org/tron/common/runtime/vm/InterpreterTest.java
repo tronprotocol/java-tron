@@ -28,6 +28,7 @@ import org.tron.common.utils.DBConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.VM;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
 import org.tron.protos.Protocol.Transaction;
@@ -40,7 +41,7 @@ public class InterpreterTest {
 
   @BeforeClass
   public static void init() {
-    DBConfig.setDebug(true);
+    VMConfig.setDebug(true);
   }
 
   @AfterClass
