@@ -45,10 +45,6 @@ public class VMConfig {
 
   @Getter
   @Setter
-  private static String zenTokenId;
-
-  @Getter
-  @Setter
   private static int checkFrozenTime; // for test only
 
   @Getter

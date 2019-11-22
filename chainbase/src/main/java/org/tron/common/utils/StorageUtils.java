@@ -46,7 +46,7 @@ public class StorageUtils {
   }
 
   public static String getOutputDirectory() {
-    if (!DBConfig.getOutputDirectoryConfig().equals("") && !DBConfig.getOutputDirectoryConfig().endsWith(File.separator)) {
+    if (!"".equals(DBConfig.getOutputDirectoryConfig()) && !DBConfig.getOutputDirectoryConfig().endsWith(File.separator)) {
       return DBConfig.getOutputDirectoryConfig() + File.separator;
     }
     return DBConfig.getOutputDirectoryConfig();

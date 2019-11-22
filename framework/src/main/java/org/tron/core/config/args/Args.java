@@ -58,6 +58,7 @@ import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.db2.common.DB;
 import org.tron.core.store.AccountStore;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.keystore.CipherException;
@@ -1040,7 +1041,6 @@ public class Args extends CommonParameter {
     VMConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
     VMConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
     VMConfig.setDebug(cfgArgs.isDebug());
-    VMConfig.setZenTokenId(cfgArgs.getZenTokenId());
     VMConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
     VMConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
     VMConfig.setSolidityNode(cfgArgs.isSolidityNode());
@@ -1084,6 +1084,7 @@ public class Args extends CommonParameter {
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
+    DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

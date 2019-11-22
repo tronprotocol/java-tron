@@ -99,5 +99,9 @@ public class DBConfig {
 
   @Getter
   @Setter
+  private static String zenTokenId;
+
+  @Getter
+  @Setter
   private static Set<String> actuatorSet;
 }

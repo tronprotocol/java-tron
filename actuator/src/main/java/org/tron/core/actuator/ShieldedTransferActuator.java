@@ -52,7 +52,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   public ShieldedTransferActuator() {
     super(ContractType.ShieldedTransferContract, ShieldedTransferContract.class);
-    zenTokenId = VMConfig.getZenTokenId();
+    zenTokenId = DBConfig.getZenTokenId();
   }
 
   @Override
