@@ -35,6 +35,7 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ZKProofStore;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -51,7 +52,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   public ShieldedTransferActuator() {
     super(ContractType.ShieldedTransferContract, ShieldedTransferContract.class);
-    zenTokenId = DBConfig.getZenTokenId();
+    zenTokenId = VMConfig.getZenTokenId();
   }
 
   @Override

@@ -962,10 +962,10 @@ public class Program {
 
   public void checkCPUTimeLimit(String opName) {
 
-    if (DBConfig.isDebug()) {
+    if (VMConfig.isDebug()) {
       return;
     }
-    if (DBConfig.isSolidityNode()) {
+    if (VMConfig.isSolidityNode()) {
       return;
     }
     long vmNowInUs = System.nanoTime() / 1000;
@@ -973,7 +973,7 @@ public class Program {
       logger.info(
           "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
               + "vm now time in us: {}, vm start time in us: {}",
-          DBConfig.getMinTimeRatio(), DBConfig.getMaxTimeRatio(),
+          VMConfig.getMinTimeRatio(), VMConfig.getMaxTimeRatio(),
           getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }

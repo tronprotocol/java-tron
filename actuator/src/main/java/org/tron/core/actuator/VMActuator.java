@@ -615,9 +615,9 @@ public class VMActuator implements Actuator2 {
       } else {
         // self witness or other witness or fullnode verifies block
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-          cpuLimitRatio = DBConfig.getMinTimeRatio();
+          cpuLimitRatio = VMConfig.getMinTimeRatio();
         } else {
-          cpuLimitRatio = DBConfig.getMaxTimeRatio();
+          cpuLimitRatio = VMConfig.getMaxTimeRatio();
         }
       }
     } else {

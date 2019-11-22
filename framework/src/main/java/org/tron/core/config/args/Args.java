@@ -59,6 +59,7 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.store.AccountStore;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -668,7 +669,7 @@ public class Args extends CommonParameter {
             : Collections.emptySet();
 
     logConfig();
-    initDBConfig(INSTANCE);
+    initConfig(INSTANCE);
   }
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
@@ -1030,6 +1031,22 @@ public class Args extends CommonParameter {
     logger.info("\n");
   }
 
+  public static void initConfig(Args cfgArgs) {
+    initVMConfig(cfgArgs);
+    initDBConfig(cfgArgs);
+  }
+
+  public static void initVMConfig(Args cfgArgs) {
+    VMConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
+    VMConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
+    VMConfig.setDebug(cfgArgs.isDebug());
+    VMConfig.setZenTokenId(cfgArgs.getZenTokenId());
+    VMConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
+    VMConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
+    VMConfig.setSolidityNode(cfgArgs.isSolidityNode());
+  }
+
+
   public static void initDBConfig(Args cfgArgs) {
     if (Objects.nonNull(cfgArgs.getStorage())) {
       DBConfig.setDbVersion(cfgArgs.getStorage().getDbVersion());
@@ -1037,6 +1054,7 @@ public class Args extends CommonParameter {
       DBConfig.setPropertyMap(cfgArgs.getStorage().getPropertyMap());
       DBConfig.setDbSync(cfgArgs.getStorage().isDbSync());
       DBConfig.setDbDirectory(cfgArgs.getStorage().getDbDirectory());
+
     }
 
     if (Objects.nonNull(cfgArgs.getGenesisBlock())) {
@@ -1058,17 +1076,10 @@ public class Args extends CommonParameter {
     DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
     DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
-    DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
     DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransactionArgs());
-    DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
-    DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
     DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
     DBConfig.setVmTrace(cfgArgs.isVmTrace());
-    DBConfig.setDebug(cfgArgs.isDebug());
-    DBConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
-    DBConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
-    DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
     DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
