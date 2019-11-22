@@ -94,6 +94,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
         dynamicStore
             .addTotalEnergyWeight(frozenBalance / 1000_000L);
         break;
+        default:
     }
 
     accountCapsule.setBalance(newBalance);
