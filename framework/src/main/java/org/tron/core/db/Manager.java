@@ -146,6 +146,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 public class Manager {
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
+  private static final String SAVE_BLOCK = "save block: ";
   private final int SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = Args.getInstance()
       .getShieldedTransInPendingMaxCounts();
   @Getter
@@ -566,7 +567,7 @@ public class Manager {
         blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
         this.blockIndexStore.put(this.genesisBlock.getBlockId());
 
-        logger.info("save block: " + this.genesisBlock);
+        logger.info(SAVE_BLOCK + this.genesisBlock);
         // init DynamicPropertiesStore
         this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
         this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
@@ -1112,7 +1113,7 @@ public class Manager {
                   + khaosDb.getMiniUnlinkedStore().size());
 
           switchFork(newBlock);
-          logger.info("save block: " + newBlock);
+          logger.info(SAVE_BLOCK + newBlock);
 
           logger.warn(
               "******** after switchFork ******* push block: "
@@ -1146,7 +1147,7 @@ public class Manager {
           throw throwable;
         }
       }
-      logger.info("save block: " + newBlock);
+      logger.info(SAVE_BLOCK + newBlock);
     }
     //clear ownerAddressSet
     synchronized (pushTransactionQueue) {
