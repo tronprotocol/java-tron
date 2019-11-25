@@ -1,7 +1,7 @@
 package org.tron.common.crypto;
 
 public interface SignInterface {
-  
+
   byte[] hash(byte[] message);
 
   byte[] getPrivateKey();
