@@ -11,6 +11,7 @@ import "core/contract/balance_contract.proto";
 import "core/contract/proposal_contract.proto";
 import "core/contract/storage_contract.proto";
 import "core/contract/exchange_contract.proto";
+import "core/contract/maker_contract.proto";
 import "core/contract/smart_contract.proto";
 import "core/contract/shield_contract.proto";
 
@@ -285,6 +286,22 @@ service Wallet {
 
   rpc ExchangeTransaction (ExchangeTransactionContract) returns (TransactionExtention) {
   }
+
+  rpc MakerSellAsset (MakerSellAssetContract) returns (TransactionExtention) {
+  }
+
+  rpc MakerCancelOrder (MakerCancelOrderContract) returns (TransactionExtention) {
+  }
+
+  rpc GetMakerOrderById (BytesMessage) returns (MakerOrderList) {
+  }
+
+  rpc GetMakerOrderByAccount (BytesMessage) returns (MakerOrderList) {
+  }
+
+  rpc GetMakerOrderByPair (MakerOrderPairMessage) returns (MakerOrderList) {
+  }
+
 
   rpc ListNodes (EmptyMessage) returns (NodeList) {
     option (google.api.http) = {

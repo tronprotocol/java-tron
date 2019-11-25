@@ -58,6 +58,30 @@ message Exchange {
   int64 second_token_balance = 9;
 }
 
+//maker
+message MakerOrder {
+    int64 order_id = 1;
+    bytes owner_address = 2;
+    int64 create_time = 3;
+    bytes sell_token_id = 4;
+    int64 sell_token_ratio = 6;
+    bytes buy_token_id = 5;
+    int64 buy_token_ratio = 7;
+    int64 sell_token_quantity = 8;
+    int64 sell_token_quantity_remain = 9;
+}
+
+message MakerOrderList {
+    repeated MakerOrder orders = 1;
+}
+
+message MakerOrderPairMessage{
+    bytes sell_token_id = 4;
+    bytes buy_token_id = 5;
+//    int64 limit = 10;
+}
+
+
 message ChainParameters {
   repeated ChainParameter chainParameter = 1;
   message ChainParameter {
@@ -272,6 +296,8 @@ message Transaction {
       ClearABIContract = 48;
       UpdateBrokerageContract = 49;
       ShieldedTransferContract = 51;
+      MakerSellAssetContract = 60;
+      MakerCancelOrderContract = 61;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
