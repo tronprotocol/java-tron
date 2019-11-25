@@ -73,7 +73,7 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 [Core Devs Gitter](https://gitter.im/tronprotocol/allcoredev)
 
 # Contribution
-https://tronprotocol.github.io/documentation-en/developers/contribution/](https://tronprotocol.github.io/documentation-en/developers/contribution/)
+[https://tronprotocol.github.io/documentation-en/developers/contribution/](https://tronprotocol.github.io/documentation-en/developers/contribution/)
 
 # Resources
 * [Medium](https://medium.com/@coredevs)
