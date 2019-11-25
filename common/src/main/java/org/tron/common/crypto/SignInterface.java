@@ -2,6 +2,8 @@ package org.tron.common.crypto;
 
 public interface SignInterface {
 
+  SignInterface fromRandom();
+
   SignInterface fromPrivKey(byte[] privateKey);
 
   SignInterface fromPubKey(byte[] publicKey);
