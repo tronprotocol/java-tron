@@ -224,18 +224,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   //make sure that contractType is validated before
   //No exception will be thrown here
-  public static byte[] getShieldTransactionHashIgnoreTypeException(TransactionCapsule tx) {
+  public static byte[] getShieldTransactionHashIgnoreTypeException(Transaction tx) {
     try {
       return hashShieldTransaction(tx);
     } catch (ContractValidateException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }
-    return new byte[0];
+    return null;
   }
 
-  public static byte[] hashShieldTransaction(TransactionCapsule tx)
+  public static byte[] hashShieldTransaction(Transaction tx)
       throws ContractValidateException, InvalidProtocolBufferException {
-    Any contractParameter = tx.getInstance().getRawData().getContract(0).getParameter();
+    Any contractParameter = tx.getRawData().getContract(0).getParameter();
     if (!contractParameter.is(ShieldedTransferContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [ShieldedTransferContract],real type["
@@ -256,7 +256,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
     }
 
-    Transaction.raw.Builder rawBuilder = tx.getInstance().toBuilder()
+    Transaction.raw.Builder rawBuilder = tx.toBuilder()
         .getRawDataBuilder()
         .clearContract()
         .addContract(
@@ -264,7 +264,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
                 .setParameter(
                     Any.pack(newContract.build())).build());
 
-    Transaction transaction = tx.getInstance().toBuilder().clearRawData()
+    Transaction transaction = tx.toBuilder().clearRawData()
         .setRawData(rawBuilder).build();
 
     return Sha256Hash.of(transaction.getRawData().toByteArray())
