@@ -1,27 +1,19 @@
 package org.tron.common.crypto;
 
 public interface SignInterface {
-
-  SignInterface fromRandom();
-
-  SignInterface fromPrivKey(byte[] privateKey);
-
-  SignInterface fromPubKey(byte[] publicKey);
-
+  
   byte[] hash(byte[] message);
 
   byte[] getPrivateKey();
 
-  byte[] getPubKeyFromPrivateKey();
+  byte[] getPubKey();
 
-  byte[] getAddressFromPrivateKey();
+  byte[] getAddress();
 
-  byte[] getAddressFromPublicKey();
+  String sign(byte[] hash);
 
-  byte[] signMessage(byte[] message);
+  boolean verify(byte[] messageHash, String signatureBase, byte[] pub);
 
-  byte[] signHash(byte[] hash);
-
-  boolean signatureToAddress(byte[] message, String signatureBase64);
+  byte[] signatureToAddress(byte[] message, String signatureBase64);
 
 }
