@@ -64,7 +64,7 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 
 # Quick Start
 
-[Quick Start](./quickstart.md) TRON Quickstart image setup
+[TRON Quick Start](./quickstart.md)
 
 # Deployment
 [https://tronprotocol.github.io/documentation-en/developers/deployment/](https://tronprotocol.github.io/documentation-en/developers/deployment/)
