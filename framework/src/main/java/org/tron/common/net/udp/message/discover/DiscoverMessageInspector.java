@@ -8,7 +8,7 @@ import org.tron.common.overlay.discover.table.KademliaOptions;
 
 public class DiscoverMessageInspector {
 
-  public static final Pattern PATTERN_IP = Pattern.compile("\\d+\\.\\d+\\.\\d+\\.\\d+");
+  public static final Pattern PATTERN_IP = Pattern.compile("^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\.(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)$");
 
   private static boolean isFound(String str, Pattern pattern) {
     if (str == null || pattern == null) {
