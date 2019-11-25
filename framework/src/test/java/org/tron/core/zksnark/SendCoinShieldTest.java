@@ -655,7 +655,7 @@ public class SendCoinShieldTest {
     TransactionCapsule transactionCap = builder.build();
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     boolean ret = ZksnarkClient.getInstance().checkZksnarkProof(transactionCap.getInstance(),
-        TransactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCap),
+        TransactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCap.getInstance()),
         10 * 1000000);
     Assert.assertTrue(ret);
   }

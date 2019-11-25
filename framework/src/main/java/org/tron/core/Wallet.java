@@ -2240,7 +2240,7 @@ public class Wallet {
     }
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     byte[] transactionHash = TransactionCapsule
-        .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
+        .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(transactionHash)).build();
   }
 
