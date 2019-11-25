@@ -6,6 +6,6 @@ if [ $encrypted_43b7d2f1321f_key ];then
   chmod 600 ~/.ssh/id_rsa
   echo "Add docker server success"
 fi
-sonar-scanner
+  sonar-scanner
 
 cp -f config/checkstyle/checkStyle.xml config/checkstyle/checkStyleAll.xml
