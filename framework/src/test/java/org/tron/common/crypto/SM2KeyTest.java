@@ -12,10 +12,12 @@ import java.security.KeyPairGenerator;
 import java.security.Security;
 import java.security.SignatureException;
 import java.util.Arrays;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.spongycastle.crypto.digests.SM3Digest;
+import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.sm2.SM2;
@@ -88,7 +90,7 @@ public class SM2KeyTest {
     public void testSignIncorrectInputSize() {
         SM2 key = new SM2();
         String message = "The quick brown fox jumps over the lazy dog.";
-        SM2.SM2Signature sig = key.sign(message.getBytes());
+        String sig = key.sign(message.getBytes());
         fail("Expecting an IllegalArgumentException for a non 32-byte input");
     }
 
@@ -112,7 +114,7 @@ public class SM2KeyTest {
         SM2 key = SM2.fromPublicOnly(pubKey);
         SM2Signer signer = key.getSM2SignerForHash();
         String message = "message digest";
-        byte[] hash = signer.generateSM3Hash(message.getBytes(),IDa);
+        byte[] hash = signer.generateSM3Hash(message.getBytes());
         assertEquals("10D51CB90C0C0522E94875A2BEA7AB72299EBE7192E64EFE0573B1C77110E5C9", Hex.toHexString(hash).toUpperCase());
     }
 
@@ -156,10 +158,10 @@ public class SM2KeyTest {
     public void testValidHashSignature(){
         SM2 key = SM2.fromPrivate(privateKey);
         byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC682D48BB5D42E3D9B9EFFE76");
-        SM2.SM2Signature sign = key.sign(hash);
-        byte[] signByte = sign.toByteArray();
+        String sign = key.sign(hash);
+        //byte[] signByte = sign.toByteArray();
         //System.out.println(Hex.toHexString(signByte));
-        assertTrue(SM2.verify(hash,sign,pubKey));
+        assertTrue(SM2.verify(hash, SM2.SM2Signature.decodeFromDER(Base64.decode(sign)),pubKey));
 
     }
 
@@ -167,9 +169,10 @@ public class SM2KeyTest {
     public void testValidHashSignature3(){
         SM2 key = SM2.fromPrivate(privateKey);
         byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC682D48BB5D42E3D9B9EFFE76");
-        SM2.SM2Signature sign = key.sign(hash);
-        byte[] signByte = sign.toByteArray();
+        String signStr = key.sign(hash);
+        byte[] signByte = Base64.decode(signStr);
         //System.out.println(Hex.toHexString(signByte));
+        SM2.SM2Signature sign = SM2.SM2Signature.decodeFromDER(signByte);
         assertTrue(SM2.verify(hash,sign,pubKey));
         BigInteger sNeg = sign.s.negate().mod(SM2_N);
         SM2.SM2Signature sign2 = new SM2.SM2Signature(sign.r, sNeg);
@@ -192,7 +195,8 @@ public class SM2KeyTest {
     public void testSignatureToKeyBytes() throws SignatureException {
         SM2 key = SM2.fromPrivate(privateKey);
         byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC682D48BB5D42E3D9B9EFFE76");
-        SM2.SM2Signature sign = key.sign(hash);
+        String str2 = key.sign(hash);
+        SM2.SM2Signature sign = SM2.SM2Signature.decodeFromDER(Base64.decode(str2));
         byte[] pubKeys = SM2.signatureToKeyBytes(hash,sign);
 //        System.out.println(Hex.toHexString(pubKeys));
 //        System.out.println(Hex.toHexString(pubKey));
@@ -212,7 +216,8 @@ public class SM2KeyTest {
     public void testSignatureToAddress() throws SignatureException {
         SM2 key = SM2.fromPrivate(privateKey);
         byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC682D48BB5D42E3D9B9EFFE76");
-        SM2.SM2Signature sign = key.sign(hash);
+        String str = key.sign(hash);
+        SM2.SM2Signature sign = SM2.SM2Signature.decodeFromDER(Base64.decode(str));;
         byte[] addr = SM2.signatureToAddress(hash,sign);
         addr = Arrays.copyOfRange(addr,1,addr.length);
 //        System.out.println(Hex.toHexString(addr));

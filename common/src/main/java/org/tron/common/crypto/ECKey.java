@@ -69,6 +69,7 @@ import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.BigIntegers;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.cryptohash.Keccak256;
 import org.tron.common.crypto.jce.ECKeyAgreement;
 import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.ECKeyPairGenerator;
@@ -77,7 +78,7 @@ import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.ByteUtil;
 
 @Slf4j(topic = "crypto")
-public class ECKey implements Serializable {
+public class ECKey implements Serializable, SignInterface {
 
   /**
    * The parameters of the secp256k1 curve.
@@ -444,7 +445,7 @@ public class ECKey implements Serializable {
    * @param signatureBase64 Base-64 encoded signature
    * @return 20-byte address
    */
-  public static byte[] signatureToAddress(byte[] messageHash, String
+  public byte[] signatureToAddress(byte[] messageHash, String
       signatureBase64) throws SignatureException {
     return computeAddress(signatureToKeyBytes(messageHash,
         signatureBase64));
@@ -770,6 +771,17 @@ public class ECKey implements Serializable {
     return nodeId;
   }
 
+  @Override
+  public byte[] hash(byte[] message) {
+    Keccak256 hashFun = new Keccak256();
+    return hashFun.digest();
+  }
+
+  @Override
+  public byte[] getPrivateKey() {
+    return getPrivKeyBytes();
+  }
+
   /**
    * Gets the encoded public key value.
    *
@@ -884,7 +896,7 @@ public class ECKey implements Serializable {
    * @return -
    * @throws IllegalStateException if this ECKey does not have the private part.
    */
-  public ECDSASignature sign(byte[] messageHash) {
+  public String sign(byte[] messageHash) {
     ECDSASignature sig = doSign(messageHash);
     // Now we have to work backwards to figure out the recId needed to
     // recover the signature.
@@ -902,7 +914,7 @@ public class ECKey implements Serializable {
           ". This should never happen.");
     }
     sig.v = (byte) (recId + 27);
-    return sig;
+    return sig.toBase64();
   }
 
   public BigInteger keyAgreement(ECPoint otherParty) {

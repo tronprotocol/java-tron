@@ -21,6 +21,7 @@ import org.spongycastle.math.ec.ECMultiplier;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.math.ec.FixedPointCombMultiplier;
 import org.spongycastle.util.BigIntegers;
+import org.tron.common.crypto.SignInterface;
 
 import javax.annotation.Nullable;
 
@@ -86,12 +87,11 @@ public class SM2Signer
      * generate the signature for the message
      *
      * @param message  plaintext
-     * @param userID  user ID
      * @return
      */
-    public BigInteger[] generateSignature(byte[] message, @Nullable String userID)
+    public BigInteger[] generateSignature(byte[] message)
     {
-        byte[] eHash = generateSM3Hash(message,userID);
+        byte[] eHash = generateSM3Hash(message);
         return generateHashSignature(eHash);
     }
     /**
@@ -101,11 +101,8 @@ public class SM2Signer
      * @return
      */
 
-    public byte[] generateSM3Hash(byte[] message,@Nullable String userID)
+    public byte[] generateSM3Hash(byte[] message)
     {
-        if(userID != null) {
-            this.userID = userID.getBytes();
-        }
         //byte[] msg = message.getBytes();
 
         SM3Digest digest = new SM3Digest();
@@ -209,7 +206,7 @@ public class SM2Signer
         if(userID != null) {
             this.userID = userID.getBytes();
         }
-        byte[] eHash = generateSM3Hash(message,userID);
+        byte[] eHash = generateSM3Hash(message);
 
         // B4
         BigInteger e = calculateE(eHash);
@@ -321,5 +318,6 @@ public class SM2Signer
     {
         return new BigInteger(1, message);
     }
+
 }
 

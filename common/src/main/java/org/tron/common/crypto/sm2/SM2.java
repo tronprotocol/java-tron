@@ -20,6 +20,7 @@ import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
 import org.spongycastle.util.test.TestRandomBigInteger;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.ECSignatureFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
@@ -45,7 +46,7 @@ import static org.tron.common.utils.DecodeUtil.computeAddress;
  *
  */
 @Slf4j(topic = "crypto")
-public class SM2 implements Serializable {
+public class SM2 implements Serializable, SignInterface {
     private static BigInteger SM2_N = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123", 16);
     private static BigInteger SM2_P = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF", 16);
     private static BigInteger SM2_A = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC", 16);
@@ -133,6 +134,17 @@ public class SM2 implements Serializable {
 //            userID = new byte[0];
 //        }
 //        this.kCalculator.init(SM2_N, secureRandom);
+    }
+
+    public SM2 (byte[] key, boolean isPrivateKey) {
+        if (isPrivateKey) {
+           BigInteger pk = new BigInteger(1, key);
+           this.privKey = privateKeyFromBigInteger(pk);
+           this.pub = ecc_param.getG().multiply(pk);
+        } else {
+            this.privKey = null;
+            this.pub = ecc_param.getCurve().decodePoint(key);
+        }
     }
 
 
@@ -406,6 +418,43 @@ public class SM2 implements Serializable {
         return key;
     }
 
+
+    @Override
+    public byte[] hash(byte[] message) {
+        SM2Signer signer = this.getSM2SignerForHash();
+        return signer.generateSM3Hash(message);
+    }
+
+    @Override
+    public byte[] getPrivateKey() {
+        return getPrivKeyBytes();
+    }
+
+    /**
+     * Gets the encoded public key value.
+     *
+     * @return 65-byte encoded public key
+     */
+    @Override
+    public byte[] getPubKey() {
+        return pub.getEncoded(/* compressed */ false);
+    }
+
+    /**
+     * Gets the address form of the public key.
+     *
+     * @return 21-byte address
+     */
+    @Override
+    public byte[] getAddress() {
+        if (pubKeyHash == null) {
+            pubKeyHash = computeAddress(this.pub);
+        }
+        return pubKeyHash;
+    }
+
+
+
     /**
      * Compute the address of the key that signed the given signature.
      *
@@ -413,7 +462,7 @@ public class SM2 implements Serializable {
      * @param signatureBase64 Base-64 encoded signature
      * @return 20-byte address
      */
-    public static byte[] signatureToAddress(byte[] messageHash, String
+    public byte[] signatureToAddress(byte[] messageHash, String
             signatureBase64) throws SignatureException {
         return computeAddress(signatureToKeyBytes(messageHash,
                 signatureBase64));
@@ -466,7 +515,7 @@ public class SM2 implements Serializable {
      * @return -
      * @throws IllegalStateException if this ECKey does not have the private part.
      */
-    public SM2Signature sign(byte[] messageHash) {
+    public String sign(byte[] messageHash) {
         SM2Signature sig = signHash(messageHash);
         // Now we have to work backwards to figure out the recId needed to
         // recover the signature.
@@ -484,7 +533,7 @@ public class SM2 implements Serializable {
                     ". This should never happen.");
         }
         sig.v = (byte) (recId + 27);
-        return sig;
+        return sig.toBase64();
     }
 
     /**
@@ -521,7 +570,7 @@ public class SM2 implements Serializable {
         byte[] thisKey = this.pub.getEncoded(/* compressed */ false);
 
         SM2Signer signer = getSigner();
-        byte[] messageHash = signer.generateSM3Hash(message, userID);
+        byte[] messageHash = signer.generateSM3Hash(message);
         for (int i = 0; i < 4; i++) {
             byte[] k = recoverPubBytesFromSignature(i, sig, messageHash);
             if (k != null && Arrays.equals(k, thisKey)) {
@@ -552,7 +601,7 @@ public class SM2 implements Serializable {
         }
         // No decryption of private key required.
         SM2Signer signer = getSigner();
-        BigInteger[] componets =  signer.generateSignature(msg, userID);
+        BigInteger[] componets =  signer.generateSignature(msg);
         return new SM2.SM2Signature(componets[0], componets[1]);
     }
 
@@ -853,17 +902,17 @@ public class SM2 implements Serializable {
         return privKey != null;
     }
 
-    /**
-     * Gets the address form of the public key.
-     *
-     * @return 21-byte address
-     */
-    public byte[] getAddress() {
-        if (pubKeyHash == null) {
-            pubKeyHash = computeAddress(this.pub);
-        }
-        return pubKeyHash;
-    }
+//    /**
+//     * Gets the address form of the public key.
+//     *
+//     * @return 21-byte address
+//     */
+//    public byte[] getAddress() {
+//        if (pubKeyHash == null) {
+//            pubKeyHash = computeAddress(this.pub);
+//        }
+//        return pubKeyHash;
+//    }
 
     /**
      * Generates the NodeID based on this key, that is the public key without first format byte
@@ -875,14 +924,14 @@ public class SM2 implements Serializable {
         return nodeId;
     }
 
-    /**
-     * Gets the encoded public key value.
-     *
-     * @return 65-byte encoded public key
-     */
-    public byte[] getPubKey() {
-        return pub.getEncoded(/* compressed */ false);
-    }
+//    /**
+//     * Gets the encoded public key value.
+//     *
+//     * @return 65-byte encoded public key
+//     */
+//    public byte[] getPubKey() {
+//        return pub.getEncoded(/* compressed */ false);
+//    }
 
     /**
      * Gets the public key in the form of an elliptic curve point object from Bouncy Castle.
