@@ -1,5 +1,7 @@
 package org.tron.core.zksnark;
 
+import static org.tron.core.capsule.TransactionCapsule.getShieldTransactionHashIgnoreTypeException;
+
 import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -655,7 +657,7 @@ public class SendCoinShieldTest {
     TransactionCapsule transactionCap = builder.build();
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     boolean ret = ZksnarkClient.getInstance().checkZksnarkProof(transactionCap.getInstance(),
-        TransactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCap.getInstance()),
+        getShieldTransactionHashIgnoreTypeException(transactionCap.getInstance()),
         10 * 1000000);
     Assert.assertTrue(ret);
   }
