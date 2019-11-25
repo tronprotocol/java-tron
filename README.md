@@ -64,39 +64,21 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 
 # Quick Start
 
-* [Quick Start](./quickstart.md) TRON Quickstart image setup
+[Quick Start](./quickstart.md) TRON Quickstart image setup
 
-# Deploy
-* [Build](./build.md) Please build java-tron after cloning the project  
-* [Run](./run.md) Run java-tron
+# Deployment
+[https://tronprotocol.github.io/documentation-en/developers/deployment/](https://tronprotocol.github.io/documentation-en/developers/deployment/)
 
-# Developer Community
+# Channel
+[Core Devs Gitter](https://gitter.im/tronprotocol/allcoredev)
 
-* [Discord](https://discord.gg/GsRgsTD) Please join our Developer Discord
-* [Gitter](https://gitter.im/tronprotocol/allcoredev) the core dev gitter
+# Contribution
+https://tronprotocol.github.io/documentation-en/developers/contribution/](https://tronprotocol.github.io/documentation-en/developers/contribution/)
 
-# Projects
-* [TRON Protocol](https://github.com/tronprotocol/protocol)
-* [Wallet Client](https://github.com/tronprotocol/wallet-cli)
-* [Wallet Web](https://github.com/tronprotocol/wallet-web)
-
-# Resource
-* [Website](https://tron.network/)
-* [Documentation](http://developers.tron.network)
-* [Blog](https://tronprotocol.github.io/tron-blog/)
-* [Tronscan](https://tronscan.org/)
-* [Trxplorer](https://www.trxplorer.io/)
+# Resources
+* [Medium](https://medium.com/@coredevs)
+* [Documentation](https://tronprotocol.github.io/documentation-en/introduction/)
 * [White Paper](https://tron.network/resources?lng=&name=1)
-* [TRON Quickstart](https://developers.tron.network/docs/getting-started-1)
-* [About](https://tron.network/about)
-* [FAQ](https://tron.network/faq)
-
-# Contributing
-Thank you for all of [our contributors](https://github.com/tronprotocol/java-tron/graphs/contributors); this project wouldn’t be what it is without you! If you want to help out, please see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-If you'd like to contribute to java-tron, please fork, fix, commit and send a pull request for the maintainers to review and merge into the main code base.   
-If you wish to submit more complex changes though, please check up with the core devs first on [our gitter channel](https://gitter.im/tronprotocol/allcoredev) to ensure those changes are 
-in line with the general philosophy of the project and/or get some early feedback which can make both your efforts much lighter as well as our review and merge procedures quick and simple.
 
 # License
-* [MIT](https://github.com/tronprotocol/java-tron/blob/master/LICENSE)
+[MIT](https://github.com/tronprotocol/java-tron/blob/master/LICENSE)
