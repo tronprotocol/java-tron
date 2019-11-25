@@ -6,15 +6,15 @@ public interface SignInterface {
 
   byte[] getPrivateKey();
 
-  byte[] getPubKeyFromPrivateKey(byte[] privateKey);
+  byte[] getPubKeyFromPrivateKey();
 
-  byte[] getAddressFromPrivateKey(byte[] privateKey);
+  byte[] getAddressFromPrivateKey();
 
-  byte[] getAddressFromPublicKey(byte[] publicKey);
+  byte[] getAddressFromPublicKey();
 
-  byte[] signMessage(byte[] message, byte[] privateKey);
+  byte[] signMessage(byte[] message);
 
-  byte[] signHash(byte[] hash, byte[] privateKey);
+  byte[] signHash(byte[] hash);
 
   boolean signatureToAddress(byte[] message, String signatureBase64);
 
