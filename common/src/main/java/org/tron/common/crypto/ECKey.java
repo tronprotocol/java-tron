@@ -181,6 +181,18 @@ public class ECKey implements Serializable, SignInterface {
    * <p>All private key operations will use the provider.
    */
 
+  public ECKey(byte[] key, boolean isPrivateKey) {
+    if (isPrivateKey) {
+      BigInteger pk = new BigInteger(1, key);
+      this.privKey = privateKeyFromBigInteger(pk);
+      this.pub = CURVE.getG().multiply(pk);
+    } else {
+      this.privKey = null;
+      this.pub = CURVE.getCurve().decodePoint(key);
+    }
+    this.provider = TronCastleProvider.getInstance();
+  }
+
   public ECKey(Provider provider, @Nullable PrivateKey privKey, ECPoint pub) {
     this.provider = provider;
 
@@ -445,7 +457,7 @@ public class ECKey implements Serializable, SignInterface {
    * @param signatureBase64 Base-64 encoded signature
    * @return 20-byte address
    */
-  public byte[] signatureToAddress(byte[] messageHash, String
+  public static byte[] signatureToAddress(byte[] messageHash, String
       signatureBase64) throws SignatureException {
     return computeAddress(signatureToKeyBytes(messageHash,
         signatureBase64));
@@ -761,6 +773,17 @@ public class ECKey implements Serializable, SignInterface {
     return pubKeyHash;
   }
 
+  @Override
+  public String signHash(byte[] hash) {
+    return sign(hash).toBase64();
+  }
+
+  @Override
+  public byte[] signToAddress(byte[] messageHash, String signatureBase64) throws SignatureException {
+    return computeAddress(signatureToKeyBytes(messageHash,
+            signatureBase64));
+  }
+
   /**
    * Generates the NodeID based on this key, that is the public key without first format byte
    */
@@ -896,7 +919,7 @@ public class ECKey implements Serializable, SignInterface {
    * @return -
    * @throws IllegalStateException if this ECKey does not have the private part.
    */
-  public String sign(byte[] messageHash) {
+  public ECDSASignature sign(byte[] messageHash) {
     ECDSASignature sig = doSign(messageHash);
     // Now we have to work backwards to figure out the recId needed to
     // recover the signature.
@@ -914,7 +937,7 @@ public class ECKey implements Serializable, SignInterface {
           ". This should never happen.");
     }
     sig.v = (byte) (recId + 27);
-    return sig.toBase64();
+    return sig;
   }
 
   public BigInteger keyAgreement(ECPoint otherParty) {

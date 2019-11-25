@@ -453,7 +453,12 @@ public class SM2 implements Serializable, SignInterface {
         return pubKeyHash;
     }
 
-
+    @Override
+    public byte[] signToAddress(byte[] messageHash, String
+            signatureBase64) throws SignatureException {
+        return computeAddress(signatureToKeyBytes(messageHash,
+                signatureBase64));
+    }
 
     /**
      * Compute the address of the key that signed the given signature.
@@ -462,7 +467,7 @@ public class SM2 implements Serializable, SignInterface {
      * @param signatureBase64 Base-64 encoded signature
      * @return 20-byte address
      */
-    public byte[] signatureToAddress(byte[] messageHash, String
+    public static byte[] signatureToAddress(byte[] messageHash, String
             signatureBase64) throws SignatureException {
         return computeAddress(signatureToKeyBytes(messageHash,
                 signatureBase64));
@@ -515,8 +520,16 @@ public class SM2 implements Serializable, SignInterface {
      * @return -
      * @throws IllegalStateException if this ECKey does not have the private part.
      */
-    public String sign(byte[] messageHash) {
-        SM2Signature sig = signHash(messageHash);
+    public SM2Signature sign(byte[] messageHash) {
+        if (messageHash.length != 32) {
+            throw new IllegalArgumentException("Expected 32 byte input to " +
+                    "SM2 signature, not " + messageHash.length);
+        }
+        // No decryption of private key required.
+        SM2Signer signer = getSigner();
+        BigInteger[] componets =  signer.generateHashSignature(messageHash);
+
+        SM2Signature sig = new SM2.SM2Signature(componets[0], componets[1]);
         // Now we have to work backwards to figure out the recId needed to
         // recover the signature.
         int recId = -1;
@@ -533,7 +546,7 @@ public class SM2 implements Serializable, SignInterface {
                     ". This should never happen.");
         }
         sig.v = (byte) (recId + 27);
-        return sig.toBase64();
+        return sig;
     }
 
     /**
@@ -543,15 +556,8 @@ public class SM2 implements Serializable, SignInterface {
      * @param input to sign
      * @return SM2Signature signature that contains the R and S components
      */
-    public SM2.SM2Signature signHash(byte[] input) {
-        if (input.length != 32) {
-            throw new IllegalArgumentException("Expected 32 byte input to " +
-                    "SM2 signature, not " + input.length);
-        }
-        // No decryption of private key required.
-        SM2Signer signer = getSigner();
-        BigInteger[] componets =  signer.generateHashSignature(input);
-        return new SM2.SM2Signature(componets[0], componets[1]);
+    public String signHash(byte[] input) {
+        return sign(input).toBase64();
     }
 
     /**
