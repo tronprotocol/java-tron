@@ -37,7 +37,7 @@ import org.tron.common.utils.StorageUtils;
  * @since 2018/5/25
  */
 
-public class Storage extends StorageUtils {
+public class Storage {
 
   /**
    * Keys (names) of database config
@@ -190,7 +190,7 @@ public class Storage extends StorageUtils {
     }
 
     // Check, get and set fields of Options
-    Options dbOptions = createDefaultDbOptions();
+    Options dbOptions = StorageUtils.createDefaultDbOptions();
 
     if (conf.containsKey(CREATE_IF_MISSING_CONFIG_KEY)) {
       dbOptions.createIfMissing(
@@ -313,16 +313,4 @@ public class Storage extends StorageUtils {
       }
     }
   }
-
-  private boolean hasProperty(String dbName) {
-    if (propertyMap != null) {
-      return propertyMap.containsKey(dbName);
-    }
-    return false;
-  }
-
-  private Property getProperty(String dbName) {
-    return propertyMap.get(dbName);
-  }
-
 }

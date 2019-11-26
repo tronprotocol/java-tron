@@ -1051,7 +1051,6 @@ public class Args extends CommonParameter {
       DBConfig.setPropertyMap(cfgArgs.getStorage().getPropertyMap());
       DBConfig.setDbSync(cfgArgs.getStorage().isDbSync());
       DBConfig.setDbDirectory(cfgArgs.getStorage().getDbDirectory());
-
     }
 
     if (Objects.nonNull(cfgArgs.getGenesisBlock())) {
