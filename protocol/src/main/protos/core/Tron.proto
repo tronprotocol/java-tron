@@ -64,10 +64,9 @@ message MakerOrder {
     bytes owner_address = 2;
     int64 create_time = 3;
     bytes sell_token_id = 4;
-    int64 sell_token_ratio = 6;
+    int64 sell_token_quantity = 6;
     bytes buy_token_id = 5;
-    int64 buy_token_ratio = 7;
-    int64 sell_token_quantity = 8;
+    int64 buy_token_quantity = 7;
     int64 sell_token_quantity_remain = 9;
 }
 
@@ -75,12 +74,28 @@ message MakerOrderList {
     repeated MakerOrder orders = 1;
 }
 
-message MakerOrderPairMessage{
+message MakerOrderPair{
     bytes sell_token_id = 4;
     bytes buy_token_id = 5;
-//    int64 limit = 10;
 }
 
+message MakerAccountOrder {
+  bytes owner_address = 1;
+//  repeated MakerOrder orders = 2;
+  repeated bytes orders = 2;
+  int64 count = 3;
+}
+
+message MakerPriceList {
+  bytes sell_token_id = 1;
+  bytes buy_token_id = 2;
+  repeated bytes prices = 5;
+}
+
+
+message MakerOrderIdList {
+  repeated bytes orders = 1;
+}
 
 message ChainParameters {
   repeated ChainParameter chainParameter = 1;

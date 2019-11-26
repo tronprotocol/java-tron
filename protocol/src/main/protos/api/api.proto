@@ -293,13 +293,13 @@ service Wallet {
   rpc MakerCancelOrder (MakerCancelOrderContract) returns (TransactionExtention) {
   }
 
-  rpc GetMakerOrderById (BytesMessage) returns (MakerOrderList) {
-  }
+//  rpc GetMakerOrderById (BytesMessage) returns (MakerOrderList) {
+//  }
 
   rpc GetMakerOrderByAccount (BytesMessage) returns (MakerOrderList) {
   }
 
-  rpc GetMakerOrderByPair (MakerOrderPairMessage) returns (MakerOrderList) {
+  rpc GetMakerOrderByPair (MakerOrderPair) returns (MakerPriceList) {
   }
 
 

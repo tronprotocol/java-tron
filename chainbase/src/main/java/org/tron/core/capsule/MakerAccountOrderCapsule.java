@@ -1,0 +1,82 @@
+package org.tron.core.capsule;
+
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Hash;
+import org.tron.protos.Protocol.MakerAccountOrder;
+
+@Slf4j(topic = "capsule")
+public class MakerAccountOrderCapsule implements ProtoCapsule<MakerAccountOrder> {
+
+  private MakerAccountOrder accountOrder;
+
+  public MakerAccountOrderCapsule(final MakerAccountOrder accountOrder) {
+    this.accountOrder = accountOrder;
+  }
+
+  public MakerAccountOrderCapsule(final byte[] data) {
+    try {
+      this.accountOrder = MakerAccountOrder.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+    }
+  }
+
+  public MakerAccountOrderCapsule(ByteString address,
+      List<ByteString> orders, long count) {
+    this.accountOrder = MakerAccountOrder.newBuilder()
+        .setOwnerAddress(address)
+        .addAllOrders(orders)
+        .setCount(count)
+        .build();
+  }
+
+
+  public ByteString getOwnerAddress() {
+    return this.accountOrder.getOwnerAddress();
+  }
+
+  public void setOwnerAddress(ByteString address) {
+    this.accountOrder = this.accountOrder.toBuilder()
+        .setOwnerAddress(address)
+        .build();
+  }
+
+
+  public List<ByteString> getOrdersList() {
+    return this.accountOrder.getOrdersList();
+  }
+
+  public void addOrders(ByteString order) {
+    this.accountOrder = this.accountOrder.toBuilder()
+        .addOrders(order)
+//        .setCount(accountOrder.getCount() + 1)
+        .build();
+
+  }
+
+  public void removeOrders(ByteString order) {
+    List<ByteString> ordersList = this.accountOrder.getOrdersList();
+    ordersList.remove(order);
+
+    this.accountOrder = this.accountOrder.toBuilder()
+        .clearOrders()
+        .addAllOrders(ordersList)
+        .build();
+  }
+
+
+  @Override
+  public byte[] getData() {
+    return this.accountOrder.toByteArray();
+  }
+
+  @Override
+  public MakerAccountOrder getInstance() {
+    return this.accountOrder;
+  }
+
+}
