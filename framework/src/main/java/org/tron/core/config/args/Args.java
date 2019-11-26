@@ -1040,10 +1040,7 @@ public class Args extends CommonParameter {
   public static void initVMConfig(Args cfgArgs) {
     VMConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
     VMConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
-    VMConfig.setDebug(cfgArgs.isDebug());
     VMConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
-    VMConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
-    VMConfig.setSolidityNode(cfgArgs.isSolidityNode());
   }
 
 
@@ -1085,6 +1082,9 @@ public class Args extends CommonParameter {
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
+    DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
+    DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
+    DBConfig.setDebug(cfgArgs.isDebug());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

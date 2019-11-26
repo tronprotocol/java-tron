@@ -54,7 +54,7 @@ public class ProposalCreateActuator extends AbstractActuator {
 
       long currentMaintenanceTime =
           chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
-      long now3 = now + VMConfig.getProposalExpireTime();
+      long now3 = now + DBConfig.getProposalExpireTime();
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
           currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;

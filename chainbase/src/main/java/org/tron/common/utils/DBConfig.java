@@ -104,4 +104,17 @@ public class DBConfig {
   @Getter
   @Setter
   private static Set<String> actuatorSet;
+
+  @Getter
+  @Setter
+  private static boolean debug;
+
+  @Getter
+  @Setter
+  private static boolean solidityNode;
+
+
+  @Getter
+  @Setter
+  private static long proposalExpireTime; // (ms)
 }

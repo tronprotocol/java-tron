@@ -41,7 +41,7 @@ public class InterpreterTest {
 
   @BeforeClass
   public static void init() {
-    VMConfig.setDebug(true);
+    DBConfig.setDebug(true);
   }
 
   @AfterClass

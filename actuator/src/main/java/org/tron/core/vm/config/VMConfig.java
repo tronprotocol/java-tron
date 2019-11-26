@@ -37,19 +37,7 @@ public class VMConfig {
 
   @Getter
   @Setter
-  private static boolean debug;
-
-  @Getter
-  @Setter
-  private static boolean solidityNode;
-
-  @Getter
-  @Setter
   private static int checkFrozenTime; // for test only
-
-  @Getter
-  @Setter
-  private static long proposalExpireTime; // (ms)
 
   public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
 
