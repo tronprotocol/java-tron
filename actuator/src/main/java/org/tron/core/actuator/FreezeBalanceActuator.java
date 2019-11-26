@@ -95,8 +95,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
             .addTotalEnergyWeight(frozenBalance / 1000_000L);
         break;
       default:
-        throw new ContractExeException(
-                "ResourceCode error,valid ResourceCode[BANDWIDTH、ENERGY]");
+        logger.debug("Resource Code Error.");
     }
 
     accountCapsule.setBalance(newBalance);
