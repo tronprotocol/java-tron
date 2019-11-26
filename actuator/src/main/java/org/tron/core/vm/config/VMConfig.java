@@ -94,10 +94,6 @@ public class VMConfig {
     ALLOW_TVM_SOLIDITY_059 = allow == 1;
   }
 
-  public static boolean getEnergyLimitHardFork() {
-    return ENERGY_LIMIT_HARD_FORK;
-  }
-
   public static boolean allowTvmTransferTrc10() {
     return ALLOW_TVM_TRANSFER_TRC10;
   }

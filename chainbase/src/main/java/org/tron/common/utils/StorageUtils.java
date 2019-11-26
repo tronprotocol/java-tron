@@ -59,7 +59,7 @@ public class StorageUtils {
     return createDefaultDbOptions();
   }
 
-  private static Options createDefaultDbOptions() {
+  protected static Options createDefaultDbOptions() {
     Options dbOptions = new Options();
 
     dbOptions.createIfMissing(true);

@@ -27,6 +27,7 @@ import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Property;
+import org.tron.common.utils.StorageUtils;
 
 /**
  * Custom storage configurations
@@ -36,7 +37,7 @@ import org.tron.common.utils.Property;
  * @since 2018/5/25
  */
 
-public class Storage {
+public class Storage extends StorageUtils {
 
   /**
    * Keys (names) of database config
@@ -73,18 +74,6 @@ public class Storage {
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWTICH = "on";
-
-  /**
-   * Default values of db options: <p> DEFAULT_COMPRESSION_TYPE: compressed with snappy
-   * DEFAULT_BLOCK_SIZE:         4 KB =         4 * 1024 B DEFAULT_WRITE_BUFFER_SIZE: 10 MB = 10 *
-   * 1024 * 1024 B DEFAULT_CACHE_SIZE:        10 MB = 10 * 1024 * 1024 B DEFAULT_MAX_OPEN_FILES:
-   * 100
-   */
-  private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
-  private static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
-  private static final int DEFAULT_WRITE_BUFFER_SIZE = 10 * 1024 * 1024;
-  private static final long DEFAULT_CACHE_SIZE = 10 * 1024 * 1024L;
-  private static final int DEFAULT_MAX_OPEN_FILES = 100;
 
   /**
    * Database storage directory: /path/to/{dbDirectory}
@@ -296,22 +285,6 @@ public class Storage {
     return property;
   }
 
-  private static Options createDefaultDbOptions() {
-    Options dbOptions = new Options();
-
-    dbOptions.createIfMissing(true);
-    dbOptions.paranoidChecks(true);
-    dbOptions.verifyChecksums(true);
-
-    dbOptions.compressionType(DEFAULT_COMPRESSION_TYPE);
-    dbOptions.blockSize(DEFAULT_BLOCK_SIZE);
-    dbOptions.writeBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
-    dbOptions.cacheSize(DEFAULT_CACHE_SIZE);
-    dbOptions.maxOpenFiles(DEFAULT_MAX_OPEN_FILES);
-
-    return dbOptions;
-  }
-
   /**
    * Set propertyMap of Storage object from Config
    *
@@ -323,32 +296,6 @@ public class Storage {
           .map(Storage::createProperty)
           .collect(Collectors.toMap(Property::getName, p -> p));
     }
-  }
-
-  /**
-   * Get storage path by name of database
-   *
-   * @param dbName name of database
-   * @return path of that database
-   */
-  public String getPathByDbName(String dbName) {
-    if (hasProperty(dbName)) {
-      return getProperty(dbName).getPath();
-    }
-    return null;
-  }
-
-  /**
-   * Get database options by name of database
-   *
-   * @param dbName name of database
-   * @return options of that database
-   */
-  public Options getOptionsByDbName(String dbName) {
-    if (hasProperty(dbName)) {
-      return getProperty(dbName).getDbOptions();
-    }
-    return createDefaultDbOptions();
   }
 
   /**
