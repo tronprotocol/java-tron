@@ -15,6 +15,8 @@
 
 package org.tron.core.config.args;
 
+import static org.tron.common.utils.StorageUtils.DEFAULT_COMPRESSION_TYPE;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import java.io.File;
