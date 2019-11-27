@@ -35,7 +35,7 @@ matrix:
 
 
 after_success:
-  - "bash <(curl -s https://codecov.io/bash) -t $codecov_token_key -s framework/build/reports/jacoco/"
+  - "bash <(curl -s https://codecov.io/bash) -s framework/build/reports/jacoco/"
 
 skip_build:
   - README.md：
