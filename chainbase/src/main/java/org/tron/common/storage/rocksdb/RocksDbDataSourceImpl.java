@@ -41,6 +41,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>>, Instance<RocksDbDataSourceImpl> {
 
   ReadOptions readOpts;
+  private static final String FAIL_TO_INIT_DATABASE = "Failed to initialize database";
   private String dataBaseName;
   private RocksDB database;
   private boolean alive;
@@ -166,7 +167,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   public void initDB() {
     if (!checkOrInitEngine()) {
       logger.error("database engine do not match");
-      throw new RuntimeException("Failed to initialize database");
+      throw new RuntimeException(FAIL_TO_INIT_DATABASE);
     }
     initDB(RocksDbSettings.getSettings());
   }
@@ -230,14 +231,14 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
             database = RocksDB.open(options, dbPath.toString());
           } catch (RocksDBException e) {
             logger.error(e.getMessage(), e);
-            throw new RuntimeException("Failed to initialize database", e);
+            throw new RuntimeException(FAIL_TO_INIT_DATABASE, e);
           }
 
           alive = true;
 
         } catch (IOException ioe) {
           logger.error(ioe.getMessage(), ioe);
-          throw new RuntimeException("Failed to initialize database", ioe);
+          throw new RuntimeException(FAIL_TO_INIT_DATABASE, ioe);
         }
 
         logger.debug("<~ RocksDbDataSource.initDB(): " + dataBaseName);

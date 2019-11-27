@@ -147,6 +147,7 @@ public class RpcApiService implements Service {
 
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
+  private static final String EXCEPTION_CAUGHT = "exception caught";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
   private int port = Args.getInstance().getRpcPort();
@@ -814,7 +815,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
       }
       trxExtBuilder.setResult(retBuilder);
       responseObserver.onNext(trxExtBuilder.build());
@@ -843,7 +844,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
       }
       trxExtBuilder.setResult(retBuilder);
       responseObserver.onNext(trxExtBuilder.build());
@@ -863,7 +864,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
       }
       trxExtBuilder.setResult(retBuilder);
       responseObserver.onNext(trxExtBuilder.build());
