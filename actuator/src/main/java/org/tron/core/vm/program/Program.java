@@ -975,7 +975,7 @@ public class Program {
       logger.info(
           "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
               + "vm now time in us: {}, vm start time in us: {}",
-          DBConfig.getMinTimeRatio(), DBConfig.getMaxTimeRatio(),
+          VMConfig.getMinTimeRatio(), VMConfig.getMaxTimeRatio(),
           getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }

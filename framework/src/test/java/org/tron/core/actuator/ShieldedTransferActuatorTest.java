@@ -122,7 +122,7 @@ public class ShieldedTransferActuatorTest {
   @Before
   public void createCapsule() {
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
-    Args.initDBConfig(Args.getInstance());
+    Args.initConfig(Args.getInstance());
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
 
