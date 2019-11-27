@@ -1072,18 +1072,18 @@ public class Args extends CommonParameter {
     DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
     DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
+    DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
     DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransactionArgs());
+    DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
     DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
     DBConfig.setVmTrace(cfgArgs.isVmTrace());
+    DBConfig.setDebug(cfgArgs.isDebug());
+    DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
     DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
-    DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
-    DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
-    DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
-    DBConfig.setDebug(cfgArgs.isDebug());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
