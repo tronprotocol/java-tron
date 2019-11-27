@@ -23,6 +23,10 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.core.store.MakerAccountStore;
+import org.tron.core.store.MakerOrderStore;
+import org.tron.core.store.MakerPairPriceToOrderStore;
+import org.tron.core.store.MakerPairToPriceStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
@@ -30,6 +34,8 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
+import org.tron.protos.Protocol.MakerAccountOrder;
+import org.tron.protos.Protocol.MakerOrder;
 
 @Component
 public class ChainBaseManager {
@@ -77,6 +83,18 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private ExchangeV2Store exchangeV2Store;
+  @Autowired
+  @Getter
+  private MakerAccountStore makerAccountStore;
+  @Autowired
+  @Getter
+  private MakerOrderStore makerOrderStore;
+  @Autowired
+  @Getter
+  private MakerPairPriceToOrderStore makerPairPriceToOrderStore;
+  @Autowired
+  @Getter
+  private MakerPairToPriceStore makerPairToPriceStore;
   @Autowired
   @Getter
   private CodeStore codeStore;

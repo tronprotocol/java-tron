@@ -11,6 +11,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.MakerOrder;
 
 import java.util.Arrays;
+import org.tron.protos.contract.MakerContract.MakerSellAssetContract;
 
 @Slf4j(topic = "capsule")
 public class MakerOrderCapsule implements ProtoCapsule<MakerOrder> {
@@ -29,47 +30,42 @@ public class MakerOrderCapsule implements ProtoCapsule<MakerOrder> {
     }
   }
 
-  public MakerOrderCapsule(final long id, ByteString address, long createTime,
-      byte[] sellTokenId, long sellTokenRatio,
-      byte[] buyTokenId, long buyTokenRatio,
-      long sellTokenQuantity, long sellTokenQuantityRemain) {
+  public MakerOrderCapsule(byte[] id, MakerSellAssetContract contract) {
+
     this.order = MakerOrder.newBuilder()
-        .setOrderId(id)
+        .setOrderId(ByteString.copyFrom(id))
+        .setOwnerAddress(contract.getOwnerAddress())
+        .setSellTokenId(contract.getSellTokenId())
+        .setSellTokenQuantity(contract.getSellTokenQuantity())
+        .setBuyTokenId(contract.getBuyTokenId())
+        .setBuyTokenQuantity(contract.getBuyTokenQuantity())
+        .setSellTokenQuantityRemain(contract.getSellTokenQuantity())
+        .build();
+  }
+
+
+  public MakerOrderCapsule(final byte[] id, ByteString address, long createTime,
+      byte[] sellTokenId, long sellTokenQuantity,
+      byte[] buyTokenId, long buyTokenQuantity, long sellTokenQuantityRemain) {
+    this.order = MakerOrder.newBuilder()
+        .setOrderId(ByteString.copyFrom(id))
         .setOwnerAddress(address)
         .setCreateTime(createTime)
         .setSellTokenId(ByteString.copyFrom(sellTokenId))
-        .setSellTokenQuantity(sellTokenRatio)
+        .setSellTokenQuantity(sellTokenQuantity)
         .setBuyTokenId(ByteString.copyFrom(buyTokenId))
-        .setBuyTokenQuantity(buyTokenRatio)
+        .setBuyTokenQuantity(buyTokenQuantity)
         .setSellTokenQuantityRemain(sellTokenQuantityRemain)
         .build();
   }
 
-  public static byte[] calculateOrderId(ByteString address, byte[] sellTokenId,
-      byte[] buyTokenId, long count) {
 
-    byte[] addressByteArray = address.toByteArray();
-    byte[] countByteArray = ByteArray.fromLong(count);
 
-    byte[] result = new byte[addressByteArray.length + sellTokenId.length
-        + buyTokenId.length + countByteArray.length];
-
-    System.arraycopy(addressByteArray, 0, result, 0, addressByteArray.length);
-    System.arraycopy(sellTokenId, 0, result, addressByteArray.length, sellTokenId.length);
-    System.arraycopy(buyTokenId, 0, result, addressByteArray.length + sellTokenId.length,
-        buyTokenId.length);
-    System.arraycopy(countByteArray, 0, result, addressByteArray.length
-        + sellTokenId.length + buyTokenId.length, countByteArray.length);
-
-//    return Hash.sha3(result);
-    return result;
-  }
-
-  public long getID() {
+  public ByteString getID() {
     return this.order.getOrderId();
   }
 
-  public void setID(long id) {
+  public void setID(ByteString id) {
     this.order = this.order.toBuilder()
         .setOrderId(id)
         .build();

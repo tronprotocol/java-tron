@@ -60,7 +60,7 @@ message Exchange {
 
 //maker
 message MakerOrder {
-    int64 order_id = 1;
+    bytes order_id = 1;
     bytes owner_address = 2;
     int64 create_time = 3;
     bytes sell_token_id = 4;
@@ -89,7 +89,12 @@ message MakerAccountOrder {
 message MakerPriceList {
   bytes sell_token_id = 1;
   bytes buy_token_id = 2;
-  repeated bytes prices = 5;
+
+  message MakerPrice {
+    int64 sell_token_quantity = 1;
+    int64 buy_token_quantity = 2;
+  }
+  repeated MakerPrice prices = 5;
 }
 
 

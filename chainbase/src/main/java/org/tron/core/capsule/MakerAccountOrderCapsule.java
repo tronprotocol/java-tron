@@ -25,6 +25,12 @@ public class MakerAccountOrderCapsule implements ProtoCapsule<MakerAccountOrder>
     }
   }
 
+  public MakerAccountOrderCapsule(ByteString address) {
+    this.accountOrder = MakerAccountOrder.newBuilder()
+        .setOwnerAddress(address)
+        .build();
+  }
+
   public MakerAccountOrderCapsule(ByteString address,
       List<ByteString> orders, long count) {
     this.accountOrder = MakerAccountOrder.newBuilder()
@@ -65,6 +71,16 @@ public class MakerAccountOrderCapsule implements ProtoCapsule<MakerAccountOrder>
     this.accountOrder = this.accountOrder.toBuilder()
         .clearOrders()
         .addAllOrders(ordersList)
+        .build();
+  }
+
+  public long getCount() {
+    return this.accountOrder.getCount();
+  }
+
+  public void setOwnerAddress(long count) {
+    this.accountOrder = this.accountOrder.toBuilder()
+        .setCount(count)
         .build();
   }
 

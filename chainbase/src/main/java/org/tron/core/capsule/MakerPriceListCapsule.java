@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Protocol.MakerPriceList;
 import org.tron.protos.Protocol.MakerPriceList;
+import org.tron.protos.Protocol.MakerPriceList.MakerPrice;
 
 @Slf4j(topic = "capsule")
 public class MakerPriceListCapsule implements ProtoCapsule<MakerPriceList> {
@@ -24,11 +25,10 @@ public class MakerPriceListCapsule implements ProtoCapsule<MakerPriceList> {
     }
   }
 
-  public MakerPriceListCapsule(byte[] sellTokenId, byte[] buyTokenId, List<ByteString> p) {
+  public MakerPriceListCapsule(byte[] sellTokenId, byte[] buyTokenId) {
     this.priceList = MakerPriceList.newBuilder()
         .setSellTokenId(ByteString.copyFrom(sellTokenId))
         .setBuyTokenId(ByteString.copyFrom(buyTokenId))
-        .addAllPrices(p)
         .build();
   }
 
@@ -53,25 +53,39 @@ public class MakerPriceListCapsule implements ProtoCapsule<MakerPriceList> {
         .build();
   }
 
-  public List<ByteString> getPricesList() {
+  public List<MakerPrice> getPricesList() {
     return this.priceList.getPricesList();
   }
 
-  public void addPrices(ByteString p) {
+  public void addPrices(long s, long b) {
+    MakerPrice build = MakerPrice.newBuilder().setSellTokenQuantity(s).setBuyTokenQuantity(b)
+        .build();
     this.priceList = this.priceList.toBuilder()
-        .addPrices(p)
+        .addPrices(build)
         .build();
   }
 
-  public void removePrice(ByteString p) {
-    List<ByteString> pricesList = this.priceList.getPricesList();
-    pricesList.remove(p);
+  public void removePrice(long s, long b) {
+    List<MakerPrice> pricesList = this.priceList.getPricesList();
+//    pricesList.remove(p);//todo
 
     this.priceList = this.priceList.toBuilder()
         .clearPrices()
         .addAllPrices(pricesList)
         .build();
   }
+
+  public void removeFirst() {
+    List<MakerPrice> pricesList = this.priceList.getPricesList();
+    pricesList.remove(0);
+
+    this.priceList = this.priceList.toBuilder()
+        .clearPrices()
+        .addAllPrices(pricesList)
+        .build();
+  }
+
+
 
 
   @Override
