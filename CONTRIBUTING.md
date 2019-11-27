@@ -39,7 +39,11 @@ detailed as possible to make it easier for us to understand.
 
 Please make sure your contributions adhere to our coding guidelines:
 
-
+- Code must be documented adhering to the [Google Style](https://google.github.io/styleguide/javaguide.html)
+- Code must pass Sonar detection.
+- Pull requests need to be based on and opened against the develop branch.
+- Commit messages should be started with verb, and the first letter should be a lowercase.The length of commit message
+must be limited in 50 words.
 ### Create issues
 
 Any significant improvement should be documented as [a GitHub
