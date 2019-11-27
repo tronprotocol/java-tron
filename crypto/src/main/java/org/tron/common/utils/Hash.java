@@ -29,6 +29,7 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.math.ec.ECPoint;
 import org.tron.common.crypto.jce.TronCastleProvider;
 
 @Slf4j(topic = "crypto")
@@ -195,5 +196,14 @@ public class Hash {
 
       return data;
     }
+  }
+
+  public static byte[] computeAddress(ECPoint pubPoint) {
+    return computeAddress(pubPoint.getEncoded(/* uncompressed */ false));
+  }
+
+  public static byte[] computeAddress(byte[] pubBytes) {
+    return sha3omit12(
+        Arrays.copyOfRange(pubBytes, 1, pubBytes.length));
   }
 }

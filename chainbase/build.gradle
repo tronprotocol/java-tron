@@ -44,6 +44,7 @@ dependencies {
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
     compile project(":protocol")
     compile project(":common")
+    compile project(":crypto")
     compile 'org.reflections:reflections:0.9.11'
 }
 

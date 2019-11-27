@@ -1,6 +1,5 @@
 package org.tron.common.utils;
 
-import static org.tron.common.utils.Hash.sha3omit12;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
 import java.util.Arrays;
@@ -64,12 +63,4 @@ public class DecodeUtil {
     return ByteArray.toHexString(bytes);
   }
 
-  public static byte[] computeAddress(ECPoint pubPoint) {
-    return computeAddress(pubPoint.getEncoded(/* uncompressed */ false));
-  }
-
-  public static byte[] computeAddress(byte[] pubBytes) {
-    return sha3omit12(
-        Arrays.copyOfRange(pubBytes, 1, pubBytes.length));
-  }
 }

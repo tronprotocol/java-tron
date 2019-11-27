@@ -19,7 +19,6 @@ package org.tron.common.crypto;
 
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
-import static org.tron.common.utils.DecodeUtil.computeAddress;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -75,7 +74,9 @@ import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.ECKeyPairGenerator;
 import org.tron.common.crypto.jce.ECSignatureFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
+import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Hash;
 
 @Slf4j(topic = "crypto")
 public class ECKey implements Serializable, SignInterface {
@@ -459,7 +460,7 @@ public class ECKey implements Serializable, SignInterface {
    */
   public static byte[] signatureToAddress(byte[] messageHash, String
       signatureBase64) throws SignatureException {
-    return computeAddress(signatureToKeyBytes(messageHash,
+    return Hash.computeAddress(signatureToKeyBytes(messageHash,
         signatureBase64));
   }
 
@@ -473,7 +474,7 @@ public class ECKey implements Serializable, SignInterface {
   public static byte[] signatureToAddress(byte[] messageHash,
       ECDSASignature sig) throws
       SignatureException {
-    return computeAddress(signatureToKeyBytes(messageHash, sig));
+    return Hash.computeAddress(signatureToKeyBytes(messageHash, sig));
   }
 
   /**
@@ -670,7 +671,7 @@ public class ECKey implements Serializable, SignInterface {
     if (pubBytes == null) {
       return null;
     } else {
-      return computeAddress(pubBytes);
+      return Hash.computeAddress(pubBytes);
     }
   }
 
@@ -768,7 +769,7 @@ public class ECKey implements Serializable, SignInterface {
    */
   public byte[] getAddress() {
     if (pubKeyHash == null) {
-      pubKeyHash = computeAddress(this.pub);
+      pubKeyHash = Hash.computeAddress(this.pub);
     }
     return pubKeyHash;
   }
@@ -780,7 +781,7 @@ public class ECKey implements Serializable, SignInterface {
 
   @Override
   public byte[] signToAddress(byte[] messageHash, String signatureBase64) throws SignatureException {
-    return computeAddress(signatureToKeyBytes(messageHash,
+    return Hash.computeAddress(signatureToKeyBytes(messageHash,
             signatureBase64));
   }
 
@@ -1057,7 +1058,7 @@ public class ECKey implements Serializable, SignInterface {
     if (privKey == null) {
       return null;
     } else if (privKey instanceof BCECPrivateKey) {
-      return bigIntegerToBytes(((BCECPrivateKey) privKey).getD(), 32);
+      return ByteUtil.bigIntegerToBytes(((BCECPrivateKey) privKey).getD(), 32);
     } else {
       return null;
     }
@@ -1136,17 +1137,17 @@ public class ECKey implements Serializable, SignInterface {
         return false;
       }
 
-      if (isLessThan(r, BigInteger.ONE)) {
+      if (BIUtil.isLessThan(r, BigInteger.ONE)) {
         return false;
       }
-      if (isLessThan(s, BigInteger.ONE)) {
+      if (BIUtil.isLessThan(s, BigInteger.ONE)) {
         return false;
       }
 
-      if (!isLessThan(r, SECP256K1N)) {
+      if (!BIUtil.isLessThan(r, SECP256K1N)) {
         return false;
       }
-      return isLessThan(s, SECP256K1N);
+      return BIUtil.isLessThan(s, SECP256K1N);
     }
 
     public static ECDSASignature decodeFromDER(byte[] bytes) {
@@ -1212,8 +1213,8 @@ public class ECKey implements Serializable, SignInterface {
       byte[] sigData = new byte[65];  // 1 header + 32 bytes for R + 32
       // bytes for S
       sigData[0] = v;
-      System.arraycopy(bigIntegerToBytes(this.r, 32), 0, sigData, 1, 32);
-      System.arraycopy(bigIntegerToBytes(this.s, 32), 0, sigData, 33, 32);
+      System.arraycopy(ByteUtil.bigIntegerToBytes(this.r, 32), 0, sigData, 1, 32);
+      System.arraycopy(ByteUtil.bigIntegerToBytes(this.s, 32), 0, sigData, 33, 32);
       return new String(Base64.encode(sigData), Charset.forName("UTF-8"));
     }
 
