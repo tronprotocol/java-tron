@@ -382,7 +382,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     // begin to generate dataToBeSigned
     TransactionCapsule transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
         builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-    byte[] dataToBeSigned = TransactionUtil
+    byte[] dataToBeSigned = TransactionCapsule
         .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
     TransactionCapsule transactionCap = generateTransactionCapsule(builder, ctx, dataToBeSigned,
         transactionCapsule);
@@ -613,7 +613,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
       TransactionExtention transactionExtention = TransactionExtention.newBuilder()
           .setTransaction(transactionCapsule.getInstance()).build();
 
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -655,7 +655,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -697,7 +697,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -739,7 +739,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -781,7 +781,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -823,7 +823,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -975,7 +975,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
 
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Could not construct signature hash: " + ex.getMessage());
@@ -2004,7 +2004,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
 
-      hashOfTransaction = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      hashOfTransaction = TransactionCapsule
+          .hashShieldTransaction(transactionCapsule.getInstance());
 
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);

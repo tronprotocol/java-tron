@@ -153,7 +153,7 @@ public class ZenTransactionBuilder {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
 
-      dataHashToBeSigned = TransactionUtil
+      dataHashToBeSigned = TransactionCapsule
           .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
 
       if (dataHashToBeSigned == null) {
