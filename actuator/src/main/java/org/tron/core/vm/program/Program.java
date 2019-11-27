@@ -92,6 +92,8 @@ public class Program {
   private static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE =
       "validateForSmartContract failure:%s";
   private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
+  private static final String REFUND_ENERGY_FROM_MESSAGE_CALL = "refund energy from message call";
+  private static final String CALL_PRE_COMPILED = "call pre-compiled";
   private final VMConfig config;
   private long nonce;
   private byte[] rootTransactionId;
@@ -795,7 +797,7 @@ public class Program {
       long senderBalance = deposit.getBalance(senderAddress);
       if (senderBalance < endowment) {
         stackPushZero();
-        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
         return;
       }
     } else {
@@ -804,7 +806,7 @@ public class Program {
       long senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
       if (senderBalance < endowment) {
         stackPushZero();
-        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
         return;
       }
     }
@@ -831,7 +833,7 @@ public class Program {
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
-            refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
             throw new TransferException("transfer trx failed: %s", e.getMessage());
           }
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
@@ -844,7 +846,7 @@ public class Program {
               tokenId, endowment);
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
-            refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
             throw new TransferException("transfer trc10 failed: %s", e.getMessage());
           }
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
@@ -938,7 +940,7 @@ public class Program {
         }
       }
     } else {
-      refundEnergy(msg.getEnergy().longValue(), "remaining esnergy from the internal call");
+      refundEnergy(msg.getEnergy().longValue(), "remaining energy from the internal call");
     }
   }
 
@@ -1358,7 +1360,7 @@ public class Program {
     }
     if (senderBalance < endowment) {
       stackPushZero();
-      refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+      refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
       return;
     }
     byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
@@ -1390,7 +1392,7 @@ public class Program {
     if (requiredEnergy > msg.getEnergy().longValue()) {
       // Not need to throw an exception, method caller needn't know that
       // regard as consumed the energy
-      this.refundEnergy(0, "call pre-compiled"); //matches cpp logic
+      this.refundEnergy(0, CALL_PRE_COMPILED); //matches cpp logic
       this.stackPushZero();
     } else {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
@@ -1404,13 +1406,13 @@ public class Program {
       Pair<Boolean, byte[]> out = contract.execute(data);
 
       if (out.getLeft()) { // success
-        this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, "call pre-compiled");
+        this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, CALL_PRE_COMPILED);
         this.stackPushOne();
         returnDataBuffer = out.getRight();
         deposit.commit();
       } else {
         // spend all energy on failure, push zero and revert state changes
-        this.refundEnergy(0, "call pre-compiled");
+        this.refundEnergy(0, CALL_PRE_COMPILED);
         this.stackPushZero();
         if (Objects.nonNull(this.result.getException())) {
           throw result.getException();
@@ -1449,7 +1451,7 @@ public class Program {
         tokenId = msg.getTokenId().sValue().longValueExact();
       } catch (ArithmeticException e) {
         if (VMConfig.allowTvmConstantinople()) {
-          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+          refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
           throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw e;
@@ -1460,7 +1462,7 @@ public class Program {
           || (tokenId == 0 && msg.isTokenTransferMsg())) {
         // tokenId == 0 is a default value for token id DataWord.
         if (VMConfig.allowTvmConstantinople()) {
-          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+          refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
           throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw new BytecodeExecutionException(

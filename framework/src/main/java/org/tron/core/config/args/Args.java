@@ -72,6 +72,8 @@ import org.tron.program.Version;
 public class Args extends CommonParameter {
 
   private static final Args INSTANCE = new Args();
+  private static final String IGNORE_WRONG_WITNESS_ADDRESS_FORMAT =
+          "The localWitnessAccountAddress format is incorrect, ignored";
 
   @Getter
   @Setter
@@ -219,7 +221,7 @@ public class Args extends CommonParameter {
           logger.debug("Got localWitnessAccountAddress from cmd");
         } else {
           INSTANCE.witnessAddress = "";
-          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+          logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
         }
       }
       INSTANCE.localWitnesses.initWitnessAccountAddress();
@@ -240,7 +242,7 @@ public class Args extends CommonParameter {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from config.conf");
         } else {
-          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+          logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
         }
       }
       INSTANCE.localWitnesses.initWitnessAccountAddress();
@@ -284,7 +286,7 @@ public class Args extends CommonParameter {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from config.conf");
         } else {
-          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+          logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
         }
       }
       INSTANCE.localWitnesses.initWitnessAccountAddress();
