@@ -279,7 +279,7 @@ public class SM2Signer
     private byte[] getZ(Digest digest)
     {
 
-        addUserID(digest, userID);
+        //addUserID(digest, userID);
 
         addFieldElement(digest, ecParams.getCurve().getA());
         addFieldElement(digest, ecParams.getCurve().getB());

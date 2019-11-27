@@ -94,7 +94,7 @@ public class SignatureInterfaceTest {
         String message = "message digest";
         SignInterface sign = new SM2(SM2_pubKey,false);
         byte[] hash = sign.hash(message.getBytes());
-        assertEquals("18D98DBA75275055B8C46D682D7C1DD29B21E2B8E98BFFC04FBDEA9F9E073C0A", Hex.toHexString(hash).toUpperCase());
+        assertEquals("299C7DDB0D8DD2A85381BACBB92F738F390210A493A144C78E18C67B430DA882", Hex.toHexString(hash).toUpperCase());
 
         sign = new ECKey();
         hash = sign.hash(message.getBytes());

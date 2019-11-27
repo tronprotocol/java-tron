@@ -115,9 +115,9 @@ public class SM2KeyTest {
         SM2Signer signer = key.getSM2SignerForHash();
         String message = "message digest";
         byte[] hash = signer.generateSM3Hash(message.getBytes());
-        assertEquals("18D98DBA75275055B8C46D682D7C1DD29B21E2B8E98BFFC04FBDEA9F9E073C0A", Hex.toHexString(hash).toUpperCase());
+        assertEquals("299C7DDB0D8DD2A85381BACBB92F738F390210A493A144C78E18C67B430DA882", Hex.toHexString(hash).toUpperCase());
     }
-    
+
 
     @Test
     public void testValidHashSignature(){
