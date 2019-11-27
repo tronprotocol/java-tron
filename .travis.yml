@@ -31,7 +31,6 @@ matrix:
       script:
         - sh tron.sh
         - bash deploy.sh
-	- sonar-scanner
 
 
 after_success:
