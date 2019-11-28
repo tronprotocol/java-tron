@@ -511,6 +511,10 @@ public class Args {
   @Setter
   private Set<String> actuatorSet;
 
+  @Getter
+  @Setter
+  private String cryptoEngine;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -1080,6 +1084,9 @@ public class Args {
         config.hasPath(Constant.ACTUATOR_WHITELIST)
             ? new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
             : Collections.emptySet();
+
+    INSTANCE.cryptoEngine = config.hasPath(Constant.CRYPTO_ENGINE) ? config
+        .getString(Constant.CRYPTO_ENGINE) : "ECKey";
 
     logConfig();
     initDBConfig(INSTANCE);
