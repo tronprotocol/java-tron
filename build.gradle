@@ -1,6 +1,6 @@
 allprojects {
     version = "1.0.0"
-    apply plugin: "java"    
+    apply plugin: "java"
 }
 
 subprojects {
@@ -11,9 +11,6 @@ subprojects {
 
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
-
-    group 'tronprotocol'
-    version '1.0.0'
 
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
@@ -59,7 +56,7 @@ subprojects {
     }
 
     artifacts {
-        archives jar
+//        archives jar
         archives sourcesJar
     }
 }
