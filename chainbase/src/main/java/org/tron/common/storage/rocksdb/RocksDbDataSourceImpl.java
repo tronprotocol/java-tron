@@ -153,10 +153,8 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
 
     // for the first init engine
     String engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
-    if (engine.equals("")) {
-      if (!PropUtil.writeProperty(enginePath, KEY_ENGINE, ROCKSDB)) {
-        return false;
-      }
+    if (engine.isEmpty() && !PropUtil.writeProperty(enginePath, KEY_ENGINE, ROCKSDB)) {
+      return false;
     }
     engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
 
