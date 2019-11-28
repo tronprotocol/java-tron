@@ -39,7 +39,7 @@ import java.util.Arrays;
 
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
-import static org.tron.common.utils.DecodeUtil.computeAddress;
+import static org.tron.common.utils.Hash.computeAddress;
 
 /**
  * Implement Chinese Commercial Cryptographic Standard of SM2
