@@ -5,7 +5,7 @@ plugins {
 apply plugin: 'application'
 apply plugin: 'checkstyle'
 apply plugin: 'com.github.johnrengelman.shadow'
-    
+
 mainClassName = 'org.tron.program.FullNode'
 
 def versions = [
@@ -44,13 +44,10 @@ dependencies {
 
     testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
 
-    compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
-
     compile "com.madgag.spongycastle:core:1.58.0.0"
     compile "com.madgag.spongycastle:prov:1.58.0.0"
 
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
-
 
     compile "com.cedarsoftware:java-util:1.8.0"
 
@@ -138,7 +135,7 @@ shadowJar {
     classifier = null
     version = null
 }
-    
+
 test {
     testLogging {
         exceptionFormat = 'full'
@@ -219,10 +216,10 @@ def createScript(project, mainClass, name) {
     project.tasks.create(name: name, type: CreateStartScripts) {
         unixStartScriptGenerator.template = resources.text.fromFile('../gradle/unixStartScript.txt')
         windowsStartScriptGenerator.template = resources.text.fromFile('../gradle/windowsStartScript.txt')
-        outputDir       = new File(project.buildDir, 'scripts')
-        mainClassName   = mainClass
+        outputDir = new File(project.buildDir, 'scripts')
+        mainClassName = mainClass
         applicationName = name
-        classpath       = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime
+        classpath = project.tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + project.configurations.runtime
 //        defaultJvmOpts = ['-XX:+UseConcMarkSweepGC',
 //                          '-XX:+PrintGCDetails',
 //                          '-Xloggc:./gc.log',
@@ -240,6 +237,7 @@ def createScript(project, mainClass, name) {
         }
     }
 }
+
 applicationDistribution.from("../gradle/java-tron.vmoptions") {
     into "bin"
 }
@@ -248,7 +246,7 @@ applicationDistribution.from("../gradle/java-tron.vmoptions") {
 //        file("$destinationDir/$archiveName").renameTo("$destinationDir/"+'java-tron-'+version+'-bin.zip')
 //    }
 //}
-configurations.archives.artifacts.removeAll {it.type == 'tar'}
+configurations.archives.artifacts.removeAll { it.type == 'tar' }
 applicationName = 'java-tron'
 startScripts.enabled = false
 run.enabled = false
