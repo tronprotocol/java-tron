@@ -50,7 +50,7 @@ public class Account implements Serializable {
   public void setAddress(final byte[] address) {
     if (!DecodeUtil.addressValid(address)) {
       throw new IllegalArgumentException(
-          "The address(" + StringUtil.createReadableString(address) + ") must be a 21 bytes.");
+          "The address(" + StringUtil.createReadableString(address) + ") must be 21 bytes.");
     }
     this.address = address;
   }
@@ -66,7 +66,7 @@ public class Account implements Serializable {
     try {
       Long.parseLong(balance);
     } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("Balance(" + balance + ") must be Long type.");
+      throw new IllegalArgumentException("Balance(" + balance + ") must be a Long type.");
     }
 
     this.balance = balance;
@@ -88,7 +88,7 @@ public class Account implements Serializable {
    */
   public void setAccountName(String accountName) {
     if (StringUtils.isBlank(accountName)) {
-      throw new IllegalArgumentException("Account name must be non-empty.");
+      throw new IllegalArgumentException("Account name must be not be empty.");
     }
 
     this.accountName = accountName;
@@ -135,7 +135,7 @@ public class Account implements Serializable {
    */
   public AccountType getAccountTypeByString(final String accountType) {
     if (accountType == null) {
-      throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
+      throw new IllegalArgumentException("Account type error: Not a Normal/AssetIssue/Contract");
     }
 
     switch (accountType.toUpperCase()) {
@@ -146,7 +146,7 @@ public class Account implements Serializable {
       case ACCOUNT_TYPE_CONTRACT:
         return AccountType.Contract;
       default:
-        throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
+        throw new IllegalArgumentException("Account type error: Not a Normal/AssetIssue/Contract");
     }
   }
 }
