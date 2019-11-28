@@ -1,5 +1,6 @@
 package org.tron.common.utils;
 
+import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,6 @@ public class Commons {
 
   public static final int ADDRESS_SIZE = 42;
   public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
-  public static byte addressPreFixByte = ADD_PRE_FIX_BYTE_MAINNET;
 
   public static byte[] clone(byte[] value) {
     byte[] clone = new byte[value.length];
