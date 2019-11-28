@@ -14,6 +14,7 @@ import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -49,7 +50,6 @@ public class RepositoryImpl implements Repository {
 
   //for energycal
   private long precision = Parameter.ChainConstant.PRECISION;
-  ;
   private long windowSize = Parameter.ChainConstant.WINDOW_SIZE_MS /
       BLOCK_PRODUCED_INTERVAL;
 
@@ -345,7 +345,7 @@ public class RepositoryImpl implements Repository {
     Storage storage;
     if (this.parent != null) {
       Storage parentStorage = parent.getStorage(address);
-      if (VMConfig.getEnergyLimitHardFork()) {
+      if (StorageUtils.getEnergyLimitHardFork()) {
         // deep copy
         storage = new Storage(parentStorage);
       } else {

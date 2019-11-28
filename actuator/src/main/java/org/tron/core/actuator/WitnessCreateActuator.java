@@ -41,11 +41,7 @@ public class WitnessCreateActuator extends AbstractActuator {
           .unpack(WitnessCreateContract.class);
       this.createWitness(witnessCreateContract);
       ret.setStatus(fee, code.SUCESS);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (BalanceInsufficientException e) {
+    } catch (InvalidProtocolBufferException | BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());

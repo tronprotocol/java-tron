@@ -51,7 +51,8 @@ public class UpdateAssetActuator extends AbstractActuator {
 
       AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
-      AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
+      AssetIssueCapsule assetIssueCapsule;
+      AssetIssueCapsule assetIssueCapsuleV2;
 
       AssetIssueStore assetIssueStoreV2 = assetIssueV2Store;
       assetIssueCapsuleV2 = assetIssueStoreV2.get(accountCapsule.getAssetIssuedID().toByteArray());

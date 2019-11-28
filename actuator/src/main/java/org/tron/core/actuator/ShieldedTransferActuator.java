@@ -23,6 +23,7 @@ import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -34,7 +35,6 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ZKProofStore;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -282,7 +282,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
 
     long shieldedTransactionFee = calcFee();
-    byte[] signHash = TransactionUtil.getShieldTransactionHashIgnoreTypeException(tx.getInstance());
+    byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx.getInstance());
 
     if (CollectionUtils.isNotEmpty(spendDescriptions)
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {

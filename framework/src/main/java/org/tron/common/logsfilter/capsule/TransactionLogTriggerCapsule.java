@@ -30,7 +30,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
   @Getter
   @Setter
-  TransactionLogTrigger transactionLogTrigger;
+  private TransactionLogTrigger transactionLogTrigger;
 
   public TransactionLogTriggerCapsule(TransactionCapsule trxCasule, BlockCapsule blockCapsule) {
     transactionLogTrigger = new TransactionLogTrigger();

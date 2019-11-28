@@ -58,7 +58,9 @@ import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.db2.common.DB;
 import org.tron.core.store.AccountStore;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -70,6 +72,8 @@ import org.tron.program.Version;
 public class Args extends CommonParameter {
 
   private static final Args INSTANCE = new Args();
+  private static final String IGNORE_WRONG_WITNESS_ADDRESS_FORMAT =
+          "The localWitnessAccountAddress format is incorrect, ignored";
 
   @Getter
   @Setter
@@ -217,7 +221,7 @@ public class Args extends CommonParameter {
           logger.debug("Got localWitnessAccountAddress from cmd");
         } else {
           INSTANCE.witnessAddress = "";
-          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+          logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
         }
       }
       INSTANCE.localWitnesses.initWitnessAccountAddress();
@@ -238,7 +242,7 @@ public class Args extends CommonParameter {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from config.conf");
         } else {
-          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+          logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
         }
       }
       INSTANCE.localWitnesses.initWitnessAccountAddress();
@@ -266,11 +270,7 @@ public class Args extends CommonParameter {
             ECKey ecKeyPair = credentials.getEcKeyPair();
             String prikey = ByteArray.toHexString(ecKeyPair.getPrivKeyBytes());
             privateKeys.add(prikey);
-          } catch (IOException e) {
-            logger.error(e.getMessage());
-            logger.error("Witness node start faild!");
-            exit(-1);
-          } catch (CipherException e) {
+          } catch (IOException | CipherException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
             exit(-1);
@@ -286,7 +286,7 @@ public class Args extends CommonParameter {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from config.conf");
         } else {
-          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+          logger.warn(IGNORE_WRONG_WITNESS_ADDRESS_FORMAT);
         }
       }
       INSTANCE.localWitnesses.initWitnessAccountAddress();
@@ -672,7 +672,7 @@ public class Args extends CommonParameter {
             : Collections.emptySet();
 
     logConfig();
-    initDBConfig(INSTANCE);
+    initConfig(INSTANCE);
   }
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
@@ -1034,6 +1034,18 @@ public class Args extends CommonParameter {
     logger.info("\n");
   }
 
+  public static void initConfig(Args cfgArgs) {
+    initVMConfig(cfgArgs);
+    initDBConfig(cfgArgs);
+  }
+
+  public static void initVMConfig(Args cfgArgs) {
+    VMConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
+    VMConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
+    VMConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
+  }
+
+
   public static void initDBConfig(Args cfgArgs) {
     if (Objects.nonNull(cfgArgs.getStorage())) {
       DBConfig.setDbVersion(cfgArgs.getStorage().getDbVersion());
@@ -1066,12 +1078,9 @@ public class Args extends CommonParameter {
     DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransactionArgs());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
-    DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
     DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
     DBConfig.setVmTrace(cfgArgs.isVmTrace());
     DBConfig.setDebug(cfgArgs.isDebug());
-    DBConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
-    DBConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
     DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
     DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
@@ -1082,20 +1091,6 @@ public class Args extends CommonParameter {
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
     this.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
     DBConfig.setFullNodeAllowShieldedTransaction(fullNodeAllowShieldedTransaction);
-  }
-
-  /**
-   * Get storage path by name of database
-   *
-   * @param dbName name of database
-   * @return path of that database
-   */
-  public String getOutputDirectoryByDbName(String dbName) {
-    String path = storage.getPathByDbName(dbName);
-    if (!StringUtils.isBlank(path)) {
-      return path;
-    }
-    return getOutputDirectory();
   }
 
   /**
