@@ -125,8 +125,8 @@ public class RuntimeImplTest {
 
     RuntimeImpl runtimeImpl = new RuntimeImpl(dbManager);
     runtimeImpl.execute(
-        new TransactionContext(null, new TransactionCapsule(trx), StoreFactory.getInstance(), true,
-            true));
+        new TransactionContext(null, new TransactionCapsule(trx),
+            StoreFactory.getInstance(), true, true));
 
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     AccountCapsule creatorAccount = repository.getAccount(creatorAddress);
@@ -186,7 +186,8 @@ public class RuntimeImplTest {
 
   @Test
   public void getCallerAndCreatorEnergyLimit2With0PercentTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
 
     long value = 0;
     long feeLimit = 1_000_000_000L; // sun
@@ -221,8 +222,8 @@ public class RuntimeImplTest {
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     RuntimeImpl runtimeImpl = new RuntimeImpl(dbManager);
     runtimeImpl.execute(
-        new TransactionContext(null, new TransactionCapsule(trx), StoreFactory.getInstance(), true,
-            true));
+        new TransactionContext(null, new TransactionCapsule(trx),
+            StoreFactory.getInstance(), true, true));
 
     AccountCapsule creatorAccount = repository.getAccount(creatorAddress);
     AccountCapsule callerAccount = repository.getAccount(callerAddress);
@@ -289,7 +290,8 @@ public class RuntimeImplTest {
 
   @Test
   public void getCallerAndCreatorEnergyLimit2With40PercentTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
 
     long value = 0;
     long feeLimit = 1_000_000_000L; // sun
@@ -324,8 +326,8 @@ public class RuntimeImplTest {
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     RuntimeImpl runtimeImpl = new RuntimeImpl(dbManager);
     runtimeImpl.execute(
-        new TransactionContext(null, new TransactionCapsule(trx), StoreFactory.getInstance(), true,
-            true));
+        new TransactionContext(null, new TransactionCapsule(trx),
+            StoreFactory.getInstance(), true, true));
 
     AccountCapsule creatorAccount = repository.getAccount(creatorAddress);
     AccountCapsule callerAccount = repository.getAccount(callerAddress);
@@ -368,7 +370,8 @@ public class RuntimeImplTest {
 
   @Test
   public void getCallerAndCreatorEnergyLimit2With100PercentTest()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
+      ContractValidateException {
 
     long value = 0;
     long feeLimit = 1_000_000_000L; // sun
@@ -403,8 +406,8 @@ public class RuntimeImplTest {
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     RuntimeImpl runtimeImpl = new RuntimeImpl(dbManager);
     runtimeImpl.execute(
-        new TransactionContext(null, new TransactionCapsule(trx), StoreFactory.getInstance(), true,
-            true));
+        new TransactionContext(null, new TransactionCapsule(trx),
+            StoreFactory.getInstance(), true, true));
 
     AccountCapsule creatorAccount = repository.getAccount(creatorAddress);
     AccountCapsule callerAccount = repository.getAccount(callerAddress);

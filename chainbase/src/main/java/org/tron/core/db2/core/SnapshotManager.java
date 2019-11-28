@@ -318,8 +318,8 @@ public class SnapshotManager implements RevokingDatabase {
     }
 
     checkTmpStore.getDbSource().updateByBatch(batch.entrySet().stream()
-        .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
+            .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
+            .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
         WriteOptionsWrapper.getInstance().sync(DBConfig.isDbSync()));
   }
 

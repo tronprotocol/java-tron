@@ -138,8 +138,8 @@ public class UpdateSettingContractActuatorTest {
       // assert result state and consume_user_resource_percent
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getConsumeUserResourcePercent(),
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getConsumeUserResourcePercent(),
           TARGET_PERCENT);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
@@ -275,8 +275,8 @@ public class UpdateSettingContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getConsumeUserResourcePercent(),
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getConsumeUserResourcePercent(),
           TARGET_PERCENT);
 
       // second
@@ -285,8 +285,8 @@ public class UpdateSettingContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getConsumeUserResourcePercent(),
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS))
+              .getConsumeUserResourcePercent(),
           90L);
 
     } catch (ContractValidateException e) {

@@ -9,6 +9,8 @@ import org.tron.core.exception.P2pException;
  */
 public class TronMessageFactory extends MessageFactory {
 
+  private static final String DATA_LEN = ", len=";
+
   @Override
   public TronMessage create(byte[] data) throws Exception {
     try {
@@ -19,7 +21,7 @@ public class TronMessageFactory extends MessageFactory {
       throw e;
     } catch (final Exception e) {
       throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED,
-          "type=" + data[0] + ", len=" + data.length + ", error msg: " + e.getMessage());
+          "type=" + data[0] + DATA_LEN + data.length + ", error msg: " + e.getMessage());
     }
   }
 
@@ -27,7 +29,7 @@ public class TronMessageFactory extends MessageFactory {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     if (receivedTypes == null) {
       throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
-          "type=" + type + ", len=" + packed.length);
+          "type=" + type + DATA_LEN + packed.length);
     }
     switch (receivedTypes) {
       case TRX:
@@ -54,7 +56,7 @@ public class TronMessageFactory extends MessageFactory {
         return new TransactionInventoryMessage(packed);
       default:
         throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
-            receivedTypes.toString() + ", len=" + packed.length);
+            receivedTypes.toString() + DATA_LEN + packed.length);
     }
   }
 }

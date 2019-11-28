@@ -74,6 +74,8 @@ public class JsonFormat {
       Pattern.CASE_INSENSITIVE);
   private static final String WRITING_STRING_BUILDER_EXCEPTION
       = "Writing to a StringBuilder threw an IOException (should never happen).";
+  private static final String EXPECTED_STRING = "Expected string.";
+  private static final String MISSING_END_QUOTE = "String missing ending quote.";
 
   /**
    * Outputs a textual representation of the Protocol Message supplied into the parameter output.
@@ -200,6 +202,29 @@ public class JsonFormat {
     // the case. Oh well.
 
     merge(toStringBuilder(input), extensionRegistry, builder, selfType);
+  }
+
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   * Extensions will be recognized if they are registered in {@code extensionRegistry}.
+   */
+  public static void merge(CharSequence input,
+      ExtensionRegistry extensionRegistry,
+      Message.Builder builder, boolean selfType) throws ParseException {
+    Tokenizer tokenizer = new Tokenizer(input);
+
+    // Based on the state machine @ http://json.org/
+
+    tokenizer.consume("{"); // Needs to happen when the object starts.
+    while (!tokenizer.tryConsume("}")) { // Continue till the object is done
+      mergeField(tokenizer, extensionRegistry, builder, selfType);
+    }
+    // Test to make sure the tokenizer has reached the end of the stream.
+    if (!tokenizer.atEnd()) {
+      throw tokenizer.parseException(
+          "Expecting the end of the stream, but there seems to be more data!  "
+              + "Check the input for a valid JSON format.");
+    }
   }
 
   public static String printErrorMsg(Exception ex) {
@@ -421,28 +446,6 @@ public class JsonFormat {
     }
   }
 
-  /**
-   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
-   * Extensions will be recognized if they are registered in {@code extensionRegistry}.
-   */
-  public static void merge(CharSequence input,
-      ExtensionRegistry extensionRegistry,
-      Message.Builder builder, boolean selfType) throws ParseException {
-    Tokenizer tokenizer = new Tokenizer(input);
-
-    // Based on the state machine @ http://json.org/
-
-    tokenizer.consume("{"); // Needs to happen when the object starts.
-    while (!tokenizer.tryConsume("}")) { // Continue till the object is done
-      mergeField(tokenizer, extensionRegistry, builder, selfType);
-    }
-    // Test to make sure the tokenizer has reached the end of the stream.
-    if (!tokenizer.atEnd()) {
-      throw tokenizer.parseException(
-          "Expecting the end of the stream, but there seems to be more data!  "
-              + "Check the input for a valid JSON format.");
-    }
-  }
 
   // TODO(chrisn): See if working around java.io.Reader#read(CharBuffer)
   // overhead is worthwhile
@@ -1483,12 +1486,12 @@ public class JsonFormat {
     public String consumeString() throws ParseException {
       char quote = currentToken.length() > 0 ? currentToken.charAt(0) : '\0';
       if ((quote != '\"') && (quote != '\'')) {
-        throw parseException("Expected string.");
+        throw parseException(EXPECTED_STRING);
       }
 
       if ((currentToken.length() < 2)
           || (currentToken.charAt(currentToken.length() - 1) != quote)) {
-        throw parseException("String missing ending quote.");
+        throw parseException(MISSING_END_QUOTE);
       }
 
       try {
@@ -1504,12 +1507,12 @@ public class JsonFormat {
     public ByteString consumeByteString() throws ParseException {
       char quote = currentToken.length() > 0 ? currentToken.charAt(0) : '\0';
       if ((quote != '\"') && (quote != '\'')) {
-        throw parseException("Expected string.");
+        throw parseException(EXPECTED_STRING);
       }
 
       if ((currentToken.length() < 2)
           || (currentToken.charAt(currentToken.length() - 1) != quote)) {
-        throw parseException("String missing ending quote.");
+        throw parseException(MISSING_END_QUOTE);
       }
 
       try {
@@ -1526,12 +1529,12 @@ public class JsonFormat {
         throws ParseException {
       char quote = currentToken.length() > 0 ? currentToken.charAt(0) : '\0';
       if ((quote != '\"') && (quote != '\'')) {
-        throw parseException("Expected string.");
+        throw parseException(EXPECTED_STRING);
       }
 
       if ((currentToken.length() < 2)
           || (currentToken.charAt(currentToken.length() - 1) != quote)) {
-        throw parseException("String missing ending quote.");
+        throw parseException(MISSING_END_QUOTE);
       }
 
       try {

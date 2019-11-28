@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
@@ -20,6 +20,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -34,8 +35,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object result) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)result;
-    if (Objects.isNull(ret)){
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
       throw new RuntimeException("TransactionResultCapsule is null");
     }
 
@@ -94,6 +95,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
         dynamicStore
             .addTotalEnergyWeight(frozenBalance / 1000_000L);
         break;
+      default:
+        logger.debug("Resource Code Error.");
     }
 
     accountCapsule.setBalance(newBalance);
@@ -129,7 +132,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = freezeBalanceContract.getOwnerAddress().toByteArray();
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
@@ -165,7 +168,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     long minFrozenTime = dynamicStore.getMinFrozenTime();
     long maxFrozenTime = dynamicStore.getMaxFrozenTime();
 
-    boolean needCheckFrozeTime = DBConfig.getCheckFrozenTime() == 1;//for test
+    boolean needCheckFrozeTime = VMConfig.getCheckFrozenTime() == 1;//for test
     if (needCheckFrozeTime && !(frozenDuration >= minFrozenTime
         && frozenDuration <= maxFrozenTime)) {
       throw new ContractValidateException(
@@ -192,7 +195,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
             "receiverAddress must not be the same as ownerAddress");
       }
 
-      if (!Commons.addressValid(receiverAddress)) {
+      if (!DecodeUtil.addressValid(receiverAddress)) {
         throw new ContractValidateException("Invalid receiverAddress");
       }
 

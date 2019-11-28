@@ -39,9 +39,7 @@ public class ActuatorFactory {
           try {
             actuatorList
                 .add(getActuatorByContract(contract, manager, transactionCapsule));
-          } catch (IllegalAccessException e) {
-            e.printStackTrace();
-          } catch (InstantiationException e) {
+          } catch (IllegalAccessException | InstantiationException e) {
             e.printStackTrace();
           }
         });

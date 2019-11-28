@@ -45,7 +45,7 @@ public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> i
   public AccountStateEntity getSolidityAccount(byte[] key) {
     return getAccount(key, trieService.getSolidityAccountStateRootHash());
   }
-  
+
   @Override
   public boolean isEmpty() {
     return super.size() <= 0;

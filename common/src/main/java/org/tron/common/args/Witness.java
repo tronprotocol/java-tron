@@ -13,13 +13,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core.config.args;
+package org.tron.common.args;
+
+import static org.tron.common.utils.DecodeUtil.addressValid;
 
 import java.io.Serializable;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 
 public class Witness implements Serializable {
@@ -40,7 +41,7 @@ public class Witness implements Serializable {
    * set address.
    */
   public void setAddress(final byte[] address) {
-    if (!Commons.addressValid(address)) {
+    if (!addressValid(address)) {
       throw new IllegalArgumentException(
           "The address(" + StringUtil.createReadableString(address) + ") must be a 21 bytes.");
     }

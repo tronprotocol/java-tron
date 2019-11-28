@@ -137,6 +137,26 @@ public class ParticipateAssetIssueActuatorTest {
             .build());
   }
 
+  private Any getContract(long count, String assetName) {
+    return Any.pack(
+        ParticipateAssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+            .setAssetName(ByteString.copyFrom(ByteArray.fromString(assetName)))
+            .setAmount(count)
+            .build());
+  }
+
+  private Any getContract(long count, ByteString assetName) {
+    return Any.pack(
+        ParticipateAssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+            .setAssetName(assetName)
+            .setAmount(count)
+            .build());
+  }
+
   private Any getContractWithOwner(long count, String ownerAddress) {
     String assertName = ASSET_NAME;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
@@ -164,26 +184,6 @@ public class ParticipateAssetIssueActuatorTest {
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toAddress)))
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName)))
-            .setAmount(count)
-            .build());
-  }
-
-  private Any getContract(long count, String assetName) {
-    return Any.pack(
-        ParticipateAssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
-            .setAssetName(ByteString.copyFrom(ByteArray.fromString(assetName)))
-            .setAmount(count)
-            .build());
-  }
-
-  private Any getContract(long count, ByteString assetName) {
-    return Any.pack(
-        ParticipateAssetIssueContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
-            .setAssetName(assetName)
             .setAmount(count)
             .build());
   }
@@ -1049,7 +1049,8 @@ public class ParticipateAssetIssueActuatorTest {
 
   @Test
   /*
-   * Asset name length must between 1 to 32 and can not contain space and other unreadable character, and can not contain chinese characters.
+   * Asset name length must between 1 to 32 and can not contain space and other unreadable
+   * character, and can not contain chinese characters.
    */
 
   //asset name validation which is unnecessary has been removed!
@@ -1093,7 +1094,8 @@ public class ParticipateAssetIssueActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 1000);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + 1000);
-      Assert.assertEquals(owner.getAssetMap().get(assetName).longValue(), (1000L) / TRX_NUM * NUM);
+      Assert.assertEquals(owner.getAssetMap().get(assetName).longValue(),
+          (1000L) / TRX_NUM * NUM);
       Assert.assertEquals(toAccount.getAssetMap().get(assetName).longValue(),
           TOTAL_SUPPLY - (1000L) / TRX_NUM * NUM);
     } catch (ContractValidateException e) {
@@ -1104,8 +1106,10 @@ public class ParticipateAssetIssueActuatorTest {
 
     // 1 byte readable character ok.
     assetName = "t";
-    initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000, assetName);
+    initAssetIssue(dbManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
+        assetName);
     actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(1000L, assetName));
@@ -1121,7 +1125,8 @@ public class ParticipateAssetIssueActuatorTest {
 
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 2000);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + 2000);
-      Assert.assertEquals(owner.getAssetMap().get(assetName).longValue(), (1000L) / TRX_NUM * NUM);
+      Assert.assertEquals(owner.getAssetMap().get(assetName).longValue(),
+          (1000L) / TRX_NUM * NUM);
       Assert.assertEquals(toAccount.getAssetMap().get(assetName).longValue(),
           TOTAL_SUPPLY - (1000L) / TRX_NUM * NUM);
     } catch (ContractValidateException e) {
@@ -1284,7 +1289,8 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE);
 
       Assert.assertTrue(isNullOrZero(owner.getAssetMapV2().get(String.valueOf(id))));
-      Assert.assertEquals(toAccount.getAssetMapV2().get(String.valueOf(id)).longValue(), 10000);
+      Assert.assertEquals(
+          toAccount.getAssetMapV2().get(String.valueOf(id)).longValue(), 10000);
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -1457,13 +1463,15 @@ public class ParticipateAssetIssueActuatorTest {
     owner.setBalance(100000000000000L);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(8589934597L));
+    actuator.setChainBaseManager(
+        dbManager.getChainBaseManager()).setAny(getContract(8589934597L));
 
     //NUM = 2147483647;
     //LONG_MAX = 9223372036854775807L = 0x7fffffffffffffff
     //4294967298 * 2147483647 = 9223372036854775806 = 0x7ffffffffffffffe
     //8589934596 * 2147483647 = 4294967298 * 2147483647 *2 = 0xfffffffffffffffc = -4
-    //8589934597 * 2147483647 = 8589934596 * 2147483647 + 2147483647 = -4 + 2147483647 = 2147483643  vs 9223372036854775806*2 + 2147483647
+    //8589934597 * 2147483647 = 8589934596 * 2147483647 + 2147483647 = -4 + 2147483647 =
+    // 2147483643  vs 9223372036854775806*2 + 2147483647
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -1502,13 +1510,15 @@ public class ParticipateAssetIssueActuatorTest {
     owner.setBalance(100000000000000L);
     dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(8589934597L));
+    actuator.setChainBaseManager(
+        dbManager.getChainBaseManager()).setAny(getContract(8589934597L));
 
     //NUM = 2147483647;
     //LONG_MAX = 9223372036854775807L = 0x7fffffffffffffff
     //4294967298 * 2147483647 = 9223372036854775806 = 0x7ffffffffffffffe
     //8589934596 * 2147483647 = 4294967298 * 2147483647 *2 = 0xfffffffffffffffc = -4
-    //8589934597 * 2147483647 = 8589934596 * 2147483647 + 2147483647 = -4 + 2147483647 = 2147483643  vs 9223372036854775806*2 + 2147483647
+    //8589934597 * 2147483647 = 8589934596 * 2147483647 + 2147483647 = -4 + 2147483647 = 2147483643
+    // vs 9223372036854775806*2 + 2147483647
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

@@ -52,10 +52,6 @@ public class WitnessControllerTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(19000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1);
 
-//    assertEquals(21, dbManager.getWitnessController().getAbSlotAtTime(21500));
-//    assertEquals(2, dbManager.getWitnessController().getSlotAtTime(21500));
-//    assertEquals(19, dbManager.getWitnessController().getHeadSlot());
-
   }
 
   //  @Test
@@ -110,26 +106,4 @@ public class WitnessControllerTest {
     assertEquals(a, dposSlot.getScheduledWitness(3));
     assertEquals(b, dposSlot.getScheduledWitness(4));
   }
-//
-//  @Test
-//  public void testTryRemoveThePowerOfTheGr() {
-//
-//    Witness witness = Args.getInstance().getGenesisBlock().getWitnesses().get(0);
-//    assertEquals(105, witness.getVoteCount());
-//
-//    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(-1);
-//    consensusDelegate.tryRemoveThePowerOfTheGr();
-//    assertEquals(105, dbManager.getWitnessStore().get(witness.getAddress()).getVoteCount());
-//
-//    dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(1);
-//    ConsensusDelegate.getWitnessController().tryRemoveThePowerOfTheGr();
-//    assertEquals(0, dbManager.getWitnessStore().get(witness.getAddress()).getVoteCount());
-//
-//    dbManager.getWitnessController().tryRemoveThePowerOfTheGr();
-//    assertEquals(0, dbManager.getWitnessStore().get(witness.getAddress()).getVoteCount());
-//
-//
-//  }
-
-
 }

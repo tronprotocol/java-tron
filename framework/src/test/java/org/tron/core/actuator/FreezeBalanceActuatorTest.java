@@ -520,7 +520,7 @@ public class FreezeBalanceActuatorTest {
       long maxFrozenTime = dbManager.getDynamicPropertiesStore().getMaxFrozenTime();
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("frozenDuration must be less than " + maxFrozenTime + " days "
-              + "and more than " + minFrozenTime + " days", e.getMessage());
+          + "and more than " + minFrozenTime + " days", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -544,7 +544,7 @@ public class FreezeBalanceActuatorTest {
       long maxFrozenTime = dbManager.getDynamicPropertiesStore().getMaxFrozenTime();
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("frozenDuration must be less than " + maxFrozenTime + " days "
-              + "and more than " + minFrozenTime + " days", e.getMessage());
+          + "and more than " + minFrozenTime + " days", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

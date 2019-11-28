@@ -29,6 +29,7 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.crypto.jce.TronCastleProvider;
 
 @Slf4j(topic = "crypto")
@@ -130,19 +131,6 @@ public class Hash {
       logger.error("Can't find such algorithm", e);
       throw new RuntimeException(e);
     }
-  }
-
-  /**
-   * Calculates RIGTMOST160(SHA3(input)). This is used in address calculations. *
-   *
-   * @param input - data
-   * @return - add_pre_fix + 20 right bytes of the hash keccak of the data
-   */
-  public static byte[] sha3omit12(byte[] input) {
-    byte[] hash = sha3(input);
-    byte[] address = copyOfRange(hash, 11, hash.length);
-    address[0] = Commons.addressPreFixByte;
-    return address;
   }
 
   public static byte[] encodeElement(byte[] srcData) {
