@@ -40,7 +40,7 @@ import org.tron.core.db2.common.Instance;
 public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>>, Instance<RocksDbDataSourceImpl> {
 
-  private ReadOptions readOpts;
+  ReadOptions readOpts;
   private static final String FAIL_TO_INIT_DATABASE = "Failed to initialize database";
   private String dataBaseName;
   private RocksDB database;
