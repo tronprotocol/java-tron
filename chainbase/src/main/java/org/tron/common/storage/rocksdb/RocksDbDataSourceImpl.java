@@ -40,12 +40,14 @@ import org.tron.core.db2.common.Instance;
 public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>>, Instance<RocksDbDataSourceImpl> {
 
-  ReadOptions readOpts;
+  private ReadOptions readOpts;
   private String dataBaseName;
   private RocksDB database;
   private boolean alive;
   private String parentPath;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
+  private static final String KEY_ENGINE = "ENGINE";
+  private static final String ROCKSDB = "ROCKSDB";
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings) {
     this.dataBaseName = name;
@@ -149,18 +151,15 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
 
     // for the first init engine
-    String engine = PropUtil.readProperty(enginePath, "ENGINE");
+    String engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
     if (engine.equals("")) {
-      if (!PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB")) {
+      if (!PropUtil.writeProperty(enginePath, KEY_ENGINE, ROCKSDB)) {
         return false;
       }
     }
-    engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("ROCKSDB")) {
-      return true;
-    } else {
-      return false;
-    }
+    engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
+
+    return engine.equals(ROCKSDB);
   }
 
   public void initDB() {

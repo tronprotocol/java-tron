@@ -156,7 +156,7 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
       TransactionCapsule trxCap = new TransactionCapsule(transaction);
       trxCap.setResultCode(contractResult.OUT_OF_ENERGY);
       TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-          new RuntimeImpl(dbManager));
+          new RuntimeImpl());
       dbManager.consumeBandwidth(trxCap, trace);
       BlockCapsule blockCapsule = null;
       trace.init(blockCapsule);
@@ -221,7 +221,7 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
             .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)).build();
     TransactionCapsule trxCap = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(dbManager));
+        new RuntimeImpl());
     dbManager.consumeBandwidth(trxCap, trace);
     BlockCapsule blockCapsule = null;
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
