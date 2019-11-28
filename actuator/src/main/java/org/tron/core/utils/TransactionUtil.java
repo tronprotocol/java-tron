@@ -131,6 +131,14 @@ public class TransactionUtil {
     return !(id.length > 1 && id[0] == '0');
   }
 
+  /**
+   * Get sender.
+   */
+ /* public static byte[] getSender(Transaction tx) {
+    byte[] pubKey = tx.getRawData().getVin(0).getRawData().getPubKey().toByteArray();
+    return ECKey.computeAddress(pubKey);
+  } */
+
   //make sure that contractType is validated before
   //No exception will be thrown here
   public static byte[] getShieldTransactionHashIgnoreTypeException(Transaction tx) {
@@ -229,5 +237,6 @@ public class TransactionUtil {
       return 0L;
     }
   }
+
 
 }
