@@ -52,6 +52,14 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
         .build();
   }
 
+  public void setPricesList(List<MarketPrice> pricesList) {
+    this.priceList = this.priceList.toBuilder()
+        .clearPrices()
+        .addAllPrices(pricesList)
+        .build();
+  }
+
+
   public List<MarketPrice> getPricesList() {
     return this.priceList.getPricesList();
   }

@@ -23,6 +23,10 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
     }
   }
 
+  public MarketOrderIdListCapsule() {
+    this.orderIdList = MarketOrderIdList.newBuilder()
+        .build();
+  }
   public MarketOrderIdListCapsule( List<ByteString> o) {
     this.orderIdList = MarketOrderIdList.newBuilder()
         .addAllOrders(o)
