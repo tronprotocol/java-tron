@@ -77,7 +77,9 @@ public final class VMUtils {
       } else {
         try {
           file.getParentFile().mkdirs();
-          file.createNewFile();
+          if (!file.createNewFile()){
+            logger.error("failed to create file {}", file.getPath());
+          }
           result = file;
         } catch (IOException e) {
           // ignored
@@ -193,9 +195,7 @@ public final class VMUtils {
             "Validate InternalTransfer error, balance is not sufficient.");
       }
 
-      if (toAccount != null) {
-        long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
-      }
+      Math.addExact(toAccount.getBalance(), amount);
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -210,7 +210,6 @@ public final class VMUtils {
       throw new ContractValidateException("No deposit!");
     }
 
-    long fee = 0;
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
 
     if (!DecodeUtil.addressValid(ownerAddress)) {
@@ -219,9 +218,7 @@ public final class VMUtils {
     if (!DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
-//    if (!TransactionUtil.validAssetName(assetName)) {
-//      throw new ContractValidateException("Invalid assetName");
-//    }
+
     if (amount <= 0) {
       throw new ContractValidateException("Amount must greater than 0.");
     }

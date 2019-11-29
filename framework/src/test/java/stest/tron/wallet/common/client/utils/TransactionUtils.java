@@ -33,9 +33,6 @@ import org.tron.protos.contract.SmartContractOuterClass;
 import org.tron.protos.contract.VoteAssetContractOuterClass;
 import org.tron.protos.contract.WitnessContract;
 
-//import org.tron.protos.Protocol.DeferredStage;
-
-
 public class TransactionUtils {
 
   public static final int NORMALTRANSACTION = 0;
