@@ -160,7 +160,7 @@ public final class VMUtils {
 
 
   public static boolean validateForSmartContract(Repository deposit, byte[] ownerAddress,
-      byte[] toAddress, long amount) throws ContractValidateException {
+                                                 byte[] toAddress, long amount) throws ContractValidateException {
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress!");
     }
@@ -180,7 +180,7 @@ public final class VMUtils {
     AccountCapsule toAccount = deposit.getAccount(toAddress);
     if (toAccount == null) {
       throw new ContractValidateException(
-          "Validate InternalTransfer error, no ToAccount. And not allowed to create an account in a smartContract.");
+              "Validate InternalTransfer error, no ToAccount. And not allowed to create an account in a smartContract.");
     }
 
     long balance = ownerAccount.getBalance();
@@ -192,8 +192,10 @@ public final class VMUtils {
     try {
       if (balance < amount) {
         throw new ContractValidateException(
-            "Validate InternalTransfer error, balance is not sufficient.");
+                "Validate InternalTransfer error, balance is not sufficient.");
       }
+
+      Math.addExact(toAccount.getBalance(), amount);
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -203,7 +205,7 @@ public final class VMUtils {
   }
 
   public static boolean validateForSmartContract(Repository deposit, byte[] ownerAddress,
-      byte[] toAddress, byte[] tokenId, long amount) throws ContractValidateException {
+                                                 byte[] toAddress, byte[] tokenId, long amount) throws ContractValidateException {
     if (deposit == null) {
       throw new ContractValidateException("No deposit!");
     }
@@ -234,8 +236,8 @@ public final class VMUtils {
       throw new ContractValidateException("No asset !");
     }
     if (!Commons.getAssetIssueStoreFinal(deposit.getDynamicPropertiesStore(),
-        deposit.getAssetIssueStore(), deposit.getAssetIssueV2Store())
-        .has(tokenIdWithoutLeadingZero)) {
+            deposit.getAssetIssueStore(), deposit.getAssetIssueV2Store())
+            .has(tokenIdWithoutLeadingZero)) {
       throw new ContractValidateException("No asset !");
     }
 
@@ -258,10 +260,25 @@ public final class VMUtils {
     }
 
     AccountCapsule toAccount = deposit.getAccount(toAddress);
-    if (null != toAccount) {
+    if (toAccount != null) {
+      if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+      } else {
+        assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+      }
+      if (assetBalance != null) {
+        try {
+          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+        } catch (Exception e) {
+          logger.debug(e.getMessage(), e);
+          throw new ContractValidateException(e.getMessage());
+        }
+      }
+    } else {
       throw new ContractValidateException(
               "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
     }
+
     return true;
   }
 
