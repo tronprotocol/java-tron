@@ -22,6 +22,7 @@ import static org.tron.protos.Contract.VoteWitnessContract;
 import static org.tron.protos.Contract.WitnessCreateContract;
 import static org.tron.protos.Contract.WitnessUpdateContract;
 
+import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
@@ -274,14 +275,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   //No exception will be thrown here
   public static byte[] getShieldTransactionHashIgnoreTypeException(TransactionCapsule tx) {
     try {
-      return hashShieldTransaction(tx);
+      return hashShieldTransaction(tx, Args.getInstance().getZenTokenId());
     } catch (ContractValidateException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }
     return null;
   }
 
-  public static byte[] hashShieldTransaction(TransactionCapsule tx)
+  public static byte[] hashShieldTransaction(TransactionCapsule tx, String tokenId)
       throws ContractValidateException, InvalidProtocolBufferException {
     Any contractParameter = tx.getInstance().getRawData().getContract(0).getParameter();
     if (!contractParameter.is(ShieldedTransferContract.class)) {
@@ -314,8 +315,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
     Transaction transaction = tx.getInstance().toBuilder().clearRawData()
         .setRawData(rawBuilder).build();
-
-    return Sha256Hash.of(transaction.getRawData().toByteArray())
+    byte[] mergedByte = Bytes.concat(Sha256Hash.of(tokenId.getBytes()).getBytes(),
+        transaction.getRawData().toByteArray());
+    return Sha256Hash.of(mergedByte)
         .getBytes();
   }
 
