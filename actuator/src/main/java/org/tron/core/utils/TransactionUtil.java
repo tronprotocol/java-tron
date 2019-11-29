@@ -16,16 +16,11 @@
 package org.tron.core.utils;
 
 import com.google.protobuf.Any;
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
-import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import org.tron.protos.contract.ShieldContract.SpendDescription;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
@@ -145,10 +140,8 @@ public class TransactionUtil {
 
 
   public static long getCallValue(Transaction.Contract contract) {
-    int energyForTrx;
     try {
       Any contractParameter = contract.getParameter();
-      long callValue;
       switch (contract.getType()) {
         case TriggerSmartContract:
           return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
@@ -166,10 +159,8 @@ public class TransactionUtil {
   }
 
   public static long getCallTokenValue(Transaction.Contract contract) {
-    int energyForTrx;
     try {
       Any contractParameter = contract.getParameter();
-      long callValue;
       switch (contract.getType()) {
         case TriggerSmartContract:
           return contractParameter.unpack(TriggerSmartContract.class).getCallTokenValue();
