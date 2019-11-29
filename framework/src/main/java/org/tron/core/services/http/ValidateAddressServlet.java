@@ -23,7 +23,7 @@ public class ValidateAddressServlet extends RateLimiterServlet {
     boolean result = true;
     String msg;
     try {
-      if (input.length() == Commons.ADDRESS_SIZE) {
+      if (input.length() == DecodeUtil.ADDRESS_SIZE) {
         //hex
         address = ByteArray.fromHexString(input);
         msg = "Hex string format";

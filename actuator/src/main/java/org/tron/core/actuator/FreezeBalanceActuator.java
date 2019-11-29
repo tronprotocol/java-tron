@@ -20,6 +20,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -167,7 +168,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     long minFrozenTime = dynamicStore.getMinFrozenTime();
     long maxFrozenTime = dynamicStore.getMaxFrozenTime();
 
-    boolean needCheckFrozeTime = DBConfig.getCheckFrozenTime() == 1;//for test
+    boolean needCheckFrozeTime = VMConfig.getCheckFrozenTime() == 1;//for test
     if (needCheckFrozeTime && !(frozenDuration >= minFrozenTime
         && frozenDuration <= maxFrozenTime)) {
       throw new ContractValidateException(
