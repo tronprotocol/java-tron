@@ -145,10 +145,8 @@ public class TransactionUtil {
 
 
   public static long getCallValue(Transaction.Contract contract) {
-    int energyForTrx;
     try {
       Any contractParameter = contract.getParameter();
-      long callValue;
       switch (contract.getType()) {
         case TriggerSmartContract:
           return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
@@ -166,10 +164,8 @@ public class TransactionUtil {
   }
 
   public static long getCallTokenValue(Transaction.Contract contract) {
-    int energyForTrx;
     try {
       Any contractParameter = contract.getParameter();
-      long callValue;
       switch (contract.getType()) {
         case TriggerSmartContract:
           return contractParameter.unpack(TriggerSmartContract.class).getCallTokenValue();
