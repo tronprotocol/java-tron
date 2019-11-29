@@ -11,7 +11,7 @@ import "core/contract/balance_contract.proto";
 import "core/contract/proposal_contract.proto";
 import "core/contract/storage_contract.proto";
 import "core/contract/exchange_contract.proto";
-import "core/contract/maker_contract.proto";
+import "core/contract/market_contract.proto";
 import "core/contract/smart_contract.proto";
 import "core/contract/shield_contract.proto";
 
@@ -287,19 +287,19 @@ service Wallet {
   rpc ExchangeTransaction (ExchangeTransactionContract) returns (TransactionExtention) {
   }
 
-  rpc MakerSellAsset (MakerSellAssetContract) returns (TransactionExtention) {
+  rpc MarketSellAsset (MarketSellAssetContract) returns (TransactionExtention) {
   }
 
-  rpc MakerCancelOrder (MakerCancelOrderContract) returns (TransactionExtention) {
+  rpc MarketCancelOrder (MarketCancelOrderContract) returns (TransactionExtention) {
   }
 
-//  rpc GetMakerOrderById (BytesMessage) returns (MakerOrderList) {
+//  rpc GetMarketOrderById (BytesMessage) returns (MarketOrderList) {
 //  }
 
-  rpc GetMakerOrderByAccount (BytesMessage) returns (MakerOrderList) {
+  rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
   }
 
-  rpc GetMakerOrderByPair (MakerOrderPair) returns (MakerPriceList) {
+  rpc GetMarketOrderByPair (MarketOrderPair) returns (MarketPriceList) {
   }
 
 

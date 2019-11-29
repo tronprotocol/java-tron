@@ -4,28 +4,27 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.protos.Protocol.MakerOrderIdList;
-import org.tron.protos.Protocol.MakerOrderIdList;
+import org.tron.protos.Protocol.MarketOrderIdList;
 
 @Slf4j(topic = "capsule")
-public class MakerOrderIdListCapsule implements ProtoCapsule<MakerOrderIdList> {
+public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList> {
 
-  private MakerOrderIdList orderIdList;
+  private MarketOrderIdList orderIdList;
 
-  public MakerOrderIdListCapsule(final MakerOrderIdList orderIdList) {
+  public MarketOrderIdListCapsule(final MarketOrderIdList orderIdList) {
     this.orderIdList = orderIdList;
   }
 
-  public MakerOrderIdListCapsule(final byte[] data) {
+  public MarketOrderIdListCapsule(final byte[] data) {
     try {
-      this.orderIdList = MakerOrderIdList.parseFrom(data);
+      this.orderIdList = MarketOrderIdList.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }
   }
 
-  public MakerOrderIdListCapsule( List<ByteString> o) {
-    this.orderIdList = MakerOrderIdList.newBuilder()
+  public MarketOrderIdListCapsule( List<ByteString> o) {
+    this.orderIdList = MarketOrderIdList.newBuilder()
         .addAllOrders(o)
         .build();
   }
@@ -57,7 +56,7 @@ public class MakerOrderIdListCapsule implements ProtoCapsule<MakerOrderIdList> {
   }
 
   @Override
-  public MakerOrderIdList getInstance() {
+  public MarketOrderIdList getInstance() {
     return this.orderIdList;
   }
 

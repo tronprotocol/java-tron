@@ -18,7 +18,7 @@ package org.tron.common.zksnark;
 import com.google.protobuf.ByteString;
 import org.tron.common.utils.ByteArray;
 
-public class MakerUtils {
+public class MarketUtils {
 
 
   public static byte[] calculateOrderId(ByteString address, byte[] sellTokenId,

@@ -4,29 +4,28 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.protos.Protocol.MakerPriceList;
-import org.tron.protos.Protocol.MakerPriceList;
-import org.tron.protos.Protocol.MakerPriceList.MakerPrice;
+import org.tron.protos.Protocol.MarketPriceList;
+import org.tron.protos.Protocol.MarketPriceList.MarketPrice;
 
 @Slf4j(topic = "capsule")
-public class MakerPriceListCapsule implements ProtoCapsule<MakerPriceList> {
+public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
 
-  private MakerPriceList priceList;
+  private MarketPriceList priceList;
 
-  public MakerPriceListCapsule(final MakerPriceList priceList) {
+  public MarketPriceListCapsule(final MarketPriceList priceList) {
     this.priceList = priceList;
   }
 
-  public MakerPriceListCapsule(final byte[] data) {
+  public MarketPriceListCapsule(final byte[] data) {
     try {
-      this.priceList = MakerPriceList.parseFrom(data);
+      this.priceList = MarketPriceList.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }
   }
 
-  public MakerPriceListCapsule(byte[] sellTokenId, byte[] buyTokenId) {
-    this.priceList = MakerPriceList.newBuilder()
+  public MarketPriceListCapsule(byte[] sellTokenId, byte[] buyTokenId) {
+    this.priceList = MarketPriceList.newBuilder()
         .setSellTokenId(ByteString.copyFrom(sellTokenId))
         .setBuyTokenId(ByteString.copyFrom(buyTokenId))
         .build();
@@ -53,12 +52,12 @@ public class MakerPriceListCapsule implements ProtoCapsule<MakerPriceList> {
         .build();
   }
 
-  public List<MakerPrice> getPricesList() {
+  public List<MarketPrice> getPricesList() {
     return this.priceList.getPricesList();
   }
 
   public void addPrices(long s, long b) {
-    MakerPrice build = MakerPrice.newBuilder().setSellTokenQuantity(s).setBuyTokenQuantity(b)
+    MarketPrice build = MarketPrice.newBuilder().setSellTokenQuantity(s).setBuyTokenQuantity(b)
         .build();
     this.priceList = this.priceList.toBuilder()
         .addPrices(build)
@@ -66,7 +65,7 @@ public class MakerPriceListCapsule implements ProtoCapsule<MakerPriceList> {
   }
 
   public void removePrice(long s, long b) {
-    List<MakerPrice> pricesList = this.priceList.getPricesList();
+    List<MarketPrice> pricesList = this.priceList.getPricesList();
 //    pricesList.remove(p);//todo
 
     this.priceList = this.priceList.toBuilder()
@@ -76,7 +75,7 @@ public class MakerPriceListCapsule implements ProtoCapsule<MakerPriceList> {
   }
 
   public void removeFirst() {
-    List<MakerPrice> pricesList = this.priceList.getPricesList();
+    List<MarketPrice> pricesList = this.priceList.getPricesList();
     pricesList.remove(0);
 
     this.priceList = this.priceList.toBuilder()
@@ -94,7 +93,7 @@ public class MakerPriceListCapsule implements ProtoCapsule<MakerPriceList> {
   }
 
   @Override
-  public MakerPriceList getInstance() {
+  public MarketPriceList getInstance() {
     return this.priceList;
   }
 

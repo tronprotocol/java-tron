@@ -58,8 +58,8 @@ message Exchange {
   int64 second_token_balance = 9;
 }
 
-//maker
-message MakerOrder {
+//market
+message MarketOrder {
     bytes order_id = 1;
     bytes owner_address = 2;
     int64 create_time = 3;
@@ -70,35 +70,35 @@ message MakerOrder {
     int64 sell_token_quantity_remain = 9;
 }
 
-message MakerOrderList {
-    repeated MakerOrder orders = 1;
+message MarketOrderList {
+    repeated MarketOrder orders = 1;
 }
 
-message MakerOrderPair{
+message MarketOrderPair{
     bytes sell_token_id = 4;
     bytes buy_token_id = 5;
 }
 
-message MakerAccountOrder {
+message MarketAccountOrder {
   bytes owner_address = 1;
-//  repeated MakerOrder orders = 2;
+//  repeated MarketOrder orders = 2;
   repeated bytes orders = 2;
   int64 count = 3;
 }
 
-message MakerPriceList {
+message MarketPriceList {
   bytes sell_token_id = 1;
   bytes buy_token_id = 2;
 
-  message MakerPrice {
+  message MarketPrice {
     int64 sell_token_quantity = 1;
     int64 buy_token_quantity = 2;
   }
-  repeated MakerPrice prices = 5;
+  repeated MarketPrice prices = 5;
 }
 
 
-message MakerOrderIdList {
+message MarketOrderIdList {
   repeated bytes orders = 1;
 }
 

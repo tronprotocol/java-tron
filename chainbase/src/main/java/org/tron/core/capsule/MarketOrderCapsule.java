@@ -8,31 +8,31 @@ import org.tron.common.utils.Hash;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.MakerOrder;
+import org.tron.protos.Protocol.MarketOrder;
 
 import java.util.Arrays;
 import org.tron.protos.contract.MakerContract.MakerSellAssetContract;
 
 @Slf4j(topic = "capsule")
-public class MakerOrderCapsule implements ProtoCapsule<MakerOrder> {
+public class MarketOrderCapsule implements ProtoCapsule<MarketOrder> {
 
-  private MakerOrder order;
+  private MarketOrder order;
 
-  public MakerOrderCapsule(final MakerOrder order) {
+  public MarketOrderCapsule(final MarketOrder order) {
     this.order = order;
   }
 
-  public MakerOrderCapsule(final byte[] data) {
+  public MarketOrderCapsule(final byte[] data) {
     try {
-      this.order = MakerOrder.parseFrom(data);
+      this.order = MarketOrder.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }
   }
 
-  public MakerOrderCapsule(byte[] id, MakerSellAssetContract contract) {
+  public MarketOrderCapsule(byte[] id, MakerSellAssetContract contract) {
 
-    this.order = MakerOrder.newBuilder()
+    this.order = MarketOrder.newBuilder()
         .setOrderId(ByteString.copyFrom(id))
         .setOwnerAddress(contract.getOwnerAddress())
         .setSellTokenId(contract.getSellTokenId())
@@ -44,10 +44,10 @@ public class MakerOrderCapsule implements ProtoCapsule<MakerOrder> {
   }
 
 
-  public MakerOrderCapsule(final byte[] id, ByteString address, long createTime,
+  public MarketOrderCapsule(final byte[] id, ByteString address, long createTime,
       byte[] sellTokenId, long sellTokenQuantity,
       byte[] buyTokenId, long buyTokenQuantity, long sellTokenQuantityRemain) {
-    this.order = MakerOrder.newBuilder()
+    this.order = MarketOrder.newBuilder()
         .setOrderId(ByteString.copyFrom(id))
         .setOwnerAddress(address)
         .setCreateTime(createTime)
@@ -151,7 +151,7 @@ public class MakerOrderCapsule implements ProtoCapsule<MakerOrder> {
   }
 
   @Override
-  public MakerOrder getInstance() {
+  public MarketOrder getInstance() {
     return this.order;
   }
 

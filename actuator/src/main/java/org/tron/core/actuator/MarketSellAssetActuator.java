@@ -19,12 +19,12 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.zksnark.MakerUtils;
+import org.tron.common.zksnark.MarketUtils;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.MakerAccountOrderCapsule;
-import org.tron.core.capsule.MakerOrderCapsule;
-import org.tron.core.capsule.MakerOrderIdListCapsule;
-import org.tron.core.capsule.MakerPriceListCapsule;
+import org.tron.core.capsule.MarketAccountOrderCapsule;
+import org.tron.core.capsule.MarketOrderCapsule;
+import org.tron.core.capsule.MarketOrderIdListCapsule;
+import org.tron.core.capsule.MarketPriceListCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -32,11 +32,11 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.MakerAccountStore;
-import org.tron.core.store.MakerOrderStore;
-import org.tron.core.store.MakerPairPriceToOrderStore;
-import org.tron.core.store.MakerPairToPriceStore;
-import org.tron.protos.Protocol.MakerPriceList.MakerPrice;
+import org.tron.core.store.MarketAccountStore;
+import org.tron.core.store.MarketOrderStore;
+import org.tron.core.store.MarketPairPriceToOrderStore;
+import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.protos.Protocol.MarketPriceList.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -46,19 +46,22 @@ import java.util.Objects;
 import org.tron.protos.contract.MakerContract.MakerSellAssetContract;
 
 @Slf4j(topic = "actuator")
-public class MakerSellAssetActuator extends AbstractActuator {
+public class MarketSellAssetActuator extends AbstractActuator {
 
   private AccountStore accountStore = chainBaseManager.getAccountStore();
   private DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
   private AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
 
-  private MakerAccountStore makerAccountStore = chainBaseManager.getMakerAccountStore();
-  private MakerOrderStore orderStore = chainBaseManager.getMakerOrderStore();
-  private MakerPairToPriceStore pairToPriceStore = chainBaseManager.getMakerPairToPriceStore();
-  private MakerPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
-      .getMakerPairPriceToOrderStore();
+  private MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
+  private MarketOrderStore orderStore = chainBaseManager.getMarketOrderStore();
+  private MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
+  private MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
+      .getMarketPairPriceToOrderStore();
 
-  public MakerSellAssetActuator() {
+  private byte[] sellTokenID = null;
+  private byte[] buyTokenID = null;
+
+  public MarketSellAssetActuator() {
     super(ContractType.MakerSellAssetContract, AssetIssueContract.class);
   }
 
@@ -79,57 +82,42 @@ public class MakerSellAssetActuator extends AbstractActuator {
           .get(contract.getOwnerAddress().toByteArray());
 
       //fee
-      long newBalance = accountCapsule.getBalance() - fee;
-      accountCapsule.setBalance(newBalance);
+      accountCapsule.setBalance(accountCapsule.getBalance() - fee);
 
       // 1. Transfer of balance
-      byte[] sellTokenID = contract.getSellTokenId().toByteArray();
-      long sellTokenQuantity = contract.getSellTokenQuantity();
-      byte[] buyTokenID = contract.getBuyTokenId().toByteArray();
-      long buyTokenQuantity = contract.getBuyTokenQuantity();
-
-      if (Arrays.equals(sellTokenID, "_".getBytes())) {
-        //deal with trx
-        accountCapsule.setBalance(newBalance - sellTokenQuantity);
-      } else {
-        accountCapsule
-            .reduceAssetAmountV2(sellTokenID, sellTokenQuantity, dynamicStore, assetIssueStore);
-      }
-      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+      transferBalanceOrToken(accountCapsule, contract);
 
       //2. create and save order
-      MakerAccountOrderCapsule makerAccountOrderCapsule = makerAccountStore
+      sellTokenID = contract.getSellTokenId().toByteArray();
+      buyTokenID = contract.getBuyTokenId().toByteArray();
+
+      MarketAccountOrderCapsule marketAccountOrderCapsule = marketAccountStore
           .get(contract.getOwnerAddress().toByteArray());
-      if (makerAccountOrderCapsule == null) {
-        makerAccountOrderCapsule = new MakerAccountOrderCapsule(contract.getOwnerAddress());
+      if (marketAccountOrderCapsule == null) {
+        marketAccountOrderCapsule = new MarketAccountOrderCapsule(contract.getOwnerAddress());
       }
-      byte[] orderId = MakerUtils
+      byte[] orderId = MarketUtils
           .calculateOrderId(contract.getOwnerAddress(), sellTokenID, buyTokenID,
-              makerAccountOrderCapsule.getCount());
-      MakerOrderCapsule orderCapsule = new MakerOrderCapsule(orderId, contract);
+              marketAccountOrderCapsule.getCount());
+      MarketOrderCapsule orderCapsule = new MarketOrderCapsule(orderId, contract);
 
+      marketAccountOrderCapsule.addOrders(orderCapsule.getID());
+      marketAccountStore.put(accountCapsule.createDbKey(), marketAccountOrderCapsule);
       orderStore.put(orderId, orderCapsule);
-      makerAccountStore.put(accountCapsule.createDbKey(), makerAccountOrderCapsule);
 
-      MakerPrice takerPrice = MakerPrice.newBuilder()
+      MarketPrice takerPrice = MarketPrice.newBuilder()
           .setSellTokenQuantity(orderCapsule.getSellTokenQuantity())
           .setBuyTokenQuantity(orderCapsule.getBuyTokenQuantity()).build();
 
       //3. match order
-      byte[] makerPair = MakerUtils.createPairKey(buyTokenID, sellTokenID);
-      MakerPriceListCapsule makerPriceListCapsule = pairToPriceStore.get(makerPair);
+      matchOrder(orderCapsule, takerPrice);
 
-      matchOrder(orderCapsule, makerPriceListCapsule, takerPrice);
-
-      //4. save remain order
+      //4. save remain order into order book
       if (orderCapsule.getSellTokenQuantityRemain() != 0) {
-
-        byte[] pair = MakerUtils.createPairKey(sellTokenID, buyTokenID);
-        MakerPriceListCapsule priceListCapsule = pairToPriceStore.get(pair);
-        saveRemainOrder(orderCapsule, priceListCapsule, takerPrice);
-        orderStore.put(orderId, orderCapsule);
+        saveRemainOrder(orderCapsule, takerPrice);
       }
 
+      orderStore.put(orderId, orderCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -154,33 +142,32 @@ public class MakerSellAssetActuator extends AbstractActuator {
     return 0L;
   }
 
-
   public boolean hasMatch(
-      MakerPriceListCapsule buyPriceListCapsule, MakerPrice takerPrice) {
-    List<MakerPrice> pricesList = buyPriceListCapsule.getPricesList();
+      MarketPriceListCapsule buyPriceListCapsule, MarketPrice takerPrice) {
+    List<MarketPrice> pricesList = buyPriceListCapsule.getPricesList();
     if (pricesList.size() == 0) {
       return false;
     }
-    MakerPrice buyPrice = pricesList.get(0);
+    MarketPrice buyPrice = pricesList.get(0);
     return priceMatch(takerPrice, buyPrice);
   }
 
-
-  public void matchOrder(MakerOrderCapsule takerCapsule,
-      MakerPriceListCapsule makerPriceListCapsule, MakerPrice takerPrice)
+  public void matchOrder(MarketOrderCapsule takerCapsule, MarketPrice takerPrice)
       throws ItemNotFoundException {
 
+    byte[] makerPair = MarketUtils.createPairKey(buyTokenID, sellTokenID);
+    MarketPriceListCapsule MarketPriceListCapsule = pairToPriceStore.get(makerPair);
 
     //match different price
     while (takerCapsule.getSellTokenQuantityRemain() != 0 &&
-        hasMatch(makerPriceListCapsule, takerPrice)) {
-      MakerPrice makerPrice = makerPriceListCapsule.getPricesList().get(0);
-      makerPriceListCapsule.removeFirst();
-      byte[] pairPriceKey = MakerUtils.createPairPriceKey(
-          makerPriceListCapsule.getSellTokenId(), makerPriceListCapsule.getBuyTokenId(),
+        hasMatch(MarketPriceListCapsule, takerPrice)) {
+      MarketPrice makerPrice = MarketPriceListCapsule.getPricesList().get(0);
+      MarketPriceListCapsule.removeFirst();
+      byte[] pairPriceKey = MarketUtils.createPairPriceKey(
+          MarketPriceListCapsule.getSellTokenId(), MarketPriceListCapsule.getBuyTokenId(),
           makerPrice.getSellTokenQuantity(), makerPrice.getBuyTokenQuantity());
 
-      MakerOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
+      MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
       List<ByteString> ordersList = orderIdListCapsule.getOrdersList();
 
       //match different order same price
@@ -188,15 +175,15 @@ public class MakerSellAssetActuator extends AbstractActuator {
           ordersList.size() != 0) {
         ByteString orderId = ordersList.get(0);
         ordersList.remove(0);
-        MakerOrderCapsule makerOrderCapsule = orderStore.get(orderId.toByteArray());
+        MarketOrderCapsule makerOrderCapsule = orderStore.get(orderId.toByteArray());
         matchSingleOrder(takerCapsule, makerOrderCapsule);
       }
     }
   }
 
   //return all match or not
-  public void matchSingleOrder(MakerOrderCapsule takerOrderCapsule,
-      MakerOrderCapsule makerOrderCapsule) throws ItemNotFoundException {
+  public void matchSingleOrder(MarketOrderCapsule takerOrderCapsule,
+      MarketOrderCapsule makerOrderCapsule) throws ItemNotFoundException {
 
     // 根据maker的价格，计算taker的buy的量(成交量）,
     // for makerPrice,sellToken is A,buyToken is TRX.
@@ -261,13 +248,52 @@ public class MakerSellAssetActuator extends AbstractActuator {
     orderStore.put(makerOrderCapsule.getID().toByteArray(), makerOrderCapsule);
 
     //add token into account
-    addTrxOrTokenIntoAccount(takerOrderCapsule, takerBuyTokenQuantityReceive);
-    addTrxOrTokenIntoAccount(makerOrderCapsule, makerBuyTokenQuantityReceive);
+    addTrxOrToken(takerOrderCapsule, takerBuyTokenQuantityReceive);
+    addTrxOrToken(makerOrderCapsule, makerBuyTokenQuantityReceive);
 
   }
 
 
-  public void addTrxOrTokenIntoAccount(MakerOrderCapsule orderCapsule, long num) {
+  public MarketOrderCapsule createAndSaveOrder(AccountCapsule accountCapsule,
+      MakerSellAssetContract contract)
+      throws ItemNotFoundException {
+
+    byte[] sellTokenID = contract.getSellTokenId().toByteArray();
+    byte[] buyTokenID = contract.getBuyTokenId().toByteArray();
+
+    MarketAccountOrderCapsule marketAccountOrderCapsule = marketAccountStore
+        .get(contract.getOwnerAddress().toByteArray());
+    if (marketAccountOrderCapsule == null) {
+      marketAccountOrderCapsule = new MarketAccountOrderCapsule(contract.getOwnerAddress());
+    }
+    byte[] orderId = MarketUtils
+        .calculateOrderId(contract.getOwnerAddress(), sellTokenID, buyTokenID,
+            marketAccountOrderCapsule.getCount());
+    MarketOrderCapsule orderCapsule = new MarketOrderCapsule(orderId, contract);
+
+    orderStore.put(orderId, orderCapsule);
+    marketAccountStore.put(accountCapsule.createDbKey(), marketAccountOrderCapsule);
+
+    return orderCapsule;
+  }
+
+
+  public void transferBalanceOrToken(AccountCapsule accountCapsule,
+      MakerSellAssetContract contract) {
+    byte[] sellTokenID = contract.getSellTokenId().toByteArray();
+    long sellTokenQuantity = contract.getSellTokenQuantity();
+
+    if (Arrays.equals(sellTokenID, "_".getBytes())) {
+      accountCapsule.setBalance(accountCapsule.getBalance() - sellTokenQuantity);
+    } else {
+      accountCapsule
+          .reduceAssetAmountV2(sellTokenID, sellTokenQuantity, dynamicStore, assetIssueStore);
+    }
+    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+  }
+
+
+  public void addTrxOrToken(MarketOrderCapsule orderCapsule, long num) {
     AccountCapsule makerAccountCapsule = accountStore
         .get(orderCapsule.getOwnerAddress().toByteArray());
 
@@ -281,7 +307,7 @@ public class MakerSellAssetActuator extends AbstractActuator {
     }
   }
 
-  public void returnSellTokenRemain(MakerOrderCapsule orderCapsule) {
+  public void returnSellTokenRemain(MarketOrderCapsule orderCapsule) {
     AccountCapsule makerAccountCapsule = accountStore
         .get(orderCapsule.getOwnerAddress().toByteArray());
 
@@ -298,7 +324,7 @@ public class MakerSellAssetActuator extends AbstractActuator {
   }
 
 
-  public boolean priceMatch(MakerPrice takerPrice, MakerPrice makerPrice) {
+  public boolean priceMatch(MarketPrice takerPrice, MarketPrice makerPrice) {
 
     // for takerPrice,buyToken is A,sellToken is TRX.
     // price_A_taker * buyQuantity_taker  = Price_TRX * sellQuantity_taker
@@ -314,25 +340,27 @@ public class MakerSellAssetActuator extends AbstractActuator {
   }
 
 
-  public void saveRemainOrder(MakerOrderCapsule orderCapsule,
-      MakerPriceListCapsule priceListCapsule, MakerPrice currentPrice)
+  public void saveRemainOrder(MarketOrderCapsule orderCapsule, MarketPrice currentPrice)
       throws ItemNotFoundException {
 
-    MakerPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
-        .getMakerPairPriceToOrderStore();
+    byte[] pair = MarketUtils.createPairKey(sellTokenID, buyTokenID);
+    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(pair);
 
-    byte[] pairPriceKey = MakerUtils.createPairPriceKey(
+    MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+
+    byte[] pairPriceKey = MarketUtils.createPairPriceKey(
         orderCapsule.getSellTokenId(), orderCapsule.getBuyTokenId(),
         orderCapsule.getSellTokenQuantity(), orderCapsule.getBuyTokenQuantity());
 
-    MakerOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
+    MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
     if (orderIdListCapsule != null) {
       //存在价格
       List<ByteString> ordersList = orderIdListCapsule.getOrdersList();
       ordersList.add(orderCapsule.getID());
     } else {
       //不存在价格，创建
-      List<MakerPrice> pricesList = priceListCapsule.getPricesList();
+      List<MarketPrice> pricesList = priceListCapsule.getPricesList();
       int index = 0;
       for (int i = 0; i < pricesList.size(); i++) {
         if (isLowerPrice(currentPrice, pricesList.get(i))) {
@@ -346,7 +374,7 @@ public class MakerSellAssetActuator extends AbstractActuator {
 
   }
 
-  private boolean isLowerPrice(MakerPrice price1, MakerPrice price2) {
+  private boolean isLowerPrice(MarketPrice price1, MarketPrice price2) {
     // ex.
     // for sellToken is A,buyToken is TRX.
     // price_A_maker * sellQuantity_maker = Price_TRX * buyQuantity_maker

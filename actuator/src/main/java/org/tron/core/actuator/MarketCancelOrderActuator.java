@@ -24,9 +24,9 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 @Slf4j(topic = "actuator")
-public class MakerCancelOrderActuator extends AbstractActuator {
+public class MarketCancelOrderActuator extends AbstractActuator {
 
-  public MakerCancelOrderActuator() {
+  public MarketCancelOrderActuator() {
     super(ContractType.MakerCancelOrderContract, AssetIssueContract.class);
   }
 

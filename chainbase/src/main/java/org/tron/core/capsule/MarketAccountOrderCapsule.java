@@ -6,34 +6,34 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Hash;
-import org.tron.protos.Protocol.MakerAccountOrder;
+import org.tron.protos.Protocol.MarketAccountOrder;
 
 @Slf4j(topic = "capsule")
-public class MakerAccountOrderCapsule implements ProtoCapsule<MakerAccountOrder> {
+public class MarketAccountOrderCapsule implements ProtoCapsule<MarketAccountOrder> {
 
-  private MakerAccountOrder accountOrder;
+  private MarketAccountOrder accountOrder;
 
-  public MakerAccountOrderCapsule(final MakerAccountOrder accountOrder) {
+  public MarketAccountOrderCapsule(final MarketAccountOrder accountOrder) {
     this.accountOrder = accountOrder;
   }
 
-  public MakerAccountOrderCapsule(final byte[] data) {
+  public MarketAccountOrderCapsule(final byte[] data) {
     try {
-      this.accountOrder = MakerAccountOrder.parseFrom(data);
+      this.accountOrder = MarketAccountOrder.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }
   }
 
-  public MakerAccountOrderCapsule(ByteString address) {
-    this.accountOrder = MakerAccountOrder.newBuilder()
+  public MarketAccountOrderCapsule(ByteString address) {
+    this.accountOrder = MarketAccountOrder.newBuilder()
         .setOwnerAddress(address)
         .build();
   }
 
-  public MakerAccountOrderCapsule(ByteString address,
+  public MarketAccountOrderCapsule(ByteString address,
       List<ByteString> orders, long count) {
-    this.accountOrder = MakerAccountOrder.newBuilder()
+    this.accountOrder = MarketAccountOrder.newBuilder()
         .setOwnerAddress(address)
         .addAllOrders(orders)
         .setCount(count)
@@ -91,7 +91,7 @@ public class MakerAccountOrderCapsule implements ProtoCapsule<MakerAccountOrder>
   }
 
   @Override
-  public MakerAccountOrder getInstance() {
+  public MarketAccountOrder getInstance() {
     return this.accountOrder;
   }
 
