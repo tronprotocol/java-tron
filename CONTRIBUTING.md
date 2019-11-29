@@ -9,17 +9,22 @@ please let us know if anything feels wrong or incomplete.
 
 ## Contribution guidelines
 
+``master`` branch:  
+This branch contains the latest code released to the production environment. It can only be merged, and can not be modified directly in this branch.
+
+``develop`` branch:  
+This branch is the main development branch. It contains the complete code that is going to release. It can only be merged, and can not be modified directly in this branch.
+
+``feature`` branch:  
+This branch is used to develop new features. It is created based on ``develop`` branch. Once the development is finished, it should be merged into ``develop`` branch, and then delete the branch.
+
+``release`` branch:  
+This is the branch that is going to be released. It is created based on ``develop`` branch. In this branch, small fix and modification of final version of metadata is allowed. When the code is released, this branch should be merged into ``master`` branch(tag needed) and ``develop`` branch. The final test before release uses this branch.
+
+``hotfix`` branch:  
+This branch is used to fix a bug when an online bug is found. It is created based on ``master`` branch. When bug fix is done, it should be merged into ``master`` branch(as a new release) and ``develop`` and then delete the branch. branch.
+
 ### Pull requests
-
-First of all, java-tron follows GitFlow, The overall flow of Gitflow is:
-
-1. A develop branch is created from master
-2. A release branch is created from develop
-3. Feature branches are created from develop
-4. When a feature is completed it is merged into the develop branch
-5. When the release branch is done it is merged into develop and master
-6. If an issue in master is detected a hotfix branch is created from master
-7. Once the hotfix is complete it is merged to both develop and master
 
 
 If you'd like to contribute to java-tron, please fork a repository from tronprotocol/java-tron,
