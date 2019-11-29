@@ -9,3 +9,4 @@ git subtree pull --prefix src/main/protos/ protocol master
 
 ## Run the included *.sh files to initialize the dependencies
 
+alberto zhang test for git flow
