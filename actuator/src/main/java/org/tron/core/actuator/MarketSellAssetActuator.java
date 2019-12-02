@@ -19,8 +19,12 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.zksnark.MarketUtils;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
@@ -31,6 +35,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
@@ -43,6 +48,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 import java.util.List;
 import java.util.Objects;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.MakerContract.MakerSellAssetContract;
 
 @Slf4j(topic = "actuator")
@@ -116,6 +122,87 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (this.any == null) {
+      throw new ContractValidateException("No contract!");
+    }
+    if (chainBaseManager == null) {
+      throw new ContractValidateException("No account store or dynamic store!");
+    }
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
+    if (!this.any.is(MakerSellAssetContract.class)) {
+      throw new ContractValidateException(
+          "contract type error,expected type [MakerSellAssetContract],real type[" + any
+              .getClass() + "]");
+    }
+
+    final MakerSellAssetContract contract;
+    try {
+      contract =
+          this.any.unpack(MakerSellAssetContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
+    }
+    //Parameters check
+    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
+    byte[] sellTokenID = contract.getSellTokenId().toByteArray();
+    byte[] buyTokenID = contract.getBuyTokenId().toByteArray();
+    long sellTokenQuantity = contract.getSellTokenQuantity();
+    long buyTokenQuantity = contract.getBuyTokenQuantity();
+
+    if (!DecodeUtil.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalid ownerAddress");
+    }
+    if (sellTokenQuantity <= 0) {
+      throw new ContractValidateException("sellTokenQuantity must greater than 0!");
+    }
+
+    if (buyTokenQuantity <= 0) {
+      throw new ContractValidateException("buyTokenQuantity must greater than 0!");
+    }
+
+    //Whether the accountStore exist
+    AccountCapsule ownerAccount = accountStore.get(ownerAddress);
+    if (ownerAccount == null) {
+      throw new ContractValidateException("Account does not exist!");
+    }
+
+    try {
+      //Whether the balance is enough
+      long fee = calcFee();
+
+      if (Arrays.equals(sellTokenID, "_".getBytes())) {
+        if (ownerAccount.getBalance() < Math.addExact(sellTokenQuantity, fee)) {
+          throw new ContractValidateException("No enough balance !");
+        }
+      }else {
+        AssetIssueCapsule assetIssueCapsule = Commons
+            .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store).get(sellTokenID);
+        if (assetIssueCapsule == null) {
+          throw new ContractValidateException("No sellTokenID : " + ByteArray.toStr(sellTokenID));
+        }
+        if (!ownerAccount.assetBalanceEnoughV2(sellTokenID, sellTokenQuantity,
+            dynamicStore)) {
+          throw new ContractValidateException("sellToken balance is not enough !");
+        }
+      }
+
+      if (!Arrays.equals(sellTokenID, "_".getBytes())) {
+        //Whether have the token
+        AssetIssueCapsule assetIssueCapsule = Commons
+            .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store).get(buyTokenID);
+        if (assetIssueCapsule == null) {
+          throw new ContractValidateException("No buyTokenID : " + ByteArray.toStr(sellTokenID));
+        }
+      }
+
+    } catch (ArithmeticException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
+    }
+
     return true;
   }
 
@@ -172,6 +259,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
         priceListCapsule.removeFirst();
       }
     }
+    //todo :store
   }
 
   //return all match or not
@@ -196,6 +284,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     long takerBuyTokenQuantityReceive = 0L;//In this match, the token obtained by taker
     long makerBuyTokenQuantityReceive = 0L;// the token obtained by maker
 
+    //todo ,combine
     if (takerBuyTokenQuantityRemain == makerOrderCapsule.getSellTokenQuantityRemain()) {
       // taker == maker
       takerOrderCapsule.setSellTokenQuantityRemain(0);
@@ -263,6 +352,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     MarketOrderCapsule orderCapsule = new MarketOrderCapsule(orderId, contract);
 
     marketAccountOrderCapsule.addOrders(orderCapsule.getID());
+    //todo , time?
     marketAccountStore.put(accountCapsule.createDbKey(), marketAccountOrderCapsule);
     orderStore.put(orderId, orderCapsule);
 
@@ -346,19 +436,18 @@ public class MarketSellAssetActuator extends AbstractActuator {
     int index = 0;
     boolean found = false;
     for (int i = 0; i < pricesList.size(); i++) {
+      index = i;
       if (isLowerPrice(currentPrice, pricesList.get(i))) {
-        index = i;
         break;
       }
       if (isSamePrice(currentPrice, pricesList.get(i))) {
         found = true;
-        index = i;
         break;
       }
     }
 
     if (!found) {
-      //price exists
+      //price not exists
       pricesList.add(index, currentPrice);
       priceListCapsule.setPricesList(pricesList);
       pairToPriceStore.put(pair, priceListCapsule);

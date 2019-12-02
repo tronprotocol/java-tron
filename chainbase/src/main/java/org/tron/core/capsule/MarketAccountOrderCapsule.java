@@ -45,12 +45,6 @@ public class MarketAccountOrderCapsule implements ProtoCapsule<MarketAccountOrde
     return this.accountOrder.getOwnerAddress();
   }
 
-  public void setOwnerAddress(ByteString address) {
-    this.accountOrder = this.accountOrder.toBuilder()
-        .setOwnerAddress(address)
-        .build();
-  }
-
 
   public List<ByteString> getOrdersList() {
     return this.accountOrder.getOrdersList();
