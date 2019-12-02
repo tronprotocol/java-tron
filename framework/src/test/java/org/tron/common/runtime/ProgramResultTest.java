@@ -514,7 +514,8 @@ public class ProgramResultTest {
 
   public void checkTransactionInfo(TransactionTrace trace, Transaction trx, BlockCapsule block,
       List<InternalTransaction> internalTransactionsList) {
-    TransactionInfoCapsule trxInfoCapsule = buildTransactionInfoInstance(new TransactionCapsule(trx), null, trace);
+    TransactionInfoCapsule trxInfoCapsule =
+        buildTransactionInfoInstance(new TransactionCapsule(trx), null, trace);
     List<Protocol.InternalTransaction> internalTransactionListFromProtocol = trxInfoCapsule
         .getInstance().getInternalTransactionsList();
     for (int i = 0; i < internalTransactionListFromProtocol.size(); i++) {

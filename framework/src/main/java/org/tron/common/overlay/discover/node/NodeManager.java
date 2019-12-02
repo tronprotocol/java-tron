@@ -236,7 +236,8 @@ public class NodeManager implements EventHandler {
   public List<NodeHandler> getNodes(Predicate<NodeHandler> predicate, int limit) {
     List<NodeHandler> filtered = new ArrayList<>();
     for (NodeHandler handler : nodeHandlerMap.values()) {
-      if (handler.getNode().isConnectible(Args.getInstance().getNodeP2pVersion()) && predicate.test(handler)) {
+      if (handler.getNode().isConnectible(Args.getInstance().getNodeP2pVersion())
+          && predicate.test(handler)) {
         filtered.add(handler);
       }
     }
