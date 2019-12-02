@@ -131,63 +131,6 @@ public class TransactionUtil {
     return !(id.length > 1 && id[0] == '0');
   }
 
-  /**
-   * Get sender.
-   */
- /* public static byte[] getSender(Transaction tx) {
-    byte[] pubKey = tx.getRawData().getVin(0).getRawData().getPubKey().toByteArray();
-    return ECKey.computeAddress(pubKey);
-  } */
-
-  //make sure that contractType is validated before
-  //No exception will be thrown here
-  public static byte[] getShieldTransactionHashIgnoreTypeException(Transaction tx) {
-    try {
-      return hashShieldTransaction(tx);
-    } catch (ContractValidateException | InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-    }
-    return null;
-  }
-
-  public static byte[] hashShieldTransaction(Transaction tx)
-      throws ContractValidateException, InvalidProtocolBufferException {
-    Any contractParameter = tx.getRawData().getContract(0).getParameter();
-    if (!contractParameter.is(ShieldedTransferContract.class)) {
-      throw new ContractValidateException(
-          "contract type error,expected type [ShieldedTransferContract],real type["
-              + contractParameter
-              .getClass() + "]");
-    }
-
-    ShieldedTransferContract shieldedTransferContract = contractParameter
-        .unpack(ShieldedTransferContract.class);
-    ShieldedTransferContract.Builder newContract = ShieldedTransferContract.newBuilder();
-    newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-    newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
-    newContract.setToAmount(shieldedTransferContract.getToAmount());
-    newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
-    newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-    for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
-      newContract
-          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-    }
-
-    Transaction.raw.Builder rawBuilder = tx.toBuilder()
-        .getRawDataBuilder()
-        .clearContract()
-        .addContract(
-            Transaction.Contract.newBuilder().setType(ContractType.ShieldedTransferContract)
-                .setParameter(
-                    Any.pack(newContract.build())).build());
-
-    Transaction transaction = tx.toBuilder().clearRawData()
-        .setRawData(rawBuilder).build();
-
-    return Sha256Hash.of(transaction.getRawData().toByteArray())
-        .getBytes();
-  }
-
   public static Sha256Hash getTransactionId(Transaction transaction) {
     return Sha256Hash.of(transaction.getRawData().toByteArray());
   }
@@ -202,10 +145,8 @@ public class TransactionUtil {
 
 
   public static long getCallValue(Transaction.Contract contract) {
-    int energyForTrx;
     try {
       Any contractParameter = contract.getParameter();
-      long callValue;
       switch (contract.getType()) {
         case TriggerSmartContract:
           return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
@@ -223,10 +164,8 @@ public class TransactionUtil {
   }
 
   public static long getCallTokenValue(Transaction.Contract contract) {
-    int energyForTrx;
     try {
       Any contractParameter = contract.getParameter();
-      long callValue;
       switch (contract.getType()) {
         case TriggerSmartContract:
           return contractParameter.unpack(TriggerSmartContract.class).getCallTokenValue();

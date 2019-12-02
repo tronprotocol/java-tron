@@ -19,6 +19,7 @@ package org.tron.core.vm.config;
 
 import static org.tron.common.utils.DBConfig.ENERGY_LIMIT_HARD_FORK;
 
+import lombok.Getter;
 import lombok.Setter;
 
 /**
@@ -26,7 +27,17 @@ import lombok.Setter;
  */
 public class VMConfig {
 
-  public static final int MAX_CODE_LENGTH = 1024 * 1024;
+  @Getter
+  @Setter
+  private static double maxTimeRatio;
+
+  @Getter
+  @Setter
+  private static double minTimeRatio;
+
+  @Getter
+  @Setter
+  private static int checkFrozenTime; // for test only
 
   public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
 
@@ -83,10 +94,6 @@ public class VMConfig {
     ALLOW_TVM_SOLIDITY_059 = allow == 1;
   }
 
-  public static boolean getEnergyLimitHardFork() {
-    return ENERGY_LIMIT_HARD_FORK;
-  }
-
   public static boolean allowTvmTransferTrc10() {
     return ALLOW_TVM_TRANSFER_TRC10;
   }
@@ -104,8 +111,6 @@ public class VMConfig {
   }
 
   private static class SystemPropertiesInstance {
-
     private static final VMConfig INSTANCE = new VMConfig();
   }
-
 }

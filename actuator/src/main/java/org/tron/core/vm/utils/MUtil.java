@@ -1,8 +1,6 @@
 package org.tron.core.vm.utils;
 
-
 import org.tron.common.utils.Base58;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
@@ -12,7 +10,6 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
 public class MUtil {
-
 
   private MUtil() {
   }

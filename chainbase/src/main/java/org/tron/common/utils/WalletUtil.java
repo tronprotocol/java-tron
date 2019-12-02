@@ -1,8 +1,10 @@
 package org.tron.common.utils;
 
+
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;

@@ -26,6 +26,7 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
+import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
@@ -40,11 +41,14 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>>, Instance<RocksDbDataSourceImpl> {
 
   ReadOptions readOpts;
+  private static final String FAIL_TO_INIT_DATABASE = "Failed to initialize database";
   private String dataBaseName;
   private RocksDB database;
   private boolean alive;
   private String parentPath;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
+  private static final String KEY_ENGINE = "ENGINE";
+  private static final String ROCKSDB = "ROCKSDB";
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings) {
     this.dataBaseName = name;
@@ -148,24 +152,19 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
 
     // for the first init engine
-    String engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("")) {
-      if (!PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB")) {
-        return false;
-      }
-    }
-    engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("ROCKSDB")) {
-      return true;
-    } else {
+    String engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
+    if (engine.isEmpty() && !PropUtil.writeProperty(enginePath, KEY_ENGINE, ROCKSDB)) {
       return false;
     }
+    engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
+
+    return ROCKSDB.equals(engine);
   }
 
   public void initDB() {
     if (!checkOrInitEngine()) {
       logger.error("database engine do not match");
-      throw new RuntimeException("Failed to initialize database");
+      throw new RuntimeException(FAIL_TO_INIT_DATABASE);
     }
     initDB(RocksDbSettings.getSettings());
   }
@@ -229,14 +228,14 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
             database = RocksDB.open(options, dbPath.toString());
           } catch (RocksDBException e) {
             logger.error(e.getMessage(), e);
-            throw new RuntimeException("Failed to initialize database", e);
+            throw new RuntimeException(FAIL_TO_INIT_DATABASE, e);
           }
 
           alive = true;
 
         } catch (IOException ioe) {
           logger.error(ioe.getMessage(), ioe);
-          throw new RuntimeException("Failed to initialize database", ioe);
+          throw new RuntimeException(FAIL_TO_INIT_DATABASE, ioe);
         }
 
         logger.debug("<~ RocksDbDataSource.initDB(): " + dataBaseName);

@@ -33,9 +33,9 @@ public class Node implements Serializable {
 
   private boolean isFakeNodeId = false;
 
-  public Node(String encodeURL) {
+  public Node(String encodeURI) {
     try {
-      URI uri = new URI(encodeURL);
+      URI uri = new URI(encodeURI);
       if (!"encode".equals(uri.getScheme())) {
         throw new RuntimeException("expecting URL in the format encode://PUBKEY@HOST:PORT");
       }

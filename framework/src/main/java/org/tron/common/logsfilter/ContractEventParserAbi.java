@@ -88,7 +88,7 @@ public class ContractEventParserAbi extends ContractEventParser {
         map.put("" + i, str);
 
       }
-      if (list.size() == 0) {
+      if (list.isEmpty()) {
         map.put("0", Hex.toHexString(data));
       }
     } catch (UnsupportedOperationException e) {

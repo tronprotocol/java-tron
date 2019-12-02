@@ -8,6 +8,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -101,11 +102,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
       ret.setExchangeInjectAnotherAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
-    } catch (ItemNotFoundException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (InvalidProtocolBufferException e) {
+    } catch (ItemNotFoundException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -140,7 +137,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
@@ -200,19 +197,17 @@ public class ExchangeInjectActuator extends AbstractActuator {
     BigInteger bigFirstTokenBalance = new BigInteger(String.valueOf(firstTokenBalance));
     BigInteger bigSecondTokenBalance = new BigInteger(String.valueOf(secondTokenBalance));
     BigInteger bigTokenQuant = new BigInteger(String.valueOf(tokenQuant));
-    long newTokenBalance, newAnotherTokenBalance;
+    long newTokenBalance;
+    long newAnotherTokenBalance;
+    
     if (Arrays.equals(tokenID, firstTokenID)) {
       anotherTokenID = secondTokenID;
-//      anotherTokenQuant = Math
-//          .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
       anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
           .divide(bigFirstTokenBalance).longValueExact();
       newTokenBalance = firstTokenBalance + tokenQuant;
       newAnotherTokenBalance = secondTokenBalance + anotherTokenQuant;
     } else {
       anotherTokenID = firstTokenID;
-//      anotherTokenQuant = Math
-//          .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
       anotherTokenQuant = bigFirstTokenBalance.multiply(bigTokenQuant)
           .divide(bigSecondTokenBalance).longValueExact();
       newTokenBalance = secondTokenBalance + tokenQuant;
