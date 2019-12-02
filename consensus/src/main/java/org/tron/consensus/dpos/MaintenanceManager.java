@@ -83,14 +83,7 @@ public class MaintenanceManager {
             witnessCapsule.getVoteCount());
       });
 
-      dposService.sortWitness(newWitnessAddressList);
-
-      if (newWitnessAddressList.size() > MAX_ACTIVE_WITNESS_NUM) {
-        consensusDelegate
-            .saveActiveWitnesses(newWitnessAddressList.subList(0, MAX_ACTIVE_WITNESS_NUM));
-      } else {
-        consensusDelegate.saveActiveWitnesses(newWitnessAddressList);
-      }
+      dposService.updateWitness(newWitnessAddressList);
 
       incentiveManager.reward(newWitnessAddressList);
 

@@ -2,6 +2,7 @@ package org.tron.consensus.dpos;
 
 
 import static org.tron.consensus.base.Constant.SOLIDIFIED_THRESHOLD;
+import static org.tron.core.config.args.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -88,8 +89,7 @@ public class DposService implements ConsensusInterface {
           witnesses.add(witnessCapsule.getAddress());
         }
       });
-      sortWitness(witnesses);
-      consensusDelegate.saveActiveWitnesses(witnesses);
+      updateWitness(witnesses);
     }
 
     dposTask.init();
@@ -156,11 +156,18 @@ public class DposService implements ConsensusInterface {
     logger.info("Update solid block number to {}", newSolidNum);
   }
 
-  public void sortWitness(List<ByteString> list) {
+  public void updateWitness(List<ByteString> list) {
     list.sort(Comparator.comparingLong((ByteString b) ->
         consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
         .reversed()
         .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+
+    if (list.size() > MAX_ACTIVE_WITNESS_NUM) {
+      consensusDelegate
+          .saveActiveWitnesses(list.subList(0, MAX_ACTIVE_WITNESS_NUM));
+    } else {
+      consensusDelegate.saveActiveWitnesses(list);
+    }
   }
 
 }
