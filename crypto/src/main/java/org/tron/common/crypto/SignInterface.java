@@ -15,5 +15,4 @@ public interface SignInterface {
   String signHash(byte[] hash);
 
   byte[] signToAddress(byte[] messageHash, String signatureBase64) throws SignatureException;
-
 }

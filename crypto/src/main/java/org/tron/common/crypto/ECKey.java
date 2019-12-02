@@ -182,6 +182,7 @@ public class ECKey implements Serializable, SignInterface {
    * <p>All private key operations will use the provider.
    */
 
+  // isPrivateKey true 私钥 其他公钥
   public ECKey(byte[] key, boolean isPrivateKey) {
     if (isPrivateKey) {
       BigInteger pk = new BigInteger(1, key);
@@ -308,7 +309,6 @@ public class ECKey implements Serializable, SignInterface {
   public static ECKey fromPrivate(byte[] privKeyBytes) {
     return fromPrivate(new BigInteger(1, privKeyBytes));
   }
-
   /**
    * Creates an ECKey that simply trusts the caller to ensure that point is really the result of
    * multiplying the generator point by the private key. This is used to speed things up when you
