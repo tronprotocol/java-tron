@@ -58,8 +58,8 @@ public class TransactionUtil {
         Contract.ContractType.TransferContract).getInstance();
   }
 
-  public static TransactionInfoCapsule buildTransactionInfoInstance(TransactionCapsule trxCap
-      , BlockCapsule block, TransactionTrace trace) {
+  public static TransactionInfoCapsule buildTransactionInfoInstance(TransactionCapsule trxCap,
+      BlockCapsule block, TransactionTrace trace) {
 
     TransactionInfo.Builder builder = TransactionInfo.newBuilder();
     ReceiptCapsule traceReceipt = trace.getReceipt();
