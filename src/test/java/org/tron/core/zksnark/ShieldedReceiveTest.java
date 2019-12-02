@@ -1,5 +1,6 @@
 package org.tron.core.zksnark;
 
+import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -124,7 +125,7 @@ public class ShieldedReceiveTest {
   private static Wallet wallet;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, "config-localtest.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
     context = new TronApplicationContext(DefaultConfig.class);
     FROM_ADDRESS = Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
     ADDRESS_ONE_PRIVATE_KEY = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
@@ -404,7 +405,7 @@ public class ShieldedReceiveTest {
     boolean ok2 = JLibrustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
     Assert.assertTrue(ok2);
 
-    return new String[] {ByteArray.toHexString(checkSpendParamsData),
+    return new String[]{ByteArray.toHexString(checkSpendParamsData),
         ByteArray.toHexString(dataToBeSigned), ByteArray.toHexString(checkOutputParams.encode())};
   }
 
@@ -595,7 +596,8 @@ public class ShieldedReceiveTest {
       TransactionExtention transactionExtention = TransactionExtention.newBuilder()
           .setTransaction(transactionCapsule.getInstance()).build();
 
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule,
+          Args.getInstance().getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -637,7 +639,8 @@ public class ShieldedReceiveTest {
       transactionCapsule = wallet
           .createTransactionCapsuleWithoutValidate(builder.getContractBuilder().build(),
               ContractType.ShieldedTransferContract);
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule,
+          Args.getInstance().getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -680,7 +683,8 @@ public class ShieldedReceiveTest {
       transactionCapsule = wallet
           .createTransactionCapsuleWithoutValidate(builder.getContractBuilder().build(),
               ContractType.ShieldedTransferContract);
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule,
+          Args.getInstance().getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -723,7 +727,8 @@ public class ShieldedReceiveTest {
       transactionCapsule = wallet
           .createTransactionCapsuleWithoutValidate(builder.getContractBuilder().build(),
               ContractType.ShieldedTransferContract);
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule,
+          Args.getInstance().getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -766,7 +771,8 @@ public class ShieldedReceiveTest {
       transactionCapsule = wallet
           .createTransactionCapsuleWithoutValidate(builder.getContractBuilder().build(),
               ContractType.ShieldedTransferContract);
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule,
+          Args.getInstance().getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -809,7 +815,8 @@ public class ShieldedReceiveTest {
       transactionCapsule = wallet
           .createTransactionCapsuleWithoutValidate(builder.getContractBuilder().build(),
               ContractType.ShieldedTransferContract);
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule,
+          Args.getInstance().getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -953,7 +960,8 @@ public class ShieldedReceiveTest {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(contractBuilder.build(),
           ContractType.ShieldedTransferContract);
 
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule,
+          Args.getInstance().getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Could not construct signature hash: " + ex.getMessage());
@@ -1582,8 +1590,10 @@ public class ShieldedReceiveTest {
 
     Transaction transaction = tx.getInstance().toBuilder().clearRawData().setRawData(rawBuilder)
         .build();
-
-    return Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] mergedByte = Bytes.concat(
+        Sha256Hash.of(Args.getInstance().getZenTokenId().getBytes()).getBytes(),
+        transaction.getRawData().toByteArray());
+    return Sha256Hash.of(mergedByte).getBytes();
   }
 
   private ZenTransactionBuilder generateShield2ShieldBuilder(ZenTransactionBuilder builder,
@@ -1966,7 +1976,8 @@ public class ShieldedReceiveTest {
           .createTransactionCapsuleWithoutValidate(builder.getContractBuilder().build(),
               ContractType.ShieldedTransferContract);
 
-      hashOfTransaction = TransactionCapsule.hashShieldTransaction(transactionCapsule);
+      hashOfTransaction = TransactionCapsule.hashShieldTransaction(transactionCapsule,
+          Args.getInstance().getZenTokenId());
 
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
