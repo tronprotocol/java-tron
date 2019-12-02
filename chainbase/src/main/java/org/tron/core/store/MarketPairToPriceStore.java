@@ -20,12 +20,4 @@ public class MarketPairToPriceStore extends TronStoreWithRevoking<MarketPriceLis
     byte[] value = revokingDB.get(key);
     return new MarketPriceListCapsule(value);
   }
-
-  public static byte[] calculateDbKey(byte[] sellTokenId, byte[] buyTokenId) {
-    byte[] result = new byte[sellTokenId.length + buyTokenId.length];
-    System.arraycopy(sellTokenId, 0, result, 0, sellTokenId.length);
-    System.arraycopy(buyTokenId, 0, result, sellTokenId.length, buyTokenId.length);
-    return result;
-  }
-
 }

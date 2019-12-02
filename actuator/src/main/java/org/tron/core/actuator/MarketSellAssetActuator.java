@@ -18,6 +18,8 @@ package org.tron.core.actuator;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -45,10 +47,6 @@ import org.tron.protos.Protocol.MarketPriceList.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-
-import java.util.List;
-import java.util.Objects;
-import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.MakerContract.MakerSellAssetContract;
 
 @Slf4j(topic = "actuator")
@@ -177,9 +175,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
         if (ownerAccount.getBalance() < Math.addExact(sellTokenQuantity, fee)) {
           throw new ContractValidateException("No enough balance !");
         }
-      }else {
+      } else {
         AssetIssueCapsule assetIssueCapsule = Commons
-            .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store).get(sellTokenID);
+            .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store)
+            .get(sellTokenID);
         if (assetIssueCapsule == null) {
           throw new ContractValidateException("No sellTokenID : " + ByteArray.toStr(sellTokenID));
         }
@@ -192,7 +191,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
       if (!Arrays.equals(sellTokenID, "_".getBytes())) {
         //Whether have the token
         AssetIssueCapsule assetIssueCapsule = Commons
-            .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store).get(buyTokenID);
+            .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store)
+            .get(buyTokenID);
         if (assetIssueCapsule == null) {
           throw new ContractValidateException("No buyTokenID : " + ByteArray.toStr(sellTokenID));
         }
@@ -255,11 +255,15 @@ public class MarketSellAssetActuator extends AbstractActuator {
         }
       }
 
+      orderIdListCapsule.setOrdersList(ordersList);
+      pairPriceToOrderStore.put(pairPriceKey,orderIdListCapsule);
+
       if (ordersList.size() == 0) {
         priceListCapsule.removeFirst();
       }
     }
-    //todo :store
+
+    pairToPriceStore.put(makerPair, priceListCapsule);
   }
 
   //return all match or not
@@ -284,7 +288,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
     long takerBuyTokenQuantityReceive = 0L;//In this match, the token obtained by taker
     long makerBuyTokenQuantityReceive = 0L;// the token obtained by maker
 
-    //todo ,combine
     if (takerBuyTokenQuantityRemain == makerOrderCapsule.getSellTokenQuantityRemain()) {
       // taker == maker
       takerOrderCapsule.setSellTokenQuantityRemain(0);
@@ -352,7 +355,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
     MarketOrderCapsule orderCapsule = new MarketOrderCapsule(orderId, contract);
 
     marketAccountOrderCapsule.addOrders(orderCapsule.getID());
-    //todo , time?
     marketAccountStore.put(accountCapsule.createDbKey(), marketAccountOrderCapsule);
     orderStore.put(orderId, orderCapsule);
 

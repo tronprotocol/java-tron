@@ -37,6 +37,13 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
     return this.orderIdList.getOrdersList();
   }
 
+  public void setOrdersList(List<ByteString> v) {
+    this.orderIdList = this.orderIdList.toBuilder()
+        .clearOrders()
+        .addAllOrders(v)
+        .build();
+  }
+
   public void addOrders(ByteString v) {
     this.orderIdList = this.orderIdList.toBuilder()
         .addOrders(v)
