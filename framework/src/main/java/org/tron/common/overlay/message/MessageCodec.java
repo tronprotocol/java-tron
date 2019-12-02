@@ -11,7 +11,7 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.PbftMessageFactory;
 import org.tron.core.net.message.TronMessageFactory;
-import org.tron.core.spv.message.HeaderMessageFactory;
+import org.tron.core.ibc.spv.message.HeaderMessageFactory;
 
 @Component
 @Scope("prototype")

@@ -1,4 +1,4 @@
-package org.tron.core.spv;
+package org.tron.core.ibc.spv;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package org.tron.core.spv;
+package org.tron.core.ibc.spv;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -21,9 +21,9 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.spv.message.BlockHeaderMessage;
-import org.tron.core.spv.message.DownloadHeaderMessage;
-import org.tron.core.spv.message.NotDataDownloadMessage;
+import org.tron.core.ibc.spv.message.BlockHeaderMessage;
+import org.tron.core.ibc.spv.message.DownloadHeaderMessage;
+import org.tron.core.ibc.spv.message.NotDataDownloadMessage;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.DownloadHeader;
 import org.tron.protos.Protocol.Items;
@@ -97,7 +97,7 @@ public class HeaderMsgAction {
     Items items = blockHeaderMessage.getItems();
     validMsg(items);
     for (BlockHeader header : items.getBlockHeadersList()) {
-      headerManager.pushBlockHeader(header);
+//      headerManager.pushBlockHeader(header);
     }
   }
 
@@ -106,7 +106,8 @@ public class HeaderMsgAction {
     validMsg(notDataDownloadMessage.getItems());
   }
 
-  public void startDownloadHeader(String chainId) throws ItemNotFoundException {
+  public void startDownloadHeader(String chainId, PeerConnection peerConnection)
+      throws ItemNotFoundException {
     BlockId solidityBlockId = headerManager.getSolidBlockId(chainId);
     DownloadHeaderMessage downloadHeaderMessage = null;
     String uuid = UUID.randomUUID().toString().replaceAll("-", "");
@@ -125,11 +126,10 @@ public class HeaderMsgAction {
           .setUuid(ByteString.copyFromUtf8(uuid));
       downloadHeaderMessage = new DownloadHeaderMessage(downloadHeader.build());
     }
-    PeerConnection peerConnection = selectPeer(chainId);
-    if (peerConnection != null) {
-      uuidCache.put(uuid, true);
-      peerConnection.sendMessage(downloadHeaderMessage);
-    }
+
+    uuidCache.put(uuid, true);
+    peerConnection.sendMessage(downloadHeaderMessage);
+
   }
 
   private PeerConnection selectPeer(String chainId) {

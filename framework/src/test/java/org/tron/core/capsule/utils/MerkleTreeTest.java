@@ -2,12 +2,14 @@ package org.tron.core.capsule.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.utils.MerkleTree.Leaf;
+import org.tron.core.capsule.utils.MerkleTree.ProofLeaf;
 
 @Slf4j
 public class MerkleTreeTest {
@@ -169,4 +171,19 @@ public class MerkleTreeTest {
       pareTree(root, hashList, maxRank, 0, 0);
     }
   }
+
+  @Test
+  public void testAnyHashNumProof() {
+    int maxNum = 128;
+    for (int hashNum = 1; hashNum <= maxNum; hashNum++) {
+      List<Sha256Hash> hashList = getHash(hashNum);
+      MerkleTree tree = MerkleTree.getInstance().createTree(hashList);
+      Leaf root = tree.getRoot();
+      int index = new Random().nextInt(hashList.size());
+      Sha256Hash src = hashList.get(index);
+      List<ProofLeaf> proofPath = MerkleTree.getInstance().generateProofPath(hashList, src);
+      Assert.assertTrue(MerkleTree.getInstance().validProof(root.getHash(), proofPath, src));
+    }
+  }
+
 }

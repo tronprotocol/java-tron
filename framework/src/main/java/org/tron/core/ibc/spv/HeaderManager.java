@@ -1,4 +1,4 @@
-package org.tron.core.spv;
+package org.tron.core.ibc.spv;
 
 import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
@@ -21,7 +21,6 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.BlockHeaderIndexStore;
 import org.tron.core.db.BlockHeaderStore;
-import org.tron.core.db2.core.ISession;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.HeaderDynamicPropertiesStore;

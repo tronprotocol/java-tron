@@ -1,4 +1,4 @@
-package org.tron.core.spv;
+package org.tron.core.ibc.spv;
 
 import org.springframework.stereotype.Component;
 

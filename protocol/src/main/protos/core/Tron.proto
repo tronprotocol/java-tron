@@ -680,3 +680,16 @@ message DownloadHeader {
   BlockId solidityId = 2;
   bytes uuid = 3;
 }
+
+message CrossMessage {
+  Transaction transaction = 1;
+  bytes to_chainId = 2;
+  int64 time_out_block_height = 3;
+  repeated Proof proof = 4;
+  int32 version = 5;
+}
+
+message Proof {
+  bytes hash = 1;
+  bool leftOrRight = 2;
+}

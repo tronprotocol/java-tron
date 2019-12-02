@@ -1,4 +1,4 @@
-package org.tron.core.spv;
+package org.tron.core.ibc.spv;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;

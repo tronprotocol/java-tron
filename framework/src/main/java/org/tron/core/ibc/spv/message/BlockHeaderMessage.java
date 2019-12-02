@@ -1,4 +1,4 @@
-package org.tron.core.spv.message;
+package org.tron.core.ibc.spv.message;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;

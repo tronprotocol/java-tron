@@ -34,3 +34,11 @@ message TransferContract {
     bytes to_address = 2;
     int64 amount = 3;
 }
+
+message CrossContract {
+    bytes owner_address = 1;
+    bytes owner_chainId = 2;
+    bytes to_address = 3;
+    bytes to_chainId = 4;
+    bytes data = 5;
+}
