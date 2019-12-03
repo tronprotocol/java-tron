@@ -86,9 +86,8 @@ public class DposService implements ConsensusInterface {
 
     if (consensusDelegate.getLatestBlockHeaderNumber() == 0) {
       List<ByteString> witnesses = new ArrayList<>();
-      consensusDelegate.getAllWitnesses().forEach(witnessCapsule -> {
-        witnesses.add(witnessCapsule.getAddress());
-      });
+      consensusDelegate.getAllWitnesses().forEach(witnessCapsule ->
+        witnesses.add(witnessCapsule.getAddress()));
       updateWitness(witnesses);
       List<ByteString> addresses = consensusDelegate.getActiveWitnesses();
       addresses.forEach(address -> {
