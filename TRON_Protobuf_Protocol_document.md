@@ -7,11 +7,11 @@
 
      There are three different `Account types`: `Normal`, `AssetIssue`, `Contract`.
 
-      enum AccountType {   
-         Normal = 0;   
-         AssetIssue = 1;   
+      enum AccountType {
+         Normal = 0;
+         AssetIssue = 1;  
          Contract = 2;
-        }
+       }
 
      An `Account` contains 7 parameters:  
      `account_name`: the name for this account – e.g. “_BillsAccount_”.  
@@ -21,22 +21,23 @@
      `asset`: other assets except TRX in this account – e.g. _{<“WishToken”,66666>,<”Dogie”,233>}_.
      `latest_operation_time`: the latest operation time of this account.
      
-      // Account 
-      message Account {   
-        message Vote {     
-           bytes vote_address = 1;     
-           int64 vote_count = 2;   }   
-        bytes accout_name = 1;   
-        AccountType type = 2;   
-        bytes address = 3;   
-        int64 balance = 4;   
-        repeated Vote votes = 5;   
+      // Account
+      message Account {  
+        message Vote {    
+           bytes vote_address = 1;   
+           int64 vote_count = 2;  
+        }  
+        bytes accout_name = 1; 
+        AccountType type = 2;  
+        bytes address = 3;
+        int64 balance = 4;  
+        repeated Vote votes = 5;  
         map<string, int64> asset = 6;
-        int64 latest_operation_time = 10; 
-       }
+        int64 latest_operation_time = 10;
+      }
        
      A `Witness` contains 8 parameters:  
-      `address`: the address of this witness – e.g. “_0xu82h…7237_”.  
+      address`: the address of this witness – e.g. “_0xu82h…7237_”.  
      `voteCount`: number of received votes on this witness – e.g. _234234_.  
      `pubKey`: the public key for this witness – e.g. “_0xu82h…7237_”.  
      `url`: the url for this witness – e.g. “_https://www.noonetrust.com_”.  
@@ -45,17 +46,17 @@
      `latestBlockNum`: the latest height of block – e.g. _4522_.
      `isjobs`: a bool flag.
      
-      // Witness 
-      message Witness{   
-        bytes address = 1;   
-        int64 voteCount = 2;   
-        bytes pubKey = 3;   
-        string url = 4;   
-        int64 totalProduced = 5;   
-        int64 totalMissed = 6;   
-        int64 latestBlockNum = 7; 
+      // Witness
+      message Witness{  
+        bytes address = 1;  
+        int64 voteCount = 2;  
+        bytes pubKey = 3;
+        string url = 4; 
+        int64 totalProduced = 5;  
+        int64 totalMissed = 6;
+        int64 latestBlockNum = 7;
         bool isJobs = 9;
-       }
+      }
 
 +	A block typically contains transaction data and a blockheader, which is a list of basic block information, including timestamp, signature, parent hash, root of Merkle tree and so on.
 
@@ -64,10 +65,10 @@
      `block_header`: one part of a block.
       
          // block
-          message Block {   
-           repeated Transaction transactions = 1;   
-           BlockHeader block_header = 2; 
-          }
+         message Block {
+           repeated Transaction transactions = 1;
+           BlockHeader block_header = 2;
+         }
 
      A `BlockHeader` contains `raw_data` and `witness_signature`.  
      `raw_data`: a `raw` message.  
@@ -81,20 +82,20 @@
      `witness_id`: the id of witness which packed this block – e.g. “_0xu82h…7237_”.  
      `witness_address`: the address of the witness packed this block – e.g. “_0xu82h…7237_”.
 
-         message BlockHeader {   
-           message raw {     
-             int64 timestamp = 1;     
-             bytes txTrieRoot = 2;     
-             bytes parentHash = 3;     
-             //bytes nonce = 5;     
-             //bytes difficulty = 6;     
-             uint64 number = 7;     
-             uint64 witness_id = 8;     
-             bytes witness_address = 9;   
-          }   
-          raw raw_data = 1;   
-          bytes witness_signature = 2; 
-          }
+         message BlockHeader {
+           message raw {
+             int64 timestamp = 1; 
+             bytes txTrieRoot = 2;    
+             bytes parentHash = 3;    
+             //bytes nonce = 5;  
+             //bytes difficulty = 6;    
+             uint64 number = 7;
+             uint64 witness_id = 8;    
+             bytes witness_address = 9;  
+           }
+           raw raw_data = 1;
+           bytes witness_signature = 2;
+         }
 
      message `ChainInventory` contains `BlockId` and `remain_num`.  
      `BlockId`: the identification of block.  
@@ -108,10 +109,10 @@
             message BlockId {
                bytes hash = 1;
                int64 number = 2;
-             }
-             repeated BlockId ids = 1;
-             int64 remain_num = 2;
-          }
+            }
+            repeated BlockId ids = 1;
+            int64 remain_num = 2;
+         }
           
 +	Transaction contracts mainly includes account create contract, account update contract transfer contract, transfer asset contract, vote asset contract, vote witness contract, witness creation contract, witness update contract, asset issue contract, participate asset issue contract and deploy contract.
 
@@ -120,11 +121,11 @@
      `account_name`: the name for this account – e.g.”_Billsaccount_”.  
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.
          
-         message AccountCreateContract {   
-           AccountType type = 1;   
-           bytes account_name = 2;   
-           bytes owner_address = 3; 
-          }
+         message AccountCreateContract {
+           AccountType type = 1;
+           bytes account_name = 2;  
+           bytes owner_address = 3;
+         }
           
      A `AccountUpdateContract` contains 2 paremeters:  
      `account_name`: the name for this account – e.g.”_Billsaccount_”.  
@@ -133,18 +134,18 @@
          message AccountUpdateContract {
            bytes account_name = 1;
            bytes owner_address = 2;
-          }
+         }
      
      A `TransferContract` contains 3 parameters:  
      `amount`: the amount of TRX – e.g. _12534_.  
      `to_address`: the receiver address – e.g. “_0xu82h…7237_”.  
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.
 
-         message TransferContract {   
-           bytes owner_address = 1;   
-           bytes to_address = 2;   
+         message TransferContract {  
+           bytes owner_address = 1;  
+           bytes to_address = 2;
            int64 amount = 3;
-          }
+         }
 
      A `TransferAssetContract` contains 4 parameters:  
      `asset_name`: the name for asset – e.g.”_Billsaccount_”.  
@@ -152,12 +153,12 @@
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.  
      `amount`: the amount of target asset - e.g._12353_.
 
-         message TransferAssetContract {   
-           bytes asset_name = 1;   
-           bytes owner_address = 2;   
-           bytes to_address = 3;   
-           int64 amount = 4; 
-          }
+         message TransferAssetContract {  
+           bytes asset_name = 1;
+           bytes owner_address = 2;  
+           bytes to_address = 3;  
+           int64 amount = 4;
+         }
 
      A `VoteAssetContract` contains 4 parameters:  
      `vote_address`: the voted address of the asset.  
@@ -165,12 +166,12 @@
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.  
      `count`: the count number of votes- e.g. _2324234_.
 
-         message VoteAssetContract {   
-           bytes owner_address = 1;   
-           repeated bytes vote_address = 2;   
-           bool support = 3;   
-           int32 count = 5; 
-          }
+         message VoteAssetContract {  
+           bytes owner_address = 1;
+           repeated bytes vote_address = 2;  
+           bool support = 3;  
+           int32 count = 5;
+         }
 
      A `VoteWitnessContract` contains 4 parameters:  
      `vote_address`: the addresses of those who voted.  
@@ -178,23 +179,23 @@
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.  
      `count`: - e.g. the count number of vote – e.g. _32632_.
 
-         message VoteWitnessContract {   
-           bytes owner_address = 1;   
-           repeated bytes vote_address = 2;   
-           bool support = 3;   
+         message VoteWitnessContract {  
+           bytes owner_address = 1;
+           repeated bytes vote_address = 2; 
+           bool support = 3;  
            int32 count = 5;
-           }
+         }
 
      A `WitnessCreateContract` contains 3 parameters:  
      `private_key`: the private key of contract– e.g. “_0xu82h…7237_”.  
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.  
      `url`: the url for the witness – e.g. “_https://www.noonetrust.com_”.
 
-         message WitnessCreateContract {   
-           bytes owner_address = 1;   
-           bytes private_key = 2;   
-           bytes url = 12; 
-          }
+         message WitnessCreateContract { 
+           bytes owner_address = 1;
+           bytes private_key = 2;
+           bytes url = 12;
+         }
      
      A `WitnessUpdateContract` contains 2 parameters:  
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.  
@@ -203,7 +204,7 @@
          message WitnessUpdateContract {
             bytes owner_address = 1;
             bytes update_url = 12;
-          }
+         }
           
      An `AssetIssueContract` contains 11 parameters:  
      `owner_address`: the address for contract owner – e.g. “_0xu82h…7237_”.  
@@ -218,19 +219,19 @@
      `description`: the description of this contract – e.g.”_trondada_”.  
      `url`: the url of this contract – e.g. “_https://www.noonetrust.com_”.
 
-         message AssetIssueContract {   
-           bytes owner_address = 1;   
-           bytes name = 2;   
-           int64 total_supply = 4;   
-           int32 trx_num = 6;   
-           int32 num = 8;   
-           int64 start_time = 9;   
-           int64 end_time = 10;   
-           int32 decay_ratio = 15;   
-           int32 vote_score = 16;   
-           bytes description = 20;   
-           bytes url = 21; 
-          }
+         message AssetIssueContract {  
+           bytes owner_address = 1;  
+           bytes name = 2;
+           int64 total_supply = 4;  
+           int32 trx_num = 6;  
+           int32 num = 8;
+           int64 start_time = 9;  
+           int64 end_time = 10;
+           int32 decay_ratio = 15;  
+           int32 vote_score = 16;  
+           bytes description = 20;
+           bytes url = 21;
+         }
           
      A `ParticipateAssetIssueContract` contains 4 parameters:  
      `owner_address`: the address for contract owner – e.g. “_0xu82h…7237_”.  
@@ -243,16 +244,16 @@
            bytes to_address = 2;
            bytes asset_name = 3; 
            int64 amount = 4; 
-          }
+         }
           
      A `DeployContract` contains 2 parameters:  
      `script`: the script of this contract.  
      `owner_address`: the address for contract owner – e.g. “_0xu82h…7237_”. 
 
-         message DeployContract {   
-           bytes owner_address = 1;   
+         message DeployContract { 
+           bytes owner_address = 1;
            bytes script = 2;
-           }                       t
+         }
 
 +	Each transaction contains several TXInputs, TXOutputs and other related qualities.
 Input, transaction and block header all require signature.
@@ -278,56 +279,56 @@ Input, transaction and block header all require signature.
     There are 8 different of contract types: `AccountCreateContract`, `TransferContract`, `TransferAssetContract`, `VoteAssetContract`, `VoteWitnessContract`,`WitnessCreateContract`, `AssetIssueContract` and `DeployContract`.  
     `TransactionType` have two types: `UtxoType` and `ContractType`.
 
-        message Transaction {   
-          enum TranscationType {     
-            UtxoType = 0;     
-            ContractType = 1;   
-           }   
-           message Contract {     
-             enum ContractType {       
-               AccountCreateContract = 0;       
-               TransferContract = 1;       
-               TransferAssetContract = 2;       
-               VoteAssetContract = 3;       
-               VoteWitnessContract = 4;       
-               WitnessCreateContract = 5;       
-               AssetIssueContract = 6;       
-               DeployContract = 7; 
-               WitnessUpdateContract = 8;
-               ParticipateAssetIssueContract = 9    
-              }     
-              ContractType type = 1;     
-              google.protobuf.Any parameter = 2;   
-            }   
-            message raw {     
-              TranscationType type = 2;     
-              repeated TXInput vin = 5;     
-              repeated TXOutput vout = 7;     
-              int64 expiration = 8;     
-              bytes data = 10;     
-              repeated Contract contract = 11;     
-              bytes scripts = 16;   
-              int64 timestamp = 17;
-             }   
-             raw raw_data = 1;   
-             repeated bytes signature = 5;
-          }
+        message Transaction { 
+          enum TranscationType {    
+            UtxoType = 0;
+            ContractType = 1;  
+          }
+          message Contract {  
+            enum ContractType {
+              AccountCreateContract = 0;      
+              TransferContract = 1;     
+              TransferAssetContract = 2;      
+              VoteAssetContract = 3;     
+              VoteWitnessContract = 4;     
+              WitnessCreateContract = 5;   
+              AssetIssueContract = 6;   
+              DeployContract = 7;
+              WitnessUpdateContract = 8;
+              ParticipateAssetIssueContract = 9    
+            }    
+            ContractType type = 1; 
+            google.protobuf.Any parameter = 2;
+          } 
+          message raw {
+            TranscationType type = 2;    
+            repeated TXInput vin = 5;   
+            repeated TXOutput vout = 7;    
+            int64 expiration = 8;
+            bytes data = 10;  
+            repeated Contract contract = 11;    
+            bytes scripts = 16; 
+            int64 timestamp = 17;
+          }  
+          raw raw_data = 1;
+          repeated bytes signature = 5;
+        }
 
     message `TXOutputs` contains `outputs`.  
     `outputs`: an array of `TXOutput`.  
 
-        message TXOutputs {   
-           repeated TXOutput outputs = 1; 
-         }
+        message TXOutputs {
+           repeated TXOutput outputs = 1;
+        }
 
     message `TXOutput` contains `value` and `pubKeyHash`.  
     `value`: output value.  
     `pubKeyHash`: Hash of public key
 
-        message TXOutput {   
-           int64 value = 1;   
-           bytes pubKeyHash = 2; 
-         }
+        message TXOutput {  
+           int64 value = 1;
+           bytes pubKeyHash = 2;
+        }
 
     message `TXInput` contains `raw_data` and `signature`.  
     `raw_data`: a message `raw`.  
@@ -338,15 +339,15 @@ Input, transaction and block header all require signature.
     `vout`: value of last output.  
     `pubKey`: public key.
 
-        message TXInput {   
-           message raw {     
-           bytes txID = 1;     
-           int64 vout = 2;     
-           bytes pubKey = 3;   
-         }   
-         raw raw_data = 1;   
-         bytes signature = 4;
-          }
+        message TXInput {  
+           message raw { 
+             bytes txID = 1;    
+             int64 vout = 2;   
+             bytes pubKey = 3;
+           }
+           raw raw_data = 1;
+           bytes signature = 4;
+         }
        
      message `Result` contains `fee` and `ret`.  
      `ret`: the state of transaction.  
@@ -373,15 +374,15 @@ Input, transaction and block header all require signature.
     `TRX`: transaction.  
     `BLOCK`: block.
 
-        // Inventory 
-        message Inventory {   
-          enum InventoryType {     
-            TRX = 0;     
-            BLOCK = 1;   
-           }   
-           InventoryType type = 1;   
-           repeated bytes ids = 2; 
-         }
+        // Inventory
+        message Inventory {
+          enum InventoryType { 
+            TRX = 0;
+            BLOCK = 1;
+          }
+          InventoryType type = 1;  
+          repeated bytes ids = 2;
+        }
 
     message `Items` contains 4 parameters:  
     `type`: type of items – e.g. _1_ stands for `TRX`.  
@@ -395,28 +396,28 @@ Input, transaction and block header all require signature.
     `BLOCK`: block.  
     `BLOCKHEADER`: block header.
 
-        message Items {   
-          enum ItemType {     
-            ERR = 0;     
-            TRX = 1;    
-            BLOCK = 2;     
-            BLOCKHEADER = 3;  
-           }   
-           ItemType type = 1;   
-           repeated Block blocks = 2;   
-           repeated BlockHeader 
-           block_headers = 3;   
-           repeated Transaction transactions = 4;
-         }
+        message Items { 
+          enum ItemType {  
+            ERR = 0;    
+            TRX = 1;  
+            BLOCK = 2;
+            BLOCKHEADER = 3;
+          }
+          ItemType type = 1;
+          repeated Block blocks = 2;
+          repeated BlockHeader = 1;
+          block_headers = 3;
+          repeated Transaction transactions = 4;
+        }
 
     `InventoryItems` contains `type` and `items`.  
     `type`: what type of inventory.  
     `items`: the list of inventory. 
 
-        message InventoryItems {   
-          int32 type = 1;   
+        message InventoryItems {  
+          int32 type = 1;  
           repeated bytes items = 2;
-          }
+        }
 
     message `BlockInventory` contains `type`.  
     `type`: what type of inventory.
@@ -430,6 +431,7 @@ Input, transaction and block header all require signature.
              ADVTISE = 1;
              FETCH = 2;
            }
+         }
     
      message `BlockId` contains `ids` and `type`.  
      `ids`: the identification of block.  
@@ -541,12 +543,11 @@ Input, transaction and block header all require signature.
    
       service Wallet {
       returns (Account) {
-          option (google.api.http) = {
-            post: "/wallet/getaccount"
-            body: "*"
-          };
-      
+        option (google.api.http) = {
+          post: "/wallet/getaccount"
+          body: "*"
         };
+      };
       
         rpc CreateTransaction (TransferContract) returns (Transaction) {
           option (google.api.http) = {
@@ -565,10 +566,9 @@ Input, transaction and block header all require signature.
         rpc GetAccount (Account) 
         rpc ListAccounts (EmptyMessage) returns (AccountList) {
           option (google.api.http) = {
-                post: "/wallet/listaccount"
-                body: "*"
-            };
-      
+            post: "/wallet/listaccount"
+            body: "*"
+          };
         };
       
         rpc UpdateAccount (AccountUpdateContract) returns (Transaction) {
@@ -625,57 +625,63 @@ Input, transaction and block header all require signature.
             post: "/wallet/transferasset"
             body: "*"
           };
-        }
+        };
       
         rpc ParticipateAssetIssue (ParticipateAssetIssueContract) returns (Transaction) {
           option (google.api.http) = {
             post: "/wallet/participateassetissue"
             body: "*"
           };
-        }
+        };
       
         rpc ListNodes (EmptyMessage) returns (NodeList) {
           option (google.api.http) = {
             post: "/wallet/listnodes"
             body: "*"
           };
-        }
+        };
+        
         rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
           option (google.api.http) = {
             post: "/wallet/getassetissuelist"
             body: "*"
           };
-        }
+        };
+        
         rpc GetAssetIssueByAccount (Account) returns (AssetIssueList) {
           option (google.api.http) = {
             post: "/wallet/getassetissuebyaccount"
             body: "*"
           };
-        }
+        };
+        
         rpc GetAssetIssueByName (BytesMessage) returns (AssetIssueContract) {
           option (google.api.http) = {
             post: "/wallet/getassetissuebyname"
             body: "*"
           };
-        }
+        };
+        
         rpc GetNowBlock (EmptyMessage) returns (Block) {
           option (google.api.http) = {
             post: "/wallet/getnowblock"
             body: "*"
           };
-        }
+        };
+        
         rpc GetBlockByNum (NumberMessage) returns (Block) {
           option (google.api.http) = {
             post: "/wallet/getblockbynum"
             body: "*"
           };
-        }
+        };
+        
         rpc TotalTransaction (EmptyMessage) returns (NumberMessage) {
           option (google.api.http) = {
             post: "/wallet/totaltransaction"
             body: "*"
           };
-        }
+        };
       };
     
    `WalletSolidity` service contains several RPCs.  
@@ -728,43 +734,53 @@ Input, transaction and block header all require signature.
       
         rpc ListNodes (EmptyMessage) returns (NodeList) {
       
-        }
+        };
+        
         rpc GetAssetIssueList (EmptyMessage) returns (AssetIssueList) {
       
-        }
+        };
+        
         rpc GetAssetIssueListByTimestamp (NumberMessage) returns (AssetIssueList) {
       
-        }
+        };
+        
         rpc GetAssetIssueByAccount (Account) returns (AssetIssueList) {
       
-        }
+        };
+        
         rpc GetAssetIssueByName (BytesMessage) returns (AssetIssueContract) {
       
-        }
+        };
+        
         rpc GetNowBlock (EmptyMessage) returns (Block) {
       
-        }
+        };
+        
         rpc GetBlockByNum (NumberMessage) returns (Block) {
       
-        }
+        };
        
         //Get transaction.
         
         rpc TotalTransaction (EmptyMessage) returns (NumberMessage) {
       
-        }
+        };
+        
         rpc getTransactionById (BytesMessage) returns (Transaction) {
       
-        }
+        };
+        
         rpc getTransactionsByTimestamp (TimeMessage) returns (TransactionList) {
       
-        }
+        };
+        
         rpc getTransactionsFromThis (Account) returns (TransactionList) {
       
-        }
+        };
+        
         rpc getTransactionsToThis (Account) returns (NumberMessage) {
       
-        }
+        };
       };
       
    `AccountList`: the list of accounts in the blockchain explorer.  
@@ -812,9 +828,9 @@ Input, transaction and block header all require signature.
    message `Return` has only one parameter:  
     `result`: a bool flag.  
    
-          message `Return` {   
+          message `Return` {  
             bool result = 1;
-           }
+          }
 
 + The message structure of UDP.
 
@@ -829,7 +845,7 @@ Input, transaction and block header all require signature.
          bytes address = 1;
          int32 port = 2;
          bytes nodeId = 3;
-       }
+      }
    
    `PingMessage`: the message sent from one node to another in the connecting process.  
    message `PingMessage` contains 4 parameters:  
@@ -843,7 +859,7 @@ Input, transaction and block header all require signature.
           Endpoint to = 2;
          int32 version = 3;
          int64 timestamp = 4;
-        }
+       }
    
    `PongMessage`: the message implies that nodes are connected.  
    message `PongMessage` contains 3 parameters:  
@@ -855,7 +871,7 @@ Input, transaction and block header all require signature.
           Endpoint from = 1;
           int32 echo = 2;
           int64 timestamp = 3;
-         }
+        }
    
    `FindNeighbours`: the message sent from one node to find another one.  
    message `FindNeighbours` contains 3 parameters:  
@@ -867,7 +883,7 @@ Input, transaction and block header all require signature.
           Endpoint from = 1;
           bytes targetId = 2;
           int64 timestamp = 3;
-         }
+        }
   
    `FindNeighbour`: the message replied by the neighbour node.  
     message `Neighbours` contains 3 parameters:  
@@ -879,7 +895,7 @@ Input, transaction and block header all require signature.
           Endpoint from = 1;
           repeated Endpoint neighbours = 2;
           int64 timestamp = 3;
-         }
+        }
 
 
 
