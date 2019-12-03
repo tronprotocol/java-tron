@@ -13,8 +13,11 @@ import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
@@ -42,7 +45,7 @@ public class EasyTransferByPrivateServlet extends RateLimiterServlet {
       EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
       byte[] privateKey = build.getPrivateKey().toByteArray();
-      ECKey ecKey = ECKey.fromPrivate(privateKey);
+      SignInterface ecKey = SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
       byte[] owner = ecKey.getAddress();
       TransferContract.Builder builder = TransferContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(owner));

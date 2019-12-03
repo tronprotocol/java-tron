@@ -1,33 +1,33 @@
 package org.tron.keystore;
 
-import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.sm2.SM2;
 
 /**
  * Credentials wrapper.
  */
 public class Credentials {
 
-  private final ECKey ecKeyPair;
+  private final SignInterface cryptoEngine;
   private final String address;
 
-  private Credentials(ECKey ecKeyPair, String address) {
-    this.ecKeyPair = ecKeyPair;
+  private Credentials(SignInterface cryptoEngine, String address) {
+    this.cryptoEngine = cryptoEngine;
     this.address = address;
   }
 
-  public static Credentials create(ECKey ecKeyPair) {
-    String address = org.tron.core.Wallet.encode58Check(ecKeyPair.getAddress());
-    return new Credentials(ecKeyPair, address);
+  public static Credentials create(SignInterface cryptoEngine) {
+    String address = org.tron.core.Wallet.encode58Check(cryptoEngine.getAddress());
+    return new Credentials(cryptoEngine, address);
   }
 
-  public static Credentials create(String privateKey) {
-    ECKey eCkey = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
-    return create(eCkey);
+  public static Credentials create(SM2 sm2Pair) {
+    String address = org.tron.core.Wallet.encode58Check(sm2Pair.getAddress());
+    return new Credentials(sm2Pair, address);
   }
 
-  public ECKey getEcKeyPair() {
-    return ecKeyPair;
+  public SignInterface getSignInterface() {
+    return cryptoEngine;
   }
 
   public String getAddress() {
@@ -45,7 +45,7 @@ public class Credentials {
 
     Credentials that = (Credentials) o;
 
-    if (ecKeyPair != null ? !ecKeyPair.equals(that.ecKeyPair) : that.ecKeyPair != null) {
+    if (cryptoEngine != null ? !cryptoEngine.equals(that.cryptoEngine) : that.cryptoEngine != null) {
       return false;
     }
 
@@ -54,7 +54,7 @@ public class Credentials {
 
   @Override
   public int hashCode() {
-    int result = ecKeyPair != null ? ecKeyPair.hashCode() : 0;
+    int result = cryptoEngine != null ? cryptoEngine.hashCode() : 0;
     result = 31 * result + (address != null ? address.hashCode() : 0);
     return result;
   }

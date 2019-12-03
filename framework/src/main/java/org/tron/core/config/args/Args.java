@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,6 +42,8 @@ import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
@@ -58,7 +59,6 @@ import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.db2.common.DB;
 import org.tron.core.store.AccountStore;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.keystore.CipherException;
@@ -271,8 +271,8 @@ public class Args extends CommonParameter {
           try {
             Credentials credentials = WalletUtils
                 .loadCredentials(password, new File(fileName));
-            ECKey ecKeyPair = credentials.getEcKeyPair();
-            String prikey = ByteArray.toHexString(ecKeyPair.getPrivKeyBytes());
+            SignInterface sign = credentials.getSignInterface();
+            String prikey = ByteArray.toHexString(sign.getPrivateKey());
             privateKeys.add(prikey);
           } catch (IOException | CipherException e) {
             logger.error(e.getMessage());
@@ -676,7 +676,7 @@ public class Args extends CommonParameter {
             : Collections.emptySet();
 
     INSTANCE.cryptoEngine = config.hasPath(Constant.CRYPTO_ENGINE) ? config
-        .getString(Constant.CRYPTO_ENGINE) : "ECKey";
+        .getString(Constant.CRYPTO_ENGINE) : Constant.CRYPTO_ENGINE;
 
     logConfig();
     initConfig(INSTANCE);
@@ -878,9 +878,9 @@ public class Args extends CommonParameter {
           props.load(r);
         }
       } else {
-        ECKey key = new ECKey();
-        props.setProperty("nodeIdPrivateKey", Hex.toHexString(key.getPrivKeyBytes()));
-        props.setProperty("nodeId", Hex.toHexString(key.getNodeId()));
+        SignInterface sign = SignUtils.getGeneratedRandomSign(Args.INSTANCE.isECKeyCryptoEngine());
+        props.setProperty("nodeIdPrivateKey", Hex.toHexString(sign.getPrivateKey()));
+        props.setProperty("nodeId", Hex.toHexString(sign.getNodeId()));
         file.getParentFile().mkdirs();
         try (Writer w = new FileWriter(file)) {
           props.store(w,
@@ -1093,6 +1093,7 @@ public class Args extends CommonParameter {
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
+    DBConfig.setECKeyCryptoEngine(cfgArgs.isECKeyCryptoEngine());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
@@ -1110,11 +1111,7 @@ public class Args extends CommonParameter {
     return this.outputDirectory;
   }
 
-  public ECKey getMyKey() {
-    if (StringUtils.isEmpty(INSTANCE.p2pNodeId)) {
-      INSTANCE.p2pNodeId = getGeneratedNodePrivateKey();
-    }
-
-    return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
+  public boolean isECKeyCryptoEngine() {
+    return INSTANCE.cryptoEngine == Constant.ECKey_ENGINE;
   }
 }

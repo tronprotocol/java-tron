@@ -197,6 +197,8 @@ public class Constant {
 
   public static final String CRYPTO_ENGINE = "crypto.engine";
 
+  public static final String ECKey_ENGINE = "ECKey";
+
   public static final String USE_NATIVE_QUEUE = "event.subscribe.native.useNativeQueue";
 
   public static final String NATIVE_QUEUE_BIND_PORT = "event.subscribe.native.bindport";

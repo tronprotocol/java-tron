@@ -113,8 +113,11 @@ public class DBConfig {
   @Setter
   private static boolean solidityNode;
 
-
   @Getter
   @Setter
   private static long proposalExpireTime; // (ms)
+
+  @Getter
+  @Setter
+  private static boolean isECKeyCryptoEngine;
 }
