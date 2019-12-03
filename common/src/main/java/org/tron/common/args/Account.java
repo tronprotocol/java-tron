@@ -106,7 +106,7 @@ public class Account implements Serializable {
    */
   public void setAccountType(final String accountType) {
     if (!this.isAccountType(accountType)) {
-      throw new IllegalArgumentException("Account type error: Not Normal/AssetIssue/Contract");
+      throw new IllegalArgumentException("Account type error: Not a Normal/AssetIssue/Contract");
     }
 
     this.accountType = accountType;
