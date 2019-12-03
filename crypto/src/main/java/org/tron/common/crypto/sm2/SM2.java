@@ -1071,7 +1071,7 @@ public class SM2 implements Serializable, SignInterface {
     }
 
 
-    public static class SM2Signature {
+    public static class SM2Signature implements SignatureInterface {
 
         /**
          * The two components of the signature.
@@ -1089,6 +1089,10 @@ public class SM2 implements Serializable, SignInterface {
         public SM2Signature(BigInteger r, BigInteger s) {
             this.r = r;
             this.s = s;
+        }
+
+        public SM2Signature(byte[] r, byte[] s, byte[] v) {
+            return SM2Signature.fromComponents(r, s, v);
         }
 
         /**

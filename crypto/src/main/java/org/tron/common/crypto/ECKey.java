@@ -1087,7 +1087,7 @@ public class ECKey implements Serializable, SignInterface {
     return Arrays.hashCode(getPubKey());
   }
 
-  public static class ECDSASignature {
+  public static class ECDSASignature implements SignatureInterface {
 
     /**
      * The two components of the signature.
@@ -1105,6 +1105,10 @@ public class ECKey implements Serializable, SignInterface {
     public ECDSASignature(BigInteger r, BigInteger s) {
       this.r = r;
       this.s = s;
+    }
+
+    public ECDSASignature(byte[] r, byte[] s, byte[] v) {
+      return ECDSASignature.fromComponents(r, s, v);
     }
 
     /**
