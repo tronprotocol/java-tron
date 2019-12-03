@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param;
@@ -41,7 +42,8 @@ public class ConsensusService {
     List<Miner> miners = new ArrayList<>();
     byte[] privateKey = ByteArray
         .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey());
-    byte[] privateKeyAddress = ECKey.fromPrivate(privateKey).getAddress();
+    byte[] privateKeyAddress = SignUtils.fromPrivate(privateKey,
+        Args.getInstance().isECKeyCryptoEngine()).getAddress();
     byte[] witnessAddress = Args.getInstance().getLocalWitnesses().getWitnessAccountAddress();
     WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
     if (null == witnessCapsule) {

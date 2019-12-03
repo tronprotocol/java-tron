@@ -1,8 +1,7 @@
 package org.tron.core.vm.utils;
 
-
 import org.tron.common.utils.Base58;
-import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -11,7 +10,6 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
 public class MUtil {
-
 
   private MUtil() {
   }
@@ -53,7 +51,7 @@ public class MUtil {
   public static byte[] convertToTronAddress(byte[] address) {
     if (address.length == 20) {
       byte[] newAddress = new byte[21];
-      byte[] temp = new byte[]{Commons.addressPreFixByte};
+      byte[] temp = new byte[]{DecodeUtil.addressPreFixByte};
       System.arraycopy(temp, 0, newAddress, 0, temp.length);
       System.arraycopy(address, 0, newAddress, temp.length, address.length);
       address = newAddress;
@@ -81,7 +79,7 @@ public class MUtil {
 
   public static byte[] allZero32TronAddress() {
     byte[] newAddress = new byte[32];
-    byte[] temp = new byte[]{Commons.addressPreFixByte};
+    byte[] temp = new byte[]{DecodeUtil.addressPreFixByte};
     System.arraycopy(temp, 0, newAddress, 11, temp.length);
 
     return newAddress;

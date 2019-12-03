@@ -22,7 +22,6 @@ import static java.util.Arrays.copyOfRange;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.ByteUtil.isNullOrZeroArray;
 import static org.tron.common.utils.ByteUtil.isSingleZero;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -39,6 +38,7 @@ public class Hash {
   private static final Provider CRYPTO_PROVIDER;
   private static final String HASH_256_ALGORITHM_NAME;
   private static final String HASH_512_ALGORITHM_NAME;
+  private static final String ALGORITHM_NOT_FOUND = "Can't find such algorithm";
   /**
    * [0x80] If a string is 0-55 bytes long, the RLP encoding consists of a single byte with value
    * 0x80 plus the length of the string followed by the string. The range of the first byte is thus
@@ -79,7 +79,7 @@ public class Hash {
       digest.update(input);
       return digest.digest();
     } catch (NoSuchAlgorithmException e) {
-      logger.error("Can't find such algorithm", e);
+      logger.error(ALGORITHM_NOT_FOUND, e);
       throw new RuntimeException(e);
     }
 
@@ -94,7 +94,7 @@ public class Hash {
       digest.update(input2, 0, input2.length);
       return digest.digest();
     } catch (NoSuchAlgorithmException e) {
-      logger.error("Can't find such algorithm", e);
+      logger.error(ALGORITHM_NOT_FOUND, e);
       throw new RuntimeException(e);
     }
   }
@@ -115,7 +115,7 @@ public class Hash {
       digest.update(input, start, length);
       return digest.digest();
     } catch (NoSuchAlgorithmException e) {
-      logger.error("Can't find such algorithm", e);
+      logger.error(ALGORITHM_NOT_FOUND, e);
       throw new RuntimeException(e);
     }
   }
@@ -128,23 +128,11 @@ public class Hash {
       digest.update(input);
       return digest.digest();
     } catch (NoSuchAlgorithmException e) {
-      logger.error("Can't find such algorithm", e);
+      logger.error(ALGORITHM_NOT_FOUND, e);
       throw new RuntimeException(e);
     }
   }
 
-  /**
-   * Calculates RIGTMOST160(SHA3(input)). This is used in address calculations. *
-   *
-   * @param input - data
-   * @return - add_pre_fix + 20 right bytes of the hash keccak of the data
-   */
-  public static byte[] sha3omit12(byte[] input) {
-    byte[] hash = sha3(input);
-    byte[] address = copyOfRange(hash, 11, hash.length);
-    address[0] = DecodeUtil.addressPreFixByte;
-    return address;
-  }
 
   public static byte[] encodeElement(byte[] srcData) {
 
@@ -205,5 +193,18 @@ public class Hash {
   public static byte[] computeAddress(byte[] pubBytes) {
     return sha3omit12(
         Arrays.copyOfRange(pubBytes, 1, pubBytes.length));
+  }
+
+  /**
+   * Calculates RIGTMOST160(SHA3(input)). This is used in address calculations. *
+   *
+   * @param input - data
+   * @return - add_pre_fix + 20 right bytes of the hash keccak of the data
+   */
+  public static byte[] sha3omit12(byte[] input) {
+    byte[] hash = Hash.sha3(input);
+    byte[] address = copyOfRange(hash, 11, hash.length);
+    address[0] = DecodeUtil.addressPreFixByte;
+    return address;
   }
 }

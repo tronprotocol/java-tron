@@ -80,8 +80,8 @@ public interface Repository {
 
   byte[] getBlackHoleAddress();
 
-  public BlockCapsule getBlockByNum(final long num);
+  BlockCapsule getBlockByNum(final long num);
 
-  public AccountCapsule createNormalAccount(byte[] address);
+  AccountCapsule createNormalAccount(byte[] address);
 
 }

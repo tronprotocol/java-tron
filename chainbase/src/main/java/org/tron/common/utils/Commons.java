@@ -1,5 +1,6 @@
 package org.tron.common.utils;
 
+import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +19,7 @@ import org.tron.core.store.ExchangeV2Store;
 @Slf4j(topic = "Commons")
 public class Commons {
 
-  public static final int ADDRESS_SIZE = 42;
   public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
-  public static byte addressPreFixByte = ADD_PRE_FIX_BYTE_MAINNET;
 
   public static byte[] clone(byte[] value) {
     byte[] clone = new byte[value.length];
@@ -46,27 +45,6 @@ public class Commons {
     return null;
   }
 
-  public static boolean addressValid(byte[] address) {
-    if (ArrayUtils.isEmpty(address)) {
-      logger.warn("Warning: Address is empty !!");
-      return false;
-    }
-    if (address.length != ADDRESS_SIZE / 2) {
-      logger.warn(
-          "Warning: Address length need " + ADDRESS_SIZE + " but " + address.length
-              + " !!");
-      return false;
-    }
-
-    if (address[0] != addressPreFixByte) {
-      logger.warn("Warning: Address need prefix with " + addressPreFixByte + " but "
-          + address[0] + " !!");
-      return false;
-    }
-    //Other rule;
-    return true;
-  }
-
   public static byte[] decodeFromBase58Check(String addressBase58) {
     if (StringUtils.isEmpty(addressBase58)) {
       logger.warn("Warning: Address is empty !!");
@@ -77,7 +55,7 @@ public class Commons {
       return null;
     }
 
-    if (!addressValid(address)) {
+    if (!DecodeUtil.addressValid(address)) {
       return null;
     }
 
@@ -88,10 +66,6 @@ public class Commons {
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
     adjustBalance(accountStore, account, amount);
-  }
-
-  public static String createReadableString(byte[] bytes) {
-    return ByteArray.toHexString(bytes);
   }
 
   /**
@@ -107,7 +81,7 @@ public class Commons {
 
     if (amount < 0 && balance < -amount) {
       throw new BalanceInsufficientException(
-          createReadableString(account.createDbKey()) + " insufficient balance");
+          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
     }
     account.setBalance(Math.addExact(balance, amount));
     accountStore.put(account.getAddress().toByteArray(), account);
