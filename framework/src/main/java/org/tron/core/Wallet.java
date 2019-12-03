@@ -2327,14 +2327,6 @@ public class Wallet {
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
         StoreFactory.getInstance(), true,
         false);
-    /*VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
-    VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
-    VMConfig.initAllowTvmTransferTrc10(
-        dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
-    VMConfig.initAllowTvmConstantinople(
-        dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
-    VMConfig
-        .initAllowTvmSolidity059(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());*/
     VMActuator vmActuator = new VMActuator(true);
 
     vmActuator.validate(context);
