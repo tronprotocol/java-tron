@@ -858,38 +858,7 @@ public class Args extends CommonParameter {
 
     return filter;
   }
-
-  private static String getGeneratedNodePrivateKey() {
-    String nodeId;
-    try {
-      File file = new File(
-          INSTANCE.outputDirectory + File.separator + INSTANCE.storage.getDbDirectory(),
-          "nodeId.properties");
-      Properties props = new Properties();
-      if (file.canRead()) {
-        try (Reader r = new FileReader(file)) {
-          props.load(r);
-        }
-      } else {
-        ECKey key = new ECKey();
-        props.setProperty("nodeIdPrivateKey", Hex.toHexString(key.getPrivKeyBytes()));
-        props.setProperty("nodeId", Hex.toHexString(key.getNodeId()));
-        file.getParentFile().mkdirs();
-        try (Writer w = new FileWriter(file)) {
-          props.store(w,
-              "Generated NodeID. To use your own nodeId please refer to "
-                  + "'peer.privateKey' config option.");
-        }
-        logger.info("New nodeID generated: " + props.getProperty("nodeId"));
-        logger.info("Generated nodeID and its private key stored in " + file);
-      }
-      nodeId = props.getProperty("nodeIdPrivateKey");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return nodeId;
-  }
-
+  
   private static void bindIp(final com.typesafe.config.Config config) {
     if (!config.hasPath(Constant.NODE_DISCOVERY_BIND_IP)
         || config.getString(Constant.NODE_DISCOVERY_BIND_IP)
