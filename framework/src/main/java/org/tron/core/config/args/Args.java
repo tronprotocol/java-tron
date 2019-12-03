@@ -361,7 +361,7 @@ public class Args extends CommonParameter {
     INSTANCE.seedNode = new SeedNode();
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
-        .orElse(config.getStringList("seed.node.ip.list")));
+        .orElse(config.getStringList(Constant.SEED_NODE_IP_LIST)));
 
     if (config.hasPath(Constant.GENESIS_BLOCK)) {
       INSTANCE.genesisBlock = new GenesisBlock();
@@ -710,13 +710,13 @@ public class Args extends CommonParameter {
 
     RateLimiterInitialization initialization = new RateLimiterInitialization();
     ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
-        .getObjectList("rate.limiter.http").stream()
+        .getObjectList(Constant.RATE_LIMITER_HTTP).stream()
         .map(RateLimiterInitialization::createHttpItem)
         .collect(Collectors.toCollection(ArrayList::new));
     initialization.setHttpMap(list1);
 
     ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
-        .getObjectList("rate.limiter.rpc").stream()
+        .getObjectList(Constant.RATE_LIMITER_RPC).stream()
         .map(RateLimiterInitialization::createRpcItem)
         .collect(Collectors.toCollection(ArrayList::new));
 
@@ -858,38 +858,7 @@ public class Args extends CommonParameter {
 
     return filter;
   }
-
-  private static String getGeneratedNodePrivateKey() {
-    String nodeId;
-    try {
-      File file = new File(
-          INSTANCE.outputDirectory + File.separator + INSTANCE.storage.getDbDirectory(),
-          "nodeId.properties");
-      Properties props = new Properties();
-      if (file.canRead()) {
-        try (Reader r = new FileReader(file)) {
-          props.load(r);
-        }
-      } else {
-        ECKey key = new ECKey();
-        props.setProperty("nodeIdPrivateKey", Hex.toHexString(key.getPrivKeyBytes()));
-        props.setProperty("nodeId", Hex.toHexString(key.getNodeId()));
-        file.getParentFile().mkdirs();
-        try (Writer w = new FileWriter(file)) {
-          props.store(w,
-              "Generated NodeID. To use your own nodeId please refer to "
-                  + "'peer.privateKey' config option.");
-        }
-        logger.info("New nodeID generated: " + props.getProperty("nodeId"));
-        logger.info("Generated nodeID and its private key stored in " + file);
-      }
-      nodeId = props.getProperty("nodeIdPrivateKey");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return nodeId;
-  }
-
+  
   private static void bindIp(final com.typesafe.config.Config config) {
     if (!config.hasPath(Constant.NODE_DISCOVERY_BIND_IP)
         || config.getString(Constant.NODE_DISCOVERY_BIND_IP)
@@ -951,7 +920,7 @@ public class Args extends CommonParameter {
   }
 
   private static void initRocksDbSettings(Config config) {
-    String prefix = "storage.dbSettings.";
+    String prefix = Constant.STORAGE_DB_SETTING;
     int levelNumber = config.hasPath(prefix + "levelNumber")
         ? config.getInt(prefix + "levelNumber") : 7;
     int compactThreads = config.hasPath(prefix + "compactThreads")
@@ -984,12 +953,12 @@ public class Args extends CommonParameter {
             && config.getBoolean(Constant.STORAGE_BACKUP_ENABLE);
     String propPath = config.hasPath(Constant.STORAGE_BACKUP_PROP_PATH)
         ? config.getString(Constant.STORAGE_BACKUP_PROP_PATH) : "prop.properties";
-    String bak1path = config.hasPath("storage.backup.bak1path")
-        ? config.getString("storage.backup.bak1path") : "bak1/database/";
-    String bak2path = config.hasPath("storage.backup.bak2path")
-        ? config.getString("storage.backup.bak2path") : "bak2/database/";
-    int frequency = config.hasPath("storage.backup.frequency")
-        ? config.getInt("storage.backup.frequency") : 10000;
+    String bak1path = config.hasPath(Constant.STORAGE_BACKUP_BAK1PATH)
+        ? config.getString(Constant.STORAGE_BACKUP_BAK1PATH) : "bak1/database/";
+    String bak2path = config.hasPath(Constant.STORAGE_BACKUP_BAK2PATH)
+        ? config.getString(Constant.STORAGE_BACKUP_BAK2PATH) : "bak2/database/";
+    int frequency = config.hasPath(Constant.STORAGE_BACKUP_FREQUENCY)
+        ? config.getInt(Constant.STORAGE_BACKUP_FREQUENCY) : 10000;
     INSTANCE.dbBackupConfig = DbBackupConfig.getInstance()
         .initArgs(enable, propPath, bak1path, bak2path, frequency);
   }
@@ -1086,6 +1055,7 @@ public class Args extends CommonParameter {
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
+    DBConfig.setTransactionHistoreSwitch(cfgArgs.getStorage().getTransactionHistoreSwitch());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
@@ -1101,13 +1071,5 @@ public class Args extends CommonParameter {
       return this.outputDirectory + File.separator;
     }
     return this.outputDirectory;
-  }
-
-  public ECKey getMyKey() {
-    if (StringUtils.isEmpty(INSTANCE.p2pNodeId)) {
-      INSTANCE.p2pNodeId = getGeneratedNodePrivateKey();
-    }
-
-    return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
   }
 }

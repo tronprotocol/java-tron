@@ -221,6 +221,15 @@ public class Constant {
 
   public static final String STORAGE_BACKUP_ENABLE = "storage.backup.enable";
   public static final String STORAGE_BACKUP_PROP_PATH = "storage.backup.propPath";
+  public static final String STORAGE_BACKUP_BAK1PATH = "storage.backup.bak1path";
+  public static final String STORAGE_BACKUP_BAK2PATH = "storage.backup.bak2path";
+  public static final String STORAGE_BACKUP_FREQUENCY = "storage.backup.frequency";
+  public static final String STORAGE_DB_SETTING = "storage.dbSettings.";
 
   public static final String ACTUATOR_WHITELIST = "actuator.whitelist";
+
+  public static final String RATE_LIMITER_HTTP = "rate.limiter.http";
+  public static final String RATE_LIMITER_RPC = "rate.limiter.rpc";
+
+  public static final String SEED_NODE_IP_LIST = "seed.node.ip.list";
 }

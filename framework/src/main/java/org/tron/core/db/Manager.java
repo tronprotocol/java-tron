@@ -78,6 +78,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ProposalController;
@@ -127,6 +128,8 @@ import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.store.TransactionHistoryStore;
+import org.tron.core.store.TransactionRetStore;
 import org.tron.core.store.TreeBlockIndexStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
@@ -1280,8 +1283,8 @@ public class Manager {
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
             new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
 
-    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
-        .buildInstance(trxCap, blockCap, trace);
+    TransactionInfoCapsule transactionInfo = TransactionUtil
+        .buildTransactionInfoInstance(trxCap, blockCap, trace);
 
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
