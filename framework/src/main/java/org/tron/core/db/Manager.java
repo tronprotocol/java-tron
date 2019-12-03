@@ -1,7 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
