@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.GenesisBlock;
 
 @Slf4j(topic = "consensus")
@@ -90,6 +92,12 @@ public class DposService implements ConsensusInterface {
         }
       });
       updateWitness(witnesses);
+      List<ByteString> addresses = consensusDelegate.getActiveWitnesses();
+      addresses.forEach(address -> {
+        WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address.toByteArray());
+        witnessCapsule.setIsJobs(true);
+        consensusDelegate.saveWitness(witnessCapsule);
+      });
     }
 
     dposTask.init();
