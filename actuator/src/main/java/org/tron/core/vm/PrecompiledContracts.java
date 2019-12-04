@@ -48,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
 import org.tron.common.crypto.zksnark.BN128G1;
@@ -67,6 +68,7 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol.Permission;
+import org.tron.common.crypto.SignatureInterface;
 
 /**
  * @author Roman Mandeleil
@@ -179,9 +181,9 @@ public class PrecompiledContracts {
         v += 27;
       }
 
-      ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
+      SignatureInterface signature = SignUtils.fromComponents(r, s, v, DBConfig.isECKeyCryptoEngine());
       if (signature.validateComponents()) {
-        out = ECKey.signatureToAddress(hash, signature);
+        out = SignUtils.signatureToAddress(hash, signature, DBConfig.isECKeyCryptoEngine());
       }
     } catch (Throwable any) {
       logger.info("ECRecover error", any.getMessage());
@@ -382,9 +384,9 @@ public class PrecompiledContracts {
         int sLength = data.length < 128 ? data.length - 96 : 32;
         System.arraycopy(data, 96, s, 0, sLength);
 
-        ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v[31]);
+        SignatureInterface signature = SignUtils.fromComponents(r, s, v[31], DBConfig.isECKeyCryptoEngine());
         if (validateV(v) && signature.validateComponents()) {
-          out = new DataWord(ECKey.signatureToAddress(h, signature));
+          out = new DataWord(SignUtils.signatureToAddress(h, signature, DBConfig.isECKeyCryptoEngine()));
         }
       } catch (Throwable any) {
       }
