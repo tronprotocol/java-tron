@@ -120,4 +120,8 @@ public class DBConfig {
   @Getter
   @Setter
   private static boolean isECKeyCryptoEngine;
+
+  @Getter
+  @Setter
+  private static String transactionHistoreSwitch;
 }
