@@ -9,7 +9,9 @@ import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
+
 public class MUtil {
+
 
   private MUtil() {
   }
