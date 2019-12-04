@@ -447,7 +447,8 @@ public class Util {
       addressStr = jsonObject.getString(addressParam);
     }
     if (org.apache.commons.lang3.StringUtils.isNotBlank(addressStr)) {
-      if (org.apache.commons.lang3.StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
+      if (org.apache.commons.lang3.StringUtils.startsWith(addressStr,
+              Constant.ADD_PRE_FIX_STRING_MAINNET)) {
         address = Hex.decode(addressStr);
       } else {
         address = Wallet.decodeFromBase58Check(addressStr);
