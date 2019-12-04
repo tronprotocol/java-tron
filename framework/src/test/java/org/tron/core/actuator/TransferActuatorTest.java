@@ -1,7 +1,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
-import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
+import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
