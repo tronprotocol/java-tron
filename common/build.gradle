@@ -6,6 +6,30 @@ version '1.0.0'
 
 sourceCompatibility = 1.8
 
+// Dependency versions
+// ---------------------------------------
+
+def leveldbVersion = "1.8"
+// --------------------------------------
+
+static def isWindows() {
+    return org.gradle.internal.os.OperatingSystem.current().isWindows()
+}
+
+if (isWindows()) {
+    ext {
+        leveldbGroup = "org.ethereum"
+        leveldbName = "leveldbjni-all"
+        leveldbVersion = "1.18.3"
+    }
+} else {
+    ext {
+        leveldbGroup = "org.fusesource.leveldbjni"
+        leveldbName = "leveldbjni-all"
+        leveldbVersion = "1.8"
+    }
+}
+
 repositories {
     mavenCentral()
 }
@@ -20,5 +44,6 @@ dependencies {
     compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
     compile group: 'com.beust', name: 'jcommander', version: '1.72'
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
+    compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
     compile project(":protocol")
 }
