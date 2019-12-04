@@ -148,24 +148,21 @@ public class Util {
   public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight,
       boolean selfType) {
     String string = JsonFormat.printToString(transactionSignWeight, selfType);
-    JSONObject jsonObject = JSONObject.parseObject(string);
-    JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
-    jsonObjectExt
-        .put(TRANSACTION,
-            printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction(),
-                selfType));
-    jsonObject.put(TRANSACTION, jsonObjectExt);
-    return jsonObject.toJSONString();
+    return printTxInfo(transactionSignWeight.getTransaction().getTransaction(), string, selfType);
   }
 
   public static String printTransactionApprovedList(
       TransactionApprovedList transactionApprovedList, boolean selfType) {
     String string = JsonFormat.printToString(transactionApprovedList, selfType);
-    JSONObject jsonObject = JSONObject.parseObject(string);
+    return printTxInfo(transactionApprovedList.getTransaction().getTransaction(), string, selfType);
+  }
+
+  public static String printTxInfo(Transaction tx, String str, boolean selfType) {
+    JSONObject jsonObject = JSONObject.parseObject(str);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
     jsonObjectExt.put(TRANSACTION,
-        printTransactionToJSON(transactionApprovedList.getTransaction().getTransaction(),
-            selfType));
+            printTransactionToJSON(tx,
+                    selfType));
     jsonObject.put(TRANSACTION, jsonObjectExt);
     return jsonObject.toJSONString();
   }
