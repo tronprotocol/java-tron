@@ -629,7 +629,6 @@ public class Manager {
 
               final WitnessCapsule witnessCapsule =
                   new WitnessCapsule(address, key.getVoteCount(), key.getUrl());
-              witnessCapsule.setIsJobs(true);
               this.witnessStore.put(keyAddress, witnessCapsule);
             });
   }
