@@ -47,7 +47,7 @@ import org.tron.protos.Protocol.MarketPriceList.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.MakerContract.MakerSellAssetContract;
+import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 
 @Slf4j(topic = "actuator")
 public class MarketSellAssetActuator extends AbstractActuator {
@@ -79,8 +79,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
     long fee = calcFee();
 
     try {
-      final MakerSellAssetContract contract = this.any
-          .unpack(MakerSellAssetContract.class);
+      final MarketSellAssetContract contract = this.any
+          .unpack(MarketSellAssetContract.class);
 
       AccountCapsule accountCapsule = accountStore
           .get(contract.getOwnerAddress().toByteArray());
@@ -129,16 +129,16 @@ public class MarketSellAssetActuator extends AbstractActuator {
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
-    if (!this.any.is(MakerSellAssetContract.class)) {
+    if (!this.any.is(MarketSellAssetContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [MakerSellAssetContract],real type[" + any
+          "contract type error,expected type [MarketSellAssetContract],real type[" + any
               .getClass() + "]");
     }
 
-    final MakerSellAssetContract contract;
+    final MarketSellAssetContract contract;
     try {
       contract =
-          this.any.unpack(MakerSellAssetContract.class);
+          this.any.unpack(MarketSellAssetContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -340,7 +340,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
 
   public MarketOrderCapsule createAndSaveOrder(AccountCapsule accountCapsule,
-      MakerSellAssetContract contract)
+      MarketSellAssetContract contract)
       throws ItemNotFoundException {
 
     MarketAccountOrderCapsule marketAccountOrderCapsule = marketAccountStore
@@ -363,7 +363,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
 
   public void transferBalanceOrToken(AccountCapsule accountCapsule,
-      MakerSellAssetContract contract) {
+      MarketSellAssetContract contract) {
     byte[] sellTokenID = contract.getSellTokenId().toByteArray();
     long sellTokenQuantity = contract.getSellTokenQuantity();
 

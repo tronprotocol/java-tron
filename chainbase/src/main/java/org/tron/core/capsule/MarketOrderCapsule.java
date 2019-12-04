@@ -11,7 +11,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.MarketOrder;
 
 import java.util.Arrays;
-import org.tron.protos.contract.MakerContract.MakerSellAssetContract;
+import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 
 @Slf4j(topic = "capsule")
 public class MarketOrderCapsule implements ProtoCapsule<MarketOrder> {
@@ -30,7 +30,7 @@ public class MarketOrderCapsule implements ProtoCapsule<MarketOrder> {
     }
   }
 
-  public MarketOrderCapsule(byte[] id, MakerSellAssetContract contract) {
+  public MarketOrderCapsule(byte[] id, MarketSellAssetContract contract) {
 
     this.order = MarketOrder.newBuilder()
         .setOrderId(ByteString.copyFrom(id))
