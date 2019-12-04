@@ -50,7 +50,6 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
       BlockList reply = wallet.getBlockByLatestNum(getNum);
       if (reply != null) {
         response.getWriter().println(Util.printBlockList(reply, visible));
-        return;
       } else {
         response.getWriter().println("{}");
       }
