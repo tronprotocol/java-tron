@@ -44,17 +44,17 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
     }
   }
 
-  private void outWrite(long getNum, boolean visible, HttpServletResponse response) throws Exception {
+  private void outWrite(long getNum, boolean visible, HttpServletResponse response)
+          throws Exception {
     if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
       BlockList reply = wallet.getBlockByLatestNum(getNum);
       if (reply != null) {
         response.getWriter().println(Util.printBlockList(reply, visible));
         return;
-      }
-      else {
+      } else {
         response.getWriter().println("{}");
       }
-    }else {
+    } else {
       response.getWriter().println("{}");
     }
   }

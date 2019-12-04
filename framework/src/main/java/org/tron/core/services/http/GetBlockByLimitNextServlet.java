@@ -46,7 +46,8 @@ public class GetBlockByLimitNextServlet extends RateLimiterServlet {
     }
   }
 
-  private void outWrite(long endNum, long startNum, boolean visible, HttpServletResponse response) throws Exception {
+  private void outWrite(long endNum, long startNum, boolean visible, HttpServletResponse response)
+          throws Exception {
     if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
       BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
       if (reply != null) {
