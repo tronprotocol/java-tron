@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.BlockCapsule;
@@ -431,6 +433,27 @@ public class Util {
     } else {
       response.getWriter().println("{}");
     }
+  }
+
+  public static byte[] getAddress(HttpServletRequest request) throws Exception {
+    byte[] address = null;
+    String addressParam = "address";
+    String addressStr = request.getParameter(addressParam);
+    if (org.apache.commons.lang3.StringUtils.isBlank(addressStr)) {
+      String input = request.getReader().lines()
+              .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
+      JSONObject jsonObject = JSONObject.parseObject(input);
+      addressStr = jsonObject.getString(addressParam);
+    }
+    if (org.apache.commons.lang3.StringUtils.isNotBlank(addressStr)) {
+      if (org.apache.commons.lang3.StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
+        address = Hex.decode(addressStr);
+      } else {
+        address = Wallet.decodeFromBase58Check(addressStr);
+      }
+    }
+    return address;
   }
 
 }
