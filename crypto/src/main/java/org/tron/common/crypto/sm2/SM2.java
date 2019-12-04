@@ -21,6 +21,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.spongycastle.util.test.TestRandomBigInteger;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.ECSignatureFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
@@ -1091,8 +1092,10 @@ public class SM2 implements Serializable, SignInterface {
             this.s = s;
         }
 
-        public SM2Signature(byte[] r, byte[] s, byte[] v) {
-            return SM2Signature.fromComponents(r, s, v);
+        public SM2Signature(byte[] r, byte[] s, byte v) {
+            this.r = new BigInteger(1, r);
+            this.s = new BigInteger(1,s);
+            this.v = v;
         }
 
         /**

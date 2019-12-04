@@ -1107,8 +1107,10 @@ public class ECKey implements Serializable, SignInterface {
       this.s = s;
     }
 
-    public ECDSASignature(byte[] r, byte[] s, byte[] v) {
-      return ECDSASignature.fromComponents(r, s, v);
+    public ECDSASignature(byte[] r, byte[] s, byte v) {
+      this.r = new BigInteger(1, r);
+      this.s = new BigInteger(1, s);
+      this.v = v;
     }
 
     /**
