@@ -21,14 +21,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-public class AccountPermissionUpdateServletTest {
-    private AccountPermissionUpdateServlet accountPermissionUpdateServlet;
+public class BroadcastHexServletTest {
+    private BroadcastHexServlet broadcastHexServlet;
     private HttpServletRequest request;
     private HttpServletResponse response;
 
     @Before
     public void setUp() {
-        accountPermissionUpdateServlet = new AccountPermissionUpdateServlet();
+        broadcastHexServlet = new BroadcastHexServlet();
         request = mock(HttpServletRequest.class);
         response = mock(HttpServletResponse.class);
     }
@@ -46,43 +46,10 @@ public class AccountPermissionUpdateServletTest {
     public void doPostTest() throws IOException {
 
         //send Post request
-        URL url = new URL("http://127.0.0.1:8090/wallet/accountpermissionupdate");
+        URL url = new URL("http://127.0.0.1:8090/wallet/broadcasttransaction");
         String postData = "{\n" +
-                "    \"owner_address\": \"TRGhNNfnmgLegT4zHNjEqDSADjgmnHvubJ\",\n" +
-                "    \"owner\": {\n" +
-                "        \"type\": 0,\n" +
-                "        \"permission_name\": \"owner\",\n" +
-                "        \"threshold\": 1,\n" +
-                "        \"keys\": [{\n" +
-                "            \"address\": \"TRGhNNfnmgLegT4zHNjEqDSADjgmnHvubJ\",\n" +
-                "            \"weight\": 1\n" +
-                "        }]\n" +
-                "    },\n" +
-                "    \"witness\": {\n" +
-                "        \"type\": 1,\n" +
-                "        \"permission_name\": \"witness\",\n" +
-                "        \"threshold\": 1,\n" +
-                "        \"keys\": [{\n" +
-                "            \"address\": \"TRGhNNfnmgLegT4zHNjEqDSADjgmnHvubJ\",\n" +
-                "            \"weight\": 1\n" +
-                "        }]\n" +
-                "    },\n" +
-                "    \"actives\": [{\n" +
-                "        \"type\": 2,\n" +
-                "        \"permission_name\": \"active12323\",\n" +
-                "        \"threshold\": 2,\n" +
-                "        \"operations\": \"7fff1fc0033e0000000000000000000000000000000000000000000000000000\",\n" +
-                "        \"keys\": [{\n" +
-                "            \"address\": \"TNhXo1GbRNCuorvYu5JFWN3m2NYr9QQpVR\",\n" +
-                "            \"weight\": 1\n" +
-                "        }, {\n" +
-                "            \"address\": \"TKwhcDup8L2PH5r6hxp5CQvQzZqJLmKvZP\",\n" +
-                "            \"weight\": 1\n" +
-                "        }]\n" +
-                "    }],\n" +
-                "    \"visible\": true\n" +
-                "\t\n" +
-                "}\n";
+                "\t\"transaction\":\"0A8A010A0202DB2208C89D4811359A28004098A4E0A6B52D5A730802126F0A32747970652E676F6F676C65617069732E636F6D2F70726F746F636F6C2E5472616E736665724173736574436F6E747261637412390A07313030303030311215415A523B449890854C8FC460AB602DF9F31FE4293F1A15416B0580DA195542DDABE288FEC436C7D5AF769D24206412418BF3F2E492ED443607910EA9EF0A7EF79728DAAAAC0EE2BA6CB87DA38366DF9AC4ADE54B2912C1DEB0EE6666B86A07A6C7DF68F1F9DA171EEE6A370B3CA9CBBB00\"\n" +
+                "}";
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("POST");
         conn.setRequestProperty("Content-Type", "application/json");
@@ -97,7 +64,7 @@ public class AccountPermissionUpdateServletTest {
         PrintWriter writer = new PrintWriter("temp.txt");
         when(response.getWriter()).thenReturn(writer);
 
-        accountPermissionUpdateServlet.doPost(request, response);
+        broadcastHexServlet.doPost(request, response);
         //Get Response Body
         String line = "";
         String result = "";
@@ -107,7 +74,7 @@ public class AccountPermissionUpdateServletTest {
         }
         in.close();
         logger.info(result);
-        Assert.assertTrue(result.contains("multi sign is not allowed, need to be opened by the committee"));
+        Assert.assertTrue(result.contains("class java.lang.NullPointerException : null"));
         writer.flush();
         conn.disconnect();
     }
