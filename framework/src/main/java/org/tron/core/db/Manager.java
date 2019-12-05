@@ -67,13 +67,11 @@ import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
-import org.tron.core.actuator.AbstractActuator;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -88,7 +86,6 @@ import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.ISession;
-import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
@@ -153,33 +150,21 @@ public class Manager {
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
-  @Autowired
-  private TransactionStore transactionStore;
+
   @Autowired(required = false)
   private TransactionCache transactionCache;
-  @Autowired
-  @Getter
-  private TransactionRetStore transactionRetStore;
-  @Autowired
-  private RecentBlockStore recentBlockStore;
-  @Autowired
-  private TransactionHistoryStore transactionHistoryStore;
-  // for network
-  @Autowired
-  private PeersStore peersStore;
+
   @Autowired
   private KhaosDatabase khaosDb;
   private BlockCapsule genesisBlock;
-  @Getter
-  @Autowired
-  private RevokingDatabase revokingStore;
+
   @Getter
   private SessionOptional session = SessionOptional.instance();
+
   @Getter
   @Setter
   private boolean isSyncMode;
 
-  // map<Long, IncrementalMerkleTree>
   @Getter
   @Setter
   private String netType;
@@ -334,23 +319,19 @@ public class Manager {
     return chainBaseManager.getBlockIndexStore();
   }
 
+  public RevokingDatabase getRevokingStore() {
+    return chainBaseManager.getRevokingStore();
+  }
+
+  public TransactionRetStore getTransactionRetStore() {
+    return chainBaseManager.getTransactionRetStore();
+  }
+
   public ExchangeStore getExchangeStoreFinal() {
     if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       return getExchangeStore();
     } else {
       return getExchangeV2Store();
-    }
-  }
-
-  public void putExchangeCapsule(ExchangeCapsule exchangeCapsule) {
-    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
-      ExchangeCapsule exchangeCapsuleV2 = new ExchangeCapsule(exchangeCapsule.getData());
-      exchangeCapsuleV2.resetTokenWithID(this.getAssetIssueStore(),
-          chainBaseManager.getDynamicPropertiesStore());
-      getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
-    } else {
-      getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     }
   }
 
@@ -409,11 +390,11 @@ public class Manager {
   }
 
   public void clearAndWriteNeighbours(Set<Node> nodes) {
-    this.peersStore.put("neighbours".getBytes(), nodes);
+    chainBaseManager.getPeersStore().put("neighbours".getBytes(), nodes);
   }
 
   public Set<Node> readNeighbours() {
-    return this.peersStore.get("neighbours".getBytes());
+    return chainBaseManager.getPeersStore().get("neighbours".getBytes());
   }
 
   public void stopRepushThread() {
@@ -432,8 +413,8 @@ public class Manager {
             chainBaseManager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
     accountStateCallBack.setManager(this);
     trieService.setManager(this);
-    revokingStore.disable();
-    revokingStore.check();
+    chainBaseManager.getRevokingStore().disable();
+    chainBaseManager.getRevokingStore().check();
     this.setProposalController(ProposalController.createInstance(this));
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
@@ -474,7 +455,7 @@ public class Manager {
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
 
     initCacheTxs();
-    revokingStore.enable();
+    chainBaseManager.getRevokingStore().enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     Thread repushThread = new Thread(repushLoop);
@@ -598,7 +579,7 @@ public class Manager {
     }
     long start = System.currentTimeMillis();
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    long recentBlockCount = recentBlockStore.size();
+    long recentBlockCount = chainBaseManager.getRecentBlockStore().size();
     ListeningExecutorService service = MoreExecutors
         .listeningDecorator(Executors.newFixedThreadPool(50));
     List<ListenableFuture<?>> futures = new ArrayList<>();
@@ -706,7 +687,7 @@ public class Manager {
     byte[] refBlockNumBytes = transactionCapsule.getInstance()
         .getRawData().getRefBlockBytes().toByteArray();
     try {
-      byte[] blockHash = this.recentBlockStore.get(refBlockNumBytes).getData();
+      byte[] blockHash = chainBaseManager.getRecentBlockStore().get(refBlockNumBytes).getData();
       if (!Arrays.equals(blockHash, refBlockHash)) {
         String str = String.format(
             "Tapos failed, different block hash, %s, %s , recent block %s, "
@@ -755,7 +736,8 @@ public class Manager {
       return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
     }
 
-    return transactionStore.has(transactionCapsule.getTransactionId().getBytes());
+    return chainBaseManager
+        .getTransactionStore().has(transactionCapsule.getTransactionId().getBytes());
   }
 
   /**
@@ -788,10 +770,10 @@ public class Manager {
           return false;
         }
         if (!session.valid()) {
-          session.setValue(revokingStore.buildSession());
+          session.setValue(chainBaseManager.getRevokingStore().buildSession());
         }
 
-        try (ISession tmpSession = revokingStore.buildSession()) {
+        try (ISession tmpSession = chainBaseManager.getRevokingStore().buildSession()) {
           processTransaction(trx, null);
           pendingTransactions.add(trx);
           tmpSession.merge();
@@ -848,7 +830,7 @@ public class Manager {
           getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
-      revokingStore.fastPop();
+      chainBaseManager.getRevokingStore().fastPop();
       logger.info("end to erase block:" + oldHeadBlock);
       popedTransactions.addAll(oldHeadBlock.getTransactions());
 
@@ -882,14 +864,15 @@ public class Manager {
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
-      this.transactionRetStore.put(ByteArray.fromLong(block.getNum()), block.getResult());
+      chainBaseManager
+          .getTransactionRetStore().put(ByteArray.fromLong(block.getNum()), block.getResult());
     }
 
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
-      revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
+      chainBaseManager.getRevokingStore().setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
     } else {
-      revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+      chainBaseManager.getRevokingStore().setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
     }
   }
 
@@ -932,7 +915,7 @@ public class Manager {
       for (KhaosBlock item : first) {
         Exception exception = null;
         // todo  process the exception carefully later
-        try (ISession tmpSession = revokingStore.buildSession()) {
+        try (ISession tmpSession = chainBaseManager.getRevokingStore().buildSession()) {
           applyBlock(item.getBlk());
           tmpSession.commit();
         } catch (AccountResourceInsufficientException
@@ -970,7 +953,7 @@ public class Manager {
             Collections.reverse(second);
             for (KhaosBlock khaosBlock : second) {
               // todo  process the exception carefully later
-              try (ISession tmpSession = revokingStore.buildSession()) {
+              try (ISession tmpSession = chainBaseManager.getRevokingStore().buildSession()) {
                 applyBlock(khaosBlock.getBlk());
                 tmpSession.commit();
               } catch (AccountResourceInsufficientException
@@ -1092,7 +1075,7 @@ public class Manager {
 
           return;
         }
-        try (ISession tmpSession = revokingStore.buildSession()) {
+        try (ISession tmpSession = chainBaseManager.getRevokingStore().buildSession()) {
 
           applyBlock(newBlock);
           tmpSession.commit();
@@ -1135,7 +1118,7 @@ public class Manager {
         .saveLatestBlockHeaderNumber(block.getNum());
     chainBaseManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    revokingStore.setMaxSize((int) (
+    chainBaseManager.getRevokingStore().setMaxSize((int) (
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
         - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
         + 1));
@@ -1278,7 +1261,7 @@ public class Manager {
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
-    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
 
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1320,7 +1303,7 @@ public class Manager {
         blockTime, miner.getWitnessAddress());
     blockCapsule.generatedByMyself = true;
     session.reset();
-    session.setValue(revokingStore.buildSession());
+    session.setValue(chainBaseManager.getRevokingStore().buildSession());
 
     accountStateCallBack.preExecute(blockCapsule);
 
@@ -1380,7 +1363,7 @@ public class Manager {
         trx.setVerified(false);
       }
       // apply transaction
-      try (ISession tmpSeesion = revokingStore.buildSession()) {
+      try (ISession tmpSeesion = chainBaseManager.getRevokingStore().buildSession()) {
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
@@ -1443,11 +1426,11 @@ public class Manager {
   }
 
   public TransactionStore getTransactionStore() {
-    return this.transactionStore;
+    return chainBaseManager.getTransactionStore();
   }
 
   public TransactionHistoryStore getTransactionHistoryStore() {
-    return this.transactionHistoryStore;
+    return chainBaseManager.getTransactionHistoryStore();
   }
 
   public BlockStore getBlockStore() {
@@ -1552,7 +1535,7 @@ public class Manager {
   }
 
   public void updateRecentBlock(BlockCapsule block) {
-    this.recentBlockStore.put(ByteArray.subArray(
+    chainBaseManager.getRecentBlockStore().put(ByteArray.subArray(
         ByteArray.fromLong(block.getNum()), 6, 8),
         new BytesCapsule(ByteArray.subArray(block.getBlockId().getBytes(), 8, 16)));
   }
@@ -1567,11 +1550,11 @@ public class Manager {
     logger.info(
         "syncBeginNumber:"
             + (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-            - revokingStore.size()));
+            - chainBaseManager.getRevokingStore().size()));
     logger.info("solidBlockNumber:"
         + chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     return chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-        - revokingStore.size();
+        - chainBaseManager.getRevokingStore().size();
   }
 
   public BlockId getSolidBlockId() {
@@ -1610,24 +1593,8 @@ public class Manager {
 
   public void closeAllStore() {
     logger.info("******** begin to close db ********");
-    closeOneStore(transactionStore);
-    closeOneStore(peersStore);
-    closeOneStore(recentBlockStore);
-    closeOneStore(transactionHistoryStore);
-    closeOneStore(transactionRetStore);
     chainBaseManager.closeAllStore();
     logger.info("******** end to close db ********");
-  }
-
-  public void closeOneStore(ITronChainBase database) {
-    logger.info("******** begin to close " + database.getName() + " ********");
-    try {
-      database.close();
-    } catch (Exception e) {
-      logger.info("failed to close  " + database.getName() + ". " + e);
-    } finally {
-      logger.info("******** end to close " + database.getName() + " ********");
-    }
   }
 
   public boolean isTooManyPending() {
@@ -1688,7 +1655,7 @@ public class Manager {
   }
 
   public void setMode(boolean mode) {
-    revokingStore.setMode(mode);
+    chainBaseManager.getRevokingStore().setMode(mode);
   }
 
   private void startEventSubscribing() {
