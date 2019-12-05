@@ -45,6 +45,8 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.startsWith;
 
 @Slf4j(topic = "API")
 public class Util {
@@ -440,15 +442,9 @@ public class Util {
     byte[] address = null;
     String addressParam = "address";
     String addressStr = request.getParameter(addressParam);
-    if (addressStr == null) {
-      String input = request.getReader().lines()
-              .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
-      addressStr = jsonObject.getString(addressParam);
-    }
-    if (addressStr != null) {
-      if (addressStr.startsWith(Constant.ADD_PRE_FIX_STRING_MAINNET)) {
+    if (isNotBlank(addressStr)) {
+      if (startsWith(addressStr,
+              Constant.ADD_PRE_FIX_STRING_MAINNET)) {
         address = Hex.decode(addressStr);
       } else {
         address = Wallet.decodeFromBase58Check(addressStr);
