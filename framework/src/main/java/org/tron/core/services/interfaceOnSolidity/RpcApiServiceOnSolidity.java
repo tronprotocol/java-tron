@@ -32,6 +32,7 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
@@ -70,7 +71,7 @@ public class RpcApiServiceOnSolidity implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter args) {
   }
 
   @Override
@@ -79,7 +80,7 @@ public class RpcApiServiceOnSolidity implements Service {
       NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
           .addService(new DatabaseApi());
 
-      Args args = Args.getInstance();
+      CommonParameter args = Args.getInstance();
 
       if (args.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder

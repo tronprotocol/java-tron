@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDBException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
@@ -28,7 +29,7 @@ public class BackupDbUtil {
   @Getter
   @Autowired
   private RevokingDatabase db;
-  private Args args = Args.getInstance();
+  private CommonParameter args = Args.getInstance();
 
   private int getBackupState() {
     try {

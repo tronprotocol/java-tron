@@ -15,6 +15,7 @@
 
 package org.tron.common.application;
 
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -23,9 +24,9 @@ public interface Application {
 
   void setOptions(Args args);
 
-  void init(Args args);
+  void init(CommonParameter args);
 
-  void initServices(Args args);
+  void initServices(CommonParameter args);
 
   void startup();
 

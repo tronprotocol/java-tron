@@ -54,6 +54,7 @@ import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
@@ -540,7 +541,7 @@ public class Manager {
    * save account into database.
    */
   public void initAccount() {
-    final Args args = Args.getInstance();
+    final CommonParameter args = CommonParameter.getInstance();
     final GenesisBlock genesisBlockArg = args.getGenesisBlock();
     genesisBlockArg
         .getAssets()
@@ -563,8 +564,8 @@ public class Manager {
    * save witnesses into database.
    */
   private void initWitness() {
-    final Args args = Args.getInstance();
-    final GenesisBlock genesisBlockArg = args.getGenesisBlock();
+    final CommonParameter commonParameter = Args.getInstance();
+    final GenesisBlock genesisBlockArg = commonParameter.getGenesisBlock();
     genesisBlockArg
         .getWitnesses()
         .forEach(

@@ -15,6 +15,7 @@
 
 package org.tron.common.application;
 
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -27,12 +28,12 @@ public class CliApplication implements Application {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter args) {
 
   }
 
   @Override
-  public void initServices(Args args) {
+  public void initServices(CommonParameter args) {
 
   }
 

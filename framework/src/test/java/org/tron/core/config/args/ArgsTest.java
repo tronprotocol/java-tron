@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.args.GenesisBlock;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 
@@ -38,7 +39,7 @@ public class ArgsTest {
   public void get() {
     Args.setParam(new String[]{"-w"}, Constant.TEST_CONF);
 
-    Args args = Args.getInstance();
+    CommonParameter args = Args.getInstance();
     Assert.assertEquals("database", args.getStorage().getDbDirectory());
 
     Assert.assertEquals(11, args.getSeedNode().getIpList().size());

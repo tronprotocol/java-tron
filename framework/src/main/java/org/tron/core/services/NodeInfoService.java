@@ -23,6 +23,7 @@ import org.tron.common.entity.NodeInfo.MachineInfo.MemoryDescInfo;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
@@ -38,7 +39,7 @@ public class NodeInfoService {
   private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
   private OperatingSystemMXBean operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory
       .getOperatingSystemMXBean();
-  private Args args = Args.getInstance();
+  private CommonParameter args = CommonParameter.getInstance();
 
   @Autowired
   private SyncPool syncPool;

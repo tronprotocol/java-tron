@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.protos.Protocol.ReasonCode;
@@ -36,7 +37,7 @@ public class ChannelManager {
   private SyncPool syncPool;
   @Autowired
   private FastForward fastForward;
-  private Args args = Args.getInstance();
+  private CommonParameter args = CommonParameter.getInstance();
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 

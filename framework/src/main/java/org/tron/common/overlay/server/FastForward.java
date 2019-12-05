@@ -18,6 +18,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
@@ -44,7 +45,7 @@ public class FastForward {
 
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-  private Args args = Args.getInstance();
+  private CommonParameter args = Args.getInstance();
   private List<Node> fastForwardNodes = args.getFastForwardNodes();
   private ByteString witnessAddress = ByteString
       .copyFrom(args.getLocalWitnesses().getWitnessAccountAddress());

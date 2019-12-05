@@ -19,13 +19,14 @@ import org.tron.common.net.udp.handler.MessageHandler;
 import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.net.udp.message.Message;
 import org.tron.common.net.udp.message.backup.KeepAliveMessage;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "backup")
 @Component
 public class BackupManager implements EventHandler {
 
-  private Args args = Args.getInstance();
+  private CommonParameter args = CommonParameter.getInstance();
 
   private int priority = args.getBackupPriority();
 

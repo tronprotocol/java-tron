@@ -33,6 +33,7 @@ import org.tron.common.net.udp.handler.MessageHandler;
 import org.tron.common.net.udp.handler.PacketDecoder;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.WireTrafficStats;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "discover")
@@ -45,7 +46,7 @@ public class DiscoverServer {
   @Autowired
   private WireTrafficStats stats;
 
-  private Args args = Args.getInstance();
+  private CommonParameter args = Args.getInstance();
 
   private int port = args.getNodeListenPort();
 

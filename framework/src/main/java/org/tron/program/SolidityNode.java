@@ -14,6 +14,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.client.DatabaseGrpcClient;
 import org.tron.common.overlay.discover.DiscoverServer;
 import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -55,7 +56,7 @@ public class SolidityNode {
   public static void main(String[] args) {
     logger.info("Solidity node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
-    Args cfgArgs = Args.getInstance();
+    CommonParameter cfgArgs = Args.getInstance();
 
     logger.info("index switch is {}",
         BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));

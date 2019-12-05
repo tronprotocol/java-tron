@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.DefaultConfig;
@@ -85,7 +86,7 @@ public abstract class BaseNet {
             },
             "config.conf"
         );
-        Args cfgArgs = Args.getInstance();
+        CommonParameter cfgArgs = Args.getInstance();
         cfgArgs.setNodeListenPort(port);
         cfgArgs.getSeedNode().getIpList().clear();
         cfgArgs.setNodeExternalIp("127.0.0.1");

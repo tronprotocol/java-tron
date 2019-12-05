@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param;
@@ -29,7 +30,7 @@ public class ConsensusService {
   @Autowired
   private BlockHandleImpl blockHandle;
 
-  private Args args = Args.getInstance();
+  private CommonParameter args = Args.getInstance();
 
   public void start() {
     Param param = new Param();
