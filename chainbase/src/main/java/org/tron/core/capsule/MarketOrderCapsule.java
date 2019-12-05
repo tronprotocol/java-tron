@@ -11,6 +11,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.MarketOrder;
 
 import java.util.Arrays;
+import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 
 @Slf4j(topic = "capsule")
@@ -40,6 +41,7 @@ public class MarketOrderCapsule implements ProtoCapsule<MarketOrder> {
         .setBuyTokenId(contract.getBuyTokenId())
         .setBuyTokenQuantity(contract.getBuyTokenQuantity())
         .setSellTokenQuantityRemain(contract.getSellTokenQuantity())
+        .setState(State.ACTIVE)
         .build();
   }
 
@@ -138,10 +140,25 @@ public class MarketOrderCapsule implements ProtoCapsule<MarketOrder> {
     return this.order.getBuyTokenQuantity();
   }
 
-  public void setBuyTokenQuantity(long buyTokenRatio) {
+  public void setBuyTokenQuantity(long value) {
     this.order = this.order.toBuilder()
-        .setBuyTokenQuantity(buyTokenRatio)
+        .setBuyTokenQuantity(value)
         .build();
+  }
+
+
+  public MarketOrder.State getSt() {
+    return this.order.getState();
+  }
+
+  public void setState(MarketOrder.State value) {
+    this.order = this.order.toBuilder()
+        .setState(value)
+        .build();
+  }
+
+  public boolean isActive(){
+    return this.order.getState() == State.ACTIVE;
   }
 
 

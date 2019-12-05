@@ -14,8 +14,8 @@ message MarketSellAssetContract {
 }
 
 message MarketCancelOrderContract {
-//    bytes owner_address = 1;
+    bytes owner_address = 1;
 //    int64 sell_token_id = 2;
 //    bytes buy_token_id = 3;
-    int64 order_id = 4;
+    bytes order_id = 4;
 }

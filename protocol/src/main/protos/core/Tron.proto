@@ -68,6 +68,12 @@ message MarketOrder {
     bytes buy_token_id = 5;
     int64 buy_token_quantity = 7;
     int64 sell_token_quantity_remain = 9;
+    enum State {
+      ACTIVE = 0;
+      INACTIVE = 1;
+      CANCELED = 2;
+    }
+    State state = 10;
 }
 
 message MarketOrderList {
@@ -316,8 +322,8 @@ message Transaction {
       ClearABIContract = 48;
       UpdateBrokerageContract = 49;
       ShieldedTransferContract = 51;
-      MakerSellAssetContract = 60;
-      MakerCancelOrderContract = 61;
+      MarketSellAssetContract = 60;
+      MarketCancelOrderContract = 61;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

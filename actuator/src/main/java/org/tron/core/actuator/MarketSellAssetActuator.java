@@ -44,6 +44,7 @@ import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketPriceList.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -67,7 +68,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private byte[] buyTokenID = null;
 
   public MarketSellAssetActuator() {
-    super(ContractType.MakerSellAssetContract, AssetIssueContract.class);
+    super(ContractType.MarketSellAssetContract, AssetIssueContract.class);
   }
 
   @Override
@@ -233,7 +234,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
       throws ItemNotFoundException {
 
     byte[] makerPair = MarketUtils.createPairKey(buyTokenID, sellTokenID);
-    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(makerPair);
+    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(makerPair);//if not exists
+    if (priceListCapsule == null) {
+      return;
+    }
 
     //match different price
     while (takerCapsule.getSellTokenQuantityRemain() != 0 &&
@@ -243,7 +247,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
       byte[] pairPriceKey = MarketUtils.createPairPriceKey(
           priceListCapsule.getSellTokenId(), priceListCapsule.getBuyTokenId(),
           makerPrice.getSellTokenQuantity(), makerPrice.getBuyTokenQuantity());
-      MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
+      MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
+          .get(pairPriceKey);//if not exists
+
       List<ByteString> ordersList = orderIdListCapsule.getOrdersList();
 
       //match different order same price
@@ -287,6 +293,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     if (takerBuyTokenQuantityRemain == 0) {
       //交易量过小，直接将剩余 sellToken 返回用户
       returnSellTokenRemain(takerOrderCapsule);
+      takerOrderCapsule.setState(State.INACTIVE);
       return;
     }
 
@@ -298,6 +305,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
       takerOrderCapsule.setSellTokenQuantityRemain(0);
       makerOrderCapsule.setSellTokenQuantityRemain(0);
 
+      takerOrderCapsule.setState(State.INACTIVE);
+      makerOrderCapsule.setState(State.INACTIVE);
+
       takerBuyTokenQuantityReceive = makerOrderCapsule.getSellTokenQuantityRemain();
       makerBuyTokenQuantityReceive = takerOrderCapsule.getSellTokenQuantityRemain();
 
@@ -306,6 +316,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // 当taker buy 的量小于 maker sell 的剩余量，所有taker的订单吃掉
 
       takerOrderCapsule.setSellTokenQuantityRemain(0);
+      takerOrderCapsule.setState(State.INACTIVE);
+
       makerOrderCapsule.setSellTokenQuantityRemain(Math.subtractExact(
           makerOrderCapsule.getSellTokenQuantityRemain(), takerBuyTokenQuantityRemain));
 
@@ -322,6 +334,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
           .floorDiv(Math.multiplyExact(makerOrderCapsule.getSellTokenQuantityRemain(),
               makerOrderCapsule.getBuyTokenQuantity()), makerOrderCapsule.getSellTokenQuantity());
 
+      makerOrderCapsule.setState(State.INACTIVE);
       if (makerBuyTokenQuantityReceive == 0) {
         //交易量过小，直接将剩余 sellToken 返回 maker
         returnSellTokenRemain(makerOrderCapsule);
