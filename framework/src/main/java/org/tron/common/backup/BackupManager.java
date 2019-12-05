@@ -31,6 +31,8 @@ public class BackupManager implements EventHandler {
 
   private int port = args.getBackupPort();
 
+  private int keepAliveInterval = args.getKeepAliveInterval();
+
   private String localIp = "";
 
   private Set<String> members = new ConcurrentSet<>();
@@ -43,7 +45,7 @@ public class BackupManager implements EventHandler {
 
   private volatile long lastKeepAliveTime;
 
-  private volatile long keepAliveTimeout = 10_000;
+  private volatile long keepAliveTimeout = keepAliveInterval * 6;
 
   private volatile boolean isInit = false;
 
@@ -105,7 +107,7 @@ public class BackupManager implements EventHandler {
       } catch (Throwable t) {
         logger.error("Exception in send keep alive message:{}", t.getMessage());
       }
-    }, 1, 1, TimeUnit.SECONDS);
+    }, 1000, keepAliveInterval, TimeUnit.MILLISECONDS);
   }
 
   @Override
