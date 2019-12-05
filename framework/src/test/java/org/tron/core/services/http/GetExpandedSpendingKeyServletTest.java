@@ -1,6 +1,7 @@
 package org.tron.core.services.http;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -14,6 +15,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.utils.FileUtil;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -23,6 +26,9 @@ public class GetExpandedSpendingKeyServletTest {
   private HttpServletRequest request;
   private HttpServletResponse response;
 
+  /**
+   * init.
+   */
   @Before
   public void setUp() {
     getExpandedSpendingKeyServlet = new GetExpandedSpendingKeyServlet();
@@ -30,14 +36,18 @@ public class GetExpandedSpendingKeyServletTest {
     response = mock(HttpServletResponse.class);
   }
 
+  /**
+   * release resource.
+   */
   @After
   public void tearDown() {
+    if (FileUtil.deleteDir(new File("temp.txt"))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
-  /*
-   *
-   *
-   */
   @Test
   public void doPostTest() throws IOException {
 
@@ -56,7 +66,7 @@ public class GetExpandedSpendingKeyServletTest {
     out.write(postData);
     out.flush();
     out.close();
-    PrintWriter writer = new PrintWriter("somefile.txt");
+    PrintWriter writer = new PrintWriter("temp.txt");
     when(response.getWriter()).thenReturn(writer);
 
     getExpandedSpendingKeyServlet.doPost(request, response);

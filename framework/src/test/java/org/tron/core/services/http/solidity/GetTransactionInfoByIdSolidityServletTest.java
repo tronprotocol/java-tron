@@ -1,11 +1,11 @@
 package org.tron.core.services.http.solidity;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import javax.servlet.http.HttpServletRequest;
@@ -16,104 +16,109 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.FileUtil;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Slf4j
 public class GetTransactionInfoByIdSolidityServletTest {
-    private GetTransactionInfoByIdSolidityServlet getTransactionInfoByIdSolidityServlet;
-    private HttpServletRequest request;
-    private HttpServletResponse response;
+  private GetTransactionInfoByIdSolidityServlet getTransactionInfoByIdSolidityServlet;
+  private HttpServletRequest request;
+  private HttpServletResponse response;
 
-    @Before
-    public void setUp() {
-        getTransactionInfoByIdSolidityServlet = new GetTransactionInfoByIdSolidityServlet();
-        request = mock(HttpServletRequest.class);
-        response = mock(HttpServletResponse.class);
+  /**
+   * init.
+   */
+  @Before
+  public void setUp() {
+    getTransactionInfoByIdSolidityServlet = new GetTransactionInfoByIdSolidityServlet();
+    request = mock(HttpServletRequest.class);
+    response = mock(HttpServletResponse.class);
+  }
+
+  /**
+   * release resource.
+   */
+  @After
+  public void tearDown() {
+    if (FileUtil.deleteDir(new File("temp.txt"))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
     }
+  }
 
-    @After
-    public void tearDown() {
-        if (FileUtil.deleteDir(new File("temp.txt"))) {
-            logger.info("Release resources successful.");
-        } else {
-            logger.info("Release resources failure.");
-        }
+  @Test
+  public void doPostTest() throws IOException {
+
+    //send Post request
+    URL url = new URL("http://127.0.0.1:8091/walletsolidity/gettransactionbyid");
+    String postData = "{\"value\": \"309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef21"
+            + "3f2c55225a8bd2\"}";
+
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.setRequestMethod("POST");
+    conn.setRequestProperty("Content-Type", "application/json");
+    conn.setRequestProperty("Connection", "Keep-Alive");
+    conn.setUseCaches(false);
+    conn.setDoOutput(true);
+    conn.setRequestProperty("Content-Length", "" + postData.length());
+    OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
+    out.write(postData);
+    out.flush();
+    out.close();
+    PrintWriter writer = new PrintWriter("temp.txt");
+    when(response.getWriter()).thenReturn(writer);
+
+    getTransactionInfoByIdSolidityServlet.doPost(request, response);
+    //Get Response Body
+    String line = "";
+    String result = "";
+    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
+    while ((line = in.readLine()) != null) {
+      result += line + "\n";
     }
+    in.close();
+    logger.info(result);
+    Assert.assertTrue(result.contains("{}"));
+    writer.flush();
+    conn.disconnect();
+  }
 
-    @Test
-    public void doPostTest() throws IOException {
+  @Test
+  public void doGetTest() throws IOException {
 
-        //send Post request
-        URL url = new URL("http://127.0.0.1:8091/walletsolidity/gettransactionbyid");
-        String postData = "{\"value\": \"309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef21"
-                + "3f2c55225a8bd2\"}";
+    //send Post request
+    URL url = new URL("http://127.0.0.1:8091/walletsolidity/gettransactionbyid");
+    String postData = "{\"value\": \"309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef21"
+            + "3f2c55225a8bd2\"}";
 
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setRequestProperty("Connection", "Keep-Alive");
-        conn.setUseCaches(false);
-        conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Length", "" + postData.length());
-        OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
-        out.write(postData);
-        out.flush();
-        out.close();
-        PrintWriter writer = new PrintWriter("temp.txt");
-        when(response.getWriter()).thenReturn(writer);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.setRequestMethod("GET");
+    conn.setRequestProperty("Content-Type", "application/json");
+    conn.setRequestProperty("Connection", "Keep-Alive");
+    conn.setUseCaches(false);
+    conn.setDoOutput(true);
+    conn.setRequestProperty("Content-Length", "" + postData.length());
+    OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
+    out.write(postData);
+    out.flush();
+    out.close();
+    PrintWriter writer = new PrintWriter("temp.txt");
+    when(response.getWriter()).thenReturn(writer);
 
-        getTransactionInfoByIdSolidityServlet.doPost(request, response);
-        //Get Response Body
-        String line = "";
-        String result = "";
-        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
-        while ((line = in.readLine()) != null) {
-            result += line + "\n";
-        }
-        in.close();
-        logger.info(result);
-        Assert.assertTrue(result.contains("{}"));
-        writer.flush();
-        conn.disconnect();
+    getTransactionInfoByIdSolidityServlet.doPost(request, response);
+    //Get Response Body
+    String line = "";
+    String result = "";
+    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
+    while ((line = in.readLine()) != null) {
+      result += line + "\n";
     }
-
-    @Test
-    public void doGetTest() throws IOException {
-
-        //send Post request
-        URL url = new URL("http://127.0.0.1:8091/walletsolidity/gettransactionbyid");
-        String postData = "{\"value\": \"309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef21"
-                + "3f2c55225a8bd2\"}";
-
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setRequestProperty("Connection", "Keep-Alive");
-        conn.setUseCaches(false);
-        conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Length", "" + postData.length());
-        OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
-        out.write(postData);
-        out.flush();
-        out.close();
-        PrintWriter writer = new PrintWriter("temp.txt");
-        when(response.getWriter()).thenReturn(writer);
-
-        getTransactionInfoByIdSolidityServlet.doPost(request, response);
-        //Get Response Body
-        String line = "";
-        String result = "";
-        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
-        while ((line = in.readLine()) != null) {
-            result += line + "\n";
-        }
-        in.close();
-        logger.info(result);
-        Assert.assertTrue(result.contains("{}"));
-        writer.flush();
-        conn.disconnect();
-    }
+    in.close();
+    logger.info(result);
+    Assert.assertTrue(result.contains("{}"));
+    writer.flush();
+    conn.disconnect();
+  }
 }
 
