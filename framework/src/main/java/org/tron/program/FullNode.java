@@ -18,7 +18,8 @@ import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
 @Slf4j(topic = "app")
-public class FullNode {
+public class
+FullNode {
 
   public static void load(String path) {
     try {
