@@ -45,8 +45,6 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.startsWith;
 
 @Slf4j(topic = "API")
 public class Util {
@@ -442,8 +440,8 @@ public class Util {
     byte[] address = null;
     String addressParam = "address";
     String addressStr = request.getParameter(addressParam);
-    if (isNotBlank(addressStr)) {
-      if (startsWith(addressStr,
+    if (org.apache.commons.lang3.StringUtils.isNotBlank(addressStr)) {
+      if (org.apache.commons.lang3.StringUtils.startsWith(addressStr,
               Constant.ADD_PRE_FIX_STRING_MAINNET)) {
         address = Hex.decode(addressStr);
       } else {
