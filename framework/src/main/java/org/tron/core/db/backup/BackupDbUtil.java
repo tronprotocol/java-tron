@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDBException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
@@ -28,12 +29,12 @@ public class BackupDbUtil {
   @Getter
   @Autowired
   private RevokingDatabase db;
-  private Args args = Args.getInstance();
+  private CommonParameter parameter = Args.getInstance();
 
   private int getBackupState() {
     try {
       return Integer.valueOf(PropUtil
-          .readProperty(args.getDbBackupConfig().getPropPath(), BackupDbUtil.DB_BACKUP_STATE)
+          .readProperty(parameter.getDbBackupConfig().getPropPath(), BackupDbUtil.DB_BACKUP_STATE)
       );
     } catch (NumberFormatException ignore) {
       return DB_BACKUP_STATE_DEFAULT;  //get default state if prop file is newly created
@@ -41,7 +42,8 @@ public class BackupDbUtil {
   }
 
   private void setBackupState(int status) {
-    PropUtil.writeProperty(args.getDbBackupConfig().getPropPath(), BackupDbUtil.DB_BACKUP_STATE,
+    PropUtil.writeProperty(parameter.getDbBackupConfig()
+            .getPropPath(), BackupDbUtil.DB_BACKUP_STATE,
         String.valueOf(status));
   }
 
@@ -109,9 +111,9 @@ public class BackupDbUtil {
   private void backup(int i) throws RocksDBException {
     String path = "";
     if (i == DB_BACKUP_INDEX1) {
-      path = args.getDbBackupConfig().getBak1path();
+      path = parameter.getDbBackupConfig().getBak1path();
     } else if (i == DB_BACKUP_INDEX2) {
-      path = args.getDbBackupConfig().getBak2path();
+      path = parameter.getDbBackupConfig().getBak2path();
     } else {
       throw new RuntimeException("Error backup with undefined index");
     }
@@ -128,9 +130,9 @@ public class BackupDbUtil {
   private void deleteBackup(int i) {
     String path = "";
     if (i == DB_BACKUP_INDEX1) {
-      path = args.getDbBackupConfig().getBak1path();
+      path = parameter.getDbBackupConfig().getBak1path();
     } else if (i == DB_BACKUP_INDEX2) {
-      path = args.getDbBackupConfig().getBak2path();
+      path = parameter.getDbBackupConfig().getBak2path();
     } else {
       throw new RuntimeException("Error deleteBackup with undefined index");
     }

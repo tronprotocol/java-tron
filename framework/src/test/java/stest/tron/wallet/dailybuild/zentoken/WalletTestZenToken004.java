@@ -76,7 +76,7 @@ public class WalletTestZenToken004 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     Assert.assertTrue(PublicMethed.sendcoin(receiverPublicAddress, 1000000L,
         fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);

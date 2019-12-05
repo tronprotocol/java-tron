@@ -27,6 +27,7 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
@@ -280,9 +281,9 @@ public class Util {
   }
 
   public static void checkBodySize(String body) throws Exception {
-    Args args = Args.getInstance();
-    if (body.getBytes().length > args.getMaxMessageSize()) {
-      throw new Exception("body size is too big, the limit is " + args.getMaxMessageSize());
+    CommonParameter parameter = Args.getInstance();
+    if (body.getBytes().length > parameter.getMaxMessageSize()) {
+      throw new Exception("body size is too big, the limit is " + parameter.getMaxMessageSize());
     }
   }
 
