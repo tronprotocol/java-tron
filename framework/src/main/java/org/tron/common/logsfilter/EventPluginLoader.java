@@ -363,7 +363,8 @@ public class EventPluginLoader {
   }
 
   private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
-    addressList = addressList.stream().filter(item -> org.apache.commons.lang3.StringUtils.isNotEmpty(item))
+    addressList = addressList.stream().filter(item ->
+        org.apache.commons.lang3.StringUtils.isNotEmpty(item))
         .collect(Collectors.toList());
     if (Objects.isNull(addressList) || addressList.isEmpty()) {
       return true;

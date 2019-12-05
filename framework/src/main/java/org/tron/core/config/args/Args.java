@@ -249,7 +249,8 @@ public class Args extends CommonParameter {
       logger.debug("Got privateKey from keystore");
     }
 
-    if (PARAMETER.isWitness() && CollectionUtils.isEmpty(PARAMETER.localWitnesses.getPrivateKeys())) {
+    if (PARAMETER.isWitness()
+        && CollectionUtils.isEmpty(PARAMETER.localWitnesses.getPrivateKeys())) {
       logger.warn("This is a witness node,but localWitnesses is null");
     }
 
@@ -515,7 +516,8 @@ public class Args extends CommonParameter {
               ? config.getString(Constant.NODE_TRUST_NODE) : null;
     }
 
-    PARAMETER.validateSignThreadNum = config.hasPath(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) ? config
+    PARAMETER.validateSignThreadNum =
+        config.hasPath(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) ? config
         .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
         : Runtime.getRuntime().availableProcessors() / 2;
 
@@ -617,7 +619,8 @@ public class Args extends CommonParameter {
             .getInt(Constant.COMMITTEE_CHANGED_DELEGATION) : 0;
 
     initBackupProperty(config);
-    if (Constant.ROCKSDB.equals(CommonParameter.getInstance().getStorage().getDbEngine().toUpperCase())) {
+    if (Constant.ROCKSDB.equals(CommonParameter
+        .getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
       initRocksDbSettings(config);
     }
