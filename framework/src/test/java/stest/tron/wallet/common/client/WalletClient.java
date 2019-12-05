@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +38,7 @@ import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
@@ -48,22 +48,7 @@ import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
-/*class AccountComparator implements Comparator {
-
-  public int compare(Object o1, Object o2) {
-    return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
-  }
-}*/
-
-class WitnessComparator implements Comparator {
-
-  public int compare(Object o1, Object o2) {
-    return Long.compare(((Witness) o2).getVoteCount(), ((Witness) o1).getVoteCount());
-  }
-}
-
 public class WalletClient {
-
 
   private static final Logger logger = LoggerFactory.getLogger("WalletClient");
   private static final String FilePath = "Wallet";
@@ -73,18 +58,6 @@ public class WalletClient {
   private static byte addressPreFixByte = CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
   private ECKey ecKey = null;
   private boolean loginState = false;
-
-  //  static {
-  //    new Timer().schedule(new TimerTask() {
-  //      @Override
-  //      public void run() {
-  //        String fullnode = selectFullNode();
-  //        if(!"".equals(fullnode)) {
-  //          rpcCli = new GrpcClient(fullnode);
-  //        }
-  //      }
-  //    }, 3 * 60 * 1000, 3 * 60 * 1000);
-  //  }
 
   /**
    * Creates a new WalletClient with a random ECKey or no ECKey.
@@ -239,6 +212,25 @@ public class WalletClient {
    * constructor.
    */
 
+  public Account queryAccount() {
+    byte[] address;
+    if (this.ecKey == null) {
+      String pubKey = loadPubKey(); //04 PubKey[128]
+      if (StringUtils.isEmpty(pubKey)) {
+        logger.warn("Warning: QueryAccount failed, no wallet address !!");
+        return null;
+      }
+      byte[] pubKeyAsc = pubKey.getBytes();
+      byte[] pubKeyHex = Hex.decode(pubKeyAsc);
+      this.ecKey = ECKey.fromPublicOnly(pubKeyHex);
+    }
+    return queryAccount(getAddress());
+  }
+
+  /**
+   * constructor.
+   */
+
   public static Transaction createTransferAssetTransaction(byte[] to, byte[] assertName,
       byte[] owner, long amount) {
     AssetIssueContractOuterClass.TransferAssetContract contract = createTransferAssetContract(to,
@@ -253,9 +245,8 @@ public class WalletClient {
 
   public static Transaction participateAssetIssueTransaction(byte[] to, byte[] assertName,
       byte[] owner, long amount) {
-    AssetIssueContractOuterClass.ParticipateAssetIssueContract contract = participateAssetIssueContract(
-        to, assertName,
-        owner, amount);
+    AssetIssueContractOuterClass.ParticipateAssetIssueContract contract =
+        participateAssetIssueContract(to, assertName, owner, amount);
     return rpcCli.createParticipateAssetIssueTransaction(contract);
   }
 
@@ -326,8 +317,8 @@ public class WalletClient {
 
   public static AssetIssueContractOuterClass.TransferAssetContract createTransferAssetContract(
       byte[] to, byte[] assertName, byte[] owner, long amount) {
-    AssetIssueContractOuterClass.TransferAssetContract.Builder builder = AssetIssueContractOuterClass.TransferAssetContract
-        .newBuilder();
+    AssetIssueContractOuterClass.TransferAssetContract.Builder builder =
+        AssetIssueContractOuterClass.TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(owner);
@@ -343,10 +334,10 @@ public class WalletClient {
    * constructor.
    */
 
-  public static AssetIssueContractOuterClass.ParticipateAssetIssueContract participateAssetIssueContract(
+  public static ParticipateAssetIssueContract participateAssetIssueContract(
       byte[] to, byte[] assertName, byte[] owner, long amount) {
-    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder = AssetIssueContractOuterClass.ParticipateAssetIssueContract
-        .newBuilder();
+    ParticipateAssetIssueContract.Builder builder =
+        ParticipateAssetIssueContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(owner);
@@ -441,8 +432,8 @@ public class WalletClient {
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       long count = Long.parseLong(value);
-      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder = WitnessContract.VoteWitnessContract.Vote
-          .newBuilder();
+      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder
+          = WitnessContract.VoteWitnessContract.Vote.newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
       if (address == null) {
         continue;
@@ -749,40 +740,6 @@ public class WalletClient {
   public byte[] getAddress() {
     return ecKey.getAddress();
   }
-
-  /**
-   * constructor.
-   */
-
-  public Account queryAccount() {
-    byte[] address;
-    if (this.ecKey == null) {
-      String pubKey = loadPubKey(); //04 PubKey[128]
-      if (StringUtils.isEmpty(pubKey)) {
-        logger.warn("Warning: QueryAccount failed, no wallet address !!");
-        return null;
-      }
-      byte[] pubKeyAsc = pubKey.getBytes();
-      byte[] pubKeyHex = Hex.decode(pubKeyAsc);
-      this.ecKey = ECKey.fromPublicOnly(pubKeyHex);
-    }
-    return queryAccount(getAddress());
-  }
-
-  /*    public static Optional<AccountList> listAccounts() {
-        Optional<AccountList> result = rpcCli.listAccounts();
-        if (result.isPresent()) {
-            AccountList accountList = result.get();
-            List<Account> list = accountList.getAccountsList();
-            List<Account> newList = new ArrayList();
-            newList.addAll(list);
-            newList.sort(new AccountComparator());
-            AccountList.Builder builder = AccountList.newBuilder();
-            newList.forEach(account -> builder.addAccounts(account));
-            result = Optional.of(builder.build());
-        }
-        return result;
-    }*/
 
   private Transaction signTransaction(Transaction transaction) {
     if (this.ecKey == null || this.ecKey.getPrivKey() == null) {

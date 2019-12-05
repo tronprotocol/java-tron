@@ -122,7 +122,7 @@ public class ShieldedTransferActuatorTest {
   @Before
   public void createCapsule() {
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
-    Args.initDBConfig(Args.getInstance());
+    Args.initConfig(Args.getInstance());
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
 
@@ -1278,8 +1278,8 @@ public class ShieldedTransferActuatorTest {
       TransactionResultCapsule ret = new TransactionResultCapsule();
 
       //set note nullifiers
-      ShieldedTransferContract shieldContract = transactionCap.getInstance().getRawData().
-          getContract(0).getParameter().unpack(ShieldedTransferContract.class);
+      ShieldedTransferContract shieldContract = transactionCap.getInstance().getRawData()
+          .getContract(0).getParameter().unpack(ShieldedTransferContract.class);
       dbManager.getNullfierStore().put(
           new BytesCapsule(shieldContract.getSpendDescription(0).getNullifier().toByteArray()));
 

@@ -1,6 +1,6 @@
 package org.tron.program;
 
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
@@ -202,6 +202,7 @@ public class SolidityNode {
     try {
       Thread.sleep(time);
     } catch (Exception e1) {
+      logger.error(e1.getMessage());
     }
   }
 

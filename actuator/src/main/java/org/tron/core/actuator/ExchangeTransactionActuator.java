@@ -7,6 +7,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -33,8 +34,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)object;
-    if (Objects.isNull(ret)){
+    TransactionResultCapsule ret = (TransactionResultCapsule) object;
+    if (Objects.isNull(ret)) {
       throw new RuntimeException("TransactionResultCapsule is null");
     }
 
@@ -92,11 +93,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
       ret.setExchangeReceivedAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
-    } catch (ItemNotFoundException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    } catch (InvalidProtocolBufferException e) {
+    } catch (ItemNotFoundException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -132,7 +129,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 

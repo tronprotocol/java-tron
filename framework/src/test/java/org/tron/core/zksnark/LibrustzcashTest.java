@@ -131,7 +131,7 @@ public class LibrustzcashTest {
         cipher_nonce, K) != 0);
   }
 
-  static public void librustzcashInitZksnarkParams() {
+  public static void librustzcashInitZksnarkParams() {
 
     FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
@@ -151,7 +151,8 @@ public class LibrustzcashTest {
     byte[] d = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     //byte[] d ={};
     //byte[] pkD = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-    byte[] ivk = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+    byte[] ivk = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8,
         9, 10, 11, 12, 13, 14, 15};
     byte[] pkD = new byte[32];
     long value = 1;
@@ -181,15 +182,19 @@ public class LibrustzcashTest {
     //check range of alpha
     byte[] ask = {(byte) 0xb7, 0x2c, (byte) 0xf7, (byte) 0xd6, 0x5e, 0x0e, (byte) 0x97, (byte) 0xd0,
         (byte) 0x82, 0x10, (byte) 0xc8, (byte) 0xcc, (byte) 0x93, 0x20, 0x68, (byte) 0xa6, 0x00,
-        0x3b, 0x34, 0x01, 0x01, 0x3b, 0x67, 0x06, (byte) 0xa9, (byte) 0xaf, 0x33, 0x65, (byte) 0xea,
-        (byte) 0xb4, 0x7d, 0x0e};
+        0x3b, 0x34, 0x01, 0x01, 0x3b, 0x67, 0x06, (byte) 0xa9, (byte) 0xaf, 0x33, 0x65,
+        (byte) 0xea, (byte) 0xb4, 0x7d, 0x0e};
+
     byte[] alpha = {(byte) 0xb6, 0x2c, (byte) 0xf7, (byte) 0xd6, 0x5e, 0x0e, (byte) 0x97,
         (byte) 0xd0, (byte) 0x82, 0x10, (byte) 0xc8, (byte) 0xcc, (byte) 0x93, 0x20, 0x68,
         (byte) 0xa6, 0x00, 0x3b, 0x34, 0x01, 0x01, 0x3b, 0x67, 0x06, (byte) 0xa9, (byte) 0xaf, 0x33,
         0x65, (byte) 0xea, (byte) 0xb4, 0x7d, 0x0e};
+
     byte[] sighash = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7,
         8, 9, 10, 11, 12, 13, 14, 15};
+
     byte[] sigRes = new byte[64];
+
     boolean boolSigRes = librustzcashSaplingSpendSig(
         new SpendSigParams(ask, alpha, sighash, sigRes));
     Assert.assertFalse(boolSigRes);
@@ -198,6 +203,7 @@ public class LibrustzcashTest {
         (byte) 0x82, 0x10, (byte) 0xc8, (byte) 0xcc, (byte) 0x93, 0x20, 0x68, (byte) 0xa6, 0x00,
         0x3b, 0x34, 0x01, 0x01, 0x3b, 0x67, 0x06, (byte) 0xa9, (byte) 0xaf, 0x33, 0x65, (byte) 0xea,
         (byte) 0xb4, 0x7d, 0x0e};
+
     byte[] nk = new byte[32];
     nk = librustzcashNskToNk(nsk);
 
@@ -220,16 +226,46 @@ public class LibrustzcashTest {
 
     long ctx = librustzcashSaplingProvingCtxInit();
 
-    byte[] ak = ByteUtil.hexToBytes("2021c369f4b901cc4f37d80eac2d676aa41beb2a2d835d5120005714bc687657");
-    byte[] nsk = ByteUtil.hexToBytes("48ea637742229ee87b8ebffd435b27469bee46ecb7732a6e3fb27939d442c006");
+    byte[] ak = ByteUtil.hexToBytes(
+        "2021c369f4b901cc4f37d80eac2d676aa41beb2a2d835d5120005714bc687657");
+    byte[] nsk = ByteUtil.hexToBytes(
+        "48ea637742229ee87b8ebffd435b27469bee46ecb7732a6e3fb27939d442c006");
 
     byte[] d = ByteUtil.hexToBytes("5aafbda15b790d38637017");
     long value = 10 * 1000000;
-    byte[] rcm = ByteUtil.hexToBytes("26328c28c46fb3c3a5e0648e5fc6b312a93f9fa93b5275cf79d4f71a30cd4d00");
-    byte[] alpha = ByteUtil.hexToBytes("994f6f29a8205747c510406e331d2a49faa1b517e630a4c55d9fe3856a9e030b");
-    byte[] anchor = ByteUtil.hexToBytes("f2097ce0e430f74a87d5d6c574f483165c781bd6b2423ec4824505890606554f");
+    byte[] rcm = ByteUtil.hexToBytes(
+        "26328c28c46fb3c3a5e0648e5fc6b312a93f9fa93b5275cf79d4f71a30cd4d00");
+    byte[] alpha = ByteUtil.hexToBytes(
+        "994f6f29a8205747c510406e331d2a49faa1b517e630a4c55d9fe3856a9e030b");
+    byte[] anchor = ByteUtil.hexToBytes(
+        "f2097ce0e430f74a87d5d6c574f483165c781bd6b2423ec4824505890606554f");
     byte[] voucherPath = ByteUtil.hexToBytes(
-        "2020b2eed031d4d6a4f02a097f80b54cc1541d4163c6b6f5971f88b6e41d35c538142012935f14b676509b81eb49ef25f39269ed72309238b4c145803544b646dca62d20e1f34b034d4a3cd28557e2907ebf990c918f64ecb50a94f01d6fda5ca5c7ef722028e7b841dcbc47cceb69d7cb8d94245fb7cb2ba3a7a6bc18f13f945f7dbd6e2a20a5122c08ff9c161d9ca6fc462073396c7d7d38e8ee48cdb3bea7e2230134ed6a20d2e1642c9a462229289e5b0e3b7f9008e0301cbb93385ee0e21da2545073cb582016d6252968971a83da8521d65382e61f0176646d771c91528e3276ee45383e4a20fee0e52802cb0c46b1eb4d376c62697f4759f6c8917fa352571202fd778fd712204c6937d78f42685f84b43ad3b7b00f81285662f85c6a68ef11d62ad1a3ee0850200769557bc682b1bf308646fd0b22e648e8b9e98f57e29f5af40f6edb833e2c492008eeab0c13abd6069e6310197bf80f9c1ea6de78fd19cbae24d4a520e6cf3023208d5fa43e5a10d11605ac7430ba1f5d81fb1b68d29a640405767749e841527673206aca8448d8263e547d5ff2950e2ed3839e998d31cbc6ac9fd57bc6002b15921620cd1c8dbf6e3acc7a80439bc4962cf25b9dce7c896f3a5bd70803fc5a0e33cf00206edb16d01907b759977d7650dad7e3ec049af1a3d875380b697c862c9ec5d51c201ea6675f9551eeb9dfaaa9247bc9858270d3d3a4c5afa7177a984d5ed1be245120d6acdedf95f608e09fa53fb43dcd0990475726c5131210c9e5caeab97f0e642f20bd74b25aacb92378a871bf27d225cfc26baca344a1ea35fdd94510f3d157082c201b77dac4d24fb7258c3c528704c59430b630718bec486421837021cf75dab65120ec677114c27206f5debc1c1ed66f95e2b1885da5b7be3d736b1de98579473048204777c8776a3b1e69b73a62fa701fa4f7a6282d9aee2c7a6b82e7937d7081c23c20ba49b659fbd0b7334211ea6a9d9df185c757e70aa81da562fb912b84f49bce722043ff5457f13b926b61df552d4e402ee6dc1463f99a535f9a713439264d5b616b207b99abdc3730991cc9274727d7d82d28cb794edbc7034b4f0053ff7c4b68044420d6c639ac24b46bd19341c91b13fdcab31581ddaf7f1411336a271f3d0aa52813208ac9cf9c391e3fd42891d27238a81a8a5c1d3a72b1bcbea8cf44a58ce738961320912d82b2c2bca231f71efcf61737fbf0a08befa0416215aeef53e8bb6d23390a20e110de65c907b9dea4ae0bd83a4b0a51bea175646a64c12b4c9f931b2cb31b4920d8283386ef2ef07ebdbb4383c12a739a953a4d6e0d6fb1139a4036d693bfbb6c20ffe9fc03f18b176c998806439ff0bb8ad193afdb27b2ccbc88856916dd804e3420817de36ab2d57feb077634bca77819c8e0bd298c04f6fed0e6a83cc1356ca1552001000000000000000000000000000000000000000000000000000000000000000000000000000000");
+        "2020b2eed031d4d6a4f02a097f80b54cc1541d4163c6b6f5971f88b6e41d35c538142012935f14b676509b8"
+            + "1eb49ef25f39269ed72309238b4c145803544b646dca62d20e1f34b034d4a3cd28557e2907ebf990c918"
+            + "f64ecb50a94f01d6fda5ca5c7ef722028e7b841dcbc47cceb69d7cb8d94245fb7cb2ba3a7a6bc18f13f9"
+            + "45f7dbd6e2a20a5122c08ff9c161d9ca6fc462073396c7d7d38e8ee48cdb3bea7e2230134ed6a20d2e16"
+            + "42c9a462229289e5b0e3b7f9008e0301cbb93385ee0e21da2545073cb582016d6252968971a83da8521d"
+            + "65382e61f0176646d771c91528e3276ee45383e4a20fee0e52802cb0c46b1eb4d376c62697f4759f6c89"
+            + "17fa352571202fd778fd712204c6937d78f42685f84b43ad3b7b00f81285662f85c6a68ef11d62ad1a3e"
+            + "e0850200769557bc682b1bf308646fd0b22e648e8b9e98f57e29f5af40f6edb833e2c492008eeab0c13a"
+            + "bd6069e6310197bf80f9c1ea6de78fd19cbae24d4a520e6cf3023208d5fa43e5a10d11605ac7430ba1f5"
+            + "d81fb1b68d29a640405767749e841527673206aca8448d8263e547d5ff2950e2ed3839e998d31cbc6ac9"
+            + "fd57bc6002b15921620cd1c8dbf6e3acc7a80439bc4962cf25b9dce7c896f3a5bd70803fc5a0e33cf002"
+            + "06edb16d01907b759977d7650dad7e3ec049af1a3d875380b697c862c9ec5d51c201ea6675f9551eeb9d"
+            + "faaa9247bc9858270d3d3a4c5afa7177a984d5ed1be245120d6acdedf95f608e09fa53fb43dcd0990475"
+            + "726c5131210c9e5caeab97f0e642f20bd74b25aacb92378a871bf27d225cfc26baca344a1ea35fdd9451"
+            + "0f3d157082c201b77dac4d24fb7258c3c528704c59430b630718bec486421837021cf75dab65120ec677"
+            + "114c27206f5debc1c1ed66f95e2b1885da5b7be3d736b1de98579473048204777c8776a3b1e69b73a62f"
+            + "a701fa4f7a6282d9aee2c7a6b82e7937d7081c23c20ba49b659fbd0b7334211ea6a9d9df185c757e70aa"
+            + "81da562fb912b84f49bce722043ff5457f13b926b61df552d4e402ee6dc1463f99a535f9a713439264d5"
+            + "b616b207b99abdc3730991cc9274727d7d82d28cb794edbc7034b4f0053ff7c4b68044420d6c639ac24b"
+            + "46bd19341c91b13fdcab31581ddaf7f1411336a271f3d0aa52813208ac9cf9c391e3fd42891d27238a81"
+            + "a8a5c1d3a72b1bcbea8cf44a58ce738961320912d82b2c2bca231f71efcf61737fbf0a08befa0416215a"
+            + "eef53e8bb6d23390a20e110de65c907b9dea4ae0bd83a4b0a51bea175646a64c12b4c9f931b2cb31b492"
+            + "0d8283386ef2ef07ebdbb4383c12a739a953a4d6e0d6fb1139a4036d693bfbb6c20ffe9fc03f18b176c9"
+            + "98806439ff0bb8ad193afdb27b2ccbc88856916dd804e3420817de36ab2d57feb077634bca77819c8e0b"
+            + "d298c04f6fed0e6a83cc1356ca1552001000000000000000000000000000000000000000000000000000"
+            + "000000000000000000000000000");
     byte[] cv = new byte[32];
     byte[] rk = new byte[32];
     byte[] zkproof = new byte[192];
@@ -280,19 +316,16 @@ public class LibrustzcashTest {
             });
 
     long startGenerate = System.currentTimeMillis();
-    LongStream.range(0L, count)
-        .forEach(
-            l -> {
-              generatePool.execute(
-                  () -> {
-                    try {
-                      benchmarkCreateSpend();
-                    } catch (Exception ex) {
-                      ex.printStackTrace();
-                      logger.error("", ex);
-                    }
-                  });
-            });
+    LongStream.range(0L, count).forEach(l -> {
+      generatePool.execute(() -> {
+        try {
+          benchmarkCreateSpend();
+        } catch (Exception ex) {
+          ex.printStackTrace();
+          logger.error("", ex);
+        }
+      });
+    });
 
     countDownLatch.await();
 
@@ -477,7 +510,13 @@ public class LibrustzcashTest {
     System.out.println("--- load ok ---");
 
     // expect fail
-    String spend = "0252dff2688fc9eb4645f85a9602dd9c0459663d1e43ade8ae1fdf5d289953b49ab041943b828fea6e0002cf67fd85437e88b14bbe35b57e46e0e2d8b354fd4164fcac491a4f9cacdd5ebcac2dcb4515cd2efc128b1e656ca4a24ab0f05b469099cbc68c2c5839959f770a20ff12184e17b9f5558936b15e7d8bc8812abb668655700fc8fca1c0ee62f5c08690433745992b96a36b21809073d26fcac04ead3f807050c480e7c1103c77992382a3a5946504fc32edef2d530f937a2975b1d43c130e20340a02c1c3e74d4d6d1fce343605c76f7e8b0fe1817430469748205382bc1307a769e5b854d6669fd1a71712909993ada53f65080990ad28de1566e8c4f05b5e49a22bc1ceed376b736b25f4ff3595802d4ac4a5def46ec20d6ba21d40";
+    String spend = "0252dff2688fc9eb4645f85a9602dd9c0459663d1e43ade8ae1fdf5d289953b49ab041943b828fe"
+        + "a6e0002cf67fd85437e88b14bbe35b57e46e0e2d8b354fd4164fcac491a4f9cacdd5ebcac2dcb4515cd2efc1"
+        + "28b1e656ca4a24ab0f05b469099cbc68c2c5839959f770a20ff12184e17b9f5558936b15e7d8bc8812abb668"
+        + "655700fc8fca1c0ee62f5c08690433745992b96a36b21809073d26fcac04ead3f807050c480e7c1103c77992"
+        + "382a3a5946504fc32edef2d530f937a2975b1d43c130e20340a02c1c3e74d4d6d1fce343605c76f7e8b0fe18"
+        + "17430469748205382bc1307a769e5b854d6669fd1a71712909993ada53f65080990ad28de1566e8c4f05b5e4"
+        + "9a22bc1ceed376b736b25f4ff3595802d4ac4a5def46ec20d6ba21d40";
 
     long ctx = librustzcashSaplingProvingCtxInit();
 
@@ -515,7 +554,8 @@ public class LibrustzcashTest {
 
         Note note = new Note(op.get(), 100);
         note.setRcm(ByteArray
-            .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02"));
+            .fromHexString(
+                "bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02"));
 
         byte[] cm = note.cm();
         if (cm != null) {
@@ -556,8 +596,8 @@ public class LibrustzcashTest {
         System.out.println("pkd is: " + ByteArray.toHexString(address.getPkD()));
 
         Note note = new Note(address, randomInt(100, 100000));
-        note.setRcm(ByteArray
-            .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02"));
+        note.setRcm(ByteArray.fromHexString(
+            "bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02"));
 
         byte[] cm = note.cm();
         if (cm != null) {

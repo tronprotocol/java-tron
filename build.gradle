@@ -1,17 +1,16 @@
 allprojects {
-    apply plugin: "java"
+    version = "1.0.0"
+    apply plugin: "java"    
 }
 
 subprojects {
+    apply plugin: "java"
     apply plugin: "jacoco"
     apply plugin: "maven"
     apply plugin: "maven-publish"
 
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
-
-    group 'tronprotocol'
-    version '1.0.0'
 
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
@@ -57,7 +56,7 @@ subprojects {
     }
 
     artifacts {
-        archives jar
+//        archives jar
         archives sourcesJar
     }
 }
@@ -69,4 +68,4 @@ task copyToParent(type: Copy) {
     }
 }
 
-build.finalizedBy(copyToParent)
+build.finalizedBy(copyToParent) 

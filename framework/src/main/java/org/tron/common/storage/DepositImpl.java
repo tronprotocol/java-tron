@@ -13,6 +13,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.Hash;
+import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -338,7 +339,7 @@ public class DepositImpl implements Deposit {
     Storage storage;
     if (this.parent != null) {
       Storage parentStorage = parent.getStorage(address);
-      if (VMConfig.getEnergyLimitHardFork()) {
+      if (StorageUtils.getEnergyLimitHardFork()) {
         // deep copy
         storage = new Storage(parentStorage);
       } else {
@@ -441,12 +442,11 @@ public class DepositImpl implements Deposit {
       accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value,
           this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
     }
-//    accountCapsule.getAssetMap().put(new String(tokenIdWithoutLeadingZero), Math.addExact(balance, value));
+
     Key key = Key.create(address);
     Value V = Value.create(accountCapsule.getData(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
-//    accountCapsule.addAssetAmount(tokenIdWithoutLeadingZero, value);
     return accountCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
   }
 

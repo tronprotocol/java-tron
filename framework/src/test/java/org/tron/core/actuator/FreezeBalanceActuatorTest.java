@@ -1,7 +1,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
-import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
+import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -520,8 +520,7 @@ public class FreezeBalanceActuatorTest {
       long maxFrozenTime = dbManager.getDynamicPropertiesStore().getMaxFrozenTime();
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("frozenDuration must be less than " + maxFrozenTime + " days "
-              + "and more than " + minFrozenTime + " days"
-          , e.getMessage());
+          + "and more than " + minFrozenTime + " days", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -545,8 +544,7 @@ public class FreezeBalanceActuatorTest {
       long maxFrozenTime = dbManager.getDynamicPropertiesStore().getMaxFrozenTime();
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("frozenDuration must be less than " + maxFrozenTime + " days "
-              + "and more than " + minFrozenTime + " days"
-          , e.getMessage());
+          + "and more than " + minFrozenTime + " days", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

@@ -65,8 +65,7 @@ public class ValidateMultiSignContractTest {
     //Address non exist
     Assert.assertEquals(
         validateMultiSign(Wallet.encode58Check(key.getAddress()), 1, hash, signs)
-            .getValue()
-        , DataWord.ZERO().getData());
+            .getValue(), DataWord.ZERO().getData());
 
 
   }
@@ -125,34 +124,28 @@ public class ValidateMultiSignContractTest {
 
     Assert.assertEquals(
         validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
-            .getValue()
-        , DataWord.ONE().getData());
+            .getValue(), DataWord.ONE().getData());
 
     //weight not enough
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     Assert.assertEquals(
         validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
-            .getValue()
-        , DataWord.ZERO().getData());
+            .getValue(), DataWord.ZERO().getData());
 
     //put wrong sign
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     Assert.assertEquals(
         validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
-            .getValue()
-        , DataWord.ZERO().getData());
+            .getValue(), DataWord.ZERO().getData());
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     signs.add(Hex.toHexString(new ECKey().sign(toSign).toByteArray()));
 
     Assert.assertEquals(
         validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
-            .getValue()
-        , DataWord.ZERO().getData());
-
-
+            .getValue(), DataWord.ZERO().getData());
   }
 
 

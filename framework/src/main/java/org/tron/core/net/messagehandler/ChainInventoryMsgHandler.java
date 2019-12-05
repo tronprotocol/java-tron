@@ -1,6 +1,6 @@
 package org.tron.core.net.messagehandler;
 
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import java.util.Deque;
 import java.util.LinkedList;
@@ -69,9 +69,9 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       }
     }
 
-    if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty()) ||
-        (chainInventoryMessage.getRemainNum() != 0
-            && peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM)) {
+    if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty())
+        || (chainInventoryMessage.getRemainNum() != 0
+        && peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM)) {
       syncService.setFetchFlag(true);
     } else {
       syncService.syncNext(peer);

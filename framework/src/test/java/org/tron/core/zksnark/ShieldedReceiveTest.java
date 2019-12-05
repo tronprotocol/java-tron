@@ -1,5 +1,6 @@
 package org.tron.core.zksnark;
 
+import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -24,6 +25,7 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -70,7 +72,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.ReceiveDescriptionInfo;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
@@ -382,7 +383,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     // begin to generate dataToBeSigned
     TransactionCapsule transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
         builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-    byte[] dataToBeSigned = TransactionUtil
+    byte[] dataToBeSigned = TransactionCapsule
         .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
     TransactionCapsule transactionCap = generateTransactionCapsule(builder, ctx, dataToBeSigned,
         transactionCapsule);
@@ -476,7 +477,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     long maxTime = 0;
     double totalTime = 0.0;
 
-    String result[] = generateSpendAndOutputParams();
+    String[] result = generateSpendAndOutputParams();
     String spend = result[0];
     String dataToBeSigned = result[1];
 
@@ -508,7 +509,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     long maxTime = 0;
     double totalTime = 0.0;
 
-    String result[] = generateSpendAndOutputParams();
+    String[] result = generateSpendAndOutputParams();
     String outputParams = result[2];
 
     for (int i = 0; i < count; i++) {
@@ -613,7 +614,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
       TransactionExtention transactionExtention = TransactionExtention.newBuilder()
           .setTransaction(transactionCapsule.getInstance()).build();
 
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance(),
+          DBConfig.getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -655,7 +657,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance(),
+          DBConfig.getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -697,7 +700,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance(),
+          DBConfig.getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -739,7 +743,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance(),
+          DBConfig.getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -781,7 +786,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance(),
+          DBConfig.getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -823,7 +829,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance(),
+          DBConfig.getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -975,7 +982,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
 
-      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      dataToBeSigned = TransactionCapsule.hashShieldTransaction(transactionCapsule.getInstance(),
+          DBConfig.getZenTokenId());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Could not construct signature hash: " + ex.getMessage());
@@ -1612,8 +1620,10 @@ public class ShieldedReceiveTest extends BlockGenerate {
     Transaction transaction = tx.getInstance().toBuilder().clearRawData()
         .setRawData(rawBuilder).build();
 
-    return Sha256Hash.of(transaction.getRawData().toByteArray())
-        .getBytes();
+    byte[] mergedByte = Bytes.concat(
+        Sha256Hash.of(DBConfig.getZenTokenId().getBytes()).getBytes(),
+        transaction.getRawData().toByteArray());
+    return Sha256Hash.of(mergedByte).getBytes();
   }
 
   private ZenTransactionBuilder generateShield2ShieldBuilder(ZenTransactionBuilder builder,
@@ -2004,7 +2014,9 @@ public class ShieldedReceiveTest extends BlockGenerate {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
 
-      hashOfTransaction = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
+      hashOfTransaction = TransactionCapsule
+          .hashShieldTransaction(transactionCapsule.getInstance(),
+              DBConfig.getZenTokenId());
 
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -2516,14 +2528,23 @@ public class ShieldedReceiveTest extends BlockGenerate {
         receiveNote2.getNote().getPaymentAddress());
   }
 
-  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM}
+  public enum TestColumn {
+    CV,
+    ZKPOOF,
+    D_CM,
+    PKD_CM,
+    VALUE_CM,
+    R_CM
+  }
 
   public enum TestSignMissingColumn {
     FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION,
     RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT
   }
 
-  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF}
+  public enum TestReceiveMissingColumn {
+    CV, CM, EPK, C_ENC, C_OUT, ZKPROOF
+  }
 
   @AllArgsConstructor
   class TransactionHash {

@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.core.config.args.GenesisBlock;
+import org.tron.common.args.GenesisBlock;
 
 public class Param {
 

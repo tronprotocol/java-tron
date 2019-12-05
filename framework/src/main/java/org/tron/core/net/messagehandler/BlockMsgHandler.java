@@ -1,7 +1,7 @@
 package org.tron.core.net.messagehandler;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
@@ -61,7 +61,8 @@ public class BlockMsgHandler implements TronMsgHandler {
       long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
       processBlock(peer, blockMessage.getBlockCapsule());
       logger.info(
-          "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, txs/process {}/{}ms, witness: {}",
+          "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, "
+              + "txs/process {}/{}ms, witness: {}",
           blockId.getNum(),
           interval,
           peer.getInetAddress(),

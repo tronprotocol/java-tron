@@ -45,6 +45,7 @@ import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.StoreIterator;
 import org.tron.core.db2.common.Instance;
@@ -457,6 +458,6 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   @Override
   public LevelDbDataSourceImpl newInstance() {
-    return new LevelDbDataSourceImpl(DBConfig.getOutputDirectoryByDbName(dataBaseName), dataBaseName, options, writeOptions);
+    return new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dataBaseName), dataBaseName, options, writeOptions);
   }
 }

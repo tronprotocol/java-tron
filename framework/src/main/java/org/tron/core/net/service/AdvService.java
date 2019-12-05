@@ -1,8 +1,8 @@
 package org.tron.core.net.service;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NetConstants.MAX_TRX_FETCH_PER_PEER;
 import static org.tron.core.config.Parameter.NetConstants.MSG_CACHE_DURATION_IN_BLOCKS;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -191,7 +191,7 @@ public class AdvService {
     }
 
     peers.forEach(peer -> {
-      peer.sendMessage(msg);
+      peer.fastSend(msg);
       peer.getAdvInvSpread().put(item, System.currentTimeMillis());
       peer.setFastForwardBlock(msg.getBlockId());
     });
@@ -239,10 +239,10 @@ public class AdvService {
               && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
           .sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
           .findFirst().ifPresent(peer -> {
-        invSender.add(item, peer);
-        peer.getAdvInvRequest().put(item, now);
-        invToFetch.remove(item);
-      });
+            invSender.add(item, peer);
+            peer.getAdvInvRequest().put(item, now);
+            invToFetch.remove(item);
+          });
     });
 
     invSender.sendFetch();
@@ -261,8 +261,8 @@ public class AdvService {
     InvSender invSender = new InvSender();
 
     invToSpread.forEach((item, time) -> peers.forEach(peer -> {
-      if (peer.getAdvInvReceive().getIfPresent(item) == null &&
-          peer.getAdvInvSpread().getIfPresent(item) == null) {
+      if (peer.getAdvInvReceive().getIfPresent(item) == null
+          && peer.getAdvInvSpread().getIfPresent(item) == null) {
         peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
         invSender.add(item, peer);
       }
@@ -274,7 +274,8 @@ public class AdvService {
 
   class InvSender {
 
-    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send = new HashMap<>();
+    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
+        = new HashMap<>();
 
     public void clear() {
       this.send.clear();
@@ -314,8 +315,10 @@ public class AdvService {
         }
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
+          peer.fastSend(new InventoryMessage(value, key));
+        } else {
+          peer.sendMessage(new InventoryMessage(value, key));
         }
-        peer.sendMessage(new InventoryMessage(value, key));
       }));
     }
 
@@ -323,8 +326,10 @@ public class AdvService {
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
+          peer.fastSend(new FetchInvDataMessage(value, key));
+        } else {
+          peer.sendMessage(new FetchInvDataMessage(value, key));
         }
-        peer.sendMessage(new FetchInvDataMessage(value, key));
       }));
     }
   }

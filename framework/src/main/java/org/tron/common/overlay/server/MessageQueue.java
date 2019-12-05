@@ -27,15 +27,15 @@ import org.tron.protos.Protocol.ReasonCode;
 @Scope("prototype")
 public class MessageQueue {
 
-  private static ScheduledExecutorService sendTimer = Executors.
-      newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
+  private static ScheduledExecutorService sendTimer =
+      Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
   private volatile boolean sendMsgFlag = false;
   private volatile long sendTime;
   private volatile long sendPing;
   private Thread sendMsgThread;
   private Channel channel;
   private ChannelHandlerContext ctx = null;
-  private Queue<MessageRoundtrip> requestQueue = new ConcurrentLinkedQueue<>();
+  private Queue<MessageRoundTrip> requestQueue = new ConcurrentLinkedQueue<>();
   private BlockingQueue<Message> msgQueue = new LinkedBlockingQueue<>();
   private ScheduledFuture<?> sendTask;
 
@@ -83,6 +83,15 @@ public class MessageQueue {
     this.channel = channel;
   }
 
+  public void fastSend(Message msg) {
+    logger.info("Fast send to {}, {} ", ctx.channel().remoteAddress(), msg);
+    ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
+      if (!future.isSuccess() && !channel.isDisconnect()) {
+        logger.error("Fast send to {} failed, {}", ctx.channel().remoteAddress(), msg);
+      }
+    });
+  }
+
   public boolean sendMessage(Message msg) {
     long now = System.currentTimeMillis();
     if (msg instanceof PingMessage) {
@@ -97,7 +106,7 @@ public class MessageQueue {
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(msg);
     sendTime = System.currentTimeMillis();
     if (msg.getAnswerMessage() != null) {
-      requestQueue.add(new MessageRoundtrip(msg));
+      requestQueue.add(new MessageRoundTrip(msg));
     } else {
       msgQueue.offer(msg);
     }
@@ -109,7 +118,7 @@ public class MessageQueue {
       logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
     }
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
-    MessageRoundtrip rt = requestQueue.peek();
+    MessageRoundTrip rt = requestQueue.peek();
     if (rt != null && rt.getMsg().getAnswerMessage() == msg.getClass()) {
       requestQueue.remove();
       if (rt.getMsg() instanceof PingMessage) {
@@ -143,8 +152,8 @@ public class MessageQueue {
       return false;
     }
 
-    if (msg instanceof InventoryMessage &&
-        ((InventoryMessage) msg).getInventoryType().equals(InventoryType.TRX)) {
+    if (msg instanceof InventoryMessage
+        && ((InventoryMessage) msg).getInventoryType().equals(InventoryType.TRX)) {
       return false;
     }
 
@@ -152,7 +161,7 @@ public class MessageQueue {
   }
 
   private void send() {
-    MessageRoundtrip rt = requestQueue.peek();
+    MessageRoundTrip rt = requestQueue.peek();
     if (!sendMsgFlag || rt == null) {
       return;
     }

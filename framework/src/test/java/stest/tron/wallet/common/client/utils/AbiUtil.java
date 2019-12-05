@@ -41,6 +41,8 @@ public class AbiUtil {
         return new CoderDynamicBytes();
       case "trcToken":
         return new CoderNumber();
+      default:
+        System.out.println(type);
     }
 
     if (paramTypeBytes.matcher(type).find()) {
@@ -155,7 +157,8 @@ public class AbiUtil {
         System.arraycopy(new DataWord(dynamicOffset).getData(), 0, data, offset, 32);
         offset += 32;
 
-        System.arraycopy(encodedList.get(idx), 0, data, dynamicOffset, encodedList.get(idx).length);
+        System.arraycopy(encodedList.get(idx), 0, data, dynamicOffset,
+            encodedList.get(idx).length);
         dynamicOffset += encodedList.get(idx).length;
       } else {
         System.arraycopy(encodedList.get(idx), 0, data, offset, encodedList.get(idx).length);
@@ -168,6 +171,18 @@ public class AbiUtil {
 
   public static String parseMethod(String methodSign, String params) {
     return parseMethod(methodSign, params, false);
+  }
+
+  public static String parseMethod(String methodSign, String input, boolean isHex) {
+    if (isHex) {
+      return parseSelector(methodSign) + input;
+    } else {
+      return parseSelector(methodSign) + parseParameters(methodSign, input);
+    }
+  }
+
+  public static String parseMethod(String methodSign, List<Object> parameters) {
+    return parseSelector(methodSign) + parseParameters(methodSign, parameters);
   }
 
   public static String parseParameters(String methodSign, List<Object> parameters) {
@@ -203,14 +218,6 @@ public class AbiUtil {
     return Hex.toHexString(selector);
   }
 
-  public static String parseMethod(String methodSign, String input, boolean isHex) {
-    if (isHex) {
-      return parseSelector(methodSign) + input;
-    } else {
-      return parseSelector(methodSign) + parseParameters(methodSign, input);
-    }
-  }
-
   public static byte[] encodeInput(String methodSign, String input) {
     ObjectMapper mapper = new ObjectMapper();
     input = "[" + input + "]";
@@ -231,10 +238,6 @@ public class AbiUtil {
     return pack(coders, items);
   }
 
-  public static String parseMethod(String methodSign, List<Object> parameters) {
-    return parseSelector(methodSign) + parseParameters(methodSign, parameters);
-  }
-
   public static void main(String[] args) {
     String method = "test(string,int2,string)";
     String params = "asdf,3123,adf";
@@ -249,9 +252,16 @@ public class AbiUtil {
     System.out.println("token:" + parseMethod(tokenMethod, tokenParams));
 
     String method1 = "test(uint256,string,string,uint256[])";
-    String expected1 = "db103cf30000000000000000000000000000000000000000000000000000000000000005000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000014200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000143000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003";
+    String expected1 = "db103cf30000000000000000000000000000000000000000000000000000000000000005000"
+        + "0000000000000000000000000000000000000000000000000000000000080000000000000000000000000000"
+        + "00000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000"
+        + "0000000000100000000000000000000000000000000000000000000000000000000000000000142000000000"
+        + "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        + "0000000000000000000000000000143000000000000000000000000000000000000000000000000000000000"
+        + "0000000000000000000000000000000000000000000000000000000000000000000030000000000000000000"
+        + "0000000000000000000000000000000000000000000010000000000000000000000000000000000000000000"
+        + "0000000000000000000020000000000000000000000000000000000000000000000000000000000000003";
     String method2 = "test(uint256,string,string,uint256[3])";
-    String expected2 = "000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003";
     String listString = "1 ,\"B\",\"C\", [1, 2, 3]";
     System.out.println(parseMethod(method1, listString));
     System.out.println(parseMethod(method2, listString));
@@ -261,7 +271,7 @@ public class AbiUtil {
     System.out.println(parseMethod(byteMethod1, bytesValue1));
   }
 
-  static abstract class Coder {
+  abstract static class Coder {
 
     boolean dynamic = false;
 

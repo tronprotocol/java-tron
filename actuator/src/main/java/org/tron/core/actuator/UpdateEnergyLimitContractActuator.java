@@ -5,8 +5,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.DecodeUtil;
+import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -28,8 +28,8 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)object;
-    if (Objects.isNull(ret)){
+    TransactionResultCapsule ret = (TransactionResultCapsule) object;
+    if (Objects.isNull(ret)) {
       throw new RuntimeException("TransactionResultCapsule is null");
     }
 
@@ -56,7 +56,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!DBConfig.getEnergyLimitHardFork()) {
+    if (!StorageUtils.getEnergyLimitHardFork()) {
       throw new ContractValidateException(
           "contract type error, unexpected type [UpdateEnergyLimitContract]");
     }
@@ -81,7 +81,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (!Commons.addressValid(contract.getOwnerAddress().toByteArray())) {
+    if (!DecodeUtil.addressValid(contract.getOwnerAddress().toByteArray())) {
       throw new ContractValidateException("Invalid address");
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();

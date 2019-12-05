@@ -23,6 +23,7 @@ import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -105,7 +106,7 @@ public class VMActuator implements Actuator2 {
   public void validate(Object object) throws ContractValidateException {
 
     TransactionContext context = (TransactionContext) object;
-    if (Objects.isNull(context)){
+    if (Objects.isNull(context)) {
       throw new RuntimeException("TransactionContext is null");
     }
 
@@ -148,7 +149,7 @@ public class VMActuator implements Actuator2 {
   @Override
   public void execute(Object object) throws ContractExeException {
     TransactionContext context = (TransactionContext) object;
-    if (Objects.isNull(context)){
+    if (Objects.isNull(context)) {
       throw new RuntimeException("TransactionContext is null");
     }
 
@@ -339,7 +340,7 @@ public class VMActuator implements Actuator2 {
       long energyLimit;
       // according to version
 
-      if (VMConfig.getEnergyLimitHardFork()) {
+      if (StorageUtils.getEnergyLimitHardFork()) {
         if (callValue < 0) {
           throw new ContractValidateException("callValue must be >= 0");
         }
@@ -441,7 +442,7 @@ public class VMActuator implements Actuator2 {
       tokenId = contract.getTokenId();
     }
 
-    if (VMConfig.getEnergyLimitHardFork()) {
+    if (StorageUtils.getEnergyLimitHardFork()) {
       if (callValue < 0) {
         throw new ContractValidateException("callValue must be >= 0");
       }
@@ -576,7 +577,7 @@ public class VMActuator implements Actuator2 {
       return getAccountEnergyLimitWithFixRatio(caller, feeLimit, callValue);
     }
     //  according to version
-    if (VMConfig.getEnergyLimitHardFork()) {
+    if (StorageUtils.getEnergyLimitHardFork()) {
       return getTotalEnergyLimitWithFixRatio(creator, caller, contract, feeLimit, callValue);
     } else {
       return getTotalEnergyLimitWithFloatRatio(creator, caller, contract, feeLimit, callValue);
@@ -615,9 +616,9 @@ public class VMActuator implements Actuator2 {
       } else {
         // self witness or other witness or fullnode verifies block
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-          cpuLimitRatio = DBConfig.getMinTimeRatio();
+          cpuLimitRatio = VMConfig.getMinTimeRatio();
         } else {
-          cpuLimitRatio = DBConfig.getMaxTimeRatio();
+          cpuLimitRatio = VMConfig.getMaxTimeRatio();
         }
       }
     } else {

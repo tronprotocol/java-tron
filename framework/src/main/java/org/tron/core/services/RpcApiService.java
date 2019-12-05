@@ -147,6 +147,7 @@ public class RpcApiService implements Service {
 
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
+  private static final String EXCEPTION_CAUGHT = "exception caught";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
   private int port = Args.getInstance().getRpcPort();
@@ -206,7 +207,7 @@ public class RpcApiService implements Service {
           .maxMessageSize(args.getMaxMessageSize())
           .maxHeaderListSize(args.getMaxHeaderListSize());
 
-      // add a ratelimiter interceptor
+      // add a rate limiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
 
       apiServer = serverBuilder.build();
@@ -217,12 +218,12 @@ public class RpcApiService implements Service {
       logger.debug(e.getMessage(), e);
     }
 
-    logger.info("RpcApiService started, listening on " + port);
+    logger.info("RpcApiService has started, listening on " + port);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       System.err.println("*** shutting down gRPC server since JVM is shutting down");
       //server.this.stop();
-      System.err.println("*** server shut down");
+      System.err.println("*** server is shutdown");
     }));
   }
 
@@ -814,7 +815,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
       }
       trxExtBuilder.setResult(retBuilder);
       responseObserver.onNext(trxExtBuilder.build());
@@ -825,8 +826,8 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionSign(TransactionSign req,
         StreamObserver<Transaction> responseObserver) {
-      TransactionCapsule retur = wallet.getTransactionSign(req);
-      responseObserver.onNext(retur.getInstance());
+      TransactionCapsule result = wallet.getTransactionSign(req);
+      responseObserver.onNext(result.getInstance());
       responseObserver.onCompleted();
     }
 
@@ -843,7 +844,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
       }
       trxExtBuilder.setResult(retBuilder);
       responseObserver.onNext(trxExtBuilder.build());
@@ -863,7 +864,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
       }
       trxExtBuilder.setResult(retBuilder);
       responseObserver.onNext(trxExtBuilder.build());
@@ -889,7 +890,7 @@ public class RpcApiService implements Service {
     @Override
     public void createAddress(BytesMessage req,
         StreamObserver<BytesMessage> responseObserver) {
-      byte[] address = wallet.createAdresss(req.getValue().toByteArray());
+      byte[] address = wallet.createAddress(req.getValue().toByteArray());
       BytesMessage.Builder builder = BytesMessage.newBuilder();
       builder.setValue(ByteString.copyFrom(address));
       responseObserver.onNext(builder.build());
@@ -911,43 +912,10 @@ public class RpcApiService implements Service {
         transactionCapsule = createTransactionCapsule(builder.build(),
             ContractType.TransferContract);
         transactionCapsule.sign(privateKey);
-        GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
+        GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
         responseBuild.setTransaction(transactionCapsule.getInstance());
         responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
-        responseBuild.setResult(retur);
-      } catch (ContractValidateException e) {
-        returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getMessage()));
-        responseBuild.setResult(returnBuilder.build());
-      } catch (Exception e) {
-        returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        responseBuild.setResult(returnBuilder.build());
-      }
-
-      return responseBuild.build();
-    }
-
-    private EasyTransferResponse easyTransferAsset(byte[] privateKey, ByteString toAddress,
-        String assetId, long amount) {
-      TransactionCapsule transactionCapsule;
-      GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
-      EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
-      try {
-        ECKey ecKey = ECKey.fromPrivate(privateKey);
-        byte[] owner = ecKey.getAddress();
-        TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
-        builder.setOwnerAddress(ByteString.copyFrom(owner));
-        builder.setToAddress(toAddress);
-        builder.setAssetName(ByteString.copyFrom(assetId.getBytes()));
-        builder.setAmount(amount);
-        transactionCapsule = createTransactionCapsule(builder.build(),
-            ContractType.TransferAssetContract);
-        transactionCapsule.sign(privateKey);
-        GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
-        responseBuild.setTransaction(transactionCapsule.getInstance());
-        responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
-        responseBuild.setResult(retur);
+        responseBuild.setResult(result);
       } catch (ContractValidateException e) {
         returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getMessage()));
@@ -980,6 +948,39 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    private EasyTransferResponse easyTransferAsset(byte[] privateKey, ByteString toAddress,
+        String assetId, long amount) {
+      TransactionCapsule transactionCapsule;
+      GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
+      EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
+      try {
+        ECKey ecKey = ECKey.fromPrivate(privateKey);
+        byte[] owner = ecKey.getAddress();
+        TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
+        builder.setOwnerAddress(ByteString.copyFrom(owner));
+        builder.setToAddress(toAddress);
+        builder.setAssetName(ByteString.copyFrom(assetId.getBytes()));
+        builder.setAmount(amount);
+        transactionCapsule = createTransactionCapsule(builder.build(),
+            ContractType.TransferAssetContract);
+        transactionCapsule.sign(privateKey);
+        GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
+        responseBuild.setTransaction(transactionCapsule.getInstance());
+        responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
+        responseBuild.setResult(result);
+      } catch (ContractValidateException e) {
+        returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getMessage()));
+        responseBuild.setResult(returnBuilder.build());
+      } catch (Exception e) {
+        returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        responseBuild.setResult(returnBuilder.build());
+      }
+
+      return responseBuild.build();
+    }
+
     @Override
     public void easyTransferByPrivate(EasyTransferByPrivateMessage req,
         StreamObserver<EasyTransferResponse> responseObserver) {
@@ -1002,8 +1003,8 @@ public class RpcApiService implements Service {
     @Override
     public void broadcastTransaction(Transaction req,
         StreamObserver<GrpcAPI.Return> responseObserver) {
-      GrpcAPI.Return retur = wallet.broadcastTransaction(req);
-      responseObserver.onNext(retur);
+      GrpcAPI.Return result = wallet.broadcastTransaction(req);
+      responseObserver.onNext(result);
       responseObserver.onCompleted();
     }
 
@@ -1068,7 +1069,7 @@ public class RpcApiService implements Service {
 
         Preconditions.checkNotNull(witness, "witness[" + readableWitnessAddress + "] not exists");
         Preconditions.checkArgument(vote.getVoteCount() <= 0,
-            "VoteAddress[" + readableWitnessAddress + "],VotesCount[" + vote
+            "VoteAddress[" + readableWitnessAddress + "], VotesCount[" + vote
                 .getVoteCount() + "] <= 0");
       });
     }
@@ -1309,24 +1310,6 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ProposalDeleteContract, responseObserver);
     }
-
-//    @Override
-//    public void buyStorage(Contract.BuyStorageContract request,
-//        StreamObserver<TransactionExtention> responseObserver) {
-//      createTransactionExtention(request, ContractType.BuyStorageContract, responseObserver);
-//    }
-//
-//    @Override
-//    public void buyStorageBytes(Contract.BuyStorageBytesContract request,
-//        StreamObserver<TransactionExtention> responseObserver) {
-//      createTransactionExtention(request, ContractType.BuyStorageBytesContract, responseObserver);
-//    }
-//
-//    @Override
-//    public void sellStorage(Contract.SellStorageContract request,
-//        StreamObserver<TransactionExtention> responseObserver) {
-//      createTransactionExtention(request, ContractType.SellStorageContract, responseObserver);
-//    }
 
     @Override
     public void exchangeCreate(ExchangeCreateContract request,
@@ -1719,7 +1702,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
+        logger.warn("When run constant call in VM, have Runtime Exception: " + e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
@@ -1852,45 +1835,6 @@ public class RpcApiService implements Service {
           responseObserver);
     }
 
-//    @Override
-//    public void getNullifier(BytesMessage request, StreamObserver<BytesMessage> responseObserver) {
-//      ByteString id = request.getValue();
-//      if (null != id) {
-//        BytesMessage trxId = wallet.getNullifier(id);
-//
-//        responseObserver.onNext(trxId);
-//      } else {
-//        responseObserver.onNext(null);
-//      }
-//      responseObserver.onCompleted();
-//    }
-
-//    @Override
-//    public void getMerklePath(BytesMessage request, StreamObserver<MerklePath> responseObserver) {
-//      ByteString rt = request.getValue();
-//      if (null != rt) {
-//        MerklePath merklePath = wallet.getMerklePath(rt);
-//
-//        responseObserver.onNext(merklePath);
-//      } else {
-//        responseObserver.onNext(null);
-//      }
-//      responseObserver.onCompleted();
-//    }
-
-//    @Override
-//    public void getBestMerkleRoot(EmptyMessage request,
-//        StreamObserver<BytesMessage> responseObserver) {
-//      byte[] rt = wallet.getBestMerkleRoot();
-//      if (rt == null) {
-//        responseObserver.onNext(null);
-//      } else {
-//        responseObserver
-//            .onNext(BytesMessage.newBuilder().setValue(ByteString.copyFrom(rt)).build());
-//      }
-//      responseObserver.onCompleted();
-//    }
-
     @Override
     public void getMerkleTreeVoucherInfo(OutputPointInfo request,
         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
@@ -1905,41 +1849,6 @@ public class RpcApiService implements Service {
 
       responseObserver.onCompleted();
     }
-
-//    @Override
-//    public void getZKBlockByLimitNext(BlockLimit request,
-//        StreamObserver<BlockListExtention> responseObserver) {
-//      long startNum = request.getStartNum();
-//      long endNum = request.getEndNum();
-//
-//      if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
-//        responseObserver.onNext(blocklist2Extention(
-//            wallet.getZKBlocksByLimitNext(startNum, endNum - startNum)));
-//      } else {
-//        responseObserver.onNext(null);
-//      }
-//      responseObserver.onCompleted();
-//    }
-//
-//    @Override
-//    public void getMerkleTreeOfBlock(NumberMessage request,
-//        StreamObserver<BlockIncrementalMerkleTree> responseObserver) {
-//      long blockNumber = request.getNum();
-//      if (blockNumber >= 0) {
-//        BlockIncrementalMerkleTree.Builder builder = BlockIncrementalMerkleTree.newBuilder();
-//        builder.setNumber(blockNumber);
-//        IncrementalMerkleTree tree = wallet.getMerkleTreeOfBlock(blockNumber);
-//        if (tree != null) {
-//          builder.setMerkleTree(tree);
-//          responseObserver.onNext(builder.build());
-//        } else {
-//          responseObserver.onNext(null);
-//        }
-//      } else {
-//        responseObserver.onNext(null);
-//      }
-//      responseObserver.onCompleted();
-//    }
 
     @Override
     public void createShieldedTransaction(PrivateParameters request,

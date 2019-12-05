@@ -27,9 +27,10 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.SourceInter;
+import org.tron.core.db2.ISession;
 import org.tron.core.db2.common.IRevokingDB;
-import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
@@ -80,7 +81,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public synchronized void check() {
     LevelDbDataSourceImpl check =
-        new LevelDbDataSourceImpl(DBConfig.getOutputDirectoryByDbName("tmp"), "tmp", new Options(),
+        new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName("tmp"), "tmp", new Options(),
             new WriteOptions());
     check.initDB();
 
