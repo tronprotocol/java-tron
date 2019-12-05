@@ -121,7 +121,6 @@ public class SolidityNodeHttpApiService implements Service {
 
   @Override
   public void start() {
-    CommonParameter args = Args.getInstance();
     try {
       server = new Server(port);
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);

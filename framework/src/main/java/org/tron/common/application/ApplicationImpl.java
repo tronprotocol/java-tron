@@ -36,7 +36,7 @@ public class ApplicationImpl implements Application {
 
   @Override
   @Autowired
-  public void init(CommonParameter args) {
+  public void init(CommonParameter parameter) {
     blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
   }
@@ -47,8 +47,8 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  public void initServices(CommonParameter args) {
-    services.init(args);
+  public void initServices(CommonParameter parameter) {
+    services.init(parameter);
   }
 
   /**
