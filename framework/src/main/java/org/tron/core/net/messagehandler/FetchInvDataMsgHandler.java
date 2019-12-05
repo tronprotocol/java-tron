@@ -1,6 +1,6 @@
 package org.tron.core.net.messagehandler;
 
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.common.collect.Lists;
 import java.util.List;

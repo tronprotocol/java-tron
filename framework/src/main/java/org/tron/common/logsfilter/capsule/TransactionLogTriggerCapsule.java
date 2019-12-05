@@ -30,7 +30,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
   @Getter
   @Setter
-  TransactionLogTrigger transactionLogTrigger;
+  private TransactionLogTrigger transactionLogTrigger;
 
   public TransactionLogTriggerCapsule(TransactionCapsule trxCasule, BlockCapsule blockCapsule) {
     transactionLogTrigger = new TransactionLogTrigger();
@@ -49,7 +49,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     }
 
     if (Objects.nonNull(trxCasule.getInstance().getRawData())) {
-      // feelimit
+      // fee limit
       transactionLogTrigger.setFeeLimit(trxCasule.getInstance().getRawData().getFeeLimit());
 
       Protocol.Transaction.Contract contract = trxCasule.getInstance().getRawData().getContract(0);

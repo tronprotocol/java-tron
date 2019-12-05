@@ -23,8 +23,8 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
-import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -564,7 +564,8 @@ public class AssetIssueActuatorTest {
 
   @Test
   /*
-   * Asset name length must between 1 to 32 and can not contain space and other unreadable character, and can not contain chinese characters.
+   * Asset name length must between 1 to 32 and can not contain space and other unreadable
+   * character, and can not contain chinese characters.
    */
   public void assetNameTest() {
     long nowTime = new Date().getTime();
@@ -852,7 +853,10 @@ public class AssetIssueActuatorTest {
       dbManager.getAssetIssueStore().delete(ByteArray.fromString(NAME));
     }
 
-    String url256Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    String url256Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678"
+        + "9abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"
+        + "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678"
+        + "9abcdef";
     //Too long url, throw exception. Max long is 256.
     contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
@@ -1016,7 +1020,9 @@ public class AssetIssueActuatorTest {
   public void descriptionTest() {
     long nowTime = new Date().getTime();
 
-    String description200Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567";
+    String description200Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"
+        + "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678"
+        + "9abcdef0123456789abcdef0123456789abcdef01234567";
     //Too long description, throw exception. Max long is 200.
     Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
@@ -1304,7 +1310,8 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
-          "frozenDuration must be less than " + maxFrozenSupplyTime + " days " + "and more than "
+          "frozenDuration must be less than " + maxFrozenSupplyTime
+              + " days " + "and more than "
               + minFrozenSupplyTime + " days", e.getMessage());
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -1351,7 +1358,8 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
-          "frozenDuration must be less than " + maxFrozenSupplyTime + " days " + "and more than "
+          "frozenDuration must be less than " + maxFrozenSupplyTime
+              + " days " + "and more than "
               + minFrozenSupplyTime + " days", e.getMessage());
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -1399,7 +1407,8 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
-          "frozenDuration must be less than " + maxFrozenSupplyTime + " days " + "and more than "
+          "frozenDuration must be less than " + maxFrozenSupplyTime
+              + " days " + "and more than "
               + minFrozenSupplyTime + " days", e.getMessage());
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -1532,7 +1541,8 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Start time should be greater than HeadBlockTime", e.getMessage());
+      Assert.assertEquals("Start time should be greater than HeadBlockTime",
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1560,7 +1570,8 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Start time should be greater than HeadBlockTime", e.getMessage());
+      Assert.assertEquals("Start time should be greater than HeadBlockTime",
+          e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {

@@ -67,7 +67,8 @@ public class PeerConnectionCheckService {
             && System.currentTimeMillis() - peerConnection.getStartTime() >= CHECK_TIME
             && !peerConnection.isTrustPeer()
             && !nodeStatistics.isPredefined()) {
-          //if xxx minutes not have data transfer,disconnect the peer,exclude trust peer and active peer
+          //if xxx minutes not have data transfer,disconnect the peer,
+          //exclude trust peer and active peer
           willDisconnectPeerList.add(peerConnection);
         }
         nodeStatistics.resetTcpFlow();

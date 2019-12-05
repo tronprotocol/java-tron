@@ -18,6 +18,7 @@ import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -290,7 +291,7 @@ public class TransactionTrace {
   private byte[] convertToTronAddress(byte[] address) {
     if (address.length == 20) {
       byte[] newAddress = new byte[21];
-      byte[] temp = new byte[]{Commons.addressPreFixByte};
+      byte[] temp = new byte[]{DecodeUtil.addressPreFixByte};
       System.arraycopy(temp, 0, newAddress, 0, temp.length);
       System.arraycopy(address, 0, newAddress, temp.length, address.length);
       address = newAddress;

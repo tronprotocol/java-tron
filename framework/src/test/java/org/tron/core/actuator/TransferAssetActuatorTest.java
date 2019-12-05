@@ -77,8 +77,8 @@ public class TransferAssetActuatorTest {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a146a";
     NOT_EXIT_ADDRESS = Wallet.getAddressPreFixString() + "B56446E617E924805E4D6CA021D341FEF6E2013B";
-    NOT_EXIT_ADDRESS_2 = Wallet.getAddressPreFixString() +
-        "B56446E617E924805E4D6CA021D341FEF6E21234";
+    NOT_EXIT_ADDRESS_2 = Wallet.getAddressPreFixString()
+        + "B56446E617E924805E4D6CA021D341FEF6E21234";
     ownerAsset_ADDRESS =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049010";
   }
@@ -1257,7 +1257,8 @@ public class TransferAssetActuatorTest {
 
   @Test
   /**
-   * SameTokenName close,Asset name length must between 1 to 32 and can not contain space and other unreadable character, and can not contain chinese characters.
+   * SameTokenName close,Asset name length must between 1 to 32 and can not contain space and
+   * other unreadable character, and can not contain chinese characters.
    */
 
   //asset name validation which is unnecessary has been removed!
@@ -1283,57 +1284,6 @@ public class TransferAssetActuatorTest {
 
     //Too long name, throw exception. Max long is 32.
     String assetName = "testname0123456789abcdefghijgklmo";
-//    actuator = new TransferAssetActuator(getContract(100L, assetName),
-//        dbManager);
-//    try {
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertTrue(false);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid assetName", e.getMessage());
-//      AccountCapsule toAccount =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-//      Assert.assertTrue(
-//          isNullOrZero(toAccount.getAssetMap().get(assetName)));
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
-
-    //Contain space, throw exception. Every character need readable .
-//    assetName = "t e";
-//    actuator = new TransferAssetActuator(getContract(100L, assetName), dbManager);
-//    try {
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertTrue(false);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid assetName", e.getMessage());
-//      AccountCapsule toAccount =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-//      Assert.assertTrue(
-//          isNullOrZero(toAccount.getAssetMap().get(assetName)));
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
-
-    //Contain chinese character, throw exception.
-//    actuator = new TransferAssetActuator(getContract(100L, ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))), dbManager);
-//    try {
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertTrue(false);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid assetName", e.getMessage());
-//      AccountCapsule toAccount =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
-//      Assert.assertTrue(
-//          isNullOrZero(toAccount.getAssetMap().get(assetName)));
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
 
     // 32 byte readable character just ok.
     assetName = "testname0123456789abcdefghijgklm";

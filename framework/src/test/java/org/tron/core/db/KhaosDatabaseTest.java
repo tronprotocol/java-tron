@@ -72,7 +72,7 @@ public class KhaosDatabaseTest {
     try {
       khaosDatabase.push(blockCapsule2);
     } catch (UnLinkedBlockException | BadNumberBlockException e) {
-
+      System.out.println(e.getMessage());
     }
 
     Assert.assertEquals(blockCapsule2, khaosDatabase.getBlock(blockCapsule2.getBlockId()));

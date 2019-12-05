@@ -90,6 +90,7 @@ public class HttpTestZenToken004 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     HttpMethed.waitToProduceOneBlock(httpnode);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 
     receiverShieldAddressInfo1 = HttpMethed.generateShieldAddress(httpnode);
@@ -116,6 +117,7 @@ public class HttpTestZenToken004 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 
+    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
 
     receiverNote1 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo1.get()).get(0);
@@ -144,6 +146,7 @@ public class HttpTestZenToken004 {
             null, 0, foundationZenTokenKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 
@@ -224,6 +227,7 @@ public class HttpTestZenToken004 {
             null, 0, foundationZenTokenKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 

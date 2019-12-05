@@ -18,12 +18,10 @@
 
 package org.tron.core;
 
-import static org.tron.common.utils.Commons.ADDRESS_SIZE;
-import static org.tron.common.utils.Commons.addressPreFixByte;
+import static org.tron.common.utils.DecodeUtil.addressValid;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-
 
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
@@ -89,11 +87,11 @@ import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
@@ -198,6 +196,7 @@ public class Wallet {
 
   private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
+  private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   @Getter
   private final ECKey ecKey;
@@ -241,6 +240,42 @@ public class Wallet {
     }
   }
 
+  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
+
+    if (selector == null || selector.length != 4
+        || abi.getEntrysList().size() == 0) {
+      return false;
+    }
+
+    for (int i = 0; i < abi.getEntrysCount(); i++) {
+      ABI.Entry entry = abi.getEntrys(i);
+      if (entry.getType() != ABI.Entry.EntryType.Function) {
+        continue;
+      }
+
+      int inputCount = entry.getInputsCount();
+      StringBuilder sb = new StringBuilder();
+      sb.append(entry.getName());
+      sb.append("(");
+      for (int k = 0; k < inputCount; k++) {
+        ABI.Entry.Param param = entry.getInputs(k);
+        sb.append(param.getType());
+        if (k + 1 < inputCount) {
+          sb.append(",");
+        }
+      }
+      sb.append(")");
+
+      byte[] funcSelector = new byte[4];
+      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
+      if (Arrays.equals(funcSelector, selector)) {
+        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
+      }
+    }
+
+    return false;
+  }
+
   public static String getAddressPreFixString() {
     return addressPreFixString;
   }
@@ -250,31 +285,11 @@ public class Wallet {
   }
 
   public static byte getAddressPreFixByte() {
-    return addressPreFixByte;
+    return DecodeUtil.addressPreFixByte;
   }
 
   public static void setAddressPreFixByte(byte addressPreFixByte) {
-    Commons.addressPreFixByte = addressPreFixByte;
-  }
-
-  public static boolean addressValid(byte[] address) {
-    if (ArrayUtils.isEmpty(address)) {
-      logger.warn("Warning: Address is empty !!");
-      return false;
-    }
-    if (address.length != ADDRESS_SIZE / 2) {
-      logger.warn(
-          "Warning: Address length requires " + ADDRESS_SIZE + " but " + address.length
-              + " !!");
-      return false;
-    }
-    if (address[0] != addressPreFixByte) {
-      logger.warn("Warning: Address requires a prefix with " + addressPreFixByte + " but "
-          + address[0] + " !!");
-      return false;
-    }
-    //Other rule;
-    return true;
+    DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
 
   public static String encode58Check(byte[] input) {
@@ -295,10 +310,10 @@ public class Wallet {
     System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
     byte[] hash0 = Sha256Hash.hash(decodeData);
     byte[] hash1 = Sha256Hash.hash(hash0);
-    if (hash1[0] == decodeCheck[decodeData.length] &&
-        hash1[1] == decodeCheck[decodeData.length + 1] &&
-        hash1[2] == decodeCheck[decodeData.length + 2] &&
-        hash1[3] == decodeCheck[decodeData.length + 3]) {
+    if (hash1[0] == decodeCheck[decodeData.length]
+        && hash1[1] == decodeCheck[decodeData.length + 1]
+        && hash1[2] == decodeCheck[decodeData.length + 2]
+        && hash1[3] == decodeCheck[decodeData.length + 3]) {
       return decodeData;
     }
     return null;
@@ -315,7 +330,7 @@ public class Wallet {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
   }
 
@@ -325,14 +340,8 @@ public class Wallet {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
-  }
-
-  // for `CREATE2`
-  public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
-    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return Hash.sha3omit12(mergedData);
   }
 
   // for `CREATE`
@@ -342,7 +351,13 @@ public class Wallet {
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
     System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
+  }
+
+  // for `CREATE2`
+  public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
+    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
+    return DecodeUtil.sha3omit12(mergedData);
   }
 
   public static byte[] tryDecodeFromBase58Check(String address) {
@@ -381,81 +396,20 @@ public class Wallet {
     return b;
   }
 
-//  public ShieldAddress generateShieldAddress() {
-//    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
-//    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
-//
-//    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
-//    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
-//
-//    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
-//    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
-//
-//    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
-//    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
-//
-//    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
-//    builder.setPublicAddress(ByteString.copyFrom(addPublic));
-//    return builder.build();
-//  }
-
   public static String makeUpperCamelMethod(String originName) {
     return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)
         .replace("_", "");
   }
 
   private static byte[] getSelector(byte[] data) {
-    if (data == null ||
-        data.length < 4) {
+    if (data == null
+        || data.length < 4) {
       return null;
     }
 
     byte[] ret = new byte[4];
     System.arraycopy(data, 0, ret, 0, 4);
     return ret;
-  }
-
-  /**
-   * Create a transaction.
-   */
-  /*public Transaction createTransaction(byte[] address, String to, long amount) {
-    long balance = getBalance(address);
-    return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
-  } */
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
-
-    if (selector == null || selector.length != 4
-        || abi.getEntrysList().size() == 0) {
-      return false;
-    }
-
-    for (int i = 0; i < abi.getEntrysCount(); i++) {
-      ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != ABI.Entry.EntryType.Function) {
-        continue;
-      }
-
-      int inputCount = entry.getInputsCount();
-      StringBuilder sb = new StringBuilder();
-      sb.append(entry.getName());
-      sb.append("(");
-      for (int k = 0; k < inputCount; k++) {
-        ABI.Entry.Param param = entry.getInputs(k);
-        sb.append(param.getType());
-        if (k + 1 < inputCount) {
-          sb.append(",");
-        }
-      }
-      sb.append(")");
-
-      byte[] funcSelector = new byte[4];
-      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
-      if (Arrays.equals(funcSelector, selector)) {
-        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
-      }
-    }
-
-    return false;
   }
 
   public byte[] getAddress() {
@@ -578,11 +532,11 @@ public class Wallet {
   /**
    * Broadcast a transaction.
    */
-  public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
+  public GrpcAPI.Return broadcastTransaction(Transaction signedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
-    TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+    TransactionCapsule trx = new TransactionCapsule(signedTransaction);
     try {
-      Message message = new TransactionMessage(signaturedTransaction.toByteArray());
+      Message message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger
@@ -627,47 +581,47 @@ public class Wallet {
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
           .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("AccountResourceInsufficient error"))
           .build();
     } catch (DupTransactionException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("dup transaction"))
           .build();
     } catch (TaposException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
           .setMessage(ByteString.copyFromUtf8("Tapos check error"))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8("other error : " + e.getMessage()))
           .build();
@@ -713,9 +667,9 @@ public class Wallet {
       }
       if (permissionId != 0) {
         if (permission.getType() != PermissionType.Active) {
-          throw new PermissionException("Permission type is error");
+          throw new PermissionException("Permission type is wrong!");
         }
-        //check oprations
+        //check operations
         if (!checkPermissionOprations(permission, contract)) {
           throw new PermissionException("Permission denied!");
         }
@@ -766,7 +720,7 @@ public class Wallet {
       byte[] owner = TransactionCapsule.getOwner(contract);
       AccountCapsule account = dbManager.getAccountStore().get(owner);
       if (account == null) {
-        throw new PermissionException("Account is not exist!");
+        throw new PermissionException("Account does not exist!");
       }
 
       if (trx.getSignatureCount() > 0) {
@@ -802,7 +756,7 @@ public class Wallet {
     return Sha256Hash.hash(passPhrase);
   }
 
-  public byte[] createAdresss(byte[] passPhrase) {
+  public byte[] createAddress(byte[] passPhrase) {
     byte[] privateKey = pass2Key(passPhrase);
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     return ecKey.getAddress();
@@ -1136,9 +1090,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(issueCapsule -> {
-          builder.addAssetIssue(issueCapsule.getInstance());
-        });
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
   }
@@ -1276,9 +1228,7 @@ public class Wallet {
           .stream()
           .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
           .forEach(
-              issueCapsule -> {
-                builder.addAssetIssue(issueCapsule.getInstance());
-              });
+              issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
       // check count
       if (builder.getAssetIssueCount() > 1) {
@@ -1300,7 +1250,7 @@ public class Wallet {
           // check count
           if (builder.getAssetIssueCount() > 1) {
             throw new NonUniqueObjectException(
-                "To get more than one asset, please use getAssetIssuebyid syntax");
+                "To get more than one asset, please use getAssetIssueById syntax");
           }
         }
       }
@@ -1324,9 +1274,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
-        .forEach(issueCapsule -> {
-          builder.addAssetIssue(issueCapsule.getInstance());
-        });
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
   }
@@ -1360,6 +1308,7 @@ public class Wallet {
     try {
       block = dbManager.getBlockStore().get(blockId.toByteArray()).getInstance();
     } catch (StoreException e) {
+      logger.error(e.getMessage());
     }
     return block;
   }
@@ -1431,6 +1380,7 @@ public class Wallet {
       proposalCapsule = dbManager.getProposalStore()
           .get(proposalId.toByteArray());
     } catch (StoreException e) {
+      logger.error(e.getMessage());
     }
     if (proposalCapsule != null) {
       return proposalCapsule.getInstance();
@@ -1488,7 +1438,8 @@ public class Wallet {
 
   //in:outPoint,out:blockNumber
   private IncrementalMerkleVoucherContainer createWitness(OutputPoint outPoint, Long blockNumber)
-      throws ItemNotFoundException, BadItemException, InvalidProtocolBufferException, ZksnarkException {
+      throws ItemNotFoundException, BadItemException,
+      InvalidProtocolBufferException, ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
@@ -1497,7 +1448,7 @@ public class Wallet {
     //Get the tree in blockNum-1 position
     byte[] treeRoot = dbManager.getMerkleTreeIndexStore().get(blockNumber - 1);
     if (treeRoot == null) {
-      throw new RuntimeException("treeRoot is null,blockNumber:" + (blockNumber - 1));
+      throw new RuntimeException("treeRoot is null, blockNumber:" + (blockNumber - 1));
     }
 
     IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
@@ -1507,7 +1458,7 @@ public class Wallet {
           .equals(ByteArray.toHexString(treeRoot))) {
         treeCapsule = new IncrementalMerkleTreeCapsule();
       } else {
-        throw new RuntimeException("tree is null,treeRoot:" + ByteArray.toHexString(treeRoot));
+        throw new RuntimeException("tree is null, treeRoot:" + ByteArray.toHexString(treeRoot));
       }
 
     }
@@ -1577,7 +1528,7 @@ public class Wallet {
     }
 
     if (!found) {
-      throw new RuntimeException("not found cm");
+      throw new RuntimeException("cm not found");
     }
 
     return witness;
@@ -1712,7 +1663,7 @@ public class Wallet {
     List<IncrementalMerkleVoucherContainer> witnessList = Lists.newArrayList();
     for (OutputPoint outputPoint : request.getOutPointsList()) {
       Long blockNum1 = getBlockNumber(outputPoint);
-      logger.debug("blockNum:" + blockNum1 + ",opIndex:" + opIndex++);
+      logger.debug("blockNum:" + blockNum1 + ", opIndex:" + opIndex++);
       if (blockNum1 + 100 < largeBlockNum) {
         throw new RuntimeException(
             "blockNum:" + blockNum1 + " + 100 < largeBlockNum:" + largeBlockNum);
@@ -1724,7 +1675,8 @@ public class Wallet {
 
     int synBlockNum = request.getBlockNum();
     if (synBlockNum != 0) {
-      //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
+      // According to the blockNum in the request, obtain the block before [block2+1,
+      // blockNum], and update the two witnesses.
       updateWitnesses(witnessList, largeBlockNum + 1, synBlockNum);
     }
 
@@ -1751,8 +1703,9 @@ public class Wallet {
             .parseFrom(dbManager.getMerkleTreeIndexStore().get(blockNum));
       }
     } catch (Exception ex) {
-      return null;
+      logger.error(ex.getMessage());
     }
+
     return null;
   }
 
@@ -1769,11 +1722,11 @@ public class Wallet {
   public void checkCmNumber(List<SpendNote> shieldedSpends, List<ReceiveNote> shieldedReceives)
       throws ContractValidateException {
     if (!shieldedSpends.isEmpty() && shieldedSpends.size() > 1) {
-      throw new ContractValidateException("The number of spend note must <=1");
+      throw new ContractValidateException("The number of spend note must <= 1");
     }
 
     if (!shieldedReceives.isEmpty() && shieldedReceives.size() > 2) {
-      throw new ContractValidateException("The number of receive note must <=2");
+      throw new ContractValidateException("The number of receive note must <= 2");
     }
   }
 
@@ -1807,7 +1760,7 @@ public class Wallet {
   public TransactionCapsule createShieldedTransaction(PrivateParameters request)
       throws ContractValidateException, RuntimeException, ZksnarkException, BadItemException {
     if (!getFullNodeAllowShieldedTransaction()) {
-      throw new ZksnarkException("ShieldedTransactionApi is not allowed");
+      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
@@ -2008,7 +1961,7 @@ public class Wallet {
     try {
       transactionCapsule = builder.buildWithoutAsk();
     } catch (ZksnarkException e) {
-      logger.error("createShieldedTransaction except, error is " + e.toString());
+      logger.error("createShieldedTransaction exception, error is " + e.toString());
       throw new ZksnarkException(e.toString());
     }
     return transactionCapsule;
@@ -2032,7 +1985,7 @@ public class Wallet {
       throw new BadItemException("spendingKey is null");
     }
     if (ByteArray.toHexString(spendingKey.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of spendingKey's hexstring should be 64");
+      throw new BadItemException("the length of spendingKey's hexString should be 64");
     }
 
     ExpandedSpendingKey expandedSpendingKey = null;
@@ -2058,7 +2011,7 @@ public class Wallet {
       throw new BadItemException("ask is null");
     }
     if (ByteArray.toHexString(ask.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of ask's hexstring should be 64");
+      throw new BadItemException("the length of ask's hexString should be 64");
     }
 
     byte[] ak = ExpandedSpendingKey.getAkFromAsk(ask.toByteArray());
@@ -2074,7 +2027,7 @@ public class Wallet {
       throw new BadItemException("nsk is null");
     }
     if (ByteArray.toHexString(nsk.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of nsk's hexstring should be 64");
+      throw new BadItemException("the length of nsk's hexString should be 64");
     }
 
     byte[] nk = ExpandedSpendingKey.getNkFromNsk(nsk.toByteArray());
@@ -2207,12 +2160,12 @@ public class Wallet {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
     byte[] result = new byte[64];
-    SpendSigParams spendSigPasrams = new SpendSigParams(
+    SpendSigParams spendSigParams = new SpendSigParams(
         spendAuthSigParameters.getAsk().toByteArray(),
         spendAuthSigParameters.getAlpha().toByteArray(),
         spendAuthSigParameters.getTxHash().toByteArray(),
         result);
-    JLibrustzcash.librustzcashSaplingSpendSig(spendSigPasrams);
+    JLibrustzcash.librustzcashSaplingSpendSig(spendSigParams);
 
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(result)).build();
   }
@@ -2268,7 +2221,7 @@ public class Wallet {
     }
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     byte[] transactionHash = TransactionCapsule
-        .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
+        .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(transactionHash)).build();
   }
 
@@ -2296,11 +2249,11 @@ public class Wallet {
     return nodeListBuilder.build();
   }
 
-  public Transaction deployContract(CreateSmartContract createSmartContract,
-      TransactionCapsule trxCap) {
+  public Transaction deployContract(TransactionCapsule trxCap) {
 
     // do nothing, so can add some useful function later
-    // trxcap contract para cacheUnpackValue has value
+    // trxCap contract para cacheUnpackValue has value
+
     return trxCap.getInstance();
   }
 
@@ -2338,10 +2291,10 @@ public class Wallet {
     ContractStore contractStore = dbManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress()
         .toByteArray();
-    byte[] isContractExiste = contractStore
+    byte[] isContractExist = contractStore
         .findContractByHash(contractAddress);
 
-    if (ArrayUtils.isEmpty(isContractExiste)) {
+    if (ArrayUtils.isEmpty(isContractExist)) {
       throw new ContractValidateException(
           "No contract or not a smart contract");
     }
@@ -2361,7 +2314,6 @@ public class Wallet {
     if (!Args.getInstance().isSupportConstant()) {
       throw new ContractValidateException("this node does not support constant");
     }
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
     Block headBlock;
     List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore()
@@ -2375,14 +2327,6 @@ public class Wallet {
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
         StoreFactory.getInstance(), true,
         false);
-    /*VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
-    VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
-    VMConfig.initAllowTvmTransferTrc10(
-        dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
-    VMConfig.initAllowTvmConstantinople(
-        dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
-    VMConfig
-        .initAllowTvmSolidity059(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());*/
     VMActuator vmActuator = new VMActuator(true);
 
     vmActuator.validate(context);
@@ -2391,7 +2335,7 @@ public class Wallet {
     ProgramResult result = context.getProgramResult();
     if (result.getException() != null) {
       RuntimeException e = result.getException();
-      logger.warn("Constant call has error {}", e.getMessage());
+      logger.warn("Constant call has an error {}", e.getMessage());
       throw e;
     }
 
@@ -2419,7 +2363,8 @@ public class Wallet {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       logger.error(
-          "Get contract failed, the account does not exist or the account does not have a code hash!");
+          "Get contract failed, the account does not exist or the account "
+              + "does not have a code hash!");
       return null;
     }
 
@@ -2580,7 +2525,7 @@ public class Wallet {
           }
         } // end of ReceiveDescriptionList
       } // end of transaction
-    } //end of blocklist
+    } //end of block list
     return builder.build();
   }
 
@@ -2682,9 +2627,9 @@ public class Wallet {
           if (notePlaintext.isPresent()) {
             OutgoingPlaintext decryptedOutCtUnwrapped = notePlaintext.get();
             //decode c_enc with pkd、esk
-            Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
-            ciphertext.setData(r.getCEnc().toByteArray());
-            Optional<Note> foo = Note.decrypt(ciphertext,
+            Encryption.EncCiphertext cipherText = new Encryption.EncCiphertext();
+            cipherText.setData(r.getCEnc().toByteArray());
+            Optional<Note> foo = Note.decrypt(cipherText,
                 r.getEpk().toByteArray(),
                 decryptedOutCtUnwrapped.getEsk(),
                 decryptedOutCtUnwrapped.getPkD(),
@@ -2713,7 +2658,7 @@ public class Wallet {
           }
         } // end of ReceiveDescriptionList
       } // end of transaction
-    } //end of blocklist
+    } //end of block list
     return builder.build();
   }
 }

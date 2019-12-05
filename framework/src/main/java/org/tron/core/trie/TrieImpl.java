@@ -34,8 +34,8 @@ import org.tron.core.db2.common.DB;
  */
 public class TrieImpl implements Trie<byte[]> {
 
-  private final static Object NULL_NODE = new Object();
-  private final static int MIN_BRANCHES_CONCURRENTLY = 3;
+  private static final Object NULL_NODE = new Object();
+  private static final int MIN_BRANCHES_CONCURRENTLY = 3;
   private static final Logger logger = LoggerFactory.getLogger(TrieImpl.class);
   private static ExecutorService executor;
   private DB<byte[], BytesCapsule> cache;
@@ -174,8 +174,8 @@ public class TrieImpl implements Trie<byte[]> {
         if (!childKey.isEmpty()) {
           newChildNode = new Node(childKey, nodeOrValue);
         } else {
-          newChildNode = nodeOrValue instanceof Node ?
-              (Node) nodeOrValue : new Node(childKey, nodeOrValue);
+          newChildNode = nodeOrValue instanceof Node
+              ? (Node) nodeOrValue : new Node(childKey, nodeOrValue);
         }
         return n.branchNodeSetChild(k.getHex(0), newChildNode);
       }
@@ -446,7 +446,7 @@ public class TrieImpl implements Trie<byte[]> {
           } else {
             cp.children[i] = encodeElement(cNode.hash);
           }
-        } else {//todo
+        } else {
           cp.children[i] = EMPTY_ELEMENT_RLP;
         }
       }
@@ -896,8 +896,8 @@ public class TrieImpl implements Trie<byte[]> {
     /***********  Dump methods  ************/
 
     public String dumpStruct(String indent, String prefix) {
-      String ret = indent + prefix + getType() + (dirty ? " *" : "") +
-          (hash == null ? "" : "(hash: " + Hex.toHexString(hash).substring(0, 6) + ")");
+      String ret = indent + prefix + getType() + (dirty ? " *" : "")
+          + (hash == null ? "" : "(hash: " + Hex.toHexString(hash).substring(0, 6) + ")");
       if (getType() == NodeType.BranchNode) {
         byte[] value = branchNodeGetValue();
         ret += (value == null ? "" : " [T] = " + Hex.toHexString(value)) + "\n";

@@ -810,8 +810,8 @@ public class ExchangeInjectActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), firstTokenQuant, dbManager.
-        getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), firstTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     accountCapsule.setBalance(10000_000000L);

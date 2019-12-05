@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.config.VMConfig;
@@ -76,7 +77,9 @@ public final class VMUtils {
       } else {
         try {
           file.getParentFile().mkdirs();
-          file.createNewFile();
+          if (!file.createNewFile()){
+            logger.error("failed to create file {}", file.getPath());
+          }
           result = file;
         } catch (IOException e) {
           // ignored
@@ -158,10 +161,10 @@ public final class VMUtils {
 
   public static boolean validateForSmartContract(Repository deposit, byte[] ownerAddress,
       byte[] toAddress, long amount) throws ContractValidateException {
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress!");
     }
-    if (!Commons.addressValid(toAddress)) {
+    if (!DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress!");
     }
 
@@ -192,9 +195,7 @@ public final class VMUtils {
             "Validate InternalTransfer error, balance is not sufficient.");
       }
 
-      if (toAccount != null) {
-        long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
-      }
+      Math.addExact(toAccount.getBalance(), amount);
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -209,18 +210,15 @@ public final class VMUtils {
       throw new ContractValidateException("No deposit!");
     }
 
-    long fee = 0;
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
 
-    if (!Commons.addressValid(ownerAddress)) {
+    if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-    if (!Commons.addressValid(toAddress)) {
+    if (!DecodeUtil.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
-//    if (!TransactionUtil.validAssetName(assetName)) {
-//      throw new ContractValidateException("Invalid assetName");
-//    }
+
     if (amount <= 0) {
       throw new ContractValidateException("Amount must greater than 0.");
     }

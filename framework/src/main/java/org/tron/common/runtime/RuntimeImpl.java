@@ -2,13 +2,15 @@ package org.tron.common.runtime;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.common.utils.DBConfig;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.Actuator2;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.actuator.VMActuator;
-import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -29,16 +31,10 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 public class RuntimeImpl implements Runtime {
 
   TransactionContext context;
+  private List<Actuator> actuatorList = null;
 
-  Manager dbManger = null;
-
-  List<Actuator> actuatorList = null;
-
-  Actuator2 actuator2 = null;
-
-  public RuntimeImpl(Manager manager) {
-    this.dbManger = manager;
-  }
+  @Getter
+  private Actuator2 actuator2 = null;
 
   @Override
   public void execute(TransactionContext context)
@@ -50,10 +46,13 @@ public class RuntimeImpl implements Runtime {
     switch (contractType.getNumber()) {
       case ContractType.TriggerSmartContract_VALUE:
       case ContractType.CreateSmartContract_VALUE:
+        Set<String> actuatorSet = DBConfig.getActuatorSet();
+        if (!actuatorSet.isEmpty() && !actuatorSet.contains(VMActuator.class.getSimpleName())) {
+          throw new ContractValidateException("not exist contract " + "SmartContract");
+        }
         actuator2 = new VMActuator(context.isStatic());
         break;
       default:
-//      actuatorList = ActuatorFactory.createActuator(context.getTrxCap(), dbManger);
         actuatorList = ActuatorCreator.getINSTANCE().createActuator(context.getTrxCap());
     }
     if (actuator2 != null) {

@@ -153,7 +153,8 @@ public class TransferToAccountTest {
     Assert.assertEquals(100,
         dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
             .longValue());
-    Assert.assertEquals(1000, dbManager.getAccountStore().get(contractAddress).getBalance());
+    Assert.assertEquals(1000,
+        dbManager.getAccountStore().get(contractAddress).getBalance());
 
     String selectorStr = "transferTokenTo(address,trcToken,uint256)";
 
@@ -173,8 +174,9 @@ public class TransferToAccountTest {
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
     Assert.assertNull(runtime.getRuntimeError());
-    Assert.assertEquals(9, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
-        .get(String.valueOf(id)).longValue());
+    Assert.assertEquals(9,
+        dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
+            .get(String.valueOf(id)).longValue());
     Assert.assertEquals(100 + tokenValue - 9,
         dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
             .longValue());
@@ -214,7 +216,8 @@ public class TransferToAccountTest {
             triggerCallValue, feeLimit, 0, 0);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
     Assert.assertNull(runtime.getRuntimeError());
-    Assert.assertEquals(19, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance());
+    Assert.assertEquals(19,
+        dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance());
     energyCostWhenExist = runtime.getResult().getEnergyUsed();
 
     //6. Test  transfer Trx with non-exsit account
@@ -229,7 +232,8 @@ public class TransferToAccountTest {
             triggerCallValue, feeLimit, 0, 0);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
     Assert.assertNull(runtime.getRuntimeError());
-    Assert.assertEquals(9, dbManager.getAccountStore().get(ecKey.getAddress()).getBalance());
+    Assert.assertEquals(9,
+        dbManager.getAccountStore().get(ecKey.getAddress()).getBalance());
     energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
 
     //7.test energy
@@ -302,7 +306,18 @@ public class TransferToAccountTest {
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
         "[]";
-    String code = "60806040526101cf806100136000396000f3fe608060405260043610610050577c010000000000000000000000000000000000000000000000000000000060003504632ccb1b3081146100555780634cd2270c14610090578063d4d6422614610098575b600080fd5b61008e6004803603604081101561006b57600080fd5b5073ffffffffffffffffffffffffffffffffffffffff81351690602001356100d7565b005b61008e61011f565b61008e600480360360608110156100ae57600080fd5b5073ffffffffffffffffffffffffffffffffffffffff8135169060208101359060400135610121565b60405173ffffffffffffffffffffffffffffffffffffffff83169082156108fc029083906000818181858888f1935050505015801561011a573d6000803e3d6000fd5b505050565b565b73ffffffffffffffffffffffffffffffffffffffff831681156108fc0282848015801561014d57600080fd5b50806780000000000000001115801561016557600080fd5b5080620f42401015801561017857600080fd5b50604051600081818185878a8ad094505050505015801561019d573d6000803e3d6000fd5b5050505056fea165627a7a723058202eab0934f57baf17ec1ddb6649b416e35d7cb846482d1232ca229258e83d22af0029";
+    String code = "60806040526101cf806100136000396000f3fe608060405260043610610050577c01000000000000"
+        + "0000000000000000000000000000000000000000000060003504632ccb1b3081146100555780634cd2270c14"
+        + "610090578063d4d6422614610098575b600080fd5b61008e6004803603604081101561006b57600080fd5b50"
+        + "73ffffffffffffffffffffffffffffffffffffffff81351690602001356100d7565b005b61008e61011f565b"
+        + "61008e600480360360608110156100ae57600080fd5b5073ffffffffffffffffffffffffffffffffffffffff"
+        + "8135169060208101359060400135610121565b60405173ffffffffffffffffffffffffffffffffffffffff83"
+        + "169082156108fc029083906000818181858888f1935050505015801561011a573d6000803e3d6000fd5b5050"
+        + "50565b565b73ffffffffffffffffffffffffffffffffffffffff831681156108fc0282848015801561014d57"
+        + "600080fd5b50806780000000000000001115801561016557600080fd5b5080620f4240101580156101785760"
+        + "0080fd5b50604051600081818185878a8ad094505050505015801561019d573d6000803e3d6000fd5b505050"
+        + "5056fea165627a7a723058202eab0934f57baf17ec1ddb6649b416e35d7cb846482d1232ca229258e83d22af"
+        + "0029";
 
     long value = 1000;
     long feeLimit = 100000000;

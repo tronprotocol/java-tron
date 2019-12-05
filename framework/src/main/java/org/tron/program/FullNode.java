@@ -75,7 +75,8 @@ public class FullNode {
     FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
     appT.addService(httpApiService);
 
-    // fullnode and soliditynode fuse together, provide solidity rpc and http server on the fullnode.
+    // fullnode and soliditynode fuse together
+    // provide solidity rpc and http server on the fullnode.
     if (Args.getInstance().getStorage().getDbVersion() == 2) {
       RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
           .getBean(RpcApiServiceOnSolidity.class);

@@ -148,8 +148,8 @@ public class Channel {
       baseThrowable = baseThrowable.getCause();
     }
     SocketAddress address = ctx.channel().remoteAddress();
-    if (throwable instanceof ReadTimeoutException ||
-        throwable instanceof IOException) {
+    if (throwable instanceof ReadTimeoutException
+        || throwable instanceof IOException) {
       logger.warn("Close peer {}, reason: {}", address, throwable.getMessage());
     } else if (baseThrowable instanceof P2pException) {
       logger.warn("Close peer {}, type: {}, info: {}",

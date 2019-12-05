@@ -15,8 +15,6 @@ import org.tron.protos.Protocol.Transaction.Contract;
 @Slf4j(topic = "actuator")
 public class ActuatorCreator {
 
-  private static ActuatorCreator INSTANCE;
-
   private DynamicPropertiesStore dynamicPropertiesStore;
 
   private ForkUtils forkUtils = new ForkUtils();
@@ -30,14 +28,14 @@ public class ActuatorCreator {
   }
 
   public static ActuatorCreator getINSTANCE() {
-    if (ActuatorCreatorInner.INSTANCE == null) {
-      ActuatorCreatorInner.INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
+    if (ActuatorCreatorInner.instance == null) {
+      ActuatorCreatorInner.instance = new ActuatorCreator(StoreFactory.getInstance());
     }
-    return ActuatorCreatorInner.INSTANCE;
+    return ActuatorCreatorInner.instance;
   }
 
   public static void init() {
-    ActuatorCreatorInner.INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
+    ActuatorCreatorInner.instance = new ActuatorCreator(StoreFactory.getInstance());
   }
 
   /**
@@ -78,6 +76,6 @@ public class ActuatorCreator {
 
   private static class ActuatorCreatorInner {
 
-    private static ActuatorCreator INSTANCE;
+    private static ActuatorCreator instance;
   }
 }

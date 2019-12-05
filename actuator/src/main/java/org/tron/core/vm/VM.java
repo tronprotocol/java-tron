@@ -37,6 +37,9 @@ import org.tron.core.vm.program.Stack;
 public class VM {
 
   public static final String ADDRESS_LOG = "address: ";
+  private static final String DATA_LOG = "data: ";
+  private static final String SIZE_LOG = "size: ";
+  private static final String VALUE_LOG = " value: ";
   private static final BigInteger _32_ = BigInteger.valueOf(32);
   private static final String ENERGY_LOG_FORMATE = "{} Op:[{}]  Energy:[{}] Deep:[{}] Hint:[{}]";
   // 3MB
@@ -817,7 +820,7 @@ public class VM {
           DataWord value = program.getDataValue(dataOffs);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + value;
+            hint = DATA_LOG + value;
           }
 
           program.stackPush(value);
@@ -828,7 +831,7 @@ public class VM {
           DataWord dataSize = program.getDataSize();
 
           if (logger.isDebugEnabled()) {
-            hint = "size: " + dataSize.value();
+            hint = SIZE_LOG + dataSize.value();
           }
 
           program.stackPush(dataSize);
@@ -843,7 +846,7 @@ public class VM {
           byte[] msgData = program.getDataCopy(dataOffsetData, lengthData);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + Hex.toHexString(msgData);
+            hint = DATA_LOG + Hex.toHexString(msgData);
           }
 
           program.memorySave(memOffsetData.intValueSafe(), msgData);
@@ -854,7 +857,7 @@ public class VM {
           DataWord dataSize = program.getReturnDataBufferSize();
 
           if (logger.isDebugEnabled()) {
-            hint = "size: " + dataSize.value();
+            hint = SIZE_LOG + dataSize.value();
           }
 
           program.stackPush(dataSize);
@@ -874,7 +877,7 @@ public class VM {
           }
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + Hex.toHexString(msgData);
+            hint = DATA_LOG + Hex.toHexString(msgData);
           }
 
           program.memorySave(memOffsetData.intValueSafe(), msgData);
@@ -894,7 +897,7 @@ public class VM {
           DataWord codeLength = new DataWord(length);
 
           if (logger.isDebugEnabled()) {
-            hint = "size: " + length;
+            hint = SIZE_LOG + length;
           }
 
           program.stackPush(codeLength);
@@ -1120,7 +1123,7 @@ public class VM {
           DataWord data = program.memoryLoad(addr);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + data;
+            hint = DATA_LOG + data;
           }
 
           program.stackPush(data);
@@ -1132,7 +1135,7 @@ public class VM {
           DataWord value = program.stackPop();
 
           if (logger.isDebugEnabled()) {
-            hint = "addr: " + addr + " value: " + value;
+            hint = "addr: " + addr + VALUE_LOG + value;
           }
 
           program.memorySave(addr, value);
@@ -1152,7 +1155,7 @@ public class VM {
           DataWord val = program.storageLoad(key);
 
           if (logger.isDebugEnabled()) {
-            hint = "key: " + key + " value: " + val;
+            hint = "key: " + key + VALUE_LOG + val;
           }
 
           if (val == null) {
@@ -1173,7 +1176,7 @@ public class VM {
 
           if (logger.isDebugEnabled()) {
             hint =
-                "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + " value: "
+                "[" + program.getContractAddress().toPrefixString() + "] key: " + addr + VALUE_LOG
                     + value;
           }
 
@@ -1407,7 +1410,7 @@ public class VM {
           program.setHReturn(hReturn);
 
           if (logger.isDebugEnabled()) {
-            hint = "data: " + Hex.toHexString(hReturn)
+            hint = DATA_LOG + Hex.toHexString(hReturn)
                 + " offset: " + offset.value()
                 + " size: " + size.value();
           }

@@ -1,6 +1,6 @@
 package org.tron.common.utils;
 
-import static org.tron.core.config.args.Parameter.ForkBlockVersionConsts.ENERGY_LIMIT;
+import static org.tron.core.config.Parameter.ForkBlockVersionConsts.ENERGY_LIMIT;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
@@ -63,7 +63,7 @@ public class ForkController extends ForkUtils {
     stats[slot] = VERSION_UPGRADE;
     manager.getDynamicPropertiesStore().statsByVersion(version, stats);
     logger.info(
-        "*******update hard fork:{}, witness size:{}, solt:{}, witness:{}, version:{}",
+        "*******update hard fork:{}, witness size:{}, slot:{}, witness:{}, version:{}",
         Streams.zip(witnesses.stream(), Stream.of(ArrayUtils.toObject(stats)), Maps::immutableEntry)
             .map(e -> Maps
                 .immutableEntry(Wallet.encode58Check(e.getKey().toByteArray()), e.getValue()))

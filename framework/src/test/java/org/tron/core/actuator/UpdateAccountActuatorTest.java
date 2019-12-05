@@ -336,46 +336,5 @@ public class UpdateAccountActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
-//    //Too short name 7 bytes
-//    try {
-//      UpdateAccountActuator actuator = new UpdateAccountActuator(
-//          getContract("testnam", OWNER_ADDRESS), dbManager);
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertFalse(true);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid accountName", e.getMessage());
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
-//
-//    //Can't contain space
-//    try {
-//      UpdateAccountActuator actuator = new UpdateAccountActuator(
-//          getContract("t e", OWNER_ADDRESS), dbManager);
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertFalse(true);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid accountName", e.getMessage());
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
-//    //Can't contain chinese characters
-//    try {
-//      UpdateAccountActuator actuator = new UpdateAccountActuator(
-//          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))
-//              , OWNER_ADDRESS), dbManager);
-//      actuator.validate();
-//      actuator.execute(ret);
-//      Assert.assertFalse(true);
-//    } catch (ContractValidateException e) {
-//      Assert.assertTrue(e instanceof ContractValidateException);
-//      Assert.assertEquals("Invalid accountName", e.getMessage());
-//    } catch (ContractExeException e) {
-//      Assert.assertFalse(e instanceof ContractExeException);
-//    }
   }
 }
