@@ -971,6 +971,8 @@ public class Args {
 
     INSTANCE.fastForwardNodes = getNodes(config, "node.fastForward");
 
+    ChainConstant.MAX_ACTIVE_WITNESS_NUM = config.hasPath("witness.maxActiveNum") ? config.getInt("witness.maxActiveNum") : 27;
+
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);

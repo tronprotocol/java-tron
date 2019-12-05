@@ -4,13 +4,13 @@ import lombok.Getter;
 
 public class Parameter {
 
-  public class ChainConstant {
+  public static class ChainConstant {
 
     public static final long TRANSFER_FEE = 0; // free
     public static final int WITNESS_STANDBY_LENGTH = 127;
     public static final int SOLIDIFIED_THRESHOLD = 70; // 70%
     public static final int PRIVATE_KEY_LENGTH = 64;
-    public static final int MAX_ACTIVE_WITNESS_NUM = 27;
+    public static int MAX_ACTIVE_WITNESS_NUM = 27;
     public static final int BLOCK_SIZE = 2_000_000;
     public static final int BLOCK_PRODUCED_INTERVAL = 3000; //ms,produce block period, must be divisible by 60. millisecond
     public static final long CLOCK_MAX_DELAY = 3600000; // 3600 * 1000 ms

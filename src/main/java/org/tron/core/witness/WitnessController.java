@@ -56,7 +56,13 @@ public class WitnessController {
       }
     });
     sortWitness(witnessAddresses);
-    setActiveWitnesses(witnessAddresses);
+
+    if (witnessAddresses.size() > ChainConstant.MAX_ACTIVE_WITNESS_NUM) {
+      setActiveWitnesses(witnessAddresses.subList(0, ChainConstant.MAX_ACTIVE_WITNESS_NUM));
+    } else {
+      setActiveWitnesses(witnessAddresses);
+    }
+
     witnessAddresses.forEach(address -> {
       logger.info("initWits shuffled addresses:" + ByteArray.toHexString(address.toByteArray()));
     });
