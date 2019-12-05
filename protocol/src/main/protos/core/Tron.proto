@@ -683,10 +683,11 @@ message DownloadHeader {
 
 message CrossMessage {
   Transaction transaction = 1;
-  bytes to_chainId = 2;
-  int64 time_out_block_height = 3;
-  repeated Proof proof = 4;
-  int32 version = 5;
+  bytes to_chain_id = 2;
+  bytes from_chain_id = 3;
+  int64 time_out_block_height = 4;
+  repeated Proof proof = 5;
+  int32 version = 6;
 }
 
 message Proof {
