@@ -10,6 +10,8 @@ import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db.PbftSignDataStore;
+import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -122,6 +124,14 @@ public class ChainBaseManager {
   @Getter
   private KhaosDatabase khaosDb;
 
+  @Autowired
+  @Getter
+  private TransactionStore transactionStore;
+
+  @Autowired
+  @Getter
+  private PbftSignDataStore pbftSignDataStore;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -156,5 +166,7 @@ public class ChainBaseManager {
     closeOneStore(merkleTreeStore);
     closeOneStore(delegationStore);
     closeOneStore(proofStore);
+    closeOneStore(transactionStore);
+    closeOneStore(pbftSignDataStore);
   }
 }

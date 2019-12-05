@@ -154,8 +154,6 @@ public class Manager {
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
-  @Autowired
-  private TransactionStore transactionStore;
   @Autowired(required = false)
   private TransactionCache transactionCache;
   @Autowired
@@ -275,10 +273,6 @@ public class Manager {
   @Getter
   private PbftCommitMsgStore pbftCommitMsgStore;
 
-  @Autowired
-  @Getter
-  private PbftSignDataStore pbftSignDataStore;
-
   public WitnessStore getWitnessStore() {
     return chainBaseManager.getWitnessStore();
   }
@@ -341,6 +335,14 @@ public class Manager {
 
   public BlockIndexStore getBlockIndexStore() {
     return chainBaseManager.getBlockIndexStore();
+  }
+
+  public TransactionStore getTransactionStore() {
+    return chainBaseManager.getTransactionStore();
+  }
+
+  public PbftSignDataStore getPbftSignDataStore() {
+    return chainBaseManager.getPbftSignDataStore();
   }
 
   public ExchangeStore getExchangeStoreFinal() {
@@ -764,7 +766,7 @@ public class Manager {
       return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
     }
 
-    return transactionStore.has(transactionCapsule.getTransactionId().getBytes());
+    return getTransactionStore().has(transactionCapsule.getTransactionId().getBytes());
   }
 
   /**
@@ -1287,7 +1289,7 @@ public class Manager {
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
-    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
 
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1425,7 +1427,7 @@ public class Manager {
     if (cycle == getDynamicPropertiesStore().getSrListCurrentCycle()) {
       return;
     }
-    PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getSrSignData(cycle);
+    PbftSignCapsule pbftSignCapsule = getPbftSignDataStore().getSrSignData(cycle);
     if (pbftSignCapsule == null) {
       return;
     }
@@ -1469,10 +1471,6 @@ public class Manager {
       default:
     }
     return false;
-  }
-
-  public TransactionStore getTransactionStore() {
-    return this.transactionStore;
   }
 
   public TransactionHistoryStore getTransactionHistoryStore() {
@@ -1639,7 +1637,6 @@ public class Manager {
 
   public void closeAllStore() {
     logger.info("******** begin to close db ********");
-    closeOneStore(transactionStore);
     closeOneStore(peersStore);
     closeOneStore(recentBlockStore);
     closeOneStore(transactionHistoryStore);
