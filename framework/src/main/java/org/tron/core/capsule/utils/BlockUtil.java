@@ -32,8 +32,8 @@ public class BlockUtil {
    */
   public static BlockCapsule newGenesisBlockCapsule() {
 
-    CommonParameter args = Args.getInstance();
-    GenesisBlock genesisBlockArg = args.getGenesisBlock();
+    CommonParameter parameter = Args.getInstance();
+    GenesisBlock genesisBlockArg = parameter.getGenesisBlock();
     List<Transaction> transactionList =
         genesisBlockArg.getAssets().stream()
             .map(key -> {

@@ -80,23 +80,23 @@ public class RpcApiServiceOnSolidity implements Service {
       NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
           .addService(new DatabaseApi());
 
-      CommonParameter args = Args.getInstance();
+      CommonParameter parameter = Args.getInstance();
 
-      if (args.getRpcThreadNum() > 0) {
+      if (parameter.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
-            .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
+            .executor(Executors.newFixedThreadPool(parameter.getRpcThreadNum()));
       }
 
       serverBuilder = serverBuilder.addService(new WalletSolidityApi());
 
       // Set configs from config.conf or default value
       serverBuilder
-          .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
-          .flowControlWindow(args.getFlowControlWindow())
-          .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-          .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(args.getMaxMessageSize())
-          .maxHeaderListSize(args.getMaxHeaderListSize());
+          .maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
+          .flowControlWindow(parameter.getFlowControlWindow())
+          .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
+          .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
+          .maxMessageSize(parameter.getMaxMessageSize())
+          .maxHeaderListSize(parameter.getMaxHeaderListSize());
 
       // add a ratelimiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);

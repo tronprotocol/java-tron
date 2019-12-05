@@ -24,7 +24,6 @@ import org.tron.common.entity.PeerInfo;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.WitnessProductBlockService.CheatWitnessInfo;
@@ -39,7 +38,7 @@ public class NodeInfoService {
   private ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
   private OperatingSystemMXBean operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory
       .getOperatingSystemMXBean();
-  private CommonParameter args = CommonParameter.getInstance();
+  private CommonParameter parameter = CommonParameter.getInstance();
 
   @Autowired
   private SyncPool syncPool;
@@ -168,24 +167,24 @@ public class NodeInfoService {
     configNodeInfo.setCodeVersion(Version.getVersion());
     configNodeInfo.setVersionName(Version.versionName);
     configNodeInfo.setVersionNum(Version.versionCode);
-    configNodeInfo.setP2pVersion(String.valueOf(args.getNodeP2pVersion()));
-    configNodeInfo.setListenPort(args.getNodeListenPort());
-    configNodeInfo.setDiscoverEnable(args.isNodeDiscoveryEnable());
-    configNodeInfo.setActiveNodeSize(args.getActiveNodes().size());
-    configNodeInfo.setPassiveNodeSize(args.getPassiveNodes().size());
-    configNodeInfo.setSendNodeSize(args.getSeedNodes().size());
-    configNodeInfo.setMaxConnectCount(args.getNodeMaxActiveNodes());
-    configNodeInfo.setSameIpMaxConnectCount(args.getNodeMaxActiveNodesWithSameIp());
-    configNodeInfo.setBackupListenPort(args.getBackupPort());
-    configNodeInfo.setBackupMemberSize(args.getBackupMembers().size());
-    configNodeInfo.setBackupPriority(args.getBackupPriority());
-    configNodeInfo.setDbVersion(args.getStorage().getDbVersion());
-    configNodeInfo.setMinParticipationRate(args.getMinParticipationRate());
-    configNodeInfo.setSupportConstant(args.isSupportConstant());
-    configNodeInfo.setMinTimeRatio(args.getMinTimeRatio());
-    configNodeInfo.setMaxTimeRatio(args.getMaxTimeRatio());
-    configNodeInfo.setAllowCreationOfContracts(args.getAllowCreationOfContracts());
-    configNodeInfo.setAllowAdaptiveEnergy(args.getAllowAdaptiveEnergy());
+    configNodeInfo.setP2pVersion(String.valueOf(parameter.getNodeP2pVersion()));
+    configNodeInfo.setListenPort(parameter.getNodeListenPort());
+    configNodeInfo.setDiscoverEnable(parameter.isNodeDiscoveryEnable());
+    configNodeInfo.setActiveNodeSize(parameter.getActiveNodes().size());
+    configNodeInfo.setPassiveNodeSize(parameter.getPassiveNodes().size());
+    configNodeInfo.setSendNodeSize(parameter.getSeedNodes().size());
+    configNodeInfo.setMaxConnectCount(parameter.getNodeMaxActiveNodes());
+    configNodeInfo.setSameIpMaxConnectCount(parameter.getNodeMaxActiveNodesWithSameIp());
+    configNodeInfo.setBackupListenPort(parameter.getBackupPort());
+    configNodeInfo.setBackupMemberSize(parameter.getBackupMembers().size());
+    configNodeInfo.setBackupPriority(parameter.getBackupPriority());
+    configNodeInfo.setDbVersion(parameter.getStorage().getDbVersion());
+    configNodeInfo.setMinParticipationRate(parameter.getMinParticipationRate());
+    configNodeInfo.setSupportConstant(parameter.isSupportConstant());
+    configNodeInfo.setMinTimeRatio(parameter.getMinTimeRatio());
+    configNodeInfo.setMaxTimeRatio(parameter.getMaxTimeRatio());
+    configNodeInfo.setAllowCreationOfContracts(parameter.getAllowCreationOfContracts());
+    configNodeInfo.setAllowAdaptiveEnergy(parameter.getAllowAdaptiveEnergy());
     nodeInfo.setConfigNodeInfo(configNodeInfo);
   }
 

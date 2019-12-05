@@ -28,12 +28,12 @@ public class CliApplication implements Application {
   }
 
   @Override
-  public void init(CommonParameter args) {
+  public void init(CommonParameter parameter) {
 
   }
 
   @Override
-  public void initServices(CommonParameter args) {
+  public void initServices(CommonParameter parameter) {
 
   }
 

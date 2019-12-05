@@ -183,16 +183,16 @@ public class RpcApiService implements Service {
   public void start() {
     try {
       NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port).addService(databaseApi);
-      CommonParameter args = Args.getInstance();
+      CommonParameter parameter = Args.getInstance();
 
-      if (args.getRpcThreadNum() > 0) {
+      if (parameter.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
-            .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
+            .executor(Executors.newFixedThreadPool(parameter.getRpcThreadNum()));
       }
 
-      if (args.isSolidityNode()) {
+      if (parameter.isSolidityNode()) {
         serverBuilder = serverBuilder.addService(walletSolidityApi);
-        if (args.isWalletExtensionApi()) {
+        if (parameter.isWalletExtensionApi()) {
           serverBuilder = serverBuilder.addService(new WalletExtensionApi());
         }
       } else {
@@ -201,12 +201,12 @@ public class RpcApiService implements Service {
 
       // Set configs from config.conf or default value
       serverBuilder
-          .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
-          .flowControlWindow(args.getFlowControlWindow())
-          .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-          .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(args.getMaxMessageSize())
-          .maxHeaderListSize(args.getMaxHeaderListSize());
+          .maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
+          .flowControlWindow(parameter.getFlowControlWindow())
+          .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
+          .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
+          .maxMessageSize(parameter.getMaxMessageSize())
+          .maxHeaderListSize(parameter.getMaxHeaderListSize());
 
       // add a rate limiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);

@@ -928,89 +928,89 @@ public class Args extends CommonParameter {
   }
 
   private static void logConfig() {
-    CommonParameter args = CommonParameter.getInstance();
+    CommonParameter parameter = CommonParameter.getInstance();
     logger.info("\n");
     logger.info("************************ Net config ************************");
-    logger.info("P2P version: {}", args.getNodeP2pVersion());
-    logger.info("Bind IP: {}", args.getNodeDiscoveryBindIp());
-    logger.info("External IP: {}", args.getNodeExternalIp());
-    logger.info("Listen port: {}", args.getNodeListenPort());
-    logger.info("Discover enable: {}", args.isNodeDiscoveryEnable());
-    logger.info("Active node size: {}", args.getActiveNodes().size());
-    logger.info("Passive node size: {}", args.getPassiveNodes().size());
-    logger.info("FastForward node size: {}", args.getFastForwardNodes().size());
-    logger.info("Seed node size: {}", args.getSeedNode().getIpList().size());
-    logger.info("Max connection: {}", args.getNodeMaxActiveNodes());
-    logger.info("Max connection with same IP: {}", args.getNodeMaxActiveNodesWithSameIp());
-    logger.info("Solidity threads: {}", args.getSolidityThreads());
+    logger.info("P2P version: {}", parameter.getNodeP2pVersion());
+    logger.info("Bind IP: {}", parameter.getNodeDiscoveryBindIp());
+    logger.info("External IP: {}", parameter.getNodeExternalIp());
+    logger.info("Listen port: {}", parameter.getNodeListenPort());
+    logger.info("Discover enable: {}", parameter.isNodeDiscoveryEnable());
+    logger.info("Active node size: {}", parameter.getActiveNodes().size());
+    logger.info("Passive node size: {}", parameter.getPassiveNodes().size());
+    logger.info("FastForward node size: {}", parameter.getFastForwardNodes().size());
+    logger.info("Seed node size: {}", parameter.getSeedNode().getIpList().size());
+    logger.info("Max connection: {}", parameter.getNodeMaxActiveNodes());
+    logger.info("Max connection with same IP: {}", parameter.getNodeMaxActiveNodesWithSameIp());
+    logger.info("Solidity threads: {}", parameter.getSolidityThreads());
     logger.info("************************ Backup config ************************");
-    logger.info("Backup listen port: {}", args.getBackupPort());
-    logger.info("Backup member size: {}", args.getBackupMembers().size());
-    logger.info("Backup priority: {}", args.getBackupPriority());
+    logger.info("Backup listen port: {}", parameter.getBackupPort());
+    logger.info("Backup member size: {}", parameter.getBackupMembers().size());
+    logger.info("Backup priority: {}", parameter.getBackupPriority());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
     logger.info("Version name: {}", Version.versionName);
     logger.info("Version code: {}", Version.versionCode);
     logger.info("************************ DB config *************************");
-    logger.info("DB version : {}", args.getStorage().getDbVersion());
-    logger.info("DB engine : {}", args.getStorage().getDbEngine());
+    logger.info("DB version : {}", parameter.getStorage().getDbVersion());
+    logger.info("DB engine : {}", parameter.getStorage().getDbEngine());
     logger.info("***************************************************************");
     logger.info("\n");
   }
 
-  public static void initConfig(CommonParameter cfgArgs) {
-    initVMConfig(cfgArgs);
-    initDBConfig(cfgArgs);
+  public static void initConfig(CommonParameter parameter) {
+    initVMConfig(parameter);
+    initDBConfig(parameter);
   }
 
-  public static void initVMConfig(CommonParameter cfgArgs) {
-    VMConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
-    VMConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
-    VMConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
+  public static void initVMConfig(CommonParameter parameter) {
+    VMConfig.setMaxTimeRatio(parameter.getMaxTimeRatio());
+    VMConfig.setMinTimeRatio(parameter.getMinTimeRatio());
+    VMConfig.setCheckFrozenTime(parameter.getCheckFrozenTime());
   }
 
 
-  public static void initDBConfig(CommonParameter cfgArgs) {
-    if (Objects.nonNull(cfgArgs.getStorage())) {
-      DBConfig.setDbVersion(cfgArgs.getStorage().getDbVersion());
-      DBConfig.setDbEngine(cfgArgs.getStorage().getDbEngine());
-      DBConfig.setPropertyMap(cfgArgs.getStorage().getPropertyMap());
-      DBConfig.setDbSync(cfgArgs.getStorage().isDbSync());
-      DBConfig.setDbDirectory(cfgArgs.getStorage().getDbDirectory());
+  public static void initDBConfig(CommonParameter parameter) {
+    if (Objects.nonNull(parameter.getStorage())) {
+      DBConfig.setDbVersion(parameter.getStorage().getDbVersion());
+      DBConfig.setDbEngine(parameter.getStorage().getDbEngine());
+      DBConfig.setPropertyMap(parameter.getStorage().getPropertyMap());
+      DBConfig.setDbSync(parameter.getStorage().isDbSync());
+      DBConfig.setDbDirectory(parameter.getStorage().getDbDirectory());
     }
 
-    if (Objects.nonNull(cfgArgs.getGenesisBlock())) {
-      DBConfig.setBlocktimestamp(cfgArgs.getGenesisBlock().getTimestamp());
-      DBConfig.setGenesisBlock(cfgArgs.getGenesisBlock());
+    if (Objects.nonNull(parameter.getGenesisBlock())) {
+      DBConfig.setBlocktimestamp(parameter.getGenesisBlock().getTimestamp());
+      DBConfig.setGenesisBlock(parameter.getGenesisBlock());
     }
 
-    DBConfig.setOutputDirectoryConfig(cfgArgs.getOutputDirectory());
-    DBConfig.setRocksDbSettings(cfgArgs.getRocksDBCustomSettings());
-    DBConfig.setAllowMultiSign(cfgArgs.getAllowMultiSign());
-    DBConfig.setMaintenanceTimeInterval(cfgArgs.getMaintenanceTimeInterval());
-    DBConfig.setAllowAdaptiveEnergy(cfgArgs.getAllowAdaptiveEnergy());
-    DBConfig.setAllowDelegateResource(cfgArgs.getAllowDelegateResource());
-    DBConfig.setAllowTvmTransferTrc10(cfgArgs.getAllowTvmTransferTrc10());
-    DBConfig.setAllowTvmConstantinople(cfgArgs.getAllowTvmConstantinople());
-    DBConfig.setAllowTvmSolidity059(cfgArgs.getAllowTvmSolidity059());
-    DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
-    DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
-    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
-    DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
-    DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
-    DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
-    DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
-    DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransactionArgs());
-    DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
-    DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
-    DBConfig.setVmTrace(cfgArgs.isVmTrace());
-    DBConfig.setDebug(cfgArgs.isDebug());
-    DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
-    DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
-    DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
-    DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
-    DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
-    DBConfig.setTransactionHistoreSwitch(cfgArgs.getStorage().getTransactionHistoreSwitch());
+    DBConfig.setOutputDirectoryConfig(parameter.getOutputDirectory());
+    DBConfig.setRocksDbSettings(parameter.getRocksDBCustomSettings());
+    DBConfig.setAllowMultiSign(parameter.getAllowMultiSign());
+    DBConfig.setMaintenanceTimeInterval(parameter.getMaintenanceTimeInterval());
+    DBConfig.setAllowAdaptiveEnergy(parameter.getAllowAdaptiveEnergy());
+    DBConfig.setAllowDelegateResource(parameter.getAllowDelegateResource());
+    DBConfig.setAllowTvmTransferTrc10(parameter.getAllowTvmTransferTrc10());
+    DBConfig.setAllowTvmConstantinople(parameter.getAllowTvmConstantinople());
+    DBConfig.setAllowTvmSolidity059(parameter.getAllowTvmSolidity059());
+    DBConfig.setAllowSameTokenName(parameter.getAllowSameTokenName());
+    DBConfig.setAllowCreationOfContracts(parameter.getAllowCreationOfContracts());
+    DBConfig.setAllowShieldedTransaction(parameter.getAllowShieldedTransaction());
+    DBConfig.setAllowAccountStateRoot(parameter.getAllowAccountStateRoot());
+    DBConfig.setAllowProtoFilterNum(parameter.getAllowProtoFilterNum());
+    DBConfig.setProposalExpireTime(parameter.getProposalExpireTime());
+    DBConfig.setBlockNumForEneryLimit(parameter.getBlockNumForEneryLimit());
+    DBConfig.setFullNodeAllowShieldedTransaction(parameter.isFullNodeAllowShieldedTransactionArgs());
+    DBConfig.setZenTokenId(parameter.getZenTokenId());
+    DBConfig.setValidContractProtoThreadNum(parameter.getValidContractProtoThreadNum());
+    DBConfig.setVmTrace(parameter.isVmTrace());
+    DBConfig.setDebug(parameter.isDebug());
+    DBConfig.setSolidityNode(parameter.isSolidityNode());
+    DBConfig.setSupportConstant(parameter.isSupportConstant());
+    DBConfig.setLongRunningTime(parameter.getLongRunningTime());
+    DBConfig.setChangedDelegation(parameter.getChangedDelegation());
+    DBConfig.setActuatorSet(parameter.getActuatorSet());
+    DBConfig.setTransactionHistoreSwitch(parameter.getStorage().getTransactionHistoreSwitch());
   }
 
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

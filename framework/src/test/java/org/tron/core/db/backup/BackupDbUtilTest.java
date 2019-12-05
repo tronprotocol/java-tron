@@ -69,8 +69,8 @@ public class BackupDbUtilTest {
     bak1Path = dbPath + File.separator + "bak1/database";
     bak2Path = dbPath + File.separator + "bak2/database";
     frequency = 50;
-    CommonParameter cfgArgs = Args.getInstance();
-    cfgArgs.getDbBackupConfig()
+    CommonParameter parameter = Args.getInstance();
+    parameter.getDbBackupConfig()
         .initArgs(true, propPath, bak1Path, bak2Path, frequency);
     FileUtil.createFileIfNotExists(propPath);
   }

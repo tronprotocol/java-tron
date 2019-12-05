@@ -56,20 +56,20 @@ public class SolidityNode {
   public static void main(String[] args) {
     logger.info("Solidity node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
-    CommonParameter cfgArgs = Args.getInstance();
+    CommonParameter parameter = Args.getInstance();
 
     logger.info("index switch is {}",
-        BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
+        BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(parameter.getStorage().getIndexSwitch())));
 
-    if (StringUtils.isEmpty(cfgArgs.getTrustNodeAddr())) {
+    if (StringUtils.isEmpty(parameter.getTrustNodeAddr())) {
       logger.error("Trust node not set.");
       return;
     }
-    cfgArgs.setSolidityNode(true);
+    parameter.setSolidityNode(true);
 
     ApplicationContext context = new TronApplicationContext(DefaultConfig.class);
 
-    if (cfgArgs.isHelp()) {
+    if (parameter.isHelp()) {
       logger.info("Here is the help message.");
       return;
     }
@@ -83,7 +83,7 @@ public class SolidityNode {
     SolidityNodeHttpApiService httpApiService = context.getBean(SolidityNodeHttpApiService.class);
     appT.addService(httpApiService);
 
-    appT.initServices(cfgArgs);
+    appT.initServices(parameter);
     appT.startServices();
     appT.startup();
 

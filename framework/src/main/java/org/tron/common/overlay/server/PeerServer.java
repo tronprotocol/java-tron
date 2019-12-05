@@ -19,7 +19,7 @@ import org.tron.core.config.args.Args;
 @Component
 public class PeerServer {
 
-  private CommonParameter args = CommonParameter.getInstance();
+  private CommonParameter parameter = CommonParameter.getInstance();
 
   private ApplicationContext ctx;
 
@@ -35,7 +35,7 @@ public class PeerServer {
   public void start(int port) {
 
     EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-    EventLoopGroup workerGroup = new NioEventLoopGroup(args.getTcpNettyWorkThreadNum());
+    EventLoopGroup workerGroup = new NioEventLoopGroup(parameter.getTcpNettyWorkThreadNum());
     TronChannelInitializer tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, "");
 
     try {
@@ -45,7 +45,7 @@ public class PeerServer {
       b.channel(NioServerSocketChannel.class);
 
       b.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
-      b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.args.getNodeConnectionTimeout());
+      b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.parameter.getNodeConnectionTimeout());
 
       b.handler(new LoggingHandler());
       b.childHandler(tronChannelInitializer);

@@ -37,7 +37,7 @@ public class ChannelManager {
   private SyncPool syncPool;
   @Autowired
   private FastForward fastForward;
-  private CommonParameter args = CommonParameter.getInstance();
+  private CommonParameter parameter = CommonParameter.getInstance();
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
@@ -53,29 +53,29 @@ public class ChannelManager {
   @Getter
   private Map<InetAddress, Node> fastForwardNodes = new ConcurrentHashMap();
 
-  private int maxActivePeers = args.getNodeMaxActiveNodes();
+  private int maxActivePeers = parameter.getNodeMaxActiveNodes();
 
-  private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
+  private int getMaxActivePeersWithSameIp = parameter.getNodeMaxActiveNodesWithSameIp();
 
   public void init() {
-    if (this.args.getNodeListenPort() > 0) {
+    if (this.parameter.getNodeListenPort() > 0) {
       new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),
           "PeerServerThread").start();
     }
 
     InetAddress address;
-    for (Node node : args.getPassiveNodes()) {
+    for (Node node : parameter.getPassiveNodes()) {
       address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
       trustNodes.put(address, node);
     }
 
-    for (Node node : args.getActiveNodes()) {
+    for (Node node : parameter.getActiveNodes()) {
       address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
       trustNodes.put(address, node);
       activeNodes.put(address, node);
     }
 
-    for (Node node : args.getFastForwardNodes()) {
+    for (Node node : parameter.getFastForwardNodes()) {
       address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
       trustNodes.put(address, node);
       fastForwardNodes.put(address, node);

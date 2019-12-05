@@ -24,9 +24,9 @@ public interface Application {
 
   void setOptions(Args args);
 
-  void init(CommonParameter args);
+  void init(CommonParameter parameter);
 
-  void initServices(CommonParameter args);
+  void initServices(CommonParameter parameter);
 
   void startup();
 

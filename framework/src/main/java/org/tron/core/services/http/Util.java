@@ -281,9 +281,9 @@ public class Util {
   }
 
   public static void checkBodySize(String body) throws Exception {
-    CommonParameter args = Args.getInstance();
-    if (body.getBytes().length > args.getMaxMessageSize()) {
-      throw new Exception("body size is too big, the limit is " + args.getMaxMessageSize());
+    CommonParameter parameter = Args.getInstance();
+    if (body.getBytes().length > parameter.getMaxMessageSize()) {
+      throw new Exception("body size is too big, the limit is " + parameter.getMaxMessageSize());
     }
   }
 

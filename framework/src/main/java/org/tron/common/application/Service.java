@@ -21,7 +21,7 @@ public interface Service {
 
   void init();
 
-  void init(CommonParameter args);
+  void init(CommonParameter parameter);
 
   void start();
 

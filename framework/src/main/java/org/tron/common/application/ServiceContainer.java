@@ -41,10 +41,10 @@ public class ServiceContainer {
     }
   }
 
-  public void init(CommonParameter args) {
+  public void init(CommonParameter parameter) {
     for (Service service : this.services) {
       logger.debug("Initing " + service.getClass().getSimpleName());
-      service.init(args);
+      service.init(parameter);
     }
   }
 

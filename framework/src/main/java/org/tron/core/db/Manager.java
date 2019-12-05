@@ -541,8 +541,8 @@ public class Manager {
    * save account into database.
    */
   public void initAccount() {
-    final CommonParameter args = CommonParameter.getInstance();
-    final GenesisBlock genesisBlockArg = args.getGenesisBlock();
+    final CommonParameter parameter = CommonParameter.getInstance();
+    final GenesisBlock genesisBlockArg = parameter.getGenesisBlock();
     genesisBlockArg
         .getAssets()
         .forEach(
