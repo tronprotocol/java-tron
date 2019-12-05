@@ -32,6 +32,7 @@ import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.MarketPriceListCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -93,6 +94,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       //fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
+      // Add to blackhole address
+      Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
 
       // 1. Transfer of balance
       transferBalanceOrToken(accountCapsule, contract);
@@ -110,7 +113,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
       ret.setStatus(fee, code.SUCESS);
-    } catch (ItemNotFoundException | InvalidProtocolBufferException e) {
+    } catch (ItemNotFoundException | InvalidProtocolBufferException | BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -256,7 +259,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       }
 
       orderIdListCapsule.setOrdersList(ordersList);
-      pairPriceToOrderStore.put(pairPriceKey,orderIdListCapsule);
+      pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
 
       if (ordersList.size() == 0) {
         priceListCapsule.removeFirst();
@@ -276,9 +279,11 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     // makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX = takerBuyTokenQuantityCurrent_A/takerSellTokenQuantityRemain_TRX
     // => takerBuyTokenQuantityCurrent_A = takerSellTokenQuantityRemain_TRX * makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
-    long takerBuyTokenQuantityRemain = takerOrderCapsule.getSellTokenQuantityRemain()
-        * makerOrderCapsule.getSellTokenQuantity()
-        / makerOrderCapsule.getBuyTokenQuantity();
+    long takerBuyTokenQuantityRemain = Math.floorDiv(
+        Math.multiplyExact(takerOrderCapsule.getSellTokenQuantityRemain(),
+            makerOrderCapsule.getSellTokenQuantity()),
+        makerOrderCapsule.getBuyTokenQuantity());
+
     if (takerBuyTokenQuantityRemain == 0) {
       //交易量过小，直接将剩余 sellToken 返回用户
       returnSellTokenRemain(takerOrderCapsule);
@@ -301,8 +306,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // 当taker buy 的量小于 maker sell 的剩余量，所有taker的订单吃掉
 
       takerOrderCapsule.setSellTokenQuantityRemain(0);
-      makerOrderCapsule.setSellTokenQuantityRemain(
-          makerOrderCapsule.getSellTokenQuantityRemain() - takerBuyTokenQuantityRemain);
+      makerOrderCapsule.setSellTokenQuantityRemain(Math.subtractExact(
+          makerOrderCapsule.getSellTokenQuantityRemain(), takerBuyTokenQuantityRemain));
 
       takerBuyTokenQuantityReceive = takerBuyTokenQuantityRemain;
       makerBuyTokenQuantityReceive = takerOrderCapsule.getSellTokenQuantityRemain();
@@ -313,9 +318,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       // 当taker buy 的量大于 maker sell 的剩余量，吃到maker的订单
       // makerSellTokenQuantityRemain_A/makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
-      makerBuyTokenQuantityReceive = makerOrderCapsule.getSellTokenQuantityRemain()
-          * makerOrderCapsule.getBuyTokenQuantity()
-          / makerOrderCapsule.getSellTokenQuantity();
+      makerBuyTokenQuantityReceive = Math
+          .floorDiv(Math.multiplyExact(makerOrderCapsule.getSellTokenQuantityRemain(),
+              makerOrderCapsule.getBuyTokenQuantity()), makerOrderCapsule.getSellTokenQuantity());
 
       if (makerBuyTokenQuantityReceive == 0) {
         //交易量过小，直接将剩余 sellToken 返回 maker
@@ -323,8 +328,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
         return;
       } else {
         makerOrderCapsule.setSellTokenQuantityRemain(0);
-        takerOrderCapsule.setSellTokenQuantityRemain(
-            takerOrderCapsule.getSellTokenQuantityRemain() - makerBuyTokenQuantityReceive);
+        takerOrderCapsule.setSellTokenQuantityRemain(Math.subtractExact(
+            takerOrderCapsule.getSellTokenQuantityRemain(), makerBuyTokenQuantityReceive));
       }
 
     }
@@ -368,7 +373,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     long sellTokenQuantity = contract.getSellTokenQuantity();
 
     if (Arrays.equals(sellTokenID, "_".getBytes())) {
-      accountCapsule.setBalance(accountCapsule.getBalance() - sellTokenQuantity);
+      accountCapsule.setBalance(Math.subtractExact(accountCapsule.getBalance(), sellTokenQuantity));
     } else {
       accountCapsule
           .reduceAssetAmountV2(sellTokenID, sellTokenQuantity, dynamicStore, assetIssueStore);
@@ -383,8 +388,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     byte[] makerBuyTokenId = orderCapsule.getBuyTokenId();
     if (Arrays.equals(makerBuyTokenId, "_".getBytes())) {
-      makerAccountCapsule.setBalance(
-          makerAccountCapsule.getBalance() + num);
+      makerAccountCapsule.setBalance(Math.addExact(makerAccountCapsule.getBalance(), num));
     } else {
       makerAccountCapsule
           .addAssetAmountV2(makerBuyTokenId, num, dynamicStore, assetIssueStore);
@@ -398,8 +402,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
     byte[] sellTokenId = orderCapsule.getSellTokenId();
     long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
     if (Arrays.equals(sellTokenId, "_".getBytes())) {
-      makerAccountCapsule.setBalance(
-          makerAccountCapsule.getBalance() + sellTokenQuantityRemain);
+      makerAccountCapsule.setBalance(Math.addExact(
+          makerAccountCapsule.getBalance(), sellTokenQuantityRemain));
     } else {
       makerAccountCapsule
           .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
@@ -419,8 +423,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
     // ==> Price_TRX * sellQuantity_taker/buyQuantity_taker > Price_TRX * buyQuantity_maker/sellQuantity_maker
     // ==> sellQuantity_taker * sellQuantity_maker > buyQuantity_taker * buyQuantity_maker
 
-    return (takerPrice.getSellTokenQuantity() * makerPrice.getSellTokenQuantity()) >
-        (takerPrice.getBuyTokenQuantity() * makerPrice.getBuyTokenQuantity());
+    return Math.multiplyExact(takerPrice.getSellTokenQuantity(), makerPrice.getSellTokenQuantity())
+        > Math.multiplyExact(takerPrice.getBuyTokenQuantity(), makerPrice.getBuyTokenQuantity());
   }
 
 
@@ -478,13 +482,13 @@ public class MarketSellAssetActuator extends AbstractActuator {
     // price_A_maker_1 < price_A_maker_2
     // ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
     // ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
-    return price1.getBuyTokenQuantity() * price2.getSellTokenQuantity()
-        < price2.getBuyTokenQuantity() * price1.getSellTokenQuantity();
+    return Math.multiplyExact(price1.getBuyTokenQuantity(), price2.getSellTokenQuantity())
+        > Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
   }
 
   private boolean isSamePrice(MarketPrice price1, MarketPrice price2) {
-    return price1.getBuyTokenQuantity() * price2.getSellTokenQuantity()
-        == price2.getBuyTokenQuantity() * price1.getSellTokenQuantity();
+    return Math.multiplyExact(price1.getBuyTokenQuantity(), price2.getSellTokenQuantity())
+        == Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
   }
 
 
