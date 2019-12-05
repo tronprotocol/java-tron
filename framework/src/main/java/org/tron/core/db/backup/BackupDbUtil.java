@@ -42,7 +42,8 @@ public class BackupDbUtil {
   }
 
   private void setBackupState(int status) {
-    PropUtil.writeProperty(parameter.getDbBackupConfig().getPropPath(), BackupDbUtil.DB_BACKUP_STATE,
+    PropUtil.writeProperty(parameter.getDbBackupConfig()
+            .getPropPath(), BackupDbUtil.DB_BACKUP_STATE,
         String.valueOf(status));
   }
 

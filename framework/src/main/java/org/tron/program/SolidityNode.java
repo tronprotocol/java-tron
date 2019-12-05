@@ -59,7 +59,8 @@ public class SolidityNode {
     CommonParameter parameter = Args.getInstance();
 
     logger.info("index switch is {}",
-        BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(parameter.getStorage().getIndexSwitch())));
+        BooleanUtils.toStringOnOff(BooleanUtils
+            .toBoolean(parameter.getStorage().getIndexSwitch())));
 
     if (StringUtils.isEmpty(parameter.getTrustNodeAddr())) {
       logger.error("Trust node not set.");

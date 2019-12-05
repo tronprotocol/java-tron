@@ -74,7 +74,8 @@ public class ArgsTest {
     Assert.assertEquals(50051, parameter.getRpcPort());
     Assert.assertEquals(Integer.MAX_VALUE, parameter.getMaxConcurrentCallsPerConnection());
     Assert
-        .assertEquals(NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW, parameter.getFlowControlWindow());
+        .assertEquals(NettyServerBuilder
+            .DEFAULT_FLOW_CONTROL_WINDOW, parameter.getFlowControlWindow());
     Assert.assertEquals(60000L, parameter.getMaxConnectionIdleInMillis());
     Assert.assertEquals(Long.MAX_VALUE, parameter.getMaxConnectionAgeInMillis());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, parameter.getMaxMessageSize());

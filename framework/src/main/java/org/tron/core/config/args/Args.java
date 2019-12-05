@@ -1000,7 +1000,8 @@ public class Args extends CommonParameter {
     DBConfig.setAllowProtoFilterNum(parameter.getAllowProtoFilterNum());
     DBConfig.setProposalExpireTime(parameter.getProposalExpireTime());
     DBConfig.setBlockNumForEneryLimit(parameter.getBlockNumForEneryLimit());
-    DBConfig.setFullNodeAllowShieldedTransaction(parameter.isFullNodeAllowShieldedTransactionArgs());
+    DBConfig.setFullNodeAllowShieldedTransaction(parameter
+        .isFullNodeAllowShieldedTransactionArgs());
     DBConfig.setZenTokenId(parameter.getZenTokenId());
     DBConfig.setValidContractProtoThreadNum(parameter.getValidContractProtoThreadNum());
     DBConfig.setVmTrace(parameter.isVmTrace());
