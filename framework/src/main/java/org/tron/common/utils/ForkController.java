@@ -1,6 +1,6 @@
 package org.tron.common.utils;
 
-import static org.tron.core.config.args.Parameter.ForkBlockVersionConsts.ENERGY_LIMIT;
+import static org.tron.core.config.Parameter.ForkBlockVersionConsts.ENERGY_LIMIT;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;

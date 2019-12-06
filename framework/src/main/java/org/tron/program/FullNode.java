@@ -9,6 +9,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -42,11 +43,11 @@ public class FullNode {
   public static void main(String[] args) {
     logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
-    Args cfgArgs = Args.getInstance();
+    CommonParameter parameter = Args.getInstance();
 
-    load(cfgArgs.getLogbackPath());
+    load(parameter.getLogbackPath());
 
-    if (cfgArgs.isHelp()) {
+    if (parameter.isHelp()) {
       logger.info("Here is the help message.");
       return;
     }
@@ -86,7 +87,7 @@ public class FullNode {
       appT.addService(httpApiOnSolidityService);
     }
 
-    appT.initServices(cfgArgs);
+    appT.initServices(parameter);
     appT.startServices();
     appT.startup();
 

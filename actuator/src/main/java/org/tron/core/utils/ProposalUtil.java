@@ -1,8 +1,8 @@
 package org.tron.core.utils;
 
 import org.tron.common.utils.ForkUtils;
-import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
-import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 

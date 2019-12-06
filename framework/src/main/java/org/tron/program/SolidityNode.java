@@ -1,6 +1,6 @@
 package org.tron.program;
 
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
@@ -14,6 +14,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.client.DatabaseGrpcClient;
 import org.tron.common.overlay.discover.DiscoverServer;
 import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -55,20 +56,21 @@ public class SolidityNode {
   public static void main(String[] args) {
     logger.info("Solidity node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
-    Args cfgArgs = Args.getInstance();
+    CommonParameter parameter = Args.getInstance();
 
     logger.info("index switch is {}",
-        BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
+        BooleanUtils.toStringOnOff(BooleanUtils
+            .toBoolean(parameter.getStorage().getIndexSwitch())));
 
-    if (StringUtils.isEmpty(cfgArgs.getTrustNodeAddr())) {
+    if (StringUtils.isEmpty(parameter.getTrustNodeAddr())) {
       logger.error("Trust node not set.");
       return;
     }
-    cfgArgs.setSolidityNode(true);
+    parameter.setSolidityNode(true);
 
     ApplicationContext context = new TronApplicationContext(DefaultConfig.class);
 
-    if (cfgArgs.isHelp()) {
+    if (parameter.isHelp()) {
       logger.info("Here is the help message.");
       return;
     }
@@ -82,7 +84,7 @@ public class SolidityNode {
     SolidityNodeHttpApiService httpApiService = context.getBean(SolidityNodeHttpApiService.class);
     appT.addService(httpApiService);
 
-    appT.initServices(cfgArgs);
+    appT.initServices(parameter);
     appT.startServices();
     appT.startup();
 

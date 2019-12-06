@@ -18,6 +18,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
@@ -44,11 +45,11 @@ public class FastForward {
 
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-  private Args args = Args.getInstance();
-  private List<Node> fastForwardNodes = args.getFastForwardNodes();
+  private CommonParameter parameter = Args.getInstance();
+  private List<Node> fastForwardNodes = parameter.getFastForwardNodes();
   private ByteString witnessAddress = ByteString
-      .copyFrom(args.getLocalWitnesses().getWitnessAccountAddress());
-  private int keySize = args.getLocalWitnesses().getPrivateKeys().size();
+      .copyFrom(parameter.getLocalWitnesses().getWitnessAccountAddress());
+  private int keySize = parameter.getLocalWitnesses().getPrivateKeys().size();
 
   public void init() {
     manager = ctx.getBean(Manager.class);
@@ -57,9 +58,9 @@ public class FastForward {
     backupManager = ctx.getBean(BackupManager.class);
 
     logger.info("Fast forward config, isWitness: {}, keySize: {}, fastForwardNodes: {}",
-        args.isWitness(), keySize, fastForwardNodes.size());
+        parameter.isWitness(), keySize, fastForwardNodes.size());
 
-    if (!args.isWitness() || keySize == 0 || fastForwardNodes.isEmpty()) {
+    if (!parameter.isWitness() || keySize == 0 || fastForwardNodes.isEmpty()) {
       return;
     }
 
@@ -83,7 +84,7 @@ public class FastForward {
         InetAddress address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
         if (address.equals(channel.getInetAddress())) {
           ECKey ecKey = ECKey
-              .fromPrivate(ByteArray.fromHexString(args.getLocalWitnesses().getPrivateKey()));
+              .fromPrivate(ByteArray.fromHexString(parameter.getLocalWitnesses().getPrivateKey()));
           Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(message.getTimestamp()));
           ECDSASignature signature = ecKey.sign(hash.getBytes());
           ByteString sig = ByteString.copyFrom(signature.toByteArray());
@@ -95,7 +96,7 @@ public class FastForward {
   }
 
   public boolean checkHelloMessage(HelloMessage message, Channel channel) {
-    if (!args.isFastForward()
+    if (!parameter.isFastForward()
             || channelManager.getTrustNodes().getIfPresent(channel.getInetAddress()) != null) {
       return true;
     }
@@ -135,7 +136,7 @@ public class FastForward {
   }
 
   private boolean isActiveWitness() {
-    return args.isWitness()
+    return parameter.isWitness()
             && keySize > 0
             && fastForwardNodes.size() > 0
             && witnessScheduleStore.getActiveWitnesses().contains(witnessAddress)

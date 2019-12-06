@@ -15,8 +15,6 @@
 
 package org.tron.core.config.args;
 
-import static org.tron.common.utils.StorageUtils.DEFAULT_COMPRESSION_TYPE;
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import java.io.File;
@@ -29,7 +27,7 @@ import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Property;
-import org.tron.common.utils.StorageUtils;
+import org.tron.common.utils.DbOptionalsUtils;
 
 /**
  * Custom storage configurations
@@ -192,7 +190,7 @@ public class Storage {
     }
 
     // Check, get and set fields of Options
-    Options dbOptions = StorageUtils.createDefaultDbOptions();
+    Options dbOptions = DbOptionalsUtils.createDefaultDbOptions();
 
     if (conf.containsKey(CREATE_IF_MISSING_CONFIG_KEY)) {
       dbOptions.createIfMissing(

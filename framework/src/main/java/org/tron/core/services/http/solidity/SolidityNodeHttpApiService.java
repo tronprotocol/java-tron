@@ -8,6 +8,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.http.GetAccountByIdServlet;
@@ -114,13 +115,12 @@ public class SolidityNodeHttpApiService implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter args) {
     FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
   @Override
   public void start() {
-    Args args = Args.getInstance();
     try {
       server = new Server(port);
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
