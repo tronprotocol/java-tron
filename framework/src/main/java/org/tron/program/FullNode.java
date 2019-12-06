@@ -19,7 +19,7 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 
 @Slf4j(topic = "app")
 public class FullNode {
-  /**.
+  /**load.
    *
    *
    */
