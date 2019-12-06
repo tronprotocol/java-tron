@@ -33,6 +33,8 @@ public class BackupManager implements EventHandler {
 
   private int keepAliveInterval = parameter.getKeepAliveInterval();
 
+  private int keepAliveTimeout = keepAliveInterval * 6;
+
   private String localIp = "";
 
   private Set<String> members = new ConcurrentSet<>();
@@ -44,8 +46,6 @@ public class BackupManager implements EventHandler {
   private BackupStatusEnum status = MASTER;
 
   private volatile long lastKeepAliveTime;
-
-  private volatile long keepAliveTimeout = keepAliveInterval * 6;
 
   private volatile boolean isInit = false;
 

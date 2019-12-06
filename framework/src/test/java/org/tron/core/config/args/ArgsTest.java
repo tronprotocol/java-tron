@@ -41,6 +41,8 @@ public class ArgsTest {
 
     CommonParameter parameter = Args.getInstance();
 
+    Args.logConfig();
+
     Assert.assertEquals(0, parameter.getBackupPriority());
 
     Assert.assertEquals(3000, parameter.getKeepAliveInterval());

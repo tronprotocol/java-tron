@@ -932,7 +932,7 @@ public class Args extends CommonParameter {
         ? config.getStringList(Constant.NODE_BACKUP_MEMBERS) : new ArrayList<>();
   }
 
-  private static void logConfig() {
+  public static void logConfig() {
     CommonParameter parameter = CommonParameter.getInstance();
     logger.info("\n");
     logger.info("************************ Net config ************************");
