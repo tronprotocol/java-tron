@@ -31,7 +31,7 @@ public class BackupManager implements EventHandler {
 
   private int port = parameter.getBackupPort();
 
-  private int keepAliveInterval = args.getKeepAliveInterval();
+  private int keepAliveInterval = parameter.getKeepAliveInterval();
 
   private String localIp = "";
 
