@@ -11,6 +11,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +67,7 @@ public class GetExpandedSpendingKeyServletTest {
     conn.setUseCaches(false);
     conn.setDoOutput(true);
     conn.setRequestProperty("Content-Length", "" + postData.length());
-    OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
+    OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8);
     out.write(postData);
     out.flush();
     out.close();
@@ -75,22 +76,24 @@ public class GetExpandedSpendingKeyServletTest {
 
     getExpandedSpendingKeyServlet.doPost(request, response);
     //Get Response Body
-    String line = "";
-    String result = "";
-    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
+    String line;
+    StringBuilder result = new StringBuilder();
+    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(),
+            StandardCharsets.UTF_8));
     while ((line = in.readLine()) != null) {
-      result += line + "\n";
+      result.append(line).append("\n");
     }
     in.close();
-    logger.info(result);
-    Assert.assertTrue(result.contains("ask"));
-    Assert.assertTrue(result.contains("3123f308343cda89604fafae517"
+    logger.info(result.toString());
+    writer.flush();
+    Assert.assertTrue(result.toString().contains("ask"));
+    Assert.assertTrue(result.toString().contains("3123f308343cda89604fafae517"
             + "994ce5c78397346659b51b7dba8f50a08a703"));
-    Assert.assertTrue(result.contains("nsk"));
-    Assert.assertTrue(result.contains("873fc387c24fa4b0eb5208778e6b"
+    Assert.assertTrue(result.toString().contains("nsk"));
+    Assert.assertTrue(result.toString().contains("873fc387c24fa4b0eb5208778e6b"
             + "99d01bd909da64b584e646fa54e5945fd207"));
-    Assert.assertTrue(result.contains("ovk"));
-    Assert.assertTrue(result.contains("3063b5fa5929bc1e4342d5a02459"
+    Assert.assertTrue(result.toString().contains("ovk"));
+    Assert.assertTrue(result.toString().contains("3063b5fa5929bc1e4342d5a02459"
             + "3d7c2457efc33071a8460e933ce272cadd9f"));
     writer.flush();
     conn.disconnect();

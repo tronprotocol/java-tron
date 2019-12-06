@@ -76,15 +76,15 @@ public class GetTransactionInfoByIdSolidityServletTest {
     getTransactionInfoByIdSolidityServlet.doPost(request, response);
     //Get Response Body
     String line;
-    String result = "";
+    StringBuilder result = new StringBuilder();
     BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(),
             StandardCharsets.UTF_8));
     while ((line = in.readLine()) != null) {
-      result = result + line + "\n";
+      result.append(line).append("\n");
     }
     in.close();
-    logger.info(result);
-    Assert.assertTrue(result.contains("{}"));
+    logger.info(result.toString());
+    Assert.assertTrue(result.toString().contains("{}"));
     writer.flush();
     conn.disconnect();
   }
@@ -114,17 +114,16 @@ public class GetTransactionInfoByIdSolidityServletTest {
 
     getTransactionInfoByIdSolidityServlet.doPost(request, response);
     //Get Response Body
-    String line = "";
-    String result = "";
+    String line;
+    StringBuilder result = new StringBuilder();
     BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(),
             StandardCharsets.UTF_8));
     while ((line = in.readLine()) != null) {
-      result = result + line + "\n";
+      result.append(line).append("\n");
     }
-
     in.close();
-    logger.info(result);
-    Assert.assertTrue(result.contains("{}"));
+    logger.info(result.toString());
+    Assert.assertTrue(result.toString().contains("{}"));
     writer.flush();
     conn.disconnect();
   }

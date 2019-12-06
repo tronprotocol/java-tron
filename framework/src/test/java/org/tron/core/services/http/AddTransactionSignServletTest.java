@@ -11,6 +11,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -97,7 +98,7 @@ public class AddTransactionSignServletTest {
     conn.setUseCaches(false);
     conn.setDoOutput(true);
     conn.setRequestProperty("Content-Length", "" + postData.length());
-    OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
+    OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8);
     out.write(postData);
     out.flush();
     out.close();
@@ -106,15 +107,16 @@ public class AddTransactionSignServletTest {
 
     addTransactionSignServlet.doPost(request, response);
     //Get Response Body
-    String line = "";
-    String result = "";
-    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
+    String line;
+    StringBuilder result = new StringBuilder();
+    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(),
+            StandardCharsets.UTF_8));
     while ((line = in.readLine()) != null) {
-      result += line + "\n";
+      result.append(line).append("\n");
     }
     in.close();
-    logger.info(result);
-    Assert.assertTrue(result.contains("Account is not exist!"));
+    logger.info(result.toString());
+    Assert.assertTrue(result.toString().contains("Account is not exist!"));
     writer.flush();
     conn.disconnect();
   }
