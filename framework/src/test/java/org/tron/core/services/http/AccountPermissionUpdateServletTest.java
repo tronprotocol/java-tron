@@ -1,5 +1,8 @@
 package org.tron.core.services.http;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -10,7 +13,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -18,8 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.FileUtil;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+
+
 
 @Slf4j
 public class AccountPermissionUpdateServletTest {

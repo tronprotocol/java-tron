@@ -48,6 +48,7 @@ subprojects {
         compile "org.apache.commons:commons-collections4:4.0"
         compile group: 'joda-time', name: 'joda-time', version: '2.3'
 
+
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {

@@ -1,5 +1,8 @@
 package org.tron.core.services.http.solidity;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -16,8 +19,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.FileUtil;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+
 
 @Slf4j
 public class GetTransactionInfoByIdSolidityServletTest {
