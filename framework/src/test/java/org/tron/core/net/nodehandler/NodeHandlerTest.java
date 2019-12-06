@@ -15,23 +15,19 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-
 import org.tron.core.db.Manager;
-
-
-
-
 
 public class NodeHandlerTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
   private Manager dbManager;
   private TronApplicationContext context;
   private Application appTest;
-  private Args argsTest;
+  private CommonParameter argsTest;
   private Node currNode;
   private Node oldNode;
   private Node replaceNode;
@@ -47,7 +43,7 @@ public class NodeHandlerTest {
   public void init() {
     argsTest = Args.getInstance();
     Args.setParam(new String[]{"--output-directory", "output-directory", "--debug"},
-            Constant.TEST_CONF);
+        Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
     appTest.initServices(argsTest);
