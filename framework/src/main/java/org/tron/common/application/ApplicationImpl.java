@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.BlockStore;
@@ -35,7 +36,7 @@ public class ApplicationImpl implements Application {
 
   @Override
   @Autowired
-  public void init(Args args) {
+  public void init(CommonParameter parameter) {
     blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
   }
@@ -46,8 +47,8 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  public void initServices(Args args) {
-    services.init(args);
+  public void initServices(CommonParameter parameter) {
+    services.init(parameter);
   }
 
   /**

@@ -162,7 +162,7 @@ public class BandWidthRuntimeWithCheckTest {
               .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000)).build();
       TransactionCapsule trxCap = new TransactionCapsule(transaction);
       TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-          new RuntimeImpl(dbManager));
+          new RuntimeImpl());
       dbManager.consumeBandwidth(trxCap, trace);
       BlockCapsule blockCapsule = null;
       DepositImpl deposit = DepositImpl.createRoot(dbManager);
@@ -200,7 +200,7 @@ public class BandWidthRuntimeWithCheckTest {
       TransactionCapsule trxCap = new TransactionCapsule(transaction);
       trxCap.setResultCode(contractResult.SUCCESS);
       TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-          new RuntimeImpl(dbManager));
+          new RuntimeImpl());
       dbManager.consumeBandwidth(trxCap, trace);
       long bandWidth = trxCap.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
       BlockCapsule blockCapsule = null;
@@ -268,7 +268,7 @@ public class BandWidthRuntimeWithCheckTest {
     TransactionCapsule trxCap = new TransactionCapsule(transaction);
     trxCap.setResultCode(contractResult.SUCCESS);
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(dbManager));
+        new RuntimeImpl());
     dbManager.consumeBandwidth(trxCap, trace);
     BlockCapsule blockCapsule = null;
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
