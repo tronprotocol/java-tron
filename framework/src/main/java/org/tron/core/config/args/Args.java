@@ -921,13 +921,18 @@ public class Args extends CommonParameter {
   private static void initBackupProperty(Config config) {
     PARAMETER.backupPriority = config.hasPath(Constant.NODE_BACKUP_PRIORITY)
         ? config.getInt(Constant.NODE_BACKUP_PRIORITY) : 0;
+
     PARAMETER.backupPort = config.hasPath(Constant.NODE_BACKUP_PORT)
         ? config.getInt(Constant.NODE_BACKUP_PORT) : 10001;
+
+    PARAMETER.keepAliveInterval = config.hasPath(Constant.NODE_BACKUP_KEEPALIVEINTERVAL)
+        ? config.getInt(Constant.NODE_BACKUP_KEEPALIVEINTERVAL) : 3000;
+
     PARAMETER.backupMembers = config.hasPath(Constant.NODE_BACKUP_MEMBERS)
         ? config.getStringList(Constant.NODE_BACKUP_MEMBERS) : new ArrayList<>();
   }
 
-  private static void logConfig() {
+  public static void logConfig() {
     CommonParameter parameter = CommonParameter.getInstance();
     logger.info("\n");
     logger.info("************************ Net config ************************");
@@ -944,9 +949,10 @@ public class Args extends CommonParameter {
     logger.info("Max connection with same IP: {}", parameter.getNodeMaxActiveNodesWithSameIp());
     logger.info("Solidity threads: {}", parameter.getSolidityThreads());
     logger.info("************************ Backup config ************************");
-    logger.info("Backup listen port: {}", parameter.getBackupPort());
-    logger.info("Backup member size: {}", parameter.getBackupMembers().size());
     logger.info("Backup priority: {}", parameter.getBackupPriority());
+    logger.info("Backup listen port: {}", parameter.getBackupPort());
+    logger.info("Backup listen keepAliveInterval: {}", parameter.getKeepAliveInterval());
+    logger.info("Backup member size: {}", parameter.getBackupMembers().size());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
     logger.info("Version name: {}", Version.versionName);
