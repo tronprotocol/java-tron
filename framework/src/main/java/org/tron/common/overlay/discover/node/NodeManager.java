@@ -29,6 +29,7 @@ import org.tron.common.net.udp.message.discover.PongMessage;
 import org.tron.common.overlay.discover.node.NodeHandler.State;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.common.overlay.discover.table.NodeTable;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.CollectionUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -41,7 +42,7 @@ public class NodeManager implements EventHandler {
   private static final int MAX_NODES = 2000;
   private static final int MAX_NODES_WRITE_TO_DB = 30;
   private static final int NODES_TRIM_THRESHOLD = 3000;
-  private Args args = Args.getInstance();
+  private CommonParameter commonParameter = Args.getInstance();
   private Manager dbManager;
   private Consumer<UdpEvent> messageSender;
 
@@ -61,12 +62,12 @@ public class NodeManager implements EventHandler {
   @Autowired
   public NodeManager(Manager dbManager) {
     this.dbManager = dbManager;
-    discoveryEnabled = args.isNodeDiscoveryEnable();
+    discoveryEnabled = commonParameter.isNodeDiscoveryEnable();
 
-    homeNode = new Node(Node.getNodeId(), args.getNodeExternalIp(),
-        args.getNodeListenPort());
+    homeNode = new Node(Node.getNodeId(), commonParameter.getNodeExternalIp(),
+        commonParameter.getNodeListenPort());
 
-    for (String boot : args.getSeedNode().getIpList()) {
+    for (String boot : commonParameter.getSeedNode().getIpList()) {
       bootNodes.add(Node.instanceOf(boot));
     }
 
@@ -86,7 +87,7 @@ public class NodeManager implements EventHandler {
     if (!inited) {
       inited = true;
 
-      if (args.isNodeDiscoveryPersist()) {
+      if (commonParameter.isNodeDiscoveryPersist()) {
         dbRead();
         nodeManagerTasksTimer.scheduleAtFixedRate(new TimerTask() {
           @Override

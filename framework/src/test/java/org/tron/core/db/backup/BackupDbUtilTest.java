@@ -11,6 +11,7 @@ import org.rocksdb.RocksDB;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.consensus.dpos.DposSlot;
@@ -68,8 +69,8 @@ public class BackupDbUtilTest {
     bak1Path = dbPath + File.separator + "bak1/database";
     bak2Path = dbPath + File.separator + "bak2/database";
     frequency = 50;
-    Args cfgArgs = Args.getInstance();
-    cfgArgs.getDbBackupConfig()
+    CommonParameter parameter = Args.getInstance();
+    parameter.getDbBackupConfig()
         .initArgs(true, propPath, bak1Path, bak2Path, frequency);
     FileUtil.createFileIfNotExists(propPath);
   }
