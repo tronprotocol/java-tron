@@ -1,5 +1,8 @@
 package org.tron.common.overlay.discover.node;
 
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -15,10 +18,6 @@ import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-
-import java.io.File;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 
 
 public class NodeHandlerTest {
