@@ -205,6 +205,9 @@ public class AccountPermissionUpdateActuatorTest {
       Assert.assertEquals(expectedMsg, e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
+    } catch(RuntimeException e) {
+      Assert.assertTrue(e instanceof RuntimeException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
     }
   }
 
@@ -313,6 +316,17 @@ public class AccountPermissionUpdateActuatorTest {
         "contract type error,expected type [AccountPermissionUpdateContract],real type["
             + invalidContract.getClass() + "]");
   }
+
+
+  @Test
+  public void invalidTransactionResultCapsule() {
+
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(OWNER_ADDRESS));
+    TransactionResultCapsule ret =null;
+    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null", "TransactionResultCapsule is null");
+  }
+
 
   @Test
   public void invalidOwnerAddress() {
