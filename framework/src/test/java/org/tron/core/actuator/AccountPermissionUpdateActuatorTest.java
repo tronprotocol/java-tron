@@ -4,6 +4,7 @@ import static org.testng.Assert.fail;
 
 
 import com.google.protobuf.Any;
+
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.ArrayList;
@@ -76,20 +77,27 @@ public class AccountPermissionUpdateActuatorTest {
     KEY_ADDRESS4 = Wallet.getAddressPreFixString() + "A727FD9B876A1040B14A7963AFDA8490ED2A2F00";
     KEY_ADDRESS5 = Wallet.getAddressPreFixString() + "474921F5AD0ACE57D8AFD7E878F38DB7C3977361";
 
-    OWNER_ADDRESS_NOACCOUNT = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
+    OWNER_ADDRESS_NOACCOUNT = Wallet.getAddressPreFixString() +
+        "548794500882809695a8a687866e76d4271a1aed";
 
-    VALID_KEY = Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS)))
-        .setWeight(KEY_WEIGHT).build();
-    VALID_KEY1 = Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS1)))
-        .setWeight(KEY_WEIGHT).build();
-    VALID_KEY2 = Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS2)))
-        .setWeight(KEY_WEIGHT).build();
-    VALID_KEY3 = Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS3)))
-        .setWeight(KEY_WEIGHT).build();
-    VALID_KEY4 = Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS4)))
-        .setWeight(KEY_WEIGHT).build();
-    VALID_KEY5 = Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS5)))
-        .setWeight(KEY_WEIGHT).build();
+    VALID_KEY =
+        Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS)))
+            .setWeight(KEY_WEIGHT).build();
+    VALID_KEY1 =
+        Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS1)))
+            .setWeight(KEY_WEIGHT).build();
+    VALID_KEY2 =
+        Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS2)))
+            .setWeight(KEY_WEIGHT).build();
+    VALID_KEY3 =
+        Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS3)))
+            .setWeight(KEY_WEIGHT).build();
+    VALID_KEY4 =
+        Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS4)))
+            .setWeight(KEY_WEIGHT).build();
+    VALID_KEY5 =
+        Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS5)))
+            .setWeight(KEY_WEIGHT).build();
   }
 
   /**
@@ -123,12 +131,14 @@ public class AccountPermissionUpdateActuatorTest {
    */
   @Before
   public void createCapsule() {
-    AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-        ByteString.copyFromUtf8("owner"), AccountType.Normal);
+    AccountCapsule ownerCapsule =
+        new AccountCapsule(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            ByteString.copyFromUtf8("owner"), AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     AccountCapsule witnessCapsule = new AccountCapsule(
-        ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS)), ByteString.copyFromUtf8("witness"),
+        ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS)), ByteString.copyFromUtf8(
+        "witness"),
         AccountType.Normal);
     witnessCapsule.setIsWitness(true);
     dbManager.getAccountStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
@@ -143,12 +153,14 @@ public class AccountPermissionUpdateActuatorTest {
     Permission active = AccountCapsule.createDefaultActivePermission(address,
         dbManager.getDynamicPropertiesStore());
 
-    AccountPermissionUpdateContract contract = AccountPermissionUpdateContract.newBuilder().setOwnerAddress(address)
-        .setOwner(owner).addActives(active).build();
+    AccountPermissionUpdateContract contract =
+        AccountPermissionUpdateContract.newBuilder().setOwnerAddress(address)
+            .setOwner(owner).addActives(active).build();
     return Any.pack(contract);
   }
 
-  private Any getContract(ByteString address, Permission owner, Permission witness, List<Permission> activeList) {
+  private Any getContract(ByteString address, Permission owner, Permission witness,
+                          List<Permission> activeList) {
     AccountPermissionUpdateContract.Builder builder = AccountPermissionUpdateContract.newBuilder();
     builder.setOwnerAddress(address);
     if (owner != null) {
@@ -184,7 +196,8 @@ public class AccountPermissionUpdateActuatorTest {
     dbManager.getAccountStore().put(owner_name_array, account);
   }
 
-  private void processAndCheckInvalid(AccountPermissionUpdateActuator actuator, TransactionResultCapsule ret,
+  private void processAndCheckInvalid(AccountPermissionUpdateActuator actuator,
+                                      TransactionResultCapsule ret,
                                       String failMsg, String expectedMsg) {
     try {
       actuator.validate();
@@ -228,8 +241,9 @@ public class AccountPermissionUpdateActuatorTest {
 
     // step 3, execute update
     // add account
-    AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFrom(ByteArray.fromHexString(keyAddress)),
-        ByteString.copyFromUtf8("active"), AccountType.Normal);
+    AccountCapsule ownerCapsule =
+        new AccountCapsule(ByteString.copyFrom(ByteArray.fromHexString(keyAddress)),
+            ByteString.copyFromUtf8("active"), AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     owner.setBalance(1000_000_000L);
@@ -240,13 +254,15 @@ public class AccountPermissionUpdateActuatorTest {
         .addKeys(Key.newBuilder().setAddress(address).setWeight(4).build()).addKeys(Key.newBuilder()
             .setAddress(ByteString.copyFrom(ByteArray.fromHexString(keyAddress))).setWeight(5).build())
         .build();
-    activePermission = Permission.newBuilder().setType(PermissionType.Active).setId(2).setPermissionName("active")
-        .setThreshold(2)
-        .setOperations(ByteString.copyFrom(
-            ByteArray.fromHexString("0000000000000000000000000000000000000000000000000000000000000000")))
-        .addKeys(Key.newBuilder().setAddress(address).setWeight(2).build()).addKeys(Key.newBuilder()
+    activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setId(2).setPermissionName("active")
+            .setThreshold(2)
+            .setOperations(ByteString.copyFrom(
+                ByteArray.fromHexString(
+                    "0000000000000000000000000000000000000000000000000000000000000000")))
+            .addKeys(Key.newBuilder().setAddress(address).setWeight(2).build()).addKeys(Key.newBuilder()
             .setAddress(ByteString.copyFrom(ByteArray.fromHexString(keyAddress))).setWeight(3).build())
-        .build();
+            .build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -314,7 +330,8 @@ public class AccountPermissionUpdateActuatorTest {
     AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(OWNER_ADDRESS));
     TransactionResultCapsule ret = null;
-    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null", "TransactionResultCapsule is null");
+    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+        "TransactionResultCapsule is null");
   }
 
   @Test
@@ -349,7 +366,8 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, null, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "owner permission is missed", "owner permission is missed");
+    processAndCheckInvalid(actuator, ret, "owner permission is missed", "owner permission is " +
+        "missed");
   }
 
   @Test
@@ -362,7 +380,8 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, null, null));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "active permission is missed", "active permission is missed");
+    processAndCheckInvalid(actuator, ret, "active permission is missed", "active permission is " +
+        "missed");
   }
 
   @Test
@@ -382,7 +401,8 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, null, null));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "active permission is missed", "active permission is missed");
+    processAndCheckInvalid(actuator, ret, "active permission is missed", "active permission is " +
+        "missed");
   }
 
   @Test
@@ -420,15 +440,17 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "witness permission is missed", "witness permission is missed");
+    processAndCheckInvalid(actuator, ret, "witness permission is missed", "witness permission is " +
+        "missed");
   }
 
   @Test
   public void invalidOwnerPermissionType() {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
-    Permission ownerPermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("owner")
-        .setThreshold(1).setParentId(0).build();
+    Permission ownerPermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("owner")
+            .setThreshold(1).setParentId(0).build();
     Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
         dbManager.getDynamicPropertiesStore());
 
@@ -440,15 +462,17 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "owner permission type is error", "owner permission type is error");
+    processAndCheckInvalid(actuator, ret, "owner permission type is error", "owner permission " +
+        "type is error");
   }
 
   @Test
   public void invalidActivePermissionType() {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setPermissionName("witness").setThreshold(1)
-        .setParentId(0).build();
+    Permission activePermission =
+        Permission.newBuilder().setPermissionName("witness").setThreshold(1)
+            .setParentId(0).build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -458,7 +482,8 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "active permission type is error", "active permission type is error");
+    processAndCheckInvalid(actuator, ret, "active permission type is error", "active permission " +
+        "type is error");
   }
 
   @Test
@@ -466,8 +491,9 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission witnessPermission = Permission.newBuilder().setPermissionName("witness").setThreshold(1)
-        .setParentId(0).build();
+    Permission witnessPermission =
+        Permission.newBuilder().setPermissionName("witness").setThreshold(1)
+            .setParentId(0).build();
     Permission activePermission = AccountCapsule.createDefaultWitnessPermission(address);
 
     List<Permission> activeList = new ArrayList<>();
@@ -478,14 +504,16 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, witnessPermission, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "witness permission type is error", "witness permission type is error");
+    processAndCheckInvalid(actuator, ret, "witness permission type is error", "witness permission" +
+        " type is error");
   }
 
   @Test
   public void ownerPermissionNoKey() {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
-    Permission ownerPermission = Permission.newBuilder().setPermissionName("owner").setThreshold(1).build();
+    Permission ownerPermission =
+        Permission.newBuilder().setPermissionName("owner").setThreshold(1).build();
     Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
         dbManager.getDynamicPropertiesStore());
 
@@ -505,9 +533,10 @@ public class AccountPermissionUpdateActuatorTest {
   public void ownerPermissionToManyKey() {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
-    Permission ownerPermission = Permission.newBuilder().setPermissionName("owner").addKeys(VALID_KEY)
-        .addKeys(VALID_KEY1).addKeys(VALID_KEY2).addKeys(VALID_KEY3).addKeys(VALID_KEY4).addKeys(VALID_KEY5)
-        .setThreshold(1).build();
+    Permission ownerPermission =
+        Permission.newBuilder().setPermissionName("owner").addKeys(VALID_KEY)
+            .addKeys(VALID_KEY1).addKeys(VALID_KEY2).addKeys(VALID_KEY3).addKeys(VALID_KEY4).addKeys(VALID_KEY5)
+            .setThreshold(1).build();
     Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
         dbManager.getDynamicPropertiesStore());
 
@@ -520,7 +549,8 @@ public class AccountPermissionUpdateActuatorTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "number of keys in permission should not be greater than 5",
+    processAndCheckInvalid(actuator, ret, "number of keys in permission should not be greater " +
+            "than 5",
         "number of keys in permission should not be greater than 5");
   }
 
@@ -529,8 +559,9 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
-        .setThreshold(1).setParentId(0).build();
+    Permission activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
+            .setThreshold(1).setParentId(0).build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -549,9 +580,10 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
-        .addKeys(VALID_KEY).addKeys(VALID_KEY1).addKeys(VALID_KEY2).addKeys(VALID_KEY3).addKeys(VALID_KEY4)
-        .addKeys(VALID_KEY5).setThreshold(1).build();
+    Permission activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
+            .addKeys(VALID_KEY).addKeys(VALID_KEY1).addKeys(VALID_KEY2).addKeys(VALID_KEY3).addKeys(VALID_KEY4)
+            .addKeys(VALID_KEY5).setThreshold(1).build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -561,7 +593,8 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "number of keys in permission should not be greater than 5",
+    processAndCheckInvalid(actuator, ret, "number of keys in permission should not be greater " +
+            "than 5",
         "number of keys in permission should not be greater than 5");
   }
 
@@ -606,7 +639,8 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, witnessPermission, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "number of keys in permission should not be greater than 5",
+    processAndCheckInvalid(actuator, ret, "number of keys in permission should not be greater " +
+            "than 5",
         "number of keys in permission should not be greater than 5");
   }
 
@@ -672,7 +706,8 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "permission's name is too long", "permission's name is too long");
+    processAndCheckInvalid(actuator, ret, "permission's name is too long", "permission's name is " +
+        "too long");
   }
 
   @Test
@@ -680,9 +715,10 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
-        .setParentId(1).setThreshold(1).addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
-        .build();
+    Permission activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
+            .setParentId(1).setThreshold(1).addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
+            .build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -701,9 +737,10 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
-        .setParentId(0).setThreshold(1).addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
-        .addKeys(Key.newBuilder().setAddress(address).setWeight(1).build()).build();
+    Permission activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
+            .setParentId(0).setThreshold(1).addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
+            .addKeys(Key.newBuilder().setAddress(address).setWeight(1).build()).build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -722,11 +759,12 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
-        .setParentId(0).setThreshold(1).addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
-        .addKeys(Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_INVALID)))
-            .setWeight(1).build())
-        .build();
+    Permission activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
+            .setParentId(0).setThreshold(1).addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
+            .addKeys(Key.newBuilder().setAddress(ByteString.copyFrom(ByteArray.fromHexString(KEY_ADDRESS_INVALID)))
+                .setWeight(1).build())
+            .build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -736,7 +774,8 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "key is not a validate address", "key is not a validate address");
+    processAndCheckInvalid(actuator, ret, "key is not a validate address", "key is not a validate" +
+        " address");
   }
 
   @Test
@@ -744,9 +783,10 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
-        .setParentId(0).setThreshold(1).addKeys(Key.newBuilder().setAddress(address).setWeight(0).build())
-        .build();
+    Permission activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
+            .setParentId(0).setThreshold(1).addKeys(Key.newBuilder().setAddress(address).setWeight(0).build())
+            .build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -765,9 +805,10 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
-        .setParentId(0).setThreshold(2).addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
-        .build();
+    Permission activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
+            .setParentId(0).setThreshold(2).addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
+            .build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -777,7 +818,8 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "sum of all keys weight should not be less that threshold",
+    processAndCheckInvalid(actuator, ret, "sum of all keys weight should not be less that " +
+            "threshold",
         "sum of all key's weight should not be less than threshold in permission Active");
   }
 
@@ -785,11 +827,13 @@ public class AccountPermissionUpdateActuatorTest {
   public void onwerPermissionOperationNeedless() {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
-    Permission ownerPermission = Permission.newBuilder().setType(PermissionType.Owner).setPermissionName("owner")
-        .setThreshold(1)
-        .setOperations(ByteString.copyFrom(
-            ByteArray.fromHexString("0000000000000000000000000000000000000000000000000000000000000000")))
-        .setParentId(0).addKeys(VALID_KEY).build();
+    Permission ownerPermission =
+        Permission.newBuilder().setType(PermissionType.Owner).setPermissionName("owner")
+            .setThreshold(1)
+            .setOperations(ByteString.copyFrom(
+                ByteArray.fromHexString(
+                    "0000000000000000000000000000000000000000000000000000000000000000")))
+            .setParentId(0).addKeys(VALID_KEY).build();
     Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
         dbManager.getDynamicPropertiesStore());
 
@@ -810,8 +854,9 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
-        .setThreshold(1).setParentId(0).addKeys(VALID_KEY).build();
+    Permission activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
+            .setThreshold(1).setParentId(0).addKeys(VALID_KEY).build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -829,11 +874,13 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
-        .setThreshold(1)
-        .setOperations(ByteString.copyFrom(
-            ByteArray.fromHexString("00000000000000000000000000000000000000000000000000000000000000")))
-        .setParentId(0).addKeys(VALID_KEY).build();
+    Permission activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
+            .setThreshold(1)
+            .setOperations(ByteString.copyFrom(
+                ByteArray.fromHexString(
+                    "00000000000000000000000000000000000000000000000000000000000000")))
+            .setParentId(0).addKeys(VALID_KEY).build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -851,11 +898,13 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
-        .setThreshold(1)
-        .setOperations(ByteString.copyFrom(
-            ByteArray.fromHexString("8000000000000000000000000000000000000000000000000000000000000000")))
-        .setParentId(0).addKeys(VALID_KEY).build();
+    Permission activePermission =
+        Permission.newBuilder().setType(PermissionType.Active).setPermissionName("active")
+            .setThreshold(1)
+            .setOperations(ByteString.copyFrom(
+                ByteArray.fromHexString(
+                    "8000000000000000000000000000000000000000000000000000000000000000")))
+            .setParentId(0).addKeys(VALID_KEY).build();
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
@@ -865,7 +914,8 @@ public class AccountPermissionUpdateActuatorTest {
         .setAny(getContract(address, ownerPermission, null, activeList));
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "7 isn't a validate ContractType", "7 isn't a validate ContractType");
+    processAndCheckInvalid(actuator, ret, "7 isn't a validate ContractType", "7 isn't a validate " +
+        "ContractType");
   }
 
   @Test
@@ -878,7 +928,8 @@ public class AccountPermissionUpdateActuatorTest {
     Permission witnessPermission = Permission.newBuilder().setType(PermissionType.Witness)
         .setPermissionName("witness").setThreshold(1)
         .setOperations(ByteString.copyFrom(
-            ByteArray.fromHexString("0000000000000000000000000000000000000000000000000000000000000000")))
+            ByteArray.fromHexString(
+                "0000000000000000000000000000000000000000000000000000000000000000")))
         .setParentId(0).addKeys(VALID_KEY).build();
 
     List<Permission> activeList = new ArrayList<>();
