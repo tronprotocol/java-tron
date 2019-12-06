@@ -40,6 +40,13 @@ public class ArgsTest {
     Args.setParam(new String[]{"-w"}, Constant.TEST_CONF);
 
     CommonParameter parameter = Args.getInstance();
+
+    Assert.assertEquals(0, parameter.getBackupPriority());
+
+    Assert.assertEquals(3000, parameter.getKeepAliveInterval());
+
+    Assert.assertEquals(10001, parameter.getBackupPort());
+
     Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
 
     Assert.assertEquals(11, parameter.getSeedNode().getIpList().size());
