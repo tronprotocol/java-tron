@@ -1,13 +1,12 @@
 package org.tron.core.actuator;
 
+import static org.testng.Assert.fail;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
-
-import static org.testng.Assert.fail;
-
-
 import java.io.File;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -62,8 +61,8 @@ public class AssetIssueActuatorTest {
     Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
-    OWNER_ADDRESS_SECOND = Wallet.getAddressPreFixString() +
-        "548794500882809695a8a687866e76d4271a1abc";
+    OWNER_ADDRESS_SECOND = Wallet
+        .getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
   /**
@@ -104,8 +103,8 @@ public class AssetIssueActuatorTest {
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)), AccountType.Normal,
         dbManager.getDynamicPropertiesStore().getAssetIssueFee());
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-    dbManager.getAccountStore().put(ownerSecondCapsule.getAddress().toByteArray(),
-        ownerSecondCapsule);
+    dbManager.getAccountStore()
+        .put(ownerSecondCapsule.getAddress().toByteArray(), ownerSecondCapsule);
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(24 * 3600 * 1000);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
@@ -123,12 +122,15 @@ public class AssetIssueActuatorTest {
 
   private Any getContract() {
     long nowTime = new Date().getTime();
-    return Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .setPrecision(6).build());
+    return Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).setPrecision(6)
+            .build());
   }
 
   /**
@@ -146,8 +148,8 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
@@ -195,13 +197,14 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       // V1,Data is no longer update
-      Assert.assertFalse(dbManager.getAssetIssueStore().has(ByteString.copyFromUtf8(NAME).toByteArray()));
+      Assert.assertFalse(
+          dbManager.getAssetIssueStore().has(ByteString.copyFromUtf8(NAME).toByteArray()));
       // check V2
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       AssetIssueCapsule assetIssueCapsuleV2 = dbManager.getAssetIssueV2Store()
@@ -237,13 +240,14 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
       // V1,Data is no longer update
-      Assert.assertFalse(dbManager.getAssetIssueStore().has(ByteString.copyFromUtf8(NAME).toByteArray()));
+      Assert.assertFalse(
+          dbManager.getAssetIssueStore().has(ByteString.copyFromUtf8(NAME).toByteArray()));
       // V2
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       byte[] assertKey = ByteArray.fromString(String.valueOf(tokenIdNum));
@@ -271,11 +275,14 @@ public class AssetIssueActuatorTest {
    */
   public void negativeTotalSupplyTest() {
     long nowTime = new Date().getTime();
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(-TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(-TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -289,14 +296,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertTrue("TotalSupply must greater than 0!".equals(e.getMessage()));
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -313,11 +320,13 @@ public class AssetIssueActuatorTest {
    */
   public void zeroTotalSupplyTest() {
     long nowTime = new Date().getTime();
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(0).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(0).setTrxNum(TRX_NUM).setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -331,14 +340,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertTrue("TotalSupply must greater than 0!".equals(e.getMessage()));
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -355,11 +364,14 @@ public class AssetIssueActuatorTest {
    */
   public void negativeTrxNumTest() {
     long nowTime = new Date().getTime();
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(-TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(-TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -373,14 +385,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertTrue("TrxNum must greater than 0!".equals(e.getMessage()));
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -397,11 +409,14 @@ public class AssetIssueActuatorTest {
    */
   public void zeroTrxNumTest() {
     long nowTime = new Date().getTime();
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(0).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(0)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -415,14 +430,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertTrue("TrxNum must greater than 0!".equals(e.getMessage()));
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -438,11 +453,14 @@ public class AssetIssueActuatorTest {
    */
   public void negativeNumTest() {
     long nowTime = new Date().getTime();
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(-NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(-NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -456,14 +474,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertTrue("Num must greater than 0!".equals(e.getMessage()));
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -480,11 +498,14 @@ public class AssetIssueActuatorTest {
    */
   public void zeroNumTest() {
     long nowTime = new Date().getTime();
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(0)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(0)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -498,14 +519,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertTrue("Num must greater than 0!".equals(e.getMessage()));
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -524,11 +545,14 @@ public class AssetIssueActuatorTest {
     long nowTime = new Date().getTime();
 
     // Empty name, throw exception
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))).setName(ByteString.EMPTY)
-        .setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM).setStartTime(nowTime)
-        .setEndTime(nowTime + 24 * 3600 * 1000).setDescription(ByteString.copyFromUtf8(DESCRIPTION))
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.EMPTY).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
+            .setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -542,14 +566,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid assetName", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -559,11 +583,15 @@ public class AssetIssueActuatorTest {
     }
 
     // Too long name, throw exception. Max long is 32.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8("testname0123456789abcdefghijgklmo")).setTotalSupply(TOTAL_SUPPLY)
-        .setTrxNum(TRX_NUM).setNum(NUM).setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8("testname0123456789abcdefghijgklmo"))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM).setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -576,14 +604,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid assetName", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -593,11 +621,14 @@ public class AssetIssueActuatorTest {
     }
 
     // Contain space, throw exception. Every character need readable .
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8("t e")).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8("t e")).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -610,14 +641,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid assetName", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -627,11 +658,15 @@ public class AssetIssueActuatorTest {
     }
 
     // Contain chinese character, throw exception.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))).setTotalSupply(TOTAL_SUPPLY)
-        .setTrxNum(TRX_NUM).setNum(NUM).setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95")))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM).setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -644,14 +679,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid assetName", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -661,11 +696,15 @@ public class AssetIssueActuatorTest {
     }
 
     // 32 byte readable character just ok.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8("testname0123456789abcdefghijgklm")).setTotalSupply(TOTAL_SUPPLY)
-        .setTrxNum(TRX_NUM).setNum(NUM).setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8("testname0123456789abcdefghijgklm"))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM).setNum(NUM).setStartTime(nowTime)
+            .setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -675,8 +714,8 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
           .get("testname0123456789abcdefghijgklm".getBytes());
       Assert.assertNotNull(assetIssueCapsule);
@@ -684,8 +723,8 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMap().get("testname0123456789abcdefghijgklm").longValue()
-          , TOTAL_SUPPLY);
+      Assert.assertEquals(owner.getAssetMap().get("testname0123456789abcdefghijgklm").longValue(),
+          TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -696,11 +735,14 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte readable character ok.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8("0")).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8("0")).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -710,8 +752,8 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore().get("0".getBytes());
       Assert.assertNotNull(assetIssueCapsule);
 
@@ -736,11 +778,13 @@ public class AssetIssueActuatorTest {
     long nowTime = new Date().getTime();
 
     // Empty url, throw exception
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.EMPTY).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.EMPTY).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -754,14 +798,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid url", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -772,15 +816,19 @@ public class AssetIssueActuatorTest {
 
     String url256Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678"
         + "9abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0"
-        + "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678"
+        +
+        "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678"
         + "9abcdef";
     // Too long url, throw exception. Max long is 256.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(url256Bytes + "0"))
-        .build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(url256Bytes + "0"))
+            .build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -793,14 +841,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid url", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -810,12 +858,14 @@ public class AssetIssueActuatorTest {
     }
 
     // 256 byte readable character just ok.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(url256Bytes))
-        .build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(url256Bytes)).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -825,8 +875,8 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore().get(NAME.getBytes());
       Assert.assertNotNull(assetIssueCapsule);
       Assert.assertEquals(owner.getBalance(), 0L);
@@ -843,11 +893,14 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte url.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8("0")).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8("0")).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -857,8 +910,8 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore().get(NAME.getBytes());
       Assert.assertNotNull(assetIssueCapsule);
 
@@ -876,11 +929,14 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte space ok.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(" ")).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(" ")).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -890,8 +946,8 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore().get(NAME.getBytes());
       Assert.assertNotNull(assetIssueCapsule);
 
@@ -919,12 +975,15 @@ public class AssetIssueActuatorTest {
         + "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678"
         + "9abcdef0123456789abcdef0123456789abcdef01234567";
     // Too long description, throw exception. Max long is 200.
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(description200Bytes + "0")).setUrl(ByteString.copyFromUtf8(URL))
-        .build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(description200Bytes + "0"))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -938,14 +997,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid description", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -955,12 +1014,14 @@ public class AssetIssueActuatorTest {
     }
 
     // 200 bytes character just ok.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(description200Bytes)).setUrl(ByteString.copyFromUtf8(URL))
-        .build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(description200Bytes))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -970,8 +1031,8 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore().get(NAME.getBytes());
       Assert.assertNotNull(assetIssueCapsule);
 
@@ -989,11 +1050,14 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // Empty description is ok.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000).setDescription(ByteString.EMPTY)
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.EMPTY)
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -1003,8 +1067,8 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore().get(NAME.getBytes());
       Assert.assertNotNull(assetIssueCapsule);
 
@@ -1022,11 +1086,14 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte space ok.
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(" ")).setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(" "))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -1036,8 +1103,8 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore().get(NAME.getBytes());
       Assert.assertNotNull(assetIssueCapsule);
 
@@ -1060,15 +1127,18 @@ public class AssetIssueActuatorTest {
   @Test
   public void frozenTest() {
     // frozen_amount = 0 throw exception.
-    FrozenSupply frozenSupply =
-        FrozenSupply.newBuilder().setFrozenDays(1).setFrozenAmount(0).build();
+    FrozenSupply frozenSupply = FrozenSupply.newBuilder().setFrozenDays(1).setFrozenAmount(0)
+        .build();
     long nowTime = new Date().getTime();
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .addFrozenSupply(frozenSupply).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .addFrozenSupply(frozenSupply).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -1082,14 +1152,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Frozen supply must be greater than 0!", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -1100,12 +1170,15 @@ public class AssetIssueActuatorTest {
 
     // frozen_amount < 0 throw exception.
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(1).setFrozenAmount(-1).build();
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .addFrozenSupply(frozenSupply).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .addFrozenSupply(frozenSupply).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -1119,14 +1192,14 @@ public class AssetIssueActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Frozen supply must be greater than 0!", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -1141,12 +1214,15 @@ public class AssetIssueActuatorTest {
     // FrozenDays = 0 throw exception.
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(0).setFrozenAmount(1).build();
     nowTime = new Date().getTime();
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .addFrozenSupply(frozenSupply).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .addFrozenSupply(frozenSupply).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -1159,17 +1235,17 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("frozenDuration must be less than " + maxFrozenSupplyTime + " days " +
-          "and more than "
-          + minFrozenSupplyTime + " days", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      Assert.assertEquals(
+          "frozenDuration must be less than " + maxFrozenSupplyTime + " days " + "and more than "
+              + minFrozenSupplyTime + " days", e.getMessage());
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -1180,12 +1256,15 @@ public class AssetIssueActuatorTest {
 
     // FrozenDays < 0 throw exception.
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(-1).setFrozenAmount(1).build();
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .addFrozenSupply(frozenSupply).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .addFrozenSupply(frozenSupply).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -1198,17 +1277,17 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("frozenDuration must be less than " + maxFrozenSupplyTime + " days " +
-          "and more than "
-          + minFrozenSupplyTime + " days", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      Assert.assertEquals(
+          "frozenDuration must be less than " + maxFrozenSupplyTime + " days " + "and more than "
+              + minFrozenSupplyTime + " days", e.getMessage());
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -1218,14 +1297,17 @@ public class AssetIssueActuatorTest {
     }
 
     // FrozenDays > maxFrozenSupplyTime throw exception.
-    frozenSupply =
-        FrozenSupply.newBuilder().setFrozenDays(maxFrozenSupplyTime + 1).setFrozenAmount(1).build();
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .addFrozenSupply(frozenSupply).build());
+    frozenSupply = FrozenSupply.newBuilder().setFrozenDays(maxFrozenSupplyTime + 1)
+        .setFrozenAmount(1).build();
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .addFrozenSupply(frozenSupply).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -1238,17 +1320,17 @@ public class AssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("frozenDuration must be less than " + maxFrozenSupplyTime + " days " +
-          "and more than "
-          + minFrozenSupplyTime + " days", e.getMessage());
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(ByteArray.fromString(NAME));
+      Assert.assertEquals(
+          "frozenDuration must be less than " + maxFrozenSupplyTime + " days " + "and more than "
+              + minFrozenSupplyTime + " days", e.getMessage());
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueStore()
+          .get(ByteArray.fromString(NAME));
       Assert.assertEquals(owner.getBalance(),
           dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
-          blackholeBalance);
+      Assert
+          .assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(), blackholeBalance);
       Assert.assertNull(assetIssueCapsule);
       Assert.assertNull(owner.getInstance().getAssetMap().get(NAME));
     } catch (ContractExeException e) {
@@ -1259,12 +1341,15 @@ public class AssetIssueActuatorTest {
 
     // frozen_amount = 1 and frozenDays = 1 is OK
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(1).setFrozenAmount(1).build();
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .addFrozenSupply(frozenSupply).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .addFrozenSupply(frozenSupply).build());
 
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
@@ -1291,41 +1376,46 @@ public class AssetIssueActuatorTest {
   @Test
   public void issueTimeTest() {
     // empty start time will throw exception
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setEndTime(endTime).setDescription(ByteString.copyFromUtf8("description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setEndTime(endTime).setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "Start time should be not empty", "Start time should be" +
-            " not empty",
-        "false");
+    processAndCheckInvalid(actuator, ret, "Start time should be not empty",
+        "Start time should be not empty", "false");
 
     // empty end time will throw exception
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(startTime).setDescription(ByteString.copyFromUtf8("description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(startTime).setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
     ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "End time should be not empty", "End time should be not" +
-        " empty", "false");
+    processAndCheckInvalid(actuator, ret, "End time should be not empty",
+        "End time should be not empty", "false");
 
     // startTime == now, throw exception
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(now).setEndTime(endTime).setDescription(ByteString.copyFromUtf8(
-            "description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(now).setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
@@ -1335,12 +1425,14 @@ public class AssetIssueActuatorTest {
         "Start time should be greater than HeadBlockTime", "false");
 
     // startTime < now, throw exception
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(now - 1).setEndTime(endTime).setDescription(ByteString.copyFromUtf8(
-            "description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(now - 1).setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
@@ -1350,12 +1442,14 @@ public class AssetIssueActuatorTest {
         "Start time should be greater than HeadBlockTime", "false");
 
     // endTime == startTime, throw exception
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(startTime).setEndTime(startTime).setDescription(ByteString.copyFromUtf8(
-            "description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(startTime).setEndTime(startTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
@@ -1365,12 +1459,14 @@ public class AssetIssueActuatorTest {
         "End time should be greater than start time", "false");
 
     // endTime < startTime, throw exception
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(endTime).setEndTime(startTime).setDescription(ByteString.copyFromUtf8(
-            "description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(endTime).setEndTime(startTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
@@ -1380,12 +1476,14 @@ public class AssetIssueActuatorTest {
         "End time should be greater than start time", "false");
 
     // right issue, will not throw exception
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(startTime).setEndTime(endTime).setDescription(ByteString.copyFromUtf8(
-            "description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(startTime).setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
@@ -1394,8 +1492,8 @@ public class AssetIssueActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      AccountCapsule account =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule account = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       Assert.assertEquals(account.getAssetIssuedName().toStringUtf8(), NAME);
       Assert.assertEquals(account.getAssetMap().size(), 1);
@@ -1413,12 +1511,14 @@ public class AssetIssueActuatorTest {
    */
   @Test
   public void assetIssueNameTest() {
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(startTime).setEndTime(endTime).setDescription(ByteString.copyFromUtf8(
-            "description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(startTime).setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
@@ -1432,11 +1532,14 @@ public class AssetIssueActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
 
-    contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(ASSET_NAME_SECOND)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
-        .setNum(NUM).setStartTime(startTime).setEndTime(endTime)
-        .setDescription(ByteString.copyFromUtf8("description")).setUrl(ByteString.copyFromUtf8(URL)).build());
+    contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(ASSET_NAME_SECOND)).setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM)
+            .setNum(NUM).setStartTime(startTime).setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
@@ -1459,12 +1562,14 @@ public class AssetIssueActuatorTest {
   @Test
   public void assetIssueTRXNameTest() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8("TRX")).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(startTime).setEndTime(endTime).setDescription(ByteString.copyFromUtf8(
-            "description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8("TRX")).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(startTime).setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
@@ -1488,16 +1593,19 @@ public class AssetIssueActuatorTest {
   public void frozenListSizeTest() {
     this.dbManager.getDynamicPropertiesStore().saveMaxFrozenSupplyNumber(3);
     List<FrozenSupply> frozenList = new ArrayList();
-    for (int i = 0; i < this.dbManager.getDynamicPropertiesStore().getMaxFrozenSupplyNumber() + 2; i++) {
+    for (int i = 0; i < this.dbManager.getDynamicPropertiesStore()
+        .getMaxFrozenSupplyNumber() + 2; i++) {
       frozenList.add(FrozenSupply.newBuilder().setFrozenAmount(10).setFrozenDays(3).build());
     }
 
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(startTime).setEndTime(endTime).setDescription(ByteString.copyFromUtf8(
-            "description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).addAllFrozenSupply(frozenList).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(startTime).setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).addAllFrozenSupply(frozenList).build());
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
@@ -1512,13 +1620,16 @@ public class AssetIssueActuatorTest {
   public void frozenSupplyMoreThanTotalSupplyTest() {
     this.dbManager.getDynamicPropertiesStore().saveMaxFrozenSupplyNumber(3);
     List<FrozenSupply> frozenList = new ArrayList();
-    frozenList.add(FrozenSupply.newBuilder().setFrozenAmount(TOTAL_SUPPLY + 1).setFrozenDays(3).build());
-    Any contract = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(startTime).setEndTime(endTime).setDescription(ByteString.copyFromUtf8(
-            "description"))
-        .setUrl(ByteString.copyFromUtf8(URL)).addAllFrozenSupply(frozenList).build());
+    frozenList
+        .add(FrozenSupply.newBuilder().setFrozenAmount(TOTAL_SUPPLY + 1).setFrozenDays(3).build());
+    Any contract = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(startTime).setEndTime(endTime)
+            .setDescription(ByteString.copyFromUtf8("description"))
+            .setUrl(ByteString.copyFromUtf8(URL)).addAllFrozenSupply(frozenList).build());
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(contract);
 
@@ -1536,11 +1647,14 @@ public class AssetIssueActuatorTest {
   public void SameTokenNameCloseInvalidOwnerAddress() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     long nowTime = new Date().getTime();
-    Any any = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("12312315345345")))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL)).build());
+    Any any = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("12312315345345")))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
@@ -1558,12 +1672,15 @@ public class AssetIssueActuatorTest {
   public void SameTokenNameCloseInvalidPrecision() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     long nowTime = new Date().getTime();
-    Any any = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .setPrecision(7).build());
+    Any any = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).setPrecision(7)
+            .build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
@@ -1571,12 +1688,12 @@ public class AssetIssueActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
-    dbManager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT,
-        stats);
+    dbManager.getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
 
-    processAndCheckInvalid(actuator, ret, "precision cannot exceed 6", "precision cannot exceed " +
-        "6", "false");
+    processAndCheckInvalid(actuator, ret, "precision cannot exceed 6", "precision cannot exceed 6",
+        "false");
 
   }
 
@@ -1587,14 +1704,17 @@ public class AssetIssueActuatorTest {
   public void SameTokenNameCloseInvalidAddr() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     long nowTime = new Date().getTime();
-    Any any = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .setAbbr(ByteString.copyFrom(ByteArray.fromHexString(
-            "a0299f3db80a24123b20a254b89ce639d59132f157f13")))
-        .setPrecision(4).build());
+    Any any = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL))
+            .setAbbr(ByteString
+                .copyFrom(ByteArray.fromHexString("a0299f3db80a24123b20a254b89ce639d59132f157f13")))
+            .setPrecision(4).build());
 
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
@@ -1602,12 +1722,11 @@ public class AssetIssueActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
-    dbManager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT,
-        stats);
+    dbManager.getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
 
-    processAndCheckInvalid(actuator, ret, "Invalid abbreviation for token", "Invalid abbreviation" +
-            " for token",
-        "false");
+    processAndCheckInvalid(actuator, ret, "Invalid abbreviation for token",
+        "Invalid abbreviation for token", "false");
 
   }
 
@@ -1624,15 +1743,16 @@ public class AssetIssueActuatorTest {
     AssetIssueContract assetIssueContract = AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
         .setName(ByteString.copyFrom(ByteArray.fromString(NAME))).setId(Long.toString(id))
-        .setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM).setStartTime(1).setEndTime(100)
-        .setVoteScore(2).setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+        .setTotalSupply(TOTAL_SUPPLY)
+        .setTrxNum(TRX_NUM).setNum(NUM).setStartTime(1).setEndTime(100).setVoteScore(2)
+        .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
         .setUrl(ByteString.copyFrom(ByteArray.fromString(URL))).build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
-    AccountCapsule ownerCapsule =
-        new AccountCapsule(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)),
-            ByteString.copyFromUtf8("owner11"), AccountType.AssetIssue);
+    AccountCapsule ownerCapsule = new AccountCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)),
+        ByteString.copyFromUtf8("owner11"), AccountType.AssetIssue);
     ownerCapsule.addAsset(NAME.getBytes(), 1000L);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
@@ -1651,8 +1771,8 @@ public class AssetIssueActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule owner =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule owner = dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS));
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       AssetIssueCapsule assetIssueCapsuleV2 = dbManager.getAssetIssueV2Store()
           .get(ByteArray.fromString(String.valueOf(tokenIdNum)));
@@ -1683,48 +1803,58 @@ public class AssetIssueActuatorTest {
     long nowTime = new Date().getTime();
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
-    dbManager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT,
-        stats);
+    dbManager.getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     // PublicFreeAssetNetUsage must be 0!
-    Any any = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .setPrecision(3).setPublicFreeAssetNetUsage(100).build());
+    Any any = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).setPrecision(3)
+            .setPublicFreeAssetNetUsage(100).build());
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
     processAndCheckInvalid(actuator, ret, "PublicFreeAssetNetUsage must be 0!",
-        "PublicFreeAssetNetUsage must be 0!", "false");
+        "PublicFreeAssetNetUsage must be 0!",
+        "false");
 
     // Invalid FreeAssetNetLimit
-    any = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .setPrecision(3).setFreeAssetNetLimit(-10).build());
+    any = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).setPrecision(3)
+            .setFreeAssetNetLimit(-10).build());
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
-    processAndCheckInvalid(actuator, ret, "Invalid FreeAssetNetLimit", "Invalid FreeAssetNetLimit"
-        , "false");
+    processAndCheckInvalid(actuator, ret, "Invalid FreeAssetNetLimit", "Invalid FreeAssetNetLimit",
+        "false");
 
     // Invalid PublicFreeAssetNetLimit
-    any = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .setPrecision(3).setPublicFreeAssetNetLimit(-10).build());
+    any = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).setPrecision(3)
+            .setPublicFreeAssetNetLimit(-10).build());
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
-    processAndCheckInvalid(actuator, ret, "Invalid PublicFreeAssetNetLimit", "Invalid " +
-            "PublicFreeAssetNetLimit",
+    processAndCheckInvalid(actuator, ret, "Invalid PublicFreeAssetNetLimit",
+        "Invalid PublicFreeAssetNetLimit",
         "false");
 
   }
@@ -1739,17 +1869,20 @@ public class AssetIssueActuatorTest {
     long nowTime = new Date().getTime();
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
-    dbManager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT,
-        stats);
+    dbManager.getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     // No enough balance for fee!
-    Any any = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .setPrecision(3).build());
+    Any any = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).setPrecision(3)
+            .build());
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
@@ -1757,17 +1890,20 @@ public class AssetIssueActuatorTest {
     owner.setBalance(1000);
     dbManager.getAccountStore().put(owner.createDbKey(), owner);
 
-    processAndCheckInvalid(actuator, ret, "No enough balance for fee!", "No enough balance for " +
-        "fee!", "false");
+    processAndCheckInvalid(actuator, ret, "No enough balance for fee!",
+        "No enough balance for fee!", "false");
 
     // Account not exists
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
-    any = Any.pack(AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-        .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM).setNum(NUM)
-        .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
-        .setDescription(ByteString.copyFromUtf8(DESCRIPTION)).setUrl(ByteString.copyFromUtf8(URL))
-        .setPrecision(3).build());
+    any = Any.pack(
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFromUtf8(NAME)).setTotalSupply(TOTAL_SUPPLY).setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(nowTime).setEndTime(nowTime + 24 * 3600 * 1000)
+            .setDescription(ByteString.copyFromUtf8(DESCRIPTION))
+            .setUrl(ByteString.copyFromUtf8(URL)).setPrecision(3)
+            .build());
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
@@ -1784,7 +1920,8 @@ public class AssetIssueActuatorTest {
     actuator.setChainBaseManager(null).setAny(getContract());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     processAndCheckInvalid(actuator, ret, "No account store or dynamic store!",
-        "No account store or dynamic store!", null);
+        "No account store or dynamic store!",
+        null);
   }
 
   /**
@@ -1805,12 +1942,13 @@ public class AssetIssueActuatorTest {
   @Test
   public void invalidContract() {
     Any InvalidContract = Any.pack(AccountCreateContract.newBuilder().build());
+    // Any InvalidContract=Any.pack(AssetIssueContract.newBuilder().build());
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(InvalidContract);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     processAndCheckInvalid(actuator, ret, "contract type error",
-        "contract type error,expected type [AssetIssueContract],real type[" + InvalidContract.getClass() + "]",
-        null);
+        "contract type error,expected type [AssetIssueContract],real type[" + InvalidContract
+            .getClass() + "]", null);
   }
 
   /**
@@ -1823,13 +1961,12 @@ public class AssetIssueActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract());
     TransactionResultCapsule ret = null;
     processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
-        "TransactionResultCapsule is null",
-        null);
+        "TransactionResultCapsule is null", null);
   }
 
   private void processAndCheckInvalid(AssetIssueActuator actuator, TransactionResultCapsule ret,
-                                      String failMsg,
-                                      String expectedMsg, String expectedBool) {
+      String failMsg,
+      String expectedMsg, String expectedBool) {
     try {
       actuator.validate();
       actuator.execute(ret);
