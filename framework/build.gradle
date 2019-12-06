@@ -143,6 +143,11 @@ test {
         append = true
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
+        includes = ["actuator/**"]
+        includes = ["chainbase/**"]
+        includes = ["common/**"]
+        includes = ["consensus/**"]
+        includes = ["framework/**"]
     }
     if (isWindows()) {
         exclude '**/ShieldedTransferActuatorTest.class'
@@ -170,6 +175,11 @@ task stest(type: Test) {
         append = false
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
+        includes = ["actuator/**"]
+        includes = ["chainbase/**"]
+        includes = ["common/**"]
+        includes = ["consensus/**"]
+        includes = ["framework/**"]
     }
 }
 
@@ -189,6 +199,17 @@ jacocoTestReport {
         html.destination file("${buildDir}/jacocoHtml")
     }
     executionData = files('build/jacoco/jacocoTest.exec')
+    test {
+        jacoco {
+            destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+            classDumpDir = file("$buildDir/jacoco/classpathdumps")
+            includes = ["actuator/**"]
+            includes = ["chainbase/**"]
+            includes = ["common/**"]
+            includes = ["consensus/**"]
+            includes = ["framework/**"]
+        }
+    }
 }
 
 def binaryRelease(taskName, jarName, mainClass) {
