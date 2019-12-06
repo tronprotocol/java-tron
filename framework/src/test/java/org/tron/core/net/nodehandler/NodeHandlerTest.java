@@ -31,7 +31,7 @@ public class NodeHandlerTest {
   private Manager dbManager;
   private TronApplicationContext context;
   private Application appTest;
-  private Args args;
+  private Args argsTest;
   private Node currNode;
   private Node oldNode;
   private Node replaceNode;
@@ -45,12 +45,12 @@ public class NodeHandlerTest {
    */
   @Before
   public void init() {
-    args = Args.getInstance();
+    argsTest = Args.getInstance();
     Args.setParam(new String[]{"--output-directory", "output-directory", "--debug"},
             Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
-    appTest.initServices(args);
+    appTest.initServices(argsTest);
     appTest.startServices();
     appTest.startup();
   }
