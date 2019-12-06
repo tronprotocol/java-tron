@@ -365,7 +365,7 @@ public class MutisignOperationerGodicTest {
 
     Assert.assertTrue(PublicMethed.transferAsset(mutisignAccountAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     shieldAddressInfo = PublicMethed.generateShieldAddress();
     shieldAddress = shieldAddressInfo.get().getAddress();
     logger.info("shieldAddress:" + shieldAddress);

@@ -15,13 +15,13 @@
 
 package org.tron.common.application;
 
-import org.tron.core.config.args.Args;
+import org.tron.common.parameter.CommonParameter;
 
 public interface Service {
 
   void init();
 
-  void init(Args args);
+  void init(CommonParameter parameter);
 
   void start();
 

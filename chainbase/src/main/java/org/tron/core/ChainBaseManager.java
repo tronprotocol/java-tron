@@ -2,6 +2,7 @@ package org.tron.core;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.MerkleContainer;
@@ -9,6 +10,7 @@ import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -31,6 +33,7 @@ import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
 
+@Slf4j(topic = "DB")
 @Component
 public class ChainBaseManager {
 
@@ -119,4 +122,39 @@ public class ChainBaseManager {
   @Getter
   private KhaosDatabase khaosDb;
 
+  public void closeOneStore(ITronChainBase database) {
+    logger.info("******** begin to close " + database.getName() + " ********");
+    try {
+      database.close();
+    } catch (Exception e) {
+      logger.info("failed to close  " + database.getName() + ". " + e);
+    } finally {
+      logger.info("******** end to close " + database.getName() + " ********");
+    }
+  }
+
+  public void closeAllStore() {
+    closeOneStore(accountStore);
+    closeOneStore(blockStore);
+    closeOneStore(blockIndexStore);
+    closeOneStore(accountIdIndexStore);
+    closeOneStore(accountIndexStore);
+    closeOneStore(witnessScheduleStore);
+    closeOneStore(assetIssueStore);
+    closeOneStore(dynamicPropertiesStore);
+    closeOneStore(codeStore);
+    closeOneStore(contractStore);
+    closeOneStore(storageRowStore);
+    closeOneStore(exchangeStore);
+    closeOneStore(proposalStore);
+    closeOneStore(votesStore);
+    closeOneStore(delegatedResourceStore);
+    closeOneStore(delegatedResourceAccountIndexStore);
+    closeOneStore(assetIssueV2Store);
+    closeOneStore(exchangeV2Store);
+    closeOneStore(nullifierStore);
+    closeOneStore(merkleTreeStore);
+    closeOneStore(delegationStore);
+    closeOneStore(proofStore);
+  }
 }

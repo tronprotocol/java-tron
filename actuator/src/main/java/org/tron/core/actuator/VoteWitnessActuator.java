@@ -3,7 +3,7 @@ package org.tron.core.actuator;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
-import static org.tron.core.config.args.Parameter.ChainConstant.MAX_VOTE_NUMBER;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_VOTE_NUMBER;
 
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
