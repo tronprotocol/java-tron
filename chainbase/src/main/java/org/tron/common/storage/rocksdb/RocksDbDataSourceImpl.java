@@ -47,6 +47,8 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   private boolean alive;
   private String parentPath;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
+  private static final String KEY_ENGINE = "ENGINE";
+  private static final String ROCKSDB = "ROCKSDB";
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings) {
     this.dataBaseName = name;
@@ -150,18 +152,13 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
 
     // for the first init engine
-    String engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("")) {
-      if (!PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB")) {
-        return false;
-      }
-    }
-    engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("ROCKSDB")) {
-      return true;
-    } else {
+    String engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
+    if (engine.isEmpty() && !PropUtil.writeProperty(enginePath, KEY_ENGINE, ROCKSDB)) {
       return false;
     }
+    engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
+
+    return ROCKSDB.equals(engine);
   }
 
   public void initDB() {

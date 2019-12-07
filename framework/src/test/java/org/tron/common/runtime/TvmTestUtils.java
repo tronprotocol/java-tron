@@ -173,7 +173,7 @@ public class TvmTestUtils {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     deposit.commit();
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(deposit.getDbManager()));    // init
+        new RuntimeImpl());    // init
     trace.init(block);
     //exec
     trace.exec();
@@ -190,7 +190,7 @@ public class TvmTestUtils {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(dbmanager));
+        new RuntimeImpl());
     // init
     trace.init(block);
     //exec
@@ -208,7 +208,7 @@ public class TvmTestUtils {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     deposit.commit();
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(deposit.getDbManager()));    // init
+        new RuntimeImpl());    // init
     trace.init(block);
     //exec
     trace.exec();
@@ -269,7 +269,7 @@ public class TvmTestUtils {
       ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(dbManager));
+        new RuntimeImpl());
     // init
     trace.init(blockCap);
     //exec

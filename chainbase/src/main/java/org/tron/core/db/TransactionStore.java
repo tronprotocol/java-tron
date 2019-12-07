@@ -109,9 +109,4 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   public long getTotalTransactions() {
     return 0; //Streams.stream(iterator()).count();
   }
-
-  @Override
-  public void delete(byte[] key) {
-    super.delete(key);
-  }
 }

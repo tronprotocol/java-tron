@@ -18,7 +18,6 @@
 
 package org.tron.common.utils;
 
-import static java.util.Arrays.copyOfRange;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.ByteUtil.isNullOrZeroArray;
 import static org.tron.common.utils.ByteUtil.isSingleZero;

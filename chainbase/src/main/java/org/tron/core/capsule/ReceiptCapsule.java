@@ -9,7 +9,7 @@ import org.tron.common.utils.ForkUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
-import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.store.AccountStore;

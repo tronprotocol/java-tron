@@ -272,7 +272,7 @@ public class BandwidthProcessorTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     TransactionTrace trace = new TransactionTrace(trx, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
     dbManager.consumeBandwidth(trx, trace);
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
@@ -327,7 +327,7 @@ public class BandwidthProcessorTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     TransactionTrace trace = new TransactionTrace(trx, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
     dbManager.consumeBandwidth(trx, trace);
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
@@ -396,7 +396,7 @@ public class BandwidthProcessorTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     TransactionTrace trace = new TransactionTrace(trx, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
     dbManager.consumeBandwidth(trx, trace);
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
@@ -460,7 +460,7 @@ public class BandwidthProcessorTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     TransactionTrace trace = new TransactionTrace(trx, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
     dbManager.consumeBandwidth(trx, trace);
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
@@ -521,7 +521,7 @@ public class BandwidthProcessorTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     TransactionTrace trace = new TransactionTrace(trx, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
     dbManager.consumeBandwidth(trx, trace);
 
     AccountCapsule ownerCapsuleNew = dbManager.getAccountStore()
@@ -615,7 +615,7 @@ public class BandwidthProcessorTest {
 
     TransactionCapsule trx = new TransactionCapsule(contract);
     TransactionTrace trace = new TransactionTrace(trx, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
 
     long byteSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize()
         + Constant.MAX_RESULT_SIZE_IN_TX;
@@ -726,7 +726,7 @@ public class BandwidthProcessorTest {
 
     TransactionCapsule trx = new TransactionCapsule(contract);
     TransactionTrace trace = new TransactionTrace(trx, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
 
     long byteSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize()
         + Constant.MAX_RESULT_SIZE_IN_TX;
@@ -807,7 +807,7 @@ public class BandwidthProcessorTest {
 
     TransactionCapsule trx = new TransactionCapsule(contract, dbManager.getAccountStore());
     TransactionTrace trace = new TransactionTrace(trx, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
 
     long byteSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize()
         + Constant.MAX_RESULT_SIZE_IN_TX;

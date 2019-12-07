@@ -33,6 +33,7 @@ import org.tron.common.net.udp.handler.MessageHandler;
 import org.tron.common.net.udp.handler.PacketDecoder;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.WireTrafficStats;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "discover")
@@ -45,9 +46,9 @@ public class DiscoverServer {
   @Autowired
   private WireTrafficStats stats;
 
-  private Args args = Args.getInstance();
+  private CommonParameter parameter = Args.getInstance();
 
-  private int port = args.getNodeListenPort();
+  private int port = parameter.getNodeListenPort();
 
   private Channel channel;
 
@@ -58,7 +59,7 @@ public class DiscoverServer {
   @Autowired
   public DiscoverServer(final NodeManager nodeManager) {
     this.nodeManager = nodeManager;
-    if (args.isNodeDiscoveryEnable() && !args.isFastForward()) {
+    if (parameter.isNodeDiscoveryEnable() && !parameter.isFastForward()) {
       if (port == 0) {
         logger.error("Discovery can't be started while listen port == 0");
       } else {
@@ -74,7 +75,7 @@ public class DiscoverServer {
   }
 
   public void start() throws Exception {
-    NioEventLoopGroup group = new NioEventLoopGroup(args.getUdpNettyWorkThreadNum());
+    NioEventLoopGroup group = new NioEventLoopGroup(parameter.getUdpNettyWorkThreadNum());
     try {
       discoveryExecutor = new DiscoveryExecutor(nodeManager);
       discoveryExecutor.start();
