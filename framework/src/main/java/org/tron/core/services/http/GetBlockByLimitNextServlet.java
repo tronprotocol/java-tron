@@ -24,7 +24,14 @@ public class GetBlockByLimitNextServlet extends RateLimiterServlet {
       boolean visible = Util.getVisible(request);
       long startNum = Long.parseLong(request.getParameter("startNum"));
       long endNum = Long.parseLong(request.getParameter("endNum"));
-      writeResponse(endNum, startNum, visible, response);
+      if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
+        BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
+        if (reply != null) {
+          response.getWriter().println(Util.printBlockList(reply, visible));
+          return;
+        }
+      }
+      response.getWriter().println("{}");
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -40,25 +47,16 @@ public class GetBlockByLimitNextServlet extends RateLimiterServlet {
       JsonFormat.merge(input, build, visible);
       long startNum = build.getStartNum();
       long endNum = build.getEndNum();
-      writeResponse(endNum, startNum, visible, response);
+      if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
+        BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
+        if (reply != null) {
+          response.getWriter().println(Util.printBlockList(reply, visible));
+          return;
+        }
+      }
+      response.getWriter().println("{}");
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
-
-  private void writeResponse(long endNum, long startNum, boolean visible,
-                             HttpServletResponse response)
-          throws Exception {
-    if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
-      BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
-      if (reply != null) {
-        response.getWriter().println(Util.printBlockList(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
-    } else {
-      response.getWriter().println("{}");
-    }
-  }
-
 }
