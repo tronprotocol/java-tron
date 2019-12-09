@@ -8,425 +8,480 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
+import org.tron.common.logsfilter.EventPluginConfig;
+import org.tron.common.logsfilter.FilterQuery;
+import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.setting.RocksDbSettings;
+import org.tron.core.Constant;
+import org.tron.core.config.args.Overlay;
+import org.tron.core.config.args.SeedNode;
+import org.tron.core.config.args.Storage;
 
 public class CommonParameter {
-  @Parameter(names = {"-c", "--config"}, description = "Config File")
-  protected String shellConfFileName = "";
+  public static CommonParameter PARAMETER = new CommonParameter();
 
+  @Parameter(names = {"-c", "--config"}, description = "Config File")
+  public String shellConfFileName = "";
+
+  @Getter
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
-  protected String outputDirectory = "output-directory";
+  public String outputDirectory = "output-directory";
 
   @Getter
   @Parameter(names = {"--log-config"})
-  protected String logbackPath = "";
+  public String logbackPath = "";
 
   @Getter
   @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
-  protected boolean help = false;
+  public boolean help = false;
 
   @Getter
   @Setter
   @Parameter(names = {"-w", "--witness"})
-  protected boolean witness = false;
+  public boolean witness = false;
 
   @Getter
   @Setter
   @Parameter(names = {"--support-constant"})
-  protected boolean supportConstant = false;
+  public boolean supportConstant = false;
 
   @Getter
   @Setter
   @Parameter(names = {"--debug"})
-  protected boolean debug = false;
+  public boolean debug = false;
 
   @Getter
   @Setter
   @Parameter(names = {"--min-time-ratio"})
-  protected double minTimeRatio = 0.0;
+  public double minTimeRatio = 0.0;
 
   @Getter
   @Setter
   @Parameter(names = {"--max-time-ratio"})
-  protected double maxTimeRatio = calcMaxTimeRatio();
+  public double maxTimeRatio = calcMaxTimeRatio();
 
   @Getter
   @Setter
   @Parameter(names = {"--long-running-time"})
-  protected int longRunningTime = 10;
+  public int longRunningTime = 10;
 
   @Getter
   @Setter
   @Parameter(names = {"--max-connect-number"})
-  protected int maxHttpConnectNumber = 50;
+  public int maxHttpConnectNumber = 50;
 
   @Getter
   @Parameter(description = "--seed-nodes")
-  protected List<String> seedNodes = new ArrayList<>();
+  public List<String> seedNodes = new ArrayList<>();
 
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
-  protected String privateKey = "";
+  public String privateKey = "";
 
   @Parameter(names = {"--witness-address"}, description = "witness-address")
-  protected String witnessAddress = "";
+  public String witnessAddress = "";
 
   @Parameter(names = {"--password"}, description = "password")
-  protected String password;
+  public String password;
 
   @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
-  protected String storageDbDirectory = "";
+  public String storageDbDirectory = "";
 
   @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
-  protected String storageDbVersion = "";
+  public String storageDbVersion = "";
 
   @Parameter(names = {
       "--storage-db-engine"}, description = "Storage db engine.(leveldb or rocksdb)")
-  protected String storageDbEngine = "";
+  public String storageDbEngine = "";
 
   @Parameter(names = {
       "--storage-db-synchronous"},
       description = "Storage db is synchronous or not.(true or false)")
-  protected String storageDbSynchronous = "";
+  public String storageDbSynchronous = "";
 
   @Parameter(names = {"--contract-parse-enable"},
       description = "enable contract parses in java-tron or not.(true or false)")
-  protected String contractParseEnable = "";
+  public String contractParseEnable = "";
 
   @Parameter(names = {"--storage-index-directory"},
       description = "Storage index directory")
-  protected String storageIndexDirectory = "";
+  public String storageIndexDirectory = "";
 
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
-  protected String storageIndexSwitch = "";
+  public String storageIndexSwitch = "";
 
   @Parameter(names = {"--storage-transactionHistory-switch"},
       description = "Storage transaction history switch.(on or off)")
-  protected String storageTransactionHistoreSwitch = "";
+  public String storageTransactionHistoreSwitch = "";
 
   @Getter
   @Parameter(names = {"--fast-forward"})
-  protected boolean fastForward = false;
+  public boolean fastForward = false;
 
   @Getter
   @Setter
-  protected String chainId;
+  public String chainId;
 
   @Getter
   @Setter
-  protected boolean needSyncCheck;
+  public boolean needSyncCheck;
 
   @Getter
   @Setter
-  protected boolean nodeDiscoveryEnable;
+  public boolean nodeDiscoveryEnable;
 
   @Getter
   @Setter
-  protected boolean nodeDiscoveryPersist;
+  public boolean nodeDiscoveryPersist;
 
   @Getter
   @Setter
-  protected int nodeConnectionTimeout;
+  public int nodeConnectionTimeout;
 
   @Getter
   @Setter
-  protected int nodeChannelReadTimeout;
+  public int nodeChannelReadTimeout;
 
   @Getter
   @Setter
-  protected int nodeMaxActiveNodes;
+  public int nodeMaxActiveNodes;
 
   @Getter
   @Setter
-  protected int nodeMaxActiveNodesWithSameIp;
+  public int nodeMaxActiveNodesWithSameIp;
 
   @Getter
   @Setter
-  protected int minParticipationRate;
+  public int minParticipationRate;
 
   @Getter
   @Setter
-  protected int nodeListenPort;
+  public int nodeListenPort;
 
   @Getter
   @Setter
-  protected String nodeDiscoveryBindIp;
+  public String nodeDiscoveryBindIp;
 
   @Getter
   @Setter
-  protected String nodeExternalIp;
+  public String nodeExternalIp;
 
   @Getter
   @Setter
-  protected boolean nodeDiscoveryPublicHomeNode;
+  public boolean nodeDiscoveryPublicHomeNode;
 
   @Getter
   @Setter
-  protected long nodeP2pPingInterval;
+  public long nodeP2pPingInterval;
 
   @Getter
   @Setter
   @Parameter(names = {"--save-internaltx"})
-  protected boolean saveInternalTx;
+  public boolean saveInternalTx;
 
   @Getter
   @Setter
-  protected int nodeP2pVersion;
+  public int nodeP2pVersion;
 
   @Getter
   @Setter
-  protected String p2pNodeId;
+  public String p2pNodeId;
 
   //If you are running a solidity node for java tron, this flag is set to true
   @Getter
   @Setter
-  protected boolean solidityNode = false;
+  public boolean solidityNode = false;
 
   @Getter
   @Setter
-  protected int rpcPort;
+  public int rpcPort;
 
   @Getter
   @Setter
-  protected int rpcOnSolidityPort;
+  public int rpcOnSolidityPort;
 
   @Getter
   @Setter
-  protected int fullNodeHttpPort;
+  public int fullNodeHttpPort;
 
   @Getter
   @Setter
-  protected int solidityHttpPort;
+  public int solidityHttpPort;
 
   @Getter
   @Setter
   @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
-  protected int rpcThreadNum;
+  public int rpcThreadNum;
 
   @Getter
   @Setter
   @Parameter(names = {"--solidity-thread"}, description = "Num of solidity thread")
-  protected int solidityThreads;
+  public int solidityThreads;
 
   @Getter
   @Setter
-  protected int maxConcurrentCallsPerConnection;
+  public int maxConcurrentCallsPerConnection;
 
   @Getter
   @Setter
-  protected int flowControlWindow;
+  public int flowControlWindow;
 
   @Getter
   @Setter
-  protected long maxConnectionIdleInMillis;
+  public long maxConnectionIdleInMillis;
 
   @Getter
   @Setter
-  protected int blockProducedTimeOut;
+  public int blockProducedTimeOut;
 
   @Getter
   @Setter
-  protected long netMaxTrxPerSecond;
+  public long netMaxTrxPerSecond;
 
   @Getter
   @Setter
-  protected long maxConnectionAgeInMillis;
+  public long maxConnectionAgeInMillis;
 
   @Getter
   @Setter
-  protected int maxMessageSize;
+  public int maxMessageSize;
 
   @Getter
   @Setter
-  protected int maxHeaderListSize;
+  public int maxHeaderListSize;
 
   @Getter
   @Setter
   @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
-  protected int validateSignThreadNum;
+  public int validateSignThreadNum;
 
   @Getter
   @Setter
-  protected long maintenanceTimeInterval; // (ms)
+  public long maintenanceTimeInterval; // (ms)
 
   @Getter
   @Setter
-  protected long proposalExpireTime; // (ms)
+  public long proposalExpireTime; // (ms)
 
   @Getter
   @Setter
-  protected int checkFrozenTime; // for test only
+  public int checkFrozenTime; // for test only
 
   @Getter
   @Setter
-  protected long allowCreationOfContracts; //committee parameter
+  public long allowCreationOfContracts; //committee parameter
 
   @Getter
   @Setter
-  protected long allowAdaptiveEnergy; //committee parameter
+  public long allowAdaptiveEnergy; //committee parameter
 
   @Getter
   @Setter
-  protected long allowDelegateResource; //committee parameter
+  public long allowDelegateResource; //committee parameter
 
   @Getter
   @Setter
-  protected long allowSameTokenName; //committee parameter
+  public long allowSameTokenName; //committee parameter
 
   @Getter
   @Setter
-  protected long allowTvmTransferTrc10; //committee parameter
+  public long allowTvmTransferTrc10; //committee parameter
 
   @Getter
   @Setter
-  protected long allowTvmConstantinople; //committee parameter
+  public long allowTvmConstantinople; //committee parameter
 
   @Getter
   @Setter
-  protected long allowTvmSolidity059; //committee parameter
+  public long allowTvmSolidity059; //committee parameter
 
   @Getter
   @Setter
-  protected int tcpNettyWorkThreadNum;
+  public int tcpNettyWorkThreadNum;
 
   @Getter
   @Setter
-  protected int udpNettyWorkThreadNum;
+  public int udpNettyWorkThreadNum;
 
   @Getter
   @Setter
   @Parameter(names = {"--trust-node"}, description = "Trust node addr")
-  protected String trustNodeAddr;
+  public String trustNodeAddr;
 
   @Getter
   @Setter
-  protected boolean walletExtensionApi;
+  public boolean walletExtensionApi;
 
   @Getter
   @Setter
-  protected int backupPriority;
+  public int backupPriority;
 
   @Getter
   @Setter
-  protected int backupPort;
+  public int backupPort;
 
   @Getter
   @Setter
-  protected List<String> backupMembers;
+  public int keepAliveInterval;
 
   @Getter
   @Setter
-  protected double connectFactor;
+  public List<String> backupMembers;
 
   @Getter
   @Setter
-  protected double activeConnectFactor;
+  public double connectFactor;
 
   @Getter
   @Setter
-  protected double disconnectNumberFactor;
+  public double activeConnectFactor;
 
   @Getter
   @Setter
-  protected double maxConnectNumberFactor;
+  public double disconnectNumberFactor;
 
   @Getter
   @Setter
-  protected long receiveTcpMinDataLength;
+  public double maxConnectNumberFactor;
 
   @Getter
   @Setter
-  protected boolean isOpenFullTcpDisconnect;
+  public long receiveTcpMinDataLength;
 
   @Getter
   @Setter
-  protected int allowMultiSign;
+  public boolean isOpenFullTcpDisconnect;
 
   @Getter
   @Setter
-  protected boolean vmTrace;
+  public int allowMultiSign;
 
   @Getter
   @Setter
-  protected boolean needToUpdateAsset;
+  public boolean vmTrace;
 
   @Getter
   @Setter
-  protected String trxReferenceBlock;
+  public boolean needToUpdateAsset;
 
   @Getter
   @Setter
-  protected int minEffectiveConnection;
+  public String trxReferenceBlock;
 
   @Getter
   @Setter
-  protected long allowShieldedTransaction; //committee parameter
+  public int minEffectiveConnection;
+
+  @Getter
+  @Setter
+  public long allowShieldedTransaction; //committee parameter
 
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
-  protected boolean fullNodeAllowShieldedTransactionArgs;
+  public boolean fullNodeAllowShieldedTransactionArgs;
 
   @Getter
   @Setter
-  protected long blockNumForEneryLimit;
+  public long blockNumForEneryLimit;
 
   @Getter
   @Setter
   @Parameter(names = {"--es"})
-  protected boolean eventSubscribe = false;
+  public boolean eventSubscribe = false;
 
   @Getter
   @Setter
-  protected long trxExpirationTimeInMilliseconds; // (ms)
+  public long trxExpirationTimeInMilliseconds; // (ms)
 
   @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
-  protected boolean version;
+  public boolean version;
 
 
   @Getter
   @Setter
-  protected String zenTokenId;
+  public String zenTokenId;
 
   @Getter
   @Setter
-  protected long allowProtoFilterNum;
+  public long allowProtoFilterNum;
 
   @Getter
   @Setter
-  protected long allowAccountStateRoot;
+  public long allowAccountStateRoot;
 
   @Getter
   @Setter
-  protected int validContractProtoThreadNum;
+  public int validContractProtoThreadNum;
 
   @Getter
   @Setter
-  protected int shieldedTransInPendingMaxCounts;
+  public int shieldedTransInPendingMaxCounts;
 
   @Getter
   @Setter
-  protected long changedDelegation;
+  public long changedDelegation;
 
   @Getter
   @Setter
-  protected Set<String> actuatorSet;
+  public Set<String> actuatorSet;
 
   @Getter
   @Setter
-  protected RateLimiterInitialization rateLimiterInitialization;
+  public RateLimiterInitialization rateLimiterInitialization;
 
 
   @Getter
-  protected DbBackupConfig dbBackupConfig;
+  public DbBackupConfig dbBackupConfig;
 
   @Getter
-  protected RocksDbSettings rocksDBCustomSettings;
+  public RocksDbSettings rocksDBCustomSettings;
 
   @Getter
-  protected GenesisBlock genesisBlock;
+  public GenesisBlock genesisBlock;
+
+  public static final String IGNORE_WRONG_WITNESS_ADDRESS_FORMAT =
+      "The localWitnessAccountAddress format is incorrect, ignored";
+
+  @Getter
+  @Setter
+  public List<Node> activeNodes;
+
+  @Getter
+  @Setter
+  public List<Node> passiveNodes;
+
+  @Getter
+  public List<Node> fastForwardNodes;
+
+  @Getter
+  public Storage storage;
+
+  @Getter
+  public Overlay overlay;
+
+  @Getter
+  public SeedNode seedNode;
+
+  @Getter
+  public EventPluginConfig eventPluginConfig;
+
+  @Getter
+  public FilterQuery eventFilter;
+
+  @Getter
+  @Setter
+  public String cryptoEngine;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;
+  }
+
+  public static CommonParameter getInstance() {
+    return PARAMETER;
+  }
+
+  public boolean isECKeyCryptoEngine() {
+    return cryptoEngine == Constant.ECKey_ENGINE;
   }
 }

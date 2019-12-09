@@ -19,6 +19,7 @@ import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.tron.common.args.GenesisBlock;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
@@ -31,8 +32,8 @@ public class BlockUtil {
    */
   public static BlockCapsule newGenesisBlockCapsule() {
 
-    Args args = Args.getInstance();
-    GenesisBlock genesisBlockArg = args.getGenesisBlock();
+    CommonParameter parameter = Args.getInstance();
+    GenesisBlock genesisBlockArg = parameter.getGenesisBlock();
     List<Transaction> transactionList =
         genesisBlockArg.getAssets().stream()
             .map(key -> {

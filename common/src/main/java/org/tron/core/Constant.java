@@ -221,6 +221,7 @@ public class Constant {
 
   public static final String NODE_BACKUP_PRIORITY = "node.backup.priority";
   public static final String NODE_BACKUP_PORT = "node.backup.port";
+  public static final String NODE_BACKUP_KEEPALIVEINTERVAL = "node.backup.keepAliveInterval";
   public static final String NODE_BACKUP_MEMBERS = "node.backup.members";
 
   public static final String STORAGE_BACKUP_ENABLE = "storage.backup.enable";

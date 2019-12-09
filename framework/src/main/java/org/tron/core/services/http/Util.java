@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -27,10 +28,12 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.BlockCapsule;
@@ -42,6 +45,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+
 
 @Slf4j(topic = "API")
 public class Util {
@@ -148,24 +152,21 @@ public class Util {
   public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight,
       boolean selfType) {
     String string = JsonFormat.printToString(transactionSignWeight, selfType);
-    JSONObject jsonObject = JSONObject.parseObject(string);
-    JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
-    jsonObjectExt
-        .put(TRANSACTION,
-            printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction(),
-                selfType));
-    jsonObject.put(TRANSACTION, jsonObjectExt);
-    return jsonObject.toJSONString();
+    return printTxInfo(transactionSignWeight.getTransaction().getTransaction(), string, selfType);
   }
 
   public static String printTransactionApprovedList(
       TransactionApprovedList transactionApprovedList, boolean selfType) {
     String string = JsonFormat.printToString(transactionApprovedList, selfType);
-    JSONObject jsonObject = JSONObject.parseObject(string);
+    return printTxInfo(transactionApprovedList.getTransaction().getTransaction(), string, selfType);
+  }
+
+  public static String printTxInfo(Transaction tx, String str, boolean selfType) {
+    JSONObject jsonObject = JSONObject.parseObject(str);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
     jsonObjectExt.put(TRANSACTION,
-        printTransactionToJSON(transactionApprovedList.getTransaction().getTransaction(),
-            selfType));
+            printTransactionToJSON(tx,
+                    selfType));
     jsonObject.put(TRANSACTION, jsonObjectExt);
     return jsonObject.toJSONString();
   }
@@ -280,9 +281,9 @@ public class Util {
   }
 
   public static void checkBodySize(String body) throws Exception {
-    Args args = Args.getInstance();
-    if (body.getBytes().length > args.getMaxMessageSize()) {
-      throw new Exception("body size is too big, the limit is " + args.getMaxMessageSize());
+    CommonParameter parameter = Args.getInstance();
+    if (body.getBytes().length > parameter.getMaxMessageSize()) {
+      throw new Exception("body size is too big, the limit is " + parameter.getMaxMessageSize());
     }
   }
 
@@ -434,6 +435,21 @@ public class Util {
     } else {
       response.getWriter().println("{}");
     }
+  }
+
+  public static byte[] getAddress(HttpServletRequest request) throws Exception {
+    byte[] address = null;
+    String addressParam = "address";
+    String addressStr = request.getParameter(addressParam);
+    if (org.apache.commons.lang3.StringUtils.isNotBlank(addressStr)) {
+      if (org.apache.commons.lang3.StringUtils.startsWith(addressStr,
+              Constant.ADD_PRE_FIX_STRING_MAINNET)) {
+        address = Hex.decode(addressStr);
+      } else {
+        address = Wallet.decodeFromBase58Check(addressStr);
+      }
+    }
+    return address;
   }
 
 }

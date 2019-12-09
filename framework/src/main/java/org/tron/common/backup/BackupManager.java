@@ -19,17 +19,21 @@ import org.tron.common.net.udp.handler.MessageHandler;
 import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.net.udp.message.Message;
 import org.tron.common.net.udp.message.backup.KeepAliveMessage;
-import org.tron.core.config.args.Args;
+import org.tron.common.parameter.CommonParameter;
 
 @Slf4j(topic = "backup")
 @Component
 public class BackupManager implements EventHandler {
 
-  private Args args = Args.getInstance();
+  private CommonParameter parameter = CommonParameter.getInstance();
 
-  private int priority = args.getBackupPriority();
+  private int priority = parameter.getBackupPriority();
 
-  private int port = args.getBackupPort();
+  private int port = parameter.getBackupPort();
+
+  private int keepAliveInterval = parameter.getKeepAliveInterval();
+
+  private int keepAliveTimeout = keepAliveInterval * 6;
 
   private String localIp = "";
 
@@ -42,8 +46,6 @@ public class BackupManager implements EventHandler {
   private BackupStatusEnum status = MASTER;
 
   private volatile long lastKeepAliveTime;
-
-  private volatile long keepAliveTimeout = 10_000;
 
   private volatile boolean isInit = false;
 
@@ -73,7 +75,7 @@ public class BackupManager implements EventHandler {
       logger.warn("Get local ip failed.");
     }
 
-    for (String member : args.getBackupMembers()) {
+    for (String member : parameter.getBackupMembers()) {
       if (!localIp.equals(member)) {
         members.add(member);
       }
@@ -105,7 +107,7 @@ public class BackupManager implements EventHandler {
       } catch (Throwable t) {
         logger.error("Exception in send keep alive message:{}", t.getMessage());
       }
-    }, 1, 1, TimeUnit.SECONDS);
+    }, 1000, keepAliveInterval, TimeUnit.MILLISECONDS);
   }
 
   @Override

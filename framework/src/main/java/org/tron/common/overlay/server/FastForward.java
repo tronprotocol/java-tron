@@ -20,6 +20,7 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.HelloMessage;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
@@ -28,6 +29,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;
+import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "net")
 @Component
@@ -46,11 +48,11 @@ public class FastForward {
 
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-  private Args args = Args.getInstance();
-  private List<Node> fastForwardNodes = args.getFastForwardNodes();
+  private CommonParameter parameter = Args.getInstance();
+  private List<Node> fastForwardNodes = parameter.getFastForwardNodes();
   private ByteString witnessAddress = ByteString
-      .copyFrom(args.getLocalWitnesses().getWitnessAccountAddress());
-  private int keySize = args.getLocalWitnesses().getPrivateKeys().size();
+      .copyFrom(Args.getLocalWitnesses().getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine()));
+  private int keySize = Args.getLocalWitnesses().getPrivateKeys().size();
 
   public void init() {
     manager = ctx.getBean(Manager.class);
@@ -59,9 +61,9 @@ public class FastForward {
     backupManager = ctx.getBean(BackupManager.class);
 
     logger.info("Fast forward config, isWitness: {}, keySize: {}, fastForwardNodes: {}",
-        args.isWitness(), keySize, fastForwardNodes.size());
+        parameter.isWitness(), keySize, fastForwardNodes.size());
 
-    if (!args.isWitness() || keySize == 0 || fastForwardNodes.isEmpty()) {
+    if (!parameter.isWitness() || keySize == 0 || fastForwardNodes.isEmpty()) {
       return;
     }
 
@@ -85,8 +87,9 @@ public class FastForward {
         InetAddress address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
         if (address.equals(channel.getInetAddress())) {
           SignInterface cryptoEngine = SignUtils
-              .fromPrivate(ByteArray.fromHexString(args.getLocalWitnesses().getPrivateKey()),
+              .fromPrivate(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()),
                   Args.getInstance().isECKeyCryptoEngine());
+
           Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(message.getTimestamp()));
           ByteString sig = ByteString.copyFrom(cryptoEngine.signHash(hash.getBytes()).getBytes());
           message.setHelloMessage(message.getHelloMessage().toBuilder()
@@ -97,7 +100,7 @@ public class FastForward {
   }
 
   public boolean checkHelloMessage(HelloMessage message, Channel channel) {
-    if (!args.isFastForward()
+    if (!parameter.isFastForward()
             || channelManager.getTrustNodes().getIfPresent(channel.getInetAddress()) != null) {
       return true;
     }
@@ -138,7 +141,7 @@ public class FastForward {
   }
 
   private boolean isActiveWitness() {
-    return args.isWitness()
+    return parameter.isWitness()
             && keySize > 0
             && fastForwardNodes.size() > 0
             && witnessScheduleStore.getActiveWitnesses().contains(witnessAddress)
