@@ -1,7 +1,7 @@
 package org.tron.core.db;
 
 import static java.lang.Long.max;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DBConfig;

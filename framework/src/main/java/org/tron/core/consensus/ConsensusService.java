@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param;
@@ -29,18 +30,18 @@ public class ConsensusService {
   @Autowired
   private BlockHandleImpl blockHandle;
 
-  private Args args = Args.getInstance();
+  private CommonParameter parameter = Args.getInstance();
 
   /**.
    *
    */
   public void start() {
     Param param = new Param();
-    param.setEnable(args.isWitness());
-    param.setGenesisBlock(args.getGenesisBlock());
-    param.setMinParticipationRate(args.getMinParticipationRate());
+    param.setEnable(parameter.isWitness());
+    param.setGenesisBlock(parameter.getGenesisBlock());
+    param.setMinParticipationRate(parameter.getMinParticipationRate());
     param.setBlockProduceTimeoutPercent(Args.getInstance().getBlockProducedTimeOut());
-    param.setNeedSyncCheck(args.isNeedSyncCheck());
+    param.setNeedSyncCheck(parameter.isNeedSyncCheck());
     List<Miner> miners = new ArrayList<>();
     byte[] privateKey = ByteArray
         .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey());

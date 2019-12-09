@@ -8,10 +8,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.overlay.discover.table.KademliaOptions;
+import org.tron.common.option.KademliaOptions;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-import org.tron.core.config.args.Args;
 
 public class Node implements Serializable {
 
@@ -33,9 +32,9 @@ public class Node implements Serializable {
 
   private boolean isFakeNodeId = false;
 
-  public Node(String encodeURL) {
+  public Node(String encodeURI) {
     try {
-      URI uri = new URI(encodeURL);
+      URI uri = new URI(encodeURI);
       if (!"encode".equals(uri.getScheme())) {
         throw new RuntimeException("expecting URL in the format encode://PUBKEY@HOST:PORT");
       }
@@ -104,8 +103,8 @@ public class Node implements Serializable {
         .append(port).toString();
   }
 
-  public boolean isConnectible() {
-    return port == bindPort && p2pVersion == Args.getInstance().getNodeP2pVersion();
+  public boolean isConnectible(int argsP2pversion) {
+    return port == bindPort && p2pVersion == argsP2pversion;
   }
 
   public String getHexId() {

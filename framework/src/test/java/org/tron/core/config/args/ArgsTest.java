@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.args.GenesisBlock;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 
@@ -37,12 +39,21 @@ public class ArgsTest {
   public void get() {
     Args.setParam(new String[]{"-w"}, Constant.TEST_CONF);
 
-    Args args = Args.getInstance();
-    Assert.assertEquals("database", args.getStorage().getDbDirectory());
+    CommonParameter parameter = Args.getInstance();
 
-    Assert.assertEquals(11, args.getSeedNode().getIpList().size());
+    Args.logConfig();
 
-    GenesisBlock genesisBlock = args.getGenesisBlock();
+    Assert.assertEquals(0, parameter.getBackupPriority());
+
+    Assert.assertEquals(3000, parameter.getKeepAliveInterval());
+
+    Assert.assertEquals(10001, parameter.getBackupPort());
+
+    Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
+
+    Assert.assertEquals(11, parameter.getSeedNode().getIpList().size());
+
+    GenesisBlock genesisBlock = parameter.getGenesisBlock();
 
     Assert.assertEquals(4, genesisBlock.getAssets().size());
 
@@ -55,34 +66,35 @@ public class ArgsTest {
 
     Assert.assertEquals(
         Lists.newArrayList("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
-        args.getLocalWitnesses().getPrivateKeys());
+        parameter.getLocalWitnesses().getPrivateKeys());
 
-    Assert.assertTrue(args.isNodeDiscoveryEnable());
-    Assert.assertTrue(args.isNodeDiscoveryPersist());
-    Assert.assertEquals("127.0.0.1", args.getNodeDiscoveryBindIp());
-    Assert.assertEquals("46.168.1.1", args.getNodeExternalIp());
-    Assert.assertEquals(18888, args.getNodeListenPort());
-    Assert.assertEquals(2000, args.getNodeConnectionTimeout());
-    Assert.assertEquals(0, args.getActiveNodes().size());
-    Assert.assertEquals(30, args.getNodeMaxActiveNodes());
-    Assert.assertEquals(43, args.getNodeP2pVersion());
+    Assert.assertTrue(parameter.isNodeDiscoveryEnable());
+    Assert.assertTrue(parameter.isNodeDiscoveryPersist());
+    Assert.assertEquals("127.0.0.1", parameter.getNodeDiscoveryBindIp());
+    Assert.assertEquals("46.168.1.1", parameter.getNodeExternalIp());
+    Assert.assertEquals(18888, parameter.getNodeListenPort());
+    Assert.assertEquals(2000, parameter.getNodeConnectionTimeout());
+    Assert.assertEquals(0, parameter.getActiveNodes().size());
+    Assert.assertEquals(30, parameter.getNodeMaxActiveNodes());
+    Assert.assertEquals(43, parameter.getNodeP2pVersion());
     //Assert.assertEquals(30, args.getSyncNodeCount());
 
     // gRPC network configs checking
-    Assert.assertEquals(50051, args.getRpcPort());
-    Assert.assertEquals(Integer.MAX_VALUE, args.getMaxConcurrentCallsPerConnection());
+    Assert.assertEquals(50051, parameter.getRpcPort());
+    Assert.assertEquals(Integer.MAX_VALUE, parameter.getMaxConcurrentCallsPerConnection());
     Assert
-        .assertEquals(NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW, args.getFlowControlWindow());
-    Assert.assertEquals(60000L, args.getMaxConnectionIdleInMillis());
-    Assert.assertEquals(Long.MAX_VALUE, args.getMaxConnectionAgeInMillis());
-    Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, args.getMaxMessageSize());
-    Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, args.getMaxHeaderListSize());
-    Assert.assertEquals(1L, args.getAllowCreationOfContracts());
+        .assertEquals(NettyServerBuilder
+            .DEFAULT_FLOW_CONTROL_WINDOW, parameter.getFlowControlWindow());
+    Assert.assertEquals(60000L, parameter.getMaxConnectionIdleInMillis());
+    Assert.assertEquals(Long.MAX_VALUE, parameter.getMaxConnectionAgeInMillis());
+    Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, parameter.getMaxMessageSize());
+    Assert.assertEquals(GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE, parameter.getMaxHeaderListSize());
+    Assert.assertEquals(1L, parameter.getAllowCreationOfContracts());
 
     Assert.assertEquals("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62",
-        args.getLocalWitnesses().getPrivateKey());
+        parameter.getLocalWitnesses().getPrivateKey());
     Assert.assertEquals("a0299f3db80a24b20a254b89ce639d59132f157f13",
-        ByteArray.toHexString(args.getLocalWitnesses().getWitnessAccountAddress()));
+        ByteArray.toHexString(parameter.getLocalWitnesses().getWitnessAccountAddress()));
 
 
   }

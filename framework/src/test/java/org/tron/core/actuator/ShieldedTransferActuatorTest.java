@@ -92,7 +92,7 @@ public class ShieldedTransferActuatorTest {
    */
   @BeforeClass
   public static void init() throws ZksnarkException {
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     wallet = context.getBean(Wallet.class);
     dbManager = context.getBean(Manager.class);
     librustzcashInitZksnarkParams();
@@ -122,7 +122,7 @@ public class ShieldedTransferActuatorTest {
   @Before
   public void createCapsule() {
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
-    Args.initDBConfig(Args.getInstance());
+    Args.initConfig(Args.getInstance());
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
 
@@ -986,7 +986,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 

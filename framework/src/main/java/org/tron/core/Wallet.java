@@ -18,10 +18,14 @@
 
 package org.tron.core;
 
+<<<<<<< HEAD
 import static org.tron.common.utils.Commons.ADDRESS_SIZE;
+=======
+import static org.tron.common.utils.DecodeUtil.addressValid;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+>>>>>>> upstream/develop
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
@@ -196,6 +200,7 @@ public class Wallet {
 
   private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
+  private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   @Getter
   private final ECKey ecKey;
@@ -289,6 +294,7 @@ public class Wallet {
 
   public static void setAddressPreFixByte(byte addressPreFixByte) {
     DecodeUtil.addressPreFixByte = addressPreFixByte;
+<<<<<<< HEAD
   }
 
   public static boolean addressValid(byte[] address) {
@@ -310,6 +316,8 @@ public class Wallet {
     }
     //Other rule;
     return true;
+=======
+>>>>>>> upstream/develop
   }
 
   public static String encode58Check(byte[] input) {
@@ -350,7 +358,7 @@ public class Wallet {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
   }
 
@@ -360,7 +368,7 @@ public class Wallet {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
   }
 
@@ -371,13 +379,13 @@ public class Wallet {
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
     System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
   }
 
   // for `CREATE2`
   public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
     byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return Hash.sha3omit12(mergedData);
+    return DecodeUtil.sha3omit12(mergedData);
   }
 
   public static byte[] tryDecodeFromBase58Check(String address) {
@@ -552,11 +560,11 @@ public class Wallet {
   /**
    * Broadcast a transaction.
    */
-  public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
+  public GrpcAPI.Return broadcastTransaction(Transaction signedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
-    TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+    TransactionCapsule trx = new TransactionCapsule(signedTransaction);
     try {
-      Message message = new TransactionMessage(signaturedTransaction.toByteArray());
+      Message message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger
@@ -601,47 +609,47 @@ public class Wallet {
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
           .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("AccountResourceInsufficient error"))
           .build();
     } catch (DupTransactionException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("dup transaction"))
           .build();
     } catch (TaposException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
           .setMessage(ByteString.copyFromUtf8("Tapos check error"))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(BROADCAST_TRANS_FAILED, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8("other error : " + e.getMessage()))
           .build();
@@ -687,7 +695,7 @@ public class Wallet {
       }
       if (permissionId != 0) {
         if (permission.getType() != PermissionType.Active) {
-          throw new PermissionException("Permission type is error");
+          throw new PermissionException("Permission type is wrong!");
         }
         //check operations
         if (!checkPermissionOprations(permission, contract)) {
@@ -1110,9 +1118,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
-        .forEach(issueCapsule -> {
-          builder.addAssetIssue(issueCapsule.getInstance());
-        });
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
   }
@@ -1250,9 +1256,7 @@ public class Wallet {
           .stream()
           .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
           .forEach(
-              issueCapsule -> {
-                builder.addAssetIssue(issueCapsule.getInstance());
-              });
+              issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
       // check count
       if (builder.getAssetIssueCount() > 1) {
@@ -1274,7 +1278,7 @@ public class Wallet {
           // check count
           if (builder.getAssetIssueCount() > 1) {
             throw new NonUniqueObjectException(
-                "To get more than one asset, please use getAssetIssuebyid syntax");
+                "To get more than one asset, please use getAssetIssueById syntax");
           }
         }
       }
@@ -1298,9 +1302,7 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
         .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
-        .forEach(issueCapsule -> {
-          builder.addAssetIssue(issueCapsule.getInstance());
-        });
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
   }
@@ -1474,7 +1476,7 @@ public class Wallet {
     //Get the tree in blockNum-1 position
     byte[] treeRoot = dbManager.getMerkleTreeIndexStore().get(blockNumber - 1);
     if (treeRoot == null) {
-      throw new RuntimeException("treeRoot is null,blockNumber:" + (blockNumber - 1));
+      throw new RuntimeException("treeRoot is null, blockNumber:" + (blockNumber - 1));
     }
 
     IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
@@ -1786,7 +1788,7 @@ public class Wallet {
   public TransactionCapsule createShieldedTransaction(PrivateParameters request)
       throws ContractValidateException, RuntimeException, ZksnarkException, BadItemException {
     if (!getFullNodeAllowShieldedTransaction()) {
-      throw new ZksnarkException("ShieldedTransactionApi is not allowed");
+      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
@@ -1987,7 +1989,7 @@ public class Wallet {
     try {
       transactionCapsule = builder.buildWithoutAsk();
     } catch (ZksnarkException e) {
-      logger.error("createShieldedTransaction except, error is " + e.toString());
+      logger.error("createShieldedTransaction exception, error is " + e.toString());
       throw new ZksnarkException(e.toString());
     }
     return transactionCapsule;
@@ -2247,7 +2249,7 @@ public class Wallet {
     }
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     byte[] transactionHash = TransactionCapsule
-        .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
+        .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(transactionHash)).build();
   }
 
@@ -2353,14 +2355,6 @@ public class Wallet {
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
         StoreFactory.getInstance(), true,
         false);
-    /*VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
-    VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
-    VMConfig.initAllowTvmTransferTrc10(
-        dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
-    VMConfig.initAllowTvmConstantinople(
-        dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
-    VMConfig
-        .initAllowTvmSolidity059(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());*/
     VMActuator vmActuator = new VMActuator(true);
 
     vmActuator.validate(context);
@@ -2369,7 +2363,7 @@ public class Wallet {
     ProgramResult result = context.getProgramResult();
     if (result.getException() != null) {
       RuntimeException e = result.getException();
-      logger.warn("Constant call has error {}", e.getMessage());
+      logger.warn("Constant call has an error {}", e.getMessage());
       throw e;
     }
 

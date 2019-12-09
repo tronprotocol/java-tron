@@ -23,7 +23,6 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -55,7 +54,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   private Block block;
   private List<TransactionCapsule> transactions = new ArrayList<>();
-  private StringBuffer toStringBuff = new StringBuffer();
+  private StringBuilder toStringBuff = new StringBuilder();
 
   public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
     // blockheader raw
@@ -140,7 +139,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public void sign(byte[] privateKey) {
-    // TODO private_key == null
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
@@ -191,10 +189,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       return Sha256Hash.ZERO_HASH;
     }
 
-    Vector<Sha256Hash> ids = transactionsList.stream()
+    ArrayList<Sha256Hash> ids = transactionsList.stream()
         .map(TransactionCapsule::new)
         .map(TransactionCapsule::getMerkleHash)
-        .collect(Collectors.toCollection(Vector::new));
+        .collect(Collectors.toCollection(ArrayList::new));
 
     return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
   }

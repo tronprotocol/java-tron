@@ -2,7 +2,10 @@ package org.tron.core.vm.utils;
 
 
 import org.tron.common.utils.Base58;
+<<<<<<< HEAD
 import org.tron.common.utils.Commons;
+=======
+>>>>>>> upstream/develop
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;

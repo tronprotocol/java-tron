@@ -66,7 +66,7 @@ public class HttpTestZenToken002 {
             sendTokenAmount, foundationZenTokenKey);
     org.junit.Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
 
   }
 
