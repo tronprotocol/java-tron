@@ -1,5 +1,7 @@
 package stest.tron.wallet.common.client.utils;
 
+import static org.tron.common.utils.Hash.sha3omit12;
+
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
@@ -3813,7 +3815,7 @@ public class PublicMethedForMutiSign {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return DecodeUtil.sha3omit12(combined);
+    return sha3omit12(combined);
 
   }
 

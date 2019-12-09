@@ -312,7 +312,7 @@ public class WalletTest {
         .getAddress()));
     logger.info("wallet address = {}", ByteArray.toHexString(wallet1
         .getAddress()));
-    assertEquals("Wallet ECKey should match provided ECKey", wallet1.getEcKey(), ecKey);
+    assertEquals("Wallet ECKey should match provided ECKey", wallet1.getCryptoEngine(), ecKey);
   }
 
   @Test

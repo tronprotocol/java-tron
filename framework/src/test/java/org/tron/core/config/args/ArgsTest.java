@@ -66,7 +66,7 @@ public class ArgsTest {
 
     Assert.assertEquals(
         Lists.newArrayList("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
-        parameter.getLocalWitnesses().getPrivateKeys());
+        Args.getLocalWitnesses().getPrivateKeys());
 
     Assert.assertTrue(parameter.isNodeDiscoveryEnable());
     Assert.assertTrue(parameter.isNodeDiscoveryPersist());
@@ -92,9 +92,10 @@ public class ArgsTest {
     Assert.assertEquals(1L, parameter.getAllowCreationOfContracts());
 
     Assert.assertEquals("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62",
-        parameter.getLocalWitnesses().getPrivateKey());
+        Args.getLocalWitnesses().getPrivateKey());
     Assert.assertEquals("a0299f3db80a24b20a254b89ce639d59132f157f13",
-        ByteArray.toHexString(parameter.getLocalWitnesses().getWitnessAccountAddress()));
+        ByteArray.toHexString(Args.getLocalWitnesses()
+            .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine())));
 
 
   }
