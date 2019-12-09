@@ -102,11 +102,10 @@ jacocoTestReport {
         xml.enabled = true
         html.enabled = true
     }
-
+    executionData = files('../framework/build/jacoco/jacocoTest.exec')
     afterEvaluate {
         classDirectories = files(classDirectories.files.collect {
-            fileTree(dir: it,
-                    exclude: ["io/reactivex/tck/**"])
+            fileTree(dir: it,)
         })
     }
 }

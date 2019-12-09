@@ -103,14 +103,15 @@ public class NodeTableTest {
   }
 
   @Test
-  public void addDupNodeTest() {
+  public void addDupNodeTest() throws Exception {
     Node node = new Node(ids.get(0), ips[0], 18888, 18888);
     nodeTable.addNode(node);
     long firstTouchTime = nodeTable.getAllNodes().get(0).getModified();
+    TimeUnit.MILLISECONDS.sleep(20);
     nodeTable.addNode(node);
-    Assert.assertEquals(1, nodeTable.getNodesCount());
     long lastTouchTime = nodeTable.getAllNodes().get(0).getModified();
     Assert.assertTrue(lastTouchTime > firstTouchTime);
+    Assert.assertEquals(1, nodeTable.getNodesCount());
   }
 
   @Test
