@@ -2,7 +2,7 @@ package org.tron.core.capsule;
 
 public class BytesCapsule implements ProtoCapsule {
 
-  byte[] bytes;
+  private byte[] bytes;
 
   public BytesCapsule(byte[] bytes) {
     this.bytes = bytes;

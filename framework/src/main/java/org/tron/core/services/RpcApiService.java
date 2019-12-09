@@ -76,6 +76,7 @@ import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -147,6 +148,7 @@ public class RpcApiService implements Service {
 
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
+  private static final String EXCEPTION_CAUGHT = "exception caught";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
   private int port = Args.getInstance().getRpcPort();
@@ -174,23 +176,23 @@ public class RpcApiService implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter args) {
   }
 
   @Override
   public void start() {
     try {
       NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port).addService(databaseApi);
-      Args args = Args.getInstance();
+      CommonParameter parameter = Args.getInstance();
 
-      if (args.getRpcThreadNum() > 0) {
+      if (parameter.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
-            .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
+            .executor(Executors.newFixedThreadPool(parameter.getRpcThreadNum()));
       }
 
-      if (args.isSolidityNode()) {
+      if (parameter.isSolidityNode()) {
         serverBuilder = serverBuilder.addService(walletSolidityApi);
-        if (args.isWalletExtensionApi()) {
+        if (parameter.isWalletExtensionApi()) {
           serverBuilder = serverBuilder.addService(new WalletExtensionApi());
         }
       } else {
@@ -199,12 +201,12 @@ public class RpcApiService implements Service {
 
       // Set configs from config.conf or default value
       serverBuilder
-          .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
-          .flowControlWindow(args.getFlowControlWindow())
-          .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-          .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(args.getMaxMessageSize())
-          .maxHeaderListSize(args.getMaxHeaderListSize());
+          .maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
+          .flowControlWindow(parameter.getFlowControlWindow())
+          .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
+          .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
+          .maxMessageSize(parameter.getMaxMessageSize())
+          .maxHeaderListSize(parameter.getMaxHeaderListSize());
 
       // add a rate limiter interceptor
       serverBuilder.intercept(rateLimiterInterceptor);
@@ -217,12 +219,12 @@ public class RpcApiService implements Service {
       logger.debug(e.getMessage(), e);
     }
 
-    logger.info("RpcApiService started, listening on " + port);
+    logger.info("RpcApiService has started, listening on " + port);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       System.err.println("*** shutting down gRPC server since JVM is shutting down");
       //server.this.stop();
-      System.err.println("*** server shut down");
+      System.err.println("*** server is shutdown");
     }));
   }
 
@@ -814,7 +816,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
       }
       trxExtBuilder.setResult(retBuilder);
       responseObserver.onNext(trxExtBuilder.build());
@@ -843,7 +845,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
       }
       trxExtBuilder.setResult(retBuilder);
       responseObserver.onNext(trxExtBuilder.build());
@@ -863,7 +865,7 @@ public class RpcApiService implements Service {
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
       }
       trxExtBuilder.setResult(retBuilder);
       responseObserver.onNext(trxExtBuilder.build());
@@ -1068,7 +1070,7 @@ public class RpcApiService implements Service {
 
         Preconditions.checkNotNull(witness, "witness[" + readableWitnessAddress + "] not exists");
         Preconditions.checkArgument(vote.getVoteCount() <= 0,
-            "VoteAddress[" + readableWitnessAddress + "],VotesCount[" + vote
+            "VoteAddress[" + readableWitnessAddress + "], VotesCount[" + vote
                 .getVoteCount() + "] <= 0");
       });
     }

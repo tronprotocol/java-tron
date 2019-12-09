@@ -1,5 +1,7 @@
 package org.tron.common.logsfilter.capsule;
 
+import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
+
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +16,7 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
 
   @Getter
   @Setter
-  ContractEventTrigger contractEventTrigger;
+  private ContractEventTrigger contractEventTrigger;
   @Getter
   @Setter
   private List<byte[]> topicList;
@@ -55,7 +57,7 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     contractEventTrigger
         .setDataMap(ContractEventParserAbi.parseEventData(data, topicList, abiEntry));
 
-    if (FilterQuery.matchFilter(contractEventTrigger)) {
+    if (matchFilter(contractEventTrigger)) {
       EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
     }
   }

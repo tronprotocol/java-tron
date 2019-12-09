@@ -34,16 +34,6 @@ public class GetNodeInfoServlet extends RateLimiterServlet {
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    try {
-      NodeInfo nodeInfo = nodeInfoService.getNodeInfo();
-      response.getWriter().println(JSON.toJSONString(nodeInfo));
-    } catch (Exception e) {
-      logger.error("", e);
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
-    }
+    doGet(request, response);
   }
 }

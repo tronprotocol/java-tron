@@ -15,6 +15,7 @@ import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.store.TransactionRetStore;
 import org.tron.protos.Protocol.Transaction;
 
 public class TransactionRetStoreTest {

@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.args.GenesisBlock;
 import org.tron.common.utils.ByteArray;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.BlockHandle;
@@ -23,7 +24,6 @@ import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.args.GenesisBlock;
 
 @Slf4j(topic = "consensus")
 @Component

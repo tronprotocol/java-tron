@@ -41,6 +41,7 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.core.Wallet;
 import org.tron.core.exception.CancelException;
@@ -3812,7 +3813,7 @@ public class PublicMethedForMutiSign {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
 
   }
 

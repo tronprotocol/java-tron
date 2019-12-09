@@ -1,6 +1,6 @@
 package org.tron.common.logsfilter;
 
-import static org.tron.common.logsfilter.FilterQuery.matchFilter;
+import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 import static org.tron.common.logsfilter.FilterQuery.parseFromBlockNumber;
 import static org.tron.common.logsfilter.FilterQuery.parseToBlockNumber;
 

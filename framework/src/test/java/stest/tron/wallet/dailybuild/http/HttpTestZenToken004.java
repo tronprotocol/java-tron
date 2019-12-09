@@ -71,7 +71,7 @@ public class HttpTestZenToken004 {
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
   }
 
   @Test(enabled = true, description = "Shield to two shield transaction by http")
