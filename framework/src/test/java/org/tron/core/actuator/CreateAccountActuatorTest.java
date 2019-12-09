@@ -1,8 +1,12 @@
 package org.tron.core.actuator;
 
+import static org.testng.Assert.fail;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+
 import java.io.File;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -25,6 +29,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 
 @Slf4j
 public class CreateAccountActuatorTest {
@@ -33,19 +38,22 @@ public class CreateAccountActuatorTest {
   private static final String OWNER_ADDRESS_FIRST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
   private static final String OWNER_ADDRESS_SECOND;
+  private static final String INVALID_ACCOUNT_ADDRESS;
   private static TronApplicationContext context;
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    INVALID_ACCOUNT_ADDRESS = Wallet.getAddressPreFixString() + "12344500882809695a8a687866";
   }
 
   /**
+   * 548794500882809695a8a687866e76d4271a1abc
    * Init data.
    */
   @BeforeClass
@@ -134,6 +142,7 @@ public class CreateAccountActuatorTest {
       actuator.execute(ret);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Account has existed", e.getMessage());
       AccountCapsule accountCapsule =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
       Assert.assertNotNull(accountCapsule);
@@ -144,4 +153,123 @@ public class CreateAccountActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+  /**
+   * create a account will take some fee, which change account balance after creatation
+   */
+  @Test
+  public void balanceAfterCreate() {
+    CreateAccountActuator actuator = new CreateAccountActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    long currentBalance = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)).getBalance();
+    long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      Assert.assertEquals(currentBalance, dbManager.getAccountStore()
+          .get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)).getBalance() - actuator.calcFee());
+      Assert.assertEquals(blackholeBalance, dbManager.getAccountStore()
+          .getBlackhole().getBalance() + actuator.calcFee());
+
+    } catch (ContractValidateException e) {
+      logger.info(e.getMessage());
+      Assert.assertFalse(e instanceof ContractValidateException);
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+
+  /**
+   * not have enough fee to create a account
+   */
+  @Test
+  public void inSufficientFeeAccount() {
+    CreateAccountActuator actuator = new CreateAccountActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    AccountCapsule owner = dbManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
+    owner.setBalance(-100);
+    dbManager.getAccountStore().put(owner.createDbKey(), owner);
+
+    processAndCheckInvalid(actuator, ret, "Validate CreateAccountActuator error, insufficient fee.",
+        "Validate CreateAccountActuator error, insufficient fee.");
+  }
+
+  /**
+   * Invalid account address
+   */
+  @Test
+  public void invalidAccount() {
+    CreateAccountActuator actuator = new CreateAccountActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_SECOND, INVALID_ACCOUNT_ADDRESS));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    processAndCheckInvalid(actuator, ret, "Invalid account address", "Invalid account address");
+  }
+
+
+  @Test
+  public void nullContract() {
+    CreateAccountActuator actuator = new CreateAccountActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void invalidContractType() {
+    CreateAccountActuator actuator = new CreateAccountActuator();
+    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(invalidContractTypes);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "contract type error",
+        "contract type error,expected type [AccountCreateContract],real type["
+            + invalidContractTypes.getClass() + "]");
+  }
+
+  @Test
+  public void nullTransationResult() {
+    CreateAccountActuator actuator = new CreateAccountActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
+    TransactionResultCapsule ret = null;
+    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+        "TransactionResultCapsule is null");
+  }
+
+
+  private void processAndCheckInvalid(CreateAccountActuator actuator, TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+
+      fail(failMsg);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e instanceof RuntimeException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    }
+  }
+
+
 }
