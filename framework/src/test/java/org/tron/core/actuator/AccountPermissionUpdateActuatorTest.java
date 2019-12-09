@@ -210,7 +210,7 @@ public class AccountPermissionUpdateActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     } catch (RuntimeException e) {
       Assert.assertTrue(e instanceof RuntimeException);
-      // Assert.assertEquals(expectedMsg, e.getMessage());
+      Assert.assertEquals(expectedMsg, e.getMessage());
     }
   }
 

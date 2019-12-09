@@ -1389,7 +1389,7 @@ public class AssetIssueActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "Start time should be not empty",
-        "Start time should be not empty", "false");
+        "Start time should be not empty");
 
     // empty end time will throw exception
     contract = Any.pack(
@@ -1405,7 +1405,7 @@ public class AssetIssueActuatorTest {
     ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "End time should be not empty",
-        "End time should be not empty", "false");
+        "End time should be not empty");
 
     // startTime == now, throw exception
     contract = Any.pack(
@@ -1422,7 +1422,7 @@ public class AssetIssueActuatorTest {
     ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "Start time should be greater than HeadBlockTime",
-        "Start time should be greater than HeadBlockTime", "false");
+        "Start time should be greater than HeadBlockTime");
 
     // startTime < now, throw exception
     contract = Any.pack(
@@ -1439,7 +1439,7 @@ public class AssetIssueActuatorTest {
     ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "Start time should be greater than HeadBlockTime",
-        "Start time should be greater than HeadBlockTime", "false");
+        "Start time should be greater than HeadBlockTime");
 
     // endTime == startTime, throw exception
     contract = Any.pack(
@@ -1456,7 +1456,7 @@ public class AssetIssueActuatorTest {
     ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "End time should be greater than start time",
-        "End time should be greater than start time", "false");
+        "End time should be greater than start time");
 
     // endTime < startTime, throw exception
     contract = Any.pack(
@@ -1473,7 +1473,7 @@ public class AssetIssueActuatorTest {
     ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "End time should be greater than start time",
-        "End time should be greater than start time", "false");
+        "End time should be greater than start time");
 
     // right issue, will not throw exception
     contract = Any.pack(
@@ -1612,7 +1612,7 @@ public class AssetIssueActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "Frozen supply list length is too long",
-        "Frozen supply list length is too long", "false");
+        "Frozen supply list length is too long");
 
   }
 
@@ -1636,7 +1636,7 @@ public class AssetIssueActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "Frozen supply cannot exceed total supply",
-        "Frozen supply cannot exceed total supply", "false");
+        "Frozen supply cannot exceed total supply");
 
   }
 
@@ -1661,7 +1661,7 @@ public class AssetIssueActuatorTest {
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
-    processAndCheckInvalid(actuator, ret, "Invalid ownerAddress", "Invalid ownerAddress", "false");
+    processAndCheckInvalid(actuator, ret, "Invalid ownerAddress", "Invalid ownerAddress");
 
   }
 
@@ -1692,8 +1692,7 @@ public class AssetIssueActuatorTest {
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
 
-    processAndCheckInvalid(actuator, ret, "precision cannot exceed 6", "precision cannot exceed 6",
-        "false");
+    processAndCheckInvalid(actuator, ret, "precision cannot exceed 6", "precision cannot exceed 6");
 
   }
 
@@ -1726,7 +1725,7 @@ public class AssetIssueActuatorTest {
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
 
     processAndCheckInvalid(actuator, ret, "Invalid abbreviation for token",
-        "Invalid abbreviation for token", "false");
+        "Invalid abbreviation for token");
 
   }
 
@@ -1763,7 +1762,7 @@ public class AssetIssueActuatorTest {
     Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     // SameTokenName not active, same assert name, should failure
 
-    processAndCheckInvalid(actuator, ret, "Token exists", "Token exists", "false");
+    processAndCheckInvalid(actuator, ret, "Token exists", "Token exists");
 
     // SameTokenName active, same assert name,should success
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
@@ -1821,8 +1820,7 @@ public class AssetIssueActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
     processAndCheckInvalid(actuator, ret, "PublicFreeAssetNetUsage must be 0!",
-        "PublicFreeAssetNetUsage must be 0!",
-        "false");
+        "PublicFreeAssetNetUsage must be 0!");
 
     // Invalid FreeAssetNetLimit
     any = Any.pack(
@@ -1837,8 +1835,7 @@ public class AssetIssueActuatorTest {
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
-    processAndCheckInvalid(actuator, ret, "Invalid FreeAssetNetLimit", "Invalid FreeAssetNetLimit",
-        "false");
+    processAndCheckInvalid(actuator, ret, "Invalid FreeAssetNetLimit", "Invalid FreeAssetNetLimit");
 
     // Invalid PublicFreeAssetNetLimit
     any = Any.pack(
@@ -1854,8 +1851,7 @@ public class AssetIssueActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
     processAndCheckInvalid(actuator, ret, "Invalid PublicFreeAssetNetLimit",
-        "Invalid PublicFreeAssetNetLimit",
-        "false");
+        "Invalid PublicFreeAssetNetLimit");
 
   }
 
@@ -1891,7 +1887,7 @@ public class AssetIssueActuatorTest {
     dbManager.getAccountStore().put(owner.createDbKey(), owner);
 
     processAndCheckInvalid(actuator, ret, "No enough balance for fee!",
-        "No enough balance for fee!", "false");
+        "No enough balance for fee!");
 
     // Account not exists
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -1907,7 +1903,7 @@ public class AssetIssueActuatorTest {
     actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(any);
 
-    processAndCheckInvalid(actuator, ret, "Account not exists", "Account not exists", "false");
+    processAndCheckInvalid(actuator, ret, "Account not exists", "Account not exists");
 
   }
 
@@ -1920,8 +1916,7 @@ public class AssetIssueActuatorTest {
     actuator.setChainBaseManager(null).setAny(getContract());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     processAndCheckInvalid(actuator, ret, "No account store or dynamic store!",
-        "No account store or dynamic store!",
-        null);
+        "No account store or dynamic store!");
   }
 
   /**
@@ -1932,7 +1927,7 @@ public class AssetIssueActuatorTest {
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(null);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!", null);
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
   }
 
   /**
@@ -1948,7 +1943,7 @@ public class AssetIssueActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     processAndCheckInvalid(actuator, ret, "contract type error",
         "contract type error,expected type [AssetIssueContract],real type[" + InvalidContract
-            .getClass() + "]", null);
+            .getClass() + "]");
   }
 
   /**
@@ -1961,20 +1956,17 @@ public class AssetIssueActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract());
     TransactionResultCapsule ret = null;
     processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
-        "TransactionResultCapsule is null", null);
+        "TransactionResultCapsule is null");
   }
 
   private void processAndCheckInvalid(AssetIssueActuator actuator, TransactionResultCapsule ret,
       String failMsg,
-      String expectedMsg, String expectedBool) {
+      String expectedMsg) {
     try {
       actuator.validate();
       actuator.execute(ret);
+
       fail(failMsg);
-      if (expectedBool != null) {
-        boolean assetBool = expectedBool.equals("true") ? true : false;
-        Assert.assertTrue(assetBool);
-      }
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(expectedMsg, e.getMessage());
