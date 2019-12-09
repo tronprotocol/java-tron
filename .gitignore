@@ -418,34 +418,3 @@ framework/receive_description_test/zkProof/LOG
 framework/receive_description_test/zkProof/LOG.old
 framework/receive_description_test/zkProof/MANIFEST-000004
 
-#visual studio IDE and some build class file
-actuator/.classpath
-actuator/.project
-actuator/.settings/
-actuator/bin/
-chainbase/.classpath
-chainbase/.project
-chainbase/.settings/
-chainbase/bin/
-common/.classpath
-common/.project
-common/.settings/
-common/bin/
-consensus/.classpath
-consensus/.project
-consensus/.settings/
-consensus/bin/
-example/.classpath
-example/.project
-example/.settings/
-example/actuator-example/.classpath
-example/actuator-example/.project
-example/actuator-example/.settings/
-example/actuator-example/bin/
-framework/.classpath
-framework/.project
-framework/.settings/
-framework/bin/
-protocol/.classpath
-protocol/.project
-protocol/.settings/
