@@ -303,7 +303,8 @@ public class Wallet {
       return false;
     }
     if (address[0] != DecodeUtil.addressPreFixByte) {
-      logger.warn("Warning: Address requires a prefix with " + DecodeUtil.addressPreFixByte + " but "
+      logger.warn("Warning: Address requires a prefix with "
+              + DecodeUtil.addressPreFixByte + " but "
           + address[0] + " !!");
       return false;
     }

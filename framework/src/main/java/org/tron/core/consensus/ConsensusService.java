@@ -31,6 +31,9 @@ public class ConsensusService {
 
   private Args args = Args.getInstance();
 
+  /**.
+   *
+   */
   public void start() {
     Param param = new Param();
     param.setEnable(args.isWitness());

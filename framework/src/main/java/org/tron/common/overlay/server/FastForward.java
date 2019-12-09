@@ -50,6 +50,9 @@ public class FastForward {
       .copyFrom(args.getLocalWitnesses().getWitnessAccountAddress());
   private int keySize = args.getLocalWitnesses().getPrivateKeys().size();
 
+  /**.
+   *
+   */
   public void init() {
     manager = ctx.getBean(Manager.class);
     channelManager = ctx.getBean(ChannelManager.class);
@@ -77,6 +80,9 @@ public class FastForward {
     }, 30, 100, TimeUnit.SECONDS);
   }
 
+  /**.
+   *
+   */
   public void fillHelloMessage(HelloMessage message, Channel channel) {
     if (isActiveWitness()) {
       fastForwardNodes.forEach(node -> {
@@ -94,6 +100,8 @@ public class FastForward {
     }
   }
 
+  /**.
+   */
   public boolean checkHelloMessage(HelloMessage message, Channel channel) {
     if (!args.isFastForward()
         || channelManager.getTrustNodes().getIfPresent(channel.getInetAddress()) != null) {
@@ -102,7 +110,8 @@ public class FastForward {
 
     Protocol.HelloMessage msg = message.getHelloMessage();
 
-    // todo, just to solve the compatibility problem
+    //TODO
+    //just to solve the compatibility problem
     if (msg.getAddress() == null || msg.getAddress().isEmpty()) {
       logger.info("HelloMessage from {}, address is empty.", channel.getInetAddress());
       return true;

@@ -20,6 +20,9 @@ public class KeystoreFactory {
 
   private static final String FilePath = "Wallet";
 
+  /**.
+   *
+   */
   public static void main(String[] args) {
     Args.setParam(args, Constant.TESTNET_CONF);
     KeystoreFactory cli = new KeystoreFactory();

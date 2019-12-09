@@ -1749,6 +1749,9 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    /**.
+     *
+     */
     public void getDelegatedResourceAccountIndex(BytesMessage request,
         StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
       responseObserver
