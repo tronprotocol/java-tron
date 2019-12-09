@@ -47,6 +47,9 @@ subprojects {
         compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
         compile "org.apache.commons:commons-collections4:4.0"
         compile group: 'joda-time', name: 'joda-time', version: '2.3'
+        // https://mvnrepository.com/artifact/org.mock-server/mockserver-netty
+        testCompile group: 'org.mock-server', name: 'mockserver-netty', version: '5.8.0'
+
 
     }
 
