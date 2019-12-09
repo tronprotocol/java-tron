@@ -24,7 +24,7 @@ public class GetBrokerageServlet extends RateLimiterServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       int value = 0;
-      byte[] address = Util.getAddress(request);
+      byte[] address = getAddress(request);
       long cycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
       if (address != null) {
         value = manager.getDelegationStore().getBrokerage(cycle, address);
@@ -39,4 +39,24 @@ public class GetBrokerageServlet extends RateLimiterServlet {
     doGet(request, response);
   }
 
+  private byte[] getAddress(HttpServletRequest request) throws Exception {
+    byte[] address = null;
+    String addressParam = "address";
+    String addressStr = request.getParameter(addressParam);
+    if (StringUtils.isBlank(addressStr)) {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
+      JSONObject jsonObject = JSONObject.parseObject(input);
+      addressStr = jsonObject.getString(addressParam);
+    }
+    if (StringUtils.isNotBlank(addressStr)) {
+      if (StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
+        address = Hex.decode(addressStr);
+      } else {
+        address = Wallet.decodeFromBase58Check(addressStr);
+      }
+    }
+    return address;
+  }
 }
