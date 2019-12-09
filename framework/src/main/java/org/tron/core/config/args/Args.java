@@ -178,6 +178,9 @@ public class Args extends CommonParameter {
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
     }
 
+    PARAMETER.cryptoEngine = config.hasPath(Constant.CRYPTO_ENGINE) ? config
+        .getString(Constant.CRYPTO_ENGINE) : Constant.ECKey_ENGINE;
+
     if (StringUtils.isNoneBlank(PARAMETER.privateKey)) {
       localWitnesses = (new LocalWitnesses(PARAMETER.privateKey));
       if (StringUtils.isNoneBlank(PARAMETER.witnessAddress)) {
@@ -639,9 +642,6 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.ACTUATOR_WHITELIST)
             ? new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
             : Collections.emptySet();
-
-    PARAMETER.cryptoEngine = config.hasPath(Constant.CRYPTO_ENGINE) ? config
-        .getString(Constant.CRYPTO_ENGINE) : Constant.CRYPTO_ENGINE;
 
     logConfig();
     initConfig(PARAMETER);
