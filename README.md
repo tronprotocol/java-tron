@@ -68,7 +68,10 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 
 # Deploy
 * [Build](./build.md) Please build java-tron after cloning the project  
-* [Run](./run.md) Run java-tron
+* [Run](./run.md) Run java-tron  
+
+# Deployment
+[https://tronprotocol.github.io/documentation-en/developers/deployment/](https://tronprotocol.github.io/documentation-en/developers/deployment/)  
 
 # Channel
 [Core Devs Gitter](https://gitter.im/tronprotocol/allcoredev)
