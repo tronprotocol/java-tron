@@ -313,7 +313,7 @@ public class ClearABIContractActuatorTest {
   @Test
   public void nullTransationResult() {
     ClearABIContractActuator actuator = new ClearABIContractActuator();
-    actuator.setChainBaseManager(null)
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
     TransactionResultCapsule ret = null;
     processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
