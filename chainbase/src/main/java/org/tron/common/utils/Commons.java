@@ -19,7 +19,6 @@ import org.tron.core.store.ExchangeV2Store;
 @Slf4j(topic = "Commons")
 public class Commons {
 
-  public static final int ADDRESS_SIZE = 42;
   public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
 
   public static byte[] clone(byte[] value) {

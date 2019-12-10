@@ -27,6 +27,7 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
@@ -97,7 +98,7 @@ public class Util {
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
     JSONArray jsonArray = new JSONArray();
     transactions.stream().forEach(transaction -> jsonArray
-            .add(printTransactionToJSON(transaction, selfType))
+        .add(printTransactionToJSON(transaction, selfType))
     );
     jsonObject.put(TRANSACTION, jsonArray);
 
@@ -108,7 +109,7 @@ public class Util {
       boolean selfType) {
     JSONArray transactions = new JSONArray();
     list.stream().forEach(transactionCapsule -> transactions
-                    .add(printTransactionToJSON(transactionCapsule.getInstance(), selfType)));
+        .add(printTransactionToJSON(transactionCapsule.getInstance(), selfType)));
     return transactions;
   }
 
@@ -280,9 +281,9 @@ public class Util {
   }
 
   public static void checkBodySize(String body) throws Exception {
-    Args args = Args.getInstance();
-    if (body.getBytes().length > args.getMaxMessageSize()) {
-      throw new Exception("body size is too big, the limit is " + args.getMaxMessageSize());
+    CommonParameter parameter = Args.getInstance();
+    if (body.getBytes().length > parameter.getMaxMessageSize()) {
+      throw new Exception("body size is too big, the limit is " + parameter.getMaxMessageSize());
     }
   }
 
@@ -417,14 +418,14 @@ public class Util {
       JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
       String assetId = accountJson.get("asset_issued_ID").toString();
       accountJson.put(
-              "asset_issued_ID",
-              ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
+          "asset_issued_ID",
+          ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
       return accountJson.toJSONString();
     }
   }
 
   public static void printAccount(Account reply, HttpServletResponse response, Boolean visible)
-          throws java.io.IOException {
+      throws java.io.IOException {
     if (reply != null) {
       if (visible) {
         response.getWriter().println(JsonFormat.printToString(reply, true));

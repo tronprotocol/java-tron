@@ -5,8 +5,8 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
-import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
+import org.tron.core.config.Parameter.ForkBlockVersionConsts;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
 
@@ -95,7 +95,6 @@ public class ForkUtils {
       }
     }
   }
-
 
   public synchronized void reset() {
     for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {

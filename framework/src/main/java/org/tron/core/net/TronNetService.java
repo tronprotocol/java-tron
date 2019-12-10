@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.message.BlockMessage;
@@ -57,11 +56,7 @@ public class TronNetService {
   @Autowired
   private TransactionsMsgHandler transactionsMsgHandler;
 
-  @Autowired
-  private Manager manager;
-
   public void start() {
-    manager.setTronNetService(this);
     channelManager.init();
     advService.init();
     syncService.init();

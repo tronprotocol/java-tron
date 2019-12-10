@@ -1,5 +1,7 @@
 package org.tron.common.logsfilter.capsule;
 
+import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
+
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -126,7 +128,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     event.setBlockNumber(contractTrigger.getBlockNumber());
     event.setTimeStamp(contractTrigger.getTimeStamp());
 
-    if (FilterQuery.matchFilter(contractTrigger)) {
+    if (matchFilter(contractTrigger)) {
       if (isEvent) {
         EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) event);
       } else {

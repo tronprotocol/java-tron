@@ -18,10 +18,10 @@
 
 package org.tron.core;
 
-import static org.tron.common.utils.Commons.ADDRESS_SIZE;
+import static org.tron.common.utils.DecodeUtil.addressValid;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
@@ -290,26 +290,6 @@ public class Wallet {
 
   public static void setAddressPreFixByte(byte addressPreFixByte) {
     DecodeUtil.addressPreFixByte = addressPreFixByte;
-  }
-
-  public static boolean addressValid(byte[] address) {
-    if (ArrayUtils.isEmpty(address)) {
-      logger.warn("Warning: Address is empty !!");
-      return false;
-    }
-    if (address.length != ADDRESS_SIZE / 2) {
-      logger.warn(
-          "Warning: Address length requires " + ADDRESS_SIZE + " but " + address.length
-              + " !!");
-      return false;
-    }
-    if (address[0] != DecodeUtil.addressPreFixByte) {
-      logger.warn("Warning: Address requires a prefix with " + DecodeUtil.addressPreFixByte
-          + " but " + address[0] + " !!");
-      return false;
-    }
-    //Other rule;
-    return true;
   }
 
   public static String encode58Check(byte[] input) {
@@ -2347,14 +2327,6 @@ public class Wallet {
     TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
         StoreFactory.getInstance(), true,
         false);
-    /*VMConfig.initVmHardFork(ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT));
-    VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
-    VMConfig.initAllowTvmTransferTrc10(
-        dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
-    VMConfig.initAllowTvmConstantinople(
-        dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
-    VMConfig
-        .initAllowTvmSolidity059(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());*/
     VMActuator vmActuator = new VMActuator(true);
 
     vmActuator.validate(context);
