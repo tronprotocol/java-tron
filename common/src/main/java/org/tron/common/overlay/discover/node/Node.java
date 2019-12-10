@@ -12,7 +12,7 @@ import org.tron.common.option.KademliaOptions;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 
-public class Node implements Serializable {
+public class   Node implements Serializable {
 
   private static final long serialVersionUID = -4267600517925770636L;
 
