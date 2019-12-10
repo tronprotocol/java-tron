@@ -71,23 +71,16 @@ public class GetTransactionByIdSolidityServletTest_1 {
   public void doPostTest() throws IOException {
 
     //send Post request
-//    url = new URL("http://127.0.0.1:8091/walletsolidity/gettransactioninfobyid");
     String postData = "{\"value\": \"309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef21"
             + "3f2c55225a8bd2\"}";
-
     final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     System.setOut(new PrintStream(outContent));
 
 
     String href = "http://127.0.0.1:8091/walletsolidity/gettransactioninfobyid";
 
-    URLConnection urlConnection = mock(URLConnection.class);
     httpUrlStreamHandler.addConnection(new URL(href), httpURLConnection);
 
-//    Assert.assertTrue(outContent.toString().contains("{}"));
-
-//    when(url.openConnection()).thenReturn(httpURLConnection);
-//    httpURLConnection = (HttpURLConnection) url.openConnection();
     httpURLConnection.setRequestMethod("POST");
     httpURLConnection.setRequestProperty("Content-Type", "application/json");
     httpURLConnection.setRequestProperty("Connection", "Keep-Alive");
@@ -111,7 +104,6 @@ public class GetTransactionByIdSolidityServletTest_1 {
     InputStream inputStream = mock(InputStream.class);
     byte[] buffer = new byte[1024];
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer);
-//    BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
     when(httpURLConnection.getInputStream()).thenReturn(byteArrayInputStream);
     BufferedReader in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(),
             StandardCharsets.UTF_8));
@@ -120,11 +112,19 @@ public class GetTransactionByIdSolidityServletTest_1 {
       result.append(line).append("\n");
     }
     in.close();
-    logger.info("===="+result.toString());
-    logger.info("-----"+outContent.toString());
-    Assert.assertTrue(true);
 //    Assert.assertTrue(result.toString().contains("{}"));
     writer.flush();
+
+    FileInputStream fileInputStream = new FileInputStream("temp.txt");
+    InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
+    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+    StringBuffer sb = new StringBuffer();
+    String text = null;
+    while((text = bufferedReader.readLine()) != null){
+      sb.append(text);
+    }
+    Assert.assertTrue(sb.toString().contains("null"));
     httpURLConnection.disconnect();
   }
 
