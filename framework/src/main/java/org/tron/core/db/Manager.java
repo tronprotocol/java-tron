@@ -52,7 +52,6 @@ import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
-import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
@@ -67,7 +66,6 @@ import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
-import org.tron.core.actuator.AbstractActuator;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -164,9 +162,6 @@ public class Manager {
   private RecentBlockStore recentBlockStore;
   @Autowired
   private TransactionHistoryStore transactionHistoryStore;
-  // for network
-  @Autowired
-  private PeersStore peersStore;
   @Autowired
   private KhaosDatabase khaosDb;
   private BlockCapsule genesisBlock;
@@ -406,14 +401,6 @@ public class Manager {
 
   public long getHeadBlockTimeStamp() {
     return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
-  }
-
-  public void clearAndWriteNeighbours(Set<Node> nodes) {
-    this.peersStore.put("neighbours".getBytes(), nodes);
-  }
-
-  public Set<Node> readNeighbours() {
-    return this.peersStore.get("neighbours".getBytes());
   }
 
   public void stopRepushThread() {
@@ -1611,7 +1598,6 @@ public class Manager {
   public void closeAllStore() {
     logger.info("******** begin to close db ********");
     closeOneStore(transactionStore);
-    closeOneStore(peersStore);
     closeOneStore(recentBlockStore);
     closeOneStore(transactionHistoryStore);
     closeOneStore(transactionRetStore);

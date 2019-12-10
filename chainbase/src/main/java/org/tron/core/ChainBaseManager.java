@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.CommonStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db2.core.ITronChainBase;
@@ -122,6 +123,10 @@ public class ChainBaseManager {
   @Getter
   private KhaosDatabase khaosDb;
 
+  @Autowired
+  @Getter
+  private CommonStore commonStore;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -156,5 +161,6 @@ public class ChainBaseManager {
     closeOneStore(merkleTreeStore);
     closeOneStore(delegationStore);
     closeOneStore(proofStore);
+    closeOneStore(commonStore);
   }
 }
