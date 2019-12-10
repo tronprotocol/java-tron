@@ -269,6 +269,7 @@ public class ManagerTest extends BlockGenerate {
                 .getByteString(),
             addressToProvateKeys);
 
+
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
 
