@@ -1,23 +1,35 @@
 package org.tron.core.services.http.solidity;
 
-import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.services.http.solidity.mockito.HttpUrlStreamHandler;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLStreamHandlerFactory;
-import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
-
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLStreamHandlerFactory;
+import java.nio.charset.StandardCharsets;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.tron.common.utils.FileUtil;
+import org.tron.core.services.http.solidity.mockito.HttpUrlStreamHandler;
 
 
 @Slf4j
@@ -25,15 +37,18 @@ public class GetTransactionByIdSolidityServletTest_1 {
   private GetTransactionByIdSolidityServlet getTransactionByIdSolidityServlet;
   private HttpServletRequest request;
   private HttpServletResponse response;
-  private HttpURLConnection httpURLConnection;
+  private HttpURLConnection httpUrlConnection;
   private OutputStreamWriter outputStreamWriter;
   private URL url;
 
 
   private static HttpUrlStreamHandler httpUrlStreamHandler;
 
+  /**.
+   *
+   */
   @BeforeClass
-  public static void setupURLStreamHandlerFactory() {
+  public static void init() {
     // Allows for mocking URL connections
     URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
     URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
@@ -44,14 +59,14 @@ public class GetTransactionByIdSolidityServletTest_1 {
   /**
    * Init.
    */
+
   @Before
   public void setUp() throws InterruptedException {
     getTransactionByIdSolidityServlet = new GetTransactionByIdSolidityServlet();
     this.request = mock(HttpServletRequest.class);
     this.response = mock(HttpServletResponse.class);
-    this.httpURLConnection = mock(HttpURLConnection.class);
+    this.httpUrlConnection = mock(HttpURLConnection.class);
     this.outputStreamWriter = mock(OutputStreamWriter.class);
-//    this.url = mock(URL.class);
     httpUrlStreamHandler.resetConnections();
   }
 
@@ -79,17 +94,18 @@ public class GetTransactionByIdSolidityServletTest_1 {
 
     String href = "http://127.0.0.1:8091/walletsolidity/gettransactioninfobyid";
 
-    httpUrlStreamHandler.addConnection(new URL(href), httpURLConnection);
+    httpUrlStreamHandler.addConnection(new URL(href), httpUrlConnection);
 
-    httpURLConnection.setRequestMethod("POST");
-    httpURLConnection.setRequestProperty("Content-Type", "application/json");
-    httpURLConnection.setRequestProperty("Connection", "Keep-Alive");
-    httpURLConnection.setUseCaches(false);
-    httpURLConnection.setDoOutput(true);
-    httpURLConnection.setRequestProperty("Content-Length", "" + postData.length());
+    httpUrlConnection.setRequestMethod("POST");
+    httpUrlConnection.setRequestProperty("Content-Type", "application/json");
+    httpUrlConnection.setRequestProperty("Connection", "Keep-Alive");
+    httpUrlConnection.setUseCaches(false);
+    httpUrlConnection.setDoOutput(true);
+    httpUrlConnection.setRequestProperty("Content-Length", "" + postData.length());
 
-    when(httpURLConnection.getOutputStream()).thenReturn(outContent);
-    OutputStreamWriter out = new OutputStreamWriter(httpURLConnection.getOutputStream(), StandardCharsets.UTF_8);
+    when(httpUrlConnection.getOutputStream()).thenReturn(outContent);
+    OutputStreamWriter out = new OutputStreamWriter(httpUrlConnection.getOutputStream(),
+            StandardCharsets.UTF_8);
     out.write(postData);
     out.flush();
     out.close();
@@ -104,8 +120,8 @@ public class GetTransactionByIdSolidityServletTest_1 {
     InputStream inputStream = mock(InputStream.class);
     byte[] buffer = new byte[1024];
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer);
-    when(httpURLConnection.getInputStream()).thenReturn(byteArrayInputStream);
-    BufferedReader in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(),
+    when(httpUrlConnection.getInputStream()).thenReturn(byteArrayInputStream);
+    BufferedReader in = new BufferedReader(new InputStreamReader(httpUrlConnection.getInputStream(),
             StandardCharsets.UTF_8));
 
     while ((line = in.readLine()) != null) {
@@ -125,7 +141,7 @@ public class GetTransactionByIdSolidityServletTest_1 {
       sb.append(text);
     }
     Assert.assertTrue(sb.toString().contains("null"));
-    httpURLConnection.disconnect();
+    httpUrlConnection.disconnect();
   }
 
   @Test
