@@ -44,8 +44,8 @@ public class GetTransactionByIdSolidityServletTest_1 {
 
   private static HttpUrlStreamHandler httpUrlStreamHandler;
 
-  /**.
-   *
+  /**
+   * .
    */
   @BeforeClass
   public static void init() {
@@ -56,6 +56,7 @@ public class GetTransactionByIdSolidityServletTest_1 {
     httpUrlStreamHandler = new HttpUrlStreamHandler();
     given(urlStreamHandlerFactory.createURLStreamHandler("http")).willReturn(httpUrlStreamHandler);
   }
+
   /**
    * Init.
    */
@@ -86,21 +87,18 @@ public class GetTransactionByIdSolidityServletTest_1 {
   public void doPostTest() throws IOException {
 
     //send Post request
-    String postData = "{\"value\": \"309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef21"
-            + "3f2c55225a8bd2\"}";
+
     final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     System.setOut(new PrintStream(outContent));
-
-
     String href = "http://127.0.0.1:8091/walletsolidity/gettransactioninfobyid";
-
     httpUrlStreamHandler.addConnection(new URL(href), httpUrlConnection);
-
     httpUrlConnection.setRequestMethod("POST");
     httpUrlConnection.setRequestProperty("Content-Type", "application/json");
     httpUrlConnection.setRequestProperty("Connection", "Keep-Alive");
     httpUrlConnection.setUseCaches(false);
     httpUrlConnection.setDoOutput(true);
+    String postData = "{\"value\": \"309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef21"
+            + "3f2c55225a8bd2\"}";
     httpUrlConnection.setRequestProperty("Content-Length", "" + postData.length());
 
     when(httpUrlConnection.getOutputStream()).thenReturn(outContent);
@@ -113,11 +111,10 @@ public class GetTransactionByIdSolidityServletTest_1 {
     when(response.getWriter()).thenReturn(writer);
 
     getTransactionByIdSolidityServlet.doPost(request, response);
-//    Get Response Body
+    //    Get Response Body
     String line;
     StringBuilder result = new StringBuilder();
 
-    InputStream inputStream = mock(InputStream.class);
     byte[] buffer = new byte[1024];
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer);
     when(httpUrlConnection.getInputStream()).thenReturn(byteArrayInputStream);
@@ -128,16 +125,14 @@ public class GetTransactionByIdSolidityServletTest_1 {
       result.append(line).append("\n");
     }
     in.close();
-//    Assert.assertTrue(result.toString().contains("{}"));
     writer.flush();
-
     FileInputStream fileInputStream = new FileInputStream("temp.txt");
     InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
     BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
     StringBuffer sb = new StringBuffer();
     String text = null;
-    while((text = bufferedReader.readLine()) != null){
+    while ((text = bufferedReader.readLine()) != null) {
       sb.append(text);
     }
     Assert.assertTrue(sb.toString().contains("null"));
@@ -147,19 +142,22 @@ public class GetTransactionByIdSolidityServletTest_1 {
   @Test
   public void doGetTest() throws IOException {
 
-    //send Post request
-    URL url = new URL("http://127.0.0.1:8091/walletsolidity/gettransactioninfobyid");
+    final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    System.setOut(new PrintStream(outContent));
+    String href = "http://127.0.0.1:8091/walletsolidity/gettransactioninfobyid";
+    httpUrlStreamHandler.addConnection(new URL(href), httpUrlConnection);
+    httpUrlConnection.setRequestMethod("GET");
+    httpUrlConnection.setRequestProperty("Content-Type", "application/json");
+    httpUrlConnection.setRequestProperty("Connection", "Keep-Alive");
+    httpUrlConnection.setUseCaches(false);
+    httpUrlConnection.setDoOutput(true);
     String postData = "{\"value\": \"309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef21"
             + "3f2c55225a8bd2\"}";
+    httpUrlConnection.setRequestProperty("Content-Length", "" + postData.length());
 
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.setRequestMethod("GET");
-    conn.setRequestProperty("Content-Type", "application/json");
-    conn.setRequestProperty("Connection", "Keep-Alive");
-    conn.setUseCaches(false);
-    conn.setDoOutput(true);
-    conn.setRequestProperty("Content-Length", "" + postData.length());
-    OutputStreamWriter out = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8);
+    when(httpUrlConnection.getOutputStream()).thenReturn(outContent);
+    OutputStreamWriter out = new OutputStreamWriter(httpUrlConnection.getOutputStream(),
+            StandardCharsets.UTF_8);
     out.write(postData);
     out.flush();
     out.close();
@@ -167,19 +165,32 @@ public class GetTransactionByIdSolidityServletTest_1 {
     when(response.getWriter()).thenReturn(writer);
 
     getTransactionByIdSolidityServlet.doPost(request, response);
-    //Get Response Body
+    //    Get Response Body
     String line;
     StringBuilder result = new StringBuilder();
-    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(),
+
+    byte[] buffer = new byte[1024];
+    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer);
+    when(httpUrlConnection.getInputStream()).thenReturn(byteArrayInputStream);
+    BufferedReader in = new BufferedReader(new InputStreamReader(httpUrlConnection.getInputStream(),
             StandardCharsets.UTF_8));
+
     while ((line = in.readLine()) != null) {
       result.append(line).append("\n");
     }
     in.close();
-
-    Assert.assertTrue(result.toString().contains("{}"));
     writer.flush();
-    conn.disconnect();
+    FileInputStream fileInputStream = new FileInputStream("temp.txt");
+    InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
+    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+    StringBuffer sb = new StringBuffer();
+    String text = null;
+    while ((text = bufferedReader.readLine()) != null) {
+      sb.append(text);
+    }
+    Assert.assertTrue(sb.toString().contains("null"));
+    httpUrlConnection.disconnect();
   }
 }
 
