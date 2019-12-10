@@ -89,8 +89,8 @@ public class KeystoreFactory {
 
     String password = WalletUtils.inputPassword2Twice();
 
-    SignInterface eCkey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey)
-        , Args.getInstance().isECKeyCryptoEngine());
+    SignInterface eCkey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey),
+            Args.getInstance().isECKeyCryptoEngine());
     File file = new File(FilePath);
     if (!file.exists()) {
       if (!file.mkdir()) {

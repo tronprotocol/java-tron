@@ -46,7 +46,8 @@ public class EasyTransferAssetServlet extends RateLimiterServlet {
       EasyTransferAssetMessage.Builder build = EasyTransferAssetMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
       byte[] privateKey = wallet.pass2Key(build.getPassPhrase().toByteArray());
-      SignInterface ecKey = SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
+      SignInterface ecKey = SignUtils.fromPrivate(privateKey, Args.getInstance()
+              .isECKeyCryptoEngine());
       byte[] owner = ecKey.getAddress();
       TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(owner));

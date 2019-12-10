@@ -308,8 +308,8 @@ public class Wallet {
       return false;
     }
     if (address[0] != DecodeUtil.addressPreFixByte) {
-      logger.warn("Warning: Address requires a prefix with " + DecodeUtil.addressPreFixByte + " but "
-          + address[0] + " !!");
+      logger.warn("Warning: Address requires a prefix with " + DecodeUtil.addressPreFixByte
+              + " but " + address[0] + " !!");
       return false;
     }
     //Other rule;
@@ -756,7 +756,8 @@ public class Wallet {
                 "Signature size is " + sig.size());
           }
           String base64 = TransactionCapsule.getBase64FromByteString(sig);
-          byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance().isECKeyCryptoEngine());
+          byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
+                  .isECKeyCryptoEngine());
           approveList.add(ByteString.copyFrom(address)); //out put approve list.
         }
         tswBuilder.addAllApprovedList(approveList);

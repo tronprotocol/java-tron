@@ -908,7 +908,8 @@ public class RpcApiService implements Service {
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
-        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
+        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, Args.getInstance()
+                .isECKeyCryptoEngine());
         byte[] owner = cryptoEngine.getAddress();
         TransferContract.Builder builder = TransferContract.newBuilder();
         builder.setOwnerAddress(ByteString.copyFrom(owner));

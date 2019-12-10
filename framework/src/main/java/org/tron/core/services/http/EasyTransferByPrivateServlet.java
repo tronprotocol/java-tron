@@ -45,7 +45,8 @@ public class EasyTransferByPrivateServlet extends RateLimiterServlet {
       EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
       byte[] privateKey = build.getPrivateKey().toByteArray();
-      SignInterface ecKey = SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
+      SignInterface ecKey = SignUtils.fromPrivate(privateKey, Args.getInstance()
+              .isECKeyCryptoEngine());
       byte[] owner = ecKey.getAddress();
       TransferContract.Builder builder = TransferContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(owner));
