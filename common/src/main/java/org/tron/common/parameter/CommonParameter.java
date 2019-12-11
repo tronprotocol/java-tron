@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.spongycastle.util.Strings;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.logsfilter.EventPluginConfig;
@@ -482,6 +483,6 @@ public class CommonParameter {
   }
 
   public boolean isECKeyCryptoEngine() {
-    return cryptoEngine == Constant.ECKey_ENGINE;
+    return Strings.toLowerCase(cryptoEngine) == Strings.toLowerCase(Constant.ECKey_ENGINE);
   }
 }
