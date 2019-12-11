@@ -126,7 +126,7 @@ public class SM2KeyTest {
   public void testValidHashSignature() {
     SM2 key = SM2.fromPrivate(privateKey);
     byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E"
-            + "、6FC682D48BB5D42E3D9B9EFFE76");
+            + "6FC682D48BB5D42E3D9B9EFFE76");
     SM2.SM2Signature sign = key.sign(hash);
     //byte[] signByte = sign.toByteArray();
     //System.out.println(Hex.toHexString(signByte));

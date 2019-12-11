@@ -145,24 +145,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   // TODO add unit test for sig2.getbytes
   public void sign(byte[] privateKey) {
-//    SignInterface ecKeyEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
-//    ByteString sig = ByteString.copyFrom(ecKeyEngine.signHash(getRawHash().getBytes()).getBytes());
-//    BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
-//        .build();
-//
-//    this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
-//
-//    ECKey ecKey = ECKey.fromPrivate(privateKey);
-//    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-//    byte[] byte1 = signature.toByteArray();
-//    ByteString sig2 = ByteString.copyFrom(signature.toByteArray());
     SignInterface ecKeyEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
-//    String string1 = ecKeyEngine.signHash(getRawHash().getBytes());
-//    byte[] byte2 = string1.getBytes();
-//    byte[] byte3 = Base64.decode(string1);
-//    byte[] byte4 = ecKeyEngine.Base64toBytes(string1);
 
-    ByteString sig = ByteString.copyFrom(ecKeyEngine.Base64toBytes(ecKeyEngine.signHash(getRawHash().getBytes())));
+    ByteString sig = ByteString.copyFrom(ecKeyEngine.Base64toBytes(ecKeyEngine.signHash(getRawHash()
+            .getBytes())));
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
             .build();
