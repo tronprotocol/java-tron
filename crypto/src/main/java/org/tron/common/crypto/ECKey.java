@@ -19,6 +19,7 @@ package org.tron.common.crypto;
 
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
+import static org.tron.common.utils.ByteUtil.byteArrayToInt;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -779,6 +780,13 @@ public class ECKey implements Serializable, SignInterface {
     return sign(hash).toBase64();
   }
 
+  public byte[] Base64toBytes (String signature) {
+    byte[] signData = Base64.decode(signature);
+    byte first = (byte)(signData[0] - 27);
+    byte[] temp = Arrays.copyOfRange(signData,1,65);
+    return ByteUtil.appendByte(temp,first);
+  }
+
   @Override
   public byte[] signToAddress(byte[] messageHash, String signatureBase64) throws SignatureException {
     return Hash.computeAddress(signatureToKeyBytes(messageHash,
@@ -1223,6 +1231,8 @@ public class ECKey implements Serializable, SignInterface {
       System.arraycopy(ByteUtil.bigIntegerToBytes(this.s, 32), 0, sigData, 33, 32);
       return new String(Base64.encode(sigData), Charset.forName("UTF-8"));
     }
+
+
 
     public byte[] toByteArray() {
       final byte fixedV = this.v >= 27

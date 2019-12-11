@@ -92,7 +92,7 @@ public class FastForward {
                   Args.getInstance().isECKeyCryptoEngine());
 
           Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(message.getTimestamp()));
-          ByteString sig = ByteString.copyFrom(cryptoEngine.signHash(hash.getBytes()).getBytes());
+          ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine.signHash(hash.getBytes())));
           message.setHelloMessage(message.getHelloMessage().toBuilder()
               .setAddress(witnessAddress).setSignature(sig).build());
         }

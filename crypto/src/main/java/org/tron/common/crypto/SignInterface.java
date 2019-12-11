@@ -17,4 +17,6 @@ public interface SignInterface {
   byte[] signToAddress(byte[] messageHash, String signatureBase64) throws SignatureException;
 
   byte[] getNodeId();
+
+  byte[] Base64toBytes (String signature);
 }

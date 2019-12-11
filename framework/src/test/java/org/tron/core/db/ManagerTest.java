@@ -52,6 +52,8 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
+
+
 @Slf4j
 public class ManagerTest extends BlockGenerate {
 
@@ -162,7 +164,7 @@ public class ManagerTest extends BlockGenerate {
 
     if (isUnlinked) {
       Assert.assertEquals("getBlockIdByNum is error",
-          dbManager.getHeadBlockNum(), 0);
+              0,dbManager.getHeadBlockNum());
     } else {
       try {
         Assert.assertEquals(

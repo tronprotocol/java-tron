@@ -561,6 +561,13 @@ public class SM2 implements Serializable, SignInterface {
         return sign(input).toBase64();
     }
 
+    public byte[] Base64toBytes (String signature) {
+        byte[] signData = Base64.decode(signature);
+        byte first = (byte)(signData[0] - 27);
+        byte[] temp = Arrays.copyOfRange(signData,1,65);
+        return ByteUtil.appendByte(temp,first);
+    }
+
     /**
      * Takes the message of data and returns the SM2 signature
      *
@@ -1192,6 +1199,8 @@ public class SM2 implements Serializable, SignInterface {
             System.arraycopy(bigIntegerToBytes(this.s, 32), 0, sigData, 33, 32);
             return new String(Base64.encode(sigData), Charset.forName("UTF-8"));
         }
+
+
 
         public byte[] toByteArray() {
             final byte fixedV = this.v >= 27
