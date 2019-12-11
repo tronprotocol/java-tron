@@ -167,7 +167,7 @@ public class NodeManager implements EventHandler {
     if (nodeHandlerMap.size() > NODES_TRIM_THRESHOLD) {
       nodeHandlerMap.values().forEach(handler -> {
         if (!handler.getNode().isConnectible(Args.getInstance().getNodeP2pVersion())) {
-          nodeHandlerMap.remove(handler);
+          nodeHandlerMap.values().remove(handler);
         }
       });
     }
