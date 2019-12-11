@@ -157,10 +157,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 //    byte[] byte1 = signature.toByteArray();
 //    ByteString sig2 = ByteString.copyFrom(signature.toByteArray());
     SignInterface ecKeyEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
-    String string1 = ecKeyEngine.signHash(getRawHash().getBytes());
+//    String string1 = ecKeyEngine.signHash(getRawHash().getBytes());
 //    byte[] byte2 = string1.getBytes();
 //    byte[] byte3 = Base64.decode(string1);
-    byte[] byte4 = ecKeyEngine.Base64toBytes(string1);
+//    byte[] byte4 = ecKeyEngine.Base64toBytes(string1);
 
     ByteString sig = ByteString.copyFrom(ecKeyEngine.Base64toBytes(ecKeyEngine.signHash(getRawHash().getBytes())));
 
