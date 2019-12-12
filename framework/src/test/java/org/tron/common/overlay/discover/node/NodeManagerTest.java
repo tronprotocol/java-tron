@@ -17,6 +17,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -70,9 +71,10 @@ public class NodeManagerTest {
   @Before
   public void initManager() throws Exception {
     nodeManagerClazz = NodeManager.class;
-    Constructor<NodeManager> handlerConstructor = nodeManagerClazz.getConstructor(Manager.class);
+    Constructor<NodeManager> handlerConstructor
+        = nodeManagerClazz.getConstructor(ChainBaseManager.class);
     manager = context.getBean(Manager.class);
-    nodeManager = handlerConstructor.newInstance(manager);
+    nodeManager = handlerConstructor.newInstance(context.getBean(ChainBaseManager.class));
   }
 
   @Test
