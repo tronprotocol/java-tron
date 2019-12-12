@@ -69,7 +69,7 @@ public class Args extends CommonParameter {
 
   @Getter
   @Setter
-  public  static  LocalWitnesses localWitnesses = new LocalWitnesses();
+  private   static  LocalWitnesses localWitnesses = new LocalWitnesses();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
