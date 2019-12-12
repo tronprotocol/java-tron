@@ -321,6 +321,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public int keepAliveInterval;
+
+  @Getter
+  @Setter
   public List<String> backupMembers;
 
   @Getter
