@@ -30,6 +30,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 
@@ -128,6 +129,7 @@ public class ExchangeCreateActuatorTest {
 
   /**
    * SameTokenName close,first createExchange,result is success.
+   *  1024000000 is calcFee, caculated by calcFee()
    */
   @Test
   public void sameTokenNameCloseSuccessExchangeCreate() {
@@ -1399,4 +1401,46 @@ public class ExchangeCreateActuatorTest {
     }
   }
 
+
+
+  @Test
+  public void noContract() {
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void invalidContractType() {
+    ExchangeCreateActuator actuator = new ExchangeCreateActuator();
+    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(invalidContractTypes);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "contract type error",
+        "contract type error,expected type [ExchangeCreateContract],real type["
+            + invalidContractTypes.getClass() + "]");
+  }
+
+
+
+  private void processAndCheckInvalid(ExchangeCreateActuator actuator, TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+
+      fail(failMsg);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
 }

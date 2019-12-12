@@ -187,6 +187,26 @@ public class CreateAccountActuatorTest {
 
 
   /**
+   * owner address not exit in DB
+   */
+  @Test
+  public void noExitsAccount() {
+    CreateAccountActuator actuator = new CreateAccountActuator();
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
+   // AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+    // delete account address, which just create
+    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
+
+    processAndCheckInvalid(actuator, ret, "Account[",
+        "Account[" + readableOwnerAddress + "] not exists");
+  }
+
+  /**
    * not have enough fee to create a account
    */
   @Test
@@ -219,7 +239,7 @@ public class CreateAccountActuatorTest {
 
 
   @Test
-  public void nullContract() {
+  public void noContract() {
     CreateAccountActuator actuator = new CreateAccountActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(null);

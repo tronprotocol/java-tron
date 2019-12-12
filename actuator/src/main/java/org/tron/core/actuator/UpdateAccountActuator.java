@@ -62,7 +62,7 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     if (!this.any.is(AccountUpdateContract.class)) {
       throw new ContractValidateException(
-          "contract type error, expected type [AccountUpdateContract], real type[" + contract
+          "contract type error, expected type [AccountUpdateContract], real type[" + any
               .getClass() + "]");
     }
     final AccountUpdateContract accountUpdateContract;
@@ -93,6 +93,7 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     if (chainBaseManager.getAccountIndexStore().has(accountName)
         && chainBaseManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
+          logger.info("test "+chainBaseManager.getAccountIndexStore().has(accountName));
       throw new ContractValidateException("This name is existed");
     }
 

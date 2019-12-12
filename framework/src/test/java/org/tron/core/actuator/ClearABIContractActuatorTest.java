@@ -288,7 +288,7 @@ public class ClearABIContractActuatorTest {
   }
 
   @Test
-  public void nullContract() {
+  public void noContract() {
     ClearABIContractActuator actuator = new ClearABIContractActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(null);

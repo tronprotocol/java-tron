@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
 
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -30,6 +31,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 
@@ -50,7 +52,7 @@ public class ExchangeTransactionActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -695,6 +697,112 @@ public class ExchangeTransactionActuatorTest {
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
     }
   }
+
+
+  /**
+   * SameTokenName close,use No enough balance, result is failed, exception is
+   * "No enough balance for exchange transaction fee!".
+   */
+  @Test
+  public void SameTokenNameCloseNoEnoughBalance() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    InitExchangeBeforeSameTokenNameActive();
+    long exchangeId = 2;
+    String tokenId = "abc";
+    long quant = 1_000L;
+    String buyTokenId = "def";
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
+    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
+    Assert.assertEquals(null, assetMap.get(buyTokenId));
+
+
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+
+    accountCapsule.setBalance(actuator.calcFee() - 10000L);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+
+      fail("No enough balance for exchange transaction fee!");
+    } catch (ContractValidateException e) {
+
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("No enough balance for exchange transaction fee!", e.getMessage());
+//      logger.info("balance ="+accountCapsule.getBalance());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
+      dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
+      dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
+      dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
+    }
+  }
+
+
+  /**
+   * SameTokenName open,use No enough balance, result is failed, exception is
+   * "No enough balance for exchange transaction fee!".
+   */
+  @Test
+  public void SameTokenNameOpenNoEnoughBalance() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    InitExchangeBeforeSameTokenNameActive();
+    long exchangeId = 2;
+    String tokenId = "123";
+    long quant = 1_000L;
+    String buyTokenId = "456";
+
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
+    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
+    Assert.assertEquals(null, assetMap.get(buyTokenId));
+
+
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+
+    accountCapsule.setBalance(actuator.calcFee() - 10000L);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+
+      fail("No enough balance for exchange transaction fee!");
+    } catch (ContractValidateException e) {
+
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("No enough balance for exchange transaction fee!", e.getMessage());
+//      logger.info("balance ="+accountCapsule.getBalance());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
+      dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
+      dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
+      dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
+    }
+  }
+
 
   /**
    * SameTokenName close,use AccountStore not exists, result is failed, exception is "account not
@@ -1586,5 +1694,6 @@ public class ExchangeTransactionActuatorTest {
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
     }
+
   }
 }

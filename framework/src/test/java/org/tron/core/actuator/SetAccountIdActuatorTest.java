@@ -1,7 +1,10 @@
 package org.tron.core.actuator;
 
+import static junit.framework.TestCase.fail;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
@@ -24,6 +27,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AccountContract.SetAccountIdContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 
 @Slf4j
 public class SetAccountIdActuatorTest {
@@ -394,4 +398,68 @@ public class SetAccountIdActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+  @Test
+  public void nullDBManger() {
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    actuator.setChainBaseManager(null)
+        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No account store or account id index store!",
+        "No account store or account id index store!");
+  }
+
+  @Test
+  public void noContract() {
+
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void invalidContractType() {
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(invalidContractTypes);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "contract type error",
+         "contract type error,expected type [SetAccountIdContract],real type[" +
+            invalidContractTypes.getClass() + "]");
+  }
+
+  @Test
+  public void nullTransationResult() {
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+    TransactionResultCapsule ret = null;
+    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+        "TransactionResultCapsule is null");
+  }
+
+  private void processAndCheckInvalid(SetAccountIdActuator actuator,
+                                      TransactionResultCapsule ret,
+                                      String failMsg,
+                                      String expectedMsg) {
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail(failMsg);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e instanceof RuntimeException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    }
+  }
+
 }

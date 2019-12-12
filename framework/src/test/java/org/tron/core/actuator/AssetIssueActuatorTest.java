@@ -1923,7 +1923,7 @@ public class AssetIssueActuatorTest {
    * No contract exception test, null contract
    */
   @Test
-  public void nullContract() {
+  public void noContract() {
     AssetIssueActuator actuator = new AssetIssueActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(null);
     TransactionResultCapsule ret = new TransactionResultCapsule();
