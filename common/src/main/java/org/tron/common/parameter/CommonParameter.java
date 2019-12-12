@@ -481,6 +481,7 @@ public class CommonParameter {
     return PARAMETER;
   }
 
+  // lowerCase rollback
   public boolean isECKeyCryptoEngine() {
     return cryptoEngine == Constant.ECKey_ENGINE;
   }
