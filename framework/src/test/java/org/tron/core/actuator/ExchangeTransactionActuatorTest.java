@@ -741,7 +741,6 @@ public class ExchangeTransactionActuatorTest {
 
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("No enough balance for exchange transaction fee!", e.getMessage());
-//      logger.info("balance ="+accountCapsule.getBalance());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -794,7 +793,6 @@ public class ExchangeTransactionActuatorTest {
 
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("No enough balance for exchange transaction fee!", e.getMessage());
-//      logger.info("balance ="+accountCapsule.getBalance());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1720,8 +1718,8 @@ public class ExchangeTransactionActuatorTest {
         .setAny(invalidContractTypes);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     processAndCheckInvalid(actuator, ret, "contract type error",
-        "contract type error,expected type [ExchangeTransactionContract],real type[" +
-            invalidContractTypes.getClass() + "]");
+        "contract type error,expected type [ExchangeTransactionContract],real type["
+            + invalidContractTypes.getClass() + "]");
   }
 
   @Test

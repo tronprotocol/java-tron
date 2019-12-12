@@ -2,11 +2,11 @@ package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
 
-
 import com.google.protobuf.Any;
+
 import org.junit.Assert;
-import org.tron.core.db.Manager;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 
@@ -92,7 +92,6 @@ public class ActuatorTest {
 
   public void nullDBManger() {
     if (this.contract == null) {
-//      logger.info("please set contract first");
       Assert.assertTrue(false);
       return;
     }

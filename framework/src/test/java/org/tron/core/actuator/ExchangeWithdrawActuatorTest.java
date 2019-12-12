@@ -2,7 +2,6 @@ package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
 
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -1787,8 +1786,8 @@ public class ExchangeWithdrawActuatorTest {
         .setAny(invalidContractTypes);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     processAndCheckInvalid(actuator, ret, "contract type error",
-        "contract type error,expected type [ExchangeWithdrawContract],real type[" +
-            invalidContractTypes.getClass() + "]");
+        "contract type error,expected type [ExchangeWithdrawContract],real type["
+            + invalidContractTypes.getClass() + "]");
   }
 
   @Test

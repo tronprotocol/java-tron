@@ -646,7 +646,7 @@ public class Manager {
     return chainBaseManager.getAccountStore();
   }
 
-  public AccountIndexStore getAccountIndexStore(){
+  public AccountIndexStore getAccountIndexStore() {
     return chainBaseManager.getAccountIndexStore();
   }
 

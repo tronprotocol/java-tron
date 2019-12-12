@@ -1802,9 +1802,8 @@ public class ExchangeInjectActuatorTest {
         .setAny(invalidContractTypes);
     TransactionResultCapsule ret = new TransactionResultCapsule();
     processAndCheckInvalid(actuator, ret, "contract type error",
-        "contract type error,expected type [ExchangeInjectContract],real type[" +
-            invalidContractTypes
-                .getClass() + "]");
+        "contract type error,expected type [ExchangeInjectContract],real type["
+            + invalidContractTypes.getClass() + "]");
   }
 
   @Test

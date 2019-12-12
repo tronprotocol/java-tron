@@ -2,7 +2,6 @@ package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
 
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
@@ -20,20 +19,19 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.DelegationStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
-import org.tron.core.store.DelegationStore;
-
 
 @Slf4j(topic = "actuator")
 public class UpdateBrokerageActuatorTest {
@@ -70,14 +68,6 @@ public class UpdateBrokerageActuatorTest {
    */
   @AfterClass
   public static void destroy() {
-
-//    byte[] address = ByteArray.fromHexString(OWNER_ADDRESS);
-//    byte[] addressNoExit = ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST);
-//    dbManager.getAccountStore().delete(address);
-//    dbManager.getWitnessStore().delete(address);
-//    // after running all test case, remove them from DB
-//    dbManager.getAccountStore().delete(addressNoExit);
-//    dbManager.getWitnessStore().delete(addressNoExit);
 
     Args.clearParam();
     context.destroy();
