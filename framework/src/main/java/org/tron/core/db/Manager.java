@@ -511,7 +511,7 @@ public class Manager {
         chainBaseManager.getBlockIndexStore().put(this.genesisBlock.getBlockId());
 
         logger.info(SAVE_BLOCK + this.genesisBlock);
-        // init DynamicPropertiesStore
+        // init Dynamic Properties Store
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderHash(
             this.genesisBlock.getBlockId().getByteString());
