@@ -1280,7 +1280,7 @@ public class ShieldedTransferActuatorTest {
       //set note nullifiers
       ShieldedTransferContract shieldContract = transactionCap.getInstance().getRawData()
           .getContract(0).getParameter().unpack(ShieldedTransferContract.class);
-      dbManager.getNullfierStore().put(
+      dbManager.getNullifierStore().put(
           new BytesCapsule(shieldContract.getSpendDescription(0).getNullifier().toByteArray()));
 
       actuator.validate();

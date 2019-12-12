@@ -117,13 +117,13 @@ public class ContractScenario016 {
     logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     Optional<Transaction> byId = PublicMethed.getTransactionById(txid, blockingStubFull);
-    logger.info("getRet：" + byId.get().getRet(0));
-    logger.info("getNumber：" + byId.get().getRet(0).getContractRet().getNumber());
-    logger.info("getContractRetValue：" + byId.get().getRet(0).getContractRetValue());
-    logger.info("getContractRet：" + byId.get().getRet(0).getContractRet());
-    logger.info("ById：" + byId);
+    logger.info("getRet:" + byId.get().getRet(0));
+    logger.info("getNumber:" + byId.get().getRet(0).getContractRet().getNumber());
+    logger.info("getContractRetValue:" + byId.get().getRet(0).getContractRetValue());
+    logger.info("getContractRet:" + byId.get().getRet(0).getContractRet());
+    logger.info("ById:" + byId);
 
-    logger.info("infoById：" + infoById);
+    logger.info("infoById:" + infoById);
 
     Assert.assertEquals(byId.get().getRet(0).getContractRetValue(), BAD_JUMP_DESTINATION_VALUE);
     Assert.assertEquals(byId.get().getRet(0).getContractRet(), contractResult.BAD_JUMP_DESTINATION);
@@ -159,13 +159,13 @@ public class ContractScenario016 {
     logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     Optional<Transaction> byId = PublicMethed.getTransactionById(txid, blockingStubFull);
-    logger.info("getRet：" + byId.get().getRet(0));
-    logger.info("getNumber：" + byId.get().getRet(0).getContractRet().getNumber());
-    logger.info("getContractRetValue：" + byId.get().getRet(0).getContractRetValue());
-    logger.info("getContractRet：" + byId.get().getRet(0).getContractRet());
-    logger.info("ById：" + byId);
+    logger.info("getRet:" + byId.get().getRet(0));
+    logger.info("getNumber:" + byId.get().getRet(0).getContractRet().getNumber());
+    logger.info("getContractRetValue:" + byId.get().getRet(0).getContractRetValue());
+    logger.info("getContractRet:" + byId.get().getRet(0).getContractRet());
+    logger.info("ById:" + byId);
 
-    logger.info("infoById：" + infoById);
+    logger.info("infoById:" + infoById);
 
     Assert.assertEquals(byId.get().getRet(0).getContractRetValue(), OUT_OF_ENERGY_VALUE);
     Assert.assertEquals(byId.get().getRet(0).getContractRet(), contractResult.OUT_OF_ENERGY);

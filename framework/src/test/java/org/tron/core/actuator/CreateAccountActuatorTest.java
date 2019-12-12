@@ -242,7 +242,7 @@ public class CreateAccountActuatorTest {
   }
 
   @Test
-  public void nullTransationResult() {
+  public void nulltransactionResult() {
     CreateAccountActuator actuator = new CreateAccountActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
