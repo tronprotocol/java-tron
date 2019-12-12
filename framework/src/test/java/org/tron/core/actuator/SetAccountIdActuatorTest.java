@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
 
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -42,7 +43,7 @@ public class SetAccountIdActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ADDRESS_1 = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -399,67 +400,28 @@ public class SetAccountIdActuatorTest {
     }
   }
 
-  @Test
-  public void nullDBManger() {
-    SetAccountIdActuator actuator = new SetAccountIdActuator();
-    actuator.setChainBaseManager(null)
-        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "No account store or account id index store!",
-        "No account store or account id index store!");
-  }
 
   @Test
-  public void noContract() {
+  public void commonErrorCheck() {
 
     SetAccountIdActuator actuator = new SetAccountIdActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(null);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
-  }
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
 
-  @Test
-  public void invalidContractType() {
-    SetAccountIdActuator actuator = new SetAccountIdActuator();
-    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
     Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
         .build());
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(invalidContractTypes);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "contract type error",
-         "contract type error,expected type [SetAccountIdContract],real type[" +
-            invalidContractTypes.getClass() + "]");
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [SetAccountIdContract],real type[");
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or account id index store!");
+    actuatorTest.nullDBManger();
+
   }
 
-  @Test
-  public void nullTransationResult() {
-    SetAccountIdActuator actuator = new SetAccountIdActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
-    TransactionResultCapsule ret = null;
-    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
-        "TransactionResultCapsule is null");
-  }
-
-  private void processAndCheckInvalid(SetAccountIdActuator actuator,
-                                      TransactionResultCapsule ret,
-                                      String failMsg,
-                                      String expectedMsg) {
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail(failMsg);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(expectedMsg, e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    } catch (RuntimeException e) {
-      Assert.assertTrue(e instanceof RuntimeException);
-      Assert.assertEquals(expectedMsg, e.getMessage());
-    }
-  }
 
 }

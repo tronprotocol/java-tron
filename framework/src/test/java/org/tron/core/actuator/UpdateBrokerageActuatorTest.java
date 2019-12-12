@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
 
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
@@ -105,7 +106,6 @@ public class UpdateBrokerageActuatorTest {
         .put(ByteArray.fromHexString(OWNER_ADDRESS), account);
 
   }
-
 
 
   private Any getContract(String ownerAddress, int brokerage) {
@@ -306,7 +306,7 @@ public class UpdateBrokerageActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     processAndCheckInvalid(actuator, ret, "contract type error",
         "contract type error, expected type [UpdateBrokerageContract], real type["
-            +invalidContractTypes.getClass() + "]");
+            + invalidContractTypes.getClass() + "]");
   }
 
   @Test

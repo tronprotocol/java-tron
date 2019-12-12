@@ -35,6 +35,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract.FrozenSupply;
 
@@ -1907,61 +1908,31 @@ public class AssetIssueActuatorTest {
 
   }
 
-  /**
-   * No account store, null DB Manager
-   */
-  @Test
-  public void nullDBManger() {
-    AssetIssueActuator actuator = new AssetIssueActuator();
-    actuator.setChainBaseManager(null).setAny(getContract());
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "No account store or dynamic store!",
-        "No account store or dynamic store!");
-  }
 
-  /**
-   * No contract exception test, null contract
-   */
   @Test
-  public void noContract() {
-    AssetIssueActuator actuator = new AssetIssueActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(null);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
-  }
+  public void commonErrorCheck() {
 
-  /**
-   * invalid contract exception, create PermissionAddKeyContract as an invalid
-   * contract
-   */
-  @Test
-  public void invalidContract() {
+    AssetIssueActuator actuator = new AssetIssueActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
     Any InvalidContract = Any.pack(AccountCreateContract.newBuilder().build());
-    // Any InvalidContract=Any.pack(AssetIssueContract.newBuilder().build());
-    AssetIssueActuator actuator = new AssetIssueActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(InvalidContract);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "contract type error",
-        "contract type error,expected type [AssetIssueContract],real type[" + InvalidContract
-            .getClass() + "]");
-  }
+    actuatorTest.setInvalidContract(InvalidContract);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [AssetIssueContract],real type[");
+    actuatorTest.invalidContractType();
 
-  /**
-   * invalid TransactionResultCapsule exception
-   */
-  @Test
-  public void invalidTransactionResultCapsule() {
+    actuatorTest.setContract(getContract());
+    actuatorTest.nullTransationResult();
 
-    AssetIssueActuator actuator = new AssetIssueActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract());
-    TransactionResultCapsule ret = null;
-    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
-        "TransactionResultCapsule is null");
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+
   }
 
   private void processAndCheckInvalid(AssetIssueActuator actuator, TransactionResultCapsule ret,
-      String failMsg,
-      String expectedMsg) {
+                                      String failMsg,
+                                      String expectedMsg) {
     try {
       actuator.validate();
       actuator.execute(ret);

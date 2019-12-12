@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
 
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
@@ -197,7 +198,6 @@ public class CreateAccountActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
-   // AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
     // delete account address, which just create
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_SECOND));
@@ -239,42 +239,30 @@ public class CreateAccountActuatorTest {
 
 
   @Test
-  public void noContract() {
-    CreateAccountActuator actuator = new CreateAccountActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(null);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
-  }
+  public void commonErrorCheck() {
 
-  @Test
-  public void invalidContractType() {
     CreateAccountActuator actuator = new CreateAccountActuator();
-    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
     Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
         .build());
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(invalidContractTypes);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "contract type error",
-        "contract type error,expected type [AccountCreateContract],real type["
-            + invalidContractTypes.getClass() + "]");
-  }
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [AccountCreateContract],real type[");
+    actuatorTest.invalidContractType();
 
-  @Test
-  public void nullTransationResult() {
-    CreateAccountActuator actuator = new CreateAccountActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
-    TransactionResultCapsule ret = null;
-    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
-        "TransactionResultCapsule is null");
-  }
+    actuatorTest.setContract(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
+    actuatorTest.nullTransationResult();
 
+    actuatorTest.setNullDBManagerMsg("No account store or contract store!");
+    actuatorTest.nullDBManger();
+
+  }
 
   private void processAndCheckInvalid(CreateAccountActuator actuator, TransactionResultCapsule ret,
-      String failMsg,
-      String expectedMsg) {
+                                      String failMsg,
+                                      String expectedMsg) {
     try {
       actuator.validate();
       actuator.execute(ret);

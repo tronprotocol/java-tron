@@ -2,12 +2,14 @@ package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
 
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+
 import java.io.File;
+
 import java.util.Arrays;
 import java.util.Map;
+import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -115,7 +117,7 @@ public class ExchangeTransactionActuatorTest {
   }
 
   private Any getContract(String address, long exchangeId, String tokenId,
-      long quant, long expected) {
+                          long quant, long expected) {
     return Any.pack(
         ExchangeTransactionContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
@@ -1696,4 +1698,71 @@ public class ExchangeTransactionActuatorTest {
     }
 
   }
+
+
+  @Test
+  public void noContract() {
+
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void invalidContractType() {
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(invalidContractTypes);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "contract type error",
+        "contract type error,expected type [ExchangeTransactionContract],real type[" +
+            invalidContractTypes.getClass() + "]");
+  }
+
+  @Test
+  public void nullTransationResult() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    InitExchangeBeforeSameTokenNameActive();
+    long exchangeId = 1;
+    String tokenId = "_";
+    long quant = 100_000_000L; // use 100 TRX to buy abc
+
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(
+            OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
+    TransactionResultCapsule ret = null;
+    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+        "TransactionResultCapsule is null");
+
+    dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
+    dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
+    dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
+    dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
+  }
+
+  private void processAndCheckInvalid(ExchangeTransactionActuator actuator,
+                                      TransactionResultCapsule ret,
+                                      String failMsg,
+                                      String expectedMsg) {
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      TestCase.fail(failMsg);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e instanceof RuntimeException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    }
+  }
+
 }

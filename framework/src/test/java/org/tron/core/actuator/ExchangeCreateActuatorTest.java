@@ -1402,45 +1402,38 @@ public class ExchangeCreateActuatorTest {
   }
 
 
-
   @Test
-  public void noContract() {
-    ExchangeCreateActuator actuator = new ExchangeCreateActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(null);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
-  }
+  public void commonErrorCheck() {
 
-  @Test
-  public void invalidContractType() {
     ExchangeCreateActuator actuator = new ExchangeCreateActuator();
-    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
     Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
         .build());
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(invalidContractTypes);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "contract type error",
-        "contract type error,expected type [ExchangeCreateContract],real type["
-            + invalidContractTypes.getClass() + "]");
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [ExchangeCreateContract],real type[");
+    actuatorTest.invalidContractType();
+
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    String firstTokenId = "_";
+    long firstTokenBalance = 100_000_000_000000L;
+    String secondTokenId = "abc";
+    long secondTokenBalance = 100_000_000L;
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.setBalance(200_000_000_000000L);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), 200_000_000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    actuatorTest.setContract(getContract(
+        OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamicStore store!");
+    actuatorTest.nullDBManger();
+
   }
 
-
-
-  private void processAndCheckInvalid(ExchangeCreateActuator actuator, TransactionResultCapsule ret,
-      String failMsg,
-      String expectedMsg) {
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-
-      fail(failMsg);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(expectedMsg, e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    }
-  }
 }

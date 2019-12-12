@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
 
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -29,6 +30,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 
 @Slf4j
@@ -48,7 +50,7 @@ public class ProposalCreateActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -423,5 +425,30 @@ public class ProposalCreateActuatorTest {
       Assert.assertFalse(e instanceof ItemNotFoundException);
     }
   }
+
+  @Test
+  public void commonErrorCheck() {
+
+    ProposalCreateActuator actuator = new ProposalCreateActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [ProposalCreateContract],real type[");
+    actuatorTest.invalidContractType();
+
+    HashMap<Long, Long> paras = new HashMap<>();
+    paras.put(0L, 1000000L);
+    actuatorTest.setContract(getContract(OWNER_ADDRESS_FIRST, paras));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No dbManager!");
+    actuatorTest.nullDBManger();
+
+  }
+
 
 }

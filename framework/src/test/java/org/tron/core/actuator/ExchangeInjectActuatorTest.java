@@ -2,7 +2,6 @@ package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
 
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
@@ -742,7 +741,7 @@ public class ExchangeInjectActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("account["+OWNER_ADDRESS_NOACCOUNT+"] not exists");
+      fail("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
