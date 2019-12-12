@@ -14,7 +14,6 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.BlockCapsule;
@@ -45,7 +43,6 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-
 
 @Slf4j(topic = "API")
 public class Util {
@@ -101,7 +98,7 @@ public class Util {
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
     JSONArray jsonArray = new JSONArray();
     transactions.stream().forEach(transaction -> jsonArray
-            .add(printTransactionToJSON(transaction, selfType))
+        .add(printTransactionToJSON(transaction, selfType))
     );
     jsonObject.put(TRANSACTION, jsonArray);
 
@@ -112,7 +109,7 @@ public class Util {
       boolean selfType) {
     JSONArray transactions = new JSONArray();
     list.stream().forEach(transactionCapsule -> transactions
-                    .add(printTransactionToJSON(transactionCapsule.getInstance(), selfType)));
+        .add(printTransactionToJSON(transactionCapsule.getInstance(), selfType)));
     return transactions;
   }
 
@@ -152,21 +149,24 @@ public class Util {
   public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight,
       boolean selfType) {
     String string = JsonFormat.printToString(transactionSignWeight, selfType);
-    return printTxInfo(transactionSignWeight.getTransaction().getTransaction(), string, selfType);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
+    jsonObjectExt
+        .put(TRANSACTION,
+            printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction(),
+                selfType));
+    jsonObject.put(TRANSACTION, jsonObjectExt);
+    return jsonObject.toJSONString();
   }
 
   public static String printTransactionApprovedList(
       TransactionApprovedList transactionApprovedList, boolean selfType) {
     String string = JsonFormat.printToString(transactionApprovedList, selfType);
-    return printTxInfo(transactionApprovedList.getTransaction().getTransaction(), string, selfType);
-  }
-
-  public static String printTxInfo(Transaction tx, String str, boolean selfType) {
-    JSONObject jsonObject = JSONObject.parseObject(str);
+    JSONObject jsonObject = JSONObject.parseObject(string);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
     jsonObjectExt.put(TRANSACTION,
-            printTransactionToJSON(tx,
-                    selfType));
+        printTransactionToJSON(transactionApprovedList.getTransaction().getTransaction(),
+            selfType));
     jsonObject.put(TRANSACTION, jsonObjectExt);
     return jsonObject.toJSONString();
   }
@@ -418,14 +418,14 @@ public class Util {
       JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
       String assetId = accountJson.get("asset_issued_ID").toString();
       accountJson.put(
-              "asset_issued_ID",
-              ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
+          "asset_issued_ID",
+          ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
       return accountJson.toJSONString();
     }
   }
 
   public static void printAccount(Account reply, HttpServletResponse response, Boolean visible)
-          throws java.io.IOException {
+      throws java.io.IOException {
     if (reply != null) {
       if (visible) {
         response.getWriter().println(JsonFormat.printToString(reply, true));
@@ -435,21 +435,6 @@ public class Util {
     } else {
       response.getWriter().println("{}");
     }
-  }
-
-  public static byte[] getAddress(HttpServletRequest request) throws Exception {
-    byte[] address = null;
-    String addressParam = "address";
-    String addressStr = request.getParameter(addressParam);
-    if (org.apache.commons.lang3.StringUtils.isNotBlank(addressStr)) {
-      if (org.apache.commons.lang3.StringUtils.startsWith(addressStr,
-              Constant.ADD_PRE_FIX_STRING_MAINNET)) {
-        address = Hex.decode(addressStr);
-      } else {
-        address = Wallet.decodeFromBase58Check(addressStr);
-      }
-    }
-    return address;
   }
 
 }
