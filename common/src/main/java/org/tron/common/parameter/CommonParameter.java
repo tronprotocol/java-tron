@@ -482,7 +482,9 @@ public class CommonParameter {
     return PARAMETER;
   }
 
+  //wait for lowerCase
   public boolean isECKeyCryptoEngine() {
-    return Strings.toLowerCase(cryptoEngine) == Strings.toLowerCase(Constant.ECKey_ENGINE);
+  //    return Strings.toLowerCase(cryptoEngine) == Strings.toLowerCase(Constant.ECKey_ENGINE);
+    return cryptoEngine == Constant.ECKey_ENGINE;
   }
 }
