@@ -187,7 +187,7 @@ public class NodeTableTest {
       nodeTable.addNode(new Node(ids.get(i), ips[i], 18888, 18888));
       TimeUnit.MILLISECONDS.sleep(10);
     }
-    Assert.assertEquals(3,nodeTable.getBucketsCount());
+    Assert.assertTrue(nodeTable.getBucketsCount() > 1);
     //3 buckets, nearnode's distance is 252, far's is 255, others' are 253
     List<Node> closest = nodeTable.getClosestNodes(homeNode.getId());
     Assert.assertTrue(closest.contains(nearNode));

@@ -14,6 +14,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -71,7 +72,7 @@ public class NodeHandlerTest {
   @Before
   public void initNodes() {
     dbManager = context.getBean(Manager.class);
-    nodeManager = new NodeManager(dbManager);
+    nodeManager = new NodeManager(context.getBean(ChainBaseManager.class));
     String currNodeId = "74c11ffad1d59d7b1a56691a0b84a53f0791c92361357364f1d2537"
             + "898407ef0249bbbf5a4ce8cff9e34e2fdf8bac883540e026d1e5d6ebf536414bdde81198e";
     String oldNodeId = "74c11ffad1d59d7b2c56691a0b84a53f0791c92361357364f1d2537898407e"
