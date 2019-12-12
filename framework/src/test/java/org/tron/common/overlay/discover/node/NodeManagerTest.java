@@ -30,7 +30,8 @@ public class NodeManagerTest {
   private TronApplicationContext context;
   private CommonParameter argsTest;
   private Application appTest;
-  private Class clazz;
+  private Class nodeManagerClazz;
+
 
   /**
    * start the application.
@@ -68,10 +69,10 @@ public class NodeManagerTest {
    */
   @Before
   public void initManager() throws Exception {
-    clazz = NodeManager.class;
-    Constructor<NodeManager> constructor = clazz.getConstructor(Manager.class);
+    nodeManagerClazz = NodeManager.class;
+    Constructor<NodeManager> handlerConstructor = nodeManagerClazz.getConstructor(Manager.class);
     manager = context.getBean(Manager.class);
-    nodeManager = constructor.newInstance(manager);
+    nodeManager = handlerConstructor.newInstance(manager);
   }
 
   @Test
@@ -88,14 +89,53 @@ public class NodeManagerTest {
   }
 
   @Test
-  public void trimTableTest() throws Exception {
+  public void trimTableTest_removeByReputation() throws Exception {
+    //insert 3001 nodes(isConnectible = true) with threshold = 3000
+    final int totalNodes = insertValues(3002);
+    Assert.assertEquals(calculateTrimNodes(totalNodes, 0), getHandlerMapSize());
+  }
+
+  @Test
+  public void trimTableTest_removeNotConnectibleNodes() throws Exception {
+    final int totalNodes = insertValues(3000);
+    insertNotConnectibleNodes();
+    Method method = nodeManagerClazz.getDeclaredMethod("trimTable");
+    method.setAccessible(true);
+    method.invoke(nodeManager);
+    Assert.assertEquals(calculateTrimNodes(totalNodes, 2), getHandlerMapSize());
+  }
+
+  /**
+   * calculate nodes number after table trim.
+   * @param totalNodes total nodes inserted
+   * @param wrongNodes isConnectable = false
+   * @return nodes count after trimTable()
+   */
+  public int calculateTrimNodes(int totalNodes, int wrongNodes) {
+    if (totalNodes + wrongNodes > 3000) {
+      if (totalNodes <= 3000) {
+        return totalNodes;
+      } else {
+        int result = 2000 + ((totalNodes + wrongNodes) % 2000 - 1001);
+        return result;
+      }
+    }
+    return totalNodes + wrongNodes;
+  }
+
+  /**
+   * insert valid nodes in map.
+   * @param totalNodes total nodes to be inserted.
+   * @return total nodes inserted.
+   */
+  public int insertValues(int totalNodes) throws Exception {
     //put 3001 nodes in nodeHandlerMap
-    int ipPart3 = 0;
+    int ipPart3 = 1;
     int ipPart4 = 1;
-    for (int i = 0; i < 3002; i++) {
+    for (int i = 0; i < totalNodes; i++) {
       StringBuilder stringBuilder = new StringBuilder("128.0.");
       byte[] bytes = new byte[64];
-      bytes[0] = (byte) i;
+      bytes[0] = (byte) (i + 1);
       stringBuilder.append(ipPart3);
       stringBuilder.append(".");
       stringBuilder.append(ipPart4);
@@ -104,16 +144,47 @@ public class NodeManagerTest {
         ipPart3++;
         ipPart4 = 1;
       }
-      Node node = new Node(bytes, stringBuilder.toString(), 18888, 18888);
+      Class nodeClazz = Node.class;
+      Constructor<Node> nodeConstructor
+          = nodeClazz.getConstructor(byte[].class, String.class, int.class, int.class);
+      Node node = nodeConstructor.newInstance(bytes, stringBuilder.toString(), 18888, 18888);
+      Field isConnectableField = nodeClazz.getDeclaredField("p2pVersion");
+      isConnectableField.setAccessible(true);
+      isConnectableField.set(node, Args.getInstance().getNodeP2pVersion());
       nodeManager.getNodeHandler(node);
     }
-    Field declaredField = clazz.getDeclaredField("nodeHandlerMap");
-    declaredField.setAccessible(true);
-    Method method = clazz.getDeclaredMethod("trimTable");
-    method.setAccessible(true);
-    method.invoke(nodeManager);
-    Map<String,NodeHandler> nodeHandlerMap = (ConcurrentHashMap)declaredField.get(nodeManager);
-    Assert.assertEquals(2001, nodeHandlerMap.size());
+    return totalNodes;
+  }
+
+  /**
+   * insert nodes with illegal p2p version.
+   */
+  public void insertNotConnectibleNodes() throws Exception {
+    Class nodeClazz = Node.class;
+    Constructor<Node> nodeConstructor
+        = nodeClazz.getConstructor(byte[].class, String.class, int.class, int.class);
+    Node wrongNode1 = nodeConstructor.newInstance(new byte[64], "128.0.0.1", 1111, 18888);
+    byte[] id = new byte[64];
+    id[63] = 1;
+    Node wrongNode2 = nodeConstructor.newInstance(id, "128.0.0.2", 1111, 18888);
+    Field isConnectableField = nodeClazz.getDeclaredField("p2pVersion");
+    isConnectableField.setAccessible(true);
+    isConnectableField.set(wrongNode1, 999);
+    isConnectableField.set(wrongNode2, 999);
+    nodeManager.getNodeHandler(wrongNode1);
+    nodeManager.getNodeHandler(wrongNode2);
+  }
+
+
+  /**
+   * get the size of nodeHandlerMap.
+   * @return NodeManager.nodeHandlerMap
+   */
+  public int getHandlerMapSize() throws Exception {
+    Field mapField = nodeManagerClazz.getDeclaredField("nodeHandlerMap");
+    mapField.setAccessible(true);
+    Map<String,NodeHandler> nodeHandlerMap = (ConcurrentHashMap)mapField.get(nodeManager);
+    return nodeHandlerMap.size();
   }
 
   @Test
