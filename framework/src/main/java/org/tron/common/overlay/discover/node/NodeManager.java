@@ -4,10 +4,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,20 +28,24 @@ import org.tron.common.overlay.discover.node.NodeHandler.State;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.common.overlay.discover.table.NodeTable;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.CollectionUtils;
+import org.tron.common.utils.JsonUtil;
+import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 
 @Slf4j(topic = "discover")
 @Component
 public class NodeManager implements EventHandler {
 
+  private static final byte[] DB_KEY_PEERS = "peers".getBytes();
   private static final long DB_COMMIT_RATE = 1 * 60 * 1000L;
   private static final int MAX_NODES = 2000;
   private static final int MAX_NODES_WRITE_TO_DB = 30;
   private static final int NODES_TRIM_THRESHOLD = 3000;
   private CommonParameter commonParameter = Args.getInstance();
-  private Manager dbManager;
+  private ChainBaseManager chainBaseManager;
   private Consumer<UdpEvent> messageSender;
 
   private NodeTable table;
@@ -60,8 +62,8 @@ public class NodeManager implements EventHandler {
   private ScheduledExecutorService pongTimer;
 
   @Autowired
-  public NodeManager(Manager dbManager) {
-    this.dbManager = dbManager;
+  public NodeManager(ChainBaseManager chainBaseManager) {
+    this.chainBaseManager = chainBaseManager;
     discoveryEnabled = commonParameter.isNodeDiscoveryEnable();
 
     homeNode = new Node(Node.getNodeId(), commonParameter.getNodeExternalIp(),
@@ -110,30 +112,50 @@ public class NodeManager implements EventHandler {
   }
 
   private void dbRead() {
-    Set<Node> nodes = this.dbManager.readNeighbours();
-    logger.info("Reading Node statistics from PeersStore: " + nodes.size() + " nodes.");
-    nodes.forEach(node -> getNodeHandler(node).getNodeStatistics()
-        .setPersistedReputation(node.getReputation()));
+    try {
+      byte[] nodeBytes = chainBaseManager.getCommonStore().get(DB_KEY_PEERS).getData();
+      if (ByteArray.isEmpty(nodeBytes)) {
+        return;
+      }
+      DBNode dbNode = JsonUtil.json2Obj(new String(nodeBytes), DBNode.class);
+      logger.info("Reading node statistics from store: {} nodes.", dbNode.getNodes().size());
+      dbNode.getNodes().forEach(n -> {
+        Node node = new Node(n.getId(), n.getHost(), n.getPort());
+        getNodeHandler(node).getNodeStatistics().setPersistedReputation(n.getReputation());
+      });
+    } catch (Exception e) {
+      logger.error("DB read node failed.", e);
+    }
   }
 
   private void dbWrite() {
-    List<Node> batch = new ArrayList<>();
-    for (NodeHandler nodeHandler : nodeHandlerMap.values()) {
-      if (nodeHandler.getNode().isConnectible(Args.getInstance().getNodeP2pVersion())) {
-        nodeHandler.getNode().setReputation(nodeHandler.getNodeStatistics().getReputation());
-        batch.add(nodeHandler.getNode());
+    try {
+      List<DBNodeStats> batch = new ArrayList<>();
+      DBNode dbNode = new DBNode();
+      for (NodeHandler nodeHandler : nodeHandlerMap.values()) {
+        Node node = nodeHandler.getNode();
+        if (node.isConnectible(Args.getInstance().getNodeP2pVersion())) {
+          DBNodeStats nodeStatic = new DBNodeStats(node.getId(), node.getHost(),
+              node.getPort(), nodeHandler.getNodeStatistics().getReputation());
+          batch.add(nodeStatic);
+        }
       }
+      int size = batch.size();
+      batch.sort(Comparator.comparingInt(value -> -value.getReputation()));
+      if (batch.size() > MAX_NODES_WRITE_TO_DB) {
+        batch = batch.subList(0, MAX_NODES_WRITE_TO_DB);
+      }
+
+      dbNode.setNodes(batch);
+
+      logger.info("Write node statistics to store: m:{}/t:{}/{}/{} nodes.",
+          nodeHandlerMap.size(), getTable().getAllNodes().size(), size, batch.size());
+
+      chainBaseManager.getCommonStore()
+          .put(DB_KEY_PEERS, new BytesCapsule(JsonUtil.obj2Json(dbNode).getBytes()));
+    } catch (Exception e) {
+      logger.error("DB write node failed.", e);
     }
-    int size = batch.size();
-    batch.sort(Comparator.comparingInt(value -> -value.getReputation()));
-    if (batch.size() > MAX_NODES_WRITE_TO_DB) {
-      batch = batch.subList(0, MAX_NODES_WRITE_TO_DB);
-    }
-    Set<Node> nodes = new HashSet<>();
-    nodes.addAll(batch);
-    logger.info("Write Node statistics to PeersStore after: m:{}/t:{}/{}/{} nodes.",
-        nodeHandlerMap.size(), getTable().getAllNodes().size(), size, nodes.size());
-    dbManager.clearAndWriteNeighbours(nodes);
   }
 
   public void setMessageSender(Consumer<UdpEvent> messageSender) {
@@ -145,9 +167,9 @@ public class NodeManager implements EventHandler {
   }
 
   private String getKey(InetSocketAddress address) {
-    InetAddress addr = address.getAddress();
-    return (addr == null ? address.getHostString() : addr.getHostAddress()) + ":" + address
-        .getPort();
+    InetAddress inetAddress = address.getAddress();
+    return (inetAddress == null ? address.getHostString() : inetAddress.getHostAddress()) + ":"
+        + address.getPort();
   }
 
   public NodeHandler getNodeHandler(Node n) {
