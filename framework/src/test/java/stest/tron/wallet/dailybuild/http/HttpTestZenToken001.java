@@ -79,7 +79,7 @@ public class HttpTestZenToken001 {
    */
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
   }

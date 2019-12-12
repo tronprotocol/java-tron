@@ -23,7 +23,14 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       long getNum = Long.parseLong(request.getParameter("num"));
-      writeResponse(getNum, visible, response);
+      if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
+        BlockList reply = wallet.getBlockByLatestNum(getNum);
+        if (reply != null) {
+          response.getWriter().println(Util.printBlockList(reply, visible));
+          return;
+        }
+      }
+      response.getWriter().println("{}");
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -38,25 +45,16 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
       NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
       long getNum = build.getNum();
-      writeResponse(getNum, visible, response);
+      if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
+        BlockList reply = wallet.getBlockByLatestNum(getNum);
+        if (reply != null) {
+          response.getWriter().println(Util.printBlockList(reply, visible));
+          return;
+        }
+      }
+      response.getWriter().println("{}");
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
-
-  private void writeResponse(long getNum, boolean visible,
-                             HttpServletResponse response)
-          throws Exception {
-    if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
-      BlockList reply = wallet.getBlockByLatestNum(getNum);
-      if (reply != null) {
-        response.getWriter().println(Util.printBlockList(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
-    } else {
-      response.getWriter().println("{}");
-    }
-  }
-
 }
