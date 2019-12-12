@@ -75,6 +75,9 @@ public class UpdateAccountActuatorTest {
    */
   @Before
   public void createCapsule() {
+
+    dbManager.getDynamicPropertiesStore().saveAllowUpdateAccountName(0);   // reset allowUpdate
+
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
@@ -82,9 +85,8 @@ public class UpdateAccountActuatorTest {
             AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_1));
-    dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME.getBytes());
-    dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME_1.getBytes());
     dbManager.getAccountIndexStore().delete(ACCOUNT_NAME.getBytes());
+    dbManager.getAccountIndexStore().delete(ACCOUNT_NAME_1.getBytes());
 
   }
 
@@ -190,11 +192,6 @@ public class UpdateAccountActuatorTest {
       Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
-      dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME.getBytes());
-      dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME_1.getBytes());
-      dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_1));
-      dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
     }
   }
 
@@ -210,16 +207,18 @@ public class UpdateAccountActuatorTest {
     // than 1 time
     UpdateAccount(ACCOUNT_NAME_1, OWNER_ADDRESS);  // second update
 
-    UpdateAccount("third Update", OWNER_ADDRESS);  // Third update
+    String accountTest = "third Update";
 
-    dbManager.getAccountIdIndexStore().delete("third Update".getBytes());
+    UpdateAccount(accountTest, OWNER_ADDRESS);  // Third update
+
+    dbManager.getAccountIndexStore().delete(accountTest.getBytes());  // delete it after test
 
 
   }
 
 
   @Test
-  public void nameIsExitFail() {
+  public void updateSameNameSuccess() {
 
     UpdateAccount(ACCOUNT_NAME, OWNER_ADDRESS);   // first update account
 
@@ -231,20 +230,12 @@ public class UpdateAccountActuatorTest {
 
     UpdateAccount("sameName", OWNER_ADDRESS);   // fourth Update with same accountName
 
-    dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME.getBytes());
+    dbManager.getAccountIndexStore().delete(ACCOUNT_NAME.getBytes());
 
   }
 
   @Test
-  public void nameIsExitSuccess() {
-    dbManager.getDynamicPropertiesStore().saveAllowUpdateAccountName(0);   // reset allowUpdate
-    AccountCapsule account = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS));
-    logger.info(account.getAccountName() + "  " + account.getAccountName().isEmpty() + "  "
-        + dbManager.getDynamicPropertiesStore().getAllowUpdateAccountName() + "  "
-    );
-    logger.info("equal " + dbManager.getAccountIdIndexStore().has(ACCOUNT_NAME.getBytes()));
-
+  public void updateSameNameFail() {
     UpdateAccount(ACCOUNT_NAME, OWNER_ADDRESS);   // first update account
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -258,6 +249,7 @@ public class UpdateAccountActuatorTest {
             ByteString.EMPTY,
             AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+
     dbManager.getDynamicPropertiesStore().saveAllowUpdateAccountName(0);   // reset allowUpdate
 
     try {
@@ -270,7 +262,6 @@ public class UpdateAccountActuatorTest {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(ACCOUNT_NAME, accountCapsule.getAccountName().toStringUtf8());
-
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

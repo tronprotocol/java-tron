@@ -93,7 +93,6 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     if (chainBaseManager.getAccountIndexStore().has(accountName)
         && chainBaseManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
-          logger.info("test "+chainBaseManager.getAccountIndexStore().has(accountName));
       throw new ContractValidateException("This name is existed");
     }
 
