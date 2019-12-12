@@ -484,7 +484,6 @@ public class CommonParameter {
 
 
   public boolean isECKeyCryptoEngine() {
-  //    return Strings.toLowerCase(cryptoEngine) == Strings.toLowerCase(Constant.ECKey_ENGINE);
-    return cryptoEngine == Constant.ECKey_ENGINE;
+    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
 }
