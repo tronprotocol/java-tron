@@ -32,6 +32,7 @@ public class ECKeyTest {
   private byte[] compressedPubKey = Hex.decode(compressedPubString);
   private String address = "cd2a3d9f938e13cd947ec05abc7fe734df8dd826";
 
+
   @Test
   public void testHashCode() {
     assertEquals(-351262686, ECKey.fromPrivate(privateKey).hashCode());

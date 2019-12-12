@@ -16,12 +16,15 @@
 package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
+import com.sun.org.apache.xpath.internal.Arg;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.Parameter.ChainConstant;
 
@@ -44,11 +47,11 @@ public class LocalWitnesses {
     setPrivateKeys(privateKeys);
   }
 
-  public byte[] getWitnessAccountAddress() {
+  public byte[] getWitnessAccountAddress(boolean isECKeyCryptoEngine) {
     if (witnessAccountAddress == null) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
-      final ECKey ecKey = ECKey.fromPrivate(privateKey);
-      this.witnessAccountAddress = ecKey.getAddress();
+      final SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, isECKeyCryptoEngine);
+      this.witnessAccountAddress = cryptoEngine.getAddress();
     }
     return witnessAccountAddress;
   }
@@ -57,10 +60,11 @@ public class LocalWitnesses {
     this.witnessAccountAddress = localWitnessAccountAddress;
   }
 
-  public void initWitnessAccountAddress() {
+  public void initWitnessAccountAddress(boolean isECKeyCryptoEngine) {
     if (witnessAccountAddress == null) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
-      final ECKey ecKey = ECKey.fromPrivate(privateKey);
+      final SignInterface ecKey = SignUtils.fromPrivate(privateKey,
+          isECKeyCryptoEngine);
       this.witnessAccountAddress = ecKey.getAddress();
     }
   }

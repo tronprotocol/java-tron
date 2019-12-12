@@ -41,6 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
@@ -204,7 +206,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             "Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
-      byte[] address = ECKey.signatureToAddress(hash, base64);
+      byte[] address = SignUtils.signatureToAddress(hash, base64, DBConfig.isECKeyCryptoEngine());
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
@@ -515,9 +517,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void sign(byte[] privateKey) {
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
-    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+    //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
+    //    ByteString sig = ByteString.copyFrom(signature.getBytes());
+    ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
+            .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
@@ -544,8 +548,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
     }
     List<ByteString> approveList = new ArrayList<>();
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
-    byte[] address = ecKey.getAddress();
+    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+    byte[] address = cryptoEngine.getAddress();
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),
           approveList);
@@ -560,8 +564,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           ByteArray.toHexString(privateKey) + "'s address is " + encode58Check(address)
               + " but it is not contained of permission.");
     }
-    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
+    ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
+            .signHash(getRawHash().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 

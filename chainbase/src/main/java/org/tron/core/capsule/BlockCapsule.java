@@ -28,9 +28,14 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.spongycastle.util.encoders.Base64;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
@@ -138,15 +143,18 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         .collect(Collectors.toList());
   }
 
+  // TODO add unit test for sig2.getbytes
   public void sign(byte[] privateKey) {
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
-    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toByteArray());
+    SignInterface ecKeyEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+
+    ByteString sig = ByteString.copyFrom(ecKeyEngine.Base64toBytes(ecKeyEngine.signHash(getRawHash()
+            .getBytes())));
 
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
-        .build();
+            .build();
 
     this.block = this.block.toBuilder().setBlockHeader(blockHeader).build();
+
   }
 
   private Sha256Hash getRawHash() {
@@ -156,8 +164,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public boolean validateSignature(DynamicPropertiesStore dynamicPropertiesStore,
       AccountStore accountStore) throws ValidateSignatureException {
     try {
-      byte[] sigAddress = ECKey.signatureToAddress(getRawHash().getBytes(),
-          TransactionCapsule.getBase64FromByteString(block.getBlockHeader().getWitnessSignature()));
+      byte[] sigAddress = SignUtils.signatureToAddress(getRawHash().getBytes(),
+          TransactionCapsule.getBase64FromByteString(
+                  block.getBlockHeader().getWitnessSignature()),
+          DBConfig.isECKeyCryptoEngine());
       byte[] witnessAccountAddress = block.getBlockHeader().getRawData().getWitnessAddress()
           .toByteArray();
 

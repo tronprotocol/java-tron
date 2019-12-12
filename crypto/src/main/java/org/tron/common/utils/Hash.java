@@ -18,16 +18,17 @@
 
 package org.tron.common.utils;
 
+import static java.util.Arrays.copyOfRange;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.ByteUtil.isNullOrZeroArray;
 import static org.tron.common.utils.ByteUtil.isSingleZero;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.math.ec.ECPoint;
 import org.tron.common.crypto.jce.TronCastleProvider;
 
 @Slf4j(topic = "crypto")
@@ -183,5 +184,27 @@ public class Hash {
 
       return data;
     }
+  }
+
+  public static byte[] computeAddress(ECPoint pubPoint) {
+    return computeAddress(pubPoint.getEncoded(/* uncompressed */ false));
+  }
+
+  public static byte[] computeAddress(byte[] pubBytes) {
+    return sha3omit12(
+        Arrays.copyOfRange(pubBytes, 1, pubBytes.length));
+  }
+
+  /**
+   * Calculates RIGTMOST160(SHA3(input)). This is used in address calculations. *
+   *
+   * @param input - data
+   * @return - add_pre_fix + 20 right bytes of the hash keccak of the data
+   */
+  public static byte[] sha3omit12(byte[] input) {
+    byte[] hash = Hash.sha3(input);
+    byte[] address = copyOfRange(hash, 11, hash.length);
+    address[0] = DecodeUtil.addressPreFixByte;
+    return address;
   }
 }

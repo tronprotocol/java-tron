@@ -18,6 +18,7 @@
 
 package org.tron.core;
 
+import static org.tron.common.utils.DecodeUtil.ADDRESS_SIZE;
 import static org.tron.common.utils.DecodeUtil.addressValid;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
@@ -83,6 +84,8 @@ import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
@@ -199,7 +202,7 @@ public class Wallet {
   private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   @Getter
-  private final ECKey ecKey;
+  private final SignInterface cryptoEngine;
   @Autowired
   private TronNetService tronNetService;
   @Autowired
@@ -214,15 +217,16 @@ public class Wallet {
    * Creates a new Wallet with a random ECKey.
    */
   public Wallet() {
-    this.ecKey = new ECKey(Utils.getRandom());
+    this.cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+        Args.getInstance().isECKeyCryptoEngine());
   }
 
   /**
    * Creates a Wallet with an existing ECKey.
    */
-  public Wallet(final ECKey ecKey) {
-    this.ecKey = ecKey;
-    logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
+  public Wallet(final SignInterface cryptoEngine) {
+    this.cryptoEngine = cryptoEngine;
+    logger.info("wallet address: {}", ByteArray.toHexString(this.cryptoEngine.getAddress()));
   }
 
   public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract)
@@ -292,6 +296,26 @@ public class Wallet {
     DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
 
+  public static boolean addressValid(byte[] address) {
+    if (ArrayUtils.isEmpty(address)) {
+      logger.warn("Warning: Address is empty !!");
+      return false;
+    }
+    if (address.length != ADDRESS_SIZE / 2) {
+      logger.warn(
+          "Warning: Address length requires " + ADDRESS_SIZE + " but " + address.length
+              + " !!");
+      return false;
+    }
+    if (address[0] != DecodeUtil.addressPreFixByte) {
+      logger.warn("Warning: Address requires a prefix with " + DecodeUtil.addressPreFixByte
+              + " but " + address[0] + " !!");
+      return false;
+    }
+    //Other rule;
+    return true;
+  }
+
   public static String encode58Check(byte[] input) {
     byte[] hash0 = Sha256Hash.hash(input);
     byte[] hash1 = Sha256Hash.hash(hash0);
@@ -330,7 +354,7 @@ public class Wallet {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return DecodeUtil.sha3omit12(combined);
+    return Hash.sha3omit12(combined);
 
   }
 
@@ -340,7 +364,7 @@ public class Wallet {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return DecodeUtil.sha3omit12(combined);
+    return Hash.sha3omit12(combined);
 
   }
 
@@ -351,13 +375,13 @@ public class Wallet {
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
     System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
 
-    return DecodeUtil.sha3omit12(combined);
+    return Hash.sha3omit12(combined);
   }
 
   // for `CREATE2`
   public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
     byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return DecodeUtil.sha3omit12(mergedData);
+    return Hash.sha3omit12(mergedData);
   }
 
   public static byte[] tryDecodeFromBase58Check(String address) {
@@ -413,7 +437,7 @@ public class Wallet {
   }
 
   public byte[] getAddress() {
-    return ecKey.getAddress();
+    return cryptoEngine.getAddress();
   }
 
   public Account getAccount(Account account) {
@@ -732,7 +756,8 @@ public class Wallet {
                 "Signature size is " + sig.size());
           }
           String base64 = TransactionCapsule.getBase64FromByteString(sig);
-          byte[] address = ECKey.signatureToAddress(hash, base64);
+          byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
+                  .isECKeyCryptoEngine());
           approveList.add(ByteString.copyFrom(address)); //out put approve list.
         }
         tswBuilder.addAllApprovedList(approveList);
@@ -758,7 +783,8 @@ public class Wallet {
 
   public byte[] createAddress(byte[] passPhrase) {
     byte[] privateKey = pass2Key(passPhrase);
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    SignInterface ecKey = SignUtils.fromPrivate(privateKey,
+        Args.getInstance().isECKeyCryptoEngine());
     return ecKey.getAddress();
   }
 

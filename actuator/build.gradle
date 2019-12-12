@@ -12,6 +12,7 @@ def slf4jVersion = "1.7.25"
 dependencies {
     compile project(":chainbase")
     compile project(":protocol")
+    compile project(":crypto")
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
 
@@ -63,6 +64,19 @@ task testng(type: Test) {
 
         warn.events = ["failed", "skipped"]
         warn.exceptionFormat = "full"
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+    executionData = files('../framework/build/jacoco/jacocoTest.exec')
+    afterEvaluate {
+        classDirectories = files(classDirectories.files.collect {
+            fileTree(dir: it,)
+        })
     }
 }
 

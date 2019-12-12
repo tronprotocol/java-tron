@@ -10,6 +10,7 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.security.Signature;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +75,8 @@ import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
@@ -599,9 +602,10 @@ public class RpcApiService implements Service {
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      byte[] priKey = ecKey.getPrivKeyBytes();
-      byte[] address = ecKey.getAddress();
+      SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+          Args.getInstance().isECKeyCryptoEngine());
+      byte[] priKey = cryptoEngine.getPrivateKey();
+      byte[] address = cryptoEngine.getAddress();
       String addressStr = Wallet.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
@@ -904,8 +908,9 @@ public class RpcApiService implements Service {
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
-        ECKey ecKey = ECKey.fromPrivate(privateKey);
-        byte[] owner = ecKey.getAddress();
+        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, Args.getInstance()
+                .isECKeyCryptoEngine());
+        byte[] owner = cryptoEngine.getAddress();
         TransferContract.Builder builder = TransferContract.newBuilder();
         builder.setOwnerAddress(ByteString.copyFrom(owner));
         builder.setToAddress(toAddress);
@@ -955,8 +960,9 @@ public class RpcApiService implements Service {
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
-        ECKey ecKey = ECKey.fromPrivate(privateKey);
-        byte[] owner = ecKey.getAddress();
+        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey,
+            Args.getInstance().isECKeyCryptoEngine());
+        byte[] owner = cryptoEngine.getAddress();
         TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
         builder.setOwnerAddress(ByteString.copyFrom(owner));
         builder.setToAddress(toAddress);
@@ -1793,9 +1799,10 @@ public class RpcApiService implements Service {
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      byte[] priKey = ecKey.getPrivKeyBytes();
-      byte[] address = ecKey.getAddress();
+      SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+          Args.getInstance().isECKeyCryptoEngine());
+      byte[] priKey = cryptoEngine.getPrivateKey();
+      byte[] address = cryptoEngine.getAddress();
       String addressStr = Wallet.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();

@@ -15,7 +15,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.Utils;
+import org.tron.core.config.args.Args;
 
 /**
  * Utility functions for working with Wallet files.
@@ -48,12 +51,13 @@ public class WalletUtils {
       throws CipherException, IOException, InvalidAlgorithmParameterException,
       NoSuchAlgorithmException, NoSuchProviderException {
 
-    ECKey ecKeyPair = new ECKey(Utils.getRandom());
+    SignInterface ecKeyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+        Args.getInstance().isECKeyCryptoEngine());
     return generateWalletFile(password, ecKeyPair, destinationDirectory, useFullScrypt);
   }
 
   public static String generateWalletFile(
-      String password, ECKey ecKeyPair, File destinationDirectory, boolean useFullScrypt)
+      String password, SignInterface ecKeyPair, File destinationDirectory, boolean useFullScrypt)
       throws CipherException, IOException {
 
     WalletFile walletFile;

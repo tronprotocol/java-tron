@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.consensus.Consensus;
@@ -41,9 +41,11 @@ public class ConsensusService {
     param.setNeedSyncCheck(parameter.isNeedSyncCheck());
     List<Miner> miners = new ArrayList<>();
     byte[] privateKey = ByteArray
-        .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey());
-    byte[] privateKeyAddress = ECKey.fromPrivate(privateKey).getAddress();
-    byte[] witnessAddress = Args.getInstance().getLocalWitnesses().getWitnessAccountAddress();
+        .fromHexString(Args.getLocalWitnesses().getPrivateKey());
+    byte[] privateKeyAddress = SignUtils.fromPrivate(privateKey,
+        Args.getInstance().isECKeyCryptoEngine()).getAddress();
+    byte[] witnessAddress = Args.getLocalWitnesses().getWitnessAccountAddress(Args
+            .getInstance().isECKeyCryptoEngine());
     WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
     if (null == witnessCapsule) {
       logger.warn("Witness {} is not in witnessStore.", Hex.encodeHexString(witnessAddress));

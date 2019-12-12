@@ -6,13 +6,14 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.spongycastle.util.Strings;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.setting.RocksDbSettings;
-import org.tron.core.config.args.LocalWitnesses;
+import org.tron.core.Constant;
 import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
@@ -463,15 +464,14 @@ public class CommonParameter {
   public SeedNode seedNode;
 
   @Getter
-  @Setter
-  public LocalWitnesses localWitnesses = new LocalWitnesses();
-
-  @Getter
   public EventPluginConfig eventPluginConfig;
 
   @Getter
   public FilterQuery eventFilter;
 
+  @Getter
+  @Setter
+  public String cryptoEngine;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
@@ -480,5 +480,9 @@ public class CommonParameter {
 
   public static CommonParameter getInstance() {
     return PARAMETER;
+  }
+
+  public boolean isECKeyCryptoEngine() {
+    return Strings.toLowerCase(cryptoEngine) == Strings.toLowerCase(Constant.ECKey_ENGINE);
   }
 }
