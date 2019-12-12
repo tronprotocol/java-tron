@@ -113,6 +113,7 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -643,6 +644,10 @@ public class Manager {
 
   public AccountStore getAccountStore() {
     return chainBaseManager.getAccountStore();
+  }
+
+  public AccountIndexStore getAccountIndexStore(){
+    return chainBaseManager.getAccountIndexStore();
   }
 
   public void adjustBalance(byte[] accountAddress, long amount)
