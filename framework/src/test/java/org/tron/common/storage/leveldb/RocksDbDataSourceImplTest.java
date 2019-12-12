@@ -16,6 +16,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.testng.collections.Maps;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -282,5 +283,52 @@ public class RocksDbDataSourceImplTest {
     }
     Assert.assertNull(dataSource.getDatabase());
     PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
+  }
+
+  @Test
+  public void testGetNext() {
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+            Args.getInstance().getOutputDirectory(), "test_getNext_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+    putSomeKeyValue(dataSource);
+    // case: normal
+    Map<byte[], byte[]> seekKvLimitNext = dataSource.getNext("0000000300".getBytes(), 2);
+    Map<String, String> hashMap = Maps.newHashMap();
+    hashMap.put(ByteArray.toStr(key3), ByteArray.toStr(value3));
+    hashMap.put(ByteArray.toStr(key4), ByteArray.toStr(value4));
+    seekKvLimitNext.forEach((key, value) -> {
+      String keyStr = ByteArray.toStr(key);
+      Assert.assertTrue("getNext", hashMap.containsKey(keyStr));
+      Assert.assertEquals(ByteArray.toStr(value), hashMap.get(keyStr));
+    });
+    // case: targetKey greater than all existed keys
+    seekKvLimitNext = dataSource.getNext("0000000700".getBytes(), 2);
+    Assert.assertEquals(0, seekKvLimitNext.size());
+    // case: limit<=0
+    seekKvLimitNext = dataSource.getNext("0000000300".getBytes(), 0);
+    Assert.assertEquals(0, seekKvLimitNext.size());
+    dataSource.resetDb();
+    dataSource.closeDB();
+  }
+
+  @Test
+  public void testGetlatestValues() {
+    RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
+            Args.getInstance().getOutputDirectory(), "test_getlatestValues_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+    putSomeKeyValue(dataSource);
+    // case: normal
+    Set<byte[]> seekKeyLimitNext = dataSource.getlatestValues(2);
+    Set<String> hashSet = Sets.newHashSet(ByteArray.toStr(value5), ByteArray.toStr(value6));
+    seekKeyLimitNext.forEach(value -> {
+      Assert.assertTrue(hashSet.contains(ByteArray.toStr(value)));
+    });
+    // case: limit<=0
+    seekKeyLimitNext = dataSource.getlatestValues(0);
+    assertEquals(0, seekKeyLimitNext.size());
+    dataSource.resetDb();
+    dataSource.closeDB();
   }
 }
