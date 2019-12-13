@@ -17,10 +17,12 @@ public class ActuatorTest {
   private Any contract = null;
   private Any invalidContract;
   private String expectedcontractTypeMsg;
-  private String failMsg,expectedMsg;
+  private String failMsg;
+  private String expectedMsg;
   private String nullChainMangerErrorMsg = "No account store or contract store!";
   private String ownerAddress = null;
   private String invalidAddressErrorMsg = "Invalid address";
+
   public ActuatorTest(Any contract, AbstractActuator actuator, Manager dbManager) {
     this.actuator = actuator;
     this.dbManager = dbManager;
@@ -36,9 +38,9 @@ public class ActuatorTest {
     this.actuator = actuator;
   }
 
-  public void setMessage(String failMsg, String expectMsg){
-    this.failMsg=failMsg;
-    this.expectedMsg=expectMsg;
+  public void setMessage(String failMsg, String expectMsg) {
+    this.failMsg = failMsg;
+    this.expectedMsg = expectMsg;
   }
 
   public void setInvalidContractTypeMsg(String failMsg, String expectcontractTypeMsg) {
