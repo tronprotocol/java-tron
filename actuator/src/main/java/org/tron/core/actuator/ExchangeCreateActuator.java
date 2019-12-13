@@ -39,7 +39,6 @@ public class ExchangeCreateActuator extends AbstractActuator {
     }
 
     long fee = calcFee();
-    logger.info("test console fee="+fee);
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
