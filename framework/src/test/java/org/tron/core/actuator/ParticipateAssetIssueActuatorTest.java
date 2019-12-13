@@ -26,6 +26,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 
@@ -51,7 +52,7 @@ public class ParticipateAssetIssueActuatorTest {
   private static TronApplicationContext context;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1234";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -1712,5 +1713,28 @@ public class ParticipateAssetIssueActuatorTest {
     }
   }
 
+  @Test
+  public void commonErrorCheck() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+
+    ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [ParticipateAssetIssueContract],real type[");
+    actuatorTest.invalidContractType();
+
+    initAssetIssue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
+    actuatorTest.setContract(getContract(1000L));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+  }
 
 }

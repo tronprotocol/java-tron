@@ -29,6 +29,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.Common.ResourceCode;
 
@@ -45,7 +46,7 @@ public class FreezeBalanceActuatorTest {
   private static TronApplicationContext context;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
@@ -121,8 +122,8 @@ public class FreezeBalanceActuatorTest {
   }
 
   private Any getDelegatedContractForBandwidth(String ownerAddress, String receiverAddress,
-      long frozenBalance,
-      long duration) {
+                                               long frozenBalance,
+                                               long duration) {
     return Any.pack(
         FreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
@@ -133,8 +134,8 @@ public class FreezeBalanceActuatorTest {
   }
 
   private Any getDelegatedContractForCpu(String ownerAddress, String receiverAddress,
-      long frozenBalance,
-      long duration) {
+                                         long frozenBalance,
+                                         long duration) {
     return Any.pack(
         FreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
@@ -628,4 +629,29 @@ public class FreezeBalanceActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+
+  @Test
+  public void commonErrorCheck() {
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [FreezeBalanceContract],real type[");
+    actuatorTest.invalidContractType();
+
+    long frozenBalance = 1_000_000_000L;
+    long duration = 3;
+    actuatorTest.setContract(getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+  }
+
+
 }
