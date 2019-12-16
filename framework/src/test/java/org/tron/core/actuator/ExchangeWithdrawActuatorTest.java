@@ -7,6 +7,7 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
+import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -30,6 +31,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 
@@ -50,7 +52,7 @@ public class ExchangeWithdrawActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -1762,4 +1764,74 @@ public class ExchangeWithdrawActuatorTest {
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
     }
   }
+
+
+  @Test
+  public void noContract() {
+
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void invalidContractType() {
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(invalidContractTypes);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "contract type error",
+        "contract type error,expected type [ExchangeWithdrawContract],real type["
+            + invalidContractTypes.getClass() + "]");
+  }
+
+  @Test
+  public void nullTransationResult() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    InitExchangeBeforeSameTokenNameActive();
+    long exchangeId = 1;
+    String firstTokenId = "abc";
+    long firstTokenQuant = 100000000L;
+    String secondTokenId = "def";
+    long secondTokenQuant = 200000000L;
+
+    ExchangeWithdrawActuator actuator = new ExchangeWithdrawActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(
+            OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
+    TransactionResultCapsule ret = null;
+    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+        "TransactionResultCapsule is null");
+
+    dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
+    dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
+    dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
+    dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
+
+  }
+
+  private void processAndCheckInvalid(ExchangeWithdrawActuator actuator,
+                                      TransactionResultCapsule ret,
+                                      String failMsg,
+                                      String expectedMsg) {
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      TestCase.fail(failMsg);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e instanceof RuntimeException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    }
+  }
+
 }
