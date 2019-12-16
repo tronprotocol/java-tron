@@ -1072,6 +1072,21 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMarketSellFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMarketSellFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMarketCancelFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMarketCancelFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMarketQuantityLimit")
+        .setValue(dbManager.getDynamicPropertiesStore().getMarketQuantityLimit())
+        .build());
+
     return builder.build();
   }
 

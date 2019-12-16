@@ -131,6 +131,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MARKET_SELL_FEE = "MARKET_SELL_FEE".getBytes();
   private static final byte[] MARKET_CANCEL_FEE = "MARKET_CANCEL_FEE".getBytes();
+  private static final byte[] MARKET_QUANTITY_LIMIT = "MARKET_QUANTITY_LIMIT".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -422,6 +423,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getMarketCancelFee();
     } catch (IllegalArgumentException e) {
       this.saveMarketCancelFee(100_000L);
+    }
+
+    try {
+      this.getMarketQuantityLimit();
+    } catch (IllegalArgumentException e) {
+      this.saveMarketQuantityLimit(1_000_000_000_000_000L);
     }
 
     try {
@@ -1225,6 +1232,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found MarketSell_FEE"));
   }
+
+
+  public void saveMarketQuantityLimit(long fee) {
+    this.put(MARKET_QUANTITY_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getMarketQuantityLimit() {
+    return Optional.ofNullable(getUnchecked(MARKET_QUANTITY_LIMIT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MARKET_QUANTITY_LIMIT"));
+  }
+
 
 
   public void saveMarketCancelFee(long fee) {

@@ -44,6 +44,7 @@ import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketPriceList.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -184,13 +185,27 @@ public class MarketSellAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Account does not exist!");
     }
 
-    if (sellTokenQuantity <= 0) {
-      throw new ContractValidateException("sellTokenQuantity must greater than 0!");
+    if (!Arrays.equals(sellTokenID, "_".getBytes()) && !TransactionUtil.isNumber(sellTokenID)) {
+      throw new ContractValidateException("sellTokenID is not a valid number");
+    }
+    if (!Arrays.equals(buyTokenID, "_".getBytes()) && !TransactionUtil
+        .isNumber(buyTokenID)) {
+      throw new ContractValidateException("buyTokenID is not a valid number");
     }
 
-    if (buyTokenQuantity <= 0) {
-      throw new ContractValidateException("buyTokenQuantity must greater than 0!");
+    if (Arrays.equals(sellTokenID, buyTokenID)) {
+      throw new ContractValidateException("cannot exchange same tokens");
     }
+
+    if (sellTokenQuantity <= 0 || buyTokenQuantity <= 0) {
+      throw new ContractValidateException("token quantity must greater than zero");
+    }
+
+    long quantityLimit = dynamicStore.getMarketQuantityLimit();
+    if (sellTokenQuantity > quantityLimit || buyTokenQuantity > quantityLimit) {
+      throw new ContractValidateException("token quantity must less than " + quantityLimit);
+    }
+
 
     try {
       //Whether the balance is enough
@@ -201,25 +216,29 @@ public class MarketSellAssetActuator extends AbstractActuator {
           throw new ContractValidateException("No enough balance !");
         }
       } else {
+        if (ownerAccount.getBalance() < fee) {
+          throw new ContractValidateException("No enough balance !");
+        }
+
         AssetIssueCapsule assetIssueCapsule = Commons
             .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store)
             .get(sellTokenID);
         if (assetIssueCapsule == null) {
-          throw new ContractValidateException("No sellTokenID : " + ByteArray.toStr(sellTokenID));
+          throw new ContractValidateException("No sellTokenID !");
         }
         if (!ownerAccount.assetBalanceEnoughV2(sellTokenID, sellTokenQuantity,
             dynamicStore)) {
-          throw new ContractValidateException("sellToken balance is not enough !");
+          throw new ContractValidateException("SellToken balance is not enough !");
         }
       }
 
-      if (!Arrays.equals(sellTokenID, "_".getBytes())) {
+      if (!Arrays.equals(buyTokenID, "_".getBytes())) {
         //Whether have the token
         AssetIssueCapsule assetIssueCapsule = Commons
             .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store)
             .get(buyTokenID);
         if (assetIssueCapsule == null) {
-          throw new ContractValidateException("No buyTokenID : " + ByteArray.toStr(sellTokenID));
+          throw new ContractValidateException("No buyTokenID !");
         }
       }
 
