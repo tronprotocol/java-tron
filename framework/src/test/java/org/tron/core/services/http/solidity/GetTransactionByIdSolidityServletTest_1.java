@@ -164,7 +164,7 @@ public class GetTransactionByIdSolidityServletTest_1 {
     PrintWriter writer = new PrintWriter("temp.txt");
     when(response.getWriter()).thenReturn(writer);
 
-    getTransactionByIdSolidityServlet.doPost(request, response);
+    getTransactionByIdSolidityServlet.doGet(request, response);
     //    Get Response Body
     String line;
     StringBuilder result = new StringBuilder();
