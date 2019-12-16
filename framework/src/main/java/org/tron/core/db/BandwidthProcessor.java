@@ -87,12 +87,12 @@ public class BandwidthProcessor extends ResourceProcessor {
         bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
       }
 
-      logger.debug("trxId {},bandwidth cost :{}", trx.getTransactionId(), bytesSize);
+      logger.debug("trxId {}, bandwidth cost: {}", trx.getTransactionId(), bytesSize);
       trace.setNetBill(bytesSize, 0);
       byte[] address = TransactionCapsule.getOwner(contract);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
       if (accountCapsule == null) {
-        throw new ContractValidateException("account not exists");
+        throw new ContractValidateException("account does not exist");
       }
       long now = dbManager.getHeadSlot();
 
@@ -120,7 +120,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
       long fee = dbManager.getDynamicPropertiesStore().getTransactionFee() * bytesSize;
       throw new AccountResourceInsufficientException(
-          "Account Insufficient bandwidth[" + bytesSize + "] and balance["
+          "Account has insufficient bandwidth[" + bytesSize + "] and balance["
               + fee + "] to create new account");
     }
   }
@@ -235,7 +235,7 @@ public class BandwidthProcessor extends ResourceProcessor {
         dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store())
         .get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
-      throw new ContractValidateException("asset not exists");
+      throw new ContractValidateException("asset does not exist");
     }
 
     String tokenName = ByteArray.toStr(assetName.toByteArray());
@@ -288,7 +288,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     long newIssuerNetUsage = increase(issuerNetUsage, 0, latestConsumeTime, now);
 
     if (bytes > (issuerNetLimit - newIssuerNetUsage)) {
-      logger.debug("The " + tokenID + " issuer'bandwidth is not enough");
+      logger.debug("The " + tokenID + " issuer's bandwidth is not enough");
       return false;
     }
 
@@ -363,7 +363,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     long newNetUsage = increase(netUsage, 0, latestConsumeTime, now);
 
     if (bytes > (netLimit - newNetUsage)) {
-      logger.debug("net usage is running out. now use free net usage");
+      logger.debug("net usage is running out, now use free net usage");
       return false;
     }
 

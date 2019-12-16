@@ -80,9 +80,14 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 [https://tronprotocol.github.io/documentation-en/developers/contribution/](https://tronprotocol.github.io/documentation-en/developers/contribution/)
 
 # Resources
-* [Medium](https://medium.com/@coredevs)
-* [Documentation](https://tronprotocol.github.io/documentation-en/introduction/)
-* [White Paper](https://tron.network/resources?lng=&name=1)
+* [Medium](https://medium.com/@coredevs)  
+* [Documentation](https://tronprotocol.github.io/documentation-en/introduction/)  
+* [Test network](http://nileex.io/)  
+* [Tronscan](https://tronscan.org/#/)    
+* [Wallet-cli](https://github.com/tronprotocol/wallet-cli)  
+* [TIP](https://github.com/tronprotocol/tips)  
+* [TP](https://github.com/tronprotocol/tips/tree/master/tp)  
+* [White Paper](https://tron.network/resources?lng=&name=1)  
 
 # License
 [MIT](https://github.com/tronprotocol/java-tron/blob/master/LICENSE)

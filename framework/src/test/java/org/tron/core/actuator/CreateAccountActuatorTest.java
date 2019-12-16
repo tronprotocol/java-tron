@@ -251,6 +251,7 @@ public class CreateAccountActuatorTest {
         "contract type error,expected type [AccountCreateContract],real type[");
     actuatorTest.invalidContractType();
 
+
     actuatorTest.setContract(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
     actuatorTest.nullTransationResult();
 

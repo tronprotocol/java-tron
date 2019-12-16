@@ -192,7 +192,7 @@ public class DepositTest {
     byte[] aAddress = Wallet.generateContractAddress(aTrx);
     byte[] bAddress = Wallet.generateContractAddress(bTrx);
 
-    // tigger contractA
+    // trigger contractA
     // callBcallA(address,uint256,uint256)
     // <bAddress>,1,2
     //
@@ -228,7 +228,7 @@ public class DepositTest {
     Assert.assertEquals(checkN2.getRuntime().getResult().getHReturn(),
         new DataWord(0).getData());
 
-    // tigger contractA
+    // trigger contractA
     // callBcallA(address,uint256,uint256)
     // <bAddress>,100,1000
     String params2 = Hex.toHexString(new DataWord(bAddress).getData())
@@ -348,7 +348,7 @@ public class DepositTest {
     byte[] aAddress = Wallet.generateContractAddress(aTrx);
     byte[] bAddress = Wallet.generateContractAddress(bTrx);
 
-    // tigger contractA
+    // trigger contractA
     // callBcallA(address,uint256,uint256)
     // <bAddress>,1,2
     //
@@ -383,7 +383,7 @@ public class DepositTest {
     Assert.assertEquals(checkN2.getRuntime().getResult().getHReturn(),
         new DataWord(2).getData());
 
-    // tigger contractA
+    // trigger contractA
     // callBcallA(address,uint256,uint256)
     // <bAddress>,100,1000
     String params2 = Hex.toHexString(new DataWord(bAddress).getData())
