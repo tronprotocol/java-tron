@@ -66,7 +66,7 @@ message MarketOrder {
     bytes sell_token_id = 4;
     int64 sell_token_quantity = 6;
     bytes buy_token_id = 5;
-    int64 buy_token_quantity = 7;
+    int64 buy_token_quantity = 7;//min to receive
     int64 sell_token_quantity_remain = 9;
     enum State {
       ACTIVE = 0;

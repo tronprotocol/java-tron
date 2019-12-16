@@ -129,6 +129,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
 
+  private static final byte[] MARKET_SELL_FEE = "MARKET_SELL_FEE".getBytes();
+  private static final byte[] MARKET_CANCEL_FEE = "MARKET_CANCEL_FEE".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -407,6 +410,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getExchangeBalanceLimit();
     } catch (IllegalArgumentException e) {
       this.saveExchangeBalanceLimit(1_000_000_000_000_000L);
+    }
+
+    try {
+      this.getMarketSellFee();
+    } catch (IllegalArgumentException e) {
+      this.saveMarketSellFee(100_000L);
+    }
+
+    try {
+      this.getMarketCancelFee();
+    } catch (IllegalArgumentException e) {
+      this.saveMarketCancelFee(100_000L);
     }
 
     try {
@@ -1196,6 +1211,33 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found EXCHANGE_BALANCE_LIMIT"));
+  }
+
+  public void saveMarketSellFee(long fee) {
+    this.put(MARKET_SELL_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getMarketSellFee() {
+    return Optional.ofNullable(getUnchecked(MARKET_SELL_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MarketSell_FEE"));
+  }
+
+
+  public void saveMarketCancelFee(long fee) {
+    this.put(MARKET_CANCEL_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getMarketCancelFee() {
+    return Optional.ofNullable(getUnchecked(MARKET_CANCEL_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MARKET_CANCEL_FEE"));
   }
 
   public void saveTotalTransactionCost(long value) {

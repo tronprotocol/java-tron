@@ -54,15 +54,15 @@ import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 @Slf4j(topic = "actuator")
 public class MarketSellAssetActuator extends AbstractActuator {
 
-  private AccountStore accountStore = chainBaseManager.getAccountStore();
-  private DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-  private AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
+  private AccountStore accountStore;
+  private DynamicPropertiesStore dynamicStore;
+  private AssetIssueStore assetIssueStore;
+  private AssetIssueV2Store assetIssueV2Store;
 
-  private MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
-  private MarketOrderStore orderStore = chainBaseManager.getMarketOrderStore();
-  private MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
-  private MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
-      .getMarketPairPriceToOrderStore();
+  private MarketAccountStore marketAccountStore;
+  private MarketOrderStore orderStore;
+  private MarketPairToPriceStore pairToPriceStore;
+  private MarketPairPriceToOrderStore pairPriceToOrderStore;
 
   private byte[] sellTokenID = null;
   private byte[] buyTokenID = null;
@@ -73,6 +73,17 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
+
+    accountStore = chainBaseManager.getAccountStore();
+    dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    assetIssueStore = chainBaseManager.getAssetIssueStore();
+    assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
+
+    marketAccountStore = chainBaseManager.getMarketAccountStore();
+    orderStore = chainBaseManager.getMarketOrderStore();
+    pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
+    pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
 
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
@@ -130,9 +141,18 @@ public class MarketSellAssetActuator extends AbstractActuator {
     if (chainBaseManager == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
-    AccountStore accountStore = chainBaseManager.getAccountStore();
-    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
+
+    accountStore = chainBaseManager.getAccountStore();
+    dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    assetIssueStore = chainBaseManager.getAssetIssueStore();
+    assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
+
+    marketAccountStore = chainBaseManager.getMarketAccountStore();
+    orderStore = chainBaseManager.getMarketOrderStore();
+    pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
+    pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+
     if (!this.any.is(MarketSellAssetContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [MarketSellAssetContract],real type[" + any
@@ -155,20 +175,21 @@ public class MarketSellAssetActuator extends AbstractActuator {
     long buyTokenQuantity = contract.getBuyTokenQuantity();
 
     if (!DecodeUtil.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalid ownerAddress");
-    }
-    if (sellTokenQuantity <= 0) {
-      throw new ContractValidateException("sellTokenQuantity must greater than 0!");
-    }
-
-    if (buyTokenQuantity <= 0) {
-      throw new ContractValidateException("buyTokenQuantity must greater than 0!");
+      throw new ContractValidateException("Invalid address");
     }
 
     //Whether the accountStore exist
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
     if (ownerAccount == null) {
       throw new ContractValidateException("Account does not exist!");
+    }
+
+    if (sellTokenQuantity <= 0) {
+      throw new ContractValidateException("sellTokenQuantity must greater than 0!");
+    }
+
+    if (buyTokenQuantity <= 0) {
+      throw new ContractValidateException("buyTokenQuantity must greater than 0!");
     }
 
     try {
@@ -217,7 +238,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return 0L;
+    return dynamicStore.getMarketSellFee();
   }
 
   public boolean hasMatch(
