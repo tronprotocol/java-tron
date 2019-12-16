@@ -1,5 +1,5 @@
 #!/bin/bash
-
+## commit2
 # Function: to start, stop and restart java-tron.
 # Usage: bash work.sh start|stop|restart.
 # Note: modify the paths and private key to your own.
