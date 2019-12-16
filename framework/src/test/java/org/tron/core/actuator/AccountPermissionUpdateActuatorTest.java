@@ -297,7 +297,7 @@ public class AccountPermissionUpdateActuatorTest {
   }
 
   @Test
-  public void nullContract() {
+  public void noContract() {
     AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(null);
     TransactionResultCapsule ret = new TransactionResultCapsule();
