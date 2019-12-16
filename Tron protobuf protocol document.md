@@ -118,7 +118,7 @@ enum AccountType {
 
   `latest_consume_free_time`: the latest consume free bandwidth time of this account.
 
-  ```java
+ ```java
 message Account {
     message Frozen {
     int64 frozen_balance = 1; 
@@ -295,7 +295,7 @@ Witness and witness-related messages.
 
   `witness_signature`: signature for this block header from witness node.
 
-  ```java
+ ```java
 message BlockHeader {
     message raw {
       int64 timestamp = 1;
@@ -451,20 +451,20 @@ Transaction and transaction-related messages.
 
     `callValueInfo`: Refers to asset transfer information in internal transactions, including trx and trc10.
 
-    ```java
-message InternalTransaction {
-      bytes hash = 1;
-  bytes caller_address = 2;
-      bytes transferTo_address = 3;
-  message CallValueInfo {
-        int64 callValue = 1;
-        string tokenId = 2;
-      }
-      repeated CallValueInfo callValueInfo = 4;
-      bytes note = 5;
-      bool rejected = 6;
-    }
-    ```
+ ```java
+       message InternalTransaction {
+          bytes hash = 1;
+          bytes caller_address = 2;
+          bytes transferTo_address = 3;
+          message CallValueInfo {
+            int64 callValue = 1;
+            string tokenId = 2;
+          }
+          repeated CallValueInfo callValueInfo = 4;
+          bytes note = 5;
+          bool rejected = 6;
+        }
+   ```
     
   - message `Transaction`
   
@@ -474,22 +474,23 @@ message InternalTransaction {
   
     message  `Result`
   
-    ​    enum `code`:
+    ​enum `code`:
   
     ```java
-  enum code {
+    enum code {
       SUCESS = 0;
-    FAILED = 1;
+      FAILED = 1;
     }
-  ```
+    ```
+  
   
   ​    enum `contractResult`: refer to [`Contract`](#contract).
   
-  ​    `fee`:
+  ​     `fee`:
   
-  ​    `ret`:
+  ​      `ret`:
   
-    ​    `contractRet`:
+        `contractRet`:
   
     ​    `assetIssueID`:
   
@@ -506,8 +507,11 @@ message InternalTransaction {
     ​    `exchange_id`:
 
     ​    `shielded_transaction_fee`:
+  
 
-    ```java
+    
+```java
+
   message Result {
       enum code {
       SUCESS = 0;
@@ -543,27 +547,28 @@ message InternalTransaction {
       int64 exchange_id = 21;
       int64 shielded_transaction_fee = 22;
     }
-    ```
+   ```
   
-    message `raw`
+  message `raw`
   
-    ​    `ref_block_bytes`: Deprecated.
+   `ref_block_bytes`: Deprecated.
   
-    ​    `ref_block_num`: now block number in transaction head.
+   `ref_block_num`: now block number in transaction head.
   
-    ​    `ref_block_hash`: now block hash in transaction head.
+   `ref_block_hash`: now block hash in transaction head.
   
-    ​    `expiration`: the expiration time in transaction head.
+   `expiration`: the expiration time in transaction head.
   
-    ​    `auths`: deprecated.
+   `auths`: deprecated.
 
-    ​    `contract`: the contract type for transaction, and only support size = 1 when repeated list here for extension.
+   `contract`: the contract type for transaction, and only support size = 1 when repeated list here for extension.
 
-    ​    `timestamp`: timestamp for transaction.
+   `timestamp`: timestamp for transaction.
 
-    ​    `fee_limit`: the cost limit for energy and fee when trigger and create contract.
+   `fee_limit`: the cost limit for energy and fee when trigger and create contract.
+   
 
-    ```java
+   ```java
   message raw {
       bytes ref_block_bytes = 1;
     int64 ref_block_num = 3;
@@ -576,9 +581,9 @@ message InternalTransaction {
       int64 timestamp = 14;
     int64 fee_limit = 18;
     }
-    ```
+   ```
     
-    `raw_data`: raw data in transaction.
+   `raw_data`: raw data in transaction.
     
   `signature`: signature in transaction.
     
@@ -681,7 +686,7 @@ message InternalTransaction {
       repeated bytes signature = 2;
       repeated Result ret = 5;
     }
-    ```
+   ```
     
   - message `TransactionInfo`
   
@@ -704,53 +709,53 @@ message InternalTransaction {
   
   ​    `data`: unsubscribed topics for contract.
   
-  ```java
+```java
     message Log {
     bytes address = 1;
       repeated bytes topics = 2;
     bytes data = 3;
     }
-    ```
+ ```
   
-    `id`: transaction id.
+   `id`: transaction id.
   
-    `fee`: transaction fee.
+   `fee`: transaction fee.
 
-    `blockNumber`: the block number of packing this transaction.
+   `blockNumber`: the block number of packing this transaction.
 
-    `blockTimeStamp`: the time of generating block for this transaction.
+   `blockTimeStamp`: the time of generating block for this transaction.
+   
+   `contractResult`: the contract result of this transaction.
 
-    `contractResult`: the contract result of this transaction.
+   `contract_address`: the address of call or create contract.
 
-    `contract_address`: the address of call or create contract.
-
-    `receipt`: the receipt of fee and energy usage. 
+   `receipt`: the receipt of fee and energy usage. 
+   
+   `log`: the log for triggering contract.
+   
+   `result`: the result code for triggering contract.
   
-    `log`: the log for triggering contract.
-  
-    `result`: the result code for triggering contract.
-  
-    `resMessage`: the response message for triggering contract .
+   `resMessage`: the response message for triggering contract .
 
-    `assetIssueID`: the ID for issue an asset.
+   `assetIssueID`: the ID for issue an asset.
 
-    `withdraw_amount`: the amount for witness withdraw.
+   `withdraw_amount`: the amount for witness withdraw.
 
-    `unfreeze_amount`: unfreeze trx amount.
+   `unfreeze_amount`: unfreeze trx amount.
 
-    `internal_transactions`: internal transaction lists.
+   `internal_transactions`: internal transaction lists.
 
-    `exchange_received_amount`: The number of tokens received by the transaction, only has value when the contract type is ExchangeTransactionContract.
+   `exchange_received_amount`: The number of tokens received by the transaction, only has value when the contract type is ExchangeTransactionContract.
 
-    `exchange_inject_another_amount`: The number of another token injected into the exchange pair, only has value when the contract type is ExchangeInjectContract.
+   `exchange_inject_another_amount`: The number of another token injected into the exchange pair, only has value when the contract type is ExchangeInjectContract.
 
-    `exchange_withdraw_another_amount`:  The number of tokens withdrew from the exchange pair, only has value when the contract type is ExchangeWithdrawContract.
+   `exchange_withdraw_another_amount`:  The number of tokens withdrew from the exchange pair, only has value when the contract type is ExchangeWithdrawContract.
 
-    `exchange_id`: the token pair id.
+   `exchange_id`: the token pair id.
 
-    `shielded_transaction_fee`: the usage fee for shielded transaction.
+   `shielded_transaction_fee`: the usage fee for shielded transaction.
 
-    ```java
+```java
   message TransactionInfo {
       enum code {
       SUCESS = 0;
@@ -782,7 +787,7 @@ message InternalTransaction {
       int64 exchange_id = 21;
       int64 shielded_transaction_fee = 22;
     }
-    ```
+```
   
   - message `Transactions`
   
@@ -805,7 +810,7 @@ message InternalTransaction {
       AccountId account = 1;
     bytes permission_name = 2;
     }
-  ```
+     ```
   
 - message `TXOutputs`
   
@@ -1190,39 +1195,39 @@ Contract and contract-related messages.
       }
       ```
       
-- message `WithdrawBalanceContract`
+     - message `WithdrawBalanceContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  ```java
+      ```java
       message WithdrawBalanceContract {
           bytes owner_address = 1;
       }
       ```
     
-- message `UnfreezeAssetContract`
+     - message `UnfreezeAssetContract`
     
-  `owner_address`: owner address.
+       `owner_address`: owner address.
     
-  ```java
+      ```java
       message UnfreezeAssetContract {
           bytes owner_address = 1;
       }
-      ```
+       ```
     
-- message `UpdateAssetContract`
+     - message `UpdateAssetContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `description`: description of asset.
+       `description`: description of asset.
     
-  `url`: asset url.
+       `url`: asset url.
     
-  `new_limit`: bandwidth consumption limit for each account when transfer.
+       `new_limit`: bandwidth consumption limit for each account when transfer.
     
-  `new_public_limit`: bandwidth consumption limit of the accounts.
+       `new_public_limit`: bandwidth consumption limit of the accounts.
     
-  ```java
+      ```java
       message UpdateAssetContract {
           bytes owner_address = 1;
           bytes description = 2;
@@ -1230,30 +1235,30 @@ Contract and contract-related messages.
           int64 new_limit = 4;
           int64 new_public_limit = 5;
       }
-      ```
+       ```
     
-- message `ProposalCreateContract`
+     - message `ProposalCreateContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `parameters`: options and their values of proposals.
+       `parameters`: options and their values of proposals.
     
-  ```java
+      ```java
       message ProposalCreateContract {
           bytes owner_address = 1;
           map<int64, int64> parameters = 2;
       }
       ```
     
-- message `ProposalApproveContract`
+     - message `ProposalApproveContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `proposal_id`: proposal id.
+       `proposal_id`: proposal id.
     
-  `is_add_approval`: whether to approve.
+       `is_add_approval`: whether to approve.
     
-  ```java
+      ```java
       message ProposalApproveContract {
           bytes owner_address = 1;
           int64 proposal_id = 2;
@@ -1261,45 +1266,45 @@ Contract and contract-related messages.
       }
       ```
     
-- message `ProposalDeleteContract`
+     - message `ProposalDeleteContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `proposal_id`: proposal id.
+       `proposal_id`: proposal id.
     
-  ```java
+      ```java
       message ProposalDeleteContract {
           bytes owner_address = 1;
           int64 proposal_id = 2;
       }
       ```
     
-- message `SetAccountIdContract`
+     - message `SetAccountIdContract`
     
-  `account_id`: account id.
+       `account_id`: account id.
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  ```java
+      ```java
       message SetAccountIdContract {
         bytes account_id = 1;
         bytes owner_address = 2;
       }
       ```
     
-- `CustomContract`
+     - `CustomContract`
     
-- message `CreateSmartContract`
+     - message `CreateSmartContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `new_contract`:  details of the new smart contract.
+       `new_contract`:  details of the new smart contract.
     
-  `call_token_value`: amount of TRC10 token sent to the newly created smart contract.
+       `call_token_value`: amount of TRC10 token sent to the newly created smart contract.
     
-  `token_id`: TRC10 token id.
+       `token_id`: TRC10 token id.
     
-  ```java
+      ```java
       message CreateSmartContract {
           bytes owner_address = 1;
           SmartContract new_contract = 2;
@@ -1308,21 +1313,21 @@ Contract and contract-related messages.
       }
       ```
     
-- message `TriggerSmartContract`
+     - message `TriggerSmartContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `contract_address`: smart contract address to interact with.
+       `contract_address`: smart contract address to interact with.
     
-  `call_value`: TRX amount sent to smart contract.
+       `call_value`: TRX amount sent to smart contract.
     
-  `data`: functions and parameters called in smart contract.
+       `data`: functions and parameters called in smart contract.
     
-  `call_token_value`: TRC10 token amount sent to smart contract.
+       `call_token_value`: TRC10 token amount sent to smart contract.
     
-  `token_id`: TRC10 token id.
+       `token_id`: TRC10 token id.
     
-  ```java
+      ```java
       message TriggerSmartContract {
           bytes owner_address = 1;
           bytes contract_address = 2;
@@ -1333,17 +1338,17 @@ Contract and contract-related messages.
       }
       ```
     
-- `GetContract`
+     - `GetContract`
     
-- message `UpdateSettingContract`
+     - message `UpdateSettingContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `contract_address`: smart contract address.
+       `contract_address`: smart contract address.
     
-  `consume_user_resource_percent`: user energy payment percentage of whole energy payment includes contract deployer’s and user's energy payment.
+       `consume_user_resource_percent`: user energy payment percentage of whole energy payment includes contract deployer’s and user's energy payment.
     
-  ```java
+      ```java
       message UpdateSettingContract {
           bytes owner_address = 1;
           bytes contract_address = 2;
@@ -1351,19 +1356,19 @@ Contract and contract-related messages.
       }
       ```
     
-- message `ExchangeCreateContract`
+     - message `ExchangeCreateContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `first_token_id`: supplied token.
+       `first_token_id`: supplied token.
     
-  `first_token_balance`: supplied token amount.
+       `first_token_balance`: supplied token amount.
     
-  `second_token_id`: second token id.
+       `second_token_id`: second token id.
     
-  `second_token_balance`: second token balance.
+       `second_token_balance`: second token balance.
     
-  ```java
+      ```java
       message ExchangeCreateContract {
           bytes owner_address = 1;
           bytes first_token_id = 2;
@@ -1373,17 +1378,17 @@ Contract and contract-related messages.
       }
       ```
     
-- message `ExchangeInjectContract`
+     - message `ExchangeInjectContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `exchange_id`: token pair id.
+       `exchange_id`: token pair id.
     
-  `token_id`: token id to inject.
+       `token_id`: token id to inject.
     
-  `quant`: token amount to inject.
+       `quant`: token amount to inject.
     
-  ```java
+      ```java
       message ExchangeInjectContract {
           bytes owner_address = 1;
           int64 exchange_id = 2;
@@ -1392,17 +1397,17 @@ Contract and contract-related messages.
       }
       ```
     
-- message `ExchangeWithdrawContract`
+     - message `ExchangeWithdrawContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `exchange_id`: token pair id.
+       `exchange_id`: token pair id.
     
-  `token_id`: token id to withdraw.
+       `token_id`: token id to withdraw.
     
-  `quant`: token amount to withdraw.
+       `quant`: token amount to withdraw.
     
-  ```java
+      ```java
       message ExchangeWithdrawContract {
           bytes owner_address = 1;
           int64 exchange_id = 2;
@@ -1411,19 +1416,19 @@ Contract and contract-related messages.
       }
       ```
     
-- message `ExchangeTransactionContract`
+     - message `ExchangeTransactionContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `exchange_id`: token pair id.
+       `exchange_id`: token pair id.
     
-  `token_id`: token id to sell.
+       `token_id`: token id to sell.
     
-  `quant`: token amount to sell.
+       `quant`: token amount to sell.
     
-  `expected`: expected minimum number of tokens.
+       `expected`: expected minimum number of tokens.
     
-  ```java
+      ```java
       message ExchangeTransactionContract {
           bytes owner_address = 1;
           int64 exchange_id = 2;
@@ -1433,15 +1438,15 @@ Contract and contract-related messages.
       }
       ```
     
-- message `UpdateEnergyLimitContract`:
+     - message `UpdateEnergyLimitContract`:
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `contract_address`: smart contract address.
+       `contract_address`: smart contract address.
     
-  `origin_energy_limit`: value of owner’s consume energy limit for each transaction.
+       `origin_energy_limit`: value of owner’s consume energy limit for each transaction.
     
-  ```java
+      ```java
       message UpdateEnergyLimitContract {
           bytes owner_address = 1;
           bytes contract_address = 2;
@@ -1449,17 +1454,17 @@ Contract and contract-related messages.
       }
       ```
     
-- message `AccountPermissionUpdateContract`
+     - message `AccountPermissionUpdateContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `owner`: autuority to execute all contracts.
+       `owner`: autuority to execute all contracts.
     
-  `witness`: used by SR for generating blocks.
+       `witness`: used by SR for generating blocks.
     
-  `actives`: custom a combination of contracts permission sets.
+       `actives`: custom a combination of contracts permission sets.
     
-  ```java
+      ```java
       message AccountPermissionUpdateContract {
         bytes owner_address = 1;
         Permission owner = 2; 
@@ -1468,49 +1473,49 @@ Contract and contract-related messages.
       }
       ```
     
-- message `ClearABIContract`
+     - message `ClearABIContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
     
-  `contract_address`: contract address.
+       `contract_address`: contract address.
     
-  ```java
+      ```java
       message ClearABIContract {
           bytes owner_address = 1;
           bytes contract_address = 2;
       }
       ```
     
-- message `UpdateBrokerageContract`
+     - message `UpdateBrokerageContract`
     
-  `owner_address`: address of owner.
+       `owner_address`: address of owner.
+         
+       `brokerage`: draw ratio of SR.
     
-  `brokerage`: draw ratio of SR.
-    
-  ```java
+      ```java
       message UpdateBrokerageContract {
           bytes owner_address = 1;
           int32 brokerage = 2;
       }
       ```
     
-- message `ShieldedTransferContract`
+     - message `ShieldedTransferContract`
     
-  `transparent_from_address`: transparent address of sender.
+       `transparent_from_address`: transparent address of sender.
     
-  `from_amount`: amount from sender.
+       `from_amount`: amount from sender.
     
-  `spend_description`: input data of transaction.
+       `spend_description`: input data of transaction.
     
-  `receive_description`: output data of transaction.
+       `receive_description`: output data of transaction.
     
-  `binding_signature`: signature to verify transaction.
+       `binding_signature`: signature to verify transaction.
     
-  `transparent_to_address`: transparent address of reveiver.
+       `transparent_to_address`: transparent address of reveiver.
     
-  `to_amount`: amount to transparent to_address
+       `to_amount`: amount to transparent to_address
     
-  ```java
+      ```java
       message ShieldedTransferContract {
           bytes transparent_from_address = 1; 
           int64 from_amount = 2;
@@ -1526,7 +1531,7 @@ Contract and contract-related messages.
   
 
   
-#### <span id="smartc">Smart Contract</span>
+### <span id="smartc">Smart Contract</span>
   
 message `SmartContract` has mutiple attributes and nested message `ABI`
   
@@ -1568,7 +1573,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
       - Enum `StateMutabilityType`
   
         ```java
-          enum StateMutabilityType {
+          enum StateMutabilityType {  
               UnknownMutabilityType = 0;
               Pure = 1;
               View = 2;
@@ -1669,7 +1674,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `value`: merkle authentication path.
 
-    ```java
+   ```java
   message AuthenticationPath {
         repeated bool value = 1;
     }
@@ -1683,7 +1688,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `rt`: merkle tree root.
 
-    ```java
+   ```java
   message MerklePath {
         repeated AuthenticationPath authentication_paths = 1;
         repeated bool index = 2;
@@ -1697,7 +1702,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `index`: output index.
 
-    ```java
+   ```java
   message OutputPoint {
         bytes hash = 1;
         int32 index = 2;
@@ -1710,7 +1715,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `block_num`: block number.
 
-    ```java
+   ```java
   message OutputPointInfo {
         repeated OutputPoint out_points = 1;
         int32 block_num = 2;
@@ -1721,7 +1726,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `content`: pedersen hash value.
 
-    ```java
+   ```java
   message PedersenHash {
         bytes content = 1;
     }
@@ -1735,7 +1740,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `parents`: PedersenHash values of parent nodes.
 
-    ```java
+   ```java
   message IncrementalMerkleTree {
         PedersenHash left = 1;
         PedersenHash right = 2;
@@ -1757,7 +1762,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `output_point`: output point.
 
-    ```java
+   ```java
   message IncrementalMerkleVoucher {
         IncrementalMerkleTree tree = 1;
         repeated PedersenHash filled = 2;
@@ -1774,7 +1779,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `paths`: his is an array each items represents the path of the outputpoint.
 
-    ```java
+   ```java
   message IncrementalMerkleVoucherInfo {
         repeated IncrementalMerkleVoucher vouchers = 1;
         repeated bytes paths = 2;
@@ -1795,7 +1800,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `spend_authority_signature`: signature for the spend authority.
 
-    ```java
+   ```java
   message SpendDescription {
         bytes value_commitment = 1;
         bytes anchor = 2; 
@@ -1820,7 +1825,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `zkproof`: zero-knowledge proof of output.
 
-    ```java
+   ```java
   message ReceiveDescription {
         bytes value_commitment = 1;
         bytes note_commitment = 2;
@@ -1847,7 +1852,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
     `to_amount: amount to receiver.
 
-    ```java
+   ```java
   message ShieldedTransferContract {
         bytes transparent_from_address = 1; 
         int64 from_amount = 2;
