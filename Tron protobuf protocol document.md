@@ -125,7 +125,7 @@ message Account {
       int64 expire_time = 2;
   }
     bytes account_name = 1;
-  AccountType type = 2;
+    AccountType type = 2;
     bytes address = 3;
     int64 balance = 4;
     repeated Vote votes = 5;
@@ -703,15 +703,14 @@ Transaction and transaction-related messages.
       
       `data`: unsubscribed topics for contract.
         
-        ```java
-            message Log {
-              bytes address = 1;
-              repeated bytes topics = 2;
-              bytes data = 3;
-            }
-        ```
+       ```java
+    message Log {
+      bytes address = 1;
+      repeated bytes topics = 2;
+      bytes data = 3;
+    }
+       ```
         
-  
    `id`: transaction id.
   
    `fee`: transaction fee.
@@ -782,17 +781,16 @@ Transaction and transaction-related messages.
       int64 exchange_id = 21;
       int64 shielded_transaction_fee = 22;
     }
-```
+   ```
+   - message `Transactions`
   
-  - message `Transactions`
-  
-    `transaction`: list of transactions.
-  
-    ```java
-    message Transactions {
-      repeated Transaction transactions = 1;
-    }
-    ```
+     `transaction`: list of transactions.
+     
+     ```java
+     message Transactions {
+       repeated Transaction transactions = 1;
+     }
+     ```
   
   - message `Authority` (deprecated)
   
@@ -803,7 +801,7 @@ Transaction and transaction-related messages.
     ```java
     message authority {
       AccountId account = 1;
-    bytes permission_name = 2;
+      bytes permission_name = 2;
     }
      ```
   
@@ -817,12 +815,6 @@ Transaction and transaction-related messages.
     }
   ```
   
-- 
-  
-  
-  
-    
-
 
 
 ### <span id="contract"> 5.Contract</span>
@@ -2389,7 +2381,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
           int64 maxSize = 4;
           double useRate = 5;
         }
-      
+      s
         message DeadLockThreadInfo {
           string name = 1;
           string lockName = 2;
