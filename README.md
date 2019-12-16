@@ -82,6 +82,8 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 # Resources
 * [Medium](https://medium.com/@coredevs)
 * [Documentation](https://tronprotocol.github.io/documentation-en/introduction/)
+* [Test network](http://nileex.io/)
+* [TIP](https://github.com/tronprotocol/tips)
 * [White Paper](https://tron.network/resources?lng=&name=1)
 
 # License
