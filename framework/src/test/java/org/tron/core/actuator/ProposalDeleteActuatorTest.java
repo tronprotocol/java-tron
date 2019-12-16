@@ -215,6 +215,7 @@ public class ProposalDeleteActuatorTest {
 
     ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
     actuatorTest.setContract(getContract(OWNER_ADDRESS_INVALID, id));
+    actuatorTest.setMessage("Invalid address","Invalid address");
     actuatorTest.invalidOwnerAddress();
 
   }

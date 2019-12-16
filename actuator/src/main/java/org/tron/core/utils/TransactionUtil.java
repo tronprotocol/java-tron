@@ -123,11 +123,12 @@ public class TransactionUtil {
       return false;
     }
     for (byte b : id) {
+      logger.info(" "+b);
       if (b < '0' || b > '9') {
         return false;
       }
     }
-
+    logger.info(id.length+"  "+id[0]);
     return !(id.length > 1 && id[0] == '0');
   }
 
