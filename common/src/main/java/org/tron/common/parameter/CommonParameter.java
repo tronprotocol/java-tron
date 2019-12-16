@@ -19,7 +19,7 @@ import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
 
 public class CommonParameter {
-  public static CommonParameter PARAMETER = new CommonParameter();
+  public static  CommonParameter PARAMETER = new CommonParameter();
 
   @Parameter(names = {"-c", "--config"}, description = "Config File")
   public String shellConfFileName = "";
@@ -483,6 +483,7 @@ public class CommonParameter {
   }
 
   public boolean isECKeyCryptoEngine() {
-    return Strings.toLowerCase(cryptoEngine) == Strings.toLowerCase(Constant.ECKey_ENGINE);
+
+    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
 }
