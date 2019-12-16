@@ -6,21 +6,21 @@ This is the description of  Google Protobuf implementation of Tron's protocol.
 
 ## Contents 
 
-#### 1.[Account](#account)
+#### [1.Account](#account)
 
-#### 2.[Witness](#witness)
+#### [2.Witness](#witness)
 
-#### 3.[Block](#block)
+#### [3.Block](#block)
 
-#### 4.[Transaction](#trans)
+#### [4.Transaction](#trans)
 
-#### 5.[Contract](#contract)
+#### [5.Contract](#contract)
 
-#### 6.[Network](#net)
+#### [6.Network](#net)
 
 ## Protocols
 
-###<span id="account"> 1.Account</span>
+### <span id="account">1.Account</span>
 
 Account and account-related messages.
 
