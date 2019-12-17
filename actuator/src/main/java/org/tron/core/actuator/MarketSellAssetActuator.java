@@ -280,6 +280,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       return;
     }
 
+    boolean priceListChanged = false;
     //match different price
     while (takerCapsule.getSellTokenQuantityRemain() != 0 &&
         hasMatch(priceListCapsule, takerPrice)) {
@@ -310,10 +311,14 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       if (ordersList.size() == 0) {
         priceListCapsule.removeFirst();
+        priceListChanged = true;
       }
     }
 
-    pairToPriceStore.put(makerPair, priceListCapsule);
+    if(priceListChanged){
+      pairToPriceStore.put(makerPair, priceListCapsule);
+    }
+
   }
 
   //return all match or not
@@ -496,12 +501,11 @@ public class MarketSellAssetActuator extends AbstractActuator {
     List<MarketPrice> pricesList = new ArrayList<>(priceListCapsule.getPricesList());
     int index = 0;
     boolean found = false;
-    for (int i = 0; i < pricesList.size(); i++) {
-      index = i;
-      if (isLowerPrice(currentPrice, pricesList.get(i))) {
+    for (; index < pricesList.size(); index++) {
+      if (isLowerPrice(currentPrice, pricesList.get(index))) {
         break;
       }
-      if (isSamePrice(currentPrice, pricesList.get(i))) {
+      if (isSamePrice(currentPrice, pricesList.get(index))) {
         found = true;
         break;
       }
@@ -538,7 +542,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     // ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
     // ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
     return Math.multiplyExact(price1.getBuyTokenQuantity(), price2.getSellTokenQuantity())
-        > Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
+        < Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
   }
 
   private boolean isSamePrice(MarketPrice price1, MarketPrice price2) {

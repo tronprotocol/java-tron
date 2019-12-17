@@ -6,7 +6,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.Arrays;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -22,7 +21,6 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
@@ -33,16 +31,13 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.MarketPriceList.MarketPrice;
-import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 
 @Slf4j
@@ -481,15 +476,46 @@ public class MarketSellAssetActuatorTest {
     }
   }
 
-  // execute:
-  // abc to def,abc to trx ,trx to abc
-  // first order,not match,part match（1，2）,all match（1，2）,left not enough,
+  private void addOrder(String sellTokenId, long sellTokenQuant,
+      String buyTokenId, long buyTokenQuant, String ownAddress) throws Exception {
+
+    byte[] ownerAddress = ByteArray.fromHexString(ownAddress);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    actuator.validate();
+    actuator.execute(ret);
+  }
+
+  // execute: combination
+  // Trading object：
+  //    abc to def
+  //    abc to trx
+  //    trx to abc
+  // Scenes：
+  //    no buy orders before,add first sell order
+  //    no buy orders before，add multiple sell orders,need to maintain the correct order
+  //    no buy orders before，add multiple sell orders,need to maintain the correct order,same price
+  //    has buy orders before，add first sell order，not match
+  //    has buy orders and sell orders before，add sell order ，not match,need to maintain the correct order
+  //    all match（1，2，3）
+  //    part match（1，2，3）
+  //        left enough
+  //        left not enough and return left
 
   /**
-   * first order for selling TRX, result is success .
+   * no buy orders before,add first sell order,selling TRX and buying token
    */
   @Test
-  public void firstOrderSellTRX() throws Exception {
+  public void noBuyAddFirstSellOrder1() throws Exception {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
@@ -530,11 +556,6 @@ public class MarketSellAssetActuatorTest {
 
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
-    Assert.assertTrue(Arrays.equals(orderCapsule.getOwnerAddress().toByteArray(), ownerAddress));
-    Assert.assertTrue(Arrays.equals(orderCapsule.getSellTokenId(), sellTokenId.getBytes()));
-    Assert.assertEquals(orderCapsule.getSellTokenQuantity(), sellTokenQuant);
-    Assert.assertTrue(Arrays.equals(orderCapsule.getBuyTokenId(), buyTokenId.getBytes()));
-    Assert.assertEquals(orderCapsule.getBuyTokenQuantity(), buyTokenQuant);
     Assert.assertEquals(orderCapsule.getSellTokenQuantityRemain(), sellTokenQuant);
 
     //check pairToPrice
@@ -560,10 +581,10 @@ public class MarketSellAssetActuatorTest {
   }
 
   /**
-   * first order for selling Token, result is success .
+   * no buy orders before,add first sell order,selling Token and buying TRX
    */
   @Test
-  public void firstOrderSellToken() throws Exception {
+  public void noBuyAddFirstSellOrder2() throws Exception {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
@@ -609,17 +630,431 @@ public class MarketSellAssetActuatorTest {
 
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
-    Assert.assertTrue(Arrays.equals(orderCapsule.getOwnerAddress().toByteArray(), ownerAddress));
-    Assert.assertTrue(Arrays.equals(orderCapsule.getSellTokenId(), sellTokenId.getBytes()));
-    Assert.assertEquals(orderCapsule.getSellTokenQuantity(), sellTokenQuant);
-    Assert.assertTrue(Arrays.equals(orderCapsule.getBuyTokenId(), buyTokenId.getBytes()));
-    Assert.assertEquals(orderCapsule.getBuyTokenQuantity(), buyTokenQuant);
     Assert.assertEquals(orderCapsule.getSellTokenQuantityRemain(), sellTokenQuant);
 
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
     Assert.assertEquals(priceListCapsule.getPricesList().size(), 1);
+    Assert.assertTrue(Arrays.equals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes()));
+    Assert.assertTrue(Arrays.equals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes()));
+
+    MarketPrice marketPrice = priceListCapsule.getPricesList().get(0);
+    Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
+    Assert.assertEquals(marketPrice.getBuyTokenQuantity(), buyTokenQuant);
+
+    //check pairPriceToOrder
+    byte[] pairPriceKey = MarketUtils.createPairPriceKey(
+        priceListCapsule.getSellTokenId(), priceListCapsule.getBuyTokenId(),
+        marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
+    MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
+        .get(pairPriceKey);
+    Assert.assertEquals(orderIdListCapsule.getOrdersList().size(), 1);
+    Assert.assertTrue(Arrays.equals(orderIdListCapsule.getOrdersList().get(0).toByteArray(),
+        orderId.toByteArray()));
+  }
+
+
+  /**
+   * no buy orders before,add first sell order,selling Token and buying token
+   */
+  @Test
+  public void noBuyAddFirstSellOrder3() throws Exception {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitAsset();
+
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100_000000L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 200_000000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    long balanceBefore = accountCapsule.getBalance();
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    actuator.validate();
+    actuator.execute(ret);
+
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
+    MarketOrderStore orderStore = chainBaseManager.getMarketOrderStore();
+    MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
+    MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+
+    //check balance and token
+    accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    Assert.assertEquals(balanceBefore,
+        dbManager.getDynamicPropertiesStore().getMarketSellFee() + accountCapsule.getBalance());
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == 0L);
+
+    //check accountOrder
+    MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
+    Assert.assertEquals(accountOrderCapsule.getCount(), 1);
+    ByteString orderId = accountOrderCapsule.getOrdersList().get(0);
+
+    //check order
+    MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
+    Assert.assertEquals(orderCapsule.getSellTokenQuantityRemain(), sellTokenQuant);
+
+    //check pairToPrice
+    byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
+    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
+    Assert.assertEquals(priceListCapsule.getPricesList().size(), 1);
+    Assert.assertTrue(Arrays.equals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes()));
+    Assert.assertTrue(Arrays.equals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes()));
+
+    MarketPrice marketPrice = priceListCapsule.getPricesList().get(0);
+    Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
+    Assert.assertEquals(marketPrice.getBuyTokenQuantity(), buyTokenQuant);
+
+    //check pairPriceToOrder
+    byte[] pairPriceKey = MarketUtils.createPairPriceKey(
+        priceListCapsule.getSellTokenId(), priceListCapsule.getBuyTokenId(),
+        marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
+    MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
+        .get(pairPriceKey);
+    Assert.assertEquals(orderIdListCapsule.getOrdersList().size(), 1);
+    Assert.assertTrue(Arrays.equals(orderIdListCapsule.getOrdersList().get(0).toByteArray(),
+        orderId.toByteArray()));
+  }
+
+
+  /**
+   * no buy orders before，add multiple sell orders,need to maintain the correct order
+   */
+  @Test
+  public void noBuyAddMultiSellOrder1() throws Exception {
+
+    // Initialize the order
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitAsset();
+
+    //(sell id_1  and buy id_2)
+    // TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 300L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+
+    // Initialize the order book
+
+    //add three order(sell id_1  and buy id_2) with different price by the same account
+    //TOKEN_ID_ONE is twice as expensive as TOKEN_ID_TWO
+    //order_1
+    addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+        200L, OWNER_ADDRESS_FIRST);
+    //order_2
+    addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+        400L, OWNER_ADDRESS_FIRST);
+
+    //the final price order should be : order_1, order_current, order_2
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    actuator.validate();
+    actuator.execute(ret);
+
+    //get storeDB instance
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
+    MarketOrderStore orderStore = chainBaseManager.getMarketOrderStore();
+    MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
+    MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+
+    //check accountOrder
+    MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
+    Assert.assertEquals(accountOrderCapsule.getCount(), 3);
+    ByteString orderId = accountOrderCapsule.getOrdersList().get(2);
+
+    //check pairToPrice
+    byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
+    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
+    Assert.assertEquals(priceListCapsule.getPricesList().size(), 3);
+
+    //This order should be second one
+    MarketPrice marketPrice = priceListCapsule.getPricesList().get(1);
+    Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
+    Assert.assertEquals(marketPrice.getBuyTokenQuantity(), buyTokenQuant);
+
+    //check pairPriceToOrder
+    byte[] pairPriceKey = MarketUtils.createPairPriceKey(
+        priceListCapsule.getSellTokenId(), priceListCapsule.getBuyTokenId(),
+        marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
+    MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
+        .get(pairPriceKey);
+    Assert.assertEquals(orderIdListCapsule.getOrdersList().size(), 1);
+    Assert.assertTrue(Arrays.equals(orderIdListCapsule.getOrdersList().get(0).toByteArray(),
+        orderId.toByteArray()));
+  }
+
+
+  /**
+   * no buy orders before，add multiple sell orders,need to maintain the correct order,same price
+   */
+  @Test
+  public void noBuyAddMultiSellOrderSamePrice1() throws Exception {
+
+    // Initialize the order
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitAsset();
+
+    //(sell id_1  and buy id_2)
+    // TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 300L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+
+    // Initialize the order book
+
+    //add three order(sell id_1  and buy id_2) with different price by the same account
+    //TOKEN_ID_ONE is twice as expensive as TOKEN_ID_TWO
+    //order_1
+    addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+        200L, OWNER_ADDRESS_FIRST);
+    //order_2
+    addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+        300L, OWNER_ADDRESS_FIRST);
+
+    //the final price order should be : order_1, order_current, order_2
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    actuator.validate();
+    actuator.execute(ret);
+
+    //get storeDB instance
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
+    MarketOrderStore orderStore = chainBaseManager.getMarketOrderStore();
+    MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
+    MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+
+    //check accountOrder
+    MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
+    Assert.assertEquals(accountOrderCapsule.getCount(), 3);
+    ByteString orderId = accountOrderCapsule.getOrdersList().get(2);
+
+    //check pairToPrice
+    byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
+    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
+    Assert.assertEquals(priceListCapsule.getPricesList().size(), 2);
+
+    //This order should be second one
+    MarketPrice marketPrice = priceListCapsule.getPricesList().get(1);
+    Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
+    Assert.assertEquals(marketPrice.getBuyTokenQuantity(), buyTokenQuant);
+
+    //check pairPriceToOrder
+    byte[] pairPriceKey = MarketUtils.createPairPriceKey(
+        priceListCapsule.getSellTokenId(), priceListCapsule.getBuyTokenId(),
+        marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
+    MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
+        .get(pairPriceKey);
+    Assert.assertEquals(orderIdListCapsule.getOrdersList().size(), 2);
+    Assert.assertTrue(Arrays.equals(orderIdListCapsule.getOrdersList().get(1).toByteArray(),
+        orderId.toByteArray()));
+  }
+
+
+  /**
+   * has buy orders before，add first sell order，not match
+   */
+  @Test
+  public void hasBuyAddFirstSellOrderNotMatch1() throws Exception {
+
+    // Initialize the order
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitAsset();
+
+    //TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 100L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+
+    // Initialize the order book
+    //add three order with different price by the same account
+
+    //TOKEN_ID_TWO is twice as expensive as TOKEN_ID_ONE
+    addOrder(TOKEN_ID_TWO, 100L, TOKEN_ID_ONE,
+        200L, OWNER_ADDRESS_FIRST);
+    addOrder(TOKEN_ID_TWO, 100L, TOKEN_ID_ONE,
+        300L, OWNER_ADDRESS_FIRST);
+    addOrder(TOKEN_ID_TWO, 100L, TOKEN_ID_ONE,
+        400L, OWNER_ADDRESS_FIRST);
+
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    actuator.validate();
+    actuator.execute(ret);
+
+    //get storeDB instance
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
+    MarketOrderStore orderStore = chainBaseManager.getMarketOrderStore();
+    MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
+    MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+
+    //check balance and token
+    accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == 0L);
+
+    //check accountOrder
+    MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
+    Assert.assertEquals(accountOrderCapsule.getCount(), 4);
+    ByteString orderId = accountOrderCapsule.getOrdersList().get(3);
+
+    //check order
+    MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
+    Assert.assertEquals(orderCapsule.getSellTokenQuantityRemain(), sellTokenQuant);
+
+    //check pairToPrice
+    byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
+    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
+    Assert.assertEquals(priceListCapsule.getPricesList().size(), 1);
+    Assert.assertTrue(Arrays.equals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes()));
+    Assert.assertTrue(Arrays.equals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes()));
+
+    MarketPrice marketPrice = priceListCapsule.getPricesList().get(0);
+    Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
+    Assert.assertEquals(marketPrice.getBuyTokenQuantity(), buyTokenQuant);
+
+    //check pairPriceToOrder
+    byte[] pairPriceKey = MarketUtils.createPairPriceKey(
+        priceListCapsule.getSellTokenId(), priceListCapsule.getBuyTokenId(),
+        marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
+    MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
+        .get(pairPriceKey);
+    Assert.assertEquals(orderIdListCapsule.getOrdersList().size(), 1);
+    Assert.assertTrue(Arrays.equals(orderIdListCapsule.getOrdersList().get(0).toByteArray(),
+        orderId.toByteArray()));
+  }
+
+
+  /**
+   * has buy orders and sell orders before，add sell order ，not match,need to maintain the correct order
+   */
+  @Test
+  public void hasBuySellAddSellOrderNotMatch1() throws Exception {
+
+    // Initialize the order
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitAsset();
+
+    //(sell id_1  and buy id_2)
+    // TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 100L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+
+    // Initialize the order book
+
+    //add three order(sell id_2 and buy id_1) with different price by the same account
+    //TOKEN_ID_TWO is twice as expensive as TOKEN_ID_ONE
+    addOrder(TOKEN_ID_TWO, 100L, TOKEN_ID_ONE,
+        200L, OWNER_ADDRESS_FIRST);
+    addOrder(TOKEN_ID_TWO, 100L, TOKEN_ID_ONE,
+        400L, OWNER_ADDRESS_FIRST);
+    addOrder(TOKEN_ID_TWO, 100L, TOKEN_ID_ONE,
+        300L, OWNER_ADDRESS_FIRST);
+
+    //add three order(sell id_1  and buy id_2)
+    //TOKEN_ID_ONE is twice as expensive as TOKEN_ID_TWO
+    addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+        200L, OWNER_ADDRESS_FIRST);
+    addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+        300L, OWNER_ADDRESS_FIRST);
+    addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+        400L, OWNER_ADDRESS_FIRST);
+
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    actuator.validate();
+    actuator.execute(ret);
+
+    //get storeDB instance
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
+    MarketOrderStore orderStore = chainBaseManager.getMarketOrderStore();
+    MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
+    MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+
+    //check balance and token
+    accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == 0L);
+
+    //check accountOrder
+    MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
+    Assert.assertEquals(accountOrderCapsule.getCount(), 7);
+    ByteString orderId = accountOrderCapsule.getOrdersList().get(6);
+
+    //check order
+    MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
+    Assert.assertEquals(orderCapsule.getSellTokenQuantityRemain(), sellTokenQuant);
+
+    //check pairToPrice
+    byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
+    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
+    Assert.assertEquals(priceListCapsule.getPricesList().size(), 4);
     Assert.assertTrue(Arrays.equals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes()));
     Assert.assertTrue(Arrays.equals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes()));
 
