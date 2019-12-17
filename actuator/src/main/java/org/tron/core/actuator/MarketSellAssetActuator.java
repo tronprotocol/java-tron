@@ -294,7 +294,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       //match different order same price
       while (takerCapsule.getSellTokenQuantityRemain() != 0 &&
-          ordersList.size() != 0) {
+          !ordersList.isEmpty()) {
         ByteString orderId = ordersList.get(0);
         MarketOrderCapsule makerOrderCapsule = orderStore.get(orderId.toByteArray());
         matchSingleOrder(takerCapsule, makerOrderCapsule);
@@ -307,7 +307,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       orderIdListCapsule.setOrdersList(ordersList);
       pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
 
-      if (ordersList.size() == 0) {
+      if (ordersList.isEmpty()) {
         priceListCapsule.removeFirst();
       }
     }
@@ -337,8 +337,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
       return;
     }
 
-    long takerBuyTokenQuantityReceive = 0L;//In this match, the token obtained by taker
-    long makerBuyTokenQuantityReceive = 0L;// the token obtained by maker
+    long takerBuyTokenQuantityReceive;//In this match, the token obtained by taker
+    long makerBuyTokenQuantityReceive;// the token obtained by maker
 
     if (takerBuyTokenQuantityRemain == makerOrderCapsule.getSellTokenQuantityRemain()) {
       // taker == maker

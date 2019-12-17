@@ -125,6 +125,8 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.core.store.MarketAccountStore;
+import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
@@ -216,6 +218,10 @@ public class Manager {
   private IncrementalMerkleTreeStore merkleTreeStore;
   @Setter
   private TronNetService tronNetService;
+  @Autowired
+  private MarketAccountStore marketAccountStore;
+  @Autowired
+  private MarketOrderStore marketOrderStore;
   // for network
   @Autowired
   private PeersStore peersStore;
@@ -1659,6 +1665,14 @@ public class Manager {
     this.nullifierStore = nullifierStore;
   }
 
+  public MarketAccountStore getMarketAccountStore() {
+    return this.marketAccountStore;
+  }
+
+  public MarketOrderStore getMarketOrderStore() {
+    return this.marketOrderStore;
+  }
+
   public void closeAllStore() {
     logger.info("******** begin to close db ********");
     closeOneStore(accountStore);
@@ -1687,6 +1701,8 @@ public class Manager {
     closeOneStore(nullifierStore);
     closeOneStore(merkleTreeStore);
     closeOneStore(transactionRetStore);
+    closeOneStore(marketAccountStore);
+    closeOneStore(marketOrderStore);
     logger.info("******** end to close db ********");
   }
 
