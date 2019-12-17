@@ -398,18 +398,11 @@ message BlockHeader {
     bytes witness_address = 9;
     int32 version = 10;
     bytes accountStateRoot = 11;
-    SrList currentSrList = 12;
-    bytes chainId = 13;
+    bytes chainId = 12;
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
   repeated bytes srs_signature = 3;
-}
-
-message SrList {
-  int64 cycle = 1;
-  repeated bytes currentSrList = 2;
-  repeated bytes pre_srs_signature = 3;
 }
 
 // block
@@ -703,4 +696,9 @@ message CrossMessage {
 message Proof {
   bytes hash = 1;
   bool leftOrRight = 2;
+}
+
+message SrList {
+  int64 cycle = 1;
+  repeated bytes srAddress = 2;
 }

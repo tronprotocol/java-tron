@@ -230,15 +230,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
 
-  public void setSrList(SrList.Builder builder) {
-    BlockHeader.raw blockHeaderRaw =
-        this.block.getBlockHeader().getRawData().toBuilder()
-            .setCurrentSrList(builder).build();
-
-    this.block = this.block.toBuilder().setBlockHeader(
-        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
-  }
-
   /* only for genisis */
   public void setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw =
@@ -295,10 +286,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block.getBlockHeader().getRawData().getTimestamp();
   }
 
-  public SrList getSrList() {
-    return this.block.getBlockHeader().getRawData().getCurrentSrList();
-  }
-
   public BlockCapsule cleanTransactions(PbftSignCapsule pbftSignCapsule) {
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder()
         .addAllSrsSignature(pbftSignCapsule.getInstance().getSignList()).build();
@@ -326,11 +313,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     } else {
       toStringBuff.append("txs are empty\n");
     }
-    if (getSrList().getCurrentSrListList().size() > 0) {
-      List<String> srAddressList = Lists.transform(getSrList().getCurrentSrListList(),
-          bytes -> WalletUtil.encode58Check(Hex.decode(bytes.toStringUtf8())));
-      toStringBuff.append("srAddressList=").append(srAddressList).append("\n");
-    }
+
     toStringBuff.append("]");
     return toStringBuff.toString();
   }

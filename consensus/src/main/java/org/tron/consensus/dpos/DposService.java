@@ -6,6 +6,7 @@ import static org.tron.consensus.base.Constant.SOLIDIFIED_THRESHOLD;
 import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.util.internal.ConcurrentSet;
 import java.security.SignatureException;
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DataSign;
 import org.tron.protos.Protocol.SrList;
 
 @Slf4j(topic = "consensus")
@@ -148,101 +149,7 @@ public class DposService implements ConsensusInterface {
       return false;
     }
 
-    return validSrList(blockCapsule.getInstance());
-  }
-
-  private boolean validSrList(Block block) {
-    //valid sr list
-    long startTime = System.currentTimeMillis();
-    SrList srList = block.getBlockHeader().getRawData().getCurrentSrList();
-    List<ByteString> addressList = srList.getCurrentSrListList();
-    List<ByteString> preCycleSrSignList = srList.getPreSrsSignatureList();
-    if (addressList.size() != 0) {
-      long cycle = block.getBlockHeader().getRawData().getCurrentSrList().getCycle();
-      if (cycle != consensusDelegate.getCurrentCycleNumber()) {
-        return false;
-      }
-      if (cycle <= consensusDelegate.getSrListCurrentCycle()) {
-        return false;
-      }
-      List<ByteString> localAddressList = consensusDelegate.getActiveWitnesses();
-      List<ByteString> addressSet = addressList.stream()
-          .map(bytes -> ByteString.copyFrom(Hex.decode(bytes.toStringUtf8())))
-          .collect(Collectors.toList());
-      Set<ByteString> preCycleSrSignSet = new ConcurrentSet();
-      preCycleSrSignSet.addAll(preCycleSrSignList);
-      if (addressList.size() != localAddressList.size()) {
-        return false;
-      }
-      if (preCycleSrSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
-        return false;
-      }
-      if (!ListUtils.isEqualList(localAddressList, addressSet)) {
-        return false;
-      }
-      List<String> addressStingList = addressList.stream()
-          .map(sr -> sr.toStringUtf8()).collect(Collectors.toList());
-      ByteString data = ByteString.copyFromUtf8(JSON.toJSONString(addressStingList));
-      byte[] dataHash = Sha256Hash.hash(data.toByteArray());
-      Set<ByteString> preCycleSrSet = Sets.newHashSet(maintenanceManager.getBeforeWitness());
-      List<Future<Boolean>> futureList = new ArrayList<>();
-      for (ByteString sign : preCycleSrSignList) {
-        futureList.add(executorService.submit(
-            new ValidPbftSignTask(block, preCycleSrSignSet, dataHash, preCycleSrSet, sign)));
-      }
-      for (Future<Boolean> future : futureList) {
-        try {
-          if (!future.get()) {
-            return false;
-          }
-        } catch (Exception e) {
-          logger.error("", e);
-        }
-      }
-      if (preCycleSrSignSet.size() != 0) {
-        return false;
-      }
-      consensusDelegate.saveSrListCurrentCycle(cycle);
-      logger.info("block {} validSrList spend time : {}",
-          block.getBlockHeader().getRawData().getNumber(),
-          (System.currentTimeMillis() - startTime));
-    }
     return true;
-  }
-
-  private class ValidPbftSignTask implements Callable<Boolean> {
-
-    Block block;
-    Set<ByteString> preCycleSrSignSet;
-    byte[] dataHash;
-    Set<ByteString> preCycleSrSet;
-    ByteString sign;
-
-    ValidPbftSignTask(Block block, Set<ByteString> preCycleSrSignSet,
-        byte[] dataHash, Set<ByteString> preCycleSrSet, ByteString sign) {
-      this.block = block;
-      this.preCycleSrSignSet = preCycleSrSignSet;
-      this.dataHash = dataHash;
-      this.preCycleSrSet = preCycleSrSet;
-      this.sign = sign;
-    }
-
-    @Override
-    public Boolean call() throws Exception {
-      try {
-        byte[] srAddress = ECKey.signatureToAddress(dataHash,
-            TransactionCapsule.getBase64FromByteString(sign));
-        if (!preCycleSrSet.contains(ByteString.copyFrom(srAddress))) {
-          return false;
-        }
-        preCycleSrSignSet.remove(sign);
-      } catch (SignatureException e) {
-        logger.error("block {} valid sr list sign fail!",
-            block.getBlockHeader().getRawData().getNumber(), e);
-        return false;
-      }
-      return true;
-    }
   }
 
   @Override

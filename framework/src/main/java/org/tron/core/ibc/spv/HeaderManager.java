@@ -2,6 +2,7 @@ package org.tron.core.ibc.spv;
 
 import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.netty.util.internal.ConcurrentSet;
 import java.security.SignatureException;
 import java.util.ArrayList;
@@ -25,6 +26,8 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.HeaderDynamicPropertiesStore;
 import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.DataSign;
+import org.tron.protos.Protocol.SrList;
 
 @Slf4j
 @Component
@@ -155,6 +158,81 @@ public class HeaderManager {
         srSignSet.remove(sign);
       } catch (SignatureException e) {
         logger.error("block {} valid sr list sign fail!", header.getRawData().getNumber(), e);
+        return false;
+      }
+      return true;
+    }
+  }
+
+  private boolean validSrList(DataSign dataSign, long cycle) throws InvalidProtocolBufferException {
+    //valid sr list
+    SrList srList = SrList.parseFrom(dataSign.getData().toByteArray());
+    List<ByteString> addressList = srList.getSrAddressList();
+    List<ByteString> preCycleSrSignList = dataSign.getSignList();
+    if (addressList.size() != 0) {
+      if (cycle != srList.getCycle()) {
+        return false;
+      }
+      Set<ByteString> preCycleSrSignSet = new ConcurrentSet();
+      preCycleSrSignSet.addAll(preCycleSrSignList);
+      if (preCycleSrSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
+        return false;
+      }
+      byte[] dataHash = Sha256Hash.hash(srList.toByteArray());
+      //todo: get the before cycle sr list
+//      Set<ByteString> preCycleSrSet = Sets.newHashSet(maintenanceManager.getBeforeWitness());
+      Set<ByteString> preCycleSrSet = Sets.newHashSet();
+      List<Future<Boolean>> futureList = new ArrayList<>();
+      for (ByteString sign : preCycleSrSignList) {
+        futureList.add(executorService.submit(
+            new ValidSrListTask(cycle, preCycleSrSignSet, dataHash, preCycleSrSet, sign)));
+      }
+      for (Future<Boolean> future : futureList) {
+        try {
+          if (!future.get()) {
+            return false;
+          }
+        } catch (Exception e) {
+          logger.error("", e);
+        }
+      }
+      if (preCycleSrSignSet.size() != 0) {
+        return false;
+      }
+      //todo: save the sr list
+//      consensusDelegate.saveSrListCurrentCycle(cycle);
+    }
+    return false;
+  }
+
+  private class ValidSrListTask implements Callable<Boolean> {
+
+    long cycle;
+    Set<ByteString> preCycleSrSignSet;
+    byte[] dataHash;
+    Set<ByteString> preCycleSrSet;
+    ByteString sign;
+
+    ValidSrListTask(long cycle, Set<ByteString> preCycleSrSignSet,
+        byte[] dataHash, Set<ByteString> preCycleSrSet, ByteString sign) {
+      this.cycle = cycle;
+      this.preCycleSrSignSet = preCycleSrSignSet;
+      this.dataHash = dataHash;
+      this.preCycleSrSet = preCycleSrSet;
+      this.sign = sign;
+    }
+
+    @Override
+    public Boolean call() throws Exception {
+      try {
+        byte[] srAddress = ECKey.signatureToAddress(dataHash,
+            TransactionCapsule.getBase64FromByteString(sign));
+        if (!preCycleSrSet.contains(ByteString.copyFrom(srAddress))) {
+          return false;
+        }
+        preCycleSrSignSet.remove(sign);
+      } catch (SignatureException e) {
+        logger.error("block {} valid sr list sign fail!", cycle, e);
         return false;
       }
       return true;

@@ -1,16 +1,17 @@
 package org.tron.consensus.pbft.message;
 
-import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.security.SignatureException;
 import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Collectors;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.WalletUtil;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.TransactionCapsule;
@@ -19,6 +20,7 @@ import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Protocol.PbftMessage;
 import org.tron.protos.Protocol.PbftMessage.Raw;
 import org.tron.protos.Protocol.PbftMessage.Type;
+import org.tron.protos.Protocol.SrList;
 
 public abstract class PbftBaseMessage extends Message {
 
@@ -147,8 +149,12 @@ public abstract class PbftBaseMessage extends Message {
   }
 
   private String decode() {
-    List<String> srStringList = JSON
-        .parseArray(pbftMessage.getRawData().getData().toStringUtf8(), String.class);
-    return srStringList.toString();
+    try {
+      SrList srList = SrList.parseFrom(pbftMessage.getRawData().getData().toByteArray());
+      return "cycle = " + srList.getCycle() + ", sr list = " + srList.getSrAddressList().stream().map(
+          bytes -> WalletUtil.encode58Check(bytes.toByteArray())).collect(Collectors.toList());
+    } catch (InvalidProtocolBufferException e) {
+    }
+    return "decode error";
   }
 }

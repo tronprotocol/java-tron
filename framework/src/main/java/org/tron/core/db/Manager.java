@@ -1435,30 +1435,9 @@ public class Manager {
         crossTxQueue.size());
 
     blockCapsule.setMerkleRoot();
-    setSrList(blockCapsule);
     blockCapsule.sign(miner.getPrivateKey());
     return blockCapsule;
 
-  }
-
-  private void setSrList(BlockCapsule blockCapsule) {
-    long cycle = getDynamicPropertiesStore().getCurrentCycleNumber();
-    if (cycle == getDynamicPropertiesStore().getSrListCurrentCycle()) {
-      return;
-    }
-    PbftSignCapsule pbftSignCapsule = getPbftSignDataStore().getSrSignData(cycle);
-    if (pbftSignCapsule == null) {
-      return;
-    }
-    String srListString = pbftSignCapsule.getInstance().getData().toStringUtf8();
-    List<String> srList = JSON.parseArray(srListString, String.class);
-    SrList.Builder builder = SrList.newBuilder();
-    builder.setCycle(cycle);
-    for (String sr : srList) {
-      builder.addCurrentSrList(ByteString.copyFromUtf8(sr));
-    }
-    builder.addAllPreSrsSignature(pbftSignCapsule.getInstance().getSignList());
-    blockCapsule.setSrList(builder);
   }
 
   private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
