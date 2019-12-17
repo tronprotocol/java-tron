@@ -219,6 +219,7 @@ public class Manager {
   @Setter
   private TronNetService tronNetService;
   @Autowired
+  @Getter
   private MarketAccountStore marketAccountStore;
   @Autowired
   private MarketOrderStore marketOrderStore;
@@ -1663,10 +1664,6 @@ public class Manager {
 
   public void setNullifierStore(NullifierStore nullifierStore) {
     this.nullifierStore = nullifierStore;
-  }
-
-  public MarketAccountStore getMarketAccountStore() {
-    return this.marketAccountStore;
   }
 
   public MarketOrderStore getMarketOrderStore() {
