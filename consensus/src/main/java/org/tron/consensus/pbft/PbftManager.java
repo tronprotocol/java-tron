@@ -39,9 +39,9 @@ public class PbftManager {
     }
   }
 
-  public void srPrePrepare(BlockCapsule block, List<ByteString> currentWitness) {
+  public void srPrePrepare(BlockCapsule block, List<ByteString> currentWitness, long cycle) {
     if (!pbftMessageHandle.isSyncing()) {
-      doAction(PbftSrMessage.buildPrePrepareMessage(block, currentWitness));
+      doAction(PbftSrMessage.buildPrePrepareMessage(block, currentWitness, cycle));
     }
   }
 

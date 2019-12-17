@@ -1,6 +1,5 @@
 package org.tron.consensus.pbft;
 
-import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +14,7 @@ import org.tron.core.db.CommonDataBase;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.PbftMessage.Raw;
+import org.tron.protos.Protocol.SrList;
 
 @Slf4j(topic = "pbft")
 @Component
@@ -45,13 +45,17 @@ public class PbftMessageAction {
       }
       break;
       case PBFT_SR_MSG: {
-        PbftSrMessage srMessage = (PbftSrMessage) message;
-        String srString = srMessage.getPbftMessage().getRawData().getData().toStringUtf8();
-        long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
-        Raw raw = srMessage.getPbftMessage().getRawData();
-        pbftSignDataStore.putSrSignData(cycle, new PbftSignCapsule(raw.getData(), dataSignList));
-        logger.info("sr commit msg :{}, {}", srMessage.getBlockNum(),
-            JSON.parseArray(srString, String.class));
+        try {
+          PbftSrMessage srMessage = (PbftSrMessage) message;
+          SrList srList = SrList
+              .parseFrom(srMessage.getPbftMessage().getRawData().getData().toByteArray());
+          Raw raw = srMessage.getPbftMessage().getRawData();
+          pbftSignDataStore
+              .putSrSignData(srList.getCycle(), new PbftSignCapsule(raw.getData(), dataSignList));
+          logger.info("sr commit msg :{}, cycle:{}", srMessage.getBlockNum(), srList.getCycle());
+        } catch (Exception e) {
+          logger.error("process the sr list error!", e);
+        }
       }
       break;
       default:

@@ -661,3 +661,8 @@ message DataSign {
   bytes data = 1;
   repeated bytes sign = 2;
 }
+
+message SrList {
+  int64 cycle = 1;
+  repeated bytes srAddress = 2;
+}
