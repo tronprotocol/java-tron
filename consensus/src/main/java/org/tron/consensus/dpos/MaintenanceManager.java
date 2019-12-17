@@ -66,7 +66,7 @@ public class MaintenanceManager {
         updateWitnessValue(currentWitness);
         //pbft sr msg
         pbftManager.srPrePrepare(blockCapsule, currentWitness,
-            consensusDelegate.getDynamicPropertiesStore().getCurrentCycleNumber());
+            consensusDelegate.getNextMaintenanceTime());
       }
       consensusDelegate.updateNextMaintenanceTime(blockTime);
     }
