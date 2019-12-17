@@ -57,6 +57,8 @@ public enum MessageTypes {
 
   PBFT_SR_MSG(0x35),
 
+  CROSS_MSG(0x50),
+
   LAST(0xFF);
 
   private static final Map<Integer, MessageTypes> intToTypeMap = new HashMap<>();

@@ -10,10 +10,8 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftBlockMessage;
 import org.tron.consensus.pbft.message.PbftSrMessage;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.PbftSignCapsule;
-import org.tron.core.db.CommonDataBase;
-import org.tron.core.db.PbftSignDataStore;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.PbftMessage.Raw;
 
 @Slf4j(topic = "pbft")
@@ -23,11 +21,7 @@ public class PbftMessageAction {
   private long checkPoint = 0;
 
   @Autowired
-  private CommonDataBase commonDataBase;
-  @Autowired
-  private DynamicPropertiesStore dynamicPropertiesStore;
-  @Autowired
-  private PbftSignDataStore pbftSignDataStore;
+  private ChainBaseManager chainBaseManager;
 
   public void action(PbftBaseMessage message, List<ByteString> dataSignList) {
     switch (message.getType()) {
@@ -36,9 +30,9 @@ public class PbftMessageAction {
         long blockNum = blockMessage.getBlockNum();
         if (blockNum - checkPoint >= Param.getInstance().getCheckMsgCount()) {
           checkPoint = blockNum;
-          commonDataBase.saveLatestPbftBlockNum(blockNum);
+          chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
           Raw raw = blockMessage.getPbftMessage().getRawData();
-          pbftSignDataStore
+          chainBaseManager.getPbftSignDataStore()
               .putBlockSignData(blockNum, new PbftSignCapsule(raw.getData(), dataSignList));
           logger.info("commit msg block num is:{}", blockNum);
         }
@@ -47,9 +41,10 @@ public class PbftMessageAction {
       case PBFT_SR_MSG: {
         PbftSrMessage srMessage = (PbftSrMessage) message;
         String srString = srMessage.getPbftMessage().getRawData().getData().toStringUtf8();
-        long cycle = dynamicPropertiesStore.getCurrentCycleNumber();
+        long cycle = chainBaseManager.getDynamicPropertiesStore().getCurrentCycleNumber();
         Raw raw = srMessage.getPbftMessage().getRawData();
-        pbftSignDataStore.putSrSignData(cycle, new PbftSignCapsule(raw.getData(), dataSignList));
+        chainBaseManager.getPbftSignDataStore()
+            .putSrSignData(cycle, new PbftSignCapsule(raw.getData(), dataSignList));
         logger.info("sr commit msg :{}, {}", srMessage.getBlockNum(),
             JSON.parseArray(srString, String.class));
       }

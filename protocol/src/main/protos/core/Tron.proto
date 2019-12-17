@@ -272,6 +272,7 @@ message Transaction {
       ClearABIContract = 48;
       UpdateBrokerageContract = 49;
       ShieldedTransferContract = 51;
+      CrossTokenContract = 52;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -683,12 +684,20 @@ message DownloadHeader {
 }
 
 message CrossMessage {
+  enum Type {
+    DATA = 0;
+    ACK = 1;
+    TIME_OUT = 2;
+  }
   Transaction transaction = 1;
   bytes to_chain_id = 2;
   bytes from_chain_id = 3;
-  int64 time_out_block_height = 4;
-  repeated Proof proof = 5;
-  int32 version = 6;
+  bytes route_chain_id = 4;
+  int64 time_out_block_height = 5;
+  repeated Proof proof = 6;
+  int64 root_height = 7;
+  int32 version = 8;
+  Type type = 9;
 }
 
 message Proof {

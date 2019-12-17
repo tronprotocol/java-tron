@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -137,6 +138,7 @@ import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.SrList;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -225,6 +227,7 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> repushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+  private BlockingQueue<Sha256Hash> crossTxQueue;
   /**
    * Cycle thread to repush Transactions
    */
@@ -279,6 +282,10 @@ public class Manager {
 
   public boolean needToUpdateAsset() {
     return getDynamicPropertiesStore().getTokenUpdateDone() == 0L;
+  }
+
+  public CrossStore getCrossStore() {
+    return chainBaseManager.getCrossStore();
   }
 
   public DynamicPropertiesStore getDynamicPropertiesStore() {
@@ -452,6 +459,7 @@ public class Manager {
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
+    this.crossTxQueue = new LinkedBlockingDeque<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setDelegationService(delegationService);
 
@@ -1350,12 +1358,21 @@ public class Manager {
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldeTransCounts = new AtomicInteger(0);
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
-    while (iterator.hasNext() || repushTransactions.size() > 0) {
+    while (iterator.hasNext() || crossTxQueue.size() > 0 || repushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
       if (iterator.hasNext()) {
         fromPending = true;
         trx = iterator.next();
+      } else if (crossTxQueue.size() > 0) {
+        //process cross tx
+        Sha256Hash txHash = crossTxQueue.poll();
+        CrossMessage crossMessage = getCrossStore().getReceiveCrossMsgUnEx(txHash);
+        if (crossMessage != null && crossMessage.getTimeOutBlockHeight() < getHeadBlockNum()) {
+          trx = new TransactionCapsule(crossMessage.getTransaction());
+        } else {
+          continue;
+        }
       } else {
         trx = repushTransactions.poll();
       }
@@ -1412,8 +1429,10 @@ public class Manager {
 
     session.reset();
 
-    logger.info("Generate block success, pendingCount: {}, repushCount: {}, postponedCount: {}",
-        pendingTransactions.size(), repushTransactions.size(), postponedTrxCount);
+    logger.info(
+        "Generate block success, pendingCount: {}, repushCount: {}, postponedCount: {}, crossCount: {}",
+        pendingTransactions.size(), repushTransactions.size(), postponedTrxCount,
+        crossTxQueue.size());
 
     blockCapsule.setMerkleRoot();
     setSrList(blockCapsule);
@@ -1828,5 +1847,9 @@ public class Manager {
       }
       return true;
     }
+  }
+
+  public boolean addCrossTx(Sha256Hash crossTx) {
+    return crossTxQueue.add(crossTx);
   }
 }
