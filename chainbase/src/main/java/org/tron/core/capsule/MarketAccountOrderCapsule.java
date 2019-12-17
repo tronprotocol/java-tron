@@ -68,6 +68,12 @@ public class MarketAccountOrderCapsule implements ProtoCapsule<MarketAccountOrde
         .build();
   }
 
+  public void setCount(long o) {
+    this.accountOrder = this.accountOrder.toBuilder()
+        .setCount(o)
+        .build();
+  }
+
   public long getCount() {
     return this.accountOrder.getCount();
   }
