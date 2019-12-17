@@ -28,6 +28,8 @@ public class ProposalUtilTest {
   public static Application AppT;
   private static TronApplicationContext context;
   private static Manager dbManager;
+  private static final String LONG_VALUE_ERROR =
+      "Bad chain parameter value, valid range is [0," + LONG_VALUE + "]";
 
   /**
    * Init .
@@ -95,7 +97,6 @@ public class ProposalUtilTest {
     try {
       actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.ACCOUNT_UPGRADE_COST.getCode(), invalidValue);
-      Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
     }
@@ -106,6 +107,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
@@ -114,6 +116,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
     try {
@@ -122,6 +125,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
     try {
@@ -130,6 +134,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
     try {
@@ -138,6 +143,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
     try {
@@ -146,6 +152,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
     try {
@@ -154,6 +161,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
 
@@ -163,6 +171,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
     try {
@@ -171,6 +180,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
 
@@ -180,6 +190,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
     try {
@@ -188,6 +199,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
     try {
@@ -196,6 +208,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
     try {
@@ -204,6 +217,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
 
@@ -243,6 +257,7 @@ public class ProposalUtilTest {
     }
 
     dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
+    dynamicPropertiesStore.saveRemoveThePowerOfTheGr(1);
     try {
       actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.REMOVE_THE_POWER_OF_THE_GR.getCode(), 2);
@@ -253,6 +268,19 @@ public class ProposalUtilTest {
           "This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1",
           e.getMessage());
     }
+
+    dynamicPropertiesStore.saveRemoveThePowerOfTheGr(-1);
+    try {
+      actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.REMOVE_THE_POWER_OF_THE_GR.getCode(), 1);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(
+          "This proposal has been executed before and is only allowed to be executed once",
+          e.getMessage());
+    }
+
 
 
     try {
@@ -276,7 +304,6 @@ public class ProposalUtilTest {
           "Bad chain parameter value, valid range is [10,100]", e.getMessage());
     }
 
-
     try {
       actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.ALLOW_DELEGATE_RESOURCE.getCode(), 2);
@@ -287,6 +314,7 @@ public class ProposalUtilTest {
           "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1", e.getMessage());
     }
 
+    dynamicPropertiesStore.saveAllowSameTokenName(1);
     try {
       actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.ALLOW_TVM_TRANSFER_TRC10.getCode(), 2);
@@ -296,7 +324,18 @@ public class ProposalUtilTest {
       Assert.assertEquals(
           "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1", e.getMessage());
     }
-  }
 
+    dynamicPropertiesStore.saveAllowSameTokenName(0);
+    try {
+      actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_TRANSFER_TRC10.getCode(), 1);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("[ALLOW_SAME_TOKEN_NAME] proposal must be approved "
+              + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed",e.getMessage());
+    }
+
+  }
 
 }
