@@ -122,10 +122,10 @@ enum AccountType {
 message Account {
     message Frozen {
     int64 frozen_balance = 1; 
-      int64 expire_time = 2;
+    int64 expire_time = 2;
   }
     bytes account_name = 1;
-  AccountType type = 2;
+    AccountType type = 2;
     bytes address = 3;
     int64 balance = 4;
     repeated Vote votes = 5;
@@ -286,7 +286,7 @@ Witness and witness-related messages.
     int64 number = 7;
     int64 witness_id = 8;
     bytes witness_address = 9;
-    int32 version = 10;
+    int32 version = 10;451PCBCOM/java-tron
     bytes accountStateRoot = 11;
   }
   ```
@@ -452,11 +452,11 @@ Transaction and transaction-related messages.
     `callValueInfo`: Refers to asset transfer information in internal transactions, including trx and trc10.
 
     ```java
-message InternalTransaction {
+    message InternalTransaction {
       bytes hash = 1;
-  bytes caller_address = 2;
+      bytes caller_address = 2;
       bytes transferTo_address = 3;
-  message CallValueInfo {
+      message CallValueInfo {
         int64 callValue = 1;
         string tokenId = 2;
       }
@@ -477,9 +477,9 @@ message InternalTransaction {
     ​    enum `code`:
   
     ```java
-  enum code {
+    enum code {
       SUCESS = 0;
-    FAILED = 1;
+      FAILED = 1;
     }
   ```
   
@@ -508,17 +508,17 @@ message InternalTransaction {
     ​    `shielded_transaction_fee`:
 
     ```java
-  message Result {
+    message Result {
       enum code {
       SUCESS = 0;
         FAILED = 1;
-    }
+      }
       enum contractResult {
-      DEFAULT = 0;
+        DEFAULT = 0;
         SUCCESS = 1;
-      REVERT = 2;
+        REVERT = 2;
         BAD_JUMP_DESTINATION = 3;
-      OUT_OF_MEMORY = 4;
+        OUT_OF_MEMORY = 4;
         PRECOMPILED_CONTRACT = 5;
         STACK_TOO_SMALL = 6;
         STACK_TOO_LARGE = 7;
@@ -533,7 +533,6 @@ message InternalTransaction {
       int64 fee = 1;
       code ret = 2;
       contractResult contractRet = 3;
-    
       string assetIssueID = 14;
       int64 withdraw_amount = 15;
       int64 unfreeze_amount = 16;
@@ -564,17 +563,17 @@ message InternalTransaction {
     ​    `fee_limit`: the cost limit for energy and fee when trigger and create contract.
 
     ```java
-  message raw {
+    message raw {
       bytes ref_block_bytes = 1;
-    int64 ref_block_num = 3;
+      int64 ref_block_num = 3;
       bytes ref_block_hash = 4;
-    int64 expiration = 8;
+      int64 expiration = 8;
       repeated authority auths = 9;
-    bytes data = 10;
+      bytes data = 10;
       repeated Contract contract = 11;
-    bytes scripts = 12;
+      bytes scripts = 12;
       int64 timestamp = 14;
-    int64 fee_limit = 18;
+      int64 fee_limit = 18;
     }
     ```
     
@@ -592,13 +591,13 @@ message InternalTransaction {
           TransferContract = 1;
           TransferAssetContract = 2;
           VoteAssetContract = 3;
-        VoteWitnessContract = 4;
+          VoteWitnessContract = 4;
           WitnessCreateContract = 5;
-        AssetIssueContract = 6;
+          AssetIssueContract = 6;
           WitnessUpdateContract = 8;
-        ParticipateAssetIssueContract = 9;
+          ParticipateAssetIssueContract = 9;
           AccountUpdateContract = 10;
-        FreezeBalanceContract = 11;
+          FreezeBalanceContract = 11;
           UnfreezeBalanceContract = 12;
           WithdrawBalanceContract = 13;
           UnfreezeAssetContract = 14;
@@ -702,13 +701,13 @@ message InternalTransaction {
   
     ​    `topics`: subscribed topics for contract.
   
-  ​    `data`: unsubscribed topics for contract.
+    ​    `data`: unsubscribed topics for contract.
   
   ```java
     message Log {
-    bytes address = 1;
+      bytes address = 1;
       repeated bytes topics = 2;
-    bytes data = 3;
+      bytes data = 3;
     }
     ```
   
@@ -751,27 +750,26 @@ message InternalTransaction {
     `shielded_transaction_fee`: the usage fee for shielded transaction.
 
     ```java
-  message TransactionInfo {
+    message TransactionInfo {
       enum code {
-      SUCESS = 0;
+        SUCESS = 0;
         FAILED = 1;
-    }
-      message Log {
-      bytes address = 1;
-        repeated bytes topics = 2;
-      bytes data = 3;
       }
-    bytes id = 1;
+      message Log {
+        bytes address = 1;
+        repeated bytes topics = 2;
+        bytes data = 3;
+      }
+      bytes id = 1;
       int64 fee = 2;
-    int64 blockNumber = 3;
+      int64 blockNumber = 3;
       int64 blockTimeStamp = 4;
-    repeated bytes contractResult = 5;
+      repeated bytes contractResult = 5;
       bytes contract_address = 6;
-    ResourceReceipt receipt = 7;
+      ResourceReceipt receipt = 7;
       repeated Log log = 8;
-    code result = 9;
+      code result = 9;
       bytes resMessage = 10;
-    
       string assetIssueID = 14;
       int64 withdraw_amount = 15;
       int64 unfreeze_amount = 16;
@@ -803,7 +801,7 @@ message InternalTransaction {
     ```java
     message authority {
       AccountId account = 1;
-    bytes permission_name = 2;
+      bytes permission_name = 2;
     }
   ```
   
@@ -813,7 +811,7 @@ message InternalTransaction {
   
     ```java
     message TXOutputs {
-    repeated TXOutput outputs = 1;
+      repeated TXOutput outputs = 1;
     }
   ```
   
@@ -1165,12 +1163,11 @@ Contract and contract-related messages.
 
       ```java
       message FreezeBalanceContract {
-          bytes owner_address = 1;
-          int64 frozen_balance = 2;
-          int64 frozen_duration = 3;
-      
-          ResourceCode resource = 10;
-          bytes receiver_address = 15;
+        bytes owner_address = 1;
+        int64 frozen_balance = 2;
+        int64 frozen_duration = 3;
+        ResourceCode resource = 10;
+        bytes receiver_address = 15;
       }
       ```
 
@@ -1184,9 +1181,9 @@ Contract and contract-related messages.
 
       ```java
       message UnfreezeBalanceContract {
-          bytes owner_address = 1;
-          ResourceCode resource = 10;
-          bytes receiver_address = 15;
+        bytes owner_address = 1;
+        ResourceCode resource = 10;
+        bytes receiver_address = 15;
       }
       ```
       
@@ -1196,7 +1193,7 @@ Contract and contract-related messages.
     
   ```java
       message WithdrawBalanceContract {
-          bytes owner_address = 1;
+        bytes owner_address = 1;
       }
       ```
     
@@ -1206,7 +1203,7 @@ Contract and contract-related messages.
     
   ```java
       message UnfreezeAssetContract {
-          bytes owner_address = 1;
+        bytes owner_address = 1;
       }
       ```
     
