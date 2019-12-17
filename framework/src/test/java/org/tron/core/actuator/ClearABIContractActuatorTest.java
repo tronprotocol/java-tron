@@ -291,8 +291,10 @@ public class ClearABIContractActuatorTest {
         "contract type error,expected type [ClearABIContract],real type[");
     actuatorTest.invalidContractType();
 
+
     actuatorTest.setContract(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
     actuatorTest.nullTransationResult();
+
 
     actuatorTest.setNullDBManagerMsg("No account store or contract store!");
     actuatorTest.nullDBManger();
