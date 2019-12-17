@@ -116,6 +116,7 @@ import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
+import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -150,6 +151,7 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
@@ -166,6 +168,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Proposal;
@@ -2281,6 +2284,35 @@ public class Wallet {
                   .setPort(node.getPort())));
         });
     return nodeListBuilder.build();
+  }
+
+  public MarketOrderList getMarketOrderByAccount(ByteString accountAddress)
+      throws ItemNotFoundException {
+
+    if (accountAddress == null || accountAddress.isEmpty()) {
+      return null;
+    }
+
+    MarketAccountOrderCapsule marketAccountOrderCapsule = dbManager.getMarketAccountStore()
+        .get(accountAddress.toByteArray());
+    List<ByteString> orderIdList = marketAccountOrderCapsule.getOrdersList();
+
+    MarketOrderStore marketOrderStore = dbManager.getMarketOrderStore();
+    MarketOrderList.Builder marketOrderListBuilder = MarketOrderList.newBuilder();
+
+    orderIdList
+        .forEach(
+              orderId -> {
+                try {
+                  marketOrderListBuilder.addOrders(marketOrderStore.get(orderId.toByteArray()).getInstance());
+                } catch (ItemNotFoundException e) {
+                  logger.error("orderId = " + orderId.toString() + " not found");
+                  throw new IllegalStateException("order not found in store");
+                }
+              }
+        );
+
+    return marketOrderListBuilder.build();
   }
 
   public Transaction deployContract(TransactionCapsule trxCap) {

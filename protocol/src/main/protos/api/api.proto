@@ -296,7 +296,7 @@ service Wallet {
 //  rpc GetMarketOrderById (BytesMessage) returns (MarketOrderList) {
 //  }
 
-  rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
+  rpc GetMarketOrderByAccount (Account) returns (MarketOrderList) {
   }
 
   rpc GetMarketOrderByPair (MarketOrderPair) returns (MarketPriceList) {
