@@ -222,6 +222,7 @@ public class Manager {
   @Getter
   private MarketAccountStore marketAccountStore;
   @Autowired
+  @Getter
   private MarketOrderStore marketOrderStore;
   // for network
   @Autowired
@@ -1664,10 +1665,6 @@ public class Manager {
 
   public void setNullifierStore(NullifierStore nullifierStore) {
     this.nullifierStore = nullifierStore;
-  }
-
-  public MarketOrderStore getMarketOrderStore() {
-    return this.marketOrderStore;
   }
 
   public void closeAllStore() {
