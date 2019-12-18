@@ -60,7 +60,7 @@ public class ProposalUtilTest {
   }
 
   @Test
-  public void validProposalTypeCheck() {
+  public void validProposalTypeCheck() throws ContractValidateException {
 
     Assert.assertEquals(false, ProposalType.contain(40));
     Assert.assertEquals(false, ProposalType.contain(-1));
@@ -75,16 +75,12 @@ public class ProposalUtilTest {
       ProposalType.getEnum(code);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Does not support code : " + code, e.getMessage());
     }
 
     code = 32;
-    try {
-      Assert.assertEquals(ProposalType.ALLOW_TVM_SOLIDITY_059, ProposalType.getEnum(code));
-    } catch (ContractValidateException e) {
-      Assert.assertFalse(e instanceof ContractValidateException);
-    }
+    Assert.assertEquals(ProposalType.ALLOW_TVM_SOLIDITY_059, ProposalType.getEnum(code));
+
   }
 
   @Test
@@ -97,8 +93,8 @@ public class ProposalUtilTest {
     try {
       actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.ACCOUNT_UPGRADE_COST.getCode(), invalidValue);
+      Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
@@ -107,7 +103,6 @@ public class ProposalUtilTest {
           ProposalType.ACCOUNT_UPGRADE_COST.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
@@ -116,7 +111,6 @@ public class ProposalUtilTest {
           ProposalType.CREATE_ACCOUNT_FEE.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -125,7 +119,6 @@ public class ProposalUtilTest {
           ProposalType.CREATE_ACCOUNT_FEE.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -134,7 +127,6 @@ public class ProposalUtilTest {
           ProposalType.ASSET_ISSUE_FEE.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -143,7 +135,6 @@ public class ProposalUtilTest {
           ProposalType.ASSET_ISSUE_FEE.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -152,7 +143,6 @@ public class ProposalUtilTest {
           ProposalType.WITNESS_PAY_PER_BLOCK.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -161,7 +151,6 @@ public class ProposalUtilTest {
           ProposalType.WITNESS_PAY_PER_BLOCK.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -171,7 +160,6 @@ public class ProposalUtilTest {
           ProposalType.WITNESS_STANDBY_ALLOWANCE.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -180,7 +168,6 @@ public class ProposalUtilTest {
           ProposalType.WITNESS_STANDBY_ALLOWANCE.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -190,7 +177,6 @@ public class ProposalUtilTest {
           ProposalType.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -199,7 +185,6 @@ public class ProposalUtilTest {
           ProposalType.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -208,7 +193,6 @@ public class ProposalUtilTest {
           ProposalType.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -217,7 +201,6 @@ public class ProposalUtilTest {
           ProposalType.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
     }
 
@@ -228,7 +211,6 @@ public class ProposalUtilTest {
           ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 3 * 27 * 1000 - 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
           "Bad chain parameter value, valid range is [3 * 27 * 1000,24 * 3600 * 1000]",
           e.getMessage());
@@ -239,7 +221,6 @@ public class ProposalUtilTest {
           ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 24 * 3600 * 1000 + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
           "Bad chain parameter value, valid range is [3 * 27 * 1000,24 * 3600 * 1000]",
           e.getMessage());
@@ -251,7 +232,6 @@ public class ProposalUtilTest {
           ProposalType.ALLOW_CREATION_OF_CONTRACTS.getCode(), 2);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
           "This value[ALLOW_CREATION_OF_CONTRACTS] is only allowed to be 1",
           e.getMessage());
@@ -264,7 +244,6 @@ public class ProposalUtilTest {
           ProposalType.REMOVE_THE_POWER_OF_THE_GR.getCode(), 2);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
           "This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1",
           e.getMessage());
@@ -276,7 +255,6 @@ public class ProposalUtilTest {
           ProposalType.REMOVE_THE_POWER_OF_THE_GR.getCode(), 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
           "This proposal has been executed before and is only allowed to be executed once",
           e.getMessage());
@@ -289,7 +267,6 @@ public class ProposalUtilTest {
           ProposalType.MAX_CPU_TIME_OF_ONE_TX.getCode(), 9);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
           "Bad chain parameter value, valid range is [10,100]", e.getMessage());
     }
@@ -300,7 +277,6 @@ public class ProposalUtilTest {
           ProposalType.MAX_CPU_TIME_OF_ONE_TX.getCode(), 101);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
           "Bad chain parameter value, valid range is [10,100]", e.getMessage());
     }
@@ -310,7 +286,6 @@ public class ProposalUtilTest {
           ProposalType.ALLOW_DELEGATE_RESOURCE.getCode(), 2);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
           "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1", e.getMessage());
     }
@@ -321,7 +296,6 @@ public class ProposalUtilTest {
           ProposalType.ALLOW_TVM_TRANSFER_TRC10.getCode(), 2);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
           "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1", e.getMessage());
     }
@@ -332,7 +306,6 @@ public class ProposalUtilTest {
           ProposalType.ALLOW_TVM_TRANSFER_TRC10.getCode(), 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("[ALLOW_SAME_TOKEN_NAME] proposal must be approved "
               + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed",e.getMessage());
     }
