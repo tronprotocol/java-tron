@@ -21,7 +21,6 @@ public class ActuatorTest {
   private String expectedMsg;
   private String nullChainMangerErrorMsg = "No account store or contract store!";
   private String ownerAddress = null;
-  private String invalidAddressErrorMsg = "Invalid address";
 
   public ActuatorTest(Any contract, AbstractActuator actuator, Manager dbManager) {
     this.actuator = actuator;
@@ -82,10 +81,9 @@ public class ActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(this.contract);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, this.invalidAddressErrorMsg,
-        this.invalidAddressErrorMsg);
+    processAndCheckInvalid(actuator, ret, this.failMsg,
+        this.expectedMsg);
   }
-
 
   /**
    * No account store, null DB Manager

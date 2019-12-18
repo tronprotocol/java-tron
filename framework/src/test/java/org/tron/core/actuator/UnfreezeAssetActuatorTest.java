@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -27,6 +29,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 
@@ -402,5 +405,26 @@ public class UnfreezeAssetActuatorTest {
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
+  }
+
+
+  @Test
+  public void commonErrorCheck() {
+    createAssertSameTokenNameActive();
+    UnfreezeAssetActuator actuator = new UnfreezeAssetActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error, expected type [UnfreezeAssetContract], real type[");
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(OWNER_ADDRESS));
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
   }
 }
