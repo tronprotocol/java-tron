@@ -299,7 +299,7 @@ service Wallet {
   rpc GetMarketOrderByAccount (Account) returns (MarketOrderList) {
   }
 
-  rpc GetMarketOrderByPair (MarketOrderPair) returns (MarketPriceList) {
+  rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {
   }
 
 
