@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
-import org.tron.core.Wallet;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction;
 
 
@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.Transaction;
 public class GetTransactionSignWeightServlet extends RateLimiterServlet {
 
   @Autowired
-  private Wallet wallet;
+  private TransactionUtil transactionUtil;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
 
@@ -29,7 +29,7 @@ public class GetTransactionSignWeightServlet extends RateLimiterServlet {
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
       Transaction transaction = Util.packTransaction(input, visible);
-      TransactionSignWeight reply = wallet.getTransactionSignWeight(transaction);
+      TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(transaction);
       if (reply != null) {
         response.getWriter().println(Util.printTransactionSignWeight(reply, visible));
       } else {

@@ -1130,8 +1130,8 @@ public class Manager {
         .saveLatestBlockHeaderTimestamp(block.getTimeStamp());
     revokingStore.setMaxSize((int) (
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-            - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
-            + 1));
+        - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
+        + 1));
     khaosDb.setMaxSize((int)
         (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
             - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
@@ -1524,7 +1524,7 @@ public class Manager {
   private void payReward(BlockCapsule block) {
     WitnessCapsule witnessCapsule =
         chainBaseManager.getWitnessStore().getUnchecked(block.getInstance().getBlockHeader()
-            .getRawData().getWitnessAddress().toByteArray());
+        .getRawData().getWitnessAddress().toByteArray());
     if (getDynamicPropertiesStore().allowChangeDelegation()) {
       delegationService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
           getDynamicPropertiesStore().getWitnessPayPerBlock());

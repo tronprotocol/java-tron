@@ -23,6 +23,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.DataWord;
@@ -99,7 +100,7 @@ public class RuntimeTransferComplexTest {
     Transaction trx = TvmTestUtils
         .generateDeploySmartContractAndGetTransaction(contractName, address, ABI, code, value, fee,
             consumeUserResourcePercent, null);
-    byte[] contractAddress = Wallet.generateContractAddress(trx);
+    byte[] contractAddress = TransactionUtil.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, deposit, null);
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(dbManager.getAccountStore().get(contractAddress).getBalance(), 100);
@@ -130,7 +131,7 @@ public class RuntimeTransferComplexTest {
     Transaction trx = TvmTestUtils
         .generateDeploySmartContractAndGetTransaction(contractName, address, ABI, code, value, fee,
             consumeUserResourcePercent, null);
-    byte[] contractAddress = Wallet.generateContractAddress(trx);
+    byte[] contractAddress = TransactionUtil.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, deposit, null);
     Assert.assertNotNull(runtime.getRuntimeError().contains("REVERT"));
     Assert.assertNull(dbManager.getAccountStore().get(contractAddress));
