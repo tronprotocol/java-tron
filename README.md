@@ -12,8 +12,8 @@
 
 
 <p align="center">
-  <a href="https://discord.gg/GsRgsTD">
-    <img src="https://img.shields.io/badge/chat-on%20discord-brightgreen.svg">
+  <a href="https://gitter.im/tronprotocol/allcoredev">
+    <img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667">
   </a>
     
   <a href="https://travis-ci.org/tronprotocol/java-tron">
@@ -44,11 +44,10 @@
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
   <a href="#deploy">Deploy</a> •
-  <a href="#developer-community">Developer Community</a> •
-  <a href="http://developers.tron.network">Documentation</a> •
-  <a href="#contributing">Contributing</a> •
-  <a href="#projects">Projects</a> •
-  <a href="#resource">Resource</a>
+  <a href="#Deployment">Deployment</a> •
+  <a href="#Channel">Channel</a> •
+  <a href="#Contribution">Contribution</a> •
+  <a href="#Resources">Resources</a>
 </p>
 
 ## What's TRON?
@@ -80,14 +79,14 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 [https://tronprotocol.github.io/documentation-en/developers/contribution/](https://tronprotocol.github.io/documentation-en/developers/contribution/)
 
 # Resources
-* [Medium](https://medium.com/@coredevs)  
-* [Documentation](https://tronprotocol.github.io/documentation-en/introduction/)  
-* [Test network](http://nileex.io/)  
-* [Tronscan](https://tronscan.org/#/)    
-* [Wallet-cli](https://github.com/tronprotocol/wallet-cli)  
-* [TIP](https://github.com/tronprotocol/tips)  
-* [TP](https://github.com/tronprotocol/tips/tree/master/tp)  
-* [White Paper](https://tron.network/resources?lng=&name=1)  
+* [Medium](https://medium.com/@coredevs)  java-tron's official technical articles are published there.    
+* [Documentation](https://tronprotocol.github.io/documentation-en/introduction/)  java-tron's official technical documentation website.  
+* [Test network](http://nileex.io/) A stable test network of TRON contributed by TRON community.
+* [Tronscan](https://tronscan.org/#/) TRON network blockchain browser.    
+* [Wallet-cli](https://github.com/tronprotocol/wallet-cli) TRON network wallet using command line.
+* [TIP](https://github.com/tronprotocol/tips) TRON Improvement Proposal (TIP) describes standards for the TRON network.  
+* [TP](https://github.com/tronprotocol/tips/tree/master/tp) TRON Protocol (TP) describes standards already implemented in TRON network but not published as a TIP. 
+* [White Paper](https://tron.network/resources?lng=&name=1) White paper of TRON network. 
 
 # License
 [MIT](https://github.com/tronprotocol/java-tron/blob/master/LICENSE)
