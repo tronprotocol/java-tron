@@ -102,6 +102,7 @@ import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.common.zksnark.MarketUtils;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
@@ -117,6 +118,7 @@ import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
+import org.tron.core.capsule.MarketPriceListCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -169,6 +171,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.MarketOrderList;
+import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Proposal;
@@ -2295,24 +2298,37 @@ public class Wallet {
 
     MarketAccountOrderCapsule marketAccountOrderCapsule = dbManager.getMarketAccountStore()
         .get(accountAddress.toByteArray());
-    List<ByteString> orderIdList = marketAccountOrderCapsule.getOrdersList();
-
     MarketOrderStore marketOrderStore = dbManager.getMarketOrderStore();
+
     MarketOrderList.Builder marketOrderListBuilder = MarketOrderList.newBuilder();
+    List<ByteString> orderIdList = marketAccountOrderCapsule.getOrdersList();
 
     orderIdList
         .forEach(
-              orderId -> {
-                try {
-                  marketOrderListBuilder.addOrders(marketOrderStore.get(orderId.toByteArray()).getInstance());
-                } catch (ItemNotFoundException e) {
-                  logger.error("orderId = " + orderId.toString() + " not found");
-                  throw new IllegalStateException("order not found in store");
-                }
+            orderId -> {
+              try {
+                marketOrderListBuilder
+                    .addOrders(marketOrderStore.get(orderId.toByteArray()).getInstance());
+              } catch (ItemNotFoundException e) {
+                logger.error("orderId = " + orderId.toString() + " not found");
+                throw new IllegalStateException("order not found in store");
               }
+            }
         );
 
     return marketOrderListBuilder.build();
+  }
+
+  public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId) {
+    byte[] makerPair = MarketUtils.createPairKey(sellTokenId, buyTokenId);
+    MarketPriceListCapsule priceListCapsule = dbManager.getMarketPairToPriceStore()
+        .getUnchecked(makerPair);
+
+    if (priceListCapsule == null) {
+      return null;
+    }
+
+    return priceListCapsule.getInstance();
   }
 
   public Transaction deployContract(TransactionCapsule trxCap) {
