@@ -99,6 +99,7 @@ public class ProposalUtilTest {
           ProposalType.ACCOUNT_UPGRADE_COST.getCode(), invalidValue);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
