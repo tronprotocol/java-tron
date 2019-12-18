@@ -397,6 +397,11 @@ public class MarketSellAssetActuator extends AbstractActuator {
       makerOrderCapsule.setState(State.INACTIVE);
       if (makerBuyTokenQuantityReceive == 0) {
         //交易量过小，直接将剩余 sellToken 返回 maker
+        // 不会出现在这种情况情况。
+        // 对maker，sellQuantity<buyQuantity时，sellRemain=1时都能兑换至少一个buyToken
+        // 因此假设 sellQuantity=200，buyQuantity=100,出现sellRemain=1，需要满足以下条件：
+        // makerOrderCapsule.getSellTokenQuantityRemain() - takerBuyTokenQuantityRemain = 1
+        // 200 - 200/100 * X = 1 ===> X = 199/2，这与X是整数的条件不符。
         returnSellTokenRemain(makerOrderCapsule);
         return;
       } else {
