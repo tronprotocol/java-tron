@@ -29,6 +29,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 
@@ -502,4 +503,27 @@ public class UpdateAssetActuatorTest {
       dbManager.getAssetIssueStore().delete(ByteString.copyFromUtf8(NAME).toByteArray());
     }
   }
+
+  @Test
+  public void commonErrorCheck() {
+
+    UpdateAssetActuator actuator = new UpdateAssetActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error, expected type [UpdateAssetContract],real type["
+    );
+    actuatorTest.invalidContractType();
+    createAssertBeforSameTokenNameActive();
+    actuatorTest.setContract(getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
+  }
+
 }

@@ -1,7 +1,10 @@
 package org.tron.core.actuator;
 
+import static junit.framework.TestCase.fail;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
@@ -24,6 +27,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AccountContract.SetAccountIdContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 
 @Slf4j
 public class SetAccountIdActuatorTest {
@@ -38,7 +42,7 @@ public class SetAccountIdActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ADDRESS_1 = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -394,4 +398,29 @@ public class SetAccountIdActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+
+  @Test
+  public void commonErrorCheck() {
+
+    SetAccountIdActuator actuator = new SetAccountIdActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [SetAccountIdContract],real type[");
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or account id index store!");
+    actuatorTest.nullDBManger();
+
+  }
+
+
 }

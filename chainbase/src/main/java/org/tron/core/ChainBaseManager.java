@@ -8,12 +8,9 @@ import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.CommonStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
-import org.tron.core.db.PeersStore;
-import org.tron.core.db.RecentBlockStore;
-import org.tron.core.db.RevokingDatabase;
-import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -32,8 +29,6 @@ import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
-import org.tron.core.store.TransactionHistoryStore;
-import org.tron.core.store.TransactionRetStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
@@ -126,29 +121,11 @@ public class ChainBaseManager {
 
   @Autowired
   @Getter
-  private TransactionStore transactionStore;
-
-  @Autowired
-  @Getter
-  private TransactionRetStore transactionRetStore;
-
-  @Autowired
-  @Getter
-  private RecentBlockStore recentBlockStore;
-
-  @Getter
-  private RevokingDatabase revokingStore;
-
-  @Getter
-  private TransactionHistoryStore transactionHistoryStore;
-
-  // for network
-  @Getter
-  private PeersStore peersStore;
-
-  @Autowired
-  @Getter
   private KhaosDatabase khaosDb;
+
+  @Autowired
+  @Getter
+  private CommonStore commonStore;
 
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
@@ -184,10 +161,6 @@ public class ChainBaseManager {
     closeOneStore(merkleTreeStore);
     closeOneStore(delegationStore);
     closeOneStore(proofStore);
-    closeOneStore(transactionStore);
-    closeOneStore(peersStore);
-    closeOneStore(recentBlockStore);
-    closeOneStore(transactionHistoryStore);
-    closeOneStore(transactionRetStore);
+    closeOneStore(commonStore);
   }
 }

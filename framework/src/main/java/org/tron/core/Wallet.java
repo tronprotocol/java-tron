@@ -1413,7 +1413,7 @@ public class Wallet {
       return null;
     }
     BytesCapsule nullifier = null;
-    nullifier = dbManager.getNullfierStore().get(id.toByteArray());
+    nullifier = dbManager.getNullifierStore().get(id.toByteArray());
 
     if (nullifier != null) {
       return BytesMessage.newBuilder().setValue(ByteString.copyFrom(nullifier.getData())).build();
@@ -2139,7 +2139,7 @@ public class Wallet {
         note.getRcm().toByteArray());
     byte[] nf = baseNote.nullifier(ak, nk, voucherContainer.position());
 
-    if (dbManager.getNullfierStore().has(nf)) {
+    if (dbManager.getNullifierStore().has(nf)) {
       result = SpendResult.newBuilder()
           .setResult(true)
           .setMessage("Input note has been spent")

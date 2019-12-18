@@ -53,7 +53,7 @@ public class BlockIdCapsule extends Sha256Hash implements ProtoCapsule {
   }
 
   public String getString() {
-    return "Num: " + num + ",ID:" + super.toString();
+    return "Num: " + num + ", ID:" + super.toString();
   }
 
   @Override

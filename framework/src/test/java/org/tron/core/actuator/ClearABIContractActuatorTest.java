@@ -5,7 +5,9 @@ import static stest.tron.wallet.common.client.utils.PublicMethed.jsonStr2Abi;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+
 import java.io.File;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -28,6 +30,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
@@ -53,7 +56,7 @@ public class ClearABIContractActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
@@ -272,4 +275,30 @@ public class ClearABIContractActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
+
+  @Test
+  public void commonErrorCheck() {
+
+    ClearABIContractActuator actuator = new ClearABIContractActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [ClearABIContract],real type[");
+    actuatorTest.invalidContractType();
+
+
+    actuatorTest.setContract(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
+    actuatorTest.nullTransationResult();
+
+
+    actuatorTest.setNullDBManagerMsg("No account store or contract store!");
+    actuatorTest.nullDBManger();
+
+  }
+
 }

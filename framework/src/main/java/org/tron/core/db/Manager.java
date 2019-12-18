@@ -52,7 +52,6 @@ import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
-import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
@@ -72,6 +71,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -86,6 +86,7 @@ import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.ISession;
+import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
@@ -110,6 +111,7 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -150,21 +152,30 @@ public class Manager {
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
-
+  @Autowired
+  private TransactionStore transactionStore;
   @Autowired(required = false)
   private TransactionCache transactionCache;
-
+  @Autowired
+  @Getter
+  private TransactionRetStore transactionRetStore;
+  @Autowired
+  private RecentBlockStore recentBlockStore;
+  @Autowired
+  private TransactionHistoryStore transactionHistoryStore;
   @Autowired
   private KhaosDatabase khaosDb;
   private BlockCapsule genesisBlock;
-
+  @Getter
+  @Autowired
+  private RevokingDatabase revokingStore;
   @Getter
   private SessionOptional session = SessionOptional.instance();
-
   @Getter
   @Setter
   private boolean isSyncMode;
 
+  // map<Long, IncrementalMerkleTree>
   @Getter
   @Setter
   private String netType;
@@ -179,7 +190,7 @@ public class Manager {
   @Setter
   private TreeBlockIndexStore merkleTreeIndexStore;
   private ExecutorService validateSignService;
-  private boolean isRunRepushThread = true;
+  private boolean isRunRePushThread = true;
   private boolean isRunTriggerCapsuleProcessThread = true;
   private long latestSolidifiedBlockNumber;
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
@@ -206,32 +217,32 @@ public class Manager {
   @Getter
   private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
   // transactions popped
-  private List<TransactionCapsule> popedTransactions =
+  private List<TransactionCapsule> poppedTransactions =
       Collections.synchronizedList(Lists.newArrayList());
   // the capacity is equal to Integer.MAX_VALUE default
-  private BlockingQueue<TransactionCapsule> repushTransactions;
+  private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
   /**
-   * Cycle thread to repush Transactions
+   * Cycle thread to rePush Transactions
    */
-  private Runnable repushLoop =
+  private Runnable rePushLoop =
       () -> {
-        while (isRunRepushThread) {
+        while (isRunRePushThread) {
           TransactionCapsule tx = null;
           try {
-            tx = getRepushTransactions().peek();
+            tx = getRePushTransactions().peek();
             if (tx != null) {
               this.rePush(tx);
             } else {
               TimeUnit.MILLISECONDS.sleep(50L);
             }
           } catch (Exception ex) {
-            logger.error("unknown exception happened in repush loop", ex);
+            logger.error("unknown exception happened in rePush loop", ex);
           } catch (Throwable throwable) {
-            logger.error("unknown throwable happened in repush loop", throwable);
+            logger.error("unknown throwable happened in rePush loop", throwable);
           } finally {
             if (tx != null) {
-              getRepushTransactions().remove(tx);
+              getRePushTransactions().remove(tx);
             }
           }
         }
@@ -240,9 +251,9 @@ public class Manager {
       () -> {
         while (isRunTriggerCapsuleProcessThread) {
           try {
-            TriggerCapsule tiggerCapsule = triggerCapsuleQueue.poll(1, TimeUnit.SECONDS);
-            if (tiggerCapsule != null) {
-              tiggerCapsule.processTrigger();
+            TriggerCapsule triggerCapsule = triggerCapsuleQueue.poll(1, TimeUnit.SECONDS);
+            if (triggerCapsule != null) {
+              triggerCapsule.processTrigger();
             }
           } catch (InterruptedException ex) {
             logger.info(ex.getMessage());
@@ -319,14 +330,6 @@ public class Manager {
     return chainBaseManager.getBlockIndexStore();
   }
 
-  public RevokingDatabase getRevokingStore() {
-    return chainBaseManager.getRevokingStore();
-  }
-
-  public TransactionRetStore getTransactionRetStore() {
-    return chainBaseManager.getTransactionRetStore();
-  }
-
   public ExchangeStore getExchangeStoreFinal() {
     if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       return getExchangeStore();
@@ -335,16 +338,28 @@ public class Manager {
     }
   }
 
+  public void putExchangeCapsule(ExchangeCapsule exchangeCapsule) {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+      ExchangeCapsule exchangeCapsuleV2 = new ExchangeCapsule(exchangeCapsule.getData());
+      exchangeCapsuleV2.resetTokenWithID(this.getAssetIssueStore(),
+          chainBaseManager.getDynamicPropertiesStore());
+      getExchangeV2Store().put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+    } else {
+      getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+    }
+  }
+
   public List<TransactionCapsule> getPendingTransactions() {
     return this.pendingTransactions;
   }
 
   public List<TransactionCapsule> getPoppedTransactions() {
-    return this.popedTransactions;
+    return this.poppedTransactions;
   }
 
-  public BlockingQueue<TransactionCapsule> getRepushTransactions() {
-    return repushTransactions;
+  public BlockingQueue<TransactionCapsule> getRePushTransactions() {
+    return rePushTransactions;
   }
 
   public long getHeadSlot() {
@@ -389,19 +404,12 @@ public class Manager {
     return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
 
-  public void clearAndWriteNeighbours(Set<Node> nodes) {
-    chainBaseManager.getPeersStore().put("neighbours".getBytes(), nodes);
+
+  public void stopRePushThread() {
+    isRunRePushThread = false;
   }
 
-  public Set<Node> readNeighbours() {
-    return chainBaseManager.getPeersStore().get("neighbours".getBytes());
-  }
-
-  public void stopRepushThread() {
-    isRunRepushThread = false;
-  }
-
-  public void stopRepushTriggerThread() {
+  public void stopRePushTriggerThread() {
     isRunTriggerCapsuleProcessThread = false;
   }
 
@@ -413,14 +421,14 @@ public class Manager {
             chainBaseManager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
     accountStateCallBack.setManager(this);
     trieService.setManager(this);
-    chainBaseManager.getRevokingStore().disable();
-    chainBaseManager.getRevokingStore().check();
+    revokingStore.disable();
+    revokingStore.check();
     this.setProposalController(ProposalController.createInstance(this));
     this.setMerkleContainer(
         merkleContainer.createInstance(chainBaseManager.getMerkleTreeStore(),
             this.merkleTreeIndexStore));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
-    this.repushTransactions = new LinkedBlockingQueue<>();
+    this.rePushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setDelegationService(delegationService);
@@ -455,11 +463,11 @@ public class Manager {
     chainBaseManager.getDynamicPropertiesStore().updateDynamicStoreByConfig();
 
     initCacheTxs();
-    chainBaseManager.getRevokingStore().enable();
+    revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
-    Thread repushThread = new Thread(repushLoop);
-    repushThread.start();
+    Thread rePushThread = new Thread(rePushLoop);
+    rePushThread.start();
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
@@ -504,7 +512,7 @@ public class Manager {
         chainBaseManager.getBlockIndexStore().put(this.genesisBlock.getBlockId());
 
         logger.info(SAVE_BLOCK + this.genesisBlock);
-        // init DynamicPropertiesStore
+        // init Dynamic Properties Store
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderHash(
             this.genesisBlock.getBlockId().getByteString());
@@ -579,7 +587,7 @@ public class Manager {
     }
     long start = System.currentTimeMillis();
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    long recentBlockCount = chainBaseManager.getRecentBlockStore().size();
+    long recentBlockCount = recentBlockStore.size();
     ListeningExecutorService service = MoreExecutors
         .listeningDecorator(Executors.newFixedThreadPool(50));
     List<ListenableFuture<?>> futures = new ArrayList<>();
@@ -614,7 +622,7 @@ public class Manager {
       logger.info(e.getMessage());
     }
 
-    logger.info("end to init txs cache. trxids:{}, block count:{}, empty block count:{}, cost:{}",
+    logger.info("end to init txs cache. trx ids:{}, block count:{}, empty block count:{}, cost:{}",
         transactionCache.size(),
         blockCount.get(),
         emptyBlockCount.get(),
@@ -624,6 +632,10 @@ public class Manager {
 
   public AccountStore getAccountStore() {
     return chainBaseManager.getAccountStore();
+  }
+
+  public AccountIndexStore getAccountIndexStore() {
+    return chainBaseManager.getAccountIndexStore();
   }
 
   public void adjustBalance(byte[] accountAddress, long amount)
@@ -687,7 +699,7 @@ public class Manager {
     byte[] refBlockNumBytes = transactionCapsule.getInstance()
         .getRawData().getRefBlockBytes().toByteArray();
     try {
-      byte[] blockHash = chainBaseManager.getRecentBlockStore().get(refBlockNumBytes).getData();
+      byte[] blockHash = this.recentBlockStore.get(refBlockNumBytes).getData();
       if (!Arrays.equals(blockHash, refBlockHash)) {
         String str = String.format(
             "Tapos failed, different block hash, %s, %s , recent block %s, "
@@ -736,8 +748,7 @@ public class Manager {
       return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
     }
 
-    return chainBaseManager
-        .getTransactionStore().has(transactionCapsule.getTransactionId().getBytes());
+    return transactionStore.has(transactionCapsule.getTransactionId().getBytes());
   }
 
   /**
@@ -770,10 +781,10 @@ public class Manager {
           return false;
         }
         if (!session.valid()) {
-          session.setValue(chainBaseManager.getRevokingStore().buildSession());
+          session.setValue(revokingStore.buildSession());
         }
 
-        try (ISession tmpSession = chainBaseManager.getRevokingStore().buildSession()) {
+        try (ISession tmpSession = revokingStore.buildSession()) {
           processTransaction(trx, null);
           pendingTransactions.add(trx);
           tmpSession.merge();
@@ -830,9 +841,9 @@ public class Manager {
           getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
-      chainBaseManager.getRevokingStore().fastPop();
+      revokingStore.fastPop();
       logger.info("end to erase block:" + oldHeadBlock);
-      popedTransactions.addAll(oldHeadBlock.getTransactions());
+      poppedTransactions.addAll(oldHeadBlock.getTransactions());
 
     } catch (ItemNotFoundException | BadItemException e) {
       logger.warn(e.getMessage(), e);
@@ -864,15 +875,14 @@ public class Manager {
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
-      chainBaseManager
-          .getTransactionRetStore().put(ByteArray.fromLong(block.getNum()), block.getResult());
+      this.transactionRetStore.put(ByteArray.fromLong(block.getNum()), block.getResult());
     }
 
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
-      chainBaseManager.getRevokingStore().setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
+      revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
     } else {
-      chainBaseManager.getRevokingStore().setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+      revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
     }
   }
 
@@ -889,7 +899,7 @@ public class Manager {
               newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (NonCommonBlockException e) {
       logger.info(
-          "there is not the most recent common ancestor, need to remove all "
+          "this is not the most recent common ancestor, need to remove all "
               + "blocks in the fork chain.");
       BlockCapsule tmp = newHead;
       while (tmp != null) {
@@ -915,7 +925,7 @@ public class Manager {
       for (KhaosBlock item : first) {
         Exception exception = null;
         // todo  process the exception carefully later
-        try (ISession tmpSession = chainBaseManager.getRevokingStore().buildSession()) {
+        try (ISession tmpSession = revokingStore.buildSession()) {
           applyBlock(item.getBlk());
           tmpSession.commit();
         } catch (AccountResourceInsufficientException
@@ -953,7 +963,7 @@ public class Manager {
             Collections.reverse(second);
             for (KhaosBlock khaosBlock : second) {
               // todo  process the exception carefully later
-              try (ISession tmpSession = chainBaseManager.getRevokingStore().buildSession()) {
+              try (ISession tmpSession = revokingStore.buildSession()) {
                 applyBlock(khaosBlock.getBlk());
                 tmpSession.commit();
               } catch (AccountResourceInsufficientException
@@ -1030,7 +1040,7 @@ public class Manager {
             .getParentHash()
             .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
           logger.warn(
-              "switch fork! new head num = {}, blockid = {}",
+              "switch fork! new head num = {}, block id = {}",
               newBlock.getNum(),
               newBlock.getBlockId());
 
@@ -1075,7 +1085,7 @@ public class Manager {
 
           return;
         }
-        try (ISession tmpSession = chainBaseManager.getRevokingStore().buildSession()) {
+        try (ISession tmpSession = revokingStore.buildSession()) {
 
           applyBlock(newBlock);
           tmpSession.commit();
@@ -1093,7 +1103,7 @@ public class Manager {
     synchronized (pushTransactionQueue) {
       if (CollectionUtils.isNotEmpty(ownerAddressSet)) {
         Set<String> result = new HashSet<>();
-        for (TransactionCapsule transactionCapsule : repushTransactions) {
+        for (TransactionCapsule transactionCapsule : rePushTransactions) {
           filterOwnerAddress(transactionCapsule, result);
         }
         for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
@@ -1118,10 +1128,10 @@ public class Manager {
         .saveLatestBlockHeaderNumber(block.getNum());
     chainBaseManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    chainBaseManager.getRevokingStore().setMaxSize((int) (
+    revokingStore.setMaxSize((int) (
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-        - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
-        + 1));
+            - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
+            + 1));
     khaosDb.setMaxSize((int)
         (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
             - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
@@ -1261,7 +1271,7 @@ public class Manager {
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
-    chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
+    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1273,7 +1283,7 @@ public class Manager {
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
-    if (isMultSignTransaction(trxCap.getInstance())) {
+    if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
 
@@ -1303,7 +1313,7 @@ public class Manager {
         blockTime, miner.getWitnessAddress());
     blockCapsule.generatedByMyself = true;
     session.reset();
-    session.setValue(chainBaseManager.getRevokingStore().buildSession());
+    session.setValue(revokingStore.buildSession());
 
     accountStateCallBack.preExecute(blockCapsule);
 
@@ -1317,23 +1327,23 @@ public class Manager {
       }
     }
 
-    TransactionRetCapsule transationRetCapsule = new TransactionRetCapsule(blockCapsule);
+    TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
-    AtomicInteger shieldeTransCounts = new AtomicInteger(0);
+    AtomicInteger shieldedTransCounts = new AtomicInteger(0);
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
-    while (iterator.hasNext() || repushTransactions.size() > 0) {
+    while (iterator.hasNext() || rePushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
       if (iterator.hasNext()) {
         fromPending = true;
         trx = iterator.next();
       } else {
-        trx = repushTransactions.poll();
+        trx = rePushTransactions.poll();
       }
 
       if (System.currentTimeMillis() > timeout) {
-        logger.warn("Processing transaction time exceeds the producing time。");
+        logger.warn("Processing transaction time exceeds the producing time.");
         break;
       }
 
@@ -1345,17 +1355,17 @@ public class Manager {
       }
       //shielded transaction
       if (isShieldedTransaction(trx.getInstance())
-          && shieldeTransCounts.incrementAndGet() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
+          && shieldedTransCounts.incrementAndGet() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
         continue;
       }
-      //mult sign transaction
+      //multi sign transaction
       Contract contract = trx.getInstance().getRawData().getContract(0);
       byte[] owner = TransactionCapsule.getOwner(contract);
       String ownerAddress = ByteArray.toHexString(owner);
       if (accountSet.contains(ownerAddress)) {
         continue;
       } else {
-        if (isMultSignTransaction(trx.getInstance())) {
+        if (isMultiSignTransaction(trx.getInstance())) {
           accountSet.add(ownerAddress);
         }
       }
@@ -1363,14 +1373,14 @@ public class Manager {
         trx.setVerified(false);
       }
       // apply transaction
-      try (ISession tmpSeesion = chainBaseManager.getRevokingStore().buildSession()) {
+      try (ISession tmpSession = revokingStore.buildSession()) {
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
-        tmpSeesion.merge();
+        tmpSession.merge();
         blockCapsule.addTransaction(trx);
         if (Objects.nonNull(result)) {
-          transationRetCapsule.addTransactionInfo(result);
+          transactionRetCapsule.addTransactionInfo(result);
         }
         if (fromPending) {
           iterator.remove();
@@ -1384,8 +1394,8 @@ public class Manager {
 
     session.reset();
 
-    logger.info("Generate block success, pendingCount: {}, repushCount: {}, postponedCount: {}",
-        pendingTransactions.size(), repushTransactions.size(), postponedTrxCount);
+    logger.info("Generate block success, pendingCount: {}, rePushCount: {}, postponedCount: {}",
+        pendingTransactions.size(), rePushTransactions.size(), postponedTrxCount);
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
@@ -1403,7 +1413,7 @@ public class Manager {
     }
   }
 
-  private boolean isMultSignTransaction(Transaction transaction) {
+  private boolean isMultiSignTransaction(Transaction transaction) {
     Contract contract = transaction.getRawData().getContract(0);
     switch (contract.getType()) {
       case AccountPermissionUpdateContract: {
@@ -1426,11 +1436,11 @@ public class Manager {
   }
 
   public TransactionStore getTransactionStore() {
-    return chainBaseManager.getTransactionStore();
+    return this.transactionStore;
   }
 
   public TransactionHistoryStore getTransactionHistoryStore() {
-    return chainBaseManager.getTransactionHistoryStore();
+    return this.transactionHistoryStore;
   }
 
   public BlockStore getBlockStore() {
@@ -1464,7 +1474,7 @@ public class Manager {
       }
     }
 
-    TransactionRetCapsule transationRetCapsule =
+    TransactionRetCapsule transactionRetCapsule =
         new TransactionRetCapsule(block);
     try {
       merkleContainer.resetCurrentMerkleTree();
@@ -1478,7 +1488,7 @@ public class Manager {
         TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
         if (Objects.nonNull(result)) {
-          transationRetCapsule.addTransactionInfo(result);
+          transactionRetCapsule.addTransactionInfo(result);
         }
       }
       accountStateCallBack.executePushFinish();
@@ -1486,7 +1496,7 @@ public class Manager {
       accountStateCallBack.exceptionFinish();
     }
     merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
-    block.setResult(transationRetCapsule);
+    block.setResult(transactionRetCapsule);
     if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
       EnergyProcessor energyProcessor = new EnergyProcessor(
           chainBaseManager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
@@ -1514,7 +1524,7 @@ public class Manager {
   private void payReward(BlockCapsule block) {
     WitnessCapsule witnessCapsule =
         chainBaseManager.getWitnessStore().getUnchecked(block.getInstance().getBlockHeader()
-        .getRawData().getWitnessAddress().toByteArray());
+            .getRawData().getWitnessAddress().toByteArray());
     if (getDynamicPropertiesStore().allowChangeDelegation()) {
       delegationService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
           getDynamicPropertiesStore().getWitnessPayPerBlock());
@@ -1535,7 +1545,7 @@ public class Manager {
   }
 
   public void updateRecentBlock(BlockCapsule block) {
-    chainBaseManager.getRecentBlockStore().put(ByteArray.subArray(
+    this.recentBlockStore.put(ByteArray.subArray(
         ByteArray.fromLong(block.getNum()), 6, 8),
         new BytesCapsule(ByteArray.subArray(block.getBlockId().getBytes(), 8, 16)));
   }
@@ -1550,11 +1560,11 @@ public class Manager {
     logger.info(
         "syncBeginNumber:"
             + (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-            - chainBaseManager.getRevokingStore().size()));
+            - revokingStore.size()));
     logger.info("solidBlockNumber:"
         + chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     return chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-        - chainBaseManager.getRevokingStore().size();
+        - revokingStore.size();
   }
 
   public BlockId getSolidBlockId() {
@@ -1587,25 +1597,40 @@ public class Manager {
     return chainBaseManager.getAccountIdIndexStore();
   }
 
-  public NullifierStore getNullfierStore() {
+  public NullifierStore getNullifierStore() {
     return chainBaseManager.getNullifierStore();
   }
 
   public void closeAllStore() {
     logger.info("******** begin to close db ********");
+    closeOneStore(transactionStore);
+    closeOneStore(recentBlockStore);
+    closeOneStore(transactionHistoryStore);
+    closeOneStore(transactionRetStore);
     chainBaseManager.closeAllStore();
     logger.info("******** end to close db ********");
   }
 
+  public void closeOneStore(ITronChainBase database) {
+    logger.info("******** begin to close " + database.getName() + " ********");
+    try {
+      database.close();
+    } catch (Exception e) {
+      logger.info("failed to close  " + database.getName() + ". " + e);
+    } finally {
+      logger.info("******** end to close " + database.getName() + " ********");
+    }
+  }
+
   public boolean isTooManyPending() {
-    return getPendingTransactions().size() + getRepushTransactions().size()
+    return getPendingTransactions().size() + getRePushTransactions().size()
         > MAX_TRANSACTION_PENDING;
   }
 
   public void preValidateTransactionSign(BlockCapsule block)
       throws InterruptedException, ValidateSignatureException {
     logger.info("PreValidate Transaction Sign, size:" + block.getTransactions().size()
-        + ",block num:" + block.getNum());
+        + ", block num:" + block.getNum());
     int transSize = block.getTransactions().size();
     if (transSize <= 0) {
       return;
@@ -1655,7 +1680,7 @@ public class Manager {
   }
 
   public void setMode(boolean mode) {
-    chainBaseManager.getRevokingStore().setMode(mode);
+    revokingStore.setMode(mode);
   }
 
   private void startEventSubscribing() {
@@ -1709,7 +1734,7 @@ public class Manager {
     if (eventPluginLoaded
         && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
         || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
-      logger.info("switchfork occured, post reorgContractTrigger");
+      logger.info("switchfork occurred, post reorgContractTrigger");
       try {
         BlockCapsule oldHeadBlock = getBlockById(
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
@@ -1734,7 +1759,7 @@ public class Manager {
         contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
         if (!triggerCapsuleQueue.offer(contractEventTriggerCapsule)) {
           logger
-              .info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
+              .info("too many trigger, lost contract log trigger: {}", trigger.getTransactionId());
         }
       }
     }
