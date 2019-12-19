@@ -3,7 +3,6 @@ package org.tron.core.db;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -74,7 +73,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
-import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -113,6 +111,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.ibc.communicate.PbftBlockListener;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
@@ -139,7 +138,6 @@ import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.CrossMessage;
-import org.tron.protos.Protocol.SrList;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -275,6 +273,9 @@ public class Manager {
   @Autowired
   @Getter
   private PbftCommitMsgStore pbftCommitMsgStore;
+
+  @Autowired
+  private PbftBlockListener pbftBlockListener;
 
   public WitnessStore getWitnessStore() {
     return chainBaseManager.getWitnessStore();
@@ -1522,6 +1523,7 @@ public class Manager {
         if (Objects.nonNull(result)) {
           transationRetCapsule.addTransactionInfo(result);
         }
+        pbftBlockListener.addCallBackTx(block.getNum(), transactionCapsule.getTransactionId());
       }
       accountStateCallBack.executePushFinish();
     } finally {
