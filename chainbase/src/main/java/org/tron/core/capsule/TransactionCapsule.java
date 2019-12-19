@@ -15,7 +15,7 @@
 
 package org.tron.core.capsule;
 
-import static org.tron.common.utils.WalletUtil.checkPermissionOprations;
+import static org.tron.common.utils.WalletUtil.checkPermissionOperations;
 import static org.tron.common.utils.WalletUtil.encode58Check;
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 
@@ -442,7 +442,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!checkPermissionOprations(permission, contract)) {
+      if (!checkPermissionOperations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
@@ -539,7 +539,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!checkPermissionOprations(permission, contract)) {
+      if (!checkPermissionOperations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
