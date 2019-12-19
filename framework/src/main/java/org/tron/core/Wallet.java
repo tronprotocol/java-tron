@@ -2289,16 +2289,21 @@ public class Wallet {
     return nodeListBuilder.build();
   }
 
-  public MarketOrderList getMarketOrderByAccount(ByteString accountAddress)
-      throws ItemNotFoundException {
+  public MarketOrderList getMarketOrderByAccount(ByteString accountAddress) {
 
     if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
 
-    MarketAccountOrderCapsule marketAccountOrderCapsule = dbManager.getMarketAccountStore()
-        .get(accountAddress.toByteArray());
-    MarketOrderStore marketOrderStore = dbManager.getMarketOrderStore();
+    MarketAccountOrderCapsule marketAccountOrderCapsule;
+    try {
+      marketAccountOrderCapsule = dbManager.getChainBaseManager()
+          .getMarketAccountStore().get(accountAddress.toByteArray());
+    } catch (ItemNotFoundException e) {
+      return null;
+    }
+
+    MarketOrderStore marketOrderStore = dbManager.getChainBaseManager().getMarketOrderStore();
 
     MarketOrderList.Builder marketOrderListBuilder = MarketOrderList.newBuilder();
     List<ByteString> orderIdList = marketAccountOrderCapsule.getOrdersList();
@@ -2321,8 +2326,8 @@ public class Wallet {
 
   public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId) {
     byte[] makerPair = MarketUtils.createPairKey(sellTokenId, buyTokenId);
-    MarketPriceListCapsule priceListCapsule = dbManager.getMarketPairToPriceStore()
-        .getUnchecked(makerPair);
+    MarketPriceListCapsule priceListCapsule = dbManager.getChainBaseManager()
+        .getMarketPairToPriceStore().getUnchecked(makerPair);
 
     if (priceListCapsule == null) {
       return null;

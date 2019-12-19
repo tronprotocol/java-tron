@@ -223,6 +223,10 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private CreateCommonTransactionServlet createCommonTransactionServlet;
   @Autowired
+  private MarketSellAssetServlet marketSellAssetServlet;
+  @Autowired
+  private MarketCancelOrderServlet marketCancelOrderServlet;
+  @Autowired
   private GetMarketOrderByAccountServlet getMarketOrderByAccountServlet;
   @Autowired
   private GetMarketPriceByPairServlet getMarketPriceByPairServlet;
@@ -403,6 +407,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/createCommonTransaction");
+      context.addServlet(new ServletHolder(marketSellAssetServlet), "/marketsellasset");
+      context.addServlet(new ServletHolder(marketCancelOrderServlet), "/marketcancelorder");
       context.addServlet(new ServletHolder(getMarketOrderByAccountServlet),
           "/getmarketorderbyaccount");
       context.addServlet(new ServletHolder(getMarketPriceByPairServlet),
