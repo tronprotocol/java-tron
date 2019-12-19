@@ -62,7 +62,7 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
 # Quick Start
-
+This guide walks the user through the TRON Quickstart (v2.0.0) image setup.    
 [TRON Quick Start](./quickstart.md)
 
 # Deploy
@@ -70,13 +70,16 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 * [Run](./run.md) Run java-tron  
 
 # Deployment
+This guide walks the user through how to deploy a Fullnode, Solidity node and SR node.
 [https://tronprotocol.github.io/documentation-en/developers/deployment/](https://tronprotocol.github.io/documentation-en/developers/deployment/)  
 
 # Channel
+This is java-tron's official channel, if you have any question, please join this channel.   
 [Core Devs Gitter](https://gitter.im/tronprotocol/allcoredev)
 
 # Contribution
-[https://tronprotocol.github.io/documentation-en/developers/contribution/](https://tronprotocol.github.io/documentation-en/developers/contribution/)
+If you'd like to contribute to java-tron, please follow below.  
+[Contribution](./CONTRIBUTING.md)
 
 # Resources
 * [Medium](https://medium.com/@coredevs)  java-tron's official technical articles are published there.    
