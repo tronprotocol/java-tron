@@ -2296,9 +2296,9 @@ public class Wallet {
       return null;
     }
 
-    MarketAccountOrderCapsule marketAccountOrderCapsule = dbManager.getMarketAccountStore()
-        .get(accountAddress.toByteArray());
-    MarketOrderStore marketOrderStore = dbManager.getMarketOrderStore();
+    MarketAccountOrderCapsule marketAccountOrderCapsule = dbManager.getChainBaseManager()
+        .getMarketAccountStore().get(accountAddress.toByteArray());
+    MarketOrderStore marketOrderStore = dbManager.getChainBaseManager().getMarketOrderStore();
 
     MarketOrderList.Builder marketOrderListBuilder = MarketOrderList.newBuilder();
     List<ByteString> orderIdList = marketAccountOrderCapsule.getOrdersList();
@@ -2321,8 +2321,8 @@ public class Wallet {
 
   public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId) {
     byte[] makerPair = MarketUtils.createPairKey(sellTokenId, buyTokenId);
-    MarketPriceListCapsule priceListCapsule = dbManager.getMarketPairToPriceStore()
-        .getUnchecked(makerPair);
+    MarketPriceListCapsule priceListCapsule = dbManager.getChainBaseManager()
+        .getMarketPairToPriceStore().getUnchecked(makerPair);
 
     if (priceListCapsule == null) {
       return null;

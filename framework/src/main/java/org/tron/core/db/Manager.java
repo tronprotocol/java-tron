@@ -219,15 +219,6 @@ public class Manager {
   private IncrementalMerkleTreeStore merkleTreeStore;
   @Setter
   private TronNetService tronNetService;
-  @Autowired
-  @Getter
-  private MarketAccountStore marketAccountStore;
-  @Autowired
-  @Getter
-  private MarketOrderStore marketOrderStore;
-  @Autowired
-  @Getter
-  private MarketPairToPriceStore marketPairToPriceStore;
   // for network
   @Autowired
   private PeersStore peersStore;
@@ -1699,9 +1690,6 @@ public class Manager {
     closeOneStore(nullifierStore);
     closeOneStore(merkleTreeStore);
     closeOneStore(transactionRetStore);
-    closeOneStore(marketAccountStore);
-    closeOneStore(marketOrderStore);
-    closeOneStore(marketPairToPriceStore);
     logger.info("******** end to close db ********");
   }
 
