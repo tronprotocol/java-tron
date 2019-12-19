@@ -1,7 +1,6 @@
 package org.tron.common.storage;
 
 public class WriteOptionsWrapper {
-
   public org.rocksdb.WriteOptions rocks = null;
   public org.iq80.leveldb.WriteOptions level = null;
 
@@ -13,7 +12,6 @@ public class WriteOptionsWrapper {
     WriteOptionsWrapper wapper = new WriteOptionsWrapper();
     wapper.level = new org.iq80.leveldb.WriteOptions();
     wapper.rocks = new org.rocksdb.WriteOptions();
-
     return wapper;
   }
 
