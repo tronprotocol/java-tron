@@ -119,10 +119,10 @@ enum AccountType {
   `latest_consume_free_time`: the latest consume free bandwidth time of this account.
 
  ```java
-message Account {
+  message Account {
     message Frozen {
     int64 frozen_balance = 1; 
-      int64 expire_time = 2;
+    int64 expire_time = 2;
   }
     bytes account_name = 1;
     AccountType type = 2;
