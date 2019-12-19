@@ -2,6 +2,7 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -94,17 +95,10 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
   }
 
   public void removeFirst() {
-    List<MarketPrice> pricesList = this.priceList.getPricesList();
-    pricesList.remove(0);
-
     this.priceList = this.priceList.toBuilder()
-        .clearPrices()
-        .addAllPrices(pricesList)
+        .removePrices(0)
         .build();
   }
-
-
-
 
   @Override
   public byte[] getData() {
