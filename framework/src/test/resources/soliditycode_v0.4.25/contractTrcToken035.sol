@@ -14,10 +14,10 @@ pragma solidity ^0.4.24;
          toAddress.transferToken(amount,id);
          assert(1==2);
      }
-
  }
+ 
  contract B{
     uint256 public flag = 0;
     constructor() public payable {}
     function() public payable {}
-}
+ }
