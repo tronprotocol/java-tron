@@ -18,6 +18,7 @@ package org.tron.core.actuator;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -101,6 +102,8 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
       //fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
+      accountStore.put(contract.getOwnerAddress().toByteArray(), accountCapsule);
+
       // Add to blackHole address
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
 
@@ -115,7 +118,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
           orderCapsule.getSellTokenId(), orderCapsule.getBuyTokenId(),
           orderCapsule.getSellTokenQuantity(), orderCapsule.getBuyTokenQuantity());
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
-      List<ByteString> ordersList = orderIdListCapsule.getOrdersList();
+      List<ByteString> ordersList = new ArrayList<>(orderIdListCapsule.getOrdersList());
       Iterator<ByteString> iterator = ordersList.iterator();
       boolean found = false;
       while (iterator.hasNext()) {
@@ -139,9 +142,9 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
         // 3. modify priceList
         byte[] makerPair = MarketUtils
-            .createPairKey(orderCapsule.getBuyTokenId(), orderCapsule.getSellTokenId());
+            .createPairKey(orderCapsule.getSellTokenId(), orderCapsule.getBuyTokenId());
         MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(makerPair);
-        List<MarketPrice> pricesList = priceListCapsule.getPricesList();
+        List<MarketPrice> pricesList = new ArrayList<>(priceListCapsule.getPricesList());
         Iterator<MarketPrice> iterator1 = pricesList.iterator();
         found = false;
         while (iterator1.hasNext()) {
@@ -154,7 +157,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
           }
         }
         if (!found) {
-          throw new ItemNotFoundException("orderIdList not exists");//should not happen
+          throw new ItemNotFoundException("pricesList not exists");//should not happen
         }
 
         if (pricesList.size() != 0) {
@@ -214,7 +217,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     ByteString orderId = contract.getOrderId();
 
     if (!DecodeUtil.addressValid(ownerAddress)) {
-      throw new ContractValidateException("Invalid ownerAddress");
+      throw new ContractValidateException("Invalid address");
     }
 
     //Whether the account  exist
@@ -229,7 +232,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       marketOrderCapsule = orderStore.get(orderId.toByteArray());
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException(
-          "orderId[" + ByteArray.toHexString(orderId.toByteArray()) + "] not exists");
+          "orderId not exists");
     }
 
     if (!marketOrderCapsule.isActive()) {
@@ -250,19 +253,21 @@ public class MarketCancelOrderActuator extends AbstractActuator {
   }
 
   public void returnSellTokenRemain(MarketOrderCapsule orderCapsule) {
-    AccountCapsule makerAccountCapsule = accountStore
+    AccountCapsule accountCapsule = accountStore
         .get(orderCapsule.getOwnerAddress().toByteArray());
 
     byte[] sellTokenId = orderCapsule.getSellTokenId();
     long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
     if (Arrays.equals(sellTokenId, "_".getBytes())) {
-      makerAccountCapsule.setBalance(Math.addExact(
-          makerAccountCapsule.getBalance(), sellTokenQuantityRemain));
+      accountCapsule.setBalance(Math.addExact(
+          accountCapsule.getBalance(), sellTokenQuantityRemain));
     } else {
-      makerAccountCapsule
+      accountCapsule
           .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
-
     }
+    accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
+    orderCapsule.setSellTokenQuantityRemain(0L);
+
   }
 
   @Override

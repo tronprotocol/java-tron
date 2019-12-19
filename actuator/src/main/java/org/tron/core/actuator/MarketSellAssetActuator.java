@@ -113,6 +113,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       // 1. Transfer of balance
       transferBalanceOrToken(accountCapsule, contract);
+      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
 
       //2. create and save order
       MarketOrderCapsule orderCapsule = createAndSaveOrder(accountCapsule, contract);
@@ -128,7 +129,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException | InvalidProtocolBufferException | BalanceInsufficientException e) {
-      logger.error(e.getMessage(), e);
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -457,7 +457,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       accountCapsule
           .reduceAssetAmountV2(sellTokenID, sellTokenQuantity, dynamicStore, assetIssueStore);
     }
-    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+
   }
 
 
