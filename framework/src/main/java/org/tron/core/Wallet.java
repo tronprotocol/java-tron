@@ -2289,15 +2289,20 @@ public class Wallet {
     return nodeListBuilder.build();
   }
 
-  public MarketOrderList getMarketOrderByAccount(ByteString accountAddress)
-      throws ItemNotFoundException {
+  public MarketOrderList getMarketOrderByAccount(ByteString accountAddress) {
 
     if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
 
-    MarketAccountOrderCapsule marketAccountOrderCapsule = dbManager.getChainBaseManager()
-        .getMarketAccountStore().get(accountAddress.toByteArray());
+    MarketAccountOrderCapsule marketAccountOrderCapsule;
+    try {
+      marketAccountOrderCapsule = dbManager.getChainBaseManager()
+          .getMarketAccountStore().get(accountAddress.toByteArray());
+    } catch (ItemNotFoundException e) {
+      return null;
+    }
+
     MarketOrderStore marketOrderStore = dbManager.getChainBaseManager().getMarketOrderStore();
 
     MarketOrderList.Builder marketOrderListBuilder = MarketOrderList.newBuilder();
