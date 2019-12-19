@@ -511,13 +511,13 @@ Transaction and transaction-related messages.
            enum code {
            SUCESS = 0;
              FAILED = 1;
-         }
+           }
            enum contractResult {
-           DEFAULT = 0;
+             DEFAULT = 0;
              SUCCESS = 1;
-           REVERT = 2;
+             REVERT = 2;
              BAD_JUMP_DESTINATION = 3;
-           OUT_OF_MEMORY = 4;
+             OUT_OF_MEMORY = 4;
              PRECOMPILED_CONTRACT = 5;
              STACK_TOO_SMALL = 6;
              STACK_TOO_LARGE = 7;
@@ -563,17 +563,17 @@ Transaction and transaction-related messages.
    `fee_limit`: the cost limit for energy and fee when trigger and create contract.
    
    ```java
-  message raw {
+    message raw {
       bytes ref_block_bytes = 1;
-    int64 ref_block_num = 3;
+      int64 ref_block_num = 3;
       bytes ref_block_hash = 4;
-    int64 expiration = 8;
+      int64 expiration = 8;
       repeated authority auths = 9;
-    bytes data = 10;
+      bytes data = 10;
       repeated Contract contract = 11;
-    bytes scripts = 12;
+      bytes scripts = 12;
       int64 timestamp = 14;
-    int64 fee_limit = 18;
+      int64 fee_limit = 18;
     }
    ```
     
