@@ -8,11 +8,11 @@
 
      There are three different `Account types`: `Normal`, `AssetIssue`, `Contract`.
 
-      enum AccountType {   
-         Normal = 0;   
-         AssetIssue = 1;   
+      enum AccountType {
+         Normal = 0;
+         AssetIssue = 1;
          Contract = 2;
-        }
+       }
 
      An `Account` contains 7 parameters:  
      `account_name`: the name for this account – e.g. “_BillsAccount_”.  
