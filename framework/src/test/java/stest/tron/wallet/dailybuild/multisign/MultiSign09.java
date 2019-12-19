@@ -59,8 +59,8 @@ public class MultiSign09 {
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
@@ -82,9 +82,7 @@ public class MultiSign09 {
   @BeforeClass(enabled = true)
   public void beforeClass() {
 
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
@@ -96,11 +94,10 @@ public class MultiSign09 {
 
     long needCoin = updateAccountPermissionFee * 2;
 
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
-        testKey002, blockingStubFull));
+    Assert.assertTrue(
+        PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
-        .getBalance();
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
 
@@ -111,54 +108,48 @@ public class MultiSign09 {
 
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
-            + "\",\"weight\":3}]},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\","
             + "\"threshold\":4,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
-    Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
-        ownerAddress, ownerKey, blockingStubFull,
-        ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
+    Assert.assertTrue(PublicMethedForMutiSign
+        .accountPermissionUpdate(accountPermissionJson, ownerAddress, ownerKey, blockingStubFull,
+            ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     ownerPermissionKeys.clear();
     ownerPermissionKeys.add(tmpKey02);
 
-    Assert.assertEquals(2,
-        PublicMethedForMutiSign.getActivePermissionKeyCount(PublicMethed.queryAccount(ownerAddress,
-            blockingStubFull).getActivePermissionList()));
+    Assert.assertEquals(2, PublicMethedForMutiSign.getActivePermissionKeyCount(
+        PublicMethed.queryAccount(ownerAddress, blockingStubFull).getActivePermissionList()));
 
-    Assert.assertEquals(1, PublicMethed.queryAccount(ownerAddress,
-        blockingStubFull).getOwnerPermission().getKeysCount());
+    Assert.assertEquals(1,
+        PublicMethed.queryAccount(ownerAddress, blockingStubFull).getOwnerPermission()
+            .getKeysCount());
 
-    PublicMethedForMutiSign.printPermissionList(PublicMethed.queryAccount(ownerAddress,
-        blockingStubFull).getActivePermissionList());
+    PublicMethedForMutiSign.printPermissionList(
+        PublicMethed.queryAccount(ownerAddress, blockingStubFull).getActivePermissionList());
 
-    System.out
-        .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
-            blockingStubFull).getOwnerPermission()));
+    System.out.printf(PublicMethedForMutiSign.printPermission(
+        PublicMethed.queryAccount(ownerAddress, blockingStubFull).getOwnerPermission()));
 
     logger.info("** trigger a permission transaction");
     accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
-            + "\",\"weight\":1}]},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
+            + "\",\"weight\":1}" + "]}]}";
 
-    Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
-        ownerAddress, ownerKey, blockingStubFull,
-        ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
-    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
-        .getBalance();
+    Assert.assertTrue(PublicMethedForMutiSign
+        .accountPermissionUpdate(accountPermissionJson, ownerAddress, ownerKey, blockingStubFull,
+            ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceAfter: " + balanceAfter);
 
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
@@ -169,11 +160,10 @@ public class MultiSign09 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     ownerAddress = ecKey1.getAddress();
     ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
-        testKey002, blockingStubFull));
+    Assert.assertTrue(
+        PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
-        .getBalance();
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
 
@@ -189,12 +179,12 @@ public class MultiSign09 {
             + "\"active_permissions\":["
             + "{\"parent_id\":\"123\",\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
-    GrpcAPI.Return response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
+    GrpcAPI.Return response = PublicMethed
+        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+            blockingStubFull);
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : permission's parent should be owner",
@@ -207,13 +197,13 @@ public class MultiSign09 {
             + "\"active_permissions\":["
             + "{\"parent_id\":123,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
 
-    response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+    response = PublicMethed
+        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+            blockingStubFull);
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : permission's parent should be owner",
@@ -226,15 +216,13 @@ public class MultiSign09 {
             + "\"active_permissions\":["
             + "{\"parent_id\":\"abc\",\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
     boolean ret = false;
     try {
-      PublicMethed
-          .accountPermissionUpdateForResponse(accountPermissionJson,
-              ownerAddress, ownerKey, blockingStubFull);
+      PublicMethed.accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+          blockingStubFull);
     } catch (NumberFormatException e) {
       logger.info("Expected NumberFormatException!");
       ret = true;
@@ -248,16 +236,14 @@ public class MultiSign09 {
             + "\"active_permissions\":["
             + "{\"parent_id\":\"\",\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
 
     ret = false;
     try {
-      PublicMethed
-          .accountPermissionUpdateForResponse(accountPermissionJson,
-              ownerAddress, ownerKey, blockingStubFull);
+      PublicMethed.accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+          blockingStubFull);
     } catch (NullPointerException e) {
       logger.info("Expected NullPointerException!");
       ret = true;
@@ -268,20 +254,17 @@ public class MultiSign09 {
     accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
-            + "\"active_permissions\":["
-            + "{\"parent_id\":" + null
+            + "\"active_permissions\":[" + "{\"parent_id\":" + null
             + ",\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
 
     ret = false;
     try {
-      PublicMethed
-          .accountPermissionUpdateForResponse(accountPermissionJson,
-              ownerAddress, ownerKey, blockingStubFull);
+      PublicMethed.accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+          blockingStubFull);
     } catch (NullPointerException e) {
       logger.info("Expected NullPointerException!");
       ret = true;
@@ -295,13 +278,13 @@ public class MultiSign09 {
             + "\"active_permissions\":["
             + "{\"parent_id\":1,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
 
-    response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+    response = PublicMethed
+        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+            blockingStubFull);
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : permission's parent should be owner",
@@ -314,13 +297,13 @@ public class MultiSign09 {
             + "\"active_permissions\":["
             + "{\"parent_id\":2,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
 
-    response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+    response = PublicMethed
+        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+            blockingStubFull);
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : permission's parent should be owner",
@@ -333,13 +316,13 @@ public class MultiSign09 {
             + "\"active_permissions\":["
             + "{\"parent_id\":3,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
 
-    response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+    response = PublicMethed
+        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+            blockingStubFull);
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : permission's parent should be owner",
@@ -352,12 +335,12 @@ public class MultiSign09 {
             + "\"active_permissions\":["
             + "{\"parent_id\":-1,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
-    response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
+    response = PublicMethed
+        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+            blockingStubFull);
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : permission's parent should be owner",
@@ -367,17 +350,16 @@ public class MultiSign09 {
     accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
-            + "\"active_permissions\":["
-            + "{\"parent_id\":2147483647,\"type\":2,"
+            + "\"active_permissions\":[" + "{\"parent_id\":2147483647,\"type\":2,"
             + "\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
 
-    response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+    response = PublicMethed
+        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+            blockingStubFull);
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : permission's parent should be owner",
@@ -387,16 +369,15 @@ public class MultiSign09 {
     accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
-            + "\"active_permissions\":["
-            + "{\"parent_id\":2147483648,\"type\":2,"
+            + "\"active_permissions\":[" + "{\"parent_id\":2147483648,\"type\":2,"
             + "\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
-    response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
+    response = PublicMethed
+        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+            blockingStubFull);
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : permission's parent should be owner",
@@ -406,16 +387,15 @@ public class MultiSign09 {
     accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
-            + "\"active_permissions\":["
-            + "{\"parent_id\":-2147483648,\"type\":2,"
+            + "\"active_permissions\":[" + "{\"parent_id\":-2147483648,\"type\":2,"
             + "\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
-    response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
+    response = PublicMethed
+        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+            blockingStubFull);
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : permission's parent should be owner",
@@ -425,23 +405,21 @@ public class MultiSign09 {
     accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
-            + "\"active_permissions\":["
-            + "{\"parent_id\":-2147483649,\"type\":2,"
+            + "\"active_permissions\":[" + "{\"parent_id\":-2147483649,\"type\":2,"
             + "\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
 
-    response = PublicMethed.accountPermissionUpdateForResponse(
-        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+    response = PublicMethed
+        .accountPermissionUpdateForResponse(accountPermissionJson, ownerAddress, ownerKey,
+            blockingStubFull);
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : permission's parent should be owner",
         response.getMessage().toStringUtf8());
-    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
-        .getBalance();
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceAfter: " + balanceAfter);
     Assert.assertEquals(balanceBefore, balanceAfter);
   }
@@ -453,11 +431,10 @@ public class MultiSign09 {
     ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2;
 
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
-        testKey002, blockingStubFull));
+    Assert.assertTrue(
+        PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
-        .getBalance();
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
 
@@ -472,13 +449,12 @@ public class MultiSign09 {
             + "\"active_permissions\":["
             + "{\"parent_id\":0,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
-            + "]}]}";
-    Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
-        ownerAddress, ownerKey, blockingStubFull,
-        ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":3}," + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}" + "]}]}";
+    Assert.assertTrue(PublicMethedForMutiSign
+        .accountPermissionUpdate(accountPermissionJson, ownerAddress, ownerKey, blockingStubFull,
+            ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -486,36 +462,32 @@ public class MultiSign09 {
     ownerPermissionKeys.add(tmpKey02);
 
     Assert.assertEquals(2, PublicMethedForMutiSign.getActivePermissionKeyCount(
-        PublicMethed.queryAccount(ownerAddress,
-            blockingStubFull).getActivePermissionList()));
+        PublicMethed.queryAccount(ownerAddress, blockingStubFull).getActivePermissionList()));
 
-    Assert.assertEquals(1, PublicMethed.queryAccount(ownerAddress,
-        blockingStubFull).getOwnerPermission().getKeysCount());
+    Assert.assertEquals(1,
+        PublicMethed.queryAccount(ownerAddress, blockingStubFull).getOwnerPermission()
+            .getKeysCount());
 
-    PublicMethedForMutiSign.printPermissionList(PublicMethed.queryAccount(ownerAddress,
-        blockingStubFull).getActivePermissionList());
+    PublicMethedForMutiSign.printPermissionList(
+        PublicMethed.queryAccount(ownerAddress, blockingStubFull).getActivePermissionList());
 
-    System.out
-        .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
-            blockingStubFull).getOwnerPermission()));
+    System.out.printf(PublicMethedForMutiSign.printPermission(
+        PublicMethed.queryAccount(ownerAddress, blockingStubFull).getOwnerPermission()));
 
     logger.info("** trigger a permission transaction");
     accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
-            + "\",\"weight\":1}]},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":["
-            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1}"
-            + "]}]}";
+            + "\"keys\":[" + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
+            + "\",\"weight\":1}" + "]}]}";
 
-    Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
-        ownerAddress, ownerKey, blockingStubFull,
-        ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
-
-    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
-        .getBalance();
+    Assert.assertTrue(PublicMethedForMutiSign
+        .accountPermissionUpdate(accountPermissionJson, ownerAddress, ownerKey, blockingStubFull,
+            ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceAfter: " + balanceAfter);
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
