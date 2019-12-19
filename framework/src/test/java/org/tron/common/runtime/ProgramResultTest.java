@@ -340,7 +340,7 @@ public class ProgramResultTest {
     TransactionTrace traceFailed = TvmTestUtils
         .processTransactionAndReturnTrace(trx2, deposit, null);
     runtime = traceFailed.getRuntime();
-    byte[] bContract2 = Wallet
+    byte[] bContract2 = TransactionUtil
         .generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
     List<InternalTransaction> internalTransactionsListFail = runtime.getResult()
         .getInternalTransactions();
