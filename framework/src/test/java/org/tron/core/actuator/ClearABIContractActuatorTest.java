@@ -278,66 +278,27 @@ public class ClearABIContractActuatorTest {
 
 
   @Test
-  public void nullDBManger() {
-    ClearABIContractActuator actuator = new ClearABIContractActuator();
-    actuator.setChainBaseManager(null)
-        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "No account store or contract store!",
-        "No account store or contract store!");
-  }
+  public void commonErrorCheck() {
 
-  @Test
-  public void nullContract() {
     ClearABIContractActuator actuator = new ClearABIContractActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(null);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
-  }
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
 
-  @Test
-  public void invalidContractType() {
-    ClearABIContractActuator actuator = new ClearABIContractActuator();
-    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
     Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
         .build());
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(invalidContractTypes);
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, "contract type error",
-        "contract type error,expected type [ClearABIContract],real type[" + invalidContractTypes
-            .getClass() + "]");
-  }
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error,expected type [ClearABIContract],real type[");
+    actuatorTest.invalidContractType();
 
-  @Test
-  public void nullTransationResult() {
-    ClearABIContractActuator actuator = new ClearABIContractActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
-    TransactionResultCapsule ret = null;
-    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
-        "TransactionResultCapsule is null");
-  }
 
-  private void processAndCheckInvalid(ClearABIContractActuator actuator,
-      TransactionResultCapsule ret,
-      String failMsg,
-      String expectedMsg) {
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail(failMsg);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(expectedMsg, e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
-    } catch (RuntimeException e) {
-      Assert.assertTrue(e instanceof RuntimeException);
-      Assert.assertEquals(expectedMsg, e.getMessage());
-    }
-  }
+    actuatorTest.setContract(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
+    actuatorTest.nullTransationResult();
 
+
+    actuatorTest.setNullDBManagerMsg("No account store or contract store!");
+    actuatorTest.nullDBManger();
+
+  }
 
 }

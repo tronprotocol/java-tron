@@ -4,7 +4,9 @@ import static org.testng.Assert.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+
 import java.io.File;
+
 import java.util.Arrays;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 
@@ -50,7 +53,7 @@ public class ExchangeInjectActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -738,11 +741,10 @@ public class ExchangeInjectActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      fail("account[+OWNER_ADDRESS_NOACCOUNT+] not exists");
+      fail("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists",
-          e.getMessage());
+      Assert.assertEquals("account[" + OWNER_ADDRESS_NOACCOUNT + "] not exists", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
@@ -1758,5 +1760,101 @@ public class ExchangeInjectActuatorTest {
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
     }
   }
+
+
+  @Test
+  public void nullDBManger() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    InitExchangeBeforeSameTokenNameActive();
+    long exchangeId = 1;
+    String firstTokenId = "abc";
+    long firstTokenQuant = 200000000L;
+
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(null)
+        .setAny(getContract(OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No account store or dynamic store!",
+        "No account store or dynamic store!");
+
+    dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
+    dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
+    dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
+    dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
+  }
+
+  @Test
+  public void noContract() {
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(null);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "No contract!", "No contract!");
+  }
+
+  @Test
+  public void sameTokeninvalidContractType() {
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(invalidContractTypes);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    processAndCheckInvalid(actuator, ret, "contract type error",
+        "contract type error,expected type [ExchangeInjectContract],real type["
+            + invalidContractTypes.getClass() + "]");
+  }
+
+  @Test
+  public void sameTokennullTransationResult() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    InitExchangeBeforeSameTokenNameActive();
+    long exchangeId = 1;
+    String firstTokenId = "abc";
+    long firstTokenQuant = 200000000L;
+    String secondTokenId = "def";
+    long secondTokenQuant = 400000000L;
+
+    ExchangeInjectActuator actuator = new ExchangeInjectActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, firstTokenQuant));
+    TransactionResultCapsule ret = null;
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmount(firstTokenId.getBytes(), firstTokenQuant);
+    accountCapsule.addAssetAmount(secondTokenId.getBytes(), secondTokenQuant);
+    accountCapsule.setBalance(10000_000000L);
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+
+    processAndCheckInvalid(actuator, ret, "TransactionResultCapsule is null",
+        "TransactionResultCapsule is null");
+
+    dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
+    dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
+    dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
+    dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
+
+  }
+
+  private void processAndCheckInvalid(ExchangeInjectActuator actuator,
+                                      TransactionResultCapsule ret,
+                                      String failMsg,
+                                      String expectedMsg) {
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      fail(failMsg);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e instanceof RuntimeException);
+      Assert.assertEquals(expectedMsg, e.getMessage());
+    }
+  }
+
 
 }

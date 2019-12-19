@@ -62,7 +62,7 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     if (!this.any.is(AccountUpdateContract.class)) {
       throw new ContractValidateException(
-          "contract type error, expected type [AccountUpdateContract], real type[" + contract
+          "contract type error, expected type [AccountUpdateContract], real type[" + any
               .getClass() + "]");
     }
     final AccountUpdateContract accountUpdateContract;

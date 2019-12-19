@@ -122,12 +122,12 @@ public class AssertException {
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    logger.info("infoById：" + infoById);
+    logger.info("infoById:" + infoById);
     Optional<Transaction> ById = PublicMethed.getTransactionById(txid, blockingStubFull);
-    logger.info("getRet：" + ById.get().getRet(0));
-    logger.info("getNumber：" + ById.get().getRet(0).getContractRet().getNumber());
-    logger.info("getContractRetValue：" + ById.get().getRet(0).getContractRetValue());
-    logger.info("getContractRet：" + ById.get().getRet(0).getContractRet());
+    logger.info("getRet:" + ById.get().getRet(0));
+    logger.info("getNumber:" + ById.get().getRet(0).getContractRet().getNumber());
+    logger.info("getContractRetValue:" + ById.get().getRet(0).getContractRetValue());
+    logger.info("getContractRet:" + ById.get().getRet(0).getContractRet());
 
     Assert.assertEquals(ById.get().getRet(0).getContractRet().getNumber(),
         contractResult.ILLEGAL_OPERATION_VALUE);
@@ -178,7 +178,7 @@ public class AssertException {
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    logger.info("11：" + Base58.encode58Check(contractAddress));
+    logger.info("11:" + Base58.encode58Check(contractAddress));
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
