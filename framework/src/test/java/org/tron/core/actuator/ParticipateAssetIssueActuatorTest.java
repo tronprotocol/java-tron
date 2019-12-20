@@ -113,7 +113,8 @@ public class ParticipateAssetIssueActuatorTest {
             TO_BALANCE);
 
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-    chainBaseManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+    chainBaseManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(),
+        toAccountCapsule);
     chainBaseManager.getAccountStore()
         .put(toAccountCapsule2.getAddress().toByteArray(), toAccountCapsule2);
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
@@ -216,17 +217,21 @@ public class ParticipateAssetIssueActuatorTest {
     AccountCapsule toAccountCapsule = chainBaseManager.getAccountStore()
         .get(ByteArray.fromHexString(TO_ADDRESS));
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      chainBaseManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+      chainBaseManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(),
+          assetIssueCapsule);
       assetIssueCapsule.setPrecision(0);
-      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(),
+          assetIssueCapsule);
       toAccountCapsule.addAsset(ASSET_NAME.getBytes(), TOTAL_SUPPLY);
       toAccountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
     } else {
-      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(),
+          assetIssueCapsule);
       toAccountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
     }
 
-    chainBaseManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+    chainBaseManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(),
+        toAccountCapsule);
   }
 
   private void initAssetIssue(long startTimestmp, long endTimestmp, String assetName) {
@@ -253,16 +258,19 @@ public class ParticipateAssetIssueActuatorTest {
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       chainBaseManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
       assetIssueCapsule.setPrecision(0);
-      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(),
+          assetIssueCapsule);
 
       toAccountCapsule.addAsset(assetName.getBytes(), TOTAL_SUPPLY);
       toAccountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
     } else {
-      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(),
+          assetIssueCapsule);
       toAccountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
     }
 
-    chainBaseManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+    chainBaseManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(),
+        toAccountCapsule);
   }
 
   private void initAssetIssueWithOwner(long startTimestmp, long endTimestmp, String owner) {
@@ -287,17 +295,21 @@ public class ParticipateAssetIssueActuatorTest {
     AccountCapsule toAccountCapsule = chainBaseManager.getAccountStore()
         .get(ByteArray.fromHexString(TO_ADDRESS));
     if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      chainBaseManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+      chainBaseManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(),
+          assetIssueCapsule);
       assetIssueCapsule.setPrecision(0);
-      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(),
+          assetIssueCapsule);
       toAccountCapsule.addAsset(ASSET_NAME.getBytes(), TOTAL_SUPPLY);
       toAccountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
     } else {
-      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(),
+          assetIssueCapsule);
       toAccountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
     }
 
-    chainBaseManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+    chainBaseManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(),
+        toAccountCapsule);
   }
 
   /**
@@ -306,7 +318,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void sameTokenNameCloseRightAssetIssue() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(1000L));
@@ -322,7 +335,8 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - 1000);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + 1000);
       //V1
-      Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), (1000L) / TRX_NUM * NUM);
+      Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(),
+          (1000L) / TRX_NUM * NUM);
       Assert.assertEquals(toAccount.getAssetMap().get(ASSET_NAME).longValue(),
           TOTAL_SUPPLY - (1000L) / TRX_NUM * NUM);
       //V2
@@ -346,7 +360,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void OldNotUpdateSuccessAssetIssue() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager
+            .getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
@@ -386,7 +401,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void sameTokenNameOpenRightAssetIssue() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().
+            getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(1000L));
@@ -558,7 +574,8 @@ public class ParticipateAssetIssueActuatorTest {
    */
   @Test
   public void sameTokenNameCloseExchangeDevisibleTest() {
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(); //no problem
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(999L));
@@ -573,7 +590,8 @@ public class ParticipateAssetIssueActuatorTest {
       AccountCapsule toAccount =
           chainBaseManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
 
-      Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(), (999L * NUM) / TRX_NUM);
+      Assert.assertEquals(owner.getAssetMap().get(ASSET_NAME).longValue(),
+          (999L * NUM) / TRX_NUM);
       Assert.assertEquals(
           toAccount.getAssetMap().get(ASSET_NAME).longValue(),
           TOTAL_SUPPLY - (999L * NUM) / TRX_NUM);
@@ -590,7 +608,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void sameTokenNameOpenExchangeDevisibleTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().
+            getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(); //no problem
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(999L));
@@ -836,8 +855,10 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void sameTokenNameCloseNoExitToTest() {
     initAssetIssueWithOwner(
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
+        chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
+        chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() + 1000,
         NOT_EXIT_ADDRESS);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
@@ -874,8 +895,10 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameOpenNoExitToTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     initAssetIssueWithOwner(
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
+        chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
+        chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() + 1000,
         NOT_EXIT_ADDRESS);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
@@ -912,8 +935,10 @@ public class ParticipateAssetIssueActuatorTest {
    */
   public void sameTokenNameCloseParticipateAssetSelf() {
     initAssetIssueWithOwner(
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
+        chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
+        chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() + 1000,
         OWNER_ADDRESS);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
@@ -949,8 +974,10 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameOpenParticipateAssetSelf() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     initAssetIssueWithOwner(
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
+        chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
+        chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() + 1000,
         OWNER_ADDRESS);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
@@ -986,7 +1013,8 @@ public class ParticipateAssetIssueActuatorTest {
    * SameTokenName close, Participate to the third party that not the issuer, will throw exception.
    */
   public void sameTokenNameCloseParticipateAssetToThird() {
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
@@ -1021,7 +1049,8 @@ public class ParticipateAssetIssueActuatorTest {
    */
   public void sameTokenNameOpenParticipateAssetToThird() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
@@ -1082,8 +1111,10 @@ public class ParticipateAssetIssueActuatorTest {
 
     // 32 byte readable character just ok.
     assetName = "testname0123456789abcdefghijgklm";
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000, assetName);
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
+        chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() + 1000, assetName);
     actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
         .setAny(getContract(1000L, assetName));
@@ -1113,7 +1144,8 @@ public class ParticipateAssetIssueActuatorTest {
     assetName = "t";
     initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
             .getLatestBlockHeaderTimestamp() - 1000,
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000,
+        chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() + 1000,
         assetName);
     actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
@@ -1146,10 +1178,12 @@ public class ParticipateAssetIssueActuatorTest {
    */
   @Test
   public void sameTokenNameCloseNotEnoughTrxTest() {
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, reduce the owner trx balance. Else can't complete this test case.
-    AccountCapsule owner = chainBaseManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    AccountCapsule owner = chainBaseManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100);
     chainBaseManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
@@ -1185,10 +1219,12 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void sameTokenNameOpenNotEnoughTrxTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, reduce the owner trx balance. Else can't complete this test case.
-    AccountCapsule owner = chainBaseManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    AccountCapsule owner = chainBaseManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100);
     chainBaseManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
@@ -1223,10 +1259,12 @@ public class ParticipateAssetIssueActuatorTest {
    */
   @Test
   public void sameTokenNameCloseNotEnoughAssetTest() {
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, reduce to account asset balance. Else can't complete this test case.
-    AccountCapsule toAccount = chainBaseManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+    AccountCapsule toAccount =
+        chainBaseManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
     toAccount.reduceAssetAmount(ByteString.copyFromUtf8(ASSET_NAME).toByteArray(),
         TOTAL_SUPPLY - 10000);
     chainBaseManager.getAccountStore().put(toAccount.getAddress().toByteArray(), toAccount);
@@ -1263,10 +1301,12 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void sameTokenNameOpenNotEnoughAssetTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, reduce to account asset balance. Else can't complete this test case.
-    AccountCapsule toAccount = chainBaseManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
+    AccountCapsule toAccount = chainBaseManager.getAccountStore()
+        .get(ByteArray.fromHexString(TO_ADDRESS));
     long id = chainBaseManager.getDynamicPropertiesStore().getTokenIdNum();
 
     toAccount.reduceAssetAmountV2(ByteString.copyFromUtf8(String.valueOf(id)).toByteArray(),
@@ -1378,10 +1418,12 @@ public class ParticipateAssetIssueActuatorTest {
    */
   @Test
   public void sameTokenNameCloseAddOverflowTest() {
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, increase the owner asset balance. Else can't complete this test case.
-    AccountCapsule owner = chainBaseManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    AccountCapsule owner = chainBaseManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.addAsset(ASSET_NAME.getBytes(), Long.MAX_VALUE);
     chainBaseManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
@@ -1419,10 +1461,12 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void sameTokenNameOpenAddOverflowTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, increase the owner asset balance. Else can't complete this test case.
-    AccountCapsule owner = chainBaseManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    AccountCapsule owner = chainBaseManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
     long id = chainBaseManager.getDynamicPropertiesStore().getTokenIdNum();
     owner.addAssetV2(ByteString.copyFromUtf8(String.valueOf(id)).toByteArray(), Long.MAX_VALUE);
     chainBaseManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
@@ -1461,10 +1505,12 @@ public class ParticipateAssetIssueActuatorTest {
    */
   @Test
   public void sameTokenNameCloseMultiplyOverflowTest() {
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, increase the owner trx balance. Else can't complete this test case.
-    AccountCapsule owner = chainBaseManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    AccountCapsule owner = chainBaseManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100000000000000L);
     chainBaseManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
@@ -1508,10 +1554,12 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void sameTokenNameOpenMultiplyOverflowTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     // First, increase the owner trx balance. Else can't complete this test case.
-    AccountCapsule owner = chainBaseManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    AccountCapsule owner = chainBaseManager.getAccountStore()
+        .get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100000000000000L);
     chainBaseManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
@@ -1577,8 +1625,10 @@ public class ParticipateAssetIssueActuatorTest {
     AccountCapsule toAccountCapsule = chainBaseManager.getAccountStore()
         .get(ByteArray.fromHexString(TO_ADDRESS));
     toAccountCapsule.addAsset(ASSET_NAME.getBytes(), TOTAL_SUPPLY);
-    chainBaseManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
-    AccountCapsule owner = chainBaseManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    chainBaseManager.getAccountStore()
+        .put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
+    AccountCapsule owner =
+        chainBaseManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100000000000000L);
     chainBaseManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
 
@@ -1632,7 +1682,8 @@ public class ParticipateAssetIssueActuatorTest {
 
     chainBaseManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(),
         toAccountCapsule);
-    AccountCapsule owner = chainBaseManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+    AccountCapsule owner =
+        chainBaseManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(100000000000000L);
     chainBaseManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
 
@@ -1728,11 +1779,14 @@ public class ParticipateAssetIssueActuatorTest {
     Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
         .build());
     actuatorTest.setInvalidContract(invalidContractTypes);
-    actuatorTest.setInvalidContractTypeMsg("contract type error",
-        "contract type error,expected type [ParticipateAssetIssueContract],real type[");
+    actuatorTest.setInvalidContractTypeMsg(
+        "contract type error",
+        "contract type error,expected type "
+            + "[ParticipateAssetIssueContract],real type[");
     actuatorTest.invalidContractType();
 
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(chainBaseManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     actuatorTest.setContract(getContract(1000L));
     actuatorTest.nullTransationResult();

@@ -292,7 +292,8 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(chainBaseManager.getDynamicPropertiesStore(),
+    EnergyProcessor energyProcessor = new EnergyProcessor(
+        chainBaseManager.getDynamicPropertiesStore(),
         chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
@@ -682,15 +683,15 @@ public class Wallet {
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getCreateNewAccountFeeInSystemContract")
-            .setValue(
-                chainBaseManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract())
+            .setValue(chainBaseManager.getDynamicPropertiesStore()
+                .getCreateNewAccountFeeInSystemContract())
             .build());
     //    CREATE_NEW_ACCOUNT_BANDWIDTH_RATE, // 1 ~ ,8
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getCreateNewAccountBandwidthRate")
-            .setValue(chainBaseManager.getDynamicPropertiesStore().getCreateNewAccountBandwidthRate())
-            .build());
+            .setValue(chainBaseManager.getDynamicPropertiesStore()
+                .getCreateNewAccountBandwidthRate()).build());
     //    ALLOW_CREATION_OF_CONTRACTS, // 0 / >0 ,9
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -828,8 +829,8 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAdaptiveResourceLimitTargetRatio")
         .setValue(
-            chainBaseManager.getDynamicPropertiesStore().
-                getAdaptiveResourceLimitTargetRatio() / (24 * 60)).build());
+            chainBaseManager.getDynamicPropertiesStore()
+                .getAdaptiveResourceLimitTargetRatio() / (24 * 60)).build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAdaptiveResourceLimitMultiplier")

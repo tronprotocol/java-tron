@@ -667,7 +667,8 @@ public class Manager {
                 + "solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
             Hex.toHexString(blockHash),
-            getSolidBlockId().getString(), chainBaseManager.getHeadBlockId().getString()).toString();
+            getSolidBlockId().getString(),
+            chainBaseManager.getHeadBlockId().getString()).toString();
         logger.info(str);
         throw new TaposException(str);
       }

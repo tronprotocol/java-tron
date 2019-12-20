@@ -123,8 +123,8 @@ public class TransferToAccountTest {
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
             .build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
-    chainBaseManager.getAssetIssueV2Store().
-        put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+    chainBaseManager.getAssetIssueV2Store()
+        .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
     ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
@@ -155,8 +155,8 @@ public class TransferToAccountTest {
     byte[] contractAddress = deployTransferContract(id);
     deposit.commit();
     Assert.assertEquals(100,
-        chainBaseManager.getAccountStore().
-            get(contractAddress).getAssetMapV2().get(String.valueOf(id)).longValue());
+        chainBaseManager.getAccountStore()
+            .get(contractAddress).getAssetMapV2().get(String.valueOf(id)).longValue());
     Assert.assertEquals(1000,
         chainBaseManager.getAccountStore().get(contractAddress).getBalance());
 
@@ -182,8 +182,8 @@ public class TransferToAccountTest {
         chainBaseManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
             .get(String.valueOf(id)).longValue());
     Assert.assertEquals(100 + tokenValue - 9,
-        chainBaseManager.getAccountStore().get(contractAddress).
-            getAssetMapV2().get(String.valueOf(id)).longValue());
+        chainBaseManager.getAccountStore().get(contractAddress)
+            .getAssetMapV2().get(String.valueOf(id)).longValue());
     long energyCostWhenExist = runtime.getResult().getEnergyUsed();
 
     // 3.Test transferToken To Non-exist address
@@ -199,8 +199,8 @@ public class TransferToAccountTest {
 
     Assert.assertNull(runtime.getRuntimeError());
     Assert.assertEquals(100 + tokenValue * 2 - 18,
-        chainBaseManager.getAccountStore().get(contractAddress).getAssetMapV2().
-            get(String.valueOf(id)).longValue());
+        chainBaseManager.getAccountStore().get(contractAddress).getAssetMapV2()
+            .get(String.valueOf(id)).longValue());
     Assert.assertEquals(9,
         chainBaseManager.getAccountStore().get(ecKey.getAddress()).getAssetMapV2()
             .get(String.valueOf(id)).longValue());
