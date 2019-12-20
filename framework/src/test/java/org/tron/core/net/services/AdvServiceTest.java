@@ -115,7 +115,7 @@ public class AdvServiceTest {
       BlockMessage msg = new BlockMessage(blockCapsule);
       service.fastForward(msg);
       Item item = new Item(blockCapsule.getBlockId(), InventoryType.BLOCK);
-      Assert.assertNull(service.getMessage(item));
+      //Assert.assertNull(service.getMessage(item));
 
       peer.getAdvInvRequest().put(item, System.currentTimeMillis());
       service.onDisconnect(peer);
