@@ -1787,6 +1787,7 @@ public class Wallet {
     addressInfo.setIvk(ivk.getIvk());
     addressInfo.setD(d.getD());
     addressInfo.setPkD(addressMessage.getPkD());
+    addressInfo.setPaymentAddress(addressMessage.getPaymentAddress());
 
     return addressInfo.build();
 
