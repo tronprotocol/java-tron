@@ -1277,6 +1277,7 @@ message ShieldedAddressInfo{
   bytes ivk = 7;
   bytes d = 8;
   bytes pkD = 9;
+  string payment_address = 10;
 }
 
 message NoteParameters {
