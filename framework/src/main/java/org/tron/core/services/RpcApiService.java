@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
@@ -60,6 +61,7 @@ import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -1910,6 +1912,18 @@ public class RpcApiService implements Service {
       responseObserver.onNext(trxExtBuilder.build());
       responseObserver.onCompleted();
 
+    }
+
+
+    @Override
+    public void getNewShieldedAddress(EmptyMessage request,
+        StreamObserver<ShieldedAddressInfo> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getNewShieldedAddressInfo());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
     }
 
     @Override

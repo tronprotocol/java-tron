@@ -57,6 +57,7 @@ import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DiversifierMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
+import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
 import org.tron.api.GrpcAPI.NfParameters;
 import org.tron.api.GrpcAPI.Node;
@@ -70,6 +71,7 @@ import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
@@ -1754,6 +1756,42 @@ public class Wallet {
     return transactionCapsule;
 
   }
+
+
+  public ShieldedAddressInfo getNewShieldedAddressInfo() throws BadItemException, ZksnarkException {
+    if (!getFullNodeAllowShieldedTransaction()) {
+      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
+    }
+
+    ShieldedAddressInfo.Builder addressInfo = ShieldedAddressInfo.newBuilder();
+
+    BytesMessage sk = getSpendingKey();
+    DiversifierMessage d = getDiversifier();
+    ExpandedSpendingKeyMessage expandedSpendingKeyMessage = getExpandedSpendingKey(sk.getValue());
+
+    BytesMessage ak = getAkFromAsk(expandedSpendingKeyMessage.getAsk());
+    BytesMessage nk = getNkFromNsk(expandedSpendingKeyMessage.getNsk());
+    IncomingViewingKeyMessage ivk = getIncomingViewingKey(ak.getValue().toByteArray(),
+        nk.getValue().toByteArray());
+
+    PaymentAddressMessage addressMessage =
+        getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
+            new DiversifierT(d.getD().toByteArray()));
+
+    addressInfo.setSk(sk.getValue());
+    addressInfo.setAsk(expandedSpendingKeyMessage.getAsk());
+    addressInfo.setNsk(expandedSpendingKeyMessage.getNsk());
+    addressInfo.setOvk(expandedSpendingKeyMessage.getOvk());
+    addressInfo.setAk(ak.getValue());
+    addressInfo.setNk(nk.getValue());
+    addressInfo.setIvk(ivk.getIvk());
+    addressInfo.setD(d.getD());
+    addressInfo.setPkD(addressMessage.getPkD());
+
+    return addressInfo.build();
+
+  }
+
 
   public BytesMessage getSpendingKey() throws ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
