@@ -1,17 +1,25 @@
 package org.tron.core;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
+import com.google.protobuf.ByteString;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.MerkleContainer;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CommonStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db2.core.ITronChainBase;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -162,5 +170,42 @@ public class ChainBaseManager {
     closeOneStore(delegationStore);
     closeOneStore(proofStore);
     closeOneStore(commonStore);
+  }
+
+  // for test only
+  public List<ByteString> getWitnesses() {
+    return witnessScheduleStore.getActiveWitnesses();
+  }
+
+  // for test only
+  public void addWitness(final ByteString address) {
+    List<ByteString> witnessAddresses =
+        witnessScheduleStore.getActiveWitnesses();
+    witnessAddresses.add(address);
+    getWitnessScheduleStore().saveActiveWitnesses(witnessAddresses);
+  }
+
+  public BlockCapsule getHead() throws HeaderNotFound {
+    List<BlockCapsule> blocks = getBlockStore().getBlockByLatestNum(1);
+    if (CollectionUtils.isNotEmpty(blocks)) {
+      return blocks.get(0);
+    } else {
+      logger.info("Header block Not Found");
+      throw new HeaderNotFound("Header block Not Found");
+    }
+  }
+
+  public synchronized BlockId getHeadBlockId() {
+    return new BlockId(
+        dynamicPropertiesStore.getLatestBlockHeaderHash(),
+        dynamicPropertiesStore.getLatestBlockHeaderNumber());
+  }
+
+  public long getHeadBlockNum() {
+    return dynamicPropertiesStore.getLatestBlockHeaderNumber();
+  }
+
+  public long getHeadBlockTimeStamp() {
+    return dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
   }
 }

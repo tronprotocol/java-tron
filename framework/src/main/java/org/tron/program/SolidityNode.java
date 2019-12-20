@@ -6,6 +6,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
 import org.tron.common.application.Application;
@@ -15,6 +16,7 @@ import org.tron.common.overlay.client.DatabaseGrpcClient;
 import org.tron.common.overlay.discover.DiscoverServer;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -29,6 +31,9 @@ import org.tron.protos.Protocol.Block;
 public class SolidityNode {
 
   private Manager dbManager;
+
+  @Autowired
+  ChainBaseManager chainBaseManager;
 
   private DatabaseGrpcClient databaseGrpcClient;
 
@@ -45,7 +50,7 @@ public class SolidityNode {
   public SolidityNode(Manager dbManager) {
     this.dbManager = dbManager;
     resolveCompatibilityIssueIfUsingFullNodeDatabase();
-    ID.set(dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+    ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     databaseGrpcClient = new DatabaseGrpcClient(Args.getInstance().getTrustNodeAddr());
     remoteBlockNum.set(getLastSolidityBlockNum());
   }
@@ -151,7 +156,7 @@ public class SolidityNode {
       long blockNum = block.getBlockHeader().getRawData().getNumber();
       try {
         dbManager.pushVerifiedBlock(new BlockCapsule(block));
-        dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(blockNum);
+        chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(blockNum);
         logger
             .info("Success to process block: {}, blockQueueSize: {}.", blockNum, blockQueue.size());
         return;
@@ -209,14 +214,15 @@ public class SolidityNode {
   }
 
   private void resolveCompatibilityIssueIfUsingFullNodeDatabase() {
-    long lastSolidityBlockNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-    long headBlockNum = dbManager.getHeadBlockNum();
+    long lastSolidityBlockNum =
+        chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+    long headBlockNum = chainBaseManager.getHeadBlockNum();
     logger.info("headBlockNum:{}, solidityBlockNum:{}, diff:{}",
         headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
     if (lastSolidityBlockNum < headBlockNum) {
       logger.info("use fullNode database, headBlockNum:{}, solidityBlockNum:{}, diff:{}",
           headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
-      dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
+      chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
     }
   }
 }

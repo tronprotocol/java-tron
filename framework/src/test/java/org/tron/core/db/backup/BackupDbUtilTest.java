@@ -15,6 +15,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.consensus.dpos.DposSlot;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
@@ -34,6 +35,7 @@ public class BackupDbUtilTest {
   public Application AppT = null;
   public BackupDbUtil dbBackupUtil;
   public Manager dbManager;
+  public ChainBaseManager chainBaseManager;
   public ConsensusService consensusService;
   public DposSlot dposSlot;
   public ManagerForTest mngForTest;
@@ -58,11 +60,12 @@ public class BackupDbUtilTest {
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
     dbManager = context.getBean(Manager.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
     dposSlot = context.getBean(DposSlot.class);
     consensusService = context.getBean(ConsensusService.class);
     dbBackupUtil = context.getBean(BackupDbUtil.class);
     consensusService.start();
-    mngForTest = new ManagerForTest(dbManager, dposSlot);
+    mngForTest = new ManagerForTest(dbManager, chainBaseManager, dposSlot);
 
     //prepare prop.properties
     propPath = dbPath + File.separator + "test_prop.properties";

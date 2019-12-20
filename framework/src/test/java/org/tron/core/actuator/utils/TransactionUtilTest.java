@@ -144,5 +144,4 @@ public class TransactionUtilTest {
     Assert.assertEquals(true, actuatorUtil.isNumber(number.getBytes()));
   }
 
-
 }

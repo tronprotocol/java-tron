@@ -19,6 +19,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -56,6 +57,7 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 public class ManagerTest extends BlockGenerate {
 
   private static Manager dbManager;
+  private static ChainBaseManager chainBaseManager;
   private static ConsensusService consensusService;
   private static DposSlot dposSlot;
   private static TronApplicationContext context;
@@ -70,6 +72,8 @@ public class ManagerTest extends BlockGenerate {
     context = new TronApplicationContext(DefaultConfig.class);
 
     dbManager = context.getBean(Manager.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
+
     setManager(dbManager);
     dposSlot = context.getBean(DposSlot.class);
     consensusService = context.getBean(ConsensusService.class);
@@ -128,22 +132,22 @@ public class ManagerTest extends BlockGenerate {
             .setToAddress(ByteString.copyFromUtf8("bbb"))
             .build();
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
-    if (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
+    if (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       dbManager.pushBlock(blockCapsule);
       Assert.assertEquals(1,
-          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+          chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
       dbManager.setBlockReference(trx);
       Assert.assertEquals(1,
           ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
     }
 
-    while (dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() > 0) {
+    while (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() > 0) {
       dbManager.eraseBlock();
     }
 
     dbManager.pushBlock(blockCapsule);
     Assert.assertEquals(1,
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
     dbManager.setBlockReference(trx);
     Assert.assertEquals(1,
         ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
@@ -162,7 +166,7 @@ public class ManagerTest extends BlockGenerate {
 
     if (isUnlinked) {
       Assert.assertEquals("getBlockIdByNum is error",
-          dbManager.getHeadBlockNum(), 0);
+          chainBaseManager.getHeadBlockNum(), 0);
     } else {
       try {
         Assert.assertEquals(
@@ -211,18 +215,20 @@ public class ManagerTest extends BlockGenerate {
                   ByteArray.toHexString(witnessAddress.toByteArray()));
             });
     logger.info("---------");
-    dbManager.getWitnessStore().put(witnessCapsulef.getAddress().toByteArray(), witnessCapsulef);
-    dbManager.getWitnessStore().put(witnessCapsules.getAddress().toByteArray(), witnessCapsules);
-    dbManager.getWitnessStore().put(witnessCapsulet.getAddress().toByteArray(), witnessCapsulet);
-    dbManager
-        .getWitnesses()
+    chainBaseManager.getWitnessStore()
+        .put(witnessCapsulef.getAddress().toByteArray(), witnessCapsulef);
+    chainBaseManager.getWitnessStore().put(witnessCapsules.getAddress()
+        .toByteArray(), witnessCapsules);
+    chainBaseManager.getWitnessStore()
+        .put(witnessCapsulet.getAddress().toByteArray(), witnessCapsulet);
+    chainBaseManager.getWitnesses()
         .forEach(
             witnessAddress -> {
               logger.info(
                   "witness address is {}",
                   ByteArray.toHexString(witnessAddress.toByteArray()));
             });
-    int sizeTis = dbManager.getWitnesses().size();
+    int sizeTis = chainBaseManager.getWitnesses().size();
     Assert.assertEquals("update add witness size is ",
         2, sizeTis - sizePrv);
   }
@@ -244,7 +250,7 @@ public class ManagerTest extends BlockGenerate {
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    dbManager.addWitness(ByteString.copyFrom(address));
+    chainBaseManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
 
@@ -289,18 +295,18 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertEquals(dbManager.getBlockStore().size(), size + 3);
 
     Assert.assertEquals(
-        dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1),
+        dbManager.getBlockIdByNum(chainBaseManager.getHead().getNum() - 1),
         blockCapsule1.getBlockId());
     Assert.assertEquals(
-        dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 2),
+        dbManager.getBlockIdByNum(chainBaseManager.getHead().getNum() - 2),
         blockCapsule1.getParentHash());
 
     Assert.assertEquals(
         blockCapsule2.getBlockId(),
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertEquals(
-        dbManager.getHead().getBlockId(),
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        chainBaseManager.getHead().getBlockId(),
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
   }
 
   @Test
@@ -321,7 +327,7 @@ public class ManagerTest extends BlockGenerate {
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    dbManager.addWitness(ByteString.copyFrom(address));
+    chainBaseManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
@@ -384,25 +390,24 @@ public class ManagerTest extends BlockGenerate {
     dbManager.pushBlock(blockCapsule3);
 
     Assert.assertEquals(blockCapsule3.getBlockId(),
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertEquals(blockCapsule3.getBlockId(),
-        dbManager.getBlockStore()
-            .get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
-                .getBytes())
+        chainBaseManager.getBlockStore()
+            .get(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes())
             .getBlockId());
 
     BlockCapsule blockCapsule4 =
         createTestBlockCapsule(1533529947843L + 12000,
-            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
+            chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
             blockCapsule3.getBlockId().getByteString(), addressToProvateKeys);
     logger.info("******block4:" + blockCapsule4);
     dbManager.pushBlock(blockCapsule4);
 
     Assert.assertEquals(blockCapsule4.getBlockId(),
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertEquals(blockCapsule4.getBlockId(),
-        dbManager.getBlockStore()
-            .get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
+        chainBaseManager.getBlockStore()
+            .get(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
                 .getBytes())
             .getBlockId());
   }
@@ -417,26 +422,26 @@ public class ManagerTest extends BlockGenerate {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
-    long size = dbManager.getBlockStore().size();
+    long size = chainBaseManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    dbManager.addWitness(ByteString.copyFrom(address));
+    chainBaseManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
-    long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long num = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
         createTestBlockCapsule(
             1533529947843L + 3000,
             num + 1,
-            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
+            chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
                 .getByteString(),
             addressToProvateKeys);
 
@@ -444,7 +449,7 @@ public class ManagerTest extends BlockGenerate {
         createTestBlockCapsule(
             1533529947843L + 3000,
             num + 1,
-            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
+            chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
                 .getByteString(),
             addressToProvateKeys);
 
@@ -461,43 +466,44 @@ public class ManagerTest extends BlockGenerate {
       logger.info("the fork chain has error block");
     }
 
-    Assert.assertNotNull(dbManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()));
+    Assert.assertNotNull(chainBaseManager.getBlockStore()
+        .get(blockCapsule0.getBlockId().getBytes()));
     Assert.assertEquals(blockCapsule0.getBlockId(),
-        dbManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()).getBlockId());
+        chainBaseManager.getBlockStore().get(blockCapsule0.getBlockId().getBytes()).getBlockId());
 
     BlockCapsule blockCapsule3 =
         createTestBlockCapsule(
             1533529947843L + 9000,
-            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
+            chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
             blockCapsule0.getBlockId().getByteString(), addressToProvateKeys);
     dbManager.pushBlock(blockCapsule3);
 
     Assert.assertEquals(blockCapsule3.getBlockId(),
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertEquals(blockCapsule3.getBlockId(),
-        dbManager.getBlockStore()
-            .get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
+        chainBaseManager.getBlockStore()
+            .get(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
                 .getBytes())
             .getBlockId());
 
     BlockCapsule blockCapsule4 =
         createTestBlockCapsule(
             1533529947843L + 12000,
-            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
+            chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
             blockCapsule3.getBlockId().getByteString(), addressToProvateKeys);
     dbManager.pushBlock(blockCapsule4);
 
     Assert.assertEquals(blockCapsule4.getBlockId(),
-        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertEquals(blockCapsule4.getBlockId(),
-        dbManager.getBlockStore()
-            .get(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
+        chainBaseManager.getBlockStore()
+            .get(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
                 .getBytes())
             .getBlockId());
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {
-    dbManager.getWitnesses().clear();
+    chainBaseManager.getWitnesses().clear();
     return IntStream.range(0, 2)
         .mapToObj(
             i -> {
@@ -506,12 +512,12 @@ public class ManagerTest extends BlockGenerate {
               ByteString address = ByteString.copyFrom(ecKey.getAddress());
 
               WitnessCapsule witnessCapsule = new WitnessCapsule(address);
-              dbManager.getWitnessStore().put(address.toByteArray(), witnessCapsule);
-              dbManager.addWitness(address);
+              chainBaseManager.getWitnessStore().put(address.toByteArray(), witnessCapsule);
+              chainBaseManager.addWitness(address);
 
               AccountCapsule accountCapsule =
                   new AccountCapsule(Account.newBuilder().setAddress(address).build());
-              dbManager.getAccountStore().put(address.toByteArray(), accountCapsule);
+              chainBaseManager.getAccountStore().put(address.toByteArray(), accountCapsule);
 
               return Maps.immutableEntry(address, privateKey);
             })

@@ -7,8 +7,10 @@ import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -24,6 +26,9 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 public class BandwidthProcessor extends ResourceProcessor {
 
   private Manager dbManager;
+
+  @Autowired
+  ChainBaseManager chainBaseManager;
 
   public BandwidthProcessor(Manager manager) {
     super(manager.getDynamicPropertiesStore(), manager.getAccountStore());
@@ -164,7 +169,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     if (bytes * createNewAccountBandwidthRatio <= (netLimit - newNetUsage)) {
       latestConsumeTime = now;
-      long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+      long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
       newNetUsage = increase(newNetUsage, bytes * createNewAccountBandwidthRatio,
           latestConsumeTime, now);
       accountCapsule.setLatestConsumeTime(latestConsumeTime);
@@ -295,7 +300,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     latestConsumeTime = now;
     latestAssetOperationTime = now;
     publicLatestFreeNetTime = now;
-    long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+    long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
 
     newIssuerNetUsage = increase(newIssuerNetUsage, bytes, latestConsumeTime, now);
     newFreeAssetNetUsage = increase(newFreeAssetNetUsage,
@@ -368,7 +373,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     latestConsumeTime = now;
-    long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+    long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
     newNetUsage = increase(newNetUsage, bytes, latestConsumeTime, now);
     accountCapsule.setNetUsage(newNetUsage);
     accountCapsule.setLatestOperationTime(latestOperationTime);
@@ -402,7 +407,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     latestConsumeFreeTime = now;
-    long latestOperationTime = dbManager.getHeadBlockTimeStamp();
+    long latestOperationTime = chainBaseManager.getHeadBlockTimeStamp();
     publicNetTime = now;
     newFreeNetUsage = increase(newFreeNetUsage, bytes, latestConsumeFreeTime, now);
     newPublicNetUsage = increase(newPublicNetUsage, bytes, publicNetTime, now);
