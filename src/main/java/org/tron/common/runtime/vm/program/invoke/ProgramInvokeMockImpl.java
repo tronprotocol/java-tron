@@ -224,7 +224,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean isConstantCall() {
+  public boolean isStaticCall() {
     return isConstantCall;
   }
 
@@ -243,17 +243,21 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setConstantCall() {
-    isConstantCall = true;
-  }
-
-  @Override
   public BlockCapsule getBlockByNum(int index) {
     try {
       return deposit.getDbManager().getBlockByNum(index);
     } catch (StoreException e) {
       throw new IllegalOperationException("cannot find block num");
     }
+  }
+
+  @Override
+  public void setRootConstantCall() {
+  }
+
+  @Override
+  public boolean isRootConstantCall() {
+    return false;
   }
 
   @Override

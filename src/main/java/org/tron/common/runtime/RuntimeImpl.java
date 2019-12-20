@@ -565,7 +565,7 @@ public class RuntimeImpl implements Runtime {
               tokenValue, tokenId, blockCap.getInstance(), deposit, vmStartInUs,
               vmShouldEndInUs, energyLimit);
       if (isConstantCall) {
-        programInvoke.setConstantCall();
+        programInvoke.setRootConstantCall();
       }
       this.vm = new VM(config);
       rootInternalTransaction = new InternalTransaction(trx, trxType);
