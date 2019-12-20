@@ -70,7 +70,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private byte[] buyTokenID = null;
 
   public MarketSellAssetActuator() {
-    super(ContractType.MarketSellAssetContract, AssetIssueContract.class);
+    super(ContractType.MarketSellAssetContract, MarketSellAssetContract.class);
   }
 
   @Override

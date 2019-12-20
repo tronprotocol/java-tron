@@ -66,7 +66,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
 
   public MarketCancelOrderActuator() {
-    super(ContractType.MarketCancelOrderContract, AssetIssueContract.class);
+    super(ContractType.MarketCancelOrderContract, MarketCancelOrderContract.class);
   }
 
   @Override

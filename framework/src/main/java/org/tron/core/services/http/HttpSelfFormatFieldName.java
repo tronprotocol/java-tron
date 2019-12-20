@@ -215,6 +215,25 @@ public class HttpSelfFormatFieldName {
     NameFieldNameMap.put("protocol.Transaction.Contract.ContractName", 1);
     //TransactionInfo
     NameFieldNameMap.put("protocol.TransactionInfo.resMessage", 1);
+
+    //***** market.proto *****
+    // MarketSellAssetContract
+    AddressFieldNameMap.put("protocol.MarketSellAssetContract.owner_address", 1);
+    NameFieldNameMap.put("protocol.MarketSellAssetContract.sell_token_id", 1);
+    NameFieldNameMap.put("protocol.MarketSellAssetContract.buy_token_id", 1);
+
+    // MarketOrder
+    AddressFieldNameMap.put("protocol.MarketOrder.owner_address", 1);
+    NameFieldNameMap.put("protocol.MarketOrder.sell_token_id", 1);
+    NameFieldNameMap.put("protocol.MarketOrder.buy_token_id", 1);
+
+    // MarketOrderPair
+    NameFieldNameMap.put("protocol.MarketOrderPair.sell_token_id", 1);
+    NameFieldNameMap.put("protocol.MarketOrderPair.buy_token_id", 1);
+
+    // MarketPriceList
+    NameFieldNameMap.put("protocol.MarketPriceList.sell_token_id", 1);
+    NameFieldNameMap.put("protocol.MarketPriceList.buy_token_id", 1);
   }
 
   public static boolean isAddressFormat(final String name) {
