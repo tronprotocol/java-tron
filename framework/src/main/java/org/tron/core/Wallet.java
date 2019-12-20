@@ -274,7 +274,7 @@ public class Wallet {
 
     return address;
   }
-  
+
   public byte[] getAddress() {
     return ecKey.getAddress();
   }
