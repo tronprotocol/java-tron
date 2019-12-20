@@ -28,6 +28,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -189,8 +190,8 @@ public class DepositTest {
         .processTransactionAndReturnRuntime(bTrx, DepositImpl.createRoot(manager), null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    byte[] aAddress = Wallet.generateContractAddress(aTrx);
-    byte[] bAddress = Wallet.generateContractAddress(bTrx);
+    byte[] aAddress = TransactionUtil.generateContractAddress(aTrx);
+    byte[] bAddress = TransactionUtil.generateContractAddress(bTrx);
 
     // trigger contractA
     // callBcallA(address,uint256,uint256)
@@ -345,8 +346,8 @@ public class DepositTest {
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(bTrx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    byte[] aAddress = Wallet.generateContractAddress(aTrx);
-    byte[] bAddress = Wallet.generateContractAddress(bTrx);
+    byte[] aAddress = TransactionUtil.generateContractAddress(aTrx);
+    byte[] bAddress = TransactionUtil.generateContractAddress(bTrx);
 
     // trigger contractA
     // callBcallA(address,uint256,uint256)

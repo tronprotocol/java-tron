@@ -17,6 +17,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.Transaction;
 
@@ -127,7 +128,7 @@ public class StorageTest extends VMTestBase {
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, code, value, fee, consumeUserResourcePercent, null);
-    byte[] contractAddress = Wallet.generateContractAddress(trx);
+    byte[] contractAddress = TransactionUtil.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 

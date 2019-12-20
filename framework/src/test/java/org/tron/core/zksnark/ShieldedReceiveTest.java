@@ -72,6 +72,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.ReceiveDescriptionInfo;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
@@ -122,6 +123,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
   private static ConsensusService consensusService;
   private static TronApplicationContext context;
   private static Wallet wallet;
+  private static TransactionUtil transactionUtil;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
@@ -138,6 +140,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     FileUtil.deleteDir(new File(dbPath));
 
     wallet = context.getBean(Wallet.class);
+    transactionUtil = context.getBean(TransactionUtil.class);
     dbManager = context.getBean(Manager.class);
     setManager(dbManager);
     consensusService = context.getBean(ConsensusService.class);
@@ -325,7 +328,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     transactionSignBuild.setPrivateKey(ByteString.copyFrom(
         ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
 
-    transactionCap = wallet.addSign(transactionSignBuild.build());
+    transactionCap = transactionUtil.addSign(transactionSignBuild.build());
 
     try {
       dbManager.pushTransaction(transactionCap);

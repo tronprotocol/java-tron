@@ -22,6 +22,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
@@ -50,7 +51,7 @@ public class TvmTestUtils {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, abi,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
     processTransactionAndReturnRuntime(trx, deposit, block);
-    return Wallet.generateContractAddress(trx);
+    return TransactionUtil.generateContractAddress(trx);
   }
 
   public static byte[] deployContractWholeProcessReturnContractAddress(String contractName,
@@ -63,7 +64,7 @@ public class TvmTestUtils {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, abi,
         code, value, feeLimit, consumeUserResourcePercent, tokenValue, tokenId, libraryAddressPair);
     processTransactionAndReturnRuntime(trx, deposit, block);
-    return Wallet.generateContractAddress(trx);
+    return TransactionUtil.generateContractAddress(trx);
   }
 
   public static Runtime triggerContractWholeProcessReturnContractAddress(byte[] callerAddress,
@@ -228,10 +229,10 @@ public class TvmTestUtils {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, abi,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
 
-    byte[] contractAddress = Wallet.generateContractAddress(trx);
+    byte[] contractAddress = TransactionUtil.generateContractAddress(trx);
 
     return processTransactionAndReturnTvmTestResult(trx, dbManager, blockCap)
-        .setContractAddress(Wallet.generateContractAddress(trx));
+        .setContractAddress(TransactionUtil.generateContractAddress(trx));
   }
 
   public static TVMTestResult deployContractWithCreatorEnergyLimitAndReturnTvmTestResult(
@@ -245,10 +246,10 @@ public class TvmTestUtils {
         contractName, callerAddress, abi,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair, creatorEnergyLimit);
 
-    byte[] contractAddress = Wallet.generateContractAddress(trx);
+    byte[] contractAddress = TransactionUtil.generateContractAddress(trx);
 
     return processTransactionAndReturnTvmTestResult(trx, dbManager, blockCap)
-        .setContractAddress(Wallet.generateContractAddress(trx));
+        .setContractAddress(TransactionUtil.generateContractAddress(trx));
   }
 
   public static TVMTestResult triggerContractAndReturnTvmTestResult(byte[] callerAddress,
