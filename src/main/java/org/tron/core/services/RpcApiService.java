@@ -50,7 +50,6 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
-import org.tron.api.GrpcAPI.IvkDecryptAndMarkParameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
@@ -62,6 +61,7 @@ import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -100,7 +100,6 @@ import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
-
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
@@ -2049,6 +2048,18 @@ public class RpcApiService implements Service {
       responseObserver.onNext(trxExtBuilder.build());
       responseObserver.onCompleted();
 
+    }
+
+    @Override
+    public void getNewShieldedAddress(EmptyMessage request,
+        StreamObserver<ShieldedAddressInfo> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getNewShieldedAddressInfo());
+      } catch (Exception e) {
+
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
     }
 
     @Override
