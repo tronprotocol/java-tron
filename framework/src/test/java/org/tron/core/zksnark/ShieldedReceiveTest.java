@@ -145,7 +145,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     transactionUtil = context.getBean(TransactionUtil.class);
     dbManager = context.getBean(Manager.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
-    setManager(dbManager);
+    setManager(dbManager, chainBaseManager);
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
     //give a big value for pool, avoid for

@@ -74,7 +74,7 @@ public class ManagerTest extends BlockGenerate {
     dbManager = context.getBean(Manager.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
 
-    setManager(dbManager);
+    setManager(dbManager, chainBaseManager);
     dposSlot = context.getBean(DposSlot.class);
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();

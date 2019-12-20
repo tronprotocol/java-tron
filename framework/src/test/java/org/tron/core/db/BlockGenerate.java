@@ -16,12 +16,12 @@ public class BlockGenerate {
 
   private static Manager manager;
 
-  @Autowired
-  private ChainBaseManager chainBaseManager;
+  private static ChainBaseManager chainBaseManager;
 
 
-  public static void setManager(Manager dbManager) {
+  public static void setManager(Manager dbManager, ChainBaseManager chainManager) {
     manager = dbManager;
+    chainBaseManager = chainManager;
   }
 
   public Block getSignedBlock(ByteString witness, long time, byte[] privateKey) {
@@ -41,7 +41,8 @@ public class BlockGenerate {
 
     BlockHeader.raw raw = block.getBlockHeader().getRawData().toBuilder()
         .setParentHash(ByteString
-            .copyFrom(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes()))
+            .copyFrom(chainBaseManager.getDynamicPropertiesStore()
+                .getLatestBlockHeaderHash().getBytes()))
         .setNumber(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1)
         .setTimestamp(blockTime)
         .setWitnessAddress(witness)
