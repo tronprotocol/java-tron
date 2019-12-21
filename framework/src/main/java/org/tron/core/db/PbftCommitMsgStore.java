@@ -18,11 +18,6 @@ public class PbftCommitMsgStore extends TronDatabase<PbftCommitMsgCapsule> {
 
   private static final byte[] SR_LIST_KEY = "current_sr_list".getBytes();
 
-  @Autowired
-  private PbftCommitMsgStore(@Value("pbftcommit") String dbName) {
-    super(dbName);
-  }
-
   @Override
   public PbftCommitMsgCapsule get(byte[] key) {
     byte[] value = dbSource.getData(key);
@@ -43,7 +38,7 @@ public class PbftCommitMsgStore extends TronDatabase<PbftCommitMsgCapsule> {
   public void delete(byte[] key) {
     dbSource.deleteData(key);
   }
-
+  
   public synchronized void put(PbftBaseMessage pbftBaseMessage) {
     byte[] key = buildKey(pbftBaseMessage);
     PbftCommitMsgCapsule pbftCommitMsgCapsule = get(key);
@@ -56,9 +51,9 @@ public class PbftCommitMsgStore extends TronDatabase<PbftCommitMsgCapsule> {
     put(key, new PbftCommitMsgCapsule(pbftBaseMessage.getBlockNum(), pbftMessageList));
   }
 
-  @Override
-  public void close() {
-    super.close();
+  @Autowired
+  private PbftCommitMsgStore(@Value("pbftcommit") String dbName) {
+    super(dbName);
   }
 
   private byte[] buildKey(PbftBaseMessage message) {
