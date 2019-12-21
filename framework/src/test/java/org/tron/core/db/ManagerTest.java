@@ -230,33 +230,6 @@ public class ManagerTest extends BlockGenerate {
     }
   }
 
-//  @Test
-//  public void putExchangeCapuleTest() {
-//    String assetName = "test";
-//    ExchangeCapsule exchangeCapsule =
-//        new ExchangeCapsule(
-//            Protocol.Exchange.newBuilder()
-//                .setExchangeId(1L)
-//                .setFirstTokenId(ByteString.copyFrom(assetName.getBytes()))
-//                .setSecondTokenId(ByteString.copyFrom("_".getBytes()))
-//                .build());
-//
-//    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-//    dbManager.putExchangeCapsule(exchangeCapsule);
-//    try {
-//      ExchangeCapsule copyExchange = dbManager.getExchangeV2Store().get(ByteArray.fromLong(1L));
-//      Assert.assertEquals(copyExchange.getFirstTokenId(), exchangeCapsule.getFirstTokenId());
-//      Assert.assertEquals(copyExchange.getSecondTokenId(), exchangeCapsule.getSecondTokenId());
-//      Assert.assertTrue(false);
-//    } catch (ItemNotFoundException e) {
-//      e.printStackTrace();
-//    }
-//
-//    AssetIssueCapsule assetIssue = new AssetIssueCapsule(
-//        AssetIssueContractOuterClass.AssetIssueContract.newBuilder().setNum(1).build());
-//    dbManager.getAssetIssueStore().put(assetIssue.createDbKey(), assetIssue);
-//
-//    }
 
   @Test
   public void getHeadTest() {
