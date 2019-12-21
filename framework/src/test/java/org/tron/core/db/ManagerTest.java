@@ -1,9 +1,14 @@
 package org.tron.core.db;
 
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.AssetIssueContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.valueOf;
+
 import com.google.common.collect.Maps;
+import com.google.inject.internal.cglib.proxy.$InvocationHandler;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -17,11 +22,15 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -31,6 +40,7 @@ import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -47,14 +57,23 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.store.CodeStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.ExchangeStore;
+import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.ShieldContract;
 
 @Slf4j
 public class ManagerTest extends BlockGenerate {
 
+  private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
   private static Manager dbManager;
   private static ConsensusService consensusService;
   private static DposSlot dposSlot;
@@ -62,10 +81,12 @@ public class ManagerTest extends BlockGenerate {
   private static BlockCapsule blockCapsule2;
   private static String dbPath = "output_manager_test";
   private static AtomicInteger port = new AtomicInteger(0);
+  private static String accountAddress =
+      Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
 
   @Before
   public void init() {
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath, "-w"}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     context = new TronApplicationContext(DefaultConfig.class);
 
@@ -177,6 +198,320 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertTrue("hasBlocks is error", dbManager.hasBlocks());
   }
 
+  @Test
+  public void GetterInstanceTest() {
+
+    Assert.assertTrue(dbManager.getTransactionStore() instanceof TransactionStore);
+    Assert.assertTrue(dbManager.getDynamicPropertiesStore() instanceof DynamicPropertiesStore);
+    Assert.assertTrue(dbManager.getMerkleTreeStore() instanceof IncrementalMerkleTreeStore);
+    Assert.assertTrue(dbManager.getBlockIndexStore() instanceof BlockIndexStore);
+    Assert.assertTrue(dbManager.getCodeStore() instanceof CodeStore);
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    Assert.assertTrue(dbManager.getExchangeStoreFinal() instanceof ExchangeStore);
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    Assert.assertTrue(dbManager.getExchangeStoreFinal() instanceof ExchangeV2Store);
+
+  }
+
+
+  @Test
+  public void pushBlockInvalidSignature() {
+    // invalid witness address cause invalid signature
+    String invalideWitness = "bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f";
+    blockCapsule2.setWitness(invalideWitness);
+    try {
+      dbManager.pushBlock(blockCapsule2);
+      Assert.assertTrue(false);
+    } catch (BadBlockException e) {
+      Assert.assertTrue(e instanceof BadBlockException);
+      Assert.assertEquals("The signature is not validated", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertFalse(e instanceof Exception);
+    }
+  }
+
+//  @Test
+//  public void putExchangeCapuleTest() {
+//    String assetName = "test";
+//    ExchangeCapsule exchangeCapsule =
+//        new ExchangeCapsule(
+//            Protocol.Exchange.newBuilder()
+//                .setExchangeId(1L)
+//                .setFirstTokenId(ByteString.copyFrom(assetName.getBytes()))
+//                .setSecondTokenId(ByteString.copyFrom("_".getBytes()))
+//                .build());
+//
+//    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+//    dbManager.putExchangeCapsule(exchangeCapsule);
+//    try {
+//      ExchangeCapsule copyExchange = dbManager.getExchangeV2Store().get(ByteArray.fromLong(1L));
+//      Assert.assertEquals(copyExchange.getFirstTokenId(), exchangeCapsule.getFirstTokenId());
+//      Assert.assertEquals(copyExchange.getSecondTokenId(), exchangeCapsule.getSecondTokenId());
+//      Assert.assertTrue(false);
+//    } catch (ItemNotFoundException e) {
+//      e.printStackTrace();
+//    }
+//
+//    AssetIssueCapsule assetIssue = new AssetIssueCapsule(
+//        AssetIssueContractOuterClass.AssetIssueContract.newBuilder().setNum(1).build());
+//    dbManager.getAssetIssueStore().put(assetIssue.createDbKey(), assetIssue);
+//
+//    }
+
+  @Test
+  public void getHeadTest() {
+    try {
+      BlockCapsule head = dbManager.getHead();
+      Assert.assertTrue(head instanceof BlockCapsule);  // successfully
+    } catch (HeaderNotFound e) {
+      Assert.assertFalse(e instanceof HeaderNotFound);
+    }
+
+    dbManager.getBlockStore().reset();
+
+    try {
+      dbManager.getHead();
+      Assert.assertTrue(false);
+    } catch (HeaderNotFound e) {
+      logger.info(e.getMessage());
+      Assert.assertTrue(e instanceof HeaderNotFound);
+    }
+  }
+
+  @Test
+  public void adjustBalanceTest() {
+
+    byte[] ownerAddress = accountAddress.getBytes();
+    AccountCapsule account =
+        new AccountCapsule(Account.newBuilder()
+            .setAddress(ByteString.copyFrom(accountAddress.getBytes()))
+            .setBalance(10)
+            .setAccountName(ByteString.copyFrom("test".getBytes()))
+            .build());
+    dbManager.getAccountStore().put(account.createDbKey(), account);
+    try {
+      dbManager.adjustBalance(accountAddress.getBytes(), 0);
+      AccountCapsule copyAccount = dbManager.getAccountStore().get(ownerAddress);
+      Assert.assertEquals(copyAccount.getBalance(), account.getBalance());
+      Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
+    } catch (BalanceInsufficientException e) {
+      Assert.assertFalse(e instanceof BalanceInsufficientException);
+    }
+
+
+    account.setBalance(30);
+    dbManager.getAccountStore().put(account.createDbKey(), account); // update balance
+    try {
+      dbManager.adjustBalance(accountAddress.getBytes(), -40);
+      Assert.assertTrue(false);
+    } catch (BalanceInsufficientException e) {
+      Assert.assertTrue(e instanceof BalanceInsufficientException);
+      Assert.assertEquals(
+          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance",
+          e.getMessage());
+    }
+
+
+    account.setBalance(30);
+    dbManager.getAccountStore().put(account.createDbKey(), account); // update balance
+    try {
+      dbManager.adjustBalance(accountAddress.getBytes(), -10);
+      AccountCapsule copyAccount = dbManager.getAccountStore().get(ownerAddress);
+      Assert.assertEquals(copyAccount.getBalance(), account.getBalance() - 10);
+      Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
+    } catch (BalanceInsufficientException e) {
+      Assert.assertFalse(e instanceof BalanceInsufficientException);
+    }
+
+    account.setBalance(30);
+    dbManager.getAccountStore().put(account.createDbKey(), account); // update balance
+    try {
+      dbManager.adjustBalance(accountAddress.getBytes(), 10);
+      AccountCapsule copyAccount = dbManager.getAccountStore().get(ownerAddress);
+      Assert.assertEquals(copyAccount.getBalance(), account.getBalance() + 10);
+      Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
+    } catch (BalanceInsufficientException e) {
+      Assert.assertFalse(e instanceof BalanceInsufficientException);
+    }
+
+  }
+
+  @Test
+  public void adjustAssetBalanceV2Test() {
+    String assetID = "asset1";
+    byte[] ownerAddress = accountAddress.getBytes();
+    AccountCapsule account =
+        new AccountCapsule(Account.newBuilder()
+            .setAddress(ByteString.copyFrom(accountAddress.getBytes()))
+            .setBalance(10)
+            .setAccountName(ByteString.copyFrom("test".getBytes()))
+            .build());
+    dbManager.getAccountStore().put(account.createDbKey(), account);
+
+    String tokenId = "test1234";
+    AssetIssueCapsule assetIssue = new AssetIssueCapsule(
+        AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+            .setId(tokenId)
+            .setOwnerAddress(ByteString.copyFrom(accountAddress.getBytes()))
+            .setAbbr(ByteString.copyFrom(accountAddress.getBytes()))
+            .build());
+    dbManager.getAssetIssueStore().put(assetID.getBytes(), assetIssue);
+    try {
+      dbManager.adjustAssetBalanceV2(accountAddress.getBytes(), assetID, -20);
+      Assert.assertTrue(false);
+    } catch (BalanceInsufficientException e) {
+      Assert.assertTrue(e instanceof BalanceInsufficientException);
+      Assert.assertEquals(
+          "reduceAssetAmount failed !", e.getMessage());
+    }
+
+    account.setBalance(30);
+    dbManager.getAccountStore().put(account.createDbKey(), account); // update balance
+
+    try {
+      dbManager.adjustAssetBalanceV2(accountAddress.getBytes(), assetID, 10);
+      AccountCapsule copyAccount = dbManager.getAccountStore().get(ownerAddress);
+      Assert.assertEquals(copyAccount.getAssetMap().size(), 1);
+      copyAccount.getAssetMap().forEach((k, v) -> {
+        Assert.assertEquals(k, assetID);
+        Assert.assertEquals(v.compareTo(10L), 0);
+      });
+      Assert.assertEquals(copyAccount.getBalance(), account.getBalance());
+    } catch (BalanceInsufficientException e) {
+      Assert.assertFalse(e instanceof BalanceInsufficientException);
+    }
+
+  }
+
+  @Test
+  public void pushBlockInvalidMerkelRoot() {
+    Transaction trx = Transaction.newBuilder().build();
+    TransactionCapsule moreTrans = new TransactionCapsule(trx);
+    blockCapsule2.addTransaction(moreTrans);  // add one more transaction will change merkroot
+    blockCapsule2.sign(ByteArray.fromHexString(Args.getInstance().getLocalWitnesses()
+        .getPrivateKey()));
+    try {
+      dbManager.pushBlock(blockCapsule2);
+      Assert.assertTrue(false);
+    } catch (BadBlockException e) {
+      Assert.assertTrue(e instanceof BadBlockException);
+      Assert.assertEquals("The merkle hash is not validated", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertFalse(e instanceof Exception);
+    }
+  }
+
+  @Test
+  public void adjustTotalShieldPoolValueTest() {
+    long valueBalance = dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue() + 1;
+    try {
+      dbManager.adjustTotalShieldedPoolValue(valueBalance);
+      Assert.assertTrue(false);
+    } catch (BalanceInsufficientException e) {
+      Assert.assertTrue(e instanceof BalanceInsufficientException);
+      Assert.assertEquals("Total shielded pool value can not below 0", e.getMessage());
+    }
+
+    long beforeTotalShieldValue = dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue();
+    valueBalance = beforeTotalShieldValue - 1;
+    try {
+      dbManager.adjustTotalShieldedPoolValue(valueBalance);
+      long expectValue = beforeTotalShieldValue - valueBalance;
+      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue(),
+          expectValue);
+    } catch (BalanceInsufficientException e) {
+      Assert.assertFalse(e instanceof BalanceInsufficientException);
+    }
+
+  }
+
+  @Test
+  public void pushBlockTooMuchShieldedTransactions() {
+    ShieldContract.ShieldedTransferContract trx1 = ShieldContract.ShieldedTransferContract
+        .newBuilder()
+        .setFromAmount(10)
+        .setToAmount(10)
+        .build();
+    ShieldContract.ShieldedTransferContract trx2 = ShieldContract.ShieldedTransferContract
+        .newBuilder()
+        .setFromAmount(20)
+        .setToAmount(20)
+        .build();
+    TransactionCapsule trans1 = new TransactionCapsule(trx1, ContractType.ShieldedTransferContract);
+    TransactionCapsule trans2 = new TransactionCapsule(trx2, ContractType.ShieldedTransferContract);
+    blockCapsule2.addTransaction(trans1);  // addShield transaction
+    blockCapsule2.addTransaction(trans2);  //  add Shield transaction
+    blockCapsule2.setMerkleRoot();
+    blockCapsule2.sign(ByteArray.fromHexString(Args.getInstance().getLocalWitnesses()
+        .getPrivateKey()));
+    try {
+      dbManager.pushBlock(blockCapsule2);
+      Assert.assertTrue(false);
+    } catch (BadBlockException e) {
+      Assert.assertTrue(e instanceof BadBlockException);
+      Assert.assertEquals("shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS,
+          e.getMessage());
+    } catch (Exception e) {
+      Assert.assertFalse(e instanceof Exception);
+    }
+  }
+
+  @Test
+  public void pushSwitchFork()
+      throws UnLinkedBlockException, NonCommonBlockException, ContractValidateException,
+      ValidateScheduleException, ZksnarkException, BadBlockException, VMIllegalException,
+      BadNumberBlockException, DupTransactionException, ContractExeException,
+      ValidateSignatureException, TooBigTransactionResultException, TransactionExpirationException,
+      TaposException, ReceiptCheckErrException, TooBigTransactionException,
+      AccountResourceInsufficientException {
+
+    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    byte[] privateKey = ByteArray.fromHexString(key);
+    final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    byte[] address = ecKey.getAddress();
+
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    dbManager.addWitness(ByteString.copyFrom(address));
+
+    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    dbManager.pushBlock(new BlockCapsule(block));
+
+    Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
+
+    long num = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    ByteString latestHeadHash =
+        dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString();
+    BlockCapsule blockCapsule1 =
+        createTestBlockCapsule(
+            1533529947843L + 3000,
+            num + 1,
+            latestHeadHash,
+            addressToProvateKeys);
+
+
+    dbManager.pushBlock(blockCapsule1);
+
+    BlockCapsule blockCapsule2 =
+        createTestBlockCapsule(
+            1533529947843L + 6000,
+            num + 2,
+            blockCapsule1.getBlockId().getByteString(),
+            addressToProvateKeys);
+
+    dbManager.getDynamicPropertiesStore()
+        .saveLatestBlockHeaderHash(latestHeadHash);  // change lastest block head
+    logger.info("debug" + dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    try {
+      dbManager.pushBlock(blockCapsule2);
+      Assert.assertTrue(false);
+    } catch (BadBlockException e) {
+      Assert.assertFalse(e instanceof BadBlockException);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof Exception);
+    }
+  }
+
+
   public void updateWits() {
     int sizePrv = dbManager.getWitnessScheduleStore().getActiveWitnesses().size();
     dbManager
@@ -236,9 +571,9 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
-    System.out.print("block store size:" + size + "\n");
+    //  System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
@@ -313,7 +648,7 @@ public class ManagerTest extends BlockGenerate {
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -416,7 +751,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -518,6 +853,7 @@ public class ManagerTest extends BlockGenerate {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
+
   private BlockCapsule createTestBlockCapsule(
       long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     long time = System.currentTimeMillis();
@@ -525,7 +861,8 @@ public class ManagerTest extends BlockGenerate {
   }
 
   private BlockCapsule createTestBlockCapsule(long time,
-      long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
+                                              long number, ByteString hash,
+                                              Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
         witnessAddress);
@@ -536,7 +873,8 @@ public class ManagerTest extends BlockGenerate {
   }
 
   private BlockCapsule createTestBlockCapsuleError(long time,
-      long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
+                                                   long number, ByteString hash,
+                                                   Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
         ByteString.copyFromUtf8("onlyTest"));
