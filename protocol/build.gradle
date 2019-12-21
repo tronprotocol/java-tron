@@ -29,7 +29,6 @@ sourceSets {
             srcDir 'src/main/java'
         }
     }
-
 }
 
 protobuf {
@@ -60,4 +59,3 @@ protobuf {
 clean.doFirst {
     delete "src/main/java"
 }
-
