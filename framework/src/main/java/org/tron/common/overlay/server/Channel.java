@@ -24,8 +24,8 @@ import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.exception.P2pException;
-import org.tron.core.net.TronNetHandler;
 import org.tron.core.net.PbftHandler;
+import org.tron.core.net.TronNetHandler;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")

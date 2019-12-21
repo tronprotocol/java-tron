@@ -56,6 +56,7 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
@@ -136,6 +137,7 @@ import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -534,6 +536,7 @@ public class Manager {
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderHash(
             this.genesisBlock.getBlockId().getByteString());
+        chainBaseManager.getDynamicPropertiesStore().saveLatestBlockCapsule(this.genesisBlock);
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(
             this.genesisBlock.getTimeStamp());
         this.initAccount();
@@ -999,6 +1002,78 @@ public class Manager {
     }
   }
 
+  private boolean checkInSameFork(BlockCapsule newblock) {
+    if (DBConfig.isDebug()) {
+      return true;
+    }
+    Sha256Hash blockHash = commonDataBase.getLatestPbftBlockHash();
+    if (Objects.isNull(blockHash) || Objects.isNull(newblock)) {
+      return true;
+    }
+    BlockCapsule tmp = newblock;
+    while (tmp != null) {
+      if (tmp.getBlockId().equals(blockHash)) {
+        return true;
+      }
+      tmp = khaosDb.getBlock(tmp.getParentHash());
+    }
+    return false;
+  }
+
+  private BlockCapsule findHighestBlockNum(Sha256Hash blockHash) {
+    KhaosBlock block = khaosDb.getMiniStore().getByHash(blockHash);
+    while (block.getChild() != null) {
+      block = block.getChild();
+    }
+    return block.getBlk();
+  }
+
+  private void printBeforeSwitchFork(BlockCapsule newBlock, final BlockCapsule block) {
+    logger.warn(
+        "switch fork! new head num = {}, blockid = {}",
+        newBlock.getNum(),
+        newBlock.getBlockId());
+
+    logger.warn(
+        "******** before switchFork ******* push block: "
+            + block.toString()
+            + ", new block:"
+            + newBlock.toString()
+            + ", dynamic head num: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
+            + ", dynamic head hash: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
+            + ", dynamic head timestamp: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
+            + ", khaosDb head: "
+            + khaosDb.getHead()
+            + ", khaosDb miniStore size: "
+            + khaosDb.getMiniStore().size()
+            + ", khaosDb unlinkMiniStore size: "
+            + khaosDb.getMiniUnlinkedStore().size());
+  }
+
+  private void printAfterSwitchFork(BlockCapsule newBlock, final BlockCapsule block) {
+    logger.info(SAVE_BLOCK + newBlock);
+    logger.warn(
+        "******** after switchFork ******* push block: "
+            + block.toString()
+            + ", new block:"
+            + newBlock.toString()
+            + ", dynamic head num: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
+            + ", dynamic head hash: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
+            + ", dynamic head timestamp: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
+            + ", khaosDb head: "
+            + khaosDb.getHead()
+            + ", khaosDb miniStore size: "
+            + khaosDb.getMiniStore().size()
+            + ", khaosDb unlinkMiniStore size: "
+            + khaosDb.getMiniUnlinkedStore().size());
+  }
+
   /**
    * save a block.
    */
@@ -1039,64 +1114,33 @@ public class Manager {
 
       BlockCapsule newBlock = this.khaosDb.push(block);
 
+
       // DB don't need lower block
       if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
         if (newBlock.getNum() != 0) {
           return;
         }
       } else {
+
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
           return;
         }
 
-        // switch fork
-        if (!newBlock
-            .getParentHash()
+        BlockCapsule latestBlockCapsule = getDynamicPropertiesStore().getLatestBlockCapsule();
+        if (!checkInSameFork(latestBlockCapsule)) {
+          Sha256Hash blockHash = commonDataBase.getLatestPbftBlockHash();
+
+          printBeforeSwitchFork(newBlock, block);
+          switchFork(findHighestBlockNum(blockHash));
+          printAfterSwitchFork(newBlock, block);
+
+
+          return;
+        } else if (checkInSameFork(newBlock) && !newBlock.getParentHash()
             .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
-          logger.warn(
-              "switch fork! new head num = {}, blockid = {}",
-              newBlock.getNum(),
-              newBlock.getBlockId());
-
-          logger.warn(
-              "******** before switchFork ******* push block: "
-                  + block.toString()
-                  + ", new block:"
-                  + newBlock.toString()
-                  + ", dynamic head num: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-                  + ", dynamic head hash: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
-                  + ", dynamic head timestamp: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
-                  + ", khaosDb head: "
-                  + khaosDb.getHead()
-                  + ", khaosDb miniStore size: "
-                  + khaosDb.getMiniStore().size()
-                  + ", khaosDb unlinkMiniStore size: "
-                  + khaosDb.getMiniUnlinkedStore().size());
-
+          printBeforeSwitchFork(newBlock, block);
           switchFork(newBlock);
-          logger.info(SAVE_BLOCK + newBlock);
-
-          logger.warn(
-              "******** after switchFork ******* push block: "
-                  + block.toString()
-                  + ", new block:"
-                  + newBlock.toString()
-                  + ", dynamic head num: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-                  + ", dynamic head hash: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
-                  + ", dynamic head timestamp: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
-                  + ", khaosDb head: "
-                  + khaosDb.getHead()
-                  + ", khaosDb miniStore size: "
-                  + khaosDb.getMiniStore().size()
-                  + ", khaosDb unlinkMiniStore size: "
-                  + khaosDb.getMiniUnlinkedStore().size());
-
+          printAfterSwitchFork(newBlock, block);
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
@@ -1137,6 +1181,8 @@ public class Manager {
 
     chainBaseManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
+    chainBaseManager.getDynamicPropertiesStore()
+        .saveLatestBlockCapsule(block);
 
     chainBaseManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderNumber(block.getNum());

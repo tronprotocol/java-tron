@@ -24,6 +24,7 @@ import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.db.CommonDataBase;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -40,6 +41,9 @@ public class DposService implements ConsensusInterface {
 
   @Autowired
   private StateManager stateManager;
+
+  @Autowired
+  private CommonDataBase commonDataBase;
 
   @Autowired
   private StatisticManager statisticManager;
@@ -147,7 +151,7 @@ public class DposService implements ConsensusInterface {
         .collect(Collectors.toList());
     long size = consensusDelegate.getActiveWitnesses().size();
     int position = (int) (size * (1 - SOLIDIFIED_THRESHOLD * 1.0 / 100));
-    long newSolidNum = numbers.get(position);
+    long newSolidNum = Math.max(commonDataBase.getLatestPbftBlockNum(),numbers.get(position));
     long oldSolidNum = consensusDelegate.getLatestSolidifiedBlockNum();
     if (newSolidNum < oldSolidNum) {
       logger.warn("Update solid block number failed, new: {} < old: {}", newSolidNum, oldSolidNum);

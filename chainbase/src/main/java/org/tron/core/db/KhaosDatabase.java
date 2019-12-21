@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,10 +23,14 @@ import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
+import org.tron.protos.Protocol.DataSign;
+import org.tron.protos.Protocol.PbftMessage.Raw;
 
+@Slf4j(topic = "DB")
 @Component
 public class KhaosDatabase extends TronDatabase {
 
@@ -38,6 +44,9 @@ public class KhaosDatabase extends TronDatabase {
   protected KhaosDatabase(@Value("block_KDB") String dbName) {
     super(dbName);
   }
+
+  @Autowired
+  private PbftSignDataStore pbftSignDataStore;
 
   @Override
   public void put(byte[] key, Object item) {
@@ -96,13 +105,30 @@ public class KhaosDatabase extends TronDatabase {
         .orElse(null);
   }
 
+  public boolean isValidatedBlock(BlockCapsule blk, PbftSignCapsule pbftSignCapsule) {
+    DataSign dataSign = pbftSignCapsule.getDataSign();
+    try {
+      Raw raw = Raw.parseFrom(dataSign.getData());
+      return raw.getData().equals(blk.getBlockId().getByteString());
+    } catch (InvalidProtocolBufferException e) {
+      logger.error("parse from raw info failed");
+    }
+    return false;
+  }
+
   /**
    * Push the block in the KhoasDB.
    */
   public BlockCapsule push(BlockCapsule blk)
       throws UnLinkedBlockException, BadNumberBlockException {
     KhaosBlock block = new KhaosBlock(blk);
+
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
+      PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getBlockSignData(blk.getNum());
+      if (pbftSignCapsule != null && !isValidatedBlock(blk, pbftSignCapsule)) {
+          throw new UnLinkedBlockException();
+      }
+
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
       if (kblock != null) {
         if (blk.getNum() != kblock.num + 1) {
@@ -110,13 +136,16 @@ public class KhaosDatabase extends TronDatabase {
               "parent number :" + kblock.num + ",block number :" + blk.getNum());
         }
         block.setParent(kblock);
+        kblock.setChild(block);
       } else {
         miniUnlinkedStore.insert(block);
         throw new UnLinkedBlockException();
       }
     }
 
+
     miniStore.insert(block);
+
 
     if (head == null || block.num > head.num) {
       head = block;
@@ -248,6 +277,7 @@ public class KhaosDatabase extends TronDatabase {
     @Getter
     private BlockCapsule blk;
     private Reference<KhaosBlock> parent = new WeakReference<>(null);
+    private Reference<KhaosBlock> child = new WeakReference<>(null);
     private BlockId id;
     private Boolean invalid;
     private long num;
@@ -266,8 +296,16 @@ public class KhaosDatabase extends TronDatabase {
       return parent == null ? null : parent.get();
     }
 
+    public KhaosBlock getChild() {
+      return child == null ? null : child.get();
+    }
+
     public void setParent(KhaosBlock parent) {
       this.parent = new WeakReference<>(parent);
+    }
+
+    public void setChild(KhaosBlock child) {
+      this.child = new WeakReference<>(child);
     }
 
     @Override

@@ -1,15 +1,18 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 
 @Slf4j
 @Component
 public class CommonDataBase extends TronDatabase<byte[]> {
 
   private static final byte[] LATEST_PBFT_BLOCK_NUM = "LATEST_PBFT_BLOCK_NUM".getBytes();
+  private static final byte[] LATEST_PBFT_BLOCK_HASH = "LATEST_PBFT_BLOCK_HASH".getBytes();
 
   public CommonDataBase() {
     super("common-database");
@@ -43,6 +46,14 @@ public class CommonDataBase extends TronDatabase<byte[]> {
     this.put(LATEST_PBFT_BLOCK_NUM, ByteArray.fromLong(number));
   }
 
+  public void saveLatestPbftBlockHash(byte[] data) {
+    this.put(LATEST_PBFT_BLOCK_HASH, data);
+  }
+
+  public Sha256Hash getLatestPbftBlockHash() {
+    byte[] date = this.get(LATEST_PBFT_BLOCK_HASH);
+    return Sha256Hash.wrap(date);
+  }
 
   public long getLatestPbftBlockNum() {
     return Optional.ofNullable(get(LATEST_PBFT_BLOCK_NUM))

@@ -145,10 +145,10 @@ public class MessageQueue {
   }
 
   private boolean needToLog(Message msg) {
-    if (msg instanceof PingMessage ||
-        msg instanceof PongMessage ||
-        msg instanceof TransactionsMessage ||
-        msg instanceof PbftBaseMessage) {
+    if (msg instanceof PingMessage
+        || msg instanceof PongMessage
+        || msg instanceof TransactionsMessage
+        || msg instanceof PbftBaseMessage) {
       return false;
     }
 
