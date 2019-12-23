@@ -20,7 +20,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 public class WalletUtil {
 
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+  public static boolean checkPermissionOperations(Permission permission, Contract contract)
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
