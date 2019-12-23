@@ -401,8 +401,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void sameTokenNameOpenRightAssetIssue() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().
-            getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(1000L));
@@ -608,8 +608,8 @@ public class ParticipateAssetIssueActuatorTest {
   @Test
   public void sameTokenNameOpenExchangeDevisibleTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    initAssetIssue(chainBaseManager.getDynamicPropertiesStore().
-            getLatestBlockHeaderTimestamp() - 1000,
+    initAssetIssue(
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - 1000,
         chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 1000);
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator(); //no problem
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(999L));

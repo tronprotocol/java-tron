@@ -212,7 +212,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
             .build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
-    chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+    chainBaseManager
+        .getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
   }
 
   /**
@@ -293,7 +294,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Not support Shielded Transaction, need to be opened by the committee",
+      Assert.assertEquals(
+          "Not support Shielded Transaction, need to be opened by the committee",
           e.getMessage());
     }
   }
@@ -338,7 +340,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Not support Shielded Transaction, need to be opened by the committee",
+      Assert.assertEquals(
+          "Not support Shielded Transaction, need to be opened by the committee",
           e.getMessage());
     }
   }
@@ -409,15 +412,22 @@ public class ShieldedReceiveTest extends BlockGenerate {
     Assert.assertTrue(ok1);
 
     byte[] checkSpendParamsData = new byte[385];
-    System.arraycopy(checkSpendParams.getCv(), 0, checkSpendParamsData, 0, 32);
-    System.arraycopy(checkSpendParams.getAnchor(), 0, checkSpendParamsData, 32, 32);
-    System.arraycopy(checkSpendParams.getNullifier(), 0, checkSpendParamsData, 64, 32);
-    System.arraycopy(checkSpendParams.getRk(), 0, checkSpendParamsData, 96, 32);
-    System.arraycopy(checkSpendParams.getZkproof(), 0, checkSpendParamsData, 128, 192);
-    System.arraycopy(checkSpendParams.getSpendAuthSig(), 0, checkSpendParamsData, 320, 64);
+    System.arraycopy(
+        checkSpendParams.getCv(), 0, checkSpendParamsData, 0, 32);
+    System.arraycopy(
+        checkSpendParams.getAnchor(), 0, checkSpendParamsData, 32, 32);
+    System.arraycopy(
+        checkSpendParams.getNullifier(), 0, checkSpendParamsData, 64, 32);
+    System.arraycopy(
+        checkSpendParams.getRk(), 0, checkSpendParamsData, 96, 32);
+    System.arraycopy(
+        checkSpendParams.getZkproof(), 0, checkSpendParamsData, 128, 192);
+    System.arraycopy(
+        checkSpendParams.getSpendAuthSig(),0, checkSpendParamsData,320,64);
 
     // generate CheckOutputParams
-    ReceiveDescription receiveDescription = builder.getContractBuilder().getReceiveDescription(0);
+    ReceiveDescription receiveDescription =
+        builder.getContractBuilder().getReceiveDescription(0);
     CheckOutputParams checkOutputParams = new CheckOutputParams(ctx,
         receiveDescription.getValueCommitment().toByteArray(),
         receiveDescription.getNoteCommitment().toByteArray(),

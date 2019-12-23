@@ -73,8 +73,10 @@ public class ManagerForTest {
       for (int i = 1; i <= count; i++) {
         ByteString hash = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
             .getByteString();
-        long time = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 3000L;
-        long number = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
+        long time =
+            chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() + 3000L;
+        long number =
+            chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1;
         BlockCapsule blockCapsule = createTestBlockCapsule(time, number, hash);
         dbManager.pushBlock(blockCapsule);
       }
