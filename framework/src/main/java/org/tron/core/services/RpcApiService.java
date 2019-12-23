@@ -102,6 +102,9 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.MarketOrderList;
+import org.tron.protos.Protocol.MarketOrderPair;
+import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.NodeInfo;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
@@ -125,6 +128,8 @@ import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
+import org.tron.protos.contract.MarketContract.MarketCancelOrderContract;
+import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
@@ -2154,6 +2159,47 @@ public class RpcApiService implements Service {
       Transaction.Contract contract = request.getRawData().getContract(0);
       createTransactionExtention(contract.getParameter(), contract.getType(),
           responseObserver);
+    }
+
+    @Override
+    public void marketSellAsset(MarketSellAssetContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.MarketSellAssetContract, responseObserver);
+    }
+
+    @Override
+    public void marketCancelOrder(MarketCancelOrderContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.MarketCancelOrderContract, responseObserver);
+    }
+
+    @Override
+    public void getMarketOrderByAccount(Account request,
+        StreamObserver<MarketOrderList> responseObserver) {
+      try {
+        ByteString address = request.getAddress();
+
+        MarketOrderList marketOrderList = wallet
+            .getMarketOrderByAccount(address);
+        responseObserver.onNext(marketOrderList);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMarketPriceByPair(MarketOrderPair request,
+        StreamObserver<MarketPriceList> responseObserver) {
+      try {
+        MarketPriceList marketPriceList = wallet
+            .getMarketPriceByPair(request.getSellTokenId().toByteArray(),
+                request.getBuyTokenId().toByteArray());
+        responseObserver.onNext(marketPriceList);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
     }
   }
 }
