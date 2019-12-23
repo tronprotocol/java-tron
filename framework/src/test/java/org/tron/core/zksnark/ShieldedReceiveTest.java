@@ -243,7 +243,8 @@ public class ShieldedReceiveTest extends BlockGenerate {
   }
 
   private void updateTotalShieldedPoolValue(long valueBalance) {
-    long totalShieldedPoolValue = chainBaseManager.getDynamicPropertiesStore().getTotalShieldedPoolValue();
+    long totalShieldedPoolValue =
+        chainBaseManager.getDynamicPropertiesStore().getTotalShieldedPoolValue();
     totalShieldedPoolValue -= valueBalance;
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }
