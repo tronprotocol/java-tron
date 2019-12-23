@@ -5,9 +5,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
 @Component
