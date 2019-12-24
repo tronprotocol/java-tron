@@ -114,17 +114,19 @@ public class TronNetService {
         case CROSS_MSG:
           crossChainMsgHandler.processMessage(peer, msg);
         case HEADER_UPDATED_NOTICE:
-          blockHeaderSyncHandler.HandleUpdatedNotice();
+          blockHeaderSyncHandler.HandleUpdatedNotice(peer, msg);
           break;
         case HEADER_REQUEST_MESSAGE:
-          blockHeaderSyncHandler.handleRequest();
+          blockHeaderSyncHandler.handleRequest(peer, msg);
           break;
         case HEADER_INVENTORY:
-          blockHeaderSyncHandler.handleInventory();
+          blockHeaderSyncHandler.handleInventory(peer, msg);
           break;
         case SR_LIST:
-          blockHeaderSyncHandler.handleSrList();
+          blockHeaderSyncHandler.handleSrList(peer, msg);
           break;
+        case EPOCH_MESSAGE:
+          blockHeaderSyncHandler.handleEpoch(peer, msg);
         default:
           throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }

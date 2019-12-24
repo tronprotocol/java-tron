@@ -67,6 +67,8 @@ public enum MessageTypes {
 
   SR_LIST(0x54),
 
+  EPOCH_MESSAGE(0x55),
+
   LAST(0xFF);
 
   private static final Map<Integer, MessageTypes> intToTypeMap = new HashMap<>();
