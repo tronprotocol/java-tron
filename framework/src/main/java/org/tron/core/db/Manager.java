@@ -1129,6 +1129,7 @@ public class Manager {
 
         BlockCapsule latestBlockCapsule = getDynamicPropertiesStore().getLatestBlockCapsule();
         if (!checkInSameFork(latestBlockCapsule)) {
+          // check lastest pbft consensus block is in main chain or not
           Sha256Hash blockHash = commonDataBase.getLatestPbftBlockHash();
 
           printBeforeSwitchFork(newBlock, block);
@@ -1142,6 +1143,8 @@ public class Manager {
           printBeforeSwitchFork(newBlock, block);
           switchFork(newBlock);
           printAfterSwitchFork(newBlock, block);
+          return;
+        } else if (!checkInSameFork(newBlock)) {
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
