@@ -29,8 +29,10 @@ import org.tron.core.exception.UnLinkedBlockException;
 public class KhaosDatabase extends TronDatabase {
 
   private KhaosBlock head;
+  
   @Getter
   private KhaosStore miniStore = new KhaosStore();
+  
   @Getter
   private KhaosStore miniUnlinkedStore = new KhaosStore();
 
@@ -66,7 +68,6 @@ public class KhaosDatabase extends TronDatabase {
     if (!miniStore.remove(hash)) {
       miniUnlinkedStore.remove(hash);
     }
-
     head = miniStore.numKblkMap.entrySet().stream()
         .max(Comparator.comparingLong(Map.Entry::getKey))
         .map(Map.Entry::getValue)
@@ -115,9 +116,7 @@ public class KhaosDatabase extends TronDatabase {
         throw new UnLinkedBlockException();
       }
     }
-
     miniStore.insert(block);
-
     if (head == null || block.num > head.num) {
       head = block;
     }
@@ -249,7 +248,6 @@ public class KhaosDatabase extends TronDatabase {
     private BlockCapsule blk;
     private Reference<KhaosBlock> parent = new WeakReference<>(null);
     private BlockId id;
-    private Boolean invalid;
     private long num;
 
     public KhaosBlock(BlockCapsule blk) {
@@ -284,7 +282,6 @@ public class KhaosDatabase extends TronDatabase {
 
     @Override
     public int hashCode() {
-
       return Objects.hash(id);
     }
   }
@@ -334,11 +331,9 @@ public class KhaosDatabase extends TronDatabase {
         if (listBlk != null) {
           listBlk.removeIf(b -> b.id.equals(hash));
         }
-
         if (CollectionUtils.isEmpty(listBlk)) {
           numKblkMap.remove(num);
         }
-
         this.hashKblkMap.remove(hash);
         return true;
       }
@@ -356,6 +351,5 @@ public class KhaosDatabase extends TronDatabase {
     public int size() {
       return hashKblkMap.size();
     }
-
   }
 }
