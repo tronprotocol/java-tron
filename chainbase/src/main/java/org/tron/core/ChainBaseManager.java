@@ -11,6 +11,8 @@ import org.tron.core.db.BlockStore;
 import org.tron.core.db.CommonStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db.RecentBlockStore;
+import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -29,6 +31,8 @@ import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
+import org.tron.core.store.TransactionHistoryStore;
+import org.tron.core.store.TransactionRetStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
@@ -127,6 +131,19 @@ public class ChainBaseManager {
   @Getter
   private CommonStore commonStore;
 
+  @Autowired
+  @Getter
+  private TransactionStore transactionStore;
+  @Autowired
+  @Getter
+  private TransactionRetStore transactionRetStore;
+  @Autowired
+  @Getter
+  private RecentBlockStore recentBlockStore;
+  @Autowired
+  @Getter
+  private TransactionHistoryStore transactionHistoryStore;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -139,6 +156,10 @@ public class ChainBaseManager {
   }
 
   public void closeAllStore() {
+    closeOneStore(transactionRetStore);
+    closeOneStore(recentBlockStore);
+    closeOneStore(transactionHistoryStore);
+    closeOneStore(transactionStore);
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
