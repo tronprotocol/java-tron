@@ -25,6 +25,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.exception.BadNumberBlockException;
+import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.protos.Protocol.DataSign;
@@ -114,13 +115,13 @@ public class KhaosDatabase extends TronDatabase {
    * Push the block in the KhoasDB.
    */
   public BlockCapsule push(BlockCapsule blk)
-      throws UnLinkedBlockException, BadNumberBlockException {
+      throws UnLinkedBlockException, BadNumberBlockException, BlockNotInMainForkException {
     KhaosBlock block = new KhaosBlock(blk);
 
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getBlockSignData(blk.getNum());
       if (pbftSignCapsule != null && !isValidatedBlock(blk, pbftSignCapsule)) {
-          throw new UnLinkedBlockException();
+          throw new BlockNotInMainForkException();
       }
 
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
