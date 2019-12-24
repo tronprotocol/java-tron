@@ -57,6 +57,7 @@ public class Chainbase implements IRevokingDB {
   /**
    * close the database.
    */
+  
   @Override
   public synchronized void close() {
     head().close();
@@ -85,7 +86,6 @@ public class Chainbase implements IRevokingDB {
     if (value == null) {
       throw new ItemNotFoundException();
     }
-
     return value;
   }
 
@@ -133,10 +133,9 @@ public class Chainbase implements IRevokingDB {
       if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
         result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
       } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
-        result.addAll(((RocksDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
+        result.addAll(((IRevokingDB) ((RocksDB) ((SnapshotRoot) snapshot).db).getDb()).getlatestValues(tmp));
       }
     }
-
     return result;
   }
 
@@ -159,7 +158,7 @@ public class Chainbase implements IRevokingDB {
               .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
           .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
     } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
-      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
+      ((IRevokingDB) ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb()).getNext(key, limit).entrySet().stream()
           .map(e -> Maps
               .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
           .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
@@ -179,5 +178,10 @@ public class Chainbase implements IRevokingDB {
   @Override
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     return getValuesNext(head(), key, limit);
+  }
+
+  @Override
+  public Map<String, byte[]> getNext(byte[] key, long limit) {
+    return null;
   }
 }
