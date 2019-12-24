@@ -34,13 +34,11 @@ import org.tron.protos.contract.VoteAssetContractOuterClass;
 import org.tron.protos.contract.WitnessContract;
 
 public class TransactionUtils {
-
+  
   public static final int NORMALTRANSACTION = 0;
   public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;
   public static final int EXECUTINGDEFERREDTRANSACTION = 2;
-  private static final Logger logger = LoggerFactory.getLogger("Transaction");
-  private static final int RESERVE_BALANCE = 10;
-
+  
   /**
    * constructor.
    */
@@ -48,7 +46,6 @@ public class TransactionUtils {
   public static byte[] getHash(Transaction transaction) {
     Transaction.Builder tmp = transaction.toBuilder();
     //tmp.clearId();
-
     return Sha256Hash.hash(tmp.build().toByteArray());
   }
 
@@ -168,7 +165,6 @@ public class TransactionUtils {
   public static Transaction sign(Transaction transaction, ECKey myKey) {
     ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
-
     byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
     List<Contract> listContract = transaction.getRawData().getContractList();
     for (int i = 0; i < listContract.size(); i++) {
