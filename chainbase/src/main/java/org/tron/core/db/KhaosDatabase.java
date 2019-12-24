@@ -107,13 +107,7 @@ public class KhaosDatabase extends TronDatabase {
 
   public boolean isValidatedBlock(BlockCapsule blk, PbftSignCapsule pbftSignCapsule) {
     DataSign dataSign = pbftSignCapsule.getDataSign();
-    try {
-      Raw raw = Raw.parseFrom(dataSign.getData());
-      return raw.getData().equals(blk.getBlockId().getByteString());
-    } catch (InvalidProtocolBufferException e) {
-      logger.error("parse from raw info failed");
-    }
-    return false;
+    return dataSign.getData().equals(blk.getBlockId().getByteString());
   }
 
   /**
