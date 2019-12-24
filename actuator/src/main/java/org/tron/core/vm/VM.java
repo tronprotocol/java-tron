@@ -16,7 +16,6 @@ import static org.tron.core.vm.OpCode.SHL;
 import static org.tron.core.vm.OpCode.SHR;
 import static org.tron.core.vm.OpCode.TOKENBALANCE;
 import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +43,6 @@ public class VM {
   private static final String ENERGY_LOG_FORMATE = "{} Op:[{}]  Energy:[{}] Deep:[{}] Hint:[{}]";
   // 3MB
   private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
-  private final VMConfig config;
 
   public VM() {
     config = VMConfig.getInstance();
@@ -97,7 +95,7 @@ public class VM {
   }
 
   public void step(Program program) {
-    if (config.vmTrace()) {
+    if (VMConfig.vmTrace()) {
       program.saveOpTrace();
     }
 
@@ -267,7 +265,6 @@ public class VM {
           }
           DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
           getEnergyLimitLeft.sub(new DataWord(energyCost));
-
           adjustedCallEnergy = program.getCallEnergy(op, callEnergyWord, getEnergyLimitLeft);
           energyCost += adjustedCallEnergy.longValueSafe();
           break;
@@ -1442,7 +1439,6 @@ public class VM {
         default:
           break;
       }
-
       program.setPreviouslyExecutedOp(op.val());
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
