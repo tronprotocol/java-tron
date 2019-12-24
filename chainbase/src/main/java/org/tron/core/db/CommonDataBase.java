@@ -1,10 +1,10 @@
 package org.tron.core.db;
 
-import com.google.protobuf.ByteString;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 
 @Slf4j
@@ -52,6 +52,10 @@ public class CommonDataBase extends TronDatabase<byte[]> {
 
   public Sha256Hash getLatestPbftBlockHash() {
     byte[] date = this.get(LATEST_PBFT_BLOCK_HASH);
+
+    if (ByteUtil.isNullOrZeroArray(date)) {
+      return null;
+    }
     return Sha256Hash.wrap(date);
   }
 
