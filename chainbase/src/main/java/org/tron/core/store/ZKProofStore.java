@@ -33,4 +33,9 @@ public class ZKProofStore extends TronDatabase<Boolean> {
   public boolean has(byte[] key) {
     return dbSource.getData(key) != null;
   }
+
+  @Override
+  public String getDbName() {
+    return null;
+  }
 }
