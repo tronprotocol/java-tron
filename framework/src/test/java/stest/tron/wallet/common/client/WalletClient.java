@@ -70,10 +70,10 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  //  Create Wallet with a pritKey
+  //  Creates a Wallet with a pritKey
   public WalletClient(String priKey) {
     ECKey temKey = null;
     try {
@@ -94,16 +94,14 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static boolean init(int itype) {
     Config config = Configuration.getByPath("testng.conf");
     dbPath = config.getString("CityDb.DbPath");
     txtPath = System.getProperty("user.dir") + '/' + config.getString("CityDb.TxtPath");
-
     String fullNodepathname = "";
-
     if (1000 == itype) {
       fullNodepathname = "checkfullnode.ip.list";
     } else {
@@ -127,7 +125,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static GrpcClient init() {
@@ -135,7 +133,6 @@ public class WalletClient {
     Config config = Configuration.getByPath("testng.conf");
     dbPath = config.getString("CityDb.DbPath");
     txtPath = System.getProperty("user.dir") + "/" + config.getString("CityDb.TxtPath");
-
     String fullNode = "";
     String solidityNode = "";
     if (config.hasPath("soliditynode.ip.list")) {
@@ -161,7 +158,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static String selectFullNode() {
@@ -209,7 +206,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public Account queryAccount() {
@@ -228,40 +225,34 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  public static Transaction createTransferAssetTransaction(byte[] to, byte[] assertName,
-      byte[] owner, long amount) {
-    AssetIssueContractOuterClass.TransferAssetContract contract = createTransferAssetContract(to,
-        assertName, owner,
-        amount);
+  public static Transaction createTransferAssetTransaction(byte[] to, byte[] assertName, byte[] owner, long amount) {
+    AssetIssueContractOuterClass.TransferAssetContract contract = createTransferAssetContract(to, assertName, owner, amount);
     return rpcCli.createTransferAssetTransaction(contract);
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  public static Transaction participateAssetIssueTransaction(byte[] to, byte[] assertName,
-      byte[] owner, long amount) {
-    AssetIssueContractOuterClass.ParticipateAssetIssueContract contract =
-        participateAssetIssueContract(to, assertName, owner, amount);
+  public static Transaction participateAssetIssueTransaction(byte[] to, byte[] assertName, byte[] owner, long amount) {
+    AssetIssueContractOuterClass.ParticipateAssetIssueContract contract = participateAssetIssueContract(to, assertName, owner, amount);
     return rpcCli.createParticipateAssetIssueTransaction(contract);
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static Transaction updateAccountTransaction(byte[] addressBytes, byte[] accountNameBytes) {
-    AccountUpdateContract contract = createAccountUpdateContract(accountNameBytes,
-        addressBytes);
+    AccountUpdateContract contract = createAccountUpdateContract(accountNameBytes, addressBytes);
     return rpcCli.createTransaction(contract);
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static boolean broadcastTransaction(byte[] transactionBytes)
@@ -282,8 +273,7 @@ public class WalletClient {
     return rpcCli.createWitness(contract);
   }
 
-  public static Transaction createVoteWitnessTransaction(byte[] owner,
-      HashMap<String, String> witness) {
+  public static Transaction createVoteWitnessTransaction(byte[] owner, HashMap<String, String> witness) {
     WitnessContract.VoteWitnessContract contract = createVoteWitnessContract(owner, witness);
     return rpcCli.voteWitnessAccount(contract);
   }
@@ -297,11 +287,10 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  public static TransferContract createTransferContract(byte[] to, byte[] owner,
-      long amount) {
+  public static TransferContract createTransferContract(byte[] to, byte[] owner, long amount) {
     TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
@@ -312,13 +301,11 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  public static AssetIssueContractOuterClass.TransferAssetContract createTransferAssetContract(
-      byte[] to, byte[] assertName, byte[] owner, long amount) {
-    AssetIssueContractOuterClass.TransferAssetContract.Builder builder =
-        AssetIssueContractOuterClass.TransferAssetContract.newBuilder();
+  public static AssetIssueContractOuterClass.TransferAssetContract createTransferAssetContract(byte[] to, byte[] assertName, byte[] owner, long amount) {
+    AssetIssueContractOuterClass.TransferAssetContract.Builder builder = AssetIssueContractOuterClass.TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(owner);
@@ -326,18 +313,15 @@ public class WalletClient {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
-
     return builder.build();
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  public static ParticipateAssetIssueContract participateAssetIssueContract(
-      byte[] to, byte[] assertName, byte[] owner, long amount) {
-    ParticipateAssetIssueContract.Builder builder =
-        ParticipateAssetIssueContract.newBuilder();
+  public static ParticipateAssetIssueContract participateAssetIssueContract(byte[] to, byte[] assertName, byte[] owner, long amount) {
+    ParticipateAssetIssueContract.Builder builder = ParticipateAssetIssueContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(owner);
@@ -345,7 +329,6 @@ public class WalletClient {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
-
     return builder.build();
   }
 
@@ -355,11 +338,10 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  public static AccountCreateContract createAccountCreateContract(byte[] owner,
-      byte[] address) {
+  public static AccountCreateContract createAccountCreateContract(byte[] owner, byte[] address) {
     AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setAccountAddress(ByteString.copyFrom(address));
@@ -367,11 +349,10 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  public static AccountCreateContract createAccountCreateContract(
-      AccountType accountType, byte[] accountName, byte[] address) {
+  public static AccountCreateContract createAccountCreateContract(AccountType accountType, byte[] accountName, byte[] address) {
     AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
     ByteString bsaAdress = ByteString.copyFrom(address);
     ByteString bsAccountName = ByteString.copyFrom(accountName);
@@ -382,7 +363,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static Transaction createAccountTransaction(byte[] owner, byte[] address) {
@@ -391,49 +372,40 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  public static AccountUpdateContract createAccountUpdateContract(byte[] accountName,
-      byte[] address) {
+  public static AccountUpdateContract createAccountUpdateContract(byte[] accountName, byte[] address) {
     AccountUpdateContract.Builder builder = AccountUpdateContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(address);
     ByteString bsAccountName = ByteString.copyFrom(accountName);
-
     builder.setAccountName(bsAccountName);
     builder.setOwnerAddress(basAddreess);
-
     return builder.build();
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  public static WitnessContract.WitnessCreateContract createWitnessCreateContract(byte[] owner,
-      byte[] url) {
-    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract
-        .newBuilder();
+  public static WitnessContract.WitnessCreateContract createWitnessCreateContract(byte[] owner, byte[] url) {
+    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(url));
-
     return builder.build();
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
-  public static WitnessContract.VoteWitnessContract createVoteWitnessContract(
-      byte[] owner, HashMap<String, String> witness) {
-    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract
-        .newBuilder();
+  public static WitnessContract.VoteWitnessContract createVoteWitnessContract(byte[] owner, HashMap<String, String> witness) {
+    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       long count = Long.parseLong(value);
-      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder
-          = WitnessContract.VoteWitnessContract.Vote.newBuilder();
+      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder = WitnessContract.VoteWitnessContract.Vote.newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
       if (address == null) {
         continue;
@@ -442,7 +414,6 @@ public class WalletClient {
       voteBuilder.setVoteCount(count);
       builder.addVotes(voteBuilder.build());
     }
-
     return builder.build();
   }
 
@@ -460,7 +431,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static String loadPubKey() {
@@ -502,7 +473,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static String getAddressByStorage() {
@@ -522,7 +493,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static byte[] getPassWord(String password) {
@@ -537,7 +508,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static byte[] getEncKey(String password) {
@@ -551,7 +522,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static boolean checkPassWord(String password) {
@@ -565,7 +536,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static boolean passwordValid(String password) {
@@ -582,7 +553,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static boolean addressValid(byte[] address) {
@@ -592,14 +563,12 @@ public class WalletClient {
     }
     if (address.length != CommonConstant.ADDRESS_SIZE) {
       logger.warn(
-          "Warning: Address length need " + CommonConstant.ADDRESS_SIZE + " but " + address.length
-              + " !!");
+          "Warning: Address length needs to be " + CommonConstant.ADDRESS_SIZE + ", but it is " + address.length + " !!");
       return false;
     }
     byte preFixbyte = address[0];
     if (preFixbyte != getAddressPreFixByte()) {
-      logger.warn("Warning: Address need prefix with " + getAddressPreFixByte() + " but "
-          + preFixbyte + " !!");
+      logger.warn("Warning: Address needs to be prefix with " + getAddressPreFixByte() + ", but it is" + preFixbyte + " !!");
       return false;
     }
     //Other rule;
@@ -607,7 +576,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static String encode58Check(byte[] input) {
@@ -638,7 +607,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
@@ -663,7 +632,7 @@ public class WalletClient {
       return false;
     }
     if (priKey.length() != 64) {
-      logger.warn("Warning: PrivateKey length need 64 but " + priKey.length() + " !!");
+      logger.warn("Warning: PrivateKey length needs to be 64, but it is " + priKey.length() + " !!");
       return false;
     }
     //Other rule;
@@ -671,8 +640,9 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
+
   public static Optional<WitnessList> listWitnesses() {
     Optional<WitnessList> result = rpcCli.listWitnesses();
     if (result.isPresent()) {
@@ -743,7 +713,7 @@ public class WalletClient {
 
   private Transaction signTransaction(Transaction transaction) {
     if (this.ecKey == null || this.ecKey.getPrivKey() == null) {
-      logger.warn("Warning: Can't sign,there is no private key !!");
+      logger.warn("Warning: Can't sign, there is no private key !!");
       return null;
     }
     transaction = TransactionUtils.setTimestamp(transaction);
@@ -754,13 +724,12 @@ public class WalletClient {
         return rpcCli.getAssetIssueListByTimestamp(timestamp);
   }*/
 
-  /*    public static Optional<TransactionList> getTransactionsByTimestamp(
-  long start, long end, int offset, int limit) {
+  /*    public static Optional<TransactionList> getTransactionsByTimestamp(long start, long end, int offset, int limit) {
         return rpcCli.getTransactionsByTimestamp(start, end, offset, limit);
   }*/
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public boolean sendCoin(byte[] to, long amount) {
@@ -775,18 +744,15 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public boolean updateAccount(byte[] addressBytes, byte[] accountNameBytes) {
-    AccountUpdateContract contract = createAccountUpdateContract(accountNameBytes,
-        addressBytes);
+    AccountUpdateContract contract = createAccountUpdateContract(accountNameBytes, addressBytes);
     Transaction transaction = rpcCli.createTransaction(contract);
-
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
     }
-
     transaction = signTransaction(transaction);
     return rpcCli.broadcastTransaction(transaction);
   }
@@ -804,7 +770,7 @@ public class WalletClient {
   }*/
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public boolean transferAsset(byte[] to, byte[] assertName, long amount) {
@@ -818,7 +784,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public boolean participateAssetIssue(byte[] to, byte[] assertName, long amount) {
@@ -836,7 +802,7 @@ public class WalletClient {
   }*/
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public boolean createAssetIssue(AssetIssueContract contract) {
@@ -863,7 +829,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public boolean voteWitness(HashMap<String, String> witness) {
@@ -878,7 +844,7 @@ public class WalletClient {
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public boolean createAccount(byte[] address)
@@ -888,77 +854,60 @@ public class WalletClient {
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
     }
-
     transaction = signTransaction(transaction);
     return rpcCli.broadcastTransaction(transaction);
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public boolean freezeBalance(long frozenBalance, long frozenDuration) {
-
-    FreezeBalanceContract contract = createFreezeBalanceContract(frozenBalance,
-        frozenDuration);
-
+    FreezeBalanceContract contract = createFreezeBalanceContract(frozenBalance, frozenDuration);
     Transaction transaction = rpcCli.createTransaction(contract);
-
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
     }
-
     transaction = signTransaction(transaction);
     return rpcCli.broadcastTransaction(transaction);
   }
 
-  private FreezeBalanceContract createFreezeBalanceContract(long frozenBalance,
-      long frozenDuration) {
+  private FreezeBalanceContract createFreezeBalanceContract(long frozenBalance, long frozenDuration) {
     byte[] address = getAddress();
     FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
-
-    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
-        .setFrozenDuration(frozenDuration);
-
+    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance).setFrozenDuration(frozenDuration);
     return builder.build();
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public boolean unfreezeBalance() {
     UnfreezeBalanceContract contract = createUnfreezeBalanceContract();
-
     Transaction transaction = rpcCli.createTransaction(contract);
-
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
     }
-
     transaction = signTransaction(transaction);
     return rpcCli.broadcastTransaction(transaction);
   }
 
   private UnfreezeBalanceContract createUnfreezeBalanceContract() {
-
     byte[] address = getAddress();
-    UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract
-        .newBuilder();
+    UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
-
     return builder.build();
   }
 
   /**
-   * constructor.
+   * Constructor.
    */
 
   public boolean withdrawBalance() {
     WithdrawBalanceContract contract = createWithdrawBalanceContract();
-
     Transaction transaction = rpcCli.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
@@ -969,14 +918,10 @@ public class WalletClient {
   }
 
   private WithdrawBalanceContract createWithdrawBalanceContract() {
-
     byte[] address = getAddress();
-    WithdrawBalanceContract.Builder builder = WithdrawBalanceContract
-        .newBuilder();
+    WithdrawBalanceContract.Builder builder = WithdrawBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
-
     builder.setOwnerAddress(byteAddreess);
-
     return builder.build();
   }
 }
