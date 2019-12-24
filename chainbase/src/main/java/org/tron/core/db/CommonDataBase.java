@@ -52,6 +52,9 @@ public class CommonDataBase extends TronDatabase<byte[]> {
 
   public Sha256Hash getLatestPbftBlockHash() {
     byte[] date = this.get(LATEST_PBFT_BLOCK_HASH);
+    if (date == null) {
+      return null;
+    }
     return Sha256Hash.wrap(date);
   }
 
