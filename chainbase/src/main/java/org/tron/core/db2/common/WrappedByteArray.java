@@ -11,6 +11,9 @@ public final class WrappedByteArray {
   @Getter
   private byte[] bytes;
 
+  public WrappedByteArray(byte[] bytes2) {
+  }
+
   public static WrappedByteArray of(byte[] bytes) {
     return new WrappedByteArray(bytes);
   }
@@ -40,4 +43,8 @@ public final class WrappedByteArray {
   public int hashCode() {
     return Arrays.hashCode(bytes);
   }
+
+public byte[] getBytes() {
+	return null;
+}
 }
