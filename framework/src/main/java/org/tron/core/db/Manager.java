@@ -741,7 +741,8 @@ public class Manager {
       return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
     }
 
-    return chainBaseManager.getTransactionStore().has(transactionCapsule.getTransactionId().getBytes());
+    return chainBaseManager.getTransactionStore()
+        .has(transactionCapsule.getTransactionId().getBytes());
   }
 
   /**
@@ -868,7 +869,8 @@ public class Manager {
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
-      chainBaseManager.getTransactionRetStore().put(ByteArray.fromLong(block.getNum()), block.getResult());
+      chainBaseManager.getTransactionRetStore()
+          .put(ByteArray.fromLong(block.getNum()), block.getResult());
     }
 
     updateFork(block);
