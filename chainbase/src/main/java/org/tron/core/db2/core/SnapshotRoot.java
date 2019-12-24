@@ -104,4 +104,18 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   public Snapshot newInstance() {
     return new SnapshotRoot(db.newInstance());
   }
+
+  @Override
+  public Snapshot getPrevious() {
+    return null;
+  }
+
+  @Override
+  public void setPrevious(Snapshot previous) {
+  }
+
+  @Override
+  public Snapshot getSolidity() {
+    return null;
+  }
 }
