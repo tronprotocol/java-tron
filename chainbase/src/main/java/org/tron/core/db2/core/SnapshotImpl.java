@@ -74,6 +74,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   // e +------------+------------+------------+------------+
   // | | nop        | put(Y)     | del        | nop        |
   // \ +------------+------------+------------+------------+
+  
   @Override
   public void merge(Snapshot from) {
     SnapshotImpl fromImpl = (SnapshotImpl) from;
@@ -142,5 +143,19 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Override
   public Snapshot newInstance() {
     return new SnapshotImpl(this);
+  }
+
+  @Override
+  public Snapshot getPrevious() {
+    return null;
+  }
+
+  @Override
+  public void setPrevious(Snapshot previous) {
+  }
+
+  @Override
+  public Snapshot getRoot() {
+    return null;
   }
 }
