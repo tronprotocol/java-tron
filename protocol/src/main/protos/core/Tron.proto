@@ -702,3 +702,25 @@ message SrList {
   int64 cycle = 1;
   repeated bytes srAddress = 2;
 }
+
+message EpochMessage {
+  bytes chainId = 1;
+  int64 currentEpoch = 2;
+}
+
+message BlockHeaderUpdatedNotice {
+  bytes chainId = 1;
+  int64 currentBlockHeight = 2;
+}
+
+message BlockHeaderRequestMessage {
+  bytes chainId = 1;
+  int64 blockHeight = 2;
+  int64 length = 3;
+}
+
+message BlockHeaderInventory {
+  bytes chainId = 1;
+  bytes currentBlockHeight = 3;
+  repeated BlockHeader blockHeaderList = 4;
+}

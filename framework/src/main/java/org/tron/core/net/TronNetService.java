@@ -9,6 +9,7 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.messagehandler.BlockHeaderSyncHandler;
 import org.tron.core.net.messagehandler.BlockMsgHandler;
 import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
 import org.tron.core.net.messagehandler.CrossChainMsgHandler;
@@ -60,6 +61,9 @@ public class TronNetService {
   @Autowired
   private CrossChainMsgHandler crossChainMsgHandler;
 
+  @Autowired
+  private BlockHeaderSyncHandler blockHeaderSyncHandler;
+
   public void start() {
     channelManager.init();
     advService.init();
@@ -109,6 +113,18 @@ public class TronNetService {
           break;
         case CROSS_MSG:
           crossChainMsgHandler.processMessage(peer, msg);
+        case HEADER_UPDATED_NOTICE:
+          blockHeaderSyncHandler.HandleUpdatedNotice();
+          break;
+        case HEADER_REQUEST_MESSAGE:
+          blockHeaderSyncHandler.handleRequest();
+          break;
+        case HEADER_INVENTORY:
+          blockHeaderSyncHandler.handleInventory();
+          break;
+        case SR_LIST:
+          blockHeaderSyncHandler.handleSrList();
+          break;
         default:
           throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }
