@@ -65,7 +65,6 @@ public class TransactionUtil {
     if (ArrayUtils.isEmpty(accountName)) {
       return true;   //account name can be empty
     }
-
     return accountName.length <= 200;
   }
 
@@ -73,15 +72,13 @@ public class TransactionUtil {
     if (ArrayUtils.isEmpty(accountId)) {
       return false;
     }
-
     if (accountId.length < 8) {
       return false;
     }
-
     if (accountId.length > 32) {
       return false;
     }
-    // b must read able.
+    // b must be readable.
     for (byte b : accountId) {
       if (b < 0x21) {
         return false; // 0x21 = '!'
@@ -100,7 +97,7 @@ public class TransactionUtil {
     if (assetName.length > 32) {
       return false;
     }
-    // b must read able.
+    // b must be readable.
     for (byte b : assetName) {
       if (b < 0x21) {
         return false; // 0x21 = '!'
@@ -131,12 +128,10 @@ public class TransactionUtil {
     return true;
   }
 
-
   public static boolean validAssetDescription(byte[] description) {
     if (ArrayUtils.isEmpty(description)) {
-      return true;   //description can empty
+      return true;   //description can be empty
     }
-
     return description.length <= 200;
   }
 
@@ -156,14 +151,12 @@ public class TransactionUtil {
         return false;
       }
     }
-
     return !(id.length > 1 && id[0] == '0');
   }
 
   public static Sha256Hash getTransactionId(Transaction transaction) {
     return Sha256Hash.of(transaction.getRawData().toByteArray());
   }
-
 
   public static contractResult getContractRet(Transaction transaction) {
     if (transaction.getRetCount() <= 0) {
@@ -172,14 +165,12 @@ public class TransactionUtil {
     return transaction.getRet(0).getContractRet();
   }
 
-
   public static long getCallValue(Transaction.Contract contract) {
     try {
       Any contractParameter = contract.getParameter();
       switch (contract.getType()) {
         case TriggerSmartContract:
           return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
-
         case CreateSmartContract:
           return contractParameter.unpack(CreateSmartContract.class).getNewContract()
               .getCallValue();
@@ -198,7 +189,6 @@ public class TransactionUtil {
       switch (contract.getType()) {
         case TriggerSmartContract:
           return contractParameter.unpack(TriggerSmartContract.class).getCallTokenValue();
-
         case CreateSmartContract:
           return contractParameter.unpack(CreateSmartContract.class).getCallTokenValue();
         default:
@@ -211,18 +201,15 @@ public class TransactionUtil {
   }
 
   public static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
-
     if (selector == null || selector.length != 4
         || abi.getEntrysList().size() == 0) {
       return false;
     }
-
     for (int i = 0; i < abi.getEntrysCount(); i++) {
       ABI.Entry entry = abi.getEntrys(i);
       if (entry.getType() != ABI.Entry.EntryType.Function) {
         continue;
       }
-
       int inputCount = entry.getInputsCount();
       StringBuilder sb = new StringBuilder();
       sb.append(entry.getName());
@@ -235,40 +222,31 @@ public class TransactionUtil {
         }
       }
       sb.append(")");
-
       byte[] funcSelector = new byte[4];
       System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
       if (Arrays.equals(funcSelector, selector)) {
         return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
       }
     }
-
     return false;
   }
 
   public static byte[] generateContractAddress(Transaction trx) {
-
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
-
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
     return DecodeUtil.sha3omit12(combined);
-
   }
 
   public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
-
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
     return DecodeUtil.sha3omit12(combined);
-
   }
 
   // for `CREATE`
@@ -277,7 +255,6 @@ public class TransactionUtil {
     byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
     System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
-
     return DecodeUtil.sha3omit12(combined);
   }
 
@@ -287,7 +264,7 @@ public class TransactionUtil {
     return DecodeUtil.sha3omit12(mergedData);
   }
 
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+  public static boolean checkPermissionOperations(Permission permission, Contract contract)
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
@@ -356,7 +333,7 @@ public class TransactionUtil {
           throw new PermissionException("Permission type is wrong!");
         }
         //check operations
-        if (!checkPermissionOprations(permission, contract)) {
+        if (!checkPermissionOperations(permission, contract)) {
           throw new PermissionException("Permission denied!");
         }
       }
@@ -389,5 +366,4 @@ public class TransactionUtil {
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
   }
-
 }
