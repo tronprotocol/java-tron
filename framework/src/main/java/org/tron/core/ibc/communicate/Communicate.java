@@ -5,7 +5,7 @@ import org.tron.protos.Protocol.CrossMessage;
 
 public interface Communicate {
 
-  void sendCrossMessage(CrossMessage crossMessage);
+  void sendCrossMessage(CrossMessage crossMessage, boolean save);
 
   void receiveCrossMessage(CrossMessage crossMessage);
 

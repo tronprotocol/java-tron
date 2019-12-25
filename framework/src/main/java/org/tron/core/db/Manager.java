@@ -1380,6 +1380,7 @@ public class Manager {
         //process cross tx
         Sha256Hash txHash = crossTxQueue.poll();
         CrossMessage crossMessage = getCrossStore().getReceiveCrossMsgUnEx(txHash);
+        //todo:a->o->b
         if (crossMessage != null && crossMessage.getTimeOutBlockHeight() < getHeadBlockNum()) {
           trx = new TransactionCapsule(crossMessage.getTransaction());
           trx.setSource(false);
@@ -1538,7 +1539,7 @@ public class Manager {
         if (Objects.nonNull(result)) {
           transationRetCapsule.addTransactionInfo(result);
         }
-        pbftBlockListener.addCallBackTx(block.getNum(), transactionCapsule.getTransactionId());
+        pbftBlockListener.addCallBackTx(block.getNum(), transactionCapsule);
       }
       accountStateCallBack.executePushFinish();
     } finally {

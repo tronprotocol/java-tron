@@ -32,7 +32,7 @@ public class CommunicateService implements Communicate {
 
   private Map<String, CrossMessage> data;
 
-  private long timeOut = 1000 * 60 * 60L;
+  private long timeOut = 1000 * 60 * 2L;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -41,10 +41,12 @@ public class CommunicateService implements Communicate {
   private SyncPool syncPool;
 
   @Override
-  public void sendCrossMessage(CrossMessage crossMessage) {
+  public void sendCrossMessage(CrossMessage crossMessage, boolean save) {
     Sha256Hash txId = Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
     if (checkCommit(txId)) {
-      chainBaseManager.getCrossStore().saveSendCrossMsg(txId, crossMessage);
+      if (save) {
+        chainBaseManager.getCrossStore().saveSendCrossMsg(txId, crossMessage);
+      }
       try {
         //generate proof path
         BlockStore blockStore = chainBaseManager.getBlockStore();
