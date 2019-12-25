@@ -200,7 +200,7 @@ public class PbftMessageHandle {
   }
 
   public boolean checkIsCanSendMsg(PbftBaseMessage msg) {
-    if (!Param.getInstance().isEnable()) {
+    if (!Param.getInstance().isEnable()) {//is witness
       return false;
     }
     if (!witnessScheduleStore.getActiveWitnesses().stream()
