@@ -129,6 +129,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
   private static final byte[] SR_LIST_CURRENT_CYCLE = "SR_LIST_CURRENT_CYCLE".getBytes();
+  //cross
+  private static final byte[] CROSS_CHAIN = "CROSS_CHAIN".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -589,6 +591,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getChangeDelegation();
     } catch (IllegalArgumentException e) {
       this.saveChangeDelegation(DBConfig.getChangedDelegation());
+    }
+
+    try {
+      this.getCrossChain();
+    } catch (IllegalArgumentException e) {
+      this.saveChangeDelegation(DBConfig.getCrossChain());
     }
 
   }
@@ -1776,6 +1784,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowChangeDelegation() {
     return getChangeDelegation() == 1;
+  }
+
+  public void saveCrossChain(long number) {
+    this.put(CROSS_CHAIN,
+        new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getCrossChain() {
+    return Optional.ofNullable(getUnchecked(CROSS_CHAIN))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found CROSS_CHAIN"));
+  }
+
+  public boolean allowCrossChain() {
+    return getCrossChain() == 1;
   }
 
   public long getSrListCurrentCycle() {

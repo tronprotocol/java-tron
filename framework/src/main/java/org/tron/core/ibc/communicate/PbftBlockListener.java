@@ -42,8 +42,7 @@ public class PbftBlockListener implements EventListener<PbftBlockEvent> {
             communicateService.sendCrossMessage(crossMessage);
           } else if (crossMessage.getType() == Type.ACK) {
             //delete the send to end chain data
-
-
+            crossStore.removeSendCrossMsg(hash);
           } else {
 
           }
@@ -52,7 +51,7 @@ public class PbftBlockListener implements EventListener<PbftBlockEvent> {
     }
   }
 
-  public void addCallBackTx(long blockNum, Sha256Hash txHash) {
+  public boolean addCallBackTx(long blockNum, Sha256Hash txHash) {
     CrossStore crossStore = chainBaseManager.getCrossStore();
     CrossMessage crossMessage = crossStore.getReceiveCrossMsgUnEx(txHash);
     if (crossMessage != null) {
@@ -63,6 +62,9 @@ public class PbftBlockListener implements EventListener<PbftBlockEvent> {
         list.add(txHash);
         callBackTx.put(blockNum, list);
       }
+      return true;
+    } else {
+      return false;
     }
   }
 }

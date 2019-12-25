@@ -39,6 +39,10 @@ public class CrossStore extends TronDatabase<byte[]> {
     this.put(buildSendKey(txId), crossMessage.toByteArray());
   }
 
+  public void removeSendCrossMsg(Sha256Hash txId) {
+    delete(buildSendKey(txId));
+  }
+
   public CrossMessage getSendCrossMsg(Sha256Hash txId) throws InvalidProtocolBufferException {
     byte[] data = get(buildSendKey(txId));
     if (!ByteUtil.isNullOrZeroArray(data)) {

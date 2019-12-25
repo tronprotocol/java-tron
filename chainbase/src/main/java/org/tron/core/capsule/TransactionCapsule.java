@@ -96,6 +96,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private TransactionTrace trxTrace;
   private StringBuilder toStringBuff = new StringBuilder();
 
+  @Getter
+  @Setter
+  private boolean source = true;
+
   /**
    * constructor TransactionCapsule.
    */
