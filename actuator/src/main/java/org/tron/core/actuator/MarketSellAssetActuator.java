@@ -106,7 +106,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
           .setSellTokenQuantity(contract.getSellTokenQuantity())
           .setBuyTokenQuantity(contract.getBuyTokenQuantity()).build();
 
-      //fee
+      // fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
       // Add to blackhole address
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
@@ -264,7 +264,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   public boolean hasMatch(
       MarketPriceListCapsule buyPriceListCapsule, MarketPrice takerPrice) {
     List<MarketPrice> pricesList = buyPriceListCapsule.getPricesList();
-    if (pricesList.size() == 0) {
+    if (pricesList.isEmpty()) {
       return false;
     }
     MarketPrice buyPrice = pricesList.get(0);
@@ -275,8 +275,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
       throws ItemNotFoundException {
 
     byte[] makerPair = MarketUtils.createPairKey(buyTokenID, sellTokenID);
-    MarketPriceListCapsule priceListCapsule = pairToPriceStore
-        .getUnchecked(makerPair);//if not exists
+    MarketPriceListCapsule priceListCapsule = pairToPriceStore.getUnchecked(makerPair);
+
+    //if not exists
     if (priceListCapsule == null) {
       return;
     }
@@ -396,7 +397,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       makerOrderCapsule.setState(State.INACTIVE);
       if (makerBuyTokenQuantityReceive == 0) {
-        //交易量过小，直接将剩余 sellToken 返回 maker
+        // 交易量过小，直接将剩余 sellToken 返回 maker
         // 不会出现在这种情况情况。
         // 对maker，sellQuantity<buyQuantity时，sellRemain=1时都能兑换至少一个buyToken
         // 因此假设 sellQuantity=200，buyQuantity=100,出现sellRemain=1，需要满足以下条件：
@@ -423,8 +424,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
 
   public MarketOrderCapsule createAndSaveOrder(AccountCapsule accountCapsule,
-      MarketSellAssetContract contract)
-      throws ItemNotFoundException {
+      MarketSellAssetContract contract) {
 
     MarketAccountOrderCapsule marketAccountOrderCapsule = marketAccountStore
         .getUnchecked(contract.getOwnerAddress().toByteArray());
@@ -510,19 +510,18 @@ public class MarketSellAssetActuator extends AbstractActuator {
   }
 
 
-  public void saveRemainOrder(MarketOrderCapsule orderCapsule, MarketPrice currentPrice)
-      throws ItemNotFoundException {
+  public void saveRemainOrder(MarketOrderCapsule orderCapsule, MarketPrice currentPrice) {
 
     //add price into pricesList
-    byte[] pair = MarketUtils.createPairKey(sellTokenID, buyTokenID);
-    MarketPriceListCapsule priceListCapsule = pairToPriceStore.getUnchecked(pair);
+    byte[] pairKey = MarketUtils.createPairKey(sellTokenID, buyTokenID);
+    MarketPriceListCapsule priceListCapsule = pairToPriceStore.getUnchecked(pairKey);
     if (priceListCapsule == null) {
       priceListCapsule = new MarketPriceListCapsule(sellTokenID, buyTokenID);
     }
 
-    List<MarketPrice> pricesList = new ArrayList<>(priceListCapsule.getPricesList());
     int index = 0;
     boolean found = false;
+    List<MarketPrice> pricesList = new ArrayList<>(priceListCapsule.getPricesList());
     for (; index < pricesList.size(); index++) {
       if (isLowerPrice(currentPrice, pricesList.get(index))) {
         break;
@@ -534,16 +533,19 @@ public class MarketSellAssetActuator extends AbstractActuator {
     }
 
     if (!found) {
-      //price not exists
+      //price not exists, add price to priceList
       pricesList.add(index, currentPrice);
       priceListCapsule.setPricesList(pricesList);
-      pairToPriceStore.put(pair, priceListCapsule);
+      pairToPriceStore.put(pairKey, priceListCapsule);
     }
 
     //add order into orderList
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(
-        orderCapsule.getSellTokenId(), orderCapsule.getBuyTokenId(),
-        orderCapsule.getSellTokenQuantity(), orderCapsule.getBuyTokenQuantity());
+        orderCapsule.getSellTokenId(),
+        orderCapsule.getBuyTokenId(),
+        orderCapsule.getSellTokenQuantity(),
+        orderCapsule.getBuyTokenQuantity()
+    );
 
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.getUnchecked(pairPriceKey);
     if (orderIdListCapsule == null) {

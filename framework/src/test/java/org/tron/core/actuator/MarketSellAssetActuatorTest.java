@@ -6,6 +6,10 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -31,6 +35,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
@@ -38,6 +43,7 @@ import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.MarketOrder;
 import org.tron.protos.Protocol.MarketOrder.State;
+import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketPriceList.MarketPrice;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
@@ -104,27 +110,62 @@ public class MarketSellAssetActuatorTest {
    */
   @Before
   public void initTest() {
+    byte[] ownerAddressFirstBytes = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    byte[] ownerAddressSecondBytes = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
+
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_FIRST),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
+            ByteString.copyFrom(ownerAddressFirstBytes),
             AccountType.Normal,
             10000_000_000L);
     AccountCapsule ownerAccountSecondCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
+            ByteString.copyFrom(ownerAddressSecondBytes),
             AccountType.Normal,
             20000_000_000L);
 
+    // init account
     dbManager.getAccountStore()
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
     dbManager.getAccountStore()
         .put(ownerAccountSecondCapsule.getAddress().toByteArray(), ownerAccountSecondCapsule);
 
+    // clean
+    cleanMarketOrderByAccount(ownerAddressFirstBytes);
+    cleanMarketOrderByAccount(ownerAddressSecondBytes);
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+
+    chainBaseManager.getMarketAccountStore().delete(ownerAddressFirstBytes);
+    chainBaseManager.getMarketAccountStore().delete(ownerAddressSecondBytes);
+
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
     dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
+  }
+
+  private void cleanMarketOrderByAccount(byte[] accountAddress) {
+
+    if (accountAddress == null || accountAddress.length == 0) {
+      return ;
+    }
+
+    MarketAccountOrderCapsule marketAccountOrderCapsule;
+    try {
+      marketAccountOrderCapsule = dbManager.getChainBaseManager()
+          .getMarketAccountStore().get(accountAddress);
+    } catch (ItemNotFoundException e) {
+      return ;
+    }
+
+    MarketOrderStore marketOrderStore = dbManager.getChainBaseManager().getMarketOrderStore();
+
+    List<ByteString> orderIdList = marketAccountOrderCapsule.getOrdersList();
+    orderIdList
+        .forEach(
+            orderId -> marketOrderStore.delete(orderId.toByteArray())
+        );
   }
 
   private Any getContract(String address, String sellTokenId, long sellTokenQuantity
@@ -154,6 +195,20 @@ public class MarketSellAssetActuatorTest {
             .build());
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule1.createDbV2Key(), assetIssueCapsule1);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
+
+    // clean
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    chainBaseManager.getMarketPairToPriceStore()
+        .delete(MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes()));
+    chainBaseManager.getMarketPairToPriceStore()
+        .delete(MarketUtils.createPairKey(TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes()));
+
+    MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+    pairPriceToOrderStore.forEach(
+        marketOrderIdListCapsuleEntry -> pairPriceToOrderStore
+            .delete(marketOrderIdListCapsuleEntry.getKey())
+    );
   }
 
   //test case

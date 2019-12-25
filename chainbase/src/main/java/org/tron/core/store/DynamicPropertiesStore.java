@@ -1234,9 +1234,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public void saveMarketQuantityLimit(long fee) {
+  public void saveMarketQuantityLimit(long limit) {
     this.put(MARKET_QUANTITY_LIMIT,
-        new BytesCapsule(ByteArray.fromLong(fee)));
+        new BytesCapsule(ByteArray.fromLong(limit)));
   }
 
   public long getMarketQuantityLimit() {
