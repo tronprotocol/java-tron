@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.db.BlockHeaderStore;
+import org.tron.core.db.CommonDataBase;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.BlockHeaderInventoryMesasge;
@@ -29,6 +30,9 @@ public class BlockHeaderSyncHandler {
 
   @Autowired
   private PbftSignDataStore pbftSignDataStore;
+
+  @Autowired
+  private CommonDataBase commonDataBase;
 
   public void HandleUpdatedNotice(PeerConnection peer, TronMessage msg) {
     BlockHeaderUpdatedNoticeMessage noticeMessage = (BlockHeaderUpdatedNoticeMessage) msg;
