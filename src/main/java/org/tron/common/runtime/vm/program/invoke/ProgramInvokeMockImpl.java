@@ -50,6 +50,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   private boolean isConstantCall;
 
+  private boolean isStaticCall;
+
   public ProgramInvokeMockImpl(byte[] msgDataRaw) {
     this();
     this.msgData = Arrays.clone(msgDataRaw);
@@ -225,7 +227,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   @Override
   public boolean isStaticCall() {
-    return isConstantCall;
+    return isStaticCall;
   }
 
   @Override
@@ -252,12 +254,13 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setRootConstantCall() {
+  public void setConstantCall() {
+    isConstantCall = true;
   }
 
   @Override
-  public boolean isRootConstantCall() {
-    return false;
+  public boolean isConstantCall() {
+    return isConstantCall;
   }
 
   @Override
