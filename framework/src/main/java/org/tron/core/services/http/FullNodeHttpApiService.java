@@ -185,7 +185,7 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetSpendingKeyServlet getSpendingKeyServlet;
   @Autowired
-  private GetShieldedAddressInfoServlet getShieldedAddressInfoServlet;
+  private GetNewShieldedAddressServlet getNewShieldedAddressServlet;
   @Autowired
   private GetDiversifierServlet getDiversifierServlet;
   @Autowired
@@ -379,7 +379,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getNkFromNskServlet), "/getnkfromnsk");
       context.addServlet(new ServletHolder(getSpendingKeyServlet), "/getspendingkey");
       context
-          .addServlet(new ServletHolder(getShieldedAddressInfoServlet), "/getshieldedaddressinfo");
+          .addServlet(new ServletHolder(getNewShieldedAddressServlet), "/getnewshieldedaddress");
       context.addServlet(new ServletHolder(getDiversifierServlet), "/getdiversifier");
       context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
       context.addServlet(new ServletHolder(getZenPaymentAddressServlet), "/getzenpaymentaddress");

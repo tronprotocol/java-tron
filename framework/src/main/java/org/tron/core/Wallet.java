@@ -1741,7 +1741,7 @@ public class Wallet {
   }
 
 
-  public ShieldedAddressInfo getNewShieldedAddressInfo() throws BadItemException, ZksnarkException {
+  public ShieldedAddressInfo getNewShieldedAddress() throws BadItemException, ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
