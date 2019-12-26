@@ -699,7 +699,7 @@ message Proof {
 }
 
 message SrList {
-  int64 cycle = 1;
+  int64 epoch = 1;
   repeated bytes srAddress = 2;
 }
 
@@ -721,6 +721,6 @@ message BlockHeaderRequestMessage {
 
 message BlockHeaderInventory {
   bytes chainId = 1;
-  bytes currentBlockHeight = 3;
-  repeated BlockHeader blockHeaderList = 4;
+  int64 currentBlockHeight = 2;
+  repeated BlockHeader blockHeader = 3;
 }

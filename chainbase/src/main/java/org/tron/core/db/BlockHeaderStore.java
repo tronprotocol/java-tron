@@ -26,44 +26,45 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.BlockHeaderCapsule;
 import org.tron.core.exception.BadItemException;
 
 @Slf4j(topic = "DB")
 @Component
-public class BlockHeaderStore extends TronStoreWithRevoking<BlockCapsule> {
+public class BlockHeaderStore extends TronStoreWithRevoking<BlockHeaderCapsule> {
 
   @Autowired
   private BlockHeaderStore(@Value("block_header") String dbName) {
     super(dbName);
   }
 
-  public List<BlockCapsule> getLimitNumber(long startNumber, long limit) {
+  public List<BlockHeaderCapsule> getLimitNumber(long startNumber, long limit) {
     BlockId startBlockId = new BlockId(Sha256Hash.ZERO_HASH, startNumber);
     return revokingDB.getValuesNext(startBlockId.getBytes(), limit).stream()
         .map(bytes -> {
           try {
-            return new BlockCapsule(bytes);
+            return new BlockHeaderCapsule(bytes);
           } catch (BadItemException ignored) {
           }
           return null;
         })
         .filter(Objects::nonNull)
-        .sorted(Comparator.comparing(BlockCapsule::getNum))
+        .sorted(Comparator.comparing(BlockHeaderCapsule::getNum))
         .collect(Collectors.toList());
   }
 
-  public List<BlockCapsule> getBlockByLatestNum(long getNum) {
+  public List<BlockHeaderCapsule> getBlockHeaderByLatestNum(long getNum) {
 
     return revokingDB.getlatestValues(getNum).stream()
         .map(bytes -> {
           try {
-            return new BlockCapsule(bytes);
+            return new BlockHeaderCapsule(bytes);
           } catch (BadItemException ignored) {
           }
           return null;
         })
         .filter(Objects::nonNull)
-        .sorted(Comparator.comparing(BlockCapsule::getNum))
+        .sorted(Comparator.comparing(BlockHeaderCapsule::getNum))
         .collect(Collectors.toList());
   }
 }
