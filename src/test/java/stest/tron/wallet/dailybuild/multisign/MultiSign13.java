@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -97,8 +98,8 @@ public class MultiSign13 {
 
   @Test(enabled = true, description = "Witness permission_name is witness")
   public void testWitnessName01() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed
@@ -108,7 +109,6 @@ public class MultiSign13 {
         .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 0, ByteString.copyFrom(ownerAddress),
             testKey002, blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
@@ -181,8 +181,8 @@ public class MultiSign13 {
 
   @Test(enabled = true, description = "Witness permission_name is witness12")
   public void testWitnessName02() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -260,8 +260,8 @@ public class MultiSign13 {
 
   @Test(enabled = true, description = "Witness permission_name is \"123\"")
   public void testWitnessName03() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -341,8 +341,8 @@ public class MultiSign13 {
 
   @Test(enabled = true, description = "Witness permission_name is \"\"")
   public void testWitnessName04() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -421,8 +421,8 @@ public class MultiSign13 {
 
   @Test(enabled = true, description = "Witness permission_name is null")
   public void testWitnessName05() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     PublicMethed.sendcoin(ownerAddress, 1_000000, fromAddress, testKey002, blockingStubFull);
 
     Assert.assertTrue(PublicMethed
@@ -478,8 +478,8 @@ public class MultiSign13 {
 
   @Test(enabled = true, description = "Witness doesn't have permission_name")
   public void testWitnessName06() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -555,8 +555,8 @@ public class MultiSign13 {
 
   @Test(enabled = true, description = "Witness permission_name is 123")
   public void testWitnessName07() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -633,8 +633,8 @@ public class MultiSign13 {
 
   @Test(enabled = true, description = "Witness permission_name is 0.1")
   public void testWitnessName08() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -710,8 +710,8 @@ public class MultiSign13 {
 
   @Test(enabled = true, description = "Witness permission_name length is 32")
   public void testWitnessName09() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
 
     long needCoin = updateAccountPermissionFee * 2;
 
@@ -721,7 +721,6 @@ public class MultiSign13 {
         .freezeBalanceForReceiver(fromAddress, 100000000L, 0, 0,
             ByteString.copyFrom(ownerAddress),
             testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -791,13 +790,12 @@ public class MultiSign13 {
 
   @Test(enabled = true, description = "Witness permission_name length is 33")
   public void testWitnessName10() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1000000, fromAddress,
         testKey002, blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -838,6 +836,12 @@ public class MultiSign13 {
 
     Assert.assertEquals(balanceBefore, balanceAfter);
 
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull);
   }
 
   /**

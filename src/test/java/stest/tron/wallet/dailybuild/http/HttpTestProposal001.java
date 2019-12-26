@@ -119,6 +119,28 @@ public class HttpTestProposal001 {
     Assert.assertEquals(responseContent.getString("state"), "CANCELED");
   }
 
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get chain parameters by http")
+  public void test7GetChainParameters() {
+    response = HttpMethed.getChainParameters(httpnode);
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals("getMaintenanceTimeInterval",
+        responseContent.getJSONArray("chainParameter").getJSONObject(0)
+            .get("key"));
+    Assert.assertEquals(300000, responseContent.getJSONArray("chainParameter").getJSONObject(0)
+        .get("value"));
+    Assert.assertEquals("getCreateAccountFee",
+        responseContent.getJSONArray("chainParameter").getJSONObject(2)
+            .get("key"));
+    Assert.assertEquals(100000, responseContent.getJSONArray("chainParameter").getJSONObject(2)
+        .get("value"));
+  }
+
   /**
    * constructor.
    */

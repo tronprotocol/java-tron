@@ -249,6 +249,8 @@ public class HttpTestAsset001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, assetAddress, fromAddress, assetKey);
+    HttpMethed.freedResource(httpnode, participateAddress, fromAddress, participateKey);
     HttpMethed.disConnect();
   }
 }

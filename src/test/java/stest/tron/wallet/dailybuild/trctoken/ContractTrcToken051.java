@@ -99,7 +99,6 @@ public class ContractTrcToken051 {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
         0, 1, user001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
@@ -137,18 +136,17 @@ public class ContractTrcToken051 {
     logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     Assert
-        .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 2048000000, fromAddress,
+        .assertFalse(PublicMethed.sendcoin(transferTokenContractAddress, 2048000000, fromAddress,
             testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    // devAddress transfer token to userAddress
+    /*// devAddress transfer token to userAddress
     PublicMethed
         .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
             user001Address,
             user001Key,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(user001Address,
         blockingStubFull);
@@ -188,7 +186,6 @@ public class ContractTrcToken051 {
         param, false, 0, 100000000L, "0",
         0, user001Address, user001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(user001Address, blockingStubFull);
@@ -239,6 +236,10 @@ public class ContractTrcToken051 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, user001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

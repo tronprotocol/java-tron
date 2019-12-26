@@ -93,7 +93,6 @@ public class ContractInternalTransaction002 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/"
         + "contractInternalTransaction002test1InternalTransaction007.sol";
     String contractName = "A";
@@ -103,7 +102,6 @@ public class ContractInternalTransaction002 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName1 = "C";
@@ -115,7 +113,6 @@ public class ContractInternalTransaction002 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String initParmes = "\"" + Base58.encode58Check(contractAddress1) + "\"";
 
@@ -124,7 +121,6 @@ public class ContractInternalTransaction002 {
     txid = PublicMethed.triggerContract(contractAddress,
         "test1(address)", initParmes, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;
@@ -564,6 +560,9 @@ public class ContractInternalTransaction002 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(internalTxsAddress, testKeyForinternalTxsAddress, testNetAccountAddress,
+            blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

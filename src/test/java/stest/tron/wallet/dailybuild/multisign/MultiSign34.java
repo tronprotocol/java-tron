@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.multisign;
 
 import static org.hamcrest.core.StringContains.containsString;
 
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.List;
@@ -115,7 +116,7 @@ public class MultiSign34 {
             containsString("PERMISSION_ERROR"));
     Assert
         .assertThat(transactionSignWeight.getResult().getMessage(),
-            containsString("permission isn't exit"));
+          containsString("Permission for this, does not exist!"));
 
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
@@ -154,7 +155,7 @@ public class MultiSign34 {
             containsString("PERMISSION_ERROR"));
     Assert
         .assertThat(transactionSignWeight.getResult().getMessage(),
-            containsString("permission isn't exit"));
+          containsString("Permission for this, does not exist!"));
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
     logger.info("returnResult1:" + returnResult1);
@@ -181,12 +182,14 @@ public class MultiSign34 {
     Assert.assertTrue(PublicMethed
         .sendcoin(witnessesKey, 1000000000, fromAddress, testKey002,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account test001AddressAccount = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
     final long balance = test001AddressAccount.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
+    logger.info("balance: " + balance);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
     Transaction transaction = PublicMethedForMutiSign
@@ -198,11 +201,13 @@ public class MultiSign34 {
         .broadcastTransaction1(transaction1, blockingStubFull);
     logger.info("returnResult1:" + returnResult1);
     Assert.assertTrue(returnResult1.getResult());
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account test001AddressAccount1 = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
     final long balance1 = test001AddressAccount1.getBalance();
+    logger.info("balance1: " + balance1);
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));

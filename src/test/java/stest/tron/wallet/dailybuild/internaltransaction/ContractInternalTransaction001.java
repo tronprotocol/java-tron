@@ -154,7 +154,6 @@ public class ContractInternalTransaction001 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String filePath = "src/test/resources/soliditycode/"
         + "contractInternalTransaction001testInternalTransaction002.sol";
@@ -241,7 +240,6 @@ public class ContractInternalTransaction001 {
     Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/"
         + "contractInternalTransaction001testInternalTransaction004.sol";
@@ -478,11 +476,15 @@ public class ContractInternalTransaction001 {
     }
   }
 
+
   /**
    * constructor.
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(internalTxsAddress, testKeyForinternalTxsAddress, testNetAccountAddress,
+            blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

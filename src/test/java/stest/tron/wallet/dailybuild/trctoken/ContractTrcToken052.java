@@ -124,14 +124,14 @@ public class ContractTrcToken052 {
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert
-        .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 2048000000, fromAddress,
+        .assertFalse(PublicMethed.sendcoin(transferTokenContractAddress, 2048000000, fromAddress,
             testKey002, blockingStubFull));
-    // devAddress transfer token to userAddress
+    /*// devAddress transfer token to userAddress
     PublicMethed
         .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
             user001Address,
             user001Key,
-            blockingStubFull);
+            blockingStubFull);*/
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
@@ -174,7 +174,6 @@ public class ContractTrcToken052 {
         param, false, 0, 100000000L, "0",
         0, user001Address, user001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(user001Address, blockingStubFull);
@@ -231,6 +230,10 @@ public class ContractTrcToken052 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, user001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

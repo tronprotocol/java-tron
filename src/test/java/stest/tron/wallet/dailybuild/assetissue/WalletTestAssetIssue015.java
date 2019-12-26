@@ -213,12 +213,17 @@ public class WalletTestAssetIssue015 {
 
   }
 
+
   /**
    * constructor.
    */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(asset015Address, testKeyForAssetIssue015, fromAddress, blockingStubFull);
+    PublicMethed
+        .freedResource(transferAssetAddress, transferAssetCreateKey, fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

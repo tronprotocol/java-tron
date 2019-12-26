@@ -35,8 +35,6 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 @Slf4j
 public class ClearABIContractActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static final String dbPath = "output_clearabicontract_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "test_account";
@@ -47,11 +45,14 @@ public class ClearABIContractActuatorTest {
   private static final String CONTRACT_ADDRESS = "111111";
   private static final String NO_EXIST_CONTRACT_ADDRESS = "2222222";
   private static final ABI SOURCE_ABI = jsonStr2Abi(
-      "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]");
+      "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\""
+          + ":\"constructor\"}]");
   private static final ABI TARGET_ABI = ABI.getDefaultInstance();
+  private static TronApplicationContext context;
+  private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
@@ -70,41 +71,6 @@ public class ClearABIContractActuatorTest {
   }
 
   /**
-   * create temp Capsule test need.
-   */
-  @Before
-  public void createCapsule() {
-    // address in accountStore and the owner of contract
-    AccountCapsule accountCapsule =
-        new AccountCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-            ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
-            Protocol.AccountType.Normal);
-    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
-
-    // smartContarct in contractStore
-    Protocol.SmartContract.Builder builder = Protocol.SmartContract.newBuilder();
-    builder.setName(SMART_CONTRACT_NAME);
-    builder.setOriginAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
-    builder.setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(CONTRACT_ADDRESS)));
-    builder.setAbi(SOURCE_ABI);
-    dbManager.getContractStore().put(
-        ByteArray.fromHexString(CONTRACT_ADDRESS),
-        new ContractCapsule(builder.build()));
-
-    // address in accountStore not the owner of contract
-    AccountCapsule secondAccount =
-        new AccountCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS)),
-            ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
-            Protocol.AccountType.Normal);
-    dbManager.getAccountStore().put(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS), secondAccount);
-
-    // address does not exist in accountStore
-    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
-  }
-
-  /**
    * Release resources.
    */
   @AfterClass
@@ -118,19 +84,46 @@ public class ClearABIContractActuatorTest {
     }
   }
 
+  /**
+   * create temp Capsule test need.
+   */
+  @Before
+  public void createCapsule() {
+    // address in accountStore and the owner of contract
+    AccountCapsule accountCapsule = new AccountCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+        ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME), Protocol.AccountType.Normal);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
+
+    // smartContarct in contractStore
+    Protocol.SmartContract.Builder builder = Protocol.SmartContract.newBuilder();
+    builder.setName(SMART_CONTRACT_NAME);
+    builder.setOriginAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
+    builder.setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(CONTRACT_ADDRESS)));
+    builder.setAbi(SOURCE_ABI);
+    dbManager.getContractStore()
+        .put(ByteArray.fromHexString(CONTRACT_ADDRESS), new ContractCapsule(builder.build()));
+
+    // address in accountStore not the owner of contract
+    AccountCapsule secondAccount = new AccountCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS)),
+        ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME), Protocol.AccountType.Normal);
+    dbManager.getAccountStore().put(ByteArray.fromHexString(SECOND_ACCOUNT_ADDRESS), secondAccount);
+
+    // address does not exist in accountStore
+    dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
+  }
+
   private Any getContract(String accountAddress, String contractAddress) {
-    return Any.pack(
-        Contract.ClearABIContract.newBuilder()
-            .setOwnerAddress(StringUtil.hexString2ByteString(accountAddress))
-            .setContractAddress(StringUtil.hexString2ByteString(contractAddress))
-            .build());
+    return Any.pack(Contract.ClearABIContract.newBuilder()
+        .setOwnerAddress(StringUtil.hexString2ByteString(accountAddress))
+        .setContractAddress(StringUtil.hexString2ByteString(contractAddress)).build());
   }
 
   @Test
   public void successClearABIContract() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS), dbManager);
+    ClearABIContractActuator actuator = new ClearABIContractActuator(
+        getContract(OWNER_ADDRESS, CONTRACT_ADDRESS), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -140,9 +133,8 @@ public class ClearABIContractActuatorTest {
       // assert result state and consume_user_resource_percent
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getInstance().getAbi(),
-          TARGET_ABI);
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).getInstance()
+              .getAbi(), TARGET_ABI);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -152,9 +144,8 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void invalidAddress() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS), dbManager);
+    ClearABIContractActuator actuator = new ClearABIContractActuator(
+        getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -172,9 +163,8 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void noExistAccount() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS), dbManager);
+    ClearABIContractActuator actuator = new ClearABIContractActuator(
+        getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -192,9 +182,8 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void noExistContract() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS), dbManager);
+    ClearABIContractActuator actuator = new ClearABIContractActuator(
+        getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -212,9 +201,8 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void callerNotContractOwner() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS), dbManager);
+    ClearABIContractActuator actuator = new ClearABIContractActuator(
+        getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -224,9 +212,9 @@ public class ClearABIContractActuatorTest {
       fail("Account[" + SECOND_ACCOUNT_ADDRESS + "] is not the owner of the contract");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(
-          "Account[" + SECOND_ACCOUNT_ADDRESS + "] is not the owner of the contract",
-          e.getMessage());
+      Assert
+          .assertEquals("Account[" + SECOND_ACCOUNT_ADDRESS + "] is not the owner of the contract",
+              e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -234,13 +222,11 @@ public class ClearABIContractActuatorTest {
 
   @Test
   public void twiceUpdateSettingContract() {
-    ClearABIContractActuator actuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS), dbManager);
+    ClearABIContractActuator actuator = new ClearABIContractActuator(
+        getContract(OWNER_ADDRESS, CONTRACT_ADDRESS), dbManager);
 
-    ClearABIContractActuator secondActuator =
-        new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS), dbManager);
+    ClearABIContractActuator secondActuator = new ClearABIContractActuator(
+        getContract(OWNER_ADDRESS, CONTRACT_ADDRESS), dbManager);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -250,9 +236,8 @@ public class ClearABIContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getInstance().getAbi(),
-          TARGET_ABI);
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).getInstance()
+              .getAbi(), TARGET_ABI);
 
       // second
       secondActuator.validate();
@@ -260,9 +245,8 @@ public class ClearABIContractActuatorTest {
 
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       Assert.assertEquals(
-          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).
-              getInstance().getAbi(),
-          TARGET_ABI);
+          dbManager.getContractStore().get(ByteArray.fromHexString(CONTRACT_ADDRESS)).getInstance()
+              .getAbi(), TARGET_ABI);
 
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);

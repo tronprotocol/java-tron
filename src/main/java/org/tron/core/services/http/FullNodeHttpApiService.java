@@ -1,6 +1,10 @@
 package org.tron.core.services.http;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -8,7 +12,10 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
+import org.tron.common.zksnark.JLibrustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ZksnarkException;
 
 @Component
 @Slf4j(topic = "API")
@@ -167,20 +174,59 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetAccountByIdServlet getAccountByIdServlet;
   @Autowired
+  private GetExpandedSpendingKeyServlet getExpandedSpendingKeyServlet;
+  @Autowired
+  private GetAkFromAskServlet getAkFromAskServlet;
+  @Autowired
+  private GetNkFromNskServlet getNkFromNskServlet;
+  @Autowired
+  private GetSpendingKeyServlet getSpendingKeyServlet;
+  @Autowired
+  private GetNewShieldedAddressServlet getNewShieldedAddressServlet;
+  @Autowired
+  private GetDiversifierServlet getDiversifierServlet;
+  @Autowired
+  private GetIncomingViewingKeyServlet getIncomingViewingKeyServlet;
+  @Autowired
+  private GetZenPaymentAddressServlet getZenPaymentAddressServlet;
+  @Autowired
+  private CreateShieldedTransactionServlet createShieldedTransactionServlet;
+  @Autowired
+  private ScanNoteByIvkServlet scanNoteByIvkServlet;
+  @Autowired
+  private ScanAndMarkNoteByIvkServlet scanAndMarkNoteByIvkServlet;
+  @Autowired
+  private ScanNoteByOvkServlet scanNoteByOvkServlet;
+  @Autowired
+  private GetRcmServlet getRcmServlet;
+  @Autowired
+  private CreateSpendAuthSigServlet createSpendAuthSigServlet;
+  @Autowired
+  private CreateShieldNullifierServlet createShieldNullifierServlet;
+  @Autowired
+  private GetShieldTransactionHashServlet getShieldTransactionHashServlet;
+  @Autowired
+  private GetMerkleTreeVoucherInfoServlet getMerkleTreeVoucherInfoServlet;
+  @Autowired
+  private IsSpendServlet isSpendServlet;
+  @Autowired
+  private CreateShieldedTransactionWithoutSpendAuthSigServlet createShieldedTransactionWithoutSpendAuthSigServlet;
+  @Autowired
+  private BroadcastHexServlet broadcastHexServlet;
+  @Autowired
   private GetBrokerageServlet getBrokerageServlet;
   @Autowired
   private GetRewardServlet getRewardServlet;
   @Autowired
   private UpdateBrokerageServlet updateBrokerageServlet;
 
-
   @Override
   public void init() {
-
   }
 
   @Override
   public void init(Args args) {
+    librustzcashInitZksnarkParams();
   }
 
   @Override
@@ -280,6 +326,32 @@ public class FullNodeHttpApiService implements Service {
           "/getdelegatedresourceaccountindex");
       context.addServlet(new ServletHolder(setAccountServlet), "/setaccountid");
       context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
+      context
+          .addServlet(new ServletHolder(getExpandedSpendingKeyServlet), "/getexpandedspendingkey");
+      context.addServlet(new ServletHolder(getAkFromAskServlet), "/getakfromask");
+      context.addServlet(new ServletHolder(getNkFromNskServlet), "/getnkfromnsk");
+      context.addServlet(new ServletHolder(getSpendingKeyServlet), "/getspendingkey");
+      context
+          .addServlet(new ServletHolder(getNewShieldedAddressServlet), "/getnewshieldedaddress");
+      context.addServlet(new ServletHolder(getDiversifierServlet), "/getdiversifier");
+      context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
+      context.addServlet(new ServletHolder(getZenPaymentAddressServlet), "/getzenpaymentaddress");
+      context.addServlet(new ServletHolder(createShieldedTransactionServlet),
+          "/createshieldedtransaction");
+      context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
+          "/createshieldedtransactionwithoutspendauthsig");
+      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/scannotebyivk");
+      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet), "/scanandmarknotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/scannotebyovk");
+      context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
+      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
+          "/getmerkletreevoucherinfo");
+      context.addServlet(new ServletHolder(isSpendServlet), "/isspend");
+      context.addServlet(new ServletHolder(createSpendAuthSigServlet), "/createspendauthsig");
+      context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
+      context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
+          "/getshieldtransactionhash");
+      context.addServlet(new ServletHolder(broadcastHexServlet), "/broadcasthex");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
@@ -288,7 +360,6 @@ public class FullNodeHttpApiService implements Service {
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
       }
-
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
@@ -302,5 +373,39 @@ public class FullNodeHttpApiService implements Service {
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
     }
+  }
+
+  private static String getParamsFile(String fileName) {
+    InputStream in = Thread.currentThread().getContextClassLoader()
+        .getResourceAsStream("params" + File.separator + fileName);
+    File fileOut = new File(System.getProperty("java.io.tmpdir")
+        + File.separator + fileName + "." + System.currentTimeMillis());
+    try {
+      FileUtils.copyToFile(in, fileOut);
+    } catch (IOException e) {
+      logger.error(e.getMessage(), e);
+    }
+    return fileOut.getAbsolutePath();
+  }
+
+  public static void librustzcashInitZksnarkParams() {
+    logger.info("init zk param begin");
+
+    if (!JLibrustzcash.isOpenZen()) {
+      logger.info("zen switch is off, zen will not start.");
+      return;
+    }
+
+    String spendPath = getParamsFile("sapling-spend.params");
+    String spendHash = "d1f8833960c43a2af250fbb97eceaf2b1afac27097680e8a74a5956b26f9072b30f48c82f28210e648ce9557847060d4262e8137eb16bdfb29a829ed664e715f";
+    String outputPath = getParamsFile("sapling-output.params");
+    String outputHash = "35cf2cc08f4005321215ee419e70bafec1d28ba8388fe788b9c30044bb635b0f56b490c5e1f744c2efdb780a542a58f4ee39a33766f75aff219eb4d4e0d208a3";
+    try {
+      JLibrustzcash.librustzcashInitZksnarkParams(
+          new InitZksnarkParams(spendPath, spendHash, outputPath, outputHash));
+    } catch (ZksnarkException e) {
+      logger.error("librustzcashInitZksnarkParams fail!", e);
+    }
+    logger.info("init zk param done");
   }
 }

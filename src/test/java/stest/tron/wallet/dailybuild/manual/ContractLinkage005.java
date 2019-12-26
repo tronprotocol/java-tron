@@ -324,8 +324,7 @@ public class ContractLinkage005 {
     Assert.assertTrue(fifthForCycleCost - forthForCycleCost
         == forthForCycleCost - thirdForCycleCost);
 
-    PublicMethed.unFreezeBalance(linkage005Address, linkage005Key, 1,
-        linkage005Address, blockingStubFull);
+
 
   }
 
@@ -335,6 +334,11 @@ public class ContractLinkage005 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.unFreezeBalance(linkage005Address, linkage005Key, 1,
+        linkage005Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(linkage005Address, linkage005Key, 0,
+        linkage005Address, blockingStubFull);
+    PublicMethed.freedResource(linkage005Address, linkage005Key, fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

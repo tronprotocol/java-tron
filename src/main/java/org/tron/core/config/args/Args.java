@@ -436,6 +436,15 @@ public class Args {
 
   @Getter
   @Setter
+  private long allowShieldedTransaction; //committee parameter
+
+  // full node used this parameter to close shielded transaction
+  @Getter
+  @Setter
+  private boolean fullNodeAllowShieldedTransaction;
+
+  @Getter
+  @Setter
   private long blockNumForEneryLimit;
 
   @Getter
@@ -462,6 +471,11 @@ public class Args {
   @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
   private boolean version;
 
+
+  @Getter
+  @Setter
+  private String zenTokenId;
+
   @Getter
   @Setter
   private long allowProtoFilterNum;
@@ -473,6 +487,14 @@ public class Args {
   @Getter
   @Setter
   private int validContractProtoThreadNum;
+
+  @Getter
+  @Setter
+  private int shieldedTransInPendingMaxCounts;
+
+  @Getter
+  @Setter
+  private RateLimiterInitialization rateLimiterInitialization;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -546,12 +568,16 @@ public class Args {
     INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
+    INSTANCE.allowShieldedTransaction = 0;
     INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
+    INSTANCE.fullNodeAllowShieldedTransaction = true;
+    INSTANCE.zenTokenId = "1000016";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
+    INSTANCE.shieldedTransInPendingMaxCounts = 10;
   }
 
   /**
@@ -940,12 +966,23 @@ public class Args {
     INSTANCE.saveInternalTx =
         config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
 
+    INSTANCE.allowShieldedTransaction =
+        config.hasPath("committee.allowShieldedTransaction") ? config
+            .getInt("committee.allowShieldedTransaction") : 0;
+
     INSTANCE.eventPluginConfig =
         config.hasPath("event.subscribe") ?
             getEventPluginConfig(config) : null;
 
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
+    INSTANCE.fullNodeAllowShieldedTransaction =
+            !config.hasPath("node.fullNodeAllowShieldedTransaction")
+             || config.getBoolean("node.fullNodeAllowShieldedTransaction");
+
+    INSTANCE.zenTokenId = config.hasPath("node.zenTokenId") ?
+        config.getString("node.zenTokenId") : "1000016";
 
     INSTANCE.allowProtoFilterNum =
         config.hasPath("committee.allowProtoFilterNum") ? config
@@ -965,6 +1002,17 @@ public class Args {
     INSTANCE.passiveNodes = getNodes(config, "node.passive");
 
     INSTANCE.fastForwardNodes = getNodes(config, "node.fastForward");
+    INSTANCE.shieldedTransInPendingMaxCounts =
+        config.hasPath("node.shieldedTransInPendingMaxCounts") ? config
+            .getInt("node.shieldedTransInPendingMaxCounts") : 10;
+
+    if (INSTANCE.isWitness()) {
+      INSTANCE.fullNodeAllowShieldedTransaction = true;
+    }
+
+    INSTANCE.rateLimiterInitialization =
+        config.hasPath("rate.limiter") ? getRateLimiterFromConfig(config)
+            : new RateLimiterInitialization();
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -973,6 +1021,7 @@ public class Args {
     }
 
     logConfig();
+
   }
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
@@ -1003,6 +1052,25 @@ public class Args {
     account.setAddress(Wallet.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
     account.setBalance(asset.get("balance").unwrapped().toString());
     return account;
+  }
+
+  private static RateLimiterInitialization getRateLimiterFromConfig(
+      final com.typesafe.config.Config config) {
+
+    RateLimiterInitialization initialization = new RateLimiterInitialization();
+    ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
+        .getObjectList("rate.limiter.http").stream()
+        .map(RateLimiterInitialization::createHttpItem)
+        .collect(Collectors.toCollection(ArrayList::new));
+    initialization.setHttpMap(list1);
+
+    ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
+        .getObjectList("rate.limiter.rpc").stream()
+        .map(RateLimiterInitialization::createRpcItem)
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    initialization.setRpcMap(list2);
+    return initialization;
   }
 
   public static Args getInstance() {

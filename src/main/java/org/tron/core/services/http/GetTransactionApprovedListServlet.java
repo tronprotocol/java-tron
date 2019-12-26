@@ -2,10 +2,9 @@ package org.tron.core.services.http;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,7 +15,7 @@ import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionApprovedListServlet extends HttpServlet {
+public class GetTransactionApprovedListServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

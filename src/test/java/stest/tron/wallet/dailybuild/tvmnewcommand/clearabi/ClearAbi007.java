@@ -124,6 +124,8 @@ public class ClearAbi007 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

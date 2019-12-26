@@ -22,7 +22,7 @@ public class ApplicationFactory {
   /**
    * Build a new application.
    */
-  public Application build() {
+  public Application createApplication() {
     return new ApplicationImpl();
   }
 

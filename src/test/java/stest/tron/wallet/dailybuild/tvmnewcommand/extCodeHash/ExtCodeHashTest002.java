@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
-import org.junit.runners.AllTests;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -237,6 +236,10 @@ public class ExtCodeHashTest002 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, user001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

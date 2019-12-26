@@ -83,8 +83,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
-    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER = "ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER".getBytes();
-    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO = "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO".getBytes();
+    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER = "ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER"
+        .getBytes();
+    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO = "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"
+        .getBytes();
   }
 
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
@@ -111,6 +113,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MULTI_SIGN_FEE = "MULTI_SIGN_FEE"
       .getBytes();
 
+  private static final byte[] SHIELDED_TRANSACTION_FEE = "SHIELDED_TRANSACTION_FEE".getBytes();
+  //This value should be not negative
+  private static final byte[] TOTAL_SHIELDED_POOL_VALUE = "TOTAL_SHIELDED_POOL_VALUE".getBytes();
 
   private static final byte[] EXCHANGE_CREATE_FEE = "EXCHANGE_CREATE_FEE".getBytes();
 
@@ -146,6 +151,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_UPDATE_ACCOUNT_NAME = "ALLOW_UPDATE_ACCOUNT_NAME".getBytes();
 
   //This value is only allowed to be 0, 1, -1
+  //Note: there is a space in this key name. This space must not be deleted.
   private static final byte[] ALLOW_SAME_TOKEN_NAME = " ALLOW_SAME_TOKEN_NAME".getBytes();
 
   //If the parameter is larger than 0, the contract is allowed to be created.
@@ -166,6 +172,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
+
+  //If the parameter is larger than 0, allow ZKsnark Transaction
+  private static final byte[] ALLOW_SHIELDED_TRANSACTION = "ALLOW_SHIELDED_TRANSACTION".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
 
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
@@ -403,6 +412,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getShieldedTransactionFee();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTransactionFee(10_000_000L); // 10
+    }
+
+    try {
+      this.getTotalShieldedPoolValue();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalShieldedPoolValue(0L); // 0
+    }
+
+    try {
       this.getCreateNewAccountFeeInSystemContract();
     } catch (IllegalArgumentException e) {
       this.saveCreateNewAccountFeeInSystemContract(0L); //changed by committee later
@@ -557,6 +578,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowShieldedTransaction();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowShieldedTransaction(Args.getInstance().getAllowShieldedTransaction());
+    }
+
+    try {
       this.getBlockFilledSlots();
     } catch (IllegalArgumentException e) {
       int[] blockFilledSlots = new int[getBlockFilledSlotsNumber()];
@@ -594,8 +621,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAdaptiveResourceLimitMultiplier(1000);
     }
-
-
 
     try {
       this.getTotalEnergyAverageTime();
@@ -1008,31 +1033,31 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveAdaptiveResourceLimitMultiplier(long adaptiveResourceLimitMultiplier) {
     this.put(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER,
-            new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitMultiplier)));
+        new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitMultiplier)));
   }
 
   public long getAdaptiveResourceLimitMultiplier() {
-    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(
-                    () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER"));
+    return Optional
+        .ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER"));
   }
 
   public void saveAdaptiveResourceLimitTargetRatio(long adaptiveResourceLimitTargetRatio) {
     this.put(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO,
-            new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitTargetRatio)));
+        new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitTargetRatio)));
   }
 
   public long getAdaptiveResourceLimitTargetRatio() {
-    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(
-                    () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"));
+    return Optional
+        .ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"));
   }
-
-
 
 
   public void saveTotalEnergyAverageTime(long totalEnergyAverageTime) {
@@ -1092,6 +1117,32 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
+  public long getShieldedTransactionFee() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRANSACTION_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELD_TRANSACTION_FEE"));
+  }
+
+  public void saveShieldedTransactionFee(long fee) {
+    this.put(SHIELDED_TRANSACTION_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getTotalShieldedPoolValue() {
+    return Optional.ofNullable(getUnchecked(TOTAL_SHIELDED_POOL_VALUE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_SHIELDED_POOL_Value"));
+  }
+
+  public void saveTotalShieldedPoolValue(long value) {
+    this.put(TOTAL_SHIELDED_POOL_VALUE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
   public long getCreateAccountFee() {
     return Optional.ofNullable(getUnchecked(CREATE_ACCOUNT_FEE))
         .map(BytesCapsule::getData)
@@ -1099,7 +1150,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found CREATE_ACCOUNT_FEE"));
   }
-
 
   public void saveCreateNewAccountFeeInSystemContract(long fee) {
     this.put(CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT,
@@ -1181,7 +1231,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found MULTI_SIGN_FEE"));
   }
-
 
   public void saveExchangeCreateFee(long fee) {
     this.put(EXCHANGE_CREATE_FEE,
@@ -1368,16 +1417,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveAllowTvmSolidity059(long value) {
     this.put(ALLOW_TVM_SOLIDITY_059,
-            new BytesCapsule(ByteArray.fromLong(value)));
+        new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   public long getAllowTvmSolidity059() {
     return Optional.ofNullable(getUnchecked(ALLOW_TVM_SOLIDITY_059))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_TVM_SOLIDITY_059"));
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_TVM_SOLIDITY_059"));
   }
-
 
 
   public void saveAvailableContractType(byte[] value) {
@@ -1495,6 +1543,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean supportVM() {
     return getAllowCreationOfContracts() == 1L;
+  }
+
+  public void saveAllowShieldedTransaction(long allowShieldedTransaction) {
+    this.put(DynamicPropertiesStore.ALLOW_SHIELDED_TRANSACTION,
+        new BytesCapsule(ByteArray.fromLong(allowShieldedTransaction)));
+  }
+
+  public long getAllowShieldedTransaction() {
+    return Optional.ofNullable(getUnchecked(ALLOW_SHIELDED_TRANSACTION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ZKSNARK_TRANSACTION"));
+  }
+
+  public boolean supportShieldedTransaction() {
+    return getAllowShieldedTransaction() == 1L;
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {

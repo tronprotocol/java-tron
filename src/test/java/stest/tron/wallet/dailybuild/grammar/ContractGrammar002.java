@@ -327,6 +327,7 @@ public class ContractGrammar002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(txid4 == null);
 
+
   }
 
   /**
@@ -334,6 +335,8 @@ public class ContractGrammar002 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(grammarAddress2, testKeyForGrammarAddress2, testNetAccountAddress,
+        blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

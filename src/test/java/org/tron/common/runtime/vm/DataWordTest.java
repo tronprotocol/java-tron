@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertEquals;
@@ -29,15 +30,38 @@ import org.spongycastle.util.encoders.Hex;
 @Slf4j
 public class DataWordTest {
 
+  private static BigInteger pow(BigInteger x, BigInteger y) {
+    if (y.compareTo(BigInteger.ZERO) < 0) {
+      throw new IllegalArgumentException();
+    }
+    BigInteger z = x; // z will successively become x^2, x^4, x^8, x^16,
+    // x^32...
+    BigInteger result = BigInteger.ONE;
+    byte[] bytes = y.toByteArray();
+    for (int i = bytes.length - 1; i >= 0; i--) {
+      byte bits = bytes[i];
+      for (int j = 0; j < 8; j++) {
+        if ((bits & 1) != 0) {
+          result = result.multiply(z);
+        }
+        // short cut out if there are no more bits to handle:
+        if ((bits >>= 1) == 0 && i == 0) {
+          return result;
+        }
+        z = z.multiply(z);
+      }
+    }
+    return result;
+  }
+
   @Test
   public void testAddPerformance() {
     boolean enabled = false;
 
     if (enabled) {
-      byte[] one = new byte[]{0x01, 0x31, 0x54, 0x41, 0x01, 0x31, 0x54,
-          0x41, 0x01, 0x31, 0x54, 0x41, 0x01, 0x31, 0x54, 0x41, 0x01,
-          0x31, 0x54, 0x41, 0x01, 0x31, 0x54, 0x41, 0x01, 0x31, 0x54,
-          0x41, 0x01, 0x31, 0x54, 0x41}; // Random value
+      byte[] one = new byte[] {0x01, 0x31, 0x54, 0x41, 0x01, 0x31, 0x54, 0x41, 0x01, 0x31, 0x54,
+          0x41, 0x01, 0x31, 0x54, 0x41, 0x01, 0x31, 0x54, 0x41, 0x01, 0x31, 0x54, 0x41, 0x01, 0x31,
+          0x54, 0x41, 0x01, 0x31, 0x54, 0x41}; // Random value
 
       int ITERATIONS = 10000000;
 
@@ -86,9 +110,9 @@ public class DataWordTest {
     System.out.println(Hex.toHexString(x.getData()));
 
     // FAIL
-//      DataWord y = new DataWord(three);
-//      y.add2(new DataWord(three));
-//      System.out.println(Hex.toHexString(y.getData()));
+    //      DataWord y = new DataWord(three);
+    //      y.add2(new DataWord(three));
+    //      System.out.println(Hex.toHexString(y.getData()));
   }
 
   @Test
@@ -429,35 +453,10 @@ public class DataWordTest {
     assertTrue(wr.isZero());
   }
 
-  private static BigInteger pow(BigInteger x, BigInteger y) {
-    if (y.compareTo(BigInteger.ZERO) < 0) {
-      throw new IllegalArgumentException();
-    }
-    BigInteger z = x; // z will successively become x^2, x^4, x^8, x^16,
-    // x^32...
-    BigInteger result = BigInteger.ONE;
-    byte[] bytes = y.toByteArray();
-    for (int i = bytes.length - 1; i >= 0; i--) {
-      byte bits = bytes[i];
-      for (int j = 0; j < 8; j++) {
-        if ((bits & 1) != 0) {
-          result = result.multiply(z);
-        }
-        // short cut out if there are no more bits to handle:
-        if ((bits >>= 1) == 0 && i == 0) {
-          return result;
-        }
-        z = z.multiply(z);
-      }
-    }
-    return result;
-  }
-
   @Test
   public void testShiftLeft() {
-    Object[][] cases = {
-        {"0000000000000000000000000000000000000000000000000000000000000001", "00",
-            "0000000000000000000000000000000000000000000000000000000000000001"},
+    Object[][] cases = {{"0000000000000000000000000000000000000000000000000000000000000001", "00",
+        "0000000000000000000000000000000000000000000000000000000000000001"},
         {"0000000000000000000000000000000000000000000000000000000000000001", "01",
             "0000000000000000000000000000000000000000000000000000000000000002"},
         {"0000000000000000000000000000000000000000000000000000000000000001", "ff",
@@ -477,8 +476,7 @@ public class DataWordTest {
         {"0000000000000000000000000000000000000000000000000000000000000000", "01",
             "0000000000000000000000000000000000000000000000000000000000000000"},
         {"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "01",
-            "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"},
-    };
+            "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"},};
 
     testShiftLeft(cases);
   }
@@ -496,9 +494,8 @@ public class DataWordTest {
 
   @Test
   public void testShiftRight() {
-    Object[][] cases = {
-        {"0000000000000000000000000000000000000000000000000000000000000001", "00",
-            "0000000000000000000000000000000000000000000000000000000000000001"},
+    Object[][] cases = {{"0000000000000000000000000000000000000000000000000000000000000001", "00",
+        "0000000000000000000000000000000000000000000000000000000000000001"},
         {"0000000000000000000000000000000000000000000000000000000000000001", "01",
             "0000000000000000000000000000000000000000000000000000000000000000"},
         {"8000000000000000000000000000000000000000000000000000000000000000", "01",
@@ -518,8 +515,7 @@ public class DataWordTest {
         {"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0100",
             "0000000000000000000000000000000000000000000000000000000000000000"},
         {"0000000000000000000000000000000000000000000000000000000000000000", "01",
-            "0000000000000000000000000000000000000000000000000000000000000000"},
-    };
+            "0000000000000000000000000000000000000000000000000000000000000000"},};
 
     testShiftRight(cases);
   }
@@ -537,9 +533,8 @@ public class DataWordTest {
 
   @Test
   public void testShiftRightSigned() {
-    String[][] cases = {
-        {"0000000000000000000000000000000000000000000000000000000000000001", "00",
-            "0000000000000000000000000000000000000000000000000000000000000001"},
+    String[][] cases = {{"0000000000000000000000000000000000000000000000000000000000000001", "00",
+        "0000000000000000000000000000000000000000000000000000000000000001"},
         {"0000000000000000000000000000000000000000000000000000000000000001", "01",
             "0000000000000000000000000000000000000000000000000000000000000000"},
         {"8000000000000000000000000000000000000000000000000000000000000000", "01",
@@ -569,8 +564,7 @@ public class DataWordTest {
         {"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "ff",
             "0000000000000000000000000000000000000000000000000000000000000000"},
         {"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0100",
-            "0000000000000000000000000000000000000000000000000000000000000000"},
-    };
+            "0000000000000000000000000000000000000000000000000000000000000000"},};
 
     testShiftRightSigned(cases);
   }

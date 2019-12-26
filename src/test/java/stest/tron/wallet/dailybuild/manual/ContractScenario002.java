@@ -143,6 +143,7 @@ public class ContractScenario002 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(contract002Address, contract002Key, fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

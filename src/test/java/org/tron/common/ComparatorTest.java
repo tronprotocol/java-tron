@@ -1,6 +1,8 @@
 package org.tron.common;
 
 import com.google.common.collect.ImmutableList;
+import java.util.Comparator;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -8,8 +10,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.testng.collections.Lists;
 
-import java.util.Comparator;
-import java.util.List;
 
 @Slf4j
 public class ComparatorTest {
@@ -60,8 +60,7 @@ public class ComparatorTest {
       }
     });
 
-    cs2.sort(Comparator.comparingInt((C c) -> c.getAge())
-        .reversed()
+    cs2.sort(Comparator.comparingInt((C c) -> c.getAge()).reversed()
         .thenComparing(Comparator.comparingInt((C c) -> c.getB().getHigh()).reversed()));
     logger.info("cs1:" + cs1);
     logger.info("cs2:" + cs2);

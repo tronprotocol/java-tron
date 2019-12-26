@@ -34,7 +34,6 @@ public class TriggerConstant003 {
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  private ManagedChannel channelSolidity = null;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -42,8 +41,11 @@ public class TriggerConstant003 {
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
 
-
+  private ManagedChannel channelSolidity = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+
+  private ManagedChannel channelRealSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubRealSolidity = null;
 
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
@@ -52,6 +54,8 @@ public class TriggerConstant003 {
 
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+  private String realSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
 
   byte[] contractAddress = null;
 
@@ -86,6 +90,11 @@ public class TriggerConstant003 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    channelRealSolidity = ManagedChannelBuilder.forTarget(realSoliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubRealSolidity = WalletSolidityGrpc.newBlockingStub(channelRealSolidity);
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a view function without ABI")
@@ -138,6 +147,40 @@ public class TriggerConstant003 {
     Assert.assertEquals(1, ByteArray.toLong(ByteArray
         .fromHexString(Hex
             .toHexString(result))));
+
+    TransactionExtention transactionExtention1 = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testView()", "#", false,
+            0, 1000000000, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+
+    Transaction transaction1 = transactionExtention1.getTransaction();
+
+    byte[] result1 = transactionExtention1.getConstantResult(0).toByteArray();
+    System.out.println("message:" + transaction1.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention1.getResult().getMessage().toByteArray()));
+    System.out.println("Result:" + Hex.toHexString(result1));
+
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result1))));
+
+    TransactionExtention transactionExtention2 = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testView()", "#", false,
+            0, 1000000000, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+
+    Transaction transaction2 = transactionExtention2.getTransaction();
+
+    byte[] result2 = transactionExtention2.getConstantResult(0).toByteArray();
+    System.out.println("message:" + transaction2.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention2.getResult().getMessage().toByteArray()));
+    System.out.println("Result:" + Hex.toHexString(result2));
+
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result2))));
   }
 
 
@@ -196,6 +239,80 @@ public class TriggerConstant003 {
     Assert.assertEquals("FAILED", transaction.getRet(0).getRet().toString());
 
 
+    TransactionExtention transactionExtention1 = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testPayable()", "#", false,
+            0, 1000000000, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+
+    Transaction transaction1 = transactionExtention1.getTransaction();
+
+    byte[] result1 = transactionExtention1.getConstantResult(0).toByteArray();
+    System.out.println("message:" + transaction1.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention1.getResult().getMessage().toByteArray()));
+    System.out.println("Result:" + Hex.toHexString(result1));
+    Assert.assertEquals("SUCESS", transaction1.getRet(0).getRet().toString());
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result1))));
+
+    transactionExtention1 = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testPayable()", "#", false,
+            1L, 1000000000, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    transaction1 = transactionExtention1.getTransaction();
+
+    result1 = transactionExtention1.getConstantResult(0).toByteArray();
+    System.out.println("message:" + transaction1.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention1.getResult().getMessage().toByteArray()));
+    System.out.println("Result:" + Hex.toHexString(result1));
+
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result1))));
+    Assert.assertEquals("constant cannot set call value or call token value.",
+        ByteArray
+            .toStr(transactionExtention1.getResult().getMessage().toByteArray()));
+    Assert.assertEquals("FAILED", transaction1.getRet(0).getRet().toString());
+
+
+    TransactionExtention transactionExtention2 = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testPayable()", "#", false,
+            0, 1000000000, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+
+    Transaction transaction2 = transactionExtention2.getTransaction();
+
+    byte[] result2 = transactionExtention2.getConstantResult(0).toByteArray();
+    System.out.println("message:" + transaction2.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention2.getResult().getMessage().toByteArray()));
+    System.out.println("Result:" + Hex.toHexString(result2));
+    Assert.assertEquals("SUCESS", transaction2.getRet(0).getRet().toString());
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result2))));
+
+    transactionExtention2 = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testPayable()", "#", false,
+            1L, 1000000000, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    transaction2 = transactionExtention2.getTransaction();
+
+    result2 = transactionExtention2.getConstantResult(0).toByteArray();
+    System.out.println("message:" + transaction2.getRet(0).getRet());
+    System.out.println(":" + ByteArray
+        .toStr(transactionExtention2.getResult().getMessage().toByteArray()));
+    System.out.println("Result:" + Hex.toHexString(result2));
+
+    Assert.assertEquals(1, ByteArray.toLong(ByteArray
+        .fromHexString(Hex
+            .toHexString(result2))));
+    Assert.assertEquals("constant cannot set call value or call token value.",
+        ByteArray
+            .toStr(transactionExtention2.getResult().getMessage().toByteArray()));
+    Assert.assertEquals("FAILED", transaction2.getRet(0).getRet().toString());
   }
   /**
    * constructor.
@@ -203,6 +320,9 @@ public class TriggerConstant003 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(contractExcAddress, contractExcKey, testNetAccountAddress, blockingStubFull);
+
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

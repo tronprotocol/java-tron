@@ -9,6 +9,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.HttpMethed;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class HttpTestBlock001 {
@@ -150,7 +151,6 @@ public class HttpTestBlock001 {
   }
 
 
-
   /**
    * constructor.
    */
@@ -212,8 +212,8 @@ public class HttpTestBlock001 {
    */
   @Test(enabled = true, description = "Get transaction count by blocknum from solidity by http")
   public void get13TransactionCountByBlocknumFromSolidity() {
-    response = HttpMethed.getTransactionCountByBlocknumFromSolidity(httpSoliditynode,
-        currentBlockNum);
+    response = HttpMethed
+        .getTransactionCountByBlocknumFromSolidity(httpSoliditynode, currentBlockNum);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -226,8 +226,8 @@ public class HttpTestBlock001 {
    */
   @Test(enabled = true, description = "GetBlockByLimitNext by http")
   public void get14BlockByLimitNextFromSolidity() {
-    response = HttpMethed.getBlockByLimitNextFromSolidity(httpSoliditynode,
-        currentBlockNum - 10, currentBlockNum);
+    response = HttpMethed
+        .getBlockByLimitNextFromSolidity(httpSoliditynode, currentBlockNum - 10, currentBlockNum);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -250,7 +250,21 @@ public class HttpTestBlock001 {
     Assert.assertEquals(jsonArray.size(), 8);
   }
 
-
+  /**
+   * constructor.
+   */
+  @Test(enabled = false, description = "Get block by num by http")
+  public void get16TestResponse() {
+    Integer times = 1000;
+    String testKey002 = "7400E3D0727F8A61041A8E8BF86599FE5597CE19DE451E59AED07D60967A5E25";
+    byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+    Long duration = HttpMethed.getBlockByNumForResponse(httpnode, 4942435, times);
+    /*    Long duration = HttpMethed.getAccountForResponse(httpnode, fromAddress, times);*/
+    /*    Long duration = HttpMethed.getTransactionByIdForResponse(httpnode,
+      "a265fc457551fd9cfa55daec0550268b1a2da54018cc700f1559454836de411c", times);*/
+    logger.info("Total duration  : " + duration);
+    logger.info("Average duration: " + duration / times);
+  }
 
 
   /**

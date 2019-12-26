@@ -1,14 +1,14 @@
 package org.tron.common.logsfilter;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class EventLoaderTest {
+
   @Test
-  public void launchNativeQueue(){
+  public void launchNativeQueue() {
     EventPluginConfig config = new EventPluginConfig();
     config.setSendQueueLength(1000);
     config.setBindPort(5555);
@@ -24,7 +24,7 @@ public class EventLoaderTest {
 
     config.setTriggerConfigList(triggerConfigList);
 
-    Assert.assertEquals(true,EventPluginLoader.getInstance().start(config));
+    Assert.assertEquals(true, EventPluginLoader.getInstance().start(config));
 
     EventPluginLoader.getInstance().stopPlugin();
   }

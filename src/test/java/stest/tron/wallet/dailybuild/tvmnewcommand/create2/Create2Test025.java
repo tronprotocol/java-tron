@@ -1,8 +1,5 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.create2;
 
-import static org.hamcrest.core.StringContains.containsString;
-
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -22,14 +19,12 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract;
-import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import zmq.socket.pubsub.Pub;
 
 @Slf4j
 public class Create2Test025 {
@@ -263,6 +258,10 @@ public class Create2Test025 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, user001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

@@ -100,7 +100,7 @@ public class RevokingDbWithCacheOldValueTest {
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
         "testrevokingtronstore-testUndo", revokingDatabase);
 
-    SessionOptional dialog = SessionOptional.instance().setValue(revokingDatabase.buildSession());
+    ISession dialog = revokingDatabase.buildSession();
     for (int i = 0; i < 10; i++) {
       ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("undo" + i).getBytes());
       try (ISession tmpSession = revokingDatabase.buildSession()) {
@@ -113,12 +113,11 @@ public class RevokingDbWithCacheOldValueTest {
 
     Assert.assertEquals(1, revokingDatabase.getStack().size());
 
-    dialog.reset();
-
+    dialog.destroy();
     Assert.assertTrue(revokingDatabase.getStack().isEmpty());
     Assert.assertEquals(0, revokingDatabase.getActiveDialog());
 
-    dialog = SessionOptional.instance().setValue(revokingDatabase.buildSession());
+    dialog = revokingDatabase.buildSession();
     revokingDatabase.disable();
     ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest("del".getBytes());
     tronDatabase.put(testProtoCapsule.getData(), testProtoCapsule);
@@ -144,7 +143,7 @@ public class RevokingDbWithCacheOldValueTest {
       tmpSession.merge();
     }
 
-    dialog.reset();
+    dialog.destroy();
 
     logger.info("**********testProtoCapsule:" + String
         .valueOf(tronDatabase.getUnchecked(testProtoCapsule.getData())));

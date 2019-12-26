@@ -162,6 +162,7 @@ public class HttpTestClearAbiContract001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, assetOwnerAddress, fromAddress, assetOwnerKey);
     HttpMethed.disConnect();
   }
 }

@@ -198,7 +198,6 @@ public class DelayTransactionStress {
     Assert.assertTrue(getTransactionById.get().getRawData().getDeferredStage().getStage() == 0);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     PublicMethed.getDeferredTransactionById(finalTxid,blockingStubFull);
     deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
@@ -324,7 +323,6 @@ public class DelayTransactionStress {
     Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address,
         deplayAccountBeforeBalance - createAccountFee - delayTransactionFee,
         delaySecond,delayAccount3Address, delayAccount3Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Query balance after delay send coin.

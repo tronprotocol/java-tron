@@ -174,7 +174,7 @@ public class ContractOriginEnergyLimit004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     // get energy
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, devFreezeBalanceSun,
-        3, 1, dev001Key, blockingStubFull));
+        0, 1, dev001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
@@ -245,9 +245,9 @@ public class ContractOriginEnergyLimit004 {
 
     // get energy
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, devFreezeBalanceSun,
-        3, 1, dev001Key, blockingStubFull));
+        0, 1, dev001Key, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, userFreezeBalanceSun,
-        3, 1, user001Key, blockingStubFull));
+        0, 1, user001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
@@ -371,6 +371,10 @@ public class ContractOriginEnergyLimit004 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.unFreezeBalance(user001Address, user001Key, 1, user001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(dev001Address, dev001Key, 1, dev001Address, blockingStubFull);
+    PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

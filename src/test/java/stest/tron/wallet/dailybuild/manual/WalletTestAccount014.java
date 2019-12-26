@@ -117,7 +117,7 @@ public class WalletTestAccount014 {
     final long createTimeInSoliInFull = account014.getCreateTime();
     final long lastOperationTimeInSoliInFull = account014.getLatestOprationTime();
     final long lastCustomeFreeTimeInSoliInFull = account014.getLatestConsumeFreeTime();
-    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     account014 = PublicMethed.queryAccount(account014Address, blockingStubSolidity);
     final long freeNetUsageInSolidity = account014.getFreeNetUsage();
     final long createTimeInSolidity = account014.getCreateTime();
@@ -187,7 +187,7 @@ public class WalletTestAccount014 {
     final long delegatedForEnergyInSoliInFull = account014
         .getAccountResource().getDelegatedFrozenBalanceForEnergy();
     logger.info("delegatedForEnergyInSoliInFull " + delegatedForEnergyInSoliInFull);
-    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     account014 = PublicMethed.queryAccount(account014Address, blockingStubSolidity);
     final long netUsageInSolidity = account014.getNetUsage();
     final long lastCustomeTimeInSolidity = account014.getLatestConsumeTime();
@@ -230,6 +230,9 @@ public class WalletTestAccount014 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(account014Address, account014Key, fromAddress, blockingStubFull);
+    PublicMethed
+        .freedResource(account014SecondAddress, account014SecondKey, fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

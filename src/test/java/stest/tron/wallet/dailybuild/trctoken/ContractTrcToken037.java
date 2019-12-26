@@ -100,7 +100,6 @@ public class ContractTrcToken037 {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
         0, 1, user001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
@@ -108,7 +107,6 @@ public class ContractTrcToken037 {
     Assert.assertTrue(PublicMethed.createAssetIssue(dev001Address, tokenName, TotalSupply, 1,
         100, start, end, 1, description, url, 10000L,
         10000L, 1L, 1L, dev001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
@@ -185,7 +183,6 @@ public class ContractTrcToken037 {
         10, dev001Address, dev001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(dev001Address,
@@ -240,6 +237,10 @@ public class ContractTrcToken037 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, user001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

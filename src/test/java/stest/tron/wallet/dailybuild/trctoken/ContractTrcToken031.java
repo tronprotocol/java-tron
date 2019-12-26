@@ -119,24 +119,15 @@ public class ContractTrcToken031 {
     String abi = retMap.get("abI").toString();
     transferTokenContractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 0, originEnergyLimit, "0",
-            0, null, dev001Key, dev001Address,
+            1000000000L, 0, originEnergyLimit, assetAccountId.toStringUtf8(),
+            100, null, dev001Key, dev001Address,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertNotNull(transferTokenContractAddress);
 
     Assert
-        .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 1000000000L, fromAddress,
+        .assertFalse(PublicMethed.sendcoin(transferTokenContractAddress, 1000000000L, fromAddress,
             testKey002, blockingStubFull));
-
-    // devAddress transfer token to userAddress
-    PublicMethed
-        .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
-            dev001Address,
-            dev001Key,
-            blockingStubFull);
-
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true, description = "Trigger suicide contract,toaddress is myself")
@@ -182,7 +173,6 @@ public class ContractTrcToken031 {
         param, false, 0, 1000000000L, "0",
         0, dev001Address, dev001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(dev001Address, blockingStubFull);
@@ -233,6 +223,10 @@ public class ContractTrcToken031 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, user001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

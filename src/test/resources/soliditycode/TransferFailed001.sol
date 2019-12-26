@@ -62,12 +62,27 @@ contract EnergyOfTransferFailedTest {
         nonexistentTarget.send(i);
     }
 
+    function testSendTrxRevert(uint256 i,address payable nonexistentTarget) payable public {
+        nonexistentTarget.send(i);
+        revert();
+    }
+
     function testTransferTrxNonexistentTarget(uint256 i,address payable nonexistentTarget) payable public {
         nonexistentTarget.transfer(i);
     }
 
+    function testTransferTrxrevert(uint256 i,address payable nonexistentTarget) payable public{
+        nonexistentTarget.transfer(i);
+        revert();
+    }
+
     function testTransferTokenNonexistentTarget(uint256 i,address payable nonexistentTarget, trcToken tokenId) payable public {
         nonexistentTarget.transferToken(i, tokenId);
+    }
+
+    function testTransferTokenRevert(uint256 i,address payable nonexistentTarget, trcToken tokenId) payable public {
+        nonexistentTarget.transferToken(i, tokenId);
+        revert();
     }
 
     function testCallTrxNonexistentTarget(uint256 i,address payable nonexistentTarget) payable public {
@@ -76,6 +91,11 @@ contract EnergyOfTransferFailedTest {
 
     function testSuicideNonexistentTarget(address payable nonexistentTarget) payable public {
          selfdestruct(nonexistentTarget);
+    }
+
+    function testSuicideRevert(address payable nonexistentTarget) payable public {
+         selfdestruct(nonexistentTarget);
+         revert();
     }
 
     // target is self

@@ -10,8 +10,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
 import org.testng.collections.Lists;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -33,15 +33,14 @@ public class ProposalControllerTest {
   private static ProposalController proposalController;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    proposalController = ProposalController
-        .createInstance(dbManager);
+    proposalController = ProposalController.createInstance(dbManager);
   }
 
   @AfterClass
@@ -54,8 +53,7 @@ public class ProposalControllerTest {
   @Test
   public void testSetDynamicParameters() {
 
-    ProposalCapsule proposalCapsule = new ProposalCapsule(
-        Proposal.newBuilder().build());
+    ProposalCapsule proposalCapsule = new ProposalCapsule(Proposal.newBuilder().build());
     Map<Long, Long> parameters = new HashMap<>();
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     long accountUpgradeCostDefault = dynamicPropertiesStore.getAccountUpgradeCost();
@@ -76,61 +74,59 @@ public class ProposalControllerTest {
 
   @Test
   public void testDynamicEnergyAdaptiveParameters() {
-    ProposalCapsule proposalCapsule = new ProposalCapsule(
-            Proposal.newBuilder().build());
+    ProposalCapsule proposalCapsule = new ProposalCapsule(Proposal.newBuilder().build());
     Map<Long, Long> parameters = new HashMap<>();
 
     DynamicPropertiesStore dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
-    Assert.assertEquals(14400,dynamicPropertiesStore.getAdaptiveResourceLimitTargetRatio());
-    Assert.assertEquals(1000,dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
+    Assert.assertEquals(14400, dynamicPropertiesStore.getAdaptiveResourceLimitTargetRatio());
+    Assert.assertEquals(1000, dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
 
     //proposal 21
-    parameters.put(21L,1L);
+    parameters.put(21L, 1L);
     proposalCapsule.setParameters(parameters);
 
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dynamicPropertiesStore
-            .statsByVersion(Parameter.ForkBlockVersionEnum.VERSION_3_6_5.getValue(), stats);
+        .statsByVersion(Parameter.ForkBlockVersionEnum.VERSION_3_6_5.getValue(), stats);
     proposalController.setDynamicParameters(proposalCapsule);
 
-    Assert.assertEquals(2880,dynamicPropertiesStore.getAdaptiveResourceLimitTargetRatio());
-    Assert.assertEquals(50_000_000_000L/2880,dynamicPropertiesStore.getTotalEnergyTargetLimit());
-    Assert.assertEquals(50,dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
+    Assert.assertEquals(2880, dynamicPropertiesStore.getAdaptiveResourceLimitTargetRatio());
+    Assert.assertEquals(50_000_000_000L / 2880, dynamicPropertiesStore.getTotalEnergyTargetLimit());
+    Assert.assertEquals(50, dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
 
     //proposal 33
     parameters.clear();
-    parameters.put(33L,100L);
+    parameters.put(33L, 100L);
     proposalCapsule.setParameters(parameters);
 
     proposalController.setDynamicParameters(proposalCapsule);
 
-    Assert.assertEquals(144000L,dynamicPropertiesStore.getAdaptiveResourceLimitTargetRatio());
+    Assert.assertEquals(144000L, dynamicPropertiesStore.getAdaptiveResourceLimitTargetRatio());
 
     //proposal 29
     parameters.clear();
-    parameters.put(29L,100L);
+    parameters.put(29L, 100L);
     proposalCapsule.setParameters(parameters);
 
     proposalController.setDynamicParameters(proposalCapsule);
 
-    Assert.assertEquals(100L,dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
+    Assert.assertEquals(100L, dynamicPropertiesStore.getAdaptiveResourceLimitMultiplier());
 
     //proposal 19
     parameters.clear();
-    parameters.put(19L,144000L);
+    parameters.put(19L, 144000L);
     proposalCapsule.setParameters(parameters);
 
     proposalController.setDynamicParameters(proposalCapsule);
 
-    Assert.assertEquals(1L,dynamicPropertiesStore.getTotalEnergyTargetLimit());
+    Assert.assertEquals(1L, dynamicPropertiesStore.getTotalEnergyTargetLimit());
 
   }
 
   @Test
   public void testProcessProposal() {
-    ProposalCapsule proposalCapsule = new ProposalCapsule(
-        Proposal.newBuilder().build());
+    ProposalCapsule proposalCapsule = new ProposalCapsule(Proposal.newBuilder().build());
     proposalCapsule.setState(State.PENDING);
     proposalCapsule.setID(1);
 
@@ -184,30 +180,25 @@ public class ProposalControllerTest {
 
   @Test
   public void testProcessProposals() {
-    ProposalCapsule proposalCapsule1 = new ProposalCapsule(
-        Proposal.newBuilder().build());
+    ProposalCapsule proposalCapsule1 = new ProposalCapsule(Proposal.newBuilder().build());
     proposalCapsule1.setState(State.APPROVED);
     proposalCapsule1.setID(1);
 
-    ProposalCapsule proposalCapsule2 = new ProposalCapsule(
-        Proposal.newBuilder().build());
+    ProposalCapsule proposalCapsule2 = new ProposalCapsule(Proposal.newBuilder().build());
     proposalCapsule2.setState(State.DISAPPROVED);
     proposalCapsule2.setID(2);
 
-    ProposalCapsule proposalCapsule3 = new ProposalCapsule(
-        Proposal.newBuilder().build());
+    ProposalCapsule proposalCapsule3 = new ProposalCapsule(Proposal.newBuilder().build());
     proposalCapsule3.setState(State.PENDING);
     proposalCapsule3.setID(3);
     proposalCapsule3.setExpirationTime(10000L);
 
-    ProposalCapsule proposalCapsule4 = new ProposalCapsule(
-        Proposal.newBuilder().build());
+    ProposalCapsule proposalCapsule4 = new ProposalCapsule(Proposal.newBuilder().build());
     proposalCapsule4.setState(State.CANCELED);
     proposalCapsule4.setID(4);
     proposalCapsule4.setExpirationTime(11000L);
 
-    ProposalCapsule proposalCapsule5 = new ProposalCapsule(
-        Proposal.newBuilder().build());
+    ProposalCapsule proposalCapsule5 = new ProposalCapsule(Proposal.newBuilder().build());
     proposalCapsule5.setState(State.PENDING);
     proposalCapsule5.setID(5);
     proposalCapsule5.setExpirationTime(12000L);
@@ -232,33 +223,32 @@ public class ProposalControllerTest {
 
   @Test
   public void testHasMostApprovals() {
-    ProposalCapsule proposalCapsule = new ProposalCapsule(
-        Proposal.newBuilder().build());
+    ProposalCapsule proposalCapsule = new ProposalCapsule(Proposal.newBuilder().build());
     proposalCapsule.setState(State.APPROVED);
     proposalCapsule.setID(1);
 
     List<ByteString> activeWitnesses = Lists.newArrayList();
     for (int i = 0; i < 27; i++) {
-      activeWitnesses.add(ByteString.copyFrom(new byte[]{(byte) i}));
+      activeWitnesses.add(ByteString.copyFrom(new byte[] {(byte) i}));
     }
     for (int i = 0; i < 18; i++) {
-      proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[] {(byte) i}));
     }
 
     Assert.assertEquals(true, proposalCapsule.hasMostApprovals(activeWitnesses));
 
     proposalCapsule.clearApproval();
     for (int i = 1; i < 18; i++) {
-      proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[] {(byte) i}));
     }
 
     activeWitnesses.clear();
     for (int i = 0; i < 5; i++) {
-      activeWitnesses.add(ByteString.copyFrom(new byte[]{(byte) i}));
+      activeWitnesses.add(ByteString.copyFrom(new byte[] {(byte) i}));
     }
     proposalCapsule.clearApproval();
     for (int i = 0; i < 3; i++) {
-      proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[] {(byte) i}));
     }
     Assert.assertEquals(true, proposalCapsule.hasMostApprovals(activeWitnesses));
 

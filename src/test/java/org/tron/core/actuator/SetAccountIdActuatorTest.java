@@ -28,17 +28,17 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j
 public class SetAccountIdActuatorTest {
 
-  private static TronApplicationContext context;
-  private static Manager dbManager;
   private static final String dbPath = "output_setaccountid_test";
   private static final String ACCOUNT_NAME = "ownertest";
   private static final String ACCOUNT_NAME_1 = "ownertest1";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_1;
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
+  private static TronApplicationContext context;
+  private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ADDRESS_1 = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -53,15 +53,27 @@ public class SetAccountIdActuatorTest {
   }
 
   /**
+   * Release resources.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    context.destroy();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
+  }
+
+  /**
    * create temp Capsule test need.
    */
   @Before
   public void createCapsule() {
-    AccountCapsule ownerCapsule =
-        new AccountCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-            ByteString.EMPTY,
-            AccountType.Normal);
+    AccountCapsule ownerCapsule = new AccountCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), ByteString.EMPTY,
+        AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_1));
     dbManager.getAccountIdIndexStore().delete(ACCOUNT_NAME.getBytes());
@@ -70,23 +82,19 @@ public class SetAccountIdActuatorTest {
 
   private Any getContract(String name, String address) {
     return Any.pack(
-        Contract.SetAccountIdContract.newBuilder()
-            .setAccountId(ByteString.copyFromUtf8(name))
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
-            .build());
-  }
-
-  private Any getContract(ByteString name, String address) {
-    return Any.pack(
-        Contract.SetAccountIdContract.newBuilder()
-            .setAccountId(name)
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
-            .build());
+        Contract.SetAccountIdContract.newBuilder().setAccountId(ByteString.copyFromUtf8(name))
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address))).build());
   }
 
   /**
    * Unit test.
    */
+
+  private Any getContract(ByteString name, String address) {
+    return Any.pack(Contract.SetAccountIdContract.newBuilder().setAccountId(name)
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address))).build());
+  }
+
   /**
    * set account id when all right.
    */
@@ -203,11 +211,9 @@ public class SetAccountIdActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
 
-    AccountCapsule ownerCapsule =
-        new AccountCapsule(
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_1)),
-            ByteString.EMPTY,
-            AccountType.Normal);
+    AccountCapsule ownerCapsule = new AccountCapsule(
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_1)), ByteString.EMPTY,
+        AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     try {
@@ -260,10 +266,8 @@ public class SetAccountIdActuatorTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      accountCapsule = dbManager.getAccountStore()
-          .get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert.assertEquals("test1111",
-          accountCapsule.getAccountId().toStringUtf8());
+      accountCapsule = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      Assert.assertEquals("test1111", accountCapsule.getAccountId().toStringUtf8());
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       logger.info(e.getMessage());
@@ -273,8 +277,7 @@ public class SetAccountIdActuatorTest {
     }
 
     //Empty name
-    accountCapsule = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
@@ -291,13 +294,12 @@ public class SetAccountIdActuatorTest {
     }
 
     //Too long name 33 bytes
-    accountCapsule = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      SetAccountIdActuator actuator = new SetAccountIdActuator(
-          getContract("testname0123456789abcdefghijgklmo0123456789abcdefghijgk"
+      SetAccountIdActuator actuator = new SetAccountIdActuator(getContract(
+          "testname0123456789abcdefghijgklmo0123456789abcdefghijgk"
               + "lmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo"
               + "0123456789abcdefghijgklmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo"
               + "0123456789abcdefghijgklmo0123456789abcdefghijgklmo", OWNER_ADDRESS), dbManager);
@@ -312,8 +314,7 @@ public class SetAccountIdActuatorTest {
     }
 
     //Too short name 7 bytes
-    accountCapsule = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
@@ -330,13 +331,12 @@ public class SetAccountIdActuatorTest {
     }
 
     //Can't contain space
-    accountCapsule = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
-      SetAccountIdActuator actuator = new SetAccountIdActuator(
-          getContract("t e", OWNER_ADDRESS), dbManager);
+      SetAccountIdActuator actuator = new SetAccountIdActuator(getContract("t e", OWNER_ADDRESS),
+          dbManager);
       actuator.validate();
       actuator.execute(ret);
       Assert.assertFalse(true);
@@ -348,14 +348,13 @@ public class SetAccountIdActuatorTest {
     }
 
     //Can't contain chinese characters
-    accountCapsule = dbManager.getAccountStore()
-        .get(ByteArray.fromHexString(OWNER_ADDRESS));
+    accountCapsule = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     accountCapsule.setAccountId(ByteString.EMPTY.toByteArray());
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
       SetAccountIdActuator actuator = new SetAccountIdActuator(
-          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95"))
-              , OWNER_ADDRESS), dbManager);
+          getContract(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95")), OWNER_ADDRESS),
+          dbManager);
       actuator.validate();
       actuator.execute(ret);
       Assert.assertFalse(true);
@@ -364,20 +363,6 @@ public class SetAccountIdActuatorTest {
       Assert.assertEquals("Invalid accountId", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    }
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
     }
   }
 }

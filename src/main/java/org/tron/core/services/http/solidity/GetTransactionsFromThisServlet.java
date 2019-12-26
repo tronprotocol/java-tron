@@ -3,7 +3,7 @@ package org.tron.core.services.http.solidity;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -13,12 +13,13 @@ import org.tron.api.GrpcAPI.AccountPaginated;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
+import org.tron.core.services.http.RateLimiterServlet;
 import org.tron.core.services.http.Util;
 
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionsFromThisServlet extends HttpServlet {
+public class GetTransactionsFromThisServlet extends RateLimiterServlet {
 
   @Autowired
   private WalletSolidity walletSolidity;

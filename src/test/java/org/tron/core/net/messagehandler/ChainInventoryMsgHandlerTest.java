@@ -3,7 +3,7 @@ package org.tron.core.net.messagehandler;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import javafx.util.Pair;
+import org.tron.common.utils.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -16,7 +16,7 @@ public class ChainInventoryMsgHandlerTest {
 
   private ChainInventoryMsgHandler handler = new ChainInventoryMsgHandler();
   private PeerConnection peer = new PeerConnection();
-  private ChainInventoryMessage msg = new ChainInventoryMessage(new ArrayList<>(), 0l);
+  private ChainInventoryMessage msg = new ChainInventoryMessage(new ArrayList<>(), 0L);
   private List<BlockId> blockIds = new ArrayList<>();
 
   @Test
@@ -39,7 +39,7 @@ public class ChainInventoryMsgHandlerTest {
     for (int i = 0; i < size; i++) {
       blockIds.add(new BlockId());
     }
-    msg = new ChainInventoryMessage(blockIds, 0l);
+    msg = new ChainInventoryMessage(blockIds, 0L);
 
     try {
       handler.processMessage(peer, msg);
@@ -52,7 +52,7 @@ public class ChainInventoryMsgHandlerTest {
     for (int i = 0; i < size; i++) {
       blockIds.add(new BlockId());
     }
-    msg = new ChainInventoryMessage(blockIds, 100l);
+    msg = new ChainInventoryMessage(blockIds, 100L);
 
     try {
       handler.processMessage(peer, msg);

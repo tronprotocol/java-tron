@@ -79,7 +79,6 @@ public class ContractLinkage002 {
             testKey002, blockingStubFull);
     Account info;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById0 = null;
     infoById0 = PublicMethed.getTransactionInfoById(sendcoin, blockingStubFull);
     logger.info("infoById0   " + infoById0.get());

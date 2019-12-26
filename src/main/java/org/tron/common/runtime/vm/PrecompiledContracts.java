@@ -84,6 +84,7 @@ public class PrecompiledContracts {
   private static final BN128Addition altBN128Add = new BN128Addition();
   private static final BN128Multiplication altBN128Mul = new BN128Multiplication();
   private static final BN128Pairing altBN128Pairing = new BN128Pairing();
+
   private static final BatchValidateSign batchValidateSign = new BatchValidateSign();
   private static final ValidateMultiSign validateMultiSign = new ValidateMultiSign();
 
@@ -648,7 +649,6 @@ public class PrecompiledContracts {
   }
 
 
-
   public static class ValidateMultiSign extends PrecompiledContract {
 
     private static final int ENGERYPERSIGN = 1500;
@@ -716,6 +716,7 @@ public class PrecompiledContracts {
 
 
   public static class BatchValidateSign extends PrecompiledContract {
+
     private static final ExecutorService workers;
     private static final int ENGERYPERSIGN = 1500;
     private static final int MAX_SIZE = 16;
@@ -816,7 +817,6 @@ public class PrecompiledContracts {
     }
 
 
-
   }
 
   private static byte[] recoverAddrBySign(byte[] sign, byte[] hash) {
@@ -871,4 +871,5 @@ public class PrecompiledContracts {
   private static byte[] extractBytes(byte[] data, int offset, int len) {
     return Arrays.copyOfRange(data, offset, offset + len);
   }
+
 }

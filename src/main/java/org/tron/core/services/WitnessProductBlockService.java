@@ -22,6 +22,32 @@ public class WitnessProductBlockService {
 
   private Map<String, CheatWitnessInfo> cheatWitnessInfoMap = new HashMap<>();
 
+  public void validWitnessProductTwoBlock(BlockCapsule block) {
+    try {
+      BlockCapsule blockCapsule = historyBlockCapsuleCache.getIfPresent(block.getNum());
+      if (blockCapsule != null && Arrays.equals(blockCapsule.getWitnessAddress().toByteArray(),
+          block.getWitnessAddress().toByteArray()) && !Arrays.equals(block.getBlockId().getBytes(),
+          blockCapsule.getBlockId().getBytes())) {
+        String key = ByteArray.toHexString(block.getWitnessAddress().toByteArray());
+        if (!cheatWitnessInfoMap.containsKey(key)) {
+          CheatWitnessInfo cheatWitnessInfo = new CheatWitnessInfo();
+          cheatWitnessInfoMap.put(key, cheatWitnessInfo);
+        }
+        cheatWitnessInfoMap.get(key).clear().setTime(System.currentTimeMillis())
+            .setLatestBlockNum(block.getNum()).add(block).add(blockCapsule).increment();
+      } else {
+        historyBlockCapsuleCache.put(block.getNum(), block);
+      }
+    } catch (Exception e) {
+      logger.error("valid witness same time product two block fail! blockNum: {}, blockHash: {}",
+          block.getNum(), block.getBlockId().toString(), e);
+    }
+  }
+
+  public Map<String, CheatWitnessInfo> queryCheatWitnessInfo() {
+    return cheatWitnessInfoMap;
+  }
+
   public static class CheatWitnessInfo {
 
     private AtomicInteger times = new AtomicInteger(0);
@@ -56,6 +82,11 @@ public class WitnessProductBlockService {
       return new HashSet<>(blockCapsuleSet);
     }
 
+    public CheatWitnessInfo setBlockCapsuleSet(Set<BlockCapsule> blockCapsuleSet) {
+      this.blockCapsuleSet = new HashSet<>(blockCapsuleSet);
+      return this;
+    }
+
     public CheatWitnessInfo clear() {
       blockCapsuleSet.clear();
       return this;
@@ -63,11 +94,6 @@ public class WitnessProductBlockService {
 
     public CheatWitnessInfo add(BlockCapsule blockCapsule) {
       blockCapsuleSet.add(blockCapsule);
-      return this;
-    }
-
-    public CheatWitnessInfo setBlockCapsuleSet(Set<BlockCapsule> blockCapsuleSet) {
-      this.blockCapsuleSet = new HashSet<>(blockCapsuleSet);
       return this;
     }
 
@@ -89,31 +115,5 @@ public class WitnessProductBlockService {
           ", blockCapsuleSet=" + blockCapsuleSet +
           '}';
     }
-  }
-
-  public void validWitnessProductTwoBlock(BlockCapsule block) {
-    try {
-      BlockCapsule blockCapsule = historyBlockCapsuleCache.getIfPresent(block.getNum());
-      if (blockCapsule != null && Arrays.equals(blockCapsule.getWitnessAddress().toByteArray(),
-          block.getWitnessAddress().toByteArray()) && !Arrays.equals(block.getBlockId().getBytes(),
-          blockCapsule.getBlockId().getBytes())) {
-        String key = ByteArray.toHexString(block.getWitnessAddress().toByteArray());
-        if (!cheatWitnessInfoMap.containsKey(key)) {
-          CheatWitnessInfo cheatWitnessInfo = new CheatWitnessInfo();
-          cheatWitnessInfoMap.put(key, cheatWitnessInfo);
-        }
-        cheatWitnessInfoMap.get(key).clear().setTime(System.currentTimeMillis())
-            .setLatestBlockNum(block.getNum()).add(block).add(blockCapsule).increment();
-      } else {
-        historyBlockCapsuleCache.put(block.getNum(), block);
-      }
-    } catch (Exception e) {
-      logger.error("valid witness same time product two block fail! blockNum: {}, blockHash: {}",
-          block.getNum(), block.getBlockId().toString(), e);
-    }
-  }
-
-  public Map<String, CheatWitnessInfo> queryCheatWitnessInfo() {
-    return cheatWitnessInfoMap;
   }
 }

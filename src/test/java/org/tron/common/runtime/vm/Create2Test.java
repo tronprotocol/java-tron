@@ -21,7 +21,7 @@ import stest.tron.wallet.common.client.utils.DataWord;
 
 @Slf4j
 public class Create2Test extends VMTestBase {
-/*
+  /*
 pragma solidity 0.5.0;
 contract Factory {
     event Deployed(address addr, uint256 salt);
@@ -48,7 +48,7 @@ contract TestConstract {
         i++;
     }
 }
- */
+  */
 
   /*
 contract:TestConstract
@@ -67,11 +67,12 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
 
 
 
-*/
+  */
 
   @Test
   public void testCreate2()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+      throws ContractExeException, ReceiptCheckErrException,
+      VMIllegalException, ContractValidateException {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     String contractName = "Factory_0";
@@ -85,42 +86,43 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
     String methodSign = "deploy(bytes,uint256)";
 
     // deploy contract
-    Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
+    Transaction trx = TvmTestUtils
+        .generateDeploySmartContractAndGetTransaction(contractName, address, ABI, factoryCode,
+            value, fee, consumeUserResourcePercent, null);
     byte[] factoryAddress = Wallet.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
-
     // Trigger contract method: deploy(bytes,uint)
     long salt = 100L;
     String hexInput = AbiUtil.parseMethod(methodSign, Arrays.asList(testCode, salt));
-    TVMTestResult result =  TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+    TVMTestResult result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     byte[] actualContract = MUtil.convertToTronAddress(Arrays.copyOfRange(returnValue, 12, 32));
-    byte[] expectedContract = Wallet.generateContractAddress2(address, new DataWord(salt).getData(), Hex.decode(testCode));
+    byte[] expectedContract = Wallet
+        .generateContractAddress2(address, new DataWord(salt).getData(), Hex.decode(testCode));
     // check deployed contract
     Assert.assertEquals(actualContract, expectedContract);
 
     // trigger deployed contract
-    String methodToTrigger  = "plusOne()";
+    String methodToTrigger = "plusOne()";
     for (int i = 1; i < 3; i++) {
       hexInput = AbiUtil.parseMethod(methodToTrigger, Collections.emptyList());
       result = TvmTestUtils
-          .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-              actualContract, Hex.decode(hexInput), 0, fee, manager, null);
+          .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), actualContract,
+              Hex.decode(hexInput), 0, fee, manager, null);
       Assert.assertNull(result.getRuntime().getRuntimeError());
       Assert.assertEquals(result.getRuntime().getResult().getHReturn(), new DataWord(i).getData());
     }
 
     // deploy contract again
-    result =  TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNotNull(result.getRuntime().getRuntimeError());
     Assert.assertEquals(result.getRuntime().getRuntimeError(), "REVERT opcode executed");
 

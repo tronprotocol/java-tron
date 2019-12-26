@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.http.GetAccountByIdServlet;
 import org.tron.core.services.http.GetAccountServlet;
 import org.tron.core.services.http.GetAssetIssueByIdServlet;
@@ -23,13 +24,18 @@ import org.tron.core.services.http.GetBrokerageServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
 import org.tron.core.services.http.GetDelegatedResourceServlet;
 import org.tron.core.services.http.GetExchangeByIdServlet;
+import org.tron.core.services.http.GetMerkleTreeVoucherInfoServlet;
 import org.tron.core.services.http.GetNodeInfoServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
 import org.tron.core.services.http.GetRewardServlet;
 import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
+import org.tron.core.services.http.IsSpendServlet;
 import org.tron.core.services.http.ListExchangesServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
+import org.tron.core.services.http.ScanAndMarkNoteByIvkServlet;
+import org.tron.core.services.http.ScanNoteByIvkServlet;
+import org.tron.core.services.http.ScanNoteByOvkServlet;
 import org.tron.core.services.http.TriggerConstantContractServlet;
 
 
@@ -90,6 +96,17 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetBlockByLatestNumServlet getBlockByLatestNumServlet;
   @Autowired
+  private ScanAndMarkNoteByIvkServlet scanAndMarkNoteByIvkServlet;
+  @Autowired
+  private ScanNoteByIvkServlet scanNoteByIvkServlet;
+  @Autowired
+  private ScanNoteByOvkServlet scanNoteByOvkServlet;
+  @Autowired
+  private GetMerkleTreeVoucherInfoServlet getMerkleTreeVoucherInfoServlet;
+  @Autowired
+  private IsSpendServlet isSpendServlet;
+
+  @Autowired
   private GetBrokerageServlet getBrokerageServlet;
   @Autowired
   private GetRewardServlet getRewardServlet;
@@ -98,12 +115,11 @@ public class SolidityNodeHttpApiService implements Service {
 
   @Override
   public void init() {
-
   }
 
   @Override
   public void init(Args args) {
-
+    FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
   @Override
@@ -148,6 +164,16 @@ public class SolidityNodeHttpApiService implements Service {
           "/walletsolidity/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet),
           "/walletsolidity/getblockbylatestnum");
+      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
+          "/walletsolidity/getmerkletreevoucherinfo");
+      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
+          "/walletsolidity/scanandmarknotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByIvkServlet),
+          "/walletsolidity/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkServlet),
+          "/walletsolidity/scannotebyovk");
+      context.addServlet(new ServletHolder(isSpendServlet),
+          "/walletsolidity/isspend");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),
@@ -193,4 +219,5 @@ public class SolidityNodeHttpApiService implements Service {
       logger.debug("Exception: {}", e.getMessage());
     }
   }
+
 }

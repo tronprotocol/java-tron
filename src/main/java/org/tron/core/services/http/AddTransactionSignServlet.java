@@ -3,7 +3,7 @@ package org.tron.core.services.http;
 import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -15,10 +15,9 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionSign;
 
 
-
 @Component
 @Slf4j(topic = "API")
-public class AddTransactionSignServlet extends HttpServlet {
+public class AddTransactionSignServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -33,7 +32,7 @@ public class AddTransactionSignServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       JSONObject input = JSONObject.parseObject(contract);
-      boolean visible =  Util.getVisibleOnlyForSign(input);
+      boolean visible = Util.getVisibleOnlyForSign(input);
       String strTransaction = input.getJSONObject("transaction").toJSONString();
       Transaction transaction = Util.packTransaction(strTransaction, visible);
       JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction,

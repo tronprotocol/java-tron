@@ -52,11 +52,10 @@ public class WitnessService implements Service {
   private static final int PRODUCE_TIME_OUT = 500; // ms
   @Getter
   private static volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
-
-  private Application tronApp;
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <witnessAccountAddress,WitnessCapsule>
+  private Application tronApp;
   private Thread generateThread;
 
   @Getter
@@ -83,30 +82,6 @@ public class WitnessService implements Service {
   private long blockCycle =
       ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.MAX_ACTIVE_WITNESS_NUM;
   private Cache<ByteString, Long> blocks = CacheBuilder.newBuilder().maximumSize(10).build();
-
-  /**
-   * Construction method.
-   */
-  public WitnessService(Application tronApp, TronApplicationContext context) {
-    this.tronApp = tronApp;
-    this.context = context;
-    backupManager = context.getBean(BackupManager.class);
-    backupServer = context.getBean(BackupServer.class);
-    tronNetService = context.getBean(TronNetService.class);
-    generateThread = new Thread(scheduleProductionLoop);
-    manager = tronApp.getDbManager();
-    manager.setWitnessService(this);
-    controller = manager.getWitnessController();
-    new Thread(() -> {
-      while (needSyncCheck) {
-        try {
-          Thread.sleep(100);
-        } catch (Exception e) {
-        }
-      }
-      backupServer.initServer();
-    }).start();
-  }
 
   /**
    * Cycle thread to generate blocks
@@ -143,6 +118,30 @@ public class WitnessService implements Service {
       };
 
   /**
+   * Construction method.
+   */
+  public WitnessService(Application tronApp, TronApplicationContext context) {
+    this.tronApp = tronApp;
+    this.context = context;
+    backupManager = context.getBean(BackupManager.class);
+    backupServer = context.getBean(BackupServer.class);
+    tronNetService = context.getBean(TronNetService.class);
+    generateThread = new Thread(scheduleProductionLoop);
+    manager = tronApp.getDbManager();
+    manager.setWitnessService(this);
+    controller = manager.getWitnessController();
+    new Thread(() -> {
+      while (needSyncCheck) {
+        try {
+          Thread.sleep(100);
+        } catch (Exception e) {
+        }
+      }
+      backupServer.initServer();
+    }).start();
+  }
+
+  /**
    * Loop to generate blocks
    */
   private void blockProductionLoop() throws InterruptedException {
@@ -164,7 +163,7 @@ public class WitnessService implements Service {
    * Generate and broadcast blocks
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
-    logger.info("Try Produce Block");
+    logger.info("Try to Produce Block");
     long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
       long nexSlotTime = controller.getSlotTime(1);
@@ -264,7 +263,7 @@ public class WitnessService implements Service {
             controller.lastHeadBlockIsMaintenance());
 
         if (block == null) {
-          logger.warn("exception when generate block");
+          logger.warn("exception thrown when generate block");
           return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
         }
 
@@ -274,7 +273,7 @@ public class WitnessService implements Service {
             .min(ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
                 ChainConstant.BLOCK_PRODUCED_INTERVAL);
         if (DateTime.now().getMillis() - now > timeout) {
-          logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", timeout, new DateTime(now),
+          logger.warn("Task timeout ( > {}ms), startTime:{},endTime:{}", timeout, new DateTime(now),
               DateTime.now());
           tronApp.getDbManager().eraseBlock();
           return BlockProductionCondition.TIME_OUT;
@@ -317,7 +316,7 @@ public class WitnessService implements Service {
     try {
       tronNetService.broadcast(new BlockMessage(block.getData()));
     } catch (Exception ex) {
-      throw new RuntimeException("BroadcastBlock error");
+      throw new RuntimeException("Broadcast block error");
     }
   }
 

@@ -198,6 +198,7 @@ public class HttpTestAccount003 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, updateAccountAddress, fromAddress, updateAccountKey);
     HttpMethed.disConnect();
   }
 }

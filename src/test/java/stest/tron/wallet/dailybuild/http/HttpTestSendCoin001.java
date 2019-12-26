@@ -119,6 +119,7 @@ public class HttpTestSendCoin001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, receiverAddress, fromAddress, receiverKey);
     HttpMethed.disConnect();
   }
 

@@ -32,10 +32,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import javafx.util.Pair;
+import org.tron.common.utils.Pair;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
@@ -102,12 +103,14 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.services.DelegationService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
+import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -173,6 +176,15 @@ public class Manager {
   @Autowired
   @Getter
   private StorageRowStore storageRowStore;
+  @Autowired
+  private NullifierStore nullifierStore;
+  @Autowired
+  @Getter
+  private ZKProofStore proofStore;
+
+  @Autowired
+  @Getter
+  private IncrementalMerkleTreeStore merkleTreeStore;
 
   @Setter
   private TronNetService tronNetService;
@@ -212,6 +224,17 @@ public class Manager {
   @Getter
   @Setter
   private ProposalController proposalController;
+
+  @Getter
+  @Setter
+  private MerkleContainer merkleContainer;
+
+  // map<Long, IncrementalMerkleTree>
+
+  @Autowired
+  @Getter
+  @Setter
+  private TreeBlockIndexStore merkleTreeIndexStore;
 
   private ExecutorService validateSignService;
 
@@ -336,6 +359,13 @@ public class Manager {
   // transactions cache
   private List<TransactionCapsule> pendingTransactions;
 
+  @Getter
+  private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
+
+  private final int SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = Args.getInstance()
+      .getShieldedTransInPendingMaxCounts();
+  private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
+
   // transactions popped
   private List<TransactionCapsule> popedTransactions =
       Collections.synchronizedList(Lists.newArrayList());
@@ -457,6 +487,7 @@ public class Manager {
     revokingStore.check();
     this.setWitnessController(WitnessController.createInstance(this));
     this.setProposalController(ProposalController.createInstance(this));
+    this.setMerkleContainer(merkleContainer.createInstance(this));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
@@ -502,6 +533,7 @@ public class Manager {
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
     }
+
   }
 
   public BlockId getGenesisBlockId() {
@@ -681,6 +713,25 @@ public class Manager {
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
+  public void adjustAssetBalanceV2(byte[] accountAddress, String AssetID, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = getAccountStore().getUnchecked(accountAddress);
+    adjustAssetBalanceV2(account, AssetID, amount);
+  }
+
+  public void adjustAssetBalanceV2(AccountCapsule account, String AssetID, long amount)
+      throws BalanceInsufficientException {
+    if (amount < 0) {
+      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, this)) {
+        throw new BalanceInsufficientException("reduceAssetAmount failed !");
+      }
+    } else if (amount > 0 &&
+            !account.addAssetAmountV2(AssetID.getBytes(), amount, this)) {
+        throw new BalanceInsufficientException("addAssetAmount failed !");
+    }
+    accountStore.put(account.getAddress().toByteArray(), account);
+  }
+
 
   public void adjustAllowance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
@@ -696,6 +747,16 @@ public class Manager {
     }
     account.setAllowance(allowance + amount);
     this.getAccountStore().put(account.createDbKey(), account);
+  }
+
+
+  public void adjustTotalShieldedPoolValue(long valueBalance) throws BalanceInsufficientException {
+    long totalShieldedPoolValue = Math
+        .subtractExact(getDynamicPropertiesStore().getTotalShieldedPoolValue(), valueBalance);
+    if (totalShieldedPoolValue < 0) {
+      throw new BalanceInsufficientException("Total shielded pool value can not below 0");
+    }
+    getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }
 
   void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
@@ -764,6 +825,11 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
+    if (isShieldedTransaction(trx.getInstance()) && !Args.getInstance()
+        .isFullNodeAllowShieldedTransaction()) {
+      return true;
+    }
+
     synchronized (pushTransactionQueue) {
       pushTransactionQueue.add(trx);
     }
@@ -774,6 +840,10 @@ public class Manager {
       }
 
       synchronized (this) {
+        if (isShieldedTransaction(trx.getInstance())
+            && shieldedTransInPendingCounts.get() >= SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) {
+          return false;
+        }
         if (!session.valid()) {
           session.setValue(revokingStore.buildSession());
         }
@@ -782,6 +852,9 @@ public class Manager {
           processTransaction(trx, null);
           pendingTransactions.add(trx);
           tmpSession.merge();
+        }
+        if (isShieldedTransaction(trx.getInstance())) {
+          shieldedTransInPendingCounts.incrementAndGet();
         }
       }
     } finally {
@@ -800,8 +873,10 @@ public class Manager {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = getAccountStore().get(address);
         try {
-          adjustBalance(accountCapsule, -fee);
-          adjustBalance(this.getAccountStore().getBlackhole().createDbKey(), +fee);
+          if (accountCapsule != null) {
+            adjustBalance(accountCapsule, -fee);
+            adjustBalance(this.getAccountStore().getBlackhole().createDbKey(), +fee);
+          }
         } catch (BalanceInsufficientException e) {
           throw new AccountResourceInsufficientException(
               "Account Insufficient  balance[" + fee + "] to MultiSign");
@@ -843,7 +918,7 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
-      NonCommonBlockException, BadNumberBlockException, BadBlockException {
+      NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException {
     block.generatedByMyself = true;
     long start = System.currentTimeMillis();
     pushBlock(block);
@@ -858,7 +933,7 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException, BadBlockException {
+      VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -879,7 +954,7 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException, BadBlockException {
+      VMIllegalException, ZksnarkException, BadBlockException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -927,6 +1002,7 @@ public class Manager {
             | TooBigTransactionResultException
             | ValidateScheduleException
             | VMIllegalException
+            | ZksnarkException
             | BadBlockException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
@@ -960,7 +1036,8 @@ public class Manager {
                   | DupTransactionException
                   | TransactionExpirationException
                   | TooBigTransactionException
-                  | ValidateScheduleException e) {
+                  | ValidateScheduleException
+                  | ZksnarkException e) {
                 logger.warn(e.getMessage(), e);
               }
             }
@@ -978,7 +1055,7 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException {
+      ReceiptCheckErrException, VMIllegalException, ZksnarkException {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -996,6 +1073,12 @@ public class Manager {
                   + block.getMerkleRoot());
           throw new BadBlockException("The merkle hash is not validated");
         }
+      }
+
+      if (block.getTransactions().stream().filter(tran -> isShieldedTransaction(tran.getInstance()))
+          .count() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
+        throw new BadBlockException(
+            "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
       }
 
       if (witnessService != null) {
@@ -1246,6 +1329,7 @@ public class Manager {
     VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
     VMConfig.initAllowTvmSolidity059(dynamicPropertiesStore.getAllowTvmSolidity059());
 
+
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
     trace.exec();
@@ -1290,7 +1374,6 @@ public class Manager {
     return transactionInfo.getInstance();
   }
 
-
   /**
    * Get the block id from the number.
    */
@@ -1298,7 +1381,8 @@ public class Manager {
     return this.blockIndexStore.get(num);
   }
 
-  public BlockCapsule getBlockByNum(final long num) throws ItemNotFoundException, BadItemException {
+  public BlockCapsule getBlockByNum(final long num) throws
+      ItemNotFoundException, BadItemException {
     return getBlockById(getBlockIdByNum(num));
   }
 
@@ -1317,8 +1401,9 @@ public class Manager {
       logger.info("It's not my turn, "
           + "and the first block after the maintenance period has just been processed.");
 
-      logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
-          when, lastHeadBlockIsMaintenanceBefore, lastHeadBlockIsMaintenance());
+      logger
+          .info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
+              when, lastHeadBlockIsMaintenanceBefore, lastHeadBlockIsMaintenance());
 
       return null;
     }
@@ -1352,13 +1437,14 @@ public class Manager {
         new TransactionRetCapsule(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
+    AtomicInteger shieldeTransCounts = new AtomicInteger(0);
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
       if (iterator.hasNext()) {
         fromPending = true;
-        trx = (TransactionCapsule) iterator.next();
+        trx = iterator.next();
       } else {
         trx = repushTransactions.poll();
       }
@@ -1377,8 +1463,12 @@ public class Manager {
         postponedTrxCount++;
         continue;
       }
-
-      //
+      //shielded transaction
+      if (isShieldedTransaction(trx.getInstance())
+          && shieldeTransCounts.incrementAndGet() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
+        continue;
+      }
+      //mult sign transaction
       Contract contract = trx.getInstance().getRawData().getContract(0);
       byte[] owner = TransactionCapsule.getOwner(contract);
       String ownerAddress = ByteArray.toHexString(owner);
@@ -1485,6 +1575,8 @@ public class Manager {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
+    } catch (ZksnarkException e) {
+      logger.info("zk error!", e.getMessage());
     }
 
     return null;
@@ -1510,6 +1602,17 @@ public class Manager {
     return false;
   }
 
+  private boolean isShieldedTransaction(Transaction transaction) {
+    Contract contract = transaction.getRawData().getContract(0);
+    switch (contract.getType()) {
+      case ShieldedTransferContract: {
+        return true;
+      }
+      default:
+    }
+    return false;
+  }
+
   public TransactionStore getTransactionStore() {
     return this.transactionStore;
   }
@@ -1522,7 +1625,6 @@ public class Manager {
     return this.blockStore;
   }
 
-
   /**
    * process block.
    */
@@ -1530,7 +1632,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, BadBlockException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1551,8 +1653,8 @@ public class Manager {
 
     TransactionRetCapsule transationRetCapsule =
         new TransactionRetCapsule(block);
-
     try {
+      merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
@@ -1570,7 +1672,7 @@ public class Manager {
     } finally {
       accountStateCallBack.exceptionFinish();
     }
-
+    merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
     block.setResult(transationRetCapsule);
     payReward(block);
     boolean needMaint = needMaintenance(block.getTimeStamp());
@@ -1593,7 +1695,6 @@ public class Manager {
     updateDynamicProperties(block);
     updateMaintenanceState(needMaint);
   }
-
 
   private void updateTransHashCache(BlockCapsule block) {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
@@ -1782,6 +1883,14 @@ public class Manager {
     this.accountIndexStore = indexStore;
   }
 
+  public NullifierStore getNullfierStore() {
+    return this.nullifierStore;
+  }
+
+  public void setNullifierStore(NullifierStore nullifierStore) {
+    this.nullifierStore = nullifierStore;
+  }
+
   public void closeAllStore() {
     logger.info("******** begin to close db ********");
     closeOneStore(accountStore);
@@ -1807,6 +1916,8 @@ public class Manager {
     closeOneStore(delegatedResourceAccountIndexStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
+    closeOneStore(nullifierStore);
+    closeOneStore(merkleTreeStore);
     closeOneStore(transactionRetStore);
     logger.info("******** end to close db ********");
   }
@@ -1991,7 +2102,8 @@ public class Manager {
         contractEventTriggerCapsule.getContractTrigger().setRemoved(remove);
         contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
         if (!triggerCapsuleQueue.offer(contractEventTriggerCapsule)) {
-          logger.info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
+          logger
+              .info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
         }
       }
     }

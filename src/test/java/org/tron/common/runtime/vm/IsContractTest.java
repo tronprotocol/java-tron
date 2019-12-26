@@ -18,57 +18,57 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class IsContractTest extends VMTestBase {
-/*
+  /*
 
-pragma solidity >=0.4.22 <0.6.0;
+  pragma solidity >=0.4.22 <0.6.0;
 
-contract isTestCtr {
-    bool public isContrct;
-    bool public senderIsContrct;
-    constructor () public {
-        isContrct = address(this).isContract;
-    }
-    function isTest(address addr) view public returns (bool) {
-        return addr.isContract;
-    }
-    function isTestIf(address addr) view public returns (bool) {
-        if (addr.isContract) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    function isTestEquals(address addr) view public returns (bool) {
-        if (addr.isContract == true) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    function isTestView(address addr) view public returns (bool) {
-        return addr.isContract;
-    }
-    function isTestSender() public {
-        senderIsContrct = msg.sender.isContract;
-    }
-    function withCall(address addr) public {
-        addr.call(abi.encodeWithSignature("isTestSender()"));
-    }
-    function withDelegatecall(address addr) public {
-        addr.delegatecall(abi.encodeWithSignature("isTestSender()"));
-    }
-    function killme() public {
-        selfdestruct(msg.sender);
-    }
-    function isTestTrue() pure public returns (bool) {
-        return true;
-    }
-    function isTestFalse() pure public returns (bool) {
-        return false;
-    }
-}
+  contract isTestCtr {
+      bool public isContrct;
+      bool public senderIsContrct;
+      constructor () public {
+          isContrct = address(this).isContract;
+      }
+      function isTest(address addr) view public returns (bool) {
+          return addr.isContract;
+      }
+      function isTestIf(address addr) view public returns (bool) {
+          if (addr.isContract) {
+              return true;
+          } else {
+              return false;
+          }
+      }
+      function isTestEquals(address addr) view public returns (bool) {
+          if (addr.isContract == true) {
+              return true;
+          } else {
+              return false;
+          }
+      }
+      function isTestView(address addr) view public returns (bool) {
+          return addr.isContract;
+      }
+      function isTestSender() public {
+          senderIsContrct = msg.sender.isContract;
+      }
+      function withCall(address addr) public {
+          addr.call(abi.encodeWithSignature("isTestSender()"));
+      }
+      function withDelegatecall(address addr) public {
+          addr.delegatecall(abi.encodeWithSignature("isTestSender()"));
+      }
+      function killme() public {
+          selfdestruct(msg.sender);
+      }
+      function isTestTrue() pure public returns (bool) {
+          return true;
+      }
+      function isTestFalse() pure public returns (bool) {
+          return false;
+      }
+  }
 
-*/
+  */
 
   @Test
   public void testIsContract()
@@ -85,15 +85,17 @@ contract isTestCtr {
     long consumeUserResourcePercent = 0;
 
     // deploy contract
-    Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
+    Transaction trx = TvmTestUtils
+        .generateDeploySmartContractAndGetTransaction(contractName, address, ABI, factoryCode,
+            value, fee, consumeUserResourcePercent, null);
     byte[] factoryAddress = Wallet.generateContractAddress(trx);
     String factoryAddressStr = Wallet.encode58Check(factoryAddress);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
-        "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
+    trx = TvmTestUtils
+        .generateDeploySmartContractAndGetTransaction("", address, ABI, factoryCode, value, fee,
+            consumeUserResourcePercent, null);
     byte[] factoryAddressOther = Wallet.generateContractAddress(trx);
     String factoryAddressStrOther = Wallet.encode58Check(factoryAddressOther);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
@@ -104,8 +106,8 @@ contract isTestCtr {
     String nonexistentAccount = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
     String hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(nonexistentAccount));
     TVMTestResult result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
@@ -117,8 +119,8 @@ contract isTestCtr {
     String existentAccount = Wallet.encode58Check(address);
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(existentAccount));
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
@@ -130,8 +132,8 @@ contract isTestCtr {
     String precompileContractAddr = "0000000000000000000000000000000000000000000000000000000000010001";
     hexInput = AbiUtil.parseMethod(methodByAddr, precompileContractAddr, true);
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
@@ -142,8 +144,8 @@ contract isTestCtr {
     // trigger deployed contract
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(factoryAddressStr));
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
@@ -155,8 +157,8 @@ contract isTestCtr {
     methodByAddr = "isContrct()";
     hexInput = AbiUtil.parseMethod(methodByAddr, "");
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
@@ -168,8 +170,8 @@ contract isTestCtr {
     methodByAddr = "senderIsContrct()";
     hexInput = AbiUtil.parseMethod(methodByAddr, "");
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
@@ -181,15 +183,15 @@ contract isTestCtr {
     methodByAddr = "isTestSender()";
     hexInput = AbiUtil.parseMethod(methodByAddr, "");
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     methodByAddr = "senderIsContrct()";
     hexInput = AbiUtil.parseMethod(methodByAddr, "");
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
@@ -201,15 +203,15 @@ contract isTestCtr {
     methodByAddr = "withCall(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(factoryAddressStrOther));
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     methodByAddr = "senderIsContrct()";
     hexInput = AbiUtil.parseMethod(methodByAddr, "");
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddressOther, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddressOther,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
@@ -221,15 +223,15 @@ contract isTestCtr {
     methodByAddr = "withDelegatecall(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(factoryAddressStrOther));
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     methodByAddr = "senderIsContrct()";
     hexInput = AbiUtil.parseMethod(methodByAddr, "");
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
@@ -241,15 +243,15 @@ contract isTestCtr {
     methodByAddr = "killme()";
     hexInput = AbiUtil.parseMethod(methodByAddr, "");
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddressOther, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddressOther,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     methodByAddr = "isTest(address)";
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(factoryAddressStrOther));
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS), factoryAddress,
+            Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();

@@ -106,7 +106,6 @@ public class ContractTrcToken026 {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
         0, 1, user001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
@@ -128,10 +127,9 @@ public class ContractTrcToken026 {
     String abi = retMap.get("abI").toString();
     btestAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 0, originEnergyLimit, "0",
-            0, null, dev001Key, dev001Address,
+            0L, 0, originEnergyLimit, assetAccountId.toStringUtf8(),
+            100, null, dev001Key, dev001Address,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName1 = "C";
@@ -140,8 +138,8 @@ public class ContractTrcToken026 {
     String abi1 = retMap1.get("abI").toString();
     ctestAddress = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
-            0L, 0, originEnergyLimit, "0",
-            0, null, dev001Key, dev001Address,
+            0L, 0, originEnergyLimit, assetAccountId.toStringUtf8(),
+            100, null, dev001Key, dev001Address,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -151,33 +149,13 @@ public class ContractTrcToken026 {
     String abi2 = retMap2.get("abI").toString();
     transferTokenContractAddress = PublicMethed
         .deployContract(contractName2, abi2, code2, "", maxFeeLimit,
-            0L, 0, originEnergyLimit, "0",
-            0, null, dev001Key, dev001Address,
+            1000000000L, 0, originEnergyLimit, assetAccountId.toStringUtf8(),
+            100, null, dev001Key, dev001Address,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert
-        .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 1000000000L, fromAddress,
+        .assertFalse(PublicMethed.sendcoin(transferTokenContractAddress, 1000000000L, fromAddress,
             testKey002, blockingStubFull));
-
-    // devAddress transfer token to userAddress
-    PublicMethed
-        .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
-            dev001Address,
-            dev001Key,
-            blockingStubFull);
-    PublicMethed
-        .transferAsset(btestAddress, assetAccountId.toByteArray(), 100, dev001Address,
-            dev001Key,
-            blockingStubFull);
-    PublicMethed
-        .transferAsset(ctestAddress, assetAccountId.toByteArray(), 100, dev001Address,
-            dev001Key,
-            blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
   }
 
   @Test(enabled = true, description = "Multistage call transferToken use right tokenID")
@@ -236,7 +214,6 @@ public class ContractTrcToken026 {
         param, false, 0, 1000000000L, "0",
         0, dev001Address, dev001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(dev001Address, blockingStubFull);
@@ -348,7 +325,6 @@ public class ContractTrcToken026 {
         0, dev001Address, dev001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter1 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter1 = PublicMethed.getAccountResource(dev001Address,
@@ -443,7 +419,6 @@ public class ContractTrcToken026 {
         param2, false, 0, 1000000000L, "0",
         0, dev001Address, dev001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter2 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
@@ -543,7 +518,6 @@ public class ContractTrcToken026 {
         1, dev001Address, dev001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter3 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter3 = PublicMethed.getAccountResource(dev001Address,
@@ -639,7 +613,6 @@ public class ContractTrcToken026 {
             .toStringUtf8(),
         100000000, dev001Address, dev001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter4 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
@@ -738,7 +711,6 @@ public class ContractTrcToken026 {
         1, dev001Address, dev001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter5 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter5 = PublicMethed.getAccountResource(dev001Address,
@@ -798,6 +770,10 @@ public class ContractTrcToken026 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, user001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

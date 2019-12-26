@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -102,7 +103,7 @@ public class WalletTestAssetIssue010 {
         .sendcoin(asset010Address, sendAmount, fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
-        .freezeBalance(asset010Address, 200000000L, 3, testKeyForAssetIssue010,
+        .freezeBalance(asset010Address, 200000000L, 0, testKeyForAssetIssue010,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long start = System.currentTimeMillis() + 2000;
@@ -188,6 +189,14 @@ public class WalletTestAssetIssue010 {
         .updateAsset(asset010Address, description.getBytes(), tooLongUrl.getBytes(),
             freeAssetNetLimit,
             publicFreeAssetNetLimit, testKeyForAssetIssue010, blockingStubFull));
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed
+        .freedResource(asset010Address, testKeyForAssetIssue010, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(asset010Address, testKeyForAssetIssue010, 0, asset010Address,
+        blockingStubFull);
   }
 
   /**

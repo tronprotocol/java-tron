@@ -158,7 +158,7 @@ public class ContractTrcToken061 {
     logger.info("after AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountAfter: "
         + devAssetCountAfter);
 
-    Assert.assertTrue(PublicMethed.transferAsset(transferTokenContractAddress,
+    Assert.assertFalse(PublicMethed.transferAsset(transferTokenContractAddress,
         assetAccountId.toByteArray(), 100L, dev001Address, dev001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long contractAssetCount = PublicMethed.getAssetIssueValue(transferTokenContractAddress,
@@ -168,7 +168,7 @@ public class ContractTrcToken061 {
 
     Assert.assertEquals(Long.valueOf(tokenValue),
         Long.valueOf(devAssetCountBefore - devAssetCountAfter));
-    Assert.assertEquals(Long.valueOf(100L + tokenValue), contractAssetCount);
+    Assert.assertEquals(Long.valueOf(tokenValue), contractAssetCount);
 
     // get and verify the msg.value and msg.id
 
@@ -221,6 +221,8 @@ public class ContractTrcToken061 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -95,11 +96,10 @@ public class MultiSign10 {
   @Test(enabled = true, description = "Active weight is exception condition")
   public void testActiveWeight01() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -387,13 +387,12 @@ public class MultiSign10 {
   @Test(enabled = true, description = "Active weight is 1")
   public void testActiveWeight02() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee + multiSignFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -459,13 +458,12 @@ public class MultiSign10 {
   @Test(enabled = true, description = "Active weight is Integer.MAX_VALUE")
   public void testActiveWeight03() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -533,11 +531,10 @@ public class MultiSign10 {
   @Test(enabled = true, description = "Active sum of weight is more than Long.MAX_VALUE")
   public void testActiveWeight04() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -582,13 +579,12 @@ public class MultiSign10 {
   @Test(enabled = true, description = "Active weight is Long.MAX_VALUE")
   public void testActiveWeight05() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -644,6 +640,11 @@ public class MultiSign10 {
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin + 1000000);
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
   }
 
   /**

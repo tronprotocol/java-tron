@@ -25,9 +25,11 @@ public class WitnessControllerTest {
   private static String dbPath = "output_witness_controller_test";
 
   static {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
+
+  ByteString blank = ByteString.copyFrom(new byte[1]);
 
   @BeforeClass
   public static void init() {
@@ -41,17 +43,15 @@ public class WitnessControllerTest {
     FileUtil.deleteDir(new File(dbPath));
   }
 
-  ByteString blank = ByteString.copyFrom(new byte[1]);
-
   @Test
   public void testSlot() {
 
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(19000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1);
 
-//    assertEquals(21, dbManager.getWitnessController().getAbSlotAtTime(21500));
-//    assertEquals(2, dbManager.getWitnessController().getSlotAtTime(21500));
-//    assertEquals(19, dbManager.getWitnessController().getHeadSlot());
+    //assertEquals(21, dbManager.getWitnessController().getAbSlotAtTime(21500));
+    //assertEquals(2, dbManager.getWitnessController().getSlotAtTime(21500));
+    //assertEquals(19, dbManager.getWitnessController().getHeadSlot());
 
   }
 
@@ -62,32 +62,25 @@ public class WitnessControllerTest {
     assertEquals(0, dbManager.getHeadBlockNum());
 
     // test witnesses in genesis block
-    assertEquals(
-        "a0904fe896536f4bebc64c95326b5054a2c3d27df6", // first(current witness)
-        ByteArray.toHexString(
-            (dbManager.getWitnessController().getScheduledWitness(0).toByteArray())));
-    assertEquals(
-        "a0904fe896536f4bebc64c95326b5054a2c3d27df6",
-        ByteArray.toHexString(
-            (dbManager.getWitnessController().getScheduledWitness(5).toByteArray())));
-    assertEquals(
-        "a0807337f180b62a77576377c1d0c9c24df5c0dd62", // second(next witness)
-        ByteArray.toHexString(
-            (dbManager.getWitnessController().getScheduledWitness(6).toByteArray())));
-    assertEquals(
-        "a0807337f180b62a77576377c1d0c9c24df5c0dd62",
-        ByteArray.toHexString(
-            (dbManager.getWitnessController().getScheduledWitness(11).toByteArray())));
-    assertEquals(
-        "a05430a3f089154e9e182ddd6fe136a62321af22a7", // third
-        ByteArray.toHexString(
-            (dbManager.getWitnessController().getScheduledWitness(12).toByteArray())));
+    assertEquals("a0904fe896536f4bebc64c95326b5054a2c3d27df6", // first(current witness)
+        ByteArray
+            .toHexString((dbManager.getWitnessController().getScheduledWitness(0).toByteArray())));
+    assertEquals("a0904fe896536f4bebc64c95326b5054a2c3d27df6", ByteArray
+        .toHexString((dbManager.getWitnessController().getScheduledWitness(5).toByteArray())));
+    assertEquals("a0807337f180b62a77576377c1d0c9c24df5c0dd62", // second(next witness)
+        ByteArray
+            .toHexString((dbManager.getWitnessController().getScheduledWitness(6).toByteArray())));
+    assertEquals("a0807337f180b62a77576377c1d0c9c24df5c0dd62", ByteArray
+        .toHexString((dbManager.getWitnessController().getScheduledWitness(11).toByteArray())));
+    assertEquals("a05430a3f089154e9e182ddd6fe136a62321af22a7", // third
+        ByteArray
+            .toHexString((dbManager.getWitnessController().getScheduledWitness(12).toByteArray())));
 
     // test maintenance
-    ByteString a =
-        ByteString.copyFrom(ByteArray.fromHexString("a0ec6525979a351a54fa09fea64beb4cce33ffbb7a"));
-    ByteString b =
-        ByteString.copyFrom(ByteArray.fromHexString("a0fab5fbf6afb681e4e37e9d33bddb7e923d6132e5"));
+    ByteString a = ByteString
+        .copyFrom(ByteArray.fromHexString("a0ec6525979a351a54fa09fea64beb4cce33ffbb7a"));
+    ByteString b = ByteString
+        .copyFrom(ByteArray.fromHexString("a0fab5fbf6afb681e4e37e9d33bddb7e923d6132e5"));
     // system.out.print("a address:" + ByteArray.toHexString(a.toByteArray()) + "\n");
     // System.out.print("b address:" + ByteArray.toHexString(b.toByteArray()));
     List<ByteString> w = new ArrayList<>();

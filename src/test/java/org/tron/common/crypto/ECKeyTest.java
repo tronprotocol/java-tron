@@ -12,12 +12,11 @@ import java.security.KeyPairGenerator;
 import java.security.Security;
 import java.security.SignatureException;
 import java.util.Arrays;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.core.Wallet;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.core.Wallet;
 
 @Slf4j
 public class ECKeyTest {
@@ -25,8 +24,10 @@ public class ECKeyTest {
   private String privString = "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4";
   private BigInteger privateKey = new BigInteger(privString, 16);
 
-  private String pubString = "040947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f698ccc8ad75aa17564ae80a20bb044ee7a6d903e8e8df624b089c95d66a0570f051e5a05b";
-  private String compressedPubString = "030947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f698ccc8ad";
+  private String pubString = "040947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f698ccc"
+      + "8ad75aa17564ae80a20bb044ee7a6d903e8e8df624b089c95d66a0570f051e5a05b";
+  private String compressedPubString =
+      "030947751e3022ecf3016be03ec77ab0ce3c2662b4843898cb068d74f6" + "98ccc8ad";
   private byte[] pubKey = Hex.decode(pubString);
   private byte[] compressedPubKey = Hex.decode(compressedPubString);
   private String address = "cd2a3d9f938e13cd947ec05abc7fe734df8dd826";
@@ -62,8 +63,7 @@ public class ECKeyTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidPrivateKey() throws Exception {
-    new ECKey(
-        Security.getProvider("SunEC"),
+    new ECKey(Security.getProvider("SunEC"),
         KeyPairGenerator.getInstance("RSA").generateKeyPair().getPrivate(),
         ECKey.fromPublicOnly(pubKey).getPubKeyPoint());
     fail("Expecting an IllegalArgumentException for using an non EC private key");
@@ -134,9 +134,8 @@ public class ECKeyTest {
   @Test
   public void testToString() {
     ECKey key = ECKey.fromPrivate(BigInteger.TEN); // An example private key.
-    assertEquals(
-        "pub:04a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7",
-        key.toString());
+    assertEquals("pub:04a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba42"
+        + "5419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7", key.toString());
   }
 
   @Test

@@ -81,21 +81,15 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
   private static Manager dbManager;
 
   private static String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
-  private String trx2ContractAddress = "TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj";
   private static String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
 
   static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
-            "-w"
-        },
-        "config-test-mainnet.conf"
-    );
+    Args.setParam(new String[] {"--output-directory", dbPath, "--storage-db-directory", dbDirectory,
+        "--storage-index-directory", indexDirectory, "-w"}, "config-test-mainnet.conf");
     context = new TronApplicationContext(DefaultConfig.class);
   }
+
+  private String trx2ContractAddress = "TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj";
 
   /**
    * Init data.
@@ -114,8 +108,7 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
         totalBalance);
 
     accountCapsule.setFrozenForEnergy(10_000_000L, 0L);
-    dbManager.getAccountStore()
-        .put(Wallet.decodeFromBase58Check(OwnerAddress), accountCapsule);
+    dbManager.getAccountStore().put(Wallet.decodeFromBase58Check(OwnerAddress), accountCapsule);
 
     AccountCapsule accountCapsule2 = new AccountCapsule(ByteString.copyFrom("owner".getBytes()),
         ByteString.copyFrom(Wallet.decodeFromBase58Check(TriggerOwnerAddress)), AccountType.Normal,
@@ -128,6 +121,17 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
         .saveLatestBlockHeaderTimestamp(System.currentTimeMillis() / 1000);
   }
 
+  /**
+   * destroy clear data of testing.
+   */
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+    ApplicationFactory.create(context).shutdown();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
+  }
+
   @Test
   public void testSuccess() {
     try {
@@ -136,9 +140,9 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
           .get(Wallet.decodeFromBase58Check(TriggerOwnerAddress));
       long energy = triggerOwner.getEnergyUsage();
       long balance = triggerOwner.getBalance();
-      TriggerSmartContract triggerContract = TvmTestUtils.createTriggerContract(contractAddress,
-          "fibonacciNotify(uint256)", "100001", false,
-          0, Wallet.decodeFromBase58Check(TriggerOwnerAddress));
+      TriggerSmartContract triggerContract = TvmTestUtils
+          .createTriggerContract(contractAddress, "fibonacciNotify(uint256)", "100001", false, 0,
+              Wallet.decodeFromBase58Check(TriggerOwnerAddress));
       Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
           Contract.newBuilder().setParameter(Any.pack(triggerContract))
               .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000)).build();
@@ -173,17 +177,36 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
   }
 
   private byte[] createContract()
-      throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException, ContractExeException, VMIllegalException {
+      throws ContractValidateException, AccountResourceInsufficientException,
+      TooBigTransactionResultException, ContractExeException, VMIllegalException {
     AccountCapsule owner = dbManager.getAccountStore()
         .get(Wallet.decodeFromBase58Check(OwnerAddress));
     long energy = owner.getEnergyUsage();
     long balance = owner.getBalance();
 
     String contractName = "Fibonacci";
-    String code = "608060405234801561001057600080fd5b506101ba806100206000396000f30060806040526004361061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680633c7fdc701461005157806361047ff414610092575b600080fd5b34801561005d57600080fd5b5061007c600480360381019080803590602001909291905050506100d3565b6040518082815260200191505060405180910390f35b34801561009e57600080fd5b506100bd60048036038101908080359060200190929190505050610124565b6040518082815260200191505060405180910390f35b60006100de82610124565b90507f71e71a8458267085d5ab16980fd5f114d2d37f232479c245d523ce8d23ca40ed8282604051808381526020018281526020019250505060405180910390a1919050565b60008060008060008086141561013d5760009450610185565b600186141561014f5760019450610185565b600093506001925060009150600290505b85811115156101815782840191508293508192508080600101915050610160565b8194505b505050509190505600a165627a7a7230582071f3cf655137ce9dc32d3307fb879e65f3960769282e6e452a5f0023ea046ed20029";
-    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],\"name\":\"fibonacciNotify\",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],\"name\":\"fibonacci\",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"input\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"result\",\"type\":\"uint256\"}],\"name\":\"Notify\",\"type\":\"event\"}]";
-    CreateSmartContract smartContract = TvmTestUtils.createSmartContract(
-        Wallet.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0, 100);
+    String code = "608060405234801561001057600080fd5b506101ba806100206000396000f300608060405260043"
+        + "61061004c576000357c0100000000000000000000000000000000000000000000000000000000900463ffff"
+        + "ffff1680633c7fdc701461005157806361047ff414610092575b600080fd5b34801561005d57600080fd5b5"
+        + "061007c600480360381019080803590602001909291905050506100d3565b60405180828152602001915050"
+        + "60405180910390f35b34801561009e57600080fd5b506100bd6004803603810190808035906020019092919"
+        + "0505050610124565b6040518082815260200191505060405180910390f35b60006100de82610124565b9050"
+        + "7f71e71a8458267085d5ab16980fd5f114d2d37f232479c245d523ce8d23ca40ed828260405180838152602"
+        + "0018281526020019250505060405180910390a1919050565b60008060008060008086141561013d57600094"
+        + "50610185565b600186141561014f5760019450610185565b600093506001925060009150600290505b85811"
+        + "115156101815782840191508293508192508080600101915050610160565b8194505b505050509190505600"
+        + "a165627a7a7230582071f3cf655137ce9dc32d3307fb879e65f3960769282e6e452a5f0023ea046ed20029";
+    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],\""
+        + "name\":\"fibonacciNotify\",\"outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],\""
+        + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\""
+        + ":true,\"inputs\":[{\"name\":\"number\",\"type\":\"uint256\"}],\"name\":\"fibonacci\",\""
+        + "outputs\":[{\"name\":\"result\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutabi"
+        + "lity\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":"
+        + "false,\"name\":\"input\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"result\","
+        + "\"type\":\"uint256\"}],\"name\":\"Notify\",\"type\":\"event\"}]";
+    CreateSmartContract smartContract = TvmTestUtils
+        .createSmartContract(Wallet.decodeFromBase58Check(OwnerAddress), contractName, abi, code, 0,
+            100);
     Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
         Contract.newBuilder().setParameter(Any.pack(smartContract))
             .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)).build();
@@ -196,8 +219,7 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
     trace.init(blockCapsule);
     trace.exec();
     trace.finalization();
-    owner = dbManager.getAccountStore()
-        .get(Wallet.decodeFromBase58Check(OwnerAddress));
+    owner = dbManager.getAccountStore().get(Wallet.decodeFromBase58Check(OwnerAddress));
     energy = owner.getEnergyUsage() - energy;
     balance = balance - owner.getBalance();
     Assert.assertEquals(88529, trace.getReceipt().getEnergyUsageTotal());
@@ -208,16 +230,5 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest {
       return runtime.getResult().getContractAddress();
     }
     return runtime.getResult().getContractAddress();
-  }
-
-  /**
-   * destroy clear data of testing.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    ApplicationFactory.create(context).shutdown();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
   }
 }

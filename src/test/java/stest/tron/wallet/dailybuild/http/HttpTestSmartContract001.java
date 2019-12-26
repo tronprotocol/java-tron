@@ -240,6 +240,8 @@ public class HttpTestSmartContract001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, assetOwnerAddress, fromAddress, assetOwnerKey);
+    HttpMethed.freedResource(httpnode, assetReceiverAddress, fromAddress, assetReceiverKey);
     HttpMethed.disConnect();
   }
 }

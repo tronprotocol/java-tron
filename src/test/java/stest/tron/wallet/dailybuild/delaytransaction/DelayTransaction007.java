@@ -104,7 +104,6 @@ public class DelayTransaction007 {
         .getBalance();
     Assert.assertTrue(beforeCreateAccountBalance - balanceInDelay == delayTransactionFee);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("create time is " + PublicMethed.queryAccount(newAccountAddress,blockingStubFull)
         .getCreateTime());
     Assert.assertTrue(PublicMethed.queryAccount(newAccountAddress,blockingStubFull)
@@ -139,7 +138,6 @@ public class DelayTransaction007 {
         doCreateAccountAddress,doCreateAccountKey,blockingStubFull);
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,doCreateAccountAddress,
         doCreateAccountKey,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     final Long afterCreateBalance = PublicMethed.queryAccount(doCreateAccountKey,blockingStubFull)

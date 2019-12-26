@@ -129,7 +129,13 @@ public class WalletTestAssetIssue002 {
     Assert.assertFalse(PublicMethed.participateAssetIssue(fromAddress,
         assetAccountId.toByteArray(), 100L,
         toAddress, testKey003, blockingStubFull));
+
+    PublicMethed.freedResource(participateAccountAddress, participateAccountKey, fromAddress,
+        blockingStubFull);
+    PublicMethed.freedResource(toAddress, testKey003, fromAddress, blockingStubFull);
+
   }
+
 
   /**
    * constructor.

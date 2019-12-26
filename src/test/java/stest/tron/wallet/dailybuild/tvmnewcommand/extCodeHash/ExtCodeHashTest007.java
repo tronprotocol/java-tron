@@ -83,10 +83,10 @@ public class ExtCodeHashTest007 {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
+    //Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
+    //    PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
+    //        blockingStubFull), 0, 1,
+    //    ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
         0, 0, ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
@@ -607,6 +607,10 @@ public class ExtCodeHashTest007 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(user001Address, user001Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(dev001Address, dev001Key, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, user001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, dev001Address, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
