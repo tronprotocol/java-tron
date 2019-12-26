@@ -73,7 +73,7 @@ public interface ProgramInvoke {
 
   BlockCapsule getBlockByNum(int index);
 
-  void setRootConstantCall();
+  void setConstantCall();
 
-  boolean isRootConstantCall();
+  boolean isConstantCall();
 }

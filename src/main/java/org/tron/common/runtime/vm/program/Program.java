@@ -537,8 +537,8 @@ public class Program {
         new DataWord(0),
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
         getVmShouldEndInUs(), energyLimit.longValueSafe());
-    if (isRootConstantCall()) {
-      programInvoke.setRootConstantCall();
+    if (isConstantCall()) {
+      programInvoke.setConstantCall();
     }
     ProgramResult createResult = ProgramResult.createEmpty();
 
@@ -755,8 +755,8 @@ public class Program {
           !isTokenTransfer ? new DataWord(0) : msg.getTokenId(),
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
-      if (isRootConstantCall()) {
-        programInvoke.setRootConstantCall();
+      if (isConstantCall()) {
+        programInvoke.setConstantCall();
       }
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config,
@@ -1055,8 +1055,8 @@ public class Program {
     return invoke.isStaticCall();
   }
 
-  public boolean isRootConstantCall() {
-    return invoke.isRootConstantCall();
+  public boolean isConstantCall() {
+    return invoke.isConstantCall();
   }
 
   public ProgramResult getResult() {
@@ -1461,7 +1461,7 @@ public class Program {
       // this is the depositImpl, not contractState as above
       contract.setDeposit(deposit);
       contract.setResult(this.result);
-      contract.setConstantCall(isRootConstantCall());
+      contract.setConstantCall(isConstantCall());
       contract.setVmShouldEndInUs(getVmShouldEndInUs());
       Pair<Boolean, byte[]> out = contract.execute(data);
 

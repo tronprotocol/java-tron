@@ -56,7 +56,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private boolean byTestingSuite = false;
   private int callDeep = 0;
   private boolean isStaticCall = false;
-  private boolean isRootConstantCall = false;
+  private boolean isConstantCall = false;
 
   public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance,
       DataWord callValue, DataWord tokenValue, DataWord tokenId, byte[] msgData,
@@ -382,13 +382,13 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setRootConstantCall() {
-    isRootConstantCall = true;
+  public void setConstantCall() {
+    isConstantCall = true;
   }
 
   @Override
-  public boolean isRootConstantCall() {
-    return isRootConstantCall;
+  public boolean isConstantCall() {
+    return isConstantCall;
   }
 
 }
