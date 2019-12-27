@@ -35,14 +35,22 @@ public class PbftManager {
   }
 
   public void blockPrePrepare(BlockCapsule block) {
-    if (!pbftMessageHandle.isSyncing() && Param.getInstance().isEnable()) {
-      doAction(PbftBlockMessage.buildPrePrepareMessage(block));
+    if (!pbftMessageHandle.isSyncing()) {
+      if (Param.getInstance().isEnable()) {
+        doAction(PbftBlockMessage.buildPrePrepareMessage(block));
+      } else {
+        doAction(PbftBlockMessage.buildFullNodePrePrepareMessage(block));
+      }
     }
   }
 
   public void srPrePrepare(BlockCapsule block, List<ByteString> currentWitness, long cycle) {
-    if (!pbftMessageHandle.isSyncing() && Param.getInstance().isEnable()) {
-      doAction(PbftSrMessage.buildPrePrepareMessage(block, currentWitness, cycle));
+    if (!pbftMessageHandle.isSyncing()) {
+      if (Param.getInstance().isEnable()) {
+        doAction(PbftSrMessage.buildPrePrepareMessage(block, currentWitness, cycle));
+      } else {
+        doAction(PbftSrMessage.buildFullNodePrePrepareMessage(block, currentWitness, cycle));
+      }
     }
   }
 

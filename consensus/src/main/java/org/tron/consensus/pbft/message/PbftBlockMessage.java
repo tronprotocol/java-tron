@@ -55,4 +55,20 @@ public class PbftBlockMessage extends PbftBaseMessage {
     return pbftBlockMessage;
   }
 
+  public static PbftBaseMessage buildFullNodePrePrepareMessage(BlockCapsule blockCapsule) {
+    PbftBlockMessage pbftBlockMessage = new PbftBlockMessage();
+    Raw.Builder rawBuilder = Raw.newBuilder();
+    PbftMessage.Builder builder = PbftMessage.newBuilder();
+    rawBuilder.setBlockNum(blockCapsule.getNum())
+        .setPbftMsgType(Type.PREPREPARE)
+        .setTime(System.currentTimeMillis())
+        .setData(blockCapsule.getBlockId().getByteString());
+    Raw raw = rawBuilder.build();
+    builder.setRawData(raw);
+    PbftMessage message = builder.build();
+    pbftBlockMessage.setType(MessageTypes.PBFT_BLOCK_MSG.asByte())
+        .setPbftMessage(message).setData(message.toByteArray()).setSwitch(blockCapsule.isSwitch());
+    return pbftBlockMessage;
+  }
+
 }

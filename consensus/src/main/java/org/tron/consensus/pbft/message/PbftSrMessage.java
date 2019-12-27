@@ -61,4 +61,24 @@ public class PbftSrMessage extends PbftBaseMessage {
         .setPbftMessage(message).setData(message.toByteArray()).setSwitch(block.isSwitch());
     return pbftSrMessage;
   }
+
+  public static PbftBaseMessage buildFullNodePrePrepareMessage(BlockCapsule block,
+      List<ByteString> currentWitness, long cycle) {
+    SrList.Builder srListBuilder = SrList.newBuilder();
+    byte[] data = srListBuilder.addAllSrAddress(currentWitness).setCycle(cycle).build()
+        .toByteArray();
+    PbftSrMessage pbftSrMessage = new PbftSrMessage();
+    Raw.Builder rawBuilder = Raw.newBuilder();
+    PbftMessage.Builder builder = PbftMessage.newBuilder();
+    rawBuilder.setBlockNum(block.getNum())
+        .setPbftMsgType(Type.PREPREPARE)
+        .setTime(System.currentTimeMillis())
+        .setData(ByteString.copyFrom(data));
+    Raw raw = rawBuilder.build();
+    builder.setRawData(raw);
+    PbftMessage message = builder.build();
+    pbftSrMessage.setType(MessageTypes.PBFT_SR_MSG.asByte())
+        .setPbftMessage(message).setData(message.toByteArray()).setSwitch(block.isSwitch());
+    return pbftSrMessage;
+  }
 }
