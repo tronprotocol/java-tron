@@ -14,6 +14,10 @@ public class BlockHeaderInventoryMesasge extends TronMessage {
     this.blockHeaderInventory = Protocol.BlockHeaderInventory.parseFrom(packed);
   }
 
+  public BlockHeaderInventoryMesasge(long currentBlockHeight, List<Protocol.BlockHeader> blockHeaders) {
+
+  }
+
   public List<Protocol.BlockHeader> getBlockHeaders() {
     return blockHeaderInventory.getBlockHeaderList();
   }

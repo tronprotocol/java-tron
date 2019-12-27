@@ -18,9 +18,11 @@ package org.tron.core.capsule;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
@@ -32,6 +34,7 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 
+import javax.annotation.Nonnull;
 import java.security.SignatureException;
 import java.util.Arrays;
 
@@ -87,8 +90,8 @@ public class BlockHeaderCapsule implements ProtoCapsule<BlockHeader> {
     blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
   }
 
-  public BlockHeaderCapsule(Block block) {
-    blockHeader = block.getBlockHeader();
+  public BlockHeaderCapsule(BlockHeader blockHeader) {
+    this.blockHeader = blockHeader;
   }
 
   public BlockHeaderCapsule(byte[] data) throws BadItemException {
@@ -141,6 +144,7 @@ public class BlockHeaderCapsule implements ProtoCapsule<BlockHeader> {
     }
   }
 
+  @Nonnull
   public BlockCapsule.BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
       blockId = new BlockCapsule.BlockId(Sha256Hash.of(blockHeader.getRawData().toByteArray()),
@@ -222,4 +226,7 @@ public class BlockHeaderCapsule implements ProtoCapsule<BlockHeader> {
     return toStringBuff.toString();
   }
 
+  public String getChainId() {
+    return ByteArray.toHexString(blockHeader.getRawData().getChainId().toByteArray());
+  }
 }

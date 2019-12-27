@@ -16,6 +16,15 @@ public class BlockHeaderRequestMessage extends TronMessage {
     this.blockHeaderRequestMessage = Protocol.BlockHeaderRequestMessage.parseFrom(packed);
   }
 
+  public BlockHeaderRequestMessage(long localLatestHeight, long blockHeaderLength) {
+    blockHeaderRequestMessage = Protocol.BlockHeaderRequestMessage.newBuilder()
+        .setBlockHeight(localLatestHeight)
+        .setLength(blockHeaderLength)
+        .build();
+    super.data = blockHeaderRequestMessage.toByteArray();
+    super.type = MessageTypes.HEADER_REQUEST_MESSAGE.asByte();
+  }
+
   public long getBlockHeight() {
     return blockHeaderRequestMessage.getBlockHeight();
   }
@@ -32,4 +41,5 @@ public class BlockHeaderRequestMessage extends TronMessage {
   public Class<?> getAnswerMessage() {
     return null;
   }
+
 }
