@@ -131,8 +131,8 @@ public class BlockHeaderSyncHandler {
 
   public void verifyHeader(Protocol.BlockHeader blockHeader) {
     long blockHeight = blockHeader.getRawData().getNumber();
-    long localBlockHeight = commonDataBase.getLatestPbftBlockNum();
-    byte[] localBlockHash = commonDataBase.getLatestPbftBlockHash();
+    long localBlockHeight = getLatestPbftBlockHeight();
+    byte[] localBlockHash = getLatestPbftBlockHash();
     // srlist verifyHeader
 
     if (localBlockHeight >= blockHeight) {
@@ -181,10 +181,8 @@ public class BlockHeaderSyncHandler {
     }
   }
 
-  public long calculateLength(long diff, long length) {
-    long times = diff / length;
-    long mod = diff % length;
-    return Longs.min(times, peerInfoMap.size());
+  public long calculateLength(long... arrays) {
+    return Longs.min(arrays);
   }
 
   public void sendRequest(PeerConnection peer, long blockHeight) {
@@ -211,6 +209,24 @@ public class BlockHeaderSyncHandler {
                 new BlockHeaderRequestMessage(localLatestHeight, BLOCK_HEADER_LENGTH)));
       }
     }
+  }
+
+  public byte[] getLatestPbftBlockHash() {
+    List<BlockHeaderCapsule> blockHeaderCapsules = blockHeaderStore.getBlockHeaderByLatestNum(1);
+    if (blockHeaderCapsules.isEmpty()) {
+      return new byte[0];// genesis block hash
+    }
+
+    return blockHeaderCapsules.get(0).getBlockId().getBytes();
+  }
+
+  public long getLatestPbftBlockHeight() {
+    List<BlockHeaderCapsule> blockHeaderCapsules = blockHeaderStore.getBlockHeaderByLatestNum(1);
+    if (blockHeaderCapsules.isEmpty()) {
+      return 0;// genesis block number
+    }
+
+    return blockHeaderCapsules.get(0).getBlockId().getNum();
   }
 
   @Getter
