@@ -89,7 +89,7 @@ public class PbftMessageHandle {
     if (message.isSwitch()) {//if is block chain switch,remove the before proposal
       logger.warn("block chain switch, again proposal block num: {}, data: {}",
           message.getBlockNum(), message.getDataString());
-      remove(key);
+      return;
     }
     if (preVotes.contains(key)) {
       //The description has been initiated, can not be repeated, can only initiate a vote at the same height
