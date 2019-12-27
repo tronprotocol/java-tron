@@ -77,7 +77,6 @@ public class SyncServiceTest {
     try {
       ReflectionUtils.invokeMethod(m, sync, blockCapsule);
     } catch (Exception e) {
-      System.out.println(e.getMessage());
       Assert.assertTrue(e instanceof TronException);
     }
   }
