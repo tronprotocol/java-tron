@@ -16,14 +16,12 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.overlay.server;
+package org.tron.core.ibc.connect;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
@@ -35,15 +33,15 @@ import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
-import org.tron.core.config.args.Args;
+import org.tron.common.overlay.server.Channel;
+import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
 @Component
 @Scope("prototype")
-public class HandshakeHandler extends ByteToMessageDecoder {
+public class CrossChainHandshakeHandler extends ByteToMessageDecoder {
 
   private Channel channel;
 
@@ -56,15 +54,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   @Autowired
   private Manager manager;
 
-  @Autowired
-  private FastForward fastForward;
-
   private byte[] remoteId;
 
   private P2pMessageFactory messageFactory = new P2pMessageFactory();
 
   @Autowired
-  private SyncPool syncPool;
+  private CrossChainConnectPool crossChainConnectPool;
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -114,8 +109,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   protected void sendHelloMsg(ChannelHandlerContext ctx, long time) {
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
-        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId(), false);
-    fastForward.fillHelloMessage(message, channel);
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId(), true);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
     logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
@@ -125,50 +119,14 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
 
-    if (!fastForward.checkHelloMessage(msg, channel)) {
-      channel.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
-      return;
-    }
-
-    if (remoteId.length != 64) {
-      InetAddress address = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
-      if (channelManager.getTrustNodes().getIfPresent(address) == null && !syncPool
-          .isCanConnect()) {
-        channel.disconnect(ReasonCode.TOO_MANY_PEERS);
-        return;
-      }
-    }
-
-    if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
-      logger.info("Peer {} different p2p version, peer->{}, me->{}",
-          ctx.channel().remoteAddress(), msg.getVersion(), Args.getInstance().getNodeP2pVersion());
-      channel.disconnect(ReasonCode.INCOMPATIBLE_VERSION);
-      return;
-    }
-
-    if (!Arrays
-        .equals(manager.getGenesisBlockId().getBytes(), msg.getGenesisBlockId().getBytes())) {
-      logger
-          .info("Peer {} different genesis block, peer->{}, me->{}", ctx.channel().remoteAddress(),
-              msg.getGenesisBlockId().getString(), manager.getGenesisBlockId().getString());
-      channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
-      return;
-    }
-
-    if (manager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum() && !manager
-        .containBlockInMainChain(msg.getSolidBlockId())) {
-      logger.info("Peer {} different solid block, peer->{}, me->{}", ctx.channel().remoteAddress(),
-          msg.getSolidBlockId().getString(), manager.getSolidBlockId().getString());
-      channel.disconnect(ReasonCode.FORKED);
-      return;
-    }
+    //todo:verify message，Disconnect if the conditions are not met
 
     ((PeerConnection) channel).setHelloMessage(msg);
 
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
 
     channel.publicHandshakeFinished(ctx, msg);
-    if (!channelManager.processPeer(channel)) {
+    if (!channelManager.processCrossChainPeer(msg.getChainId(), channel)) {
       return;
     }
 
@@ -176,6 +134,6 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       sendHelloMsg(ctx, msg.getTimestamp());
     }
 
-    syncPool.onConnect(channel);
+    crossChainConnectPool.onConnect(msg.getChainId(), channel);
   }
 }

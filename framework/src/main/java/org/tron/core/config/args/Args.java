@@ -4,9 +4,12 @@ import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.consensus.base.Constant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.Constant.NODE_CROSS_CHAIN_CONNECT;
+import static org.tron.core.Constant.NODE_CROSS_CHAIN_PORT;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
+import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -22,8 +25,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -105,6 +110,15 @@ public class Args extends CommonParameter {
   @Getter
   @Setter
   private int checkMsgCount;
+
+
+  @Getter
+  @Setter
+  private int crossChainPort;
+
+  @Getter
+  @Setter
+  private Map<String, List<Node>> crossChainConnect;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -191,6 +205,8 @@ public class Args extends CommonParameter {
     INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     INSTANCE.checkMsgCount = 1;
     INSTANCE.crossChain = 0;
+    INSTANCE.crossChainPort = 0;
+    INSTANCE.crossChainConnect = Maps.newConcurrentMap();
   }
 
   /**
@@ -648,6 +664,8 @@ public class Args extends CommonParameter {
     INSTANCE.passiveNodes = getNodes(config, Constant.NODE_PASSIVE);
 
     INSTANCE.fastForwardNodes = getNodes(config, Constant.NODE_FAST_FORWARD);
+    INSTANCE.crossChainConnect = getCrossNodes(config);
+
     INSTANCE.shieldedTransInPendingMaxCounts =
         config.hasPath(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) ? config
             .getInt(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) : 10;
@@ -759,6 +777,30 @@ public class Args extends CommonParameter {
           || "127.0.0.1".equals(n.getHost()))
           || INSTANCE.nodeListenPort != n.getPort()) {
         ret.add(n);
+      }
+    }
+    return ret;
+  }
+
+  private static Map<String, List<Node>> getCrossNodes(final com.typesafe.config.Config config) {
+    Map<String, List<Node>> ret = new ConcurrentHashMap<>();
+    INSTANCE.crossChainPort = config.hasPath(Constant.NODE_CROSS_CHAIN_PORT) ? config
+        .getInt(NODE_CROSS_CHAIN_PORT) : 0;
+    if (config.hasPath(Constant.NODE_CROSS_CHAIN_CONNECT)) {
+      List<String> list = config.getStringList(NODE_CROSS_CHAIN_CONNECT);
+      for (String configString : list) {
+        String[] chainIdAndIp = configString.split(":");
+        Node n = Node.instanceOf(chainIdAndIp[1] + ":" + INSTANCE.crossChainPort);
+        if (!(INSTANCE.nodeDiscoveryBindIp.equals(n.getHost())
+            || INSTANCE.nodeExternalIp.equals(n.getHost())
+            || "127.0.0.1".equals(n.getHost()))
+            || INSTANCE.nodeListenPort != n.getPort()
+            || INSTANCE.backupPort != n.getPort()) {
+          if (!INSTANCE.crossChainConnect.containsKey(chainIdAndIp[0])) {
+            INSTANCE.crossChainConnect.put(chainIdAndIp[0], new ArrayList<>());
+          }
+          INSTANCE.crossChainConnect.get(chainIdAndIp[0]).add(n);
+        }
       }
     }
     return ret;
@@ -1002,6 +1044,7 @@ public class Args extends CommonParameter {
     logger.info("Active node size: {}", args.getActiveNodes().size());
     logger.info("Passive node size: {}", args.getPassiveNodes().size());
     logger.info("FastForward node size: {}", args.getFastForwardNodes().size());
+    logger.info("CrossChain node size: {}", args.getCrossChainConnect().size());
     logger.info("Seed node size: {}", args.getSeedNode().getIpList().size());
     logger.info("Max connection: {}", args.getNodeMaxActiveNodes());
     logger.info("Max connection with same IP: {}", args.getNodeMaxActiveNodesWithSameIp());

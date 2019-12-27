@@ -1,4 +1,4 @@
-package org.tron.common.overlay.server;
+package org.tron.core.ibc.connect;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -12,11 +12,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.server.TronChannelInitializer;
 import org.tron.core.config.args.Args;
 
-@Slf4j(topic = "net")
+@Slf4j(topic = "net-cross")
 @Component
-public class PeerServer {
+public class CrossChainTcpServer {
 
   private Args args = Args.getInstance();
 
@@ -27,7 +28,7 @@ public class PeerServer {
   private ChannelFuture channelFuture;
 
   @Autowired
-  public PeerServer(final Args args, final ApplicationContext ctx) {
+  public CrossChainTcpServer(final Args args, final ApplicationContext ctx) {
     this.ctx = ctx;
   }
 
@@ -36,7 +37,7 @@ public class PeerServer {
     EventLoopGroup bossGroup = new NioEventLoopGroup(1);
     EventLoopGroup workerGroup = new NioEventLoopGroup(args.getTcpNettyWorkThreadNum());
     TronChannelInitializer tronChannelInitializer = ctx
-        .getBean(TronChannelInitializer.class, "", false);
+        .getBean(TronChannelInitializer.class, "", true);
 
     try {
       ServerBootstrap b = new ServerBootstrap();
