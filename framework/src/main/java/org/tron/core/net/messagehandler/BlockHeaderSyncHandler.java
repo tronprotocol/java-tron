@@ -84,7 +84,7 @@ public class BlockHeaderSyncHandler {
     long blockHeight = requestMessage.getBlockHeight();
     long length = requestMessage.getLength();
 
-    long currentBlockheight = commonDataBase.getLatestPbftBlockNum();
+    long currentBlockheight = getLatestPbftBlockHeight();
     if (currentBlockheight > blockHeight) {
       long min = calculateLength(currentBlockheight - blockHeight, length);
       List<Protocol.BlockHeader> blockHeaders = new ArrayList<>();
