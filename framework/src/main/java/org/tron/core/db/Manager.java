@@ -1007,6 +1007,9 @@ public class Manager {
     if (DBConfig.isDebug()) {
       return true;
     }
+    if (newblock.getNum() <= commonDataBase.getLatestPbftBlockNum()) {
+      return true;
+    }
     Sha256Hash blockHash = commonDataBase.getLatestPbftBlockHash();
     if (Objects.isNull(blockHash) || Objects.isNull(newblock)) {
       return true;
@@ -1135,8 +1138,6 @@ public class Manager {
           printBeforeSwitchFork(newBlock, block);
           switchFork(findHighestBlockNum(blockHash));
           printAfterSwitchFork(newBlock, block);
-
-
           return;
         } else if (checkInSameFork(newBlock) && !newBlock.getParentHash()
             .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
@@ -1145,6 +1146,7 @@ public class Manager {
           printAfterSwitchFork(newBlock, block);
           return;
         } else if (!checkInSameFork(newBlock)) {
+          khaosDb.removeBlk(block.getBlockId());
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
