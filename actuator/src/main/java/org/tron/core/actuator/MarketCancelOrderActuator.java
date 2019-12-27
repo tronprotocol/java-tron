@@ -46,7 +46,7 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.protos.Protocol.MarketOrder.State;
-import org.tron.protos.Protocol.MarketPriceList.MarketPrice;
+import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;

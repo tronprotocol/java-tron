@@ -92,16 +92,29 @@ message MarketAccountOrder {
   int64 count = 3;
 }
 
+message MarketPrice {
+  int64 sell_token_quantity = 1;
+  int64 buy_token_quantity = 2;
+
+  bytes next = 3;
+}
+
 message MarketPriceList {
   bytes sell_token_id = 1;
   bytes buy_token_id = 2;
 
-  message MarketPrice {
-    int64 sell_token_quantity = 1;
-    int64 buy_token_quantity = 2;
-  }
   repeated MarketPrice prices = 5;
+
+  bytes bestPriceId = 7;
+  MarketPrice bestPrice = 8;
 }
+
+//message BestMarketPrice {
+//  bytes sell_token_id = 1;
+//  bytes buy_token_id = 2;
+//
+//  bytes bestPriceId = 7;
+//}
 
 
 message MarketOrderIdList {
