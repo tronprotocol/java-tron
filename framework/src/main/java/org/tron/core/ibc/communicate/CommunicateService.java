@@ -44,6 +44,7 @@ public class CommunicateService implements Communicate {
   public void sendCrossMessage(CrossMessage crossMessage) {
     Sha256Hash txId = Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
     if (checkCommit(txId)) {
+      chainBaseManager.getCrossStore().saveSendCrossMsg(txId, crossMessage);
       try {
         //generate proof path
         BlockStore blockStore = chainBaseManager.getBlockStore();
@@ -65,13 +66,13 @@ public class CommunicateService implements Communicate {
         crossMessage = crossMessage.toBuilder().addAllProof(proofList)
             .setTimeOutBlockHeight(timeOut / BLOCK_PRODUCED_INTERVAL
                 + propertiesStore.getLatestSolidifiedBlockNum() + 1)
-            .setRouteChainId(getLocalChainId()).setRootHeight(blockNum).build();
-        chainBaseManager.getCrossStore().saveSendCrossMsg(txId, crossMessage);
-        //todo: send data
-
+            .setRootHeight(blockNum).build();
+        //send data
+        sendData(crossMessage);
       } catch (Exception e) {
-        //todo
-
+        //wait the time out or auto rollback
+        //if wait the time out, nothing to do
+        logger.error("send cross message fail! txId: {}", txId, e);
       }
     }
   }
@@ -138,11 +139,20 @@ public class CommunicateService implements Communicate {
   /**
    * todo:
    */
-  private ByteString getLocalChainId() {
+  public ByteString getLocalChainId() {
     return ByteString.copyFromUtf8("");
   }
 
   private void disconnect(ByteString fromChainId) {
+
+  }
+
+  /**
+   * todo:
+   */
+  private void sendData(CrossMessage crossMessage) {
+    ByteString toChainId = crossMessage.getToChainId();
+    ByteString routeChainId = crossMessage.getRouteChainId();
 
   }
 }

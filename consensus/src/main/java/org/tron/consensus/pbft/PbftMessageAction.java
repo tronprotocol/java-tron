@@ -11,6 +11,8 @@ import org.tron.consensus.pbft.message.PbftBlockMessage;
 import org.tron.consensus.pbft.message.PbftSrMessage;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.PbftSignCapsule;
+import org.tron.core.event.EventBusService;
+import org.tron.core.event.entity.PbftBlockEvent;
 import org.tron.protos.Protocol.PbftMessage.Raw;
 import org.tron.protos.Protocol.SrList;
 
@@ -22,6 +24,9 @@ public class PbftMessageAction {
 
   @Autowired
   private ChainBaseManager chainBaseManager;
+
+  @Autowired
+  private EventBusService eventBusService;
 
   public void action(PbftBaseMessage message, List<ByteString> dataSignList) {
     switch (message.getType()) {
@@ -36,6 +41,8 @@ public class PbftMessageAction {
               .putBlockSignData(blockNum, new PbftSignCapsule(raw.getData(), dataSignList));
           logger.info("commit msg block num is:{}", blockNum);
         }
+        eventBusService.postEvent(
+            new PbftBlockEvent(blockNum, blockMessage.getPbftMessage().getRawData().getData()));
       }
       break;
       case PBFT_SR_MSG: {

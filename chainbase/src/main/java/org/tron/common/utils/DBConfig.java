@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.args.GenesisBlock;
+import org.tron.common.setting.RocksDbSettings;
 
 public class DBConfig {
 
@@ -121,4 +121,8 @@ public class DBConfig {
   @Getter
   @Setter
   private static String transactionHistoreSwitch;
+
+  @Getter
+  @Setter
+  private static long crossChain;
 }

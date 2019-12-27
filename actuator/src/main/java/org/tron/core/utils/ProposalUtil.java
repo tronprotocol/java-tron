@@ -275,6 +275,16 @@ public class ProposalUtil {
         }
         break;
       }
+      case CROSS_CHAIN: {
+        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_3)) {
+          throw new ContractValidateException(BAD_PARAM_ID);
+        }
+        if (value != 1 && value != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_CHANGE_DELEGATION] is only allowed to be 1 or 0");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -314,7 +324,8 @@ public class ProposalUtil {
     ALLOW_CHANGE_DELEGATION(30), //1, 30
     WITNESS_127_PAY_PER_BLOCK(31), //drop, 31
     ALLOW_TVM_SOLIDITY_059(32), // 1, 32
-    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33); // 10, 33
+    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, 33
+    CROSS_CHAIN(40);
 
     private long code;
 

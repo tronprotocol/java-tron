@@ -22,7 +22,7 @@ public class Parameter {
     public static final int SINGLE_REPEAT = 1;
     public static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
     public static final int MAX_FROZEN_NUMBER = 1;
-    public static final int BLOCK_VERSION = 15;
+    public static final int BLOCK_VERSION = 20;
   }
 
   public class NodeConstant {
@@ -76,7 +76,8 @@ public class Parameter {
     VERSION_3_5(7),
     VERSION_3_6(8),
     VERSION_3_6_5(9),
-    VERSION_4_0(15);
+    VERSION_4_0(15),
+    VERSION_4_3(20);
 
     @Getter
     private int value;
