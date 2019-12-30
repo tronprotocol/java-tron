@@ -236,26 +236,6 @@ public class Wallet {
     DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
 
-  public static boolean addressValid(byte[] address) {
-    if (ArrayUtils.isEmpty(address)) {
-      logger.warn("Warning: Address is empty !!");
-      return false;
-    }
-    if (address.length != ADDRESS_SIZE / 2) {
-      logger.warn(
-          "Warning: Address length requires " + ADDRESS_SIZE + " but " + address.length
-              + " !!");
-      return false;
-    }
-    if (address[0] != DecodeUtil.addressPreFixByte) {
-      logger.warn("Warning: Address requires a prefix with " + DecodeUtil.addressPreFixByte
-              + " but " + address[0] + " !!");
-      return false;
-    }
-    //Other rule;
-    return true;
-  }
-
   public static String encode58Check(byte[] input) {
     byte[] hash0 = Sha256Hash.hash(input);
     byte[] hash1 = Sha256Hash.hash(hash0);

@@ -19,7 +19,7 @@ import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
 
 public class CommonParameter {
-  public static  CommonParameter PARAMETER = new CommonParameter();
+  public static CommonParameter PARAMETER = new CommonParameter();
 
   @Parameter(names = {"-c", "--config"}, description = "Config File")
   public String shellConfFileName = "";
