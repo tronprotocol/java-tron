@@ -52,8 +52,8 @@ public class PbftMessageAction {
               .parseFrom(srMessage.getPbftMessage().getRawData().getData().toByteArray());
           Raw raw = srMessage.getPbftMessage().getRawData();
           chainBaseManager.getPbftSignDataStore()
-              .putSrSignData(srList.getCycle(), new PbftSignCapsule(raw.getData(), dataSignList));
-          logger.info("sr commit msg :{}, cycle:{}", srMessage.getBlockNum(), srList.getCycle());
+              .putSrSignData(srList.getEpoch(), new PbftSignCapsule(raw.getData(), dataSignList));
+          logger.info("sr commit msg :{}, cycle:{}", srMessage.getBlockNum(), srList.getEpoch());
         } catch (Exception e) {
           logger.error("process the sr list error!", e);
         }

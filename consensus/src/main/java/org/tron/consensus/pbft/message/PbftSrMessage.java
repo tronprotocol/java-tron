@@ -35,9 +35,9 @@ public class PbftSrMessage extends PbftBaseMessage {
   }
 
   public static PbftBaseMessage buildPrePrepareMessage(BlockCapsule block,
-      List<ByteString> currentWitness, long cycle) {
+      List<ByteString> currentWitness, long epoch) {
     SrList.Builder srListBuilder = SrList.newBuilder();
-    byte[] data = srListBuilder.addAllSrAddress(currentWitness).setCycle(cycle).build()
+    byte[] data = srListBuilder.addAllSrAddress(currentWitness).setEpoch(epoch).build()
         .toByteArray();
     PbftSrMessage pbftSrMessage = new PbftSrMessage();
     Miner miner = Param.getInstance().getMiner();

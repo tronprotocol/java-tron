@@ -170,7 +170,7 @@ public class HeaderManager {
     List<ByteString> addressList = srList.getSrAddressList();
     List<ByteString> preCycleSrSignList = dataSign.getSignList();
     if (addressList.size() != 0) {
-      if (cycle != srList.getCycle()) {
+      if (cycle != srList.getEpoch()) {
         return false;
       }
       Set<ByteString> preCycleSrSignSet = new ConcurrentSet();
