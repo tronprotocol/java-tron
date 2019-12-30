@@ -6,7 +6,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
 import org.tron.common.application.Application;
@@ -32,7 +31,6 @@ public class SolidityNode {
 
   private Manager dbManager;
 
-  @Autowired
   private ChainBaseManager chainBaseManager;
 
   private DatabaseGrpcClient databaseGrpcClient;
@@ -47,8 +45,9 @@ public class SolidityNode {
 
   private volatile boolean flag = true;
 
-  public SolidityNode(Manager dbManager) {
+  public SolidityNode(Manager dbManager, ChainBaseManager chainBaseManager) {
     this.dbManager = dbManager;
+    this.chainBaseManager = chainBaseManager;
     resolveCompatibilityIssueIfUsingFullNodeDatabase();
     ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     databaseGrpcClient = new DatabaseGrpcClient(Args.getInstance().getTrustNodeAddr());
@@ -82,7 +81,6 @@ public class SolidityNode {
     Application appT = ApplicationFactory.create(context);
     FullNode.shutdown(appT);
 
-    //appT.init(cfgArgs);
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
     //http
@@ -101,7 +99,7 @@ public class SolidityNode {
     TronNetService tronNetService = context.getBean(TronNetService.class);
     tronNetService.stop();
 
-    SolidityNode node = new SolidityNode(appT.getDbManager());
+    SolidityNode node = new SolidityNode(appT.getDbManager(), appT.getChainBaseManager());
     node.start();
 
     rpcApiService.blockUntilShutdown();
