@@ -5,7 +5,7 @@ import static org.testng.Assert.fail;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -31,11 +31,13 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.core.store.MarketPriceStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketPrice;
@@ -105,16 +107,19 @@ public class MarketCancelOrderActuatorTest {
    */
   @Before
   public void initTest() {
+    byte[] ownerAddressFirstBytes = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    byte[] ownerAddressSecondBytes = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
+
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_FIRST),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
+            ByteString.copyFrom(ownerAddressFirstBytes),
             AccountType.Normal,
             10000_000_000L);
     AccountCapsule ownerAccountSecondCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_SECOND),
-            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)),
+            ByteString.copyFrom(ownerAddressSecondBytes),
             AccountType.Normal,
             20000_000_000L);
 
@@ -123,9 +128,40 @@ public class MarketCancelOrderActuatorTest {
     dbManager.getAccountStore()
         .put(ownerAccountSecondCapsule.getAddress().toByteArray(), ownerAccountSecondCapsule);
 
+    // clean
+    cleanMarketOrderByAccount(ownerAddressFirstBytes);
+    cleanMarketOrderByAccount(ownerAddressSecondBytes);
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+
+    chainBaseManager.getMarketAccountStore().delete(ownerAddressFirstBytes);
+    chainBaseManager.getMarketAccountStore().delete(ownerAddressSecondBytes);
+
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
     dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
+  }
+
+  private void cleanMarketOrderByAccount(byte[] accountAddress) {
+
+    if (accountAddress == null || accountAddress.length == 0) {
+      return ;
+    }
+
+    MarketAccountOrderCapsule marketAccountOrderCapsule;
+    try {
+      marketAccountOrderCapsule = dbManager.getChainBaseManager()
+          .getMarketAccountStore().get(accountAddress);
+    } catch (ItemNotFoundException e) {
+      return ;
+    }
+
+    MarketOrderStore marketOrderStore = dbManager.getChainBaseManager().getMarketOrderStore();
+
+    List<ByteString> orderIdList = marketAccountOrderCapsule.getOrdersList();
+    orderIdList
+        .forEach(
+            orderId -> marketOrderStore.delete(orderId.toByteArray())
+        );
   }
 
   private Any getContract(String address, String sellTokenId, long sellTokenQuantity
@@ -164,6 +200,20 @@ public class MarketCancelOrderActuatorTest {
             .build());
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule1.createDbV2Key(), assetIssueCapsule1);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
+
+    // clean
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    chainBaseManager.getMarketPairToPriceStore()
+        .delete(MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes()));
+    chainBaseManager.getMarketPairToPriceStore()
+        .delete(MarketUtils.createPairKey(TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes()));
+
+    MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+    pairPriceToOrderStore.forEach(
+        marketOrderIdListCapsuleEntry -> pairPriceToOrderStore
+            .delete(marketOrderIdListCapsuleEntry.getKey())
+    );
   }
 
   /**
@@ -465,6 +515,7 @@ public class MarketCancelOrderActuatorTest {
     MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
+    MarketPriceStore marketPriceStore = chainBaseManager.getMarketPriceStore();
 
     addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
         200L, OWNER_ADDRESS_FIRST);
@@ -511,9 +562,9 @@ public class MarketCancelOrderActuatorTest {
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
     MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
-    Assert.assertEquals(priceListCapsule.getPricesList().size(), 3);
+    Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 3);
 
-    MarketPrice marketPrice = priceListCapsule.getPricesList().get(1);
+    MarketPrice marketPrice = priceListCapsule.getPriceByIndex(1, marketPriceStore).getInstance();
     Assert.assertEquals(marketPrice.getSellTokenQuantity(), 100L);
     Assert.assertEquals(marketPrice.getBuyTokenQuantity(), 300L);
 
@@ -542,6 +593,7 @@ public class MarketCancelOrderActuatorTest {
     MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
+    MarketPriceStore marketPriceStore = chainBaseManager.getMarketPriceStore();
 
     addOrder("_", 100L, TOKEN_ID_TWO,
         200L, OWNER_ADDRESS_FIRST);
@@ -589,9 +641,9 @@ public class MarketCancelOrderActuatorTest {
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey("_".getBytes(), TOKEN_ID_TWO.getBytes());
     MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
-    Assert.assertEquals(priceListCapsule.getPricesList().size(), 3);
+    Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 3);
 
-    MarketPrice marketPrice = priceListCapsule.getPricesList().get(1);
+    MarketPrice marketPrice = priceListCapsule.getPriceByIndex(1, marketPriceStore).getInstance();
     Assert.assertEquals(marketPrice.getSellTokenQuantity(), 100L);
     Assert.assertEquals(marketPrice.getBuyTokenQuantity(), 300L);
 
@@ -621,6 +673,7 @@ public class MarketCancelOrderActuatorTest {
     MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
+    MarketPriceStore marketPriceStore = chainBaseManager.getMarketPriceStore();
 
     addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
         200L, OWNER_ADDRESS_FIRST);
@@ -664,13 +717,13 @@ public class MarketCancelOrderActuatorTest {
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
     MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
-    Assert.assertEquals(priceListCapsule.getPricesList().size(), 2);
+    Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 2);
 
-    MarketPrice marketPrice = priceListCapsule.getPricesList().get(0);
+    MarketPrice marketPrice = priceListCapsule.getBestPrice();
     Assert.assertEquals(marketPrice.getSellTokenQuantity(), 100L);
     Assert.assertEquals(marketPrice.getBuyTokenQuantity(), 200L);
 
-    marketPrice = priceListCapsule.getPricesList().get(1);
+    marketPrice = priceListCapsule.getPriceByIndex(1, marketPriceStore).getInstance();
     Assert.assertEquals(marketPrice.getSellTokenQuantity(), 100L);
     Assert.assertEquals(marketPrice.getBuyTokenQuantity(), 400L);
 

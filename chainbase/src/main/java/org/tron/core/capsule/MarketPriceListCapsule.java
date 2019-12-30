@@ -2,12 +2,10 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.MarketPriceStore;
 import org.tron.protos.Protocol.MarketPriceList;
@@ -58,18 +56,6 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
         .build();
   }
 
-  public void setPricesList(List<MarketPrice> pricesList) {
-    this.priceList = this.priceList.toBuilder()
-        .clearPrices()
-        .addAllPrices(pricesList)
-        .build();
-  }
-
-
-  public List<MarketPrice> getPricesList() {
-    return this.priceList.getPricesList();
-  }
-
   public int getPriceSize(MarketPriceStore marketPriceStore) throws ItemNotFoundException {
     MarketPriceCapsule head = new MarketPriceCapsule(this.getBestPrice());
 
@@ -85,24 +71,43 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
     return size;
   }
 
+  public MarketPriceCapsule getPriceByIndex(int index, MarketPriceStore marketPriceStore)
+      throws ItemNotFoundException {
+    MarketPriceCapsule head = new MarketPriceCapsule(this.getBestPrice());
+    MarketPriceCapsule current = head;
+
+    int count = 0;
+    while (!current.isNull()) {
+      if (count == index) {
+        return current;
+      }
+      count++;
+
+      if (current.isNextNull()) {
+        return null;
+      }
+      current = marketPriceStore.get(current.getNext());
+    }
+
+    return null;
+  }
+
   public void setBestPrice(MarketPriceCapsule bestPrice) {
     this.priceList = this.priceList.toBuilder().setBestPrice(bestPrice.getInstance()).build();
   }
 
 
   // insert price by sort, if same, just return
+  // store ops outside
   public MarketPriceCapsule insertMarket(MarketPrice marketPrice, byte[] sellTokenID,
       byte[] buyTokenID, MarketPriceStore marketPriceStore) throws ItemNotFoundException {
 
     MarketPriceCapsule head = new MarketPriceCapsule(this.getBestPrice());
 
     // dummy.next = head
-    MarketPriceCapsule dummy = new MarketPriceCapsule(0, 0, new byte[0]);
-    if (head.isNull()) {
-      dummy.setNext(new byte[0]);
-    } else {
+    MarketPriceCapsule dummy = new MarketPriceCapsule(0, 0);
+    if (!head.isNull()) {
       dummy.setNext(head.getKey(sellTokenID, buyTokenID));
-
     }
 
     head = dummy;
@@ -121,10 +126,21 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
 
     if (!found) {
       // node.next = head.next
-      marketPrice = marketPrice.toBuilder().setNext(ByteString.copyFrom(head.getNext())).build();
+      // node.prev = head
+      marketPrice = marketPrice.toBuilder()
+          .setNext(ByteString.copyFrom(head.getNext()))
+          .setPrev(ByteString.copyFrom(head.getKey(sellTokenID, buyTokenID)))
+          .build();
 
       MarketPriceCapsule marketPriceCapsule = new MarketPriceCapsule(marketPrice);
       byte[] priceKey = marketPriceCapsule.getKey(sellTokenID, buyTokenID);
+
+      // head.next.pre = node
+      if (!head.isNextNull()) {
+        MarketPriceCapsule next = marketPriceStore.get(head.getNext());
+        next.setPrev(priceKey);
+        marketPriceStore.put(next.getKey(sellTokenID, buyTokenID), next);
+      }
 
       // head.next = node
       head.setNext(priceKey);
@@ -139,40 +155,12 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
     return null;
   }
 
-  public void addPrices(long s, long b) {
-    MarketPrice build = MarketPrice.newBuilder().setSellTokenQuantity(s).setBuyTokenQuantity(b)
-        .build();
-    this.priceList = this.priceList.toBuilder()
-        .addPrices(build)
-        .build();
-  }
-
-  public boolean removePrice(long s, long b) {
-    List<MarketPrice> pricesList = this.priceList.getPricesList();
-    Iterator<MarketPrice> iterator = pricesList.iterator();
-    boolean found = false;
-    while (!found && iterator.hasNext()){
-      MarketPrice next = iterator.next();
-      if(next.getSellTokenQuantity() == s && next.getBuyTokenQuantity() == b){
-        found = true;
-        iterator.remove();
-      }
-    }
-
-    this.priceList = this.priceList.toBuilder()
-        .clearPrices()
-        .addAllPrices(pricesList)
-        .build();
-
-    return found;
-  }
-
   // update bestPrice, set the next
   // and should remove bestPrice from store after this
   // 1. delete bestPrice from store
   // 2. if best.next == empty, set priceList.best = empty, update priceList, delete pairToPriceStore
   // 3. else set priceList.best = best.next, update priceList
-  public MarketPrice deleteBestPrice(MarketPrice bestPrice, byte[] pairPriceKey,
+  public MarketPrice deleteCurrentPrice(MarketPrice currentPrice, byte[] pairPriceKey,
       MarketPriceStore marketPriceStore, byte[] makerPair, MarketPairToPriceStore pairToPriceStore)
       throws ItemNotFoundException {
 
@@ -180,19 +168,45 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
     marketPriceStore.delete(pairPriceKey);
 
     MarketPrice nextPrice = null;
-    // update makerPriceListCapsule, and need to delete from pairToPriceStore,
-    if (bestPrice.getNext() == null) {
-      // set empty and delete from pairToPriceStore
-      this.priceList = this.priceList.toBuilder()
-          .setBestPrice(new MarketPriceCapsule().getInstance()).build();
-      pairToPriceStore.delete(makerPair);
+    MarketPriceCapsule currentPriceCapsule = new MarketPriceCapsule(currentPrice);
+    // update makerPriceListCapsule, and need to delete from pairToPriceStore, TODO
+    if (currentPriceCapsule.isNextNull()) {
+      if (currentPriceCapsule.isPrevNull()) {
+        // set empty and delete from pairToPriceStore
+        this.priceList = this.priceList.toBuilder()
+            .setBestPrice(new MarketPriceCapsule().getInstance()).build();
+        pairToPriceStore.delete(makerPair);
+      } else {
+        // current.pre.next = null
+        MarketPriceCapsule prePriceCapsule = marketPriceStore.get(currentPrice.getPrev().toByteArray());
+        prePriceCapsule.setNext(new byte[0]);
+        marketPriceStore.put(prePriceCapsule.getKey(this.getSellTokenId(), this.getBuyTokenId()),
+            prePriceCapsule);
+      }
     } else {
       try {
         // node.val = node.next.val
         // node.next = node.next.next
-        nextPrice = marketPriceStore.get(bestPrice.getNext().toByteArray()).getInstance();
-        bestPrice = new MarketPriceCapsule(nextPrice).getInstance();
-        this.priceList = this.priceList.toBuilder().setBestPrice(bestPrice).build();
+        // node.next.next.pre = node.pre
+        MarketPriceCapsule nextPriceCapsule = marketPriceStore.get(currentPrice.getNext().toByteArray());
+        nextPriceCapsule.setPrev(currentPrice.getPrev().toByteArray());
+        byte[] nextPriceKey = nextPriceCapsule.getKey(this.getSellTokenId(), this.getBuyTokenId());
+        marketPriceStore.put(nextPriceKey, nextPriceCapsule);
+
+        // check if first
+        if (currentPriceCapsule.isPrevNull()) {
+          nextPrice = nextPriceCapsule.getInstance();
+          this.priceList = this.priceList.toBuilder().setBestPrice(nextPrice).build();
+        } else {
+          MarketPriceCapsule prePriceCapsule = marketPriceStore.get(currentPrice.getPrev().toByteArray());
+          prePriceCapsule.setNext(nextPriceKey);
+          marketPriceStore.put(prePriceCapsule.getKey(this.getSellTokenId(), this.getBuyTokenId()),
+              prePriceCapsule);
+
+          if (prePriceCapsule.isPrevNull()) {
+            this.priceList = this.priceList.toBuilder().setBestPrice(prePriceCapsule.getInstance()).build();
+          }
+        }
 
         // check
         pairToPriceStore.put(makerPair, this);
@@ -201,15 +215,7 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
       }
     }
 
-
     return nextPrice;
-  }
-
-
-  public void removeFirst() {
-    this.priceList = this.priceList.toBuilder()
-        .removePrices(0)
-        .build();
   }
 
   public MarketPrice getBestPrice() {

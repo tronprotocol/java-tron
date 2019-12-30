@@ -34,6 +34,8 @@ public class MarketPriceCapsule implements ProtoCapsule<MarketPrice> {
     this.price = MarketPrice.newBuilder()
         .setSellTokenQuantity(sellTokenQuantity)
         .setBuyTokenQuantity(buyTokenQuantity)
+        .setPrev(ByteString.copyFrom(new byte[0]))
+        .setNext(ByteString.copyFrom(new byte[0]))
         .build();
   }
 
@@ -75,9 +77,21 @@ public class MarketPriceCapsule implements ProtoCapsule<MarketPrice> {
         .build();
   }
 
+  public byte[] getPrev() {
+    return this.price.getPrev().toByteArray();
+  }
 
+  public void setPrev(byte[] prev) {
+    this.price = this.price.toBuilder()
+        .setPrev(ByteString.copyFrom(prev))
+        .build();
+  }
 
   public byte[] getKey(byte[] sellTokenId, byte[] buyTokenId) {
+    if (this.isNull()) {
+      return new byte[0];
+    }
+
     return MarketUtils.createPairPriceKey(
         sellTokenId,
         buyTokenId,
@@ -92,6 +106,10 @@ public class MarketPriceCapsule implements ProtoCapsule<MarketPrice> {
 
   public boolean isNextNull() {
     return this.getNext() == null || (this.getNext().length == 0);
+  }
+
+  public boolean isPrevNull() {
+    return this.getPrev() == null || (this.getPrev().length == 0);
   }
 
   @Override

@@ -329,9 +329,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
         // need to delete marketPair
         if (makerPriceListCapsule
-            .deleteBestPrice(makerPrice, pairPriceKey, marketPriceStore, makerPair,
+            .deleteCurrentPrice(makerPrice, pairPriceKey, marketPriceStore, makerPair,
                 pairToPriceStore) == null) {
-          pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
+          // pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
           break;
         } else {
           priceListChanged = true;

@@ -17,14 +17,12 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.zksnark.MarketUtils;
@@ -45,13 +43,13 @@ import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.core.store.MarketPriceStore;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.MarketContract.MarketCancelOrderContract;
-import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 
 @Slf4j(topic = "actuator")
 public class MarketCancelOrderActuator extends AbstractActuator {
@@ -65,6 +63,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
   private MarketOrderStore orderStore;
   private MarketPairToPriceStore pairToPriceStore;
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
+  private MarketPriceStore marketPriceStore;
 
   public MarketCancelOrderActuator() {
     super(ContractType.MarketCancelOrderContract, MarketCancelOrderContract.class);
@@ -81,8 +80,8 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     marketAccountStore = chainBaseManager.getMarketAccountStore();
     orderStore = chainBaseManager.getMarketOrderStore();
     pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
-    pairPriceToOrderStore = chainBaseManager
-        .getMarketPairPriceToOrderStore();
+    pairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
+    marketPriceStore = chainBaseManager.getMarketPriceStore();
 
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
@@ -100,7 +99,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       byte[] orderId = contract.getOrderId().toByteArray();
       MarketOrderCapsule orderCapsule = orderStore.get(orderId);
 
-      //fee
+      // fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
       accountStore.put(contract.getOwnerAddress().toByteArray(), accountCapsule);
 
@@ -115,8 +114,11 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
       //2. clear orderList
       byte[] pairPriceKey = MarketUtils.createPairPriceKey(
-          orderCapsule.getSellTokenId(), orderCapsule.getBuyTokenId(),
-          orderCapsule.getSellTokenQuantity(), orderCapsule.getBuyTokenQuantity());
+          orderCapsule.getSellTokenId(),
+          orderCapsule.getBuyTokenId(),
+          orderCapsule.getSellTokenQuantity(),
+          orderCapsule.getBuyTokenQuantity()
+      );
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
       List<ByteString> ordersList = new ArrayList<>(orderIdListCapsule.getOrdersList());
       Iterator<ByteString> iterator = ordersList.iterator();
@@ -133,7 +135,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
         throw new ItemNotFoundException("orderId not exists");//should not happen
       }
 
-      if (ordersList.size() != 0) {
+      if (!ordersList.isEmpty()) {
         orderIdListCapsule.setOrdersList(ordersList);
         pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
       } else {
@@ -141,31 +143,18 @@ public class MarketCancelOrderActuator extends AbstractActuator {
         pairPriceToOrderStore.delete(pairPriceKey);
 
         // 3. modify priceList
-        byte[] makerPair = MarketUtils
-            .createPairKey(orderCapsule.getSellTokenId(), orderCapsule.getBuyTokenId());
+        byte[] makerPair = MarketUtils.createPairKey(
+            orderCapsule.getSellTokenId(),
+            orderCapsule.getBuyTokenId()
+        );
         MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(makerPair);
-        List<MarketPrice> pricesList = new ArrayList<>(priceListCapsule.getPricesList());
-        Iterator<MarketPrice> iterator1 = pricesList.iterator();
-        found = false;
-        while (iterator1.hasNext()) {
-          MarketPrice next = iterator1.next();
-          if (next.getSellTokenQuantity() == orderCapsule.getSellTokenQuantity()
-              && next.getBuyTokenQuantity() == orderCapsule.getBuyTokenQuantity()) {
-            iterator1.remove();
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          throw new ItemNotFoundException("pricesList not exists");//should not happen
-        }
 
-        if (pricesList.size() != 0) {
-          priceListCapsule.setPricesList(pricesList);
-          pairToPriceStore.put(makerPair, priceListCapsule);
-        } else {
-          //if orderList is empty,delete
-          pairToPriceStore.delete(makerPair);
+        // delete price from priceList
+        MarketPrice marketPrice = marketPriceStore.get(pairPriceKey).getInstance();
+        if (priceListCapsule
+            .deleteCurrentPrice(marketPrice, pairPriceKey, marketPriceStore, makerPair,
+                pairToPriceStore) == null) {
+          // pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
         }
       }
 

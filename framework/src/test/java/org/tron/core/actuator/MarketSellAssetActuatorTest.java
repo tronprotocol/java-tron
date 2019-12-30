@@ -6,10 +6,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -42,9 +39,7 @@ import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.MarketPriceStore;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.MarketOrder;
 import org.tron.protos.Protocol.MarketOrder.State;
-import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
@@ -860,8 +855,7 @@ public class MarketSellAssetActuatorTest {
     Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 3);
 
     //This order should be second one
-    MarketPrice marketPrice = marketPriceStore
-        .get(priceListCapsule.getBestPrice().getNext().toByteArray()).getInstance();
+    MarketPrice marketPrice = priceListCapsule.getPriceByIndex(1, marketPriceStore).getInstance();
     Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
     Assert.assertEquals(marketPrice.getBuyTokenQuantity(), buyTokenQuant);
 
@@ -942,8 +936,7 @@ public class MarketSellAssetActuatorTest {
     Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 2);
 
     //This order should be second one
-    MarketPrice marketPrice = marketPriceStore
-        .get(priceListCapsule.getBestPrice().getNext().toByteArray()).getInstance();
+    MarketPrice marketPrice = priceListCapsule.getPriceByIndex(1, marketPriceStore).getInstance();
     Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
     Assert.assertEquals(marketPrice.getBuyTokenQuantity(), buyTokenQuant);
 
