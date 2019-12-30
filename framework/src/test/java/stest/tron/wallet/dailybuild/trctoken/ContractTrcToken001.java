@@ -70,19 +70,6 @@ public class ContractTrcToken001 {
     PublicMethed.printAddress(dev001Key);
   }
 
-  @Test(enabled = true)
-  public void test() {
-    while (true) {
-      try {
-        PublicMethed.sendcoin(dev001Address, 1, fromAddress, testKey002, blockingStubFull);
-        Thread.sleep(100);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-
-
-    }
-  }
 
   @Test(enabled = true, description = "DeployContract with correct tokenValue and tokenId")
   public void deployTransferTokenContract() {

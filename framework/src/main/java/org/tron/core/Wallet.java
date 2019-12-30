@@ -70,6 +70,7 @@ import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
@@ -339,24 +340,27 @@ public class Wallet {
     return new TransactionCapsule(contract, accountStore).getInstance();
   }
 
-  public TransactionCapsule createTransactionCapsuleWithoutValidate(
-      com.google.protobuf.Message message,
-      ContractType contractType) {
-    TransactionCapsule trx = new TransactionCapsule(message, contractType);
+  private void setTransaction(TransactionCapsule trx) {
     try {
       BlockId blockId = chainBaseManager.getHeadBlockId();
       if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
         blockId = dbManager.getSolidBlockId();
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
-      long expiration =
-          chainBaseManager.getHeadBlockTimeStamp() + Args.getInstance()
-              .getTrxExpirationTimeInMilliseconds();
+      long expiration = chainBaseManager.getHeadBlockTimeStamp() + Args.getInstance()
+          .getTrxExpirationTimeInMilliseconds();
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
       logger.error("Create transaction capsule failed.", e);
     }
+  }
+
+  public TransactionCapsule createTransactionCapsuleWithoutValidate(
+      com.google.protobuf.Message message,
+      ContractType contractType) {
+    TransactionCapsule trx = new TransactionCapsule(message, contractType);
+    setTransaction(trx);
     return trx;
   }
 
@@ -380,21 +384,7 @@ public class Wallet {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
     }
-
-    try {
-      BlockId blockId = chainBaseManager.getHeadBlockId();
-      if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
-        blockId = dbManager.getSolidBlockId();
-      }
-      trx.setReference(blockId.getNum(), blockId.getBytes());
-      long expiration =
-          chainBaseManager.getHeadBlockTimeStamp() + Args.getInstance()
-              .getTrxExpirationTimeInMilliseconds();
-      trx.setExpiration(expiration);
-      trx.setTimestamp();
-    } catch (Exception e) {
-      logger.error("Create transaction capsule failed.", e);
-    }
+    setTransaction(trx);
     return trx;
   }
 
@@ -889,6 +879,27 @@ public class Wallet {
     return builder.build();
   }
 
+  private Map<String, Long> setAssetNetLimit(Map<String, Long> assetNetLimitMap,
+                                AccountCapsule accountCapsule) {
+    Map<String, Long> allFreeAssetNetUsage;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+                .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      });
+    } else {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+                .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+      });
+    }
+    return allFreeAssetNetUsage;
+  }
+
   public AccountNetMessage getAccountNet(ByteString accountAddress) {
     if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
@@ -910,22 +921,7 @@ public class Wallet {
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage;
-    if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
-      allFreeAssetNetUsage.keySet().forEach(asset -> {
-        byte[] key = ByteArray.fromString(asset);
-        assetNetLimitMap
-            .put(asset, chainBaseManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
-      });
-    } else {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
-      allFreeAssetNetUsage.keySet().forEach(asset -> {
-        byte[] key = ByteArray.fromString(asset);
-        assetNetLimitMap
-            .put(asset, chainBaseManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
-      });
-    }
+    Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
@@ -973,22 +969,7 @@ public class Wallet {
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage;
-    if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
-      allFreeAssetNetUsage.keySet().forEach(asset -> {
-        byte[] key = ByteArray.fromString(asset);
-        assetNetLimitMap
-            .put(asset, chainBaseManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
-      });
-    } else {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
-      allFreeAssetNetUsage.keySet().forEach(asset -> {
-        byte[] key = ByteArray.fromString(asset);
-        assetNetLimitMap
-            .put(asset, chainBaseManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
-      });
-    }
+    Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
@@ -1767,6 +1748,43 @@ public class Wallet {
     return transactionCapsule;
 
   }
+
+
+  public ShieldedAddressInfo getNewShieldedAddress() throws BadItemException, ZksnarkException {
+    if (!getFullNodeAllowShieldedTransaction()) {
+      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
+    }
+
+    ShieldedAddressInfo.Builder addressInfo = ShieldedAddressInfo.newBuilder();
+
+    BytesMessage sk = getSpendingKey();
+    DiversifierMessage d = getDiversifier();
+    ExpandedSpendingKeyMessage expandedSpendingKeyMessage = getExpandedSpendingKey(sk.getValue());
+
+    BytesMessage ak = getAkFromAsk(expandedSpendingKeyMessage.getAsk());
+    BytesMessage nk = getNkFromNsk(expandedSpendingKeyMessage.getNsk());
+    IncomingViewingKeyMessage ivk = getIncomingViewingKey(ak.getValue().toByteArray(),
+        nk.getValue().toByteArray());
+
+    PaymentAddressMessage addressMessage =
+        getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
+            new DiversifierT(d.getD().toByteArray()));
+
+    addressInfo.setSk(sk.getValue());
+    addressInfo.setAsk(expandedSpendingKeyMessage.getAsk());
+    addressInfo.setNsk(expandedSpendingKeyMessage.getNsk());
+    addressInfo.setOvk(expandedSpendingKeyMessage.getOvk());
+    addressInfo.setAk(ak.getValue());
+    addressInfo.setNk(nk.getValue());
+    addressInfo.setIvk(ivk.getIvk());
+    addressInfo.setD(d.getD());
+    addressInfo.setPkD(addressMessage.getPkD());
+    addressInfo.setPaymentAddress(addressMessage.getPaymentAddress());
+
+    return addressInfo.build();
+
+  }
+
 
   public BytesMessage getSpendingKey() throws ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
