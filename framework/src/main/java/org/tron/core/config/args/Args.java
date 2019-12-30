@@ -66,7 +66,6 @@ import org.tron.program.Version;
 @Component
 public class Args extends CommonParameter {
 
-
   @Getter
   @Setter
   private   static  LocalWitnesses localWitnesses = new LocalWitnesses();
