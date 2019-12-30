@@ -327,7 +327,7 @@ message Transaction {
     repeated authority auths = 9;
     // transaction note
     bytes data = 10;
-    //only support size = 1,  repeated list here for extension
+    //only support size = 1, repeated list here for extension
     repeated Contract contract = 11;
     // scripts not used
     bytes scripts = 12;
@@ -336,7 +336,7 @@ message Transaction {
   }
 
   raw raw_data = 1;
-  // only support size = 1,  repeated list here for muti-sig extension
+  // only support size = 1, repeated list here for muti-sig extension
   repeated bytes signature = 2;
   repeated Result ret = 5;
 }
