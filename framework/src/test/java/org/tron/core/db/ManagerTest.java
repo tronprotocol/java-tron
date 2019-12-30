@@ -368,7 +368,7 @@ public class ManagerTest extends BlockGenerate {
     Transaction trx = Transaction.newBuilder().build();
     TransactionCapsule moreTrans = new TransactionCapsule(trx);
     blockCapsule2.addTransaction(moreTrans);  // add one more transaction will change merkroot
-    blockCapsule2.sign(ByteArray.fromHexString(Args.getInstance().getLocalWitnesses()
+    blockCapsule2.sign(ByteArray.fromHexString(Args.getLocalWitnesses()
         .getPrivateKey()));
     try {
       dbManager.pushBlock(blockCapsule2);
@@ -423,7 +423,7 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule2.addTransaction(trans1);  // addShield transaction
     blockCapsule2.addTransaction(trans2);  //  add Shield transaction
     blockCapsule2.setMerkleRoot();
-    blockCapsule2.sign(ByteArray.fromHexString(Args.getInstance().getLocalWitnesses()
+    blockCapsule2.sign(ByteArray.fromHexString(Args.getLocalWitnesses()
         .getPrivateKey()));
     try {
       dbManager.pushBlock(blockCapsule2);

@@ -103,7 +103,7 @@ public class SignatureInterfaceTest {
 
     sign = new ECKey();
     hash = sign.hash(message.getBytes());
-    assertEquals("C5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470",
+    assertEquals("856AB8A3AD0F6168A4D0BA8D77487243F3655DB6FC5B0E1669BC05B1287E0147",
             Hex.toHexString(hash).toUpperCase());
   }
 
