@@ -3,7 +3,7 @@ package org.tron.core.actuator;
 import com.google.common.collect.Lists;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ForkUtils;
+import org.tron.common.utils.ForkController;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -15,16 +15,13 @@ import org.tron.protos.Protocol.Transaction.Contract;
 @Slf4j(topic = "actuator")
 public class ActuatorCreator {
 
-  private DynamicPropertiesStore dynamicPropertiesStore;
-
-  private ForkUtils forkUtils = new ForkUtils();
+  private ForkController forkController = new ForkController();
 
   private ChainBaseManager chainBaseManager;
 
   private ActuatorCreator(StoreFactory storeFactory) {
     chainBaseManager = storeFactory.getChainBaseManager();
-    dynamicPropertiesStore = storeFactory.getChainBaseManager().getDynamicPropertiesStore();
-    forkUtils.setDynamicPropertiesStore(dynamicPropertiesStore);
+    forkController.init(storeFactory.getChainBaseManager());
   }
 
   public static ActuatorCreator getINSTANCE() {
@@ -70,7 +67,7 @@ public class ActuatorCreator {
     }
     AbstractActuator abstractActuator = (AbstractActuator) clazz.newInstance();
     abstractActuator.setChainBaseManager(chainBaseManager).setContract(contract)
-        .setForkUtils(forkUtils).setTx(tx);
+        .setForkUtils(forkController).setTx(tx);
     return abstractActuator;
   }
 
