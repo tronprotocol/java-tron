@@ -33,7 +33,7 @@ public class SolidityNode {
   private Manager dbManager;
 
   @Autowired
-  ChainBaseManager chainBaseManager;
+  private ChainBaseManager chainBaseManager;
 
   private DatabaseGrpcClient databaseGrpcClient;
 
