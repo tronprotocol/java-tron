@@ -1018,6 +1018,7 @@ public class Args extends CommonParameter {
     DBConfig.setChangedDelegation(parameter.getChangedDelegation());
     DBConfig.setActuatorSet(parameter.getActuatorSet());
     DBConfig.setTransactionHistoreSwitch(parameter.getStorage().getTransactionHistoreSwitch());
+    DBConfig.setSaveInternalTx(parameter.saveInternalTx);
   }
 
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

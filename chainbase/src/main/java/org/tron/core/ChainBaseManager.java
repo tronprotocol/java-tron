@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CommonStore;
@@ -152,6 +153,10 @@ public class ChainBaseManager {
   @Getter
   private TransactionHistoryStore transactionHistoryStore;
 
+  @Getter
+  @Setter
+  private BlockCapsule genesisBlock;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -229,4 +234,14 @@ public class ChainBaseManager {
   public long getHeadBlockTimeStamp() {
     return dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
   }
+
+  public void initGenesis(){
+    genesisBlock = BlockUtil.newGenesisBlockCapsule();
+  }
+
+  public long getHeadSlot() {
+    return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
+        .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
+  }
+
 }

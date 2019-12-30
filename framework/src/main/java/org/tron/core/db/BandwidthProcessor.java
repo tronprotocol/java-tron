@@ -24,18 +24,16 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 @Slf4j(topic = "DB")
 public class BandwidthProcessor extends ResourceProcessor {
 
-  private Manager dbManager;
   private ChainBaseManager chainBaseManager;
 
-  public BandwidthProcessor(Manager manager) {
-    super(manager.getDynamicPropertiesStore(), manager.getAccountStore());
-    this.dbManager = manager;
-    this.chainBaseManager = manager.getChainBaseManager();
+  public BandwidthProcessor(ChainBaseManager chainBaseManager) {
+    super(chainBaseManager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
+    this.chainBaseManager = chainBaseManager;
   }
 
   @Override
   public void updateUsage(AccountCapsule accountCapsule) {
-    long now = dbManager.getHeadSlot();
+    long now = chainBaseManager.getHeadSlot();
     updateUsage(accountCapsule, now);
   }
 
@@ -97,7 +95,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       if (accountCapsule == null) {
         throw new ContractValidateException("account does not exist");
       }
-      long now = dbManager.getHeadSlot();
+      long now = chainBaseManager.getHeadSlot();
 
       if (contractCreateNewAccount(contract)) {
         consumeForCreateNewAccount(accountCapsule, bytesSize, now, trace);
