@@ -60,20 +60,27 @@ public class BlockHeaderSyncHandler {
 
   private ConcurrentMap<Long, BlockHeaderCapsule> blockHeaderMap = new ConcurrentHashMap<>();
 
-  private Map<PeerConnection, PeerInfo> peerInfoMap = new HashMap<>();
+  private ConcurrentMap<PeerConnection, PeerInfo> peerInfoMap = new ConcurrentHashMap<>();
+
+  private long latestHeaderHeightOnChain;
 
   private ExecutorService updateHeaderExecutor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder().setNameFormat("updateHeaderExecutor").build());
 
+  private ExecutorService sendRequestExecutor = Executors.newSingleThreadExecutor(
+      new ThreadFactoryBuilder().setNameFormat("sendRequestExecutor").build());
+
   @PostConstruct
   private void init() {
     updateHeaderExecutor.execute(this::updateBlockHeader);
+    sendRequestExecutor.execute(this::sendRequest);
   }
 
-  public void HandleUpdatedNotice(PeerConnection peer, TronMessage msg) throws InvalidProtocolBufferException {
+  public void HandleUpdatedNotice(PeerConnection peer, TronMessage msg) {
     BlockHeaderUpdatedNoticeMessage noticeMessage = (BlockHeaderUpdatedNoticeMessage) msg;
     long currentBlockHeight = noticeMessage.getCurrentBlockHeight();
     peerInfoMap.compute(peer, (k,v) -> new PeerInfo()).setCurrentBlockHeight(currentBlockHeight);
+    updateLatestHeaderOnChain();
     sendRequest(peer, currentBlockHeight);
   }
 
@@ -108,7 +115,8 @@ public class BlockHeaderSyncHandler {
     }
 
     long currentBlockHeight = blockHeaderInventoryMesasge.getCurrentBlockHeight();
-    sendRequest(peer, currentBlockHeight);
+    peerInfoMap.compute(peer, (k,v) -> new PeerInfo()).setCurrentBlockHeight(currentBlockHeight);
+    updateLatestHeaderOnChain();
   }
 
   public void handleSrList(PeerConnection peer, TronMessage msg) {
@@ -168,6 +176,7 @@ public class BlockHeaderSyncHandler {
         BlockHeaderCapsule headerCapsule = blockHeaderMap.get(currentBlockHeight);
         if (headerCapsule == null) {
           TimeUnit.MILLISECONDS.sleep(50);
+          continue;
         }
 
         String chainId = headerCapsule.getChainId();
@@ -176,13 +185,43 @@ public class BlockHeaderSyncHandler {
         blockHeaderStore.put(blockId.getBytes(), headerCapsule);
         commonDataBase.saveLatestPbftBlockNum(blockId.getNum());
       } catch (Exception e) {
-        logger.info(e.getMessage());
+        logger.info("updateBlockHeader {}", e.getMessage());
       }
     }
   }
 
   public long calculateLength(long... arrays) {
     return Longs.min(arrays);
+  }
+
+  public void sendRequest() {
+    while (true) {
+      try {
+        if (blockHeaderMap.size() >= 50) {
+          TimeUnit.MILLISECONDS.sleep(100);
+          continue;
+        }
+
+        long localLatestHeight = getLatestPbftBlockHeight();
+        long diff = latestHeaderHeightOnChain - localLatestHeight;
+        long quot = diff / BLOCK_HEADER_LENGTH;
+        long mod = diff % BLOCK_HEADER_LENGTH;
+        if (quot < peerInfoMap.size()) {
+          peerInfoMap.keySet().stream().limit(quot).forEach(
+              peerConnection -> peerConnection.sendMessage(
+                  new BlockHeaderRequestMessage(localLatestHeight, BLOCK_HEADER_LENGTH)));
+          peerInfoMap.keySet().stream().skip(quot).limit(1).forEach(
+              peerConnection -> peerConnection.sendMessage(
+                  new BlockHeaderRequestMessage(localLatestHeight, mod)));
+        } else {
+          peerInfoMap.keySet().forEach(
+              peerConnection -> peerConnection.sendMessage(
+                  new BlockHeaderRequestMessage(localLatestHeight, BLOCK_HEADER_LENGTH)));
+        }
+      } catch (Exception e) {
+        logger.info("sendRequest {}", e.getMessage());
+      }
+    }
   }
 
   public void sendRequest(PeerConnection peer, long blockHeight) {
@@ -192,21 +231,6 @@ public class BlockHeaderSyncHandler {
       long diff = blockHeight - localLatestHeight;
       if (diff <= BLOCK_HEADER_LENGTH) {
         peer.sendMessage(new BlockHeaderRequestMessage(localLatestHeight, diff));
-      }
-
-      long quot = diff / BLOCK_HEADER_LENGTH;
-      long mod = diff % BLOCK_HEADER_LENGTH;
-      if (quot < peerInfoMap.size()) {
-        peerInfoMap.keySet().stream().limit(quot).forEach(
-            peerConnection -> peerConnection.sendMessage(
-                new BlockHeaderRequestMessage(localLatestHeight, BLOCK_HEADER_LENGTH)));
-        peerInfoMap.keySet().stream().skip(quot).limit(1).forEach(
-            peerConnection -> peerConnection.sendMessage(
-                new BlockHeaderRequestMessage(localLatestHeight, mod)));
-      } else {
-        peerInfoMap.keySet().forEach(
-            peerConnection -> peerConnection.sendMessage(
-                new BlockHeaderRequestMessage(localLatestHeight, BLOCK_HEADER_LENGTH)));
       }
     }
   }
@@ -229,10 +253,32 @@ public class BlockHeaderSyncHandler {
     return blockHeaderCapsules.get(0).getBlockId().getNum();
   }
 
+  public void updateLatestHeaderOnChain() {
+    latestHeaderHeightOnChain = peerInfoMap.values().stream()
+        .map(PeerInfo::getCurrentBlockHeight)
+        .max(Long::compareTo)
+        .orElse(0L);
+  }
+
+  public long LatestHeaderHeightThatHas() {
+    return blockHeaderMap.keySet().stream()
+        .max(Long::compareTo)
+        .orElse(0L);
+  }
+
+  public long latestHeaderHeightThatSent() {
+    return peerInfoMap.values().stream()
+        .map(PeerInfo::getEndHeight)
+        .max(Long::compareTo)
+        .orElse(0L);
+  }
+
   @Getter
   @Setter
   @ToString
   public static class PeerInfo {
     private long currentBlockHeight;
+    private long beginHeight;
+    private long endHeight;
   }
 }
