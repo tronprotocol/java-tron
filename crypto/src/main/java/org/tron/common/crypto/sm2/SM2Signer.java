@@ -191,9 +191,7 @@ public class SM2Signer
         }
 
         ECPoint q = ((ECPublicKeyParameters)ecKey).getQ();
-//
-//        // B3
-//        digest.doFinal(eHash, 0);
+
         if(userID != null) {
             this.userID = userID.getBytes();
         }
