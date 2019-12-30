@@ -358,6 +358,17 @@ public class ProposalService {
         }
         break;
       }
+      case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          throw new ContractValidateException("Bad chain parameter id [SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE]");
+        }
+        if (value < 0 || value > 10_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value,valid range is [0,10_000_000_000L]");
+        }
+        break;
+      }
+
       default:
         break;
     }
