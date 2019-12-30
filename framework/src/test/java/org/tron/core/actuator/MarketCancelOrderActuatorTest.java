@@ -24,7 +24,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
-import org.tron.core.capsule.MarketPriceListCapsule;
+import org.tron.core.capsule.MarketPriceLinkedListCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -55,10 +55,7 @@ public class MarketCancelOrderActuatorTest {
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
   private static final String OWNER_ADDRESS_SECOND;
   private static final String OWNER_ADDRESS_NOT_EXIST;
-  private static final String URL = "https://tron.network";
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
-  private static final String OWNER_ADDRESS_NOACCOUNT;
-  private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
   private static final String TOKEN_ID_ONE = String.valueOf(1L);
   private static final String TOKEN_ID_TWO = String.valueOf(2L);
   private static final String TRX = "_";
@@ -72,10 +69,6 @@ public class MarketCancelOrderActuatorTest {
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-    OWNER_ADDRESS_NOACCOUNT =
-        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
-    OWNER_ADDRESS_BALANCENOTSUFFIENT =
-        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
     OWNER_ADDRESS_NOT_EXIST =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1c11";
   }
@@ -144,7 +137,7 @@ public class MarketCancelOrderActuatorTest {
   private void cleanMarketOrderByAccount(byte[] accountAddress) {
 
     if (accountAddress == null || accountAddress.length == 0) {
-      return ;
+      return;
     }
 
     MarketAccountOrderCapsule marketAccountOrderCapsule;
@@ -152,20 +145,19 @@ public class MarketCancelOrderActuatorTest {
       marketAccountOrderCapsule = dbManager.getChainBaseManager()
           .getMarketAccountStore().get(accountAddress);
     } catch (ItemNotFoundException e) {
-      return ;
+      return;
     }
 
     MarketOrderStore marketOrderStore = dbManager.getChainBaseManager().getMarketOrderStore();
 
     List<ByteString> orderIdList = marketAccountOrderCapsule.getOrdersList();
-    orderIdList
-        .forEach(
-            orderId -> marketOrderStore.delete(orderId.toByteArray())
-        );
+    orderIdList.forEach(
+        orderId -> marketOrderStore.delete(orderId.toByteArray())
+    );
   }
 
-  private Any getContract(String address, String sellTokenId, long sellTokenQuantity
-      , String buyTokenId, long buyTokenQuantity) {
+  private Any getContract(String address, String sellTokenId, long sellTokenQuantity,
+      String buyTokenId, long buyTokenQuantity) {
 
     return Any.pack(
         MarketSellAssetContract.newBuilder()
@@ -240,7 +232,6 @@ public class MarketCancelOrderActuatorTest {
       Assert.assertEquals("Invalid address", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
     }
   }
 
@@ -268,7 +259,6 @@ public class MarketCancelOrderActuatorTest {
       Assert.assertEquals("Account does not exist!", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
     }
   }
 
@@ -296,7 +286,6 @@ public class MarketCancelOrderActuatorTest {
       Assert.assertEquals("orderId not exists", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
     }
   }
 
@@ -338,7 +327,6 @@ public class MarketCancelOrderActuatorTest {
       Assert.assertEquals("Order is not active!", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
     }
   }
 
@@ -379,7 +367,6 @@ public class MarketCancelOrderActuatorTest {
       Assert.assertEquals("Order does not belong to the account!", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
     }
   }
 
@@ -421,7 +408,6 @@ public class MarketCancelOrderActuatorTest {
       Assert.assertEquals("No enough balance !", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
-    } finally {
     }
   }
 
@@ -458,7 +444,6 @@ public class MarketCancelOrderActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       fail("validateSuccess error");
-    } finally {
     }
   }
 
@@ -561,7 +546,7 @@ public class MarketCancelOrderActuatorTest {
 
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
-    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
+    MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
     Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 3);
 
     MarketPrice marketPrice = priceListCapsule.getPriceByIndex(1, marketPriceStore).getInstance();
@@ -640,7 +625,7 @@ public class MarketCancelOrderActuatorTest {
 
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey("_".getBytes(), TOKEN_ID_TWO.getBytes());
-    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
+    MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
     Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 3);
 
     MarketPrice marketPrice = priceListCapsule.getPriceByIndex(1, marketPriceStore).getInstance();
@@ -716,7 +701,7 @@ public class MarketCancelOrderActuatorTest {
 
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
-    MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
+    MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
     Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 2);
 
     MarketPrice marketPrice = priceListCapsule.getBestPrice();
@@ -733,7 +718,7 @@ public class MarketCancelOrderActuatorTest {
         100L, 300L);
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule, null);
+    Assert.assertNull(orderIdListCapsule);
   }
 
 
@@ -791,9 +776,9 @@ public class MarketCancelOrderActuatorTest {
 
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
-    MarketPriceListCapsule priceListCapsule = pairToPriceStore.getUnchecked(marketPair);
+    MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.getUnchecked(marketPair);
 
-    Assert.assertEquals(priceListCapsule, null);
+    Assert.assertNull(priceListCapsule);
 
     //check pairPriceToOrder
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(
@@ -801,6 +786,7 @@ public class MarketCancelOrderActuatorTest {
         100L, 300L);
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule, null);
+    Assert.assertNull(orderIdListCapsule);
+
   }
 }

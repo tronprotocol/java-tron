@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.zksnark.MarketUtils;
@@ -32,7 +31,7 @@ import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.MarketPriceCapsule;
-import org.tron.core.capsule.MarketPriceListCapsule;
+import org.tron.core.capsule.MarketPriceLinkedListCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -136,6 +135,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
+
     return true;
   }
 
@@ -265,13 +265,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     return dynamicStore.getMarketSellFee();
   }
 
-  public boolean hasMatch(MarketPriceListCapsule makerPriceListCapsule, MarketPrice takerPrice) {
-    // List<MarketPrice> pricesList = makerPriceListCapsule.getPricesList();
-    // if (pricesList.isEmpty()) {
-    //   return false;
-    // }
-    // MarketPrice buyPrice = pricesList.get(0);
-
+  public boolean hasMatch(MarketPriceLinkedListCapsule makerPriceListCapsule, MarketPrice takerPrice) {
     MarketPrice bestPrice = makerPriceListCapsule.getBestPrice();
     if (new MarketPriceCapsule(bestPrice).isNull()) {
       return false;
@@ -284,14 +278,13 @@ public class MarketSellAssetActuator extends AbstractActuator {
       throws ItemNotFoundException {
 
     byte[] makerPair = MarketUtils.createPairKey(buyTokenID, sellTokenID);
-    MarketPriceListCapsule makerPriceListCapsule = pairToPriceStore.getUnchecked(makerPair);
+    MarketPriceLinkedListCapsule makerPriceListCapsule = pairToPriceStore.getUnchecked(makerPair);
 
     //if not exists
     if (makerPriceListCapsule == null) {
       return;
     }
 
-    boolean priceListChanged = false;
     //match different price
     while (takerCapsule.getSellTokenQuantityRemain() != 0
         && hasMatch(makerPriceListCapsule, takerPrice)) {
@@ -331,10 +324,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
         if (makerPriceListCapsule
             .deleteCurrentPrice(makerPrice, pairPriceKey, marketPriceStore, makerPair,
                 pairToPriceStore) == null) {
-          // pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
           break;
-        } else {
-          priceListChanged = true;
         }
 
       } else if (ordersListChanged) {
@@ -342,16 +332,11 @@ public class MarketSellAssetActuator extends AbstractActuator {
         pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
       }
     } // end while
-
-    // if (priceListChanged) {
-    //   pairToPriceStore.put(makerPair, makerPriceListCapsule);
-    // }
-
   }
 
   //return all match or not
   public void matchSingleOrder(MarketOrderCapsule takerOrderCapsule,
-      MarketOrderCapsule makerOrderCapsule) throws ItemNotFoundException {
+      MarketOrderCapsule makerOrderCapsule) {
 
     // 根据maker的价格，计算taker的buy的量(成交量）,
     // for makerPrice,sellToken is A,buyToken is TRX.
@@ -538,9 +523,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     //add price into pricesList
     byte[] pairKey = MarketUtils.createPairKey(sellTokenID, buyTokenID);
-    MarketPriceListCapsule priceListCapsule = pairToPriceStore.getUnchecked(pairKey);
+    MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.getUnchecked(pairKey);
     if (priceListCapsule == null) {
-      priceListCapsule = new MarketPriceListCapsule(sellTokenID, buyTokenID);
+      priceListCapsule = new MarketPriceLinkedListCapsule(sellTokenID, buyTokenID);
     }
 
     MarketPriceCapsule headPriceCapsule = priceListCapsule

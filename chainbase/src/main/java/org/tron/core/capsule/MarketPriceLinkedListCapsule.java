@@ -2,34 +2,34 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.MarketPriceStore;
-import org.tron.protos.Protocol.MarketPriceList;
+import org.tron.protos.Protocol.MarketPriceLinkedList;
 import org.tron.protos.Protocol.MarketPrice;
 
 @Slf4j(topic = "capsule")
-public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
+public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLinkedList> {
 
-  private MarketPriceList priceList;
+  private MarketPriceLinkedList priceList;
 
-  public MarketPriceListCapsule(final MarketPriceList priceList) {
+  public MarketPriceLinkedListCapsule(final MarketPriceLinkedList priceList) {
     this.priceList = priceList;
   }
 
-  public MarketPriceListCapsule(final byte[] data) {
+  public MarketPriceLinkedListCapsule(final byte[] data) {
     try {
-      this.priceList = MarketPriceList.parseFrom(data);
+      this.priceList = MarketPriceLinkedList.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }
   }
 
-  public MarketPriceListCapsule(byte[] sellTokenId, byte[] buyTokenId) {
-    this.priceList = MarketPriceList.newBuilder()
+  public MarketPriceLinkedListCapsule(byte[] sellTokenId, byte[] buyTokenId) {
+    this.priceList = MarketPriceLinkedList.newBuilder()
         .setSellTokenId(ByteString.copyFrom(sellTokenId))
         .setBuyTokenId(ByteString.copyFrom(buyTokenId))
         .build();
@@ -44,7 +44,6 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
         .setSellTokenId(ByteString.copyFrom(id))
         .build();
   }
-
 
   public byte[] getBuyTokenId() {
     return this.priceList.getBuyTokenId().toByteArray();
@@ -73,8 +72,7 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
 
   public MarketPriceCapsule getPriceByIndex(int index, MarketPriceStore marketPriceStore)
       throws ItemNotFoundException {
-    MarketPriceCapsule head = new MarketPriceCapsule(this.getBestPrice());
-    MarketPriceCapsule current = head;
+    MarketPriceCapsule current = new MarketPriceCapsule(this.getBestPrice());
 
     int count = 0;
     while (!current.isNull()) {
@@ -92,13 +90,35 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
     return null;
   }
 
+  public List<MarketPrice> getPricesList(MarketPriceStore marketPriceStore)
+      throws ItemNotFoundException {
+    List<MarketPrice> marketPrices = new ArrayList<>();
+    MarketPriceCapsule current = new MarketPriceCapsule(this.getBestPrice());
+
+    while (!current.isNull()) {
+      marketPrices.add(current.getInstance());
+
+      if (!current.isNextNull()) {
+        current = marketPriceStore.get(current.getNext());
+      } else {
+        break;
+      }
+    }
+
+    return marketPrices;
+  }
+
+
   public void setBestPrice(MarketPriceCapsule bestPrice) {
     this.priceList = this.priceList.toBuilder().setBestPrice(bestPrice.getInstance()).build();
   }
 
 
-  // insert price by sort, if same, just return
-  // store ops outside
+  /*
+  * insert price by sort, if same, just return
+  * store ops outside(itself)
+  * return head, null if not changed
+  * */
   public MarketPriceCapsule insertMarket(MarketPrice marketPrice, byte[] sellTokenID,
       byte[] buyTokenID, MarketPriceStore marketPriceStore) throws ItemNotFoundException {
 
@@ -155,11 +175,9 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
     return null;
   }
 
-  // update bestPrice, set the next
-  // and should remove bestPrice from store after this
-  // 1. delete bestPrice from store
-  // 2. if best.next == empty, set priceList.best = empty, update priceList, delete pairToPriceStore
-  // 3. else set priceList.best = best.next, update priceList
+  /*
+  * delete current price, including head and other node
+  * */
   public MarketPrice deleteCurrentPrice(MarketPrice currentPrice, byte[] pairPriceKey,
       MarketPriceStore marketPriceStore, byte[] makerPair, MarketPairToPriceStore pairToPriceStore)
       throws ItemNotFoundException {
@@ -169,7 +187,7 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
 
     MarketPrice nextPrice = null;
     MarketPriceCapsule currentPriceCapsule = new MarketPriceCapsule(currentPrice);
-    // update makerPriceListCapsule, and need to delete from pairToPriceStore, TODO
+
     if (currentPriceCapsule.isNextNull()) {
       if (currentPriceCapsule.isPrevNull()) {
         // set empty and delete from pairToPriceStore
@@ -203,12 +221,12 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
           marketPriceStore.put(prePriceCapsule.getKey(this.getSellTokenId(), this.getBuyTokenId()),
               prePriceCapsule);
 
+          // update pre to preListCapsule, because itself has changed
           if (prePriceCapsule.isPrevNull()) {
             this.priceList = this.priceList.toBuilder().setBestPrice(prePriceCapsule.getInstance()).build();
           }
         }
 
-        // check
         pairToPriceStore.put(makerPair, this);
       } catch (ItemNotFoundException e) {
         throw new ItemNotFoundException(e.getMessage());
@@ -228,7 +246,7 @@ public class MarketPriceListCapsule implements ProtoCapsule<MarketPriceList> {
   }
 
   @Override
-  public MarketPriceList getInstance() {
+  public MarketPriceLinkedList getInstance() {
     return this.priceList;
   }
 

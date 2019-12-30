@@ -118,7 +118,7 @@ import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
-import org.tron.core.capsule.MarketPriceListCapsule;
+import org.tron.core.capsule.MarketPriceLinkedListCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -154,6 +154,8 @@ import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.MarketOrderStore;
+import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.core.store.MarketPriceStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
@@ -171,6 +173,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.MarketOrderList;
+import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -2308,32 +2311,42 @@ public class Wallet {
     MarketOrderList.Builder marketOrderListBuilder = MarketOrderList.newBuilder();
     List<ByteString> orderIdList = marketAccountOrderCapsule.getOrdersList();
 
-    orderIdList
-        .forEach(
-            orderId -> {
-              try {
-                marketOrderListBuilder
-                    .addOrders(marketOrderStore.get(orderId.toByteArray()).getInstance());
-              } catch (ItemNotFoundException e) {
-                logger.error("orderId = " + orderId.toString() + " not found");
-                throw new IllegalStateException("order not found in store");
-              }
-            }
-        );
+    orderIdList.forEach(
+        orderId -> {
+          try {
+            marketOrderListBuilder
+                .addOrders(marketOrderStore.get(orderId.toByteArray()).getInstance());
+          } catch (ItemNotFoundException e) {
+            logger.error("orderId = " + orderId.toString() + " not found");
+            throw new IllegalStateException("order not found in store");
+          }
+        }
+    );
 
     return marketOrderListBuilder.build();
   }
 
-  public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId) {
+  public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId)
+      throws ItemNotFoundException {
+    MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
+        .getMarketPairToPriceStore();
     byte[] makerPair = MarketUtils.createPairKey(sellTokenId, buyTokenId);
-    MarketPriceListCapsule priceListCapsule = dbManager.getChainBaseManager()
-        .getMarketPairToPriceStore().getUnchecked(makerPair);
 
+    MarketPriceLinkedListCapsule priceListCapsule = marketPairToPriceStore.getUnchecked(makerPair);
     if (priceListCapsule == null) {
       return null;
     }
 
-    return priceListCapsule.getInstance();
+    MarketPriceStore marketPriceStore = dbManager.getChainBaseManager().getMarketPriceStore();
+    List<MarketPrice> marketPrices = priceListCapsule.getPricesList(marketPriceStore);
+
+    MarketPriceList.Builder marketPriceListBuilder = MarketPriceList.newBuilder()
+        .setSellTokenId(ByteString.copyFrom(priceListCapsule.getSellTokenId()))
+        .setBuyTokenId(ByteString.copyFrom(priceListCapsule.getBuyTokenId()));
+
+    marketPrices.forEach(marketPriceListBuilder::addPrices);
+
+    return marketPriceListBuilder.build();
   }
 
   public Transaction deployContract(TransactionCapsule trxCap) {

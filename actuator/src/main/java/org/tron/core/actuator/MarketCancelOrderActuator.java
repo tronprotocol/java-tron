@@ -29,7 +29,7 @@ import org.tron.common.zksnark.MarketUtils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
-import org.tron.core.capsule.MarketPriceListCapsule;
+import org.tron.core.capsule.MarketPriceLinkedListCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -37,9 +37,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
@@ -57,9 +55,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
   private AccountStore accountStore;
   private DynamicPropertiesStore dynamicStore;
   private AssetIssueStore assetIssueStore;
-  private AssetIssueV2Store assetIssueV2Store;
 
-  private MarketAccountStore marketAccountStore;
   private MarketOrderStore orderStore;
   private MarketPairToPriceStore pairToPriceStore;
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
@@ -75,9 +71,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     accountStore = chainBaseManager.getAccountStore();
     dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     assetIssueStore = chainBaseManager.getAssetIssueStore();
-    assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
 
-    marketAccountStore = chainBaseManager.getMarketAccountStore();
     orderStore = chainBaseManager.getMarketOrderStore();
     pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     pairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
@@ -147,19 +141,18 @@ public class MarketCancelOrderActuator extends AbstractActuator {
             orderCapsule.getSellTokenId(),
             orderCapsule.getBuyTokenId()
         );
-        MarketPriceListCapsule priceListCapsule = pairToPriceStore.get(makerPair);
+        MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(makerPair);
 
         // delete price from priceList
         MarketPrice marketPrice = marketPriceStore.get(pairPriceKey).getInstance();
-        if (priceListCapsule
-            .deleteCurrentPrice(marketPrice, pairPriceKey, marketPriceStore, makerPair,
-                pairToPriceStore) == null) {
-          // pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
-        }
+        priceListCapsule.deleteCurrentPrice(marketPrice, pairPriceKey, marketPriceStore,
+            makerPair, pairToPriceStore);
       }
 
       ret.setStatus(fee, code.SUCESS);
-    } catch (ItemNotFoundException | InvalidProtocolBufferException | BalanceInsufficientException e) {
+    } catch (ItemNotFoundException
+        | InvalidProtocolBufferException
+        | BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -179,9 +172,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     accountStore = chainBaseManager.getAccountStore();
     dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     assetIssueStore = chainBaseManager.getAssetIssueStore();
-    assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
 
-    marketAccountStore = chainBaseManager.getMarketAccountStore();
     orderStore = chainBaseManager.getMarketOrderStore();
     pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     pairPriceToOrderStore = chainBaseManager
