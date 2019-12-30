@@ -290,7 +290,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager, chainBaseManager);
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
     EnergyProcessor energyProcessor = new EnergyProcessor(
@@ -320,7 +320,7 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager, chainBaseManager);
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
     EnergyProcessor energyProcessor = new EnergyProcessor(
@@ -911,7 +911,7 @@ public class Wallet {
       return null;
     }
 
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager, chainBaseManager);
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
     long netLimit = processor
@@ -945,7 +945,7 @@ public class Wallet {
       return null;
     }
 
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager,chainBaseManager);
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
     EnergyProcessor energyProcessor = new EnergyProcessor(

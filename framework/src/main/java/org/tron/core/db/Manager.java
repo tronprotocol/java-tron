@@ -789,7 +789,7 @@ public class Manager {
   public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException,
       TooBigTransactionResultException {
-    BandwidthProcessor processor = new BandwidthProcessor(this, chainBaseManager);
+    BandwidthProcessor processor = new BandwidthProcessor(this);
     processor.consume(trx, trace);
   }
 

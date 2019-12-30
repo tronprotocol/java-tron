@@ -19,9 +19,9 @@ public class BlockGenerate {
   private static ChainBaseManager chainBaseManager;
 
 
-  public static void setManager(Manager dbManager, ChainBaseManager chainManager) {
+  public static void setManager(Manager dbManager) {
     manager = dbManager;
-    chainBaseManager = chainManager;
+    chainBaseManager = dbManager.getChainBaseManager();
   }
 
   public Block getSignedBlock(ByteString witness, long time, byte[] privateKey) {

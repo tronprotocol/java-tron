@@ -22,9 +22,9 @@ public class ManagerForTest {
   private ChainBaseManager chainBaseManager;
   private DposSlot dposSlot;
 
-  public ManagerForTest(Manager dbManager, ChainBaseManager chainBaseManager, DposSlot dposSlot) {
+  public ManagerForTest(Manager dbManager, DposSlot dposSlot) {
     this.dbManager = dbManager;
-    this.chainBaseManager = chainBaseManager;
+    this.chainBaseManager = dbManager.getChainBaseManager();
     this.dposSlot = dposSlot;
   }
 

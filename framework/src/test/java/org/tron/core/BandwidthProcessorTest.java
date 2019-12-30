@@ -229,7 +229,7 @@ public class BandwidthProcessorTest {
 
   //@Test
   public void testCreateNewAccount() throws Exception {
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager, chainBaseManager);
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     TransferAssetContract transferAssetContract = getTransferAssetContract();
     TransactionCapsule trx = new TransactionCapsule(transferAssetContract);
 
@@ -636,7 +636,7 @@ public class BandwidthProcessorTest {
     long byteSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize()
         + Constant.MAX_RESULT_SIZE_IN_TX;
 
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager, chainBaseManager);
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
 
     try {
       processor.consume(trx, trace);
@@ -749,7 +749,7 @@ public class BandwidthProcessorTest {
     long byteSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize()
         + Constant.MAX_RESULT_SIZE_IN_TX;
 
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager, chainBaseManager);
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
 
     try {
       processor.consume(trx, trace);
@@ -830,7 +830,7 @@ public class BandwidthProcessorTest {
     long byteSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize()
         + Constant.MAX_RESULT_SIZE_IN_TX;
 
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager, chainBaseManager);
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
 
     try {
       processor.consume(trx, trace);

@@ -93,8 +93,7 @@ public class ManagerTest extends BlockGenerate {
     context = new TronApplicationContext(DefaultConfig.class);
 
     dbManager = context.getBean(Manager.class);
-    chainManager = context.getBean(ChainBaseManager.class);
-    setManager(dbManager, chainManager);
+    setManager(dbManager);
     dposSlot = context.getBean(DposSlot.class);
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();

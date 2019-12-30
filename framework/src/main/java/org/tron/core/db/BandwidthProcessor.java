@@ -27,10 +27,10 @@ public class BandwidthProcessor extends ResourceProcessor {
   private Manager dbManager;
   private ChainBaseManager chainBaseManager;
 
-  public BandwidthProcessor(Manager manager, ChainBaseManager chainBaseManager) {
+  public BandwidthProcessor(Manager manager) {
     super(manager.getDynamicPropertiesStore(), manager.getAccountStore());
     this.dbManager = manager;
-    this.chainBaseManager = chainBaseManager;
+    this.chainBaseManager = manager.getChainBaseManager();
   }
 
   @Override

@@ -45,9 +45,9 @@ public class SolidityNode {
 
   private volatile boolean flag = true;
 
-  public SolidityNode(Manager dbManager, ChainBaseManager chainBaseManager) {
+  public SolidityNode(Manager dbManager) {
     this.dbManager = dbManager;
-    this.chainBaseManager = chainBaseManager;
+    this.chainBaseManager = dbManager.getChainBaseManager();
     resolveCompatibilityIssueIfUsingFullNodeDatabase();
     ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     databaseGrpcClient = new DatabaseGrpcClient(Args.getInstance().getTrustNodeAddr());
@@ -99,7 +99,7 @@ public class SolidityNode {
     TronNetService tronNetService = context.getBean(TronNetService.class);
     tronNetService.stop();
 
-    SolidityNode node = new SolidityNode(appT.getDbManager(), appT.getChainBaseManager());
+    SolidityNode node = new SolidityNode(appT.getDbManager());
     node.start();
 
     rpcApiService.blockUntilShutdown();
