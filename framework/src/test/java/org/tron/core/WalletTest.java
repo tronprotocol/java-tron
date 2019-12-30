@@ -53,6 +53,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
@@ -499,7 +500,7 @@ public class WalletTest {
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
 
     Arrays.stream(ProposalType.values()).forEach(parameters -> {
-      String methodName = Wallet.makeUpperCamelMethod(parameters.name());
+      String methodName = TransactionUtil.makeUpperCamelMethod(parameters.name());
       try {
         builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey(methodName)

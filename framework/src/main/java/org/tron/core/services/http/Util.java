@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import static org.tron.common.utils.Commons.decodeFromBase58Check;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -316,7 +318,7 @@ public class Util {
 
   public static String getHexAddress(final String address) {
     if (address != null) {
-      byte[] addressByte = Wallet.decodeFromBase58Check(address);
+      byte[] addressByte = decodeFromBase58Check(address);
       return ByteArray.toHexString(addressByte);
     } else {
       return null;

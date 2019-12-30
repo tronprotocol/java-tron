@@ -1,14 +1,16 @@
 package org.tron.common.utils;
 
-import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.core.Constant;
 
 @Slf4j(topic = "Commons")
 public class DecodeUtil {
 
   public static final int ADDRESS_SIZE = 42;
-  public static byte addressPreFixByte = ADD_PRE_FIX_BYTE_MAINNET;
+  public static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
+
+  public static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;
 
   public static boolean addressValid(byte[] address) {
     if (ArrayUtils.isEmpty(address)) {
@@ -27,12 +29,7 @@ public class DecodeUtil {
           + address[0] + " !!");
       return false;
     }
-    //Other rule;
     return true;
-  }
-
-  public static String createReadableString(byte[] bytes) {
-    return ByteArray.toHexString(bytes);
   }
 
 }

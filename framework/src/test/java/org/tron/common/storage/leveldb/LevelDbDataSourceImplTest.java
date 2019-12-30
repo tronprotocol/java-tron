@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.util.HashMap;
@@ -270,6 +271,23 @@ public class LevelDbDataSourceImplTest {
     });
     seekKeyLimitNext = dataSource.getValuesPrev("0000000100".getBytes(), 2);
     Assert.assertEquals("getValuesPrev2", 0, seekKeyLimitNext.size());
+    dataSource.resetDb();
+    dataSource.closeDB();
+  }
+
+  @Test
+  public void testGetTotal() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+            Args.getInstance().getOutputDirectory(), "test_getTotal_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+
+    Map<byte[], byte[]> dataMapset = Maps.newHashMap();
+    dataMapset.put(key1, value1);
+    dataMapset.put(key2, value2);
+    dataMapset.put(key3, value3);
+    dataMapset.forEach(dataSource::putData);
+    Assert.assertEquals(dataMapset.size(), dataSource.getTotal());
     dataSource.resetDb();
     dataSource.closeDB();
   }

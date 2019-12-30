@@ -114,12 +114,12 @@ public class ContractGrammar001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    logger.info("infoById：" + infoById);
+    logger.info("infoById:" + infoById);
     Optional<Transaction> ById = PublicMethed.getTransactionById(txid, blockingStubFull);
-    logger.info("getRet：" + ById.get().getRet(0));
-    logger.info("getNumber：" + ById.get().getRet(0).getContractRet().getNumber());
-    logger.info("getContractRetValue：" + ById.get().getRet(0).getContractRetValue());
-    logger.info("getContractRet：" + ById.get().getRet(0).getContractRet());
+    logger.info("getRet:" + ById.get().getRet(0));
+    logger.info("getNumber:" + ById.get().getRet(0).getContractRet().getNumber());
+    logger.info("getContractRetValue:" + ById.get().getRet(0).getContractRetValue());
+    logger.info("getContractRet:" + ById.get().getRet(0).getContractRet());
 
     Assert.assertEquals(ById.get().getRet(0).getContractRet().getNumber(),
         contractResult.SUCCESS_VALUE);
@@ -131,7 +131,7 @@ public class ContractGrammar001 {
             "0000000000000000000000000000000000000000000000000000000000000064");
     Assert.assertEquals(contractResult.SUCCESS, infoById.get().getReceipt().getResult());
 
-    logger.info("ById：" + ById);
+    logger.info("ById:" + ById);
     Assert.assertEquals(ById.get().getRet(0).getRet().getNumber(), 0);
     Assert.assertEquals(ById.get().getRet(0).getRetValue(), 0);
 

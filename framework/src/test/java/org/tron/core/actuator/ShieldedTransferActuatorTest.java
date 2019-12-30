@@ -30,6 +30,7 @@ import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -71,6 +72,7 @@ public class ShieldedTransferActuatorTest {
   private static Wallet wallet;
   private static Manager dbManager;
   private static TronApplicationContext context;
+  private static TransactionUtil transactionUtil;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -94,6 +96,7 @@ public class ShieldedTransferActuatorTest {
   public static void init() throws ZksnarkException {
     Args.setFullNodeAllowShieldedTransaction(true);
     wallet = context.getBean(Wallet.class);
+    transactionUtil = context.getBean(TransactionUtil.class);
     dbManager = context.getBean(Manager.class);
     librustzcashInitZksnarkParams();
   }
@@ -234,7 +237,7 @@ public class ShieldedTransferActuatorTest {
       transactionSignBuild.setTransaction(transactionCap.getInstance());
       transactionSignBuild.setPrivateKey(ByteString.copyFrom(
           ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCap = wallet.addSign(transactionSignBuild.build());
+      transactionCap = transactionUtil.addSign(transactionSignBuild.build());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCap));
     } catch (Exception e) {
@@ -265,7 +268,7 @@ public class ShieldedTransferActuatorTest {
       transactionSignBuild.setTransaction(transactionCap.getInstance());
       transactionSignBuild.setPrivateKey(ByteString.copyFrom(
           ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCap = wallet.addSign(transactionSignBuild.build());
+      transactionCap = transactionUtil.addSign(transactionSignBuild.build());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCap));
     } catch (Exception e) {
@@ -288,7 +291,7 @@ public class ShieldedTransferActuatorTest {
       transactionSignBuild.setTransaction(transactionCap.getInstance());
       transactionSignBuild.setPrivateKey(ByteString.copyFrom(
           ByteArray.fromHexString(ADDRESS_TWO_PRIVATE_KEY)));
-      wallet.addSign(transactionSignBuild.build());
+      transactionUtil.addSign(transactionSignBuild.build());
       Assert.assertTrue(false);
     } catch (PermissionException e) {
       Assert.assertTrue(e instanceof PermissionException);
@@ -431,7 +434,7 @@ public class ShieldedTransferActuatorTest {
       transactionSignBuild.setTransaction(transactionCap.getInstance());
       transactionSignBuild.setPrivateKey(ByteString.copyFrom(
           ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCap = wallet.addSign(transactionSignBuild.build());
+      transactionCap = transactionUtil.addSign(transactionSignBuild.build());
 
       AccountCapsule accountCapsule =
           dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
@@ -1022,7 +1025,7 @@ public class ShieldedTransferActuatorTest {
       transactionSignBuild.setTransaction(transactionCapOne.getInstance());
       transactionSignBuild.setPrivateKey(ByteString.copyFrom(
           ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCapOne = wallet.addSign(transactionSignBuild.build());
+      transactionCapOne = transactionUtil.addSign(transactionSignBuild.build());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCapOne));
       AccountCapsule accountCapsuleOne =
@@ -1280,7 +1283,7 @@ public class ShieldedTransferActuatorTest {
       //set note nullifiers
       ShieldedTransferContract shieldContract = transactionCap.getInstance().getRawData()
           .getContract(0).getParameter().unpack(ShieldedTransferContract.class);
-      dbManager.getNullfierStore().put(
+      dbManager.getNullifierStore().put(
           new BytesCapsule(shieldContract.getSpendDescription(0).getNullifier().toByteArray()));
 
       actuator.validate();

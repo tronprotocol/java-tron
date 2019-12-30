@@ -28,6 +28,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -189,10 +190,10 @@ public class DepositTest {
         .processTransactionAndReturnRuntime(bTrx, DepositImpl.createRoot(manager), null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    byte[] aAddress = Wallet.generateContractAddress(aTrx);
-    byte[] bAddress = Wallet.generateContractAddress(bTrx);
+    byte[] aAddress = TransactionUtil.generateContractAddress(aTrx);
+    byte[] bAddress = TransactionUtil.generateContractAddress(bTrx);
 
-    // tigger contractA
+    // trigger contractA
     // callBcallA(address,uint256,uint256)
     // <bAddress>,1,2
     //
@@ -228,7 +229,7 @@ public class DepositTest {
     Assert.assertEquals(checkN2.getRuntime().getResult().getHReturn(),
         new DataWord(0).getData());
 
-    // tigger contractA
+    // trigger contractA
     // callBcallA(address,uint256,uint256)
     // <bAddress>,100,1000
     String params2 = Hex.toHexString(new DataWord(bAddress).getData())
@@ -345,10 +346,10 @@ public class DepositTest {
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(bTrx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    byte[] aAddress = Wallet.generateContractAddress(aTrx);
-    byte[] bAddress = Wallet.generateContractAddress(bTrx);
+    byte[] aAddress = TransactionUtil.generateContractAddress(aTrx);
+    byte[] bAddress = TransactionUtil.generateContractAddress(bTrx);
 
-    // tigger contractA
+    // trigger contractA
     // callBcallA(address,uint256,uint256)
     // <bAddress>,1,2
     //
@@ -383,7 +384,7 @@ public class DepositTest {
     Assert.assertEquals(checkN2.getRuntime().getResult().getHReturn(),
         new DataWord(2).getData());
 
-    // tigger contractA
+    // trigger contractA
     // callBcallA(address,uint256,uint256)
     // <bAddress>,100,1000
     String params2 = Hex.toHexString(new DataWord(bAddress).getData())

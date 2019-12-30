@@ -80,7 +80,7 @@ public class TransferActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(TransferContract.class)) {
       throw new ContractValidateException(
-          "contract type error, expected type [TransferContract], real type [" + contract
+          "contract type error, expected type [TransferContract], real type [" + this.any
               .getClass() + "]");
     }
     long fee = calcFee();

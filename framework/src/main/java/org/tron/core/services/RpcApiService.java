@@ -61,6 +61,7 @@ import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -99,6 +100,7 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.protos.Protocol;
@@ -162,6 +164,10 @@ public class RpcApiService implements Service {
   private NodeManager nodeManager;
   @Autowired
   private Wallet wallet;
+
+  @Autowired
+  private TransactionUtil transactionUtil;
+
   @Autowired
   private NodeInfoService nodeInfoService;
   @Autowired
@@ -831,7 +837,7 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionSign(TransactionSign req,
         StreamObserver<Transaction> responseObserver) {
-      TransactionCapsule result = wallet.getTransactionSign(req);
+      TransactionCapsule result = TransactionUtil.getTransactionSign(req);
       responseObserver.onNext(result.getInstance());
       responseObserver.onCompleted();
     }
@@ -842,7 +848,7 @@ public class RpcApiService implements Service {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
       try {
-        TransactionCapsule trx = wallet.getTransactionSign(req);
+        TransactionCapsule trx = TransactionUtil.getTransactionSign(req);
         trxExtBuilder.setTransaction(trx.getInstance());
         trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
@@ -862,7 +868,7 @@ public class RpcApiService implements Service {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
       try {
-        TransactionCapsule trx = wallet.addSign(req);
+        TransactionCapsule trx = transactionUtil.addSign(req);
         trxExtBuilder.setTransaction(trx.getInstance());
         trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
@@ -879,7 +885,7 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionSignWeight(Transaction req,
         StreamObserver<TransactionSignWeight> responseObserver) {
-      TransactionSignWeight tsw = wallet.getTransactionSignWeight(req);
+      TransactionSignWeight tsw = transactionUtil.getTransactionSignWeight(req);
       responseObserver.onNext(tsw);
       responseObserver.onCompleted();
     }
@@ -1912,6 +1918,18 @@ public class RpcApiService implements Service {
       responseObserver.onNext(trxExtBuilder.build());
       responseObserver.onCompleted();
 
+    }
+
+
+    @Override
+    public void getNewShieldedAddress(EmptyMessage request,
+        StreamObserver<ShieldedAddressInfo> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getNewShieldedAddress());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
     }
 
     @Override
