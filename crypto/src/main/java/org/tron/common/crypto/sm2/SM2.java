@@ -54,13 +54,6 @@ public class SM2 implements Serializable, SignInterface {
     private static BigInteger SM2_B = new BigInteger("28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93", 16);
     private static BigInteger SM2_GX = new BigInteger("32C4AE2C1F1981195F9904466A39C9948FE30BBFF2660BE1715A4589334C74C7", 16);
     private static BigInteger SM2_GY = new BigInteger("BC3736A2F4F6779C59BDCEE36B692153D0A9877CC62A474002DF32E52139F0A0", 16);
-//
-//    private static BigInteger SM2_N = new BigInteger("8542D69E4C044F18E8B92435BF6FF7DD297720630485628D5AE74EE7C32E79B7", 16);
-//    private static BigInteger SM2_P = new BigInteger("8542D69E4C044F18E8B92435BF6FF7DE457283915C45517D722EDB8B08F1DFC3", 16);
-//    private static BigInteger SM2_A = new BigInteger("787968B4FA32C3FD2417842E73BBFEFF2F3C848B6831D7E0EC65228B3937E498", 16);
-//    private static BigInteger SM2_B = new BigInteger("63E4C6D3B23B0C849CF84241484BFE48F61D59A5B16BA06E6E12D1DA27C5249A", 16);
-//    private static BigInteger SM2_GX = new BigInteger("421DEBD61B62EAB6746434EBC3CC315E32220B3BADD50BDC4C4E6C147FEDD43D", 16);
-//    private static BigInteger SM2_GY = new BigInteger("0680512BCBB42C07D47349D2153B70C4E5D7FDFCBFA36EA1A85841B9E46E09A2", 16);
 
     private static ECDomainParameters ecc_param;
     private static ECParameterSpec ecc_spec;
@@ -83,14 +76,12 @@ public class SM2 implements Serializable, SignInterface {
 
     private final PrivateKey privKey;
 
-//    private final SM2KeyPair keyPair;
 
     // Transient because it's calculated on demand.
     private transient byte[] pubKeyHash;
     private transient byte[] nodeId;
 
-//    private final DSAKCalculator kCalculator = new RandomDSAKCalculator();
-//    private byte[] userID;
+
 
     public SM2() {
         this(secureRandom);
@@ -119,22 +110,6 @@ public class SM2 implements Serializable, SignInterface {
         BigInteger privateKey = ecpriv.getD();
         this.privKey = privateKeyFromBigInteger(privateKey);
         this.pub = ecpub.getQ();
-//        this.keyPair = new SM2KeyPair(pub.getEncoded(false),privateKey.toByteArray());
-
-//        CipherParameters privateKeyParameters = new ECPrivateKeyParameters(privateKey, ecc_param);
-//        CipherParameters baseParam;
-//
-//        if (privateKeyParameters instanceof ParametersWithID)
-//        {
-//            baseParam = ((ParametersWithID)privateKeyParameters).getParameters();
-//            userID = ((ParametersWithID)privateKeyParameters).getID();
-//        }
-//        else
-//        {
-//            baseParam = privateKeyParameters;
-//            userID = new byte[0];
-//        }
-//        this.kCalculator.init(SM2_N, secureRandom);
     }
 
     public SM2 (byte[] key, boolean isPrivateKey) {
@@ -184,10 +159,6 @@ public class SM2 implements Serializable, SignInterface {
                 privateKeyFromBigInteger(priv),
                 pub
         );
-
-//        this.privKey = privateKeyFromBigInteger(priv);
-//        this.pub = pub;
-//        this.keyPair = new SM2KeyPair(pub.getEncoded(false), priv.toByteArray());
     }
 
     /**
@@ -623,7 +594,6 @@ public class SM2 implements Serializable, SignInterface {
         SM2Signer signer = new SM2Signer();
         BigInteger d = getPrivKey();
         ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
-//        ECPublicKeyParameters publicKeyParameters = new ECPublicKeyParameters(pub,ecc_param);
         signer.init(true, privateKeyParameters);
         return signer;
     }
@@ -635,8 +605,6 @@ public class SM2 implements Serializable, SignInterface {
      */
     public SM2Signer getSM2SignerForHash() {
         SM2Signer signer = new SM2Signer();
-        //BigInteger d = getPrivKey();
-        //ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(d, ecc_param);
         ECPublicKeyParameters publicKeyParameters = new ECPublicKeyParameters(pub,ecc_param);
         signer.init(false, publicKeyParameters);
         return signer;
@@ -916,17 +884,6 @@ public class SM2 implements Serializable, SignInterface {
         return privKey != null;
     }
 
-//    /**
-//     * Gets the address form of the public key.
-//     *
-//     * @return 21-byte address
-//     */
-//    public byte[] getAddress() {
-//        if (pubKeyHash == null) {
-//            pubKeyHash = computeAddress(this.pub);
-//        }
-//        return pubKeyHash;
-//    }
 
     /**
      * Generates the NodeID based on this key, that is the public key without first format byte
@@ -938,14 +895,6 @@ public class SM2 implements Serializable, SignInterface {
         return nodeId;
     }
 
-//    /**
-//     * Gets the encoded public key value.
-//     *
-//     * @return 65-byte encoded public key
-//     */
-//    public byte[] getPubKey() {
-//        return pub.getEncoded(/* compressed */ false);
-//    }
 
     /**
      * Gets the public key in the form of an elliptic curve point object from Bouncy Castle.

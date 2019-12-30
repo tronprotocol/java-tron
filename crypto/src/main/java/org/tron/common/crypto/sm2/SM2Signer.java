@@ -191,15 +191,6 @@ public class SM2Signer
         }
 
         ECPoint q = ((ECPublicKeyParameters)ecKey).getQ();
-
-//        SM3Digest digest = new SM3Digest();
-//
-//        byte[] z = getZ(digest);
-//
-//        digest.update(z, 0, z.length);
-//        digest.update(message, 0, message.length);
-//
-//        byte[] eHash = new byte[digest.getDigestSize()];
 //
 //        // B3
 //        digest.doFinal(eHash, 0);
