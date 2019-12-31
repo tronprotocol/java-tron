@@ -91,6 +91,13 @@ message MarketAccountOrder {
   int64 count = 3;
 }
 
+message MarketOrderPosition {
+  //if price list is empty or price exist, pre_price_key = null
+  bool price_list_not_empty = 1;
+  bool price_exist = 2;
+  bytes pre_price_key = 3;
+}
+
 message MarketPrice {
   int64 sell_token_quantity = 1;
   int64 buy_token_quantity = 2;

@@ -55,6 +55,7 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
         .build();
   }
 
+  //for test only
   public int getPriceSize(MarketPriceStore marketPriceStore) throws ItemNotFoundException {
     MarketPriceCapsule head = new MarketPriceCapsule(this.getBestPrice());
 
@@ -250,7 +251,7 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
     return this.priceList;
   }
 
-  public boolean isLowerPrice(MarketPrice price1, MarketPrice price2) {
+  public static boolean isLowerPrice(MarketPrice price1, MarketPrice price2) {
     // ex.
     // for sellToken is A,buyToken is TRX.
     // price_A_maker * sellQuantity_maker = Price_TRX * buyQuantity_maker
@@ -263,7 +264,7 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
         < Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
   }
 
-  public boolean isSamePrice(MarketPrice price1, MarketPrice price2) {
+  public static boolean isSamePrice(MarketPrice price1, MarketPrice price2) {
     return Math.multiplyExact(price1.getBuyTokenQuantity(), price2.getSellTokenQuantity())
         == Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
   }

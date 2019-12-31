@@ -118,6 +118,7 @@ import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
+import org.tron.core.capsule.MarketPriceCapsule;
 import org.tron.core.capsule.MarketPriceLinkedListCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ProposalCapsule;
@@ -154,8 +155,8 @@ import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.MarketOrderStore;
-import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.MarketPriceStore;
+import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
@@ -173,6 +174,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.MarketOrderList;
+import org.tron.protos.Protocol.MarketOrderPosition;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.Permission;
@@ -2348,6 +2350,59 @@ public class Wallet {
 
     return marketPriceListBuilder.build();
   }
+
+  //if price exists or price list is empty, pre_price_key = null
+  public MarketOrderPosition getMarketOrderPosition(byte[] sellTokenId, byte[] buyTokenId,
+      long sellQuant, long buyQuant) throws ItemNotFoundException {
+    MarketOrderPosition orderPosition = MarketOrderPosition.newBuilder().build();
+
+    MarketPrice newOrderPrice = MarketPrice.newBuilder()
+        .setSellTokenQuantity(sellQuant)
+        .setBuyTokenQuantity(buyQuant).build();
+
+    MarketPriceStore marketPriceStore = dbManager.getChainBaseManager().getMarketPriceStore();
+
+    byte[] key = new MarketPriceCapsule(newOrderPrice).getKey(sellTokenId, buyTokenId);
+    if (!marketPriceStore.get(key).isNull()) {
+      //price exists
+      return orderPosition.toBuilder().setPriceExist(true).setPriceListNotEmpty(true).build();
+    }
+
+    //price not exist
+    byte[] makerPair = MarketUtils.createPairKey(sellTokenId, buyTokenId);
+    MarketPriceLinkedListCapsule priceListCapsule = dbManager.getChainBaseManager()
+        .getMarketPairToPriceStore().getUnchecked(makerPair);
+
+    //price list is empty
+    if (priceListCapsule == null) {
+      return orderPosition.toBuilder().setPriceExist(false).setPriceListNotEmpty(false).build();
+    }
+    MarketPriceCapsule head = new MarketPriceCapsule(priceListCapsule.getBestPrice());
+    if (head.isNull()) {
+      return orderPosition.toBuilder().setPriceExist(false).setPriceListNotEmpty(false).build();
+    }
+
+    // find the pre price
+    // dummy.next = head
+    MarketPriceCapsule dummy = new MarketPriceCapsule(0, 0);
+    if (!head.isNull()) {
+      dummy.setNext(head.getKey(sellTokenId, buyTokenId));
+    }
+    head = dummy;
+    while (!head.isNextNull()) {
+      if (MarketPriceLinkedListCapsule
+          .isLowerPrice(marketPriceStore.get(head.getNext()).getInstance(), newOrderPrice)) {
+        head = marketPriceStore.get(head.getNext());
+      } else {
+        break;
+      }
+    }
+
+    ByteString prePriceKey = ByteString.copyFrom(head.getKey(sellTokenId, buyTokenId));
+    return orderPosition.toBuilder().setPriceExist(false).setPriceListNotEmpty(true)
+        .setPrePriceKey(prePriceKey).build();
+  }
+
 
   public Transaction deployContract(TransactionCapsule trxCap) {
 
