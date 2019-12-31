@@ -1350,7 +1350,7 @@ public class TransferAssetActuatorTest {
   @Test
   public void transferToContractAddress()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException, BalanceInsufficientException {
-    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
+    dbManager.getDynamicPropertiesStore().saveForbidTransferToContract(1);
     createAssertSameTokenNameActive();
     VMConfig.initAllowMultiSign(1);
     VMConfig.initAllowTvmTransferTrc10(1);
