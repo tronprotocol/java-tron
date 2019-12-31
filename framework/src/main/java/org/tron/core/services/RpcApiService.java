@@ -104,6 +104,7 @@ import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketOrderPair;
+import org.tron.protos.Protocol.MarketOrderPosition;
 import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.NodeInfo;
 import org.tron.protos.Protocol.Proposal;
@@ -2201,5 +2202,23 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getMarketPositionKey(MarketSellAssetContract request,
+        StreamObserver<MarketOrderPosition> responseObserver) {
+      try {
+        MarketOrderPosition marketOrderPosition = wallet
+            .getMarketOrderPosition(request.getSellTokenId().toByteArray(),
+                request.getBuyTokenId().toByteArray(),
+                request.getSellTokenQuantity(),
+                request.getBuyTokenQuantity());
+        responseObserver.onNext(marketOrderPosition);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+
   }
 }
