@@ -332,6 +332,7 @@ message Transaction {
     bytes scripts = 12;
     int64 timestamp = 14;
     int64 fee_limit = 18;
+    bytes source_tx_id = 19; //give cross chain tx use, if is ack type set value, others is null
   }
 
   raw raw_data = 1;
@@ -687,7 +688,7 @@ message CrossMessage {
   bytes to_chain_id = 2;
   bytes from_chain_id = 3;
   bytes route_chain_id = 4;
-  int64 time_out_block_height = 5;//this time out height is end node block height
+  int64 time_out_block_height = 5; //this time out height is end node block height
   repeated Proof proof = 6;
   int64 root_height = 7;
   int32 version = 8;

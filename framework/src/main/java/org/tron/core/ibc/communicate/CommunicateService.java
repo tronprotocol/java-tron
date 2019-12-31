@@ -24,6 +24,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.net.message.CrossChainMessage;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.CrossMessage;
+import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Proof;
 
 @Slf4j(topic = "Communicate")
@@ -42,7 +43,7 @@ public class CommunicateService implements Communicate {
 
   @Override
   public void sendCrossMessage(CrossMessage crossMessage, boolean save) {
-    Sha256Hash txId = Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
+    Sha256Hash txId = getTxId(crossMessage);
     if (checkCommit(txId)) {
       if (save) {
         chainBaseManager.getCrossStore().saveSendCrossMsg(txId, crossMessage);
@@ -92,7 +93,7 @@ public class CommunicateService implements Communicate {
   @Override
   public boolean validProof(CrossMessage crossMessage) {
     List<Proof> proofList = crossMessage.getProofList();
-    Sha256Hash txId = Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
+    Sha256Hash txId = getTxId(crossMessage);
     Sha256Hash root = getRoot(crossMessage.getRouteChainId(), crossMessage.getRootHeight());
     MerkleTree merkleTree = MerkleTree.getInstance();
     List<ProofLeaf> proofLeafList = proofList.stream().map(proof -> merkleTree.new ProofLeaf(
@@ -125,6 +126,16 @@ public class CommunicateService implements Communicate {
         }
     );
     return false;
+  }
+
+  private Sha256Hash getTxId(CrossMessage crossMessage) {
+    Sha256Hash txId;
+    if (crossMessage.getType() == Type.ACK) {
+      txId = Sha256Hash.wrap(crossMessage.getTransaction().getRawData().getSourceTxId());
+    } else {
+      txId = Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
+    }
+    return txId;
   }
 
   /**
