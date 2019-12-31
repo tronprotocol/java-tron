@@ -55,7 +55,8 @@ public class ProposalService {
     WITNESS_127_PAY_PER_BLOCK(31), //drop, 31
     ALLOW_TVM_SOLIDITY_059(32), // 1, 32
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, 33
-    FORBID_TRANSFER_TO_CONTRACT(35); // 1, 35
+    ALLOW_TVM_SOLIDITY_059_V2(35), // 1, 35
+    FORBID_TRANSFER_TO_CONTRACT(36); //1, 36
 
     ProposalType(long code) {
       this.code = code;
@@ -331,6 +332,22 @@ public class ProposalService {
         }
         break;
       }
+      case ALLOW_TVM_SOLIDITY_059_V2: {
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_6)) {
+
+          throw new ContractValidateException(BAD_PARAM_ID);
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_SOLIDITY_059_V2] is only allowed to be 1");
+        }
+        if (manager.getDynamicPropertiesStore().getAllowCreationOfContracts() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
+                  + "before [ALLOW_TVM_SOLIDITY_059_V2] can be proposed");
+        }
+        break;
+      }
       case FORBID_TRANSFER_TO_CONTRACT: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_6)) {
 
@@ -507,6 +524,10 @@ public class ProposalService {
         }
         case WITNESS_127_PAY_PER_BLOCK: {
           manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(entry.getValue());
+          break;
+        }
+        case ALLOW_TVM_SOLIDITY_059_V2: {
+          manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(entry.getValue());
           break;
         }
         case FORBID_TRANSFER_TO_CONTRACT: {
