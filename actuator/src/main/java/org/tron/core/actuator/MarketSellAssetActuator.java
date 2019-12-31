@@ -24,7 +24,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
-import org.tron.common.zksnark.MarketUtils;
+import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
@@ -180,6 +180,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     byte[] buyTokenID = contract.getBuyTokenId().toByteArray();
     long sellTokenQuantity = contract.getSellTokenQuantity();
     long buyTokenQuantity = contract.getBuyTokenQuantity();
+    byte[] prePriceKey = contract.getPrePriceKey().toByteArray();
 
     if (!DecodeUtil.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
@@ -247,6 +248,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
         }
       }
 
+//      checkPosition(prePriceKey, sellTokenQuantity, buyTokenQuantity);
+
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -254,6 +257,82 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     return true;
   }
+
+  private void checkPosition(byte[] prePriceKey, long sellTokenQuantity, long buyTokenQuantity)
+      throws ContractValidateException {
+
+    MarketPrice newPrice = MarketPrice.newBuilder().setSellTokenQuantity(sellTokenQuantity)
+        .setBuyTokenQuantity(buyTokenQuantity).build();
+
+    //check position info
+    if (prePriceKey.length != 0) {
+      MarketPriceCapsule prePriceCapsule = marketPriceStore.getUnchecked(prePriceKey);
+      if (prePriceCapsule == null) {
+        throw new ContractValidateException("prePriceKey not exists");
+      }
+
+      //pre price should be less than current price
+      if (!MarketUtils.isLowerPrice(prePriceCapsule.getInstance(), newPrice)) {
+        throw new ContractValidateException("pre price should be less than current price");
+      }
+    }
+
+    Integer MAX_SEARCH_NUM = 10;
+    byte[] newPairPriceKey = MarketUtils
+        .createPairPriceKey(sellTokenID, buyTokenID, sellTokenQuantity, buyTokenQuantity);
+    MarketPriceCapsule newPriceCapsule = marketPriceStore.getUnchecked(newPairPriceKey);
+
+    if (newPriceCapsule != null) {
+      //if price exists, no need to use position info
+      return;
+    }
+
+    //get the start position
+    MarketPriceCapsule head = null;
+    if (prePriceKey.length == 0) {
+      //search from the bestPrice
+      //check if price list or bestPrice exists
+      MarketPriceCapsule bestPrice = null;
+      byte[] makerPair = MarketUtils.createPairKey(buyTokenID, sellTokenID);
+      MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.getUnchecked(makerPair);
+      if (priceListCapsule != null) {
+        bestPrice = new MarketPriceCapsule(priceListCapsule.getBestPrice());
+      }
+      if (bestPrice == null || bestPrice.isNull()) {
+        //if price list is empty, no need to search
+        return;
+      }
+      head = bestPrice;
+    } else {
+      //search from the prePrice
+      //has checked prePrice exist before
+      MarketPriceCapsule prePriceCapsule = marketPriceStore.getUnchecked(prePriceKey);
+      head = prePriceCapsule;
+    }
+
+    //check how many times need to find the correct position
+    MarketPriceCapsule dummy = new MarketPriceCapsule(0, 0);
+    if (!head.isNull()) {
+      dummy.setNext(head.getKey(sellTokenID, buyTokenID));
+    }
+    head = dummy;
+    Integer count = 0;
+    while (count < MAX_SEARCH_NUM && !head.isNextNull()) {
+      if (MarketUtils
+          .isLowerPrice(marketPriceStore.getUnchecked(head.getNext()).getInstance(), newPrice)) {
+        head = marketPriceStore.getUnchecked(head.getNext());
+      } else {
+        break;
+      }
+      count++;
+    }
+
+    if (count == MAX_SEARCH_NUM) {
+      throw new ContractValidateException("Maximum number of queries exceeded，10");
+    }
+
+  }
+
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
@@ -265,7 +344,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
     return dynamicStore.getMarketSellFee();
   }
 
-  public boolean hasMatch(MarketPriceLinkedListCapsule makerPriceListCapsule, MarketPrice takerPrice) {
+  public boolean hasMatch(MarketPriceLinkedListCapsule makerPriceListCapsule,
+      MarketPrice takerPrice) {
     MarketPrice bestPrice = makerPriceListCapsule.getBestPrice();
     if (new MarketPriceCapsule(bestPrice).isNull()) {
       return false;

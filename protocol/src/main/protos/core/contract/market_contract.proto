@@ -11,6 +11,7 @@ message MarketSellAssetContract {
     int64 sell_token_quantity = 6;
     bytes buy_token_id = 5;
     int64 buy_token_quantity = 7;//min to receive
+    bytes pre_price_key = 8 ;//order price position
 }
 
 message MarketCancelOrderContract {

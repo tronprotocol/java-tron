@@ -13,10 +13,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.zksnark;
+package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import org.tron.common.utils.ByteArray;
+import org.tron.protos.Protocol.MarketPrice;
 
 public class MarketUtils {
 
@@ -66,5 +67,24 @@ public class MarketUtils {
     System.arraycopy(buyTokenId, 0, result, sellTokenId.length, buyTokenId.length);
     return result;
   }
+
+  public static boolean isLowerPrice(MarketPrice price1, MarketPrice price2) {
+    // ex.
+    // for sellToken is A,buyToken is TRX.
+    // price_A_maker * sellQuantity_maker = Price_TRX * buyQuantity_maker
+    // ==> price_A_maker = Price_TRX * buyQuantity_maker/sellQuantity_maker
+
+    // price_A_maker_1 < price_A_maker_2
+    // ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
+    // ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
+    return Math.multiplyExact(price1.getBuyTokenQuantity(), price2.getSellTokenQuantity())
+        < Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
+  }
+
+  public static boolean isSamePrice(MarketPrice price1, MarketPrice price2) {
+    return Math.multiplyExact(price1.getBuyTokenQuantity(), price2.getSellTokenQuantity())
+        == Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
+  }
+
 
 }

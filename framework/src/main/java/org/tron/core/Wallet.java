@@ -90,7 +90,6 @@ import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
@@ -102,7 +101,7 @@ import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
-import org.tron.common.zksnark.MarketUtils;
+import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
@@ -2390,7 +2389,7 @@ public class Wallet {
     }
     head = dummy;
     while (!head.isNextNull()) {
-      if (MarketPriceLinkedListCapsule
+      if (MarketUtils
           .isLowerPrice(marketPriceStore.get(head.getNext()).getInstance(), newOrderPrice)) {
         head = marketPriceStore.get(head.getNext());
       } else {

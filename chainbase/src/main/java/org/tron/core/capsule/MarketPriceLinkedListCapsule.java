@@ -5,6 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.MarketPriceStore;
@@ -135,10 +136,10 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
 
     boolean found = false;
     while (!head.isNextNull()) {
-      if (isLowerPrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice)) {
+      if (MarketUtils.isLowerPrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice)) {
         head = marketPriceStore.get(head.getNext());
       } else {
-        if (isSamePrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice)) {
+        if (MarketUtils.isSamePrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice)) {
           found = true;
         }
         break;
@@ -251,21 +252,4 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
     return this.priceList;
   }
 
-  public static boolean isLowerPrice(MarketPrice price1, MarketPrice price2) {
-    // ex.
-    // for sellToken is A,buyToken is TRX.
-    // price_A_maker * sellQuantity_maker = Price_TRX * buyQuantity_maker
-    // ==> price_A_maker = Price_TRX * buyQuantity_maker/sellQuantity_maker
-
-    // price_A_maker_1 < price_A_maker_2
-    // ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
-    // ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
-    return Math.multiplyExact(price1.getBuyTokenQuantity(), price2.getSellTokenQuantity())
-        < Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
-  }
-
-  public static boolean isSamePrice(MarketPrice price1, MarketPrice price2) {
-    return Math.multiplyExact(price1.getBuyTokenQuantity(), price2.getSellTokenQuantity())
-        == Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
-  }
 }
