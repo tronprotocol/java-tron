@@ -55,7 +55,7 @@ public class ProposalService {
     WITNESS_127_PAY_PER_BLOCK(31), //drop, 31
     ALLOW_TVM_SOLIDITY_059(32), // 1, 32
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, 33
-    ALLOW_TVM_SOLIDITY_059_V2(35), // 1, 35
+    ALLOW_TVM_SOLIDITY_0510(35), // 1, 35
     FORBID_TRANSFER_TO_CONTRACT(36); //1, 36
 
     ProposalType(long code) {
@@ -332,7 +332,7 @@ public class ProposalService {
         }
         break;
       }
-      case ALLOW_TVM_SOLIDITY_059_V2: {
+      case ALLOW_TVM_SOLIDITY_0510: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_6)) {
 
           throw new ContractValidateException(BAD_PARAM_ID);
@@ -526,7 +526,8 @@ public class ProposalService {
           manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(entry.getValue());
           break;
         }
-        case ALLOW_TVM_SOLIDITY_059_V2: {
+        case ALLOW_TVM_SOLIDITY_0510: {
+          // actually change ALLOW_TVM_SOLIDITY_059 in dynamicStore, but we use a proposal name called 0510
           manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(entry.getValue());
           break;
         }
