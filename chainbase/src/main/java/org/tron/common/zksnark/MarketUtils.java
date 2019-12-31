@@ -70,8 +70,4 @@ public class MarketUtils {
     return result;
   }
 
-  public static void main(String[] args) {
-    createPairKey("100".getBytes(), "1".getBytes());
-  }
-
 }
