@@ -21,6 +21,9 @@ import org.tron.protos.Protocol.MarketPrice;
 
 public class MarketUtils {
 
+  private static final int TOKEN_ID_LENGTH = ByteArray
+      .fromString(Long.toString(Long.MAX_VALUE)).length; // 19
+
 
   public static byte[] calculateOrderId(ByteString address, byte[] sellTokenId,
       byte[] buyTokenId, long count) {
@@ -28,15 +31,15 @@ public class MarketUtils {
     byte[] addressByteArray = address.toByteArray();
     byte[] countByteArray = ByteArray.fromLong(count);
 
-    byte[] result = new byte[addressByteArray.length + sellTokenId.length
-        + buyTokenId.length + countByteArray.length];
+    byte[] result = new byte[addressByteArray.length + TOKEN_ID_LENGTH
+        + TOKEN_ID_LENGTH + countByteArray.length];
 
     System.arraycopy(addressByteArray, 0, result, 0, addressByteArray.length);
     System.arraycopy(sellTokenId, 0, result, addressByteArray.length, sellTokenId.length);
-    System.arraycopy(buyTokenId, 0, result, addressByteArray.length + sellTokenId.length,
+    System.arraycopy(buyTokenId, 0, result, addressByteArray.length + TOKEN_ID_LENGTH,
         buyTokenId.length);
     System.arraycopy(countByteArray, 0, result, addressByteArray.length
-        + sellTokenId.length + buyTokenId.length, countByteArray.length);
+        + TOKEN_ID_LENGTH + TOKEN_ID_LENGTH, countByteArray.length);
 
 //    return Hash.sha3(result);
     return result;
@@ -47,24 +50,24 @@ public class MarketUtils {
       long sellTokenQuantity, long buyTokenQuantity) {
     byte[] sellTokenQuantityBytes = ByteArray.fromLong(sellTokenQuantity);
     byte[] buyTokenQuantityBytes = ByteArray.fromLong(buyTokenQuantity);
-    byte[] result = new byte[sellTokenId.length + buyTokenId.length
+    byte[] result = new byte[TOKEN_ID_LENGTH + TOKEN_ID_LENGTH
         + sellTokenQuantityBytes.length + buyTokenQuantityBytes.length];
 
     System.arraycopy(sellTokenId, 0, result, 0, sellTokenId.length);
-    System.arraycopy(buyTokenId, 0, result, sellTokenId.length, buyTokenId.length);
+    System.arraycopy(buyTokenId, 0, result, TOKEN_ID_LENGTH, buyTokenId.length);
     System.arraycopy(sellTokenQuantityBytes, 0, result,
-        sellTokenId.length + buyTokenId.length,
+        TOKEN_ID_LENGTH + TOKEN_ID_LENGTH,
         sellTokenQuantityBytes.length);
     System.arraycopy(buyTokenQuantityBytes, 0, result,
-        sellTokenId.length + buyTokenId.length + sellTokenQuantityBytes.length,
+        TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + sellTokenQuantityBytes.length,
         buyTokenQuantityBytes.length);
     return result;
   }
 
   public static byte[] createPairKey(byte[] sellTokenId, byte[] buyTokenId) {
-    byte[] result = new byte[sellTokenId.length + buyTokenId.length];
+    byte[] result = new byte[TOKEN_ID_LENGTH * 2];
     System.arraycopy(sellTokenId, 0, result, 0, sellTokenId.length);
-    System.arraycopy(buyTokenId, 0, result, sellTokenId.length, buyTokenId.length);
+    System.arraycopy(buyTokenId, 0, result, TOKEN_ID_LENGTH, buyTokenId.length);
     return result;
   }
 
