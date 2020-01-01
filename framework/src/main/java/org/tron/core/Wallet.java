@@ -18,6 +18,7 @@
 
 package org.tron.core;
 
+import static org.tron.common.utils.DecodeUtil.ADDRESS_SIZE;
 import static org.tron.common.utils.DecodeUtil.addressValid;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
@@ -79,6 +80,8 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
@@ -187,7 +190,7 @@ public class Wallet {
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
   private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
   @Getter
-  private final ECKey ecKey;
+  private final SignInterface cryptoEngine;
   @Autowired
   private TronNetService tronNetService;
   @Autowired
@@ -205,15 +208,16 @@ public class Wallet {
    * Creates a new Wallet with a random ECKey.
    */
   public Wallet() {
-    this.ecKey = new ECKey(Utils.getRandom());
+    this.cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+        Args.getInstance().isECKeyCryptoEngine());
   }
 
   /**
    * Creates a Wallet with an existing ECKey.
    */
-  public Wallet(final ECKey ecKey) {
-    this.ecKey = ecKey;
-    logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
+  public Wallet(final SignInterface cryptoEngine) {
+    this.cryptoEngine = cryptoEngine;
+    logger.info("wallet address: {}", ByteArray.toHexString(this.cryptoEngine.getAddress()));
   }
 
   public static String getAddressPreFixString() {
@@ -241,43 +245,8 @@ public class Wallet {
     return Base58.encode(inputCheck);
   }
 
-  private static byte[] decode58Check(String input) {
-    byte[] decodeCheck = Base58.decode(input);
-    if (decodeCheck.length <= 4) {
-      return null;
-    }
-    byte[] decodeData = new byte[decodeCheck.length - 4];
-    System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
-    byte[] hash0 = Sha256Hash.hash(decodeData);
-    byte[] hash1 = Sha256Hash.hash(hash0);
-    if (hash1[0] == decodeCheck[decodeData.length]
-        && hash1[1] == decodeCheck[decodeData.length + 1]
-        && hash1[2] == decodeCheck[decodeData.length + 2]
-        && hash1[3] == decodeCheck[decodeData.length + 3]) {
-      return decodeData;
-    }
-    return null;
-  }
-
-  public static byte[] decodeFromBase58Check(String addressBase58) {
-    if (StringUtils.isEmpty(addressBase58)) {
-      logger.warn("Warning: Address is empty !!");
-      return null;
-    }
-    byte[] address = decode58Check(addressBase58);
-    if (address == null) {
-      return null;
-    }
-
-    if (!addressValid(address)) {
-      return null;
-    }
-
-    return address;
-  }
-
   public byte[] getAddress() {
-    return ecKey.getAddress();
+    return cryptoEngine.getAddress();
   }
 
   public Account getAccount(Account account) {
@@ -512,7 +481,8 @@ public class Wallet {
                 "Signature size is " + sig.size());
           }
           String base64 = TransactionCapsule.getBase64FromByteString(sig);
-          byte[] address = ECKey.signatureToAddress(hash, base64);
+          byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
+                  .isECKeyCryptoEngine());
           approveList.add(ByteString.copyFrom(address)); //out put approve list.
         }
         tswBuilder.addAllApprovedList(approveList);
@@ -538,7 +508,8 @@ public class Wallet {
 
   public byte[] createAddress(byte[] passPhrase) {
     byte[] privateKey = pass2Key(passPhrase);
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    SignInterface ecKey = SignUtils.fromPrivate(privateKey,
+        Args.getInstance().isECKeyCryptoEngine());
     return ecKey.getAddress();
   }
 

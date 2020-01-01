@@ -1,6 +1,7 @@
 package stest.tron.wallet.common.client.utils;
 
 import static org.tron.common.utils.Hash.sha3;
+import static org.tron.common.utils.Hash.sha3omit12;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -2800,7 +2801,7 @@ public class PublicMethed {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return DecodeUtil.sha3omit12(combined);
+    return sha3omit12(combined);
 
   }
 
@@ -5096,7 +5097,7 @@ public class PublicMethed {
     System.arraycopy(temp, 0, salt, 24, 8);
 
     byte[] mergedData = ByteUtil.merge(address, salt, sha3(code));
-    String create2Address = Base58.encode58Check(DecodeUtil.sha3omit12(mergedData));
+    String create2Address = Base58.encode58Check(sha3omit12(mergedData));
 
     logger.info("create2 Address: " + create2Address);
 

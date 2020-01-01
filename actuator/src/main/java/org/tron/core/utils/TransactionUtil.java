@@ -15,6 +15,8 @@
 
 package org.tron.core.utils;
 
+import static org.tron.common.utils.Hash.sha3omit12;
+
 import com.google.common.base.CaseFormat;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
@@ -257,7 +259,7 @@ public class TransactionUtil {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return DecodeUtil.sha3omit12(combined);
+    return sha3omit12(combined);
 
   }
 
@@ -267,7 +269,7 @@ public class TransactionUtil {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return DecodeUtil.sha3omit12(combined);
+    return sha3omit12(combined);
 
   }
 
@@ -278,13 +280,7 @@ public class TransactionUtil {
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
     System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
 
-    return DecodeUtil.sha3omit12(combined);
-  }
-
-  // for `CREATE2`
-  public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
-    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return DecodeUtil.sha3omit12(mergedData);
+    return sha3omit12(combined);
   }
 
   public static boolean checkPermissionOprations(Permission permission, Contract contract)

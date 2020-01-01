@@ -19,8 +19,12 @@ import org.spongycastle.crypto.generators.PKCS5S2ParametersGenerator;
 import org.spongycastle.crypto.generators.SCrypt;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
+import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Hash;
+import org.tron.core.config.args.Args;
 
 /**
  * <p>Ethereum wallet file management. For reference, refer to <a href="https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition">
@@ -54,7 +58,7 @@ public class Wallet {
   private static final int CURRENT_VERSION = 3;
   private static final String CIPHER = "aes-128-ctr";
 
-  public static WalletFile create(String password, ECKey ecKeyPair, int n, int p)
+  public static WalletFile create(String password, SignInterface sign, int n, int p)
       throws CipherException {
 
     byte[] salt = generateRandomBytes(32);
@@ -64,28 +68,28 @@ public class Wallet {
     byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
     byte[] iv = generateRandomBytes(16);
 
-    byte[] privateKeyBytes = ecKeyPair.getPrivKeyBytes();
+    byte[] privateKeyBytes = sign.getPrivateKey();
 
     byte[] cipherText = performCipherOperation(Cipher.ENCRYPT_MODE, iv, encryptKey,
         privateKeyBytes);
 
     byte[] mac = generateMac(derivedKey, cipherText);
 
-    return createWalletFile(ecKeyPair, cipherText, iv, salt, mac, n, p);
+    return createWalletFile(sign, cipherText, iv, salt, mac, n, p);
   }
 
-  public static WalletFile createStandard(String password, ECKey ecKeyPair)
+  public static WalletFile createStandard(String password, SignInterface cryptoEngine)
       throws CipherException {
-    return create(password, ecKeyPair, N_STANDARD, P_STANDARD);
+    return create(password, cryptoEngine, N_STANDARD, P_STANDARD);
   }
 
-  public static WalletFile createLight(String password, ECKey ecKeyPair)
+  public static WalletFile createLight(String password, SignInterface cryptoEngine)
       throws CipherException {
-    return create(password, ecKeyPair, N_LIGHT, P_LIGHT);
+    return create(password, cryptoEngine, N_LIGHT, P_LIGHT);
   }
 
   private static WalletFile createWalletFile(
-      ECKey ecKeyPair, byte[] cipherText, byte[] iv, byte[] salt, byte[] mac,
+      SignInterface ecKeyPair, byte[] cipherText, byte[] iv, byte[] salt, byte[] mac,
       int n, int p) {
 
     WalletFile walletFile = new WalletFile();
@@ -163,7 +167,7 @@ public class Wallet {
     return Hash.sha3(result);
   }
 
-  public static ECKey decrypt(String password, WalletFile walletFile)
+  public static SignInterface decrypt(String password, WalletFile walletFile)
       throws CipherException {
 
     validate(walletFile);
@@ -207,8 +211,7 @@ public class Wallet {
     byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
     byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
 
-    return ECKey.fromPrivate(privateKey);
-
+    return SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
   }
 
   static void validate(WalletFile walletFile) throws CipherException {
