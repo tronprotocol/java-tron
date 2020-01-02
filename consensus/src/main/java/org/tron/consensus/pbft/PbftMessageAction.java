@@ -50,8 +50,8 @@ public class PbftMessageAction {
           SRL srList = SRL
               .parseFrom(srMessage.getPbftMessage().getRawData().getData().toByteArray());
           Raw raw = srMessage.getPbftMessage().getRawData();
-          pbftSignDataStore
-              .putSrSignData(srList.getEpoch(), new PbftSignCapsule(raw.getData(), dataSignList));
+          pbftSignDataStore.putSrSignData(srList.getEpoch(),
+              new PbftSignCapsule(raw.toByteString(), dataSignList));
           logger.info("sr commit msg :{}, epoch:{}", srMessage.getNumber(), srList.getEpoch());
         } catch (Exception e) {
           logger.error("process the sr list error!", e);
