@@ -14,6 +14,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.consensus.base.Param;
@@ -103,6 +104,7 @@ public class BackupDbUtilTest {
     Param.Miner miner = param.new Miner(pk, null, null);
     minerList.add(miner);
     param.setMiners(minerList);
+    DBConfig.setDebug(true);
     mngForTest.pushNTestBlock(50);
     List<Chainbase> alist = ((SnapshotManager) dbBackupUtil.getDb()).getDbs();
 

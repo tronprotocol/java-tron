@@ -19,11 +19,11 @@ import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.net.message.TronMessage;
-import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.ibc.spv.message.BlockHeaderMessage;
 import org.tron.core.ibc.spv.message.DownloadHeaderMessage;
 import org.tron.core.ibc.spv.message.NotDataDownloadMessage;
+import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.DownloadHeader;
 import org.tron.protos.Protocol.Items;
@@ -86,9 +86,6 @@ public class HeaderMsgAction {
       return;
     }
     List<BlockCapsule> blockCapsuleList = blockStore.getLimitNumber(begin, downloadCount);
-    for (BlockCapsule blockCapsule : blockCapsuleList) {
-      blockCapsule.cleanTransactions(pbftSignDataStore.getBlockSignData(blockCapsule.getNum()));
-    }
     peer.sendMessage(new BlockHeaderMessage(blockCapsuleList, downloadHeaderMessage.getUuid()));
   }
 

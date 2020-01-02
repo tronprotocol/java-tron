@@ -638,7 +638,7 @@ message NodeInfo {
   }
 }
 
-message PbftMessage {
+message PBFTMessage {
   enum Type {
     VIEW_CHANGE = 0;
     REQUEST = 1;
@@ -648,24 +648,16 @@ message PbftMessage {
   }
   message Raw {
     Type pbftMsgType = 1;
-    int64 blockNum = 2;
-    int64 time = 3;
-    bytes publicKey = 4;
-    bytes data = 5;
-    bytes data_sign = 6;
+    int64 number = 2;
+    bytes data = 3;
   }
   Raw raw_data = 1;
-  bytes sign = 2;
+  bytes signature = 2;
 }
 
-message PbftMessageList {
-  int64 blockNum = 1;
-  repeated PbftMessage pbftMessage = 2;
-}
-
-message DataSign {
+message PBFTCommitResult {
   bytes data = 1;
-  repeated bytes sign = 2;
+  repeated bytes signature = 2;
 }
 
 message DownloadHeader {
@@ -700,7 +692,7 @@ message Proof {
   bool leftOrRight = 2;
 }
 
-message SrList {
-  int64 cycle = 1;
+message SRL {
+  int64 epoch = 1;
   repeated bytes srAddress = 2;
 }

@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
@@ -67,6 +68,7 @@ public class ManagerTest extends BlockGenerate {
   public void init() {
     Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
+    DBConfig.setDebug(true);
     context = new TronApplicationContext(DefaultConfig.class);
 
     dbManager = context.getBean(Manager.class);
@@ -237,6 +239,7 @@ public class ManagerTest extends BlockGenerate {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+    DBConfig.setDebug(true);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -314,6 +317,7 @@ public class ManagerTest extends BlockGenerate {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+    DBConfig.setDebug(true);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -324,7 +328,8 @@ public class ManagerTest extends BlockGenerate {
     dbManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
-    dbManager.pushBlock(new BlockCapsule(block));
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    dbManager.pushBlock(blockCapsule);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
@@ -417,6 +422,7 @@ public class ManagerTest extends BlockGenerate {
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+    DBConfig.setDebug(true);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";

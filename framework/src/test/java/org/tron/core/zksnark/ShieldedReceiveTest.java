@@ -2380,7 +2380,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
    */
   @Test
   public void pushSameSkAndScanAndSpend() throws Exception {
-
+    DBConfig.setDebug(true);
     byte[] privateKey = ByteArray
         .fromHexString("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57");
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
