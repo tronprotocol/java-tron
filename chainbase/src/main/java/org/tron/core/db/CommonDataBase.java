@@ -46,19 +46,6 @@ public class CommonDataBase extends TronDatabase<byte[]> {
     this.put(LATEST_PBFT_BLOCK_NUM, ByteArray.fromLong(number));
   }
 
-  public void saveLatestPbftBlockHash(byte[] data) {
-    this.put(LATEST_PBFT_BLOCK_HASH, data);
-  }
-
-  public Sha256Hash getLatestPbftBlockHash() {
-    byte[] date = this.get(LATEST_PBFT_BLOCK_HASH);
-
-    if (ByteUtil.isNullOrZeroArray(date)) {
-      return null;
-    }
-    return Sha256Hash.wrap(date);
-  }
-
   public long getLatestPbftBlockNum() {
     return Optional.ofNullable(get(LATEST_PBFT_BLOCK_NUM))
         .map(ByteArray::toLong)

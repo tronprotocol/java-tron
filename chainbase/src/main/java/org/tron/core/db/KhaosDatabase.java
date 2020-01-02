@@ -25,7 +25,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.exception.BadNumberBlockException;
-import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.protos.Protocol.DataSign;
@@ -115,15 +114,10 @@ public class KhaosDatabase extends TronDatabase {
    * Push the block in the KhoasDB.
    */
   public BlockCapsule push(BlockCapsule blk)
-      throws UnLinkedBlockException, BadNumberBlockException, BlockNotInMainForkException {
+      throws UnLinkedBlockException, BadNumberBlockException {
     KhaosBlock block = new KhaosBlock(blk);
 
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
-      PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getBlockSignData(blk.getNum());
-      if (pbftSignCapsule != null && !isValidatedBlock(blk, pbftSignCapsule)) {
-          throw new BlockNotInMainForkException();
-      }
-
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
       if (kblock != null) {
         if (blk.getNum() != kblock.num + 1) {
@@ -131,7 +125,6 @@ public class KhaosDatabase extends TronDatabase {
               "parent number :" + kblock.num + ",block number :" + blk.getNum());
         }
         block.setParent(kblock);
-        kblock.setChild(block);
       } else {
         miniUnlinkedStore.insert(block);
         throw new UnLinkedBlockException();
@@ -272,7 +265,6 @@ public class KhaosDatabase extends TronDatabase {
     @Getter
     private BlockCapsule blk;
     private Reference<KhaosBlock> parent = new WeakReference<>(null);
-    private Reference<KhaosBlock> child = new WeakReference<>(null);
     private BlockId id;
     private Boolean invalid;
     private long num;
@@ -291,16 +283,8 @@ public class KhaosDatabase extends TronDatabase {
       return parent == null ? null : parent.get();
     }
 
-    public KhaosBlock getChild() {
-      return child == null ? null : child.get();
-    }
-
     public void setParent(KhaosBlock parent) {
       this.parent = new WeakReference<>(parent);
-    }
-
-    public void setChild(KhaosBlock child) {
-      this.child = new WeakReference<>(child);
     }
 
     @Override

@@ -168,12 +168,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getLatestBlockCapsule();
-    } catch (IllegalArgumentException e) {
-      this.saveLatestBlockCapsule(null);
-    }
-
-    try {
       this.getStateFlag();
     } catch (IllegalArgumentException e) {
       this.saveStateFlag(0);
@@ -1603,19 +1597,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(() -> new IllegalArgumentException("not found maintenance flag"));
-  }
-
-  public BlockCapsule getLatestBlockCapsule() {
-    try {
-      return new BlockCapsule(this.get(LATEST_BLOCK_CAPSULE).getData());
-    } catch (BadItemException | ItemNotFoundException e) {
-      logger.error("get latestBlockCapsule failed");
-    }
-    return null;
-  }
-
-  public void saveLatestBlockCapsule(BlockCapsule blockCapsule) {
-    this.put(LATEST_BLOCK_CAPSULE, new BytesCapsule(blockCapsule.getData()));
   }
 
   /**
