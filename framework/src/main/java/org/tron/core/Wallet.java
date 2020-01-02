@@ -197,6 +197,10 @@ public class Wallet {
   private TronNetDelegate tronNetDelegate;
   @Autowired
   private Manager dbManager;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
   @Autowired
   private NodeManager nodeManager;
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
@@ -250,16 +254,17 @@ public class Wallet {
   }
 
   public Account getAccount(Account account) {
-    AccountStore accountStore = dbManager.getAccountStore();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountCapsule accountCapsule = accountStore.get(account.getAddress().toByteArray());
     if (accountCapsule == null) {
       return null;
     }
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(
+        chainBaseManager.getDynamicPropertiesStore(),
+        chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     long genesisTimeStamp = dbManager.getGenesisBlock().getTimeStamp();
@@ -274,8 +279,8 @@ public class Wallet {
   }
 
   public Account getAccountById(Account account) {
-    AccountStore accountStore = dbManager.getAccountStore();
-    AccountIdIndexStore accountIdIndexStore = dbManager.getAccountIdIndexStore();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
+    AccountIdIndexStore accountIdIndexStore = chainBaseManager.getAccountIdIndexStore();
     byte[] address = accountIdIndexStore.get(account.getAccountId());
     if (address == null) {
       return null;
@@ -284,11 +289,12 @@ public class Wallet {
     if (accountCapsule == null) {
       return null;
     }
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(
+        chainBaseManager.getDynamicPropertiesStore(),
+        chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     return accountCapsule.getInstance();
@@ -299,20 +305,19 @@ public class Wallet {
    */
   @Deprecated
   public Transaction createTransaction(TransferContract contract) {
-    AccountStore accountStore = dbManager.getAccountStore();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     return new TransactionCapsule(contract, accountStore).getInstance();
   }
 
   private void setTransaction(TransactionCapsule trx) {
     try {
-      BlockId blockId = dbManager.getHeadBlockId();
+      BlockId blockId = chainBaseManager.getHeadBlockId();
       if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
         blockId = dbManager.getSolidBlockId();
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
-      long expiration =
-              dbManager.getHeadBlockTimeStamp() + Args.getInstance()
-                      .getTrxExpirationTimeInMilliseconds();
+      long expiration = chainBaseManager.getHeadBlockTimeStamp() + Args.getInstance()
+          .getTrxExpirationTimeInMilliseconds();
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
@@ -348,9 +353,7 @@ public class Wallet {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
     }
-
     setTransaction(trx);
-
     return trx;
   }
 
@@ -398,7 +401,7 @@ public class Wallet {
       } else {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
       }
-      if (dbManager.getDynamicPropertiesStore().supportVM()) {
+      if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
@@ -467,7 +470,7 @@ public class Wallet {
     try {
       Contract contract = trx.getRawData().getContract(0);
       byte[] owner = TransactionCapsule.getOwner(contract);
-      AccountCapsule account = dbManager.getAccountStore().get(owner);
+      AccountCapsule account = chainBaseManager.getAccountStore().get(owner);
       if (account == null) {
         throw new PermissionException("Account does not exist!");
       }
@@ -514,7 +517,7 @@ public class Wallet {
   }
 
   public Block getNowBlock() {
-    List<BlockCapsule> blockList = dbManager.getBlockStore().getBlockByLatestNum(1);
+    List<BlockCapsule> blockList = chainBaseManager.getBlockStore().getBlockByLatestNum(1);
     if (CollectionUtils.isEmpty(blockList)) {
       return null;
     } else {
@@ -546,7 +549,7 @@ public class Wallet {
 
   public WitnessList getWitnessList() {
     WitnessList.Builder builder = WitnessList.newBuilder();
-    List<WitnessCapsule> witnessCapsuleList = dbManager.getWitnessStore().getAllWitnesses();
+    List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
     witnessCapsuleList
         .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
     return builder.build();
@@ -554,7 +557,8 @@ public class Wallet {
 
   public ProposalList getProposalList() {
     ProposalList.Builder builder = ProposalList.newBuilder();
-    List<ProposalCapsule> proposalCapsuleList = dbManager.getProposalStore().getAllProposals();
+    List<ProposalCapsule> proposalCapsuleList =
+        chainBaseManager.getProposalStore().getAllProposals();
     proposalCapsuleList
         .forEach(proposalCapsule -> builder.addProposals(proposalCapsule.getInstance()));
     return builder.build();
@@ -564,7 +568,7 @@ public class Wallet {
     DelegatedResourceList.Builder builder = DelegatedResourceList.newBuilder();
     byte[] dbKey = DelegatedResourceCapsule
         .createDbKey(fromAddress.toByteArray(), toAddress.toByteArray());
-    DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
+    DelegatedResourceCapsule delegatedResourceCapsule = chainBaseManager.getDelegatedResourceStore()
         .get(dbKey);
     if (delegatedResourceCapsule != null) {
       builder.addDelegatedResource(delegatedResourceCapsule.getInstance());
@@ -574,7 +578,7 @@ public class Wallet {
 
   public DelegatedResourceAccountIndex getDelegatedResourceAccountIndex(ByteString address) {
     DelegatedResourceAccountIndexCapsule accountIndexCapsule =
-        dbManager.getDelegatedResourceAccountIndexStore().get(address.toByteArray());
+        chainBaseManager.getDelegatedResourceAccountIndexStore().get(address.toByteArray());
     if (accountIndexCapsule != null) {
       return accountIndexCapsule.getInstance();
     } else {
@@ -598,210 +602,210 @@ public class Wallet {
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getMaintenanceTimeInterval")
-            .setValue(dbManager.getDynamicPropertiesStore().getMaintenanceTimeInterval())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getMaintenanceTimeInterval())
             .build());
     //    ACCOUNT_UPGRADE_COST, //drop ,1
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAccountUpgradeCost")
-            .setValue(dbManager.getDynamicPropertiesStore().getAccountUpgradeCost())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getAccountUpgradeCost())
             .build());
     //    CREATE_ACCOUNT_FEE, //drop ,2
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getCreateAccountFee")
-            .setValue(dbManager.getDynamicPropertiesStore().getCreateAccountFee())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getCreateAccountFee())
             .build());
     //    TRANSACTION_FEE, //drop ,3
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getTransactionFee")
-            .setValue(dbManager.getDynamicPropertiesStore().getTransactionFee())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getTransactionFee())
             .build());
     //    ASSET_ISSUE_FEE, //drop ,4
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAssetIssueFee")
-            .setValue(dbManager.getDynamicPropertiesStore().getAssetIssueFee())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee())
             .build());
     //    WITNESS_PAY_PER_BLOCK, //drop ,5
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getWitnessPayPerBlock")
-            .setValue(dbManager.getDynamicPropertiesStore().getWitnessPayPerBlock())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getWitnessPayPerBlock())
             .build());
     //    WITNESS_STANDBY_ALLOWANCE, //drop ,6
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getWitnessStandbyAllowance")
-            .setValue(dbManager.getDynamicPropertiesStore().getWitnessStandbyAllowance())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getWitnessStandbyAllowance())
             .build());
     //    CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT, //drop ,7
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getCreateNewAccountFeeInSystemContract")
-            .setValue(
-                dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract())
+            .setValue(chainBaseManager.getDynamicPropertiesStore()
+                .getCreateNewAccountFeeInSystemContract())
             .build());
     //    CREATE_NEW_ACCOUNT_BANDWIDTH_RATE, // 1 ~ ,8
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getCreateNewAccountBandwidthRate")
-            .setValue(dbManager.getDynamicPropertiesStore().getCreateNewAccountBandwidthRate())
-            .build());
+            .setValue(chainBaseManager.getDynamicPropertiesStore()
+                .getCreateNewAccountBandwidthRate()).build());
     //    ALLOW_CREATION_OF_CONTRACTS, // 0 / >0 ,9
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowCreationOfContracts")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowCreationOfContracts())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowCreationOfContracts())
             .build());
     //    REMOVE_THE_POWER_OF_THE_GR,  // 1 ,10
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getRemoveThePowerOfTheGr")
-            .setValue(dbManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr())
             .build());
     //    ENERGY_FEE, // drop, 11
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getEnergyFee")
-            .setValue(dbManager.getDynamicPropertiesStore().getEnergyFee())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getEnergyFee())
             .build());
     //    EXCHANGE_CREATE_FEE, // drop, 12
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getExchangeCreateFee")
-            .setValue(dbManager.getDynamicPropertiesStore().getExchangeCreateFee())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getExchangeCreateFee())
             .build());
     //    MAX_CPU_TIME_OF_ONE_TX, // ms, 13
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getMaxCpuTimeOfOneTx")
-            .setValue(dbManager.getDynamicPropertiesStore().getMaxCpuTimeOfOneTx())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getMaxCpuTimeOfOneTx())
             .build());
     //    ALLOW_UPDATE_ACCOUNT_NAME, // 1, 14
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowUpdateAccountName")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowUpdateAccountName())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowUpdateAccountName())
             .build());
     //    ALLOW_SAME_TOKEN_NAME, // 1, 15
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowSameTokenName")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowSameTokenName())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName())
             .build());
     //    ALLOW_DELEGATE_RESOURCE, // 0, 16
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowDelegateResource")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowDelegateResource())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowDelegateResource())
             .build());
     //    TOTAL_ENERGY_LIMIT, // 50,000,000,000, 17
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getTotalEnergyLimit")
-            .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyLimit())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getTotalEnergyLimit())
             .build());
     //    ALLOW_TVM_TRANSFER_TRC10, // 1, 18
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowTvmTransferTrc10")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10())
             .build());
     //    TOTAL_CURRENT_ENERGY_LIMIT, // 50,000,000,000, 19
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getTotalEnergyCurrentLimit")
-            .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit())
             .build());
     //    ALLOW_MULTI_SIGN, // 1, 20
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowMultiSign")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowMultiSign())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowMultiSign())
             .build());
     //    ALLOW_ADAPTIVE_ENERGY, // 1, 21
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowAdaptiveEnergy")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy())
             .build());
     //other chainParameters
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getTotalEnergyTargetLimit")
-        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getTotalEnergyTargetLimit())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getTotalEnergyAverageUsage")
-        .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getUpdateAccountPermissionFee")
-        .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMultiSignFee")
-        .setValue(dbManager.getDynamicPropertiesStore().getMultiSignFee())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getMultiSignFee())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowAccountStateRoot")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountStateRoot())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowAccountStateRoot())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowProtoFilterNum")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowProtoFilterNum())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowProtoFilterNum())
         .build());
 
     // ALLOW_TVM_CONSTANTINOPLE
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmConstantinople")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmSolidity059")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
         .build());
 
     // ALLOW_ZKSNARK_TRANSACTION
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowShieldedTransaction")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
             .build());
 
     // SHIELDED_TRANSACTION_FEE
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getShieldedTransactionFee")
-            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
+            .setValue(chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee())
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAdaptiveResourceLimitTargetRatio")
         .setValue(
-            dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitTargetRatio() / (24 * 60))
-        .build());
+            chainBaseManager.getDynamicPropertiesStore()
+                .getAdaptiveResourceLimitTargetRatio() / (24 * 60)).build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAdaptiveResourceLimitMultiplier")
-        .setValue(dbManager.getDynamicPropertiesStore().getAdaptiveResourceLimitMultiplier())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getAdaptiveResourceLimitMultiplier())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getChangeDelegation")
-        .setValue(dbManager.getDynamicPropertiesStore().getChangeDelegation())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getChangeDelegation())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getWitness127PayPerBlock")
-        .setValue(dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
         .build());
 
     return builder.build();
@@ -872,22 +876,22 @@ public class Wallet {
       return null;
     }
     AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
+    AccountCapsule accountCapsule =
+        chainBaseManager.getAccountStore().get(accountAddress.toByteArray());
     if (accountCapsule == null) {
       return null;
     }
 
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
     long netLimit = processor
         .calculateGlobalNetLimit(accountCapsule);
-    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
-    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
-    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long freeNetLimit = chainBaseManager.getDynamicPropertiesStore().getFreeNetLimit();
+    long totalNetLimit = chainBaseManager.getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
 
     Map<String, Long> assetNetLimitMap = new HashMap<>();
-
     Map<String, Long> allFreeAssetNetUsage = setAssetNetLimit(assetNetLimitMap, accountCapsule);
 
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
@@ -906,27 +910,31 @@ public class Wallet {
       return null;
     }
     AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
+    AccountCapsule accountCapsule =
+        chainBaseManager.getAccountStore().get(accountAddress.toByteArray());
     if (accountCapsule == null) {
       return null;
     }
 
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
-        dbManager.getAccountStore());
+    EnergyProcessor energyProcessor = new EnergyProcessor(
+        chainBaseManager.getDynamicPropertiesStore(),
+        chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     long netLimit = processor
         .calculateGlobalNetLimit(accountCapsule);
-    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
-    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
-    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long freeNetLimit = chainBaseManager.getDynamicPropertiesStore().getFreeNetLimit();
+    long totalNetLimit = chainBaseManager.getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
     long energyLimit = energyProcessor
         .calculateGlobalEnergyLimit(accountCapsule);
-    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
-    long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
+    long totalEnergyLimit =
+        chainBaseManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
+    long totalEnergyWeight =
+        chainBaseManager.getDynamicPropertiesStore().getTotalEnergyWeight();
 
     long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
     long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
@@ -957,15 +965,15 @@ public class Wallet {
       return null;
     }
 
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+    if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       // fetch from old DB, same as old logic ops
       AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(assetName.toByteArray());
+          chainBaseManager.getAssetIssueStore().get(assetName.toByteArray());
       return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
     } else {
       // get asset issue by name from new DB
       List<AssetIssueCapsule> assetIssueCapsuleList =
-          dbManager.getAssetIssueV2Store().getAllAssetIssues();
+          chainBaseManager.getAssetIssueV2Store().getAllAssetIssues();
       AssetIssueList.Builder builder = AssetIssueList.newBuilder();
       assetIssueCapsuleList
           .stream()
@@ -980,12 +988,13 @@ public class Wallet {
       } else {
         // fetch from DB by assetName as id
         AssetIssueCapsule assetIssueCapsule =
-            dbManager.getAssetIssueV2Store().get(assetName.toByteArray());
+            chainBaseManager.getAssetIssueV2Store().get(assetName.toByteArray());
 
         if (assetIssueCapsule != null) {
           // check already fetch
           if (builder.getAssetIssueCount() > 0
-              && builder.getAssetIssue(0).getId().equals(assetIssueCapsule.getInstance().getId())) {
+              && builder.getAssetIssue(0).getId()
+              .equals(assetIssueCapsule.getInstance().getId())) {
             return assetIssueCapsule.getInstance();
           }
 
@@ -1026,7 +1035,7 @@ public class Wallet {
     if (assetId == null || assetId.isEmpty()) {
       return null;
     }
-    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueV2Store()
+    AssetIssueCapsule assetIssueCapsule = chainBaseManager.getAssetIssueV2Store()
         .get(ByteArray.fromString(assetId));
     return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
   }
@@ -1039,7 +1048,7 @@ public class Wallet {
 
   public NumberMessage getNextMaintenanceTime() {
     NumberMessage.Builder builder = NumberMessage.newBuilder()
-        .setNum(dbManager.getDynamicPropertiesStore().getNextMaintenanceTime());
+        .setNum(chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime());
     return builder.build();
   }
 
@@ -1049,7 +1058,7 @@ public class Wallet {
     }
     Block block = null;
     try {
-      block = dbManager.getBlockStore().get(blockId.toByteArray()).getInstance();
+      block = chainBaseManager.getBlockStore().get(blockId.toByteArray()).getInstance();
     } catch (StoreException e) {
       logger.error(e.getMessage());
     }
@@ -1061,14 +1070,14 @@ public class Wallet {
       return null;
     }
     BlockList.Builder blockListBuilder = BlockList.newBuilder();
-    dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
+    chainBaseManager.getBlockStore().getLimitNumber(number, limit).forEach(
         blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
     return blockListBuilder.build();
   }
 
   public BlockList getBlockByLatestNum(long getNum) {
     BlockList.Builder blockListBuilder = BlockList.newBuilder();
-    dbManager.getBlockStore().getBlockByLatestNum(getNum).forEach(
+    chainBaseManager.getBlockStore().getBlockByLatestNum(getNum).forEach(
         blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
     return blockListBuilder.build();
   }
@@ -1120,7 +1129,7 @@ public class Wallet {
     }
     ProposalCapsule proposalCapsule = null;
     try {
-      proposalCapsule = dbManager.getProposalStore()
+      proposalCapsule = chainBaseManager.getProposalStore()
           .get(proposalId.toByteArray());
     } catch (StoreException e) {
       logger.error(e.getMessage());
@@ -1156,7 +1165,7 @@ public class Wallet {
       return null;
     }
     BytesCapsule nullifier = null;
-    nullifier = dbManager.getNullifierStore().get(id.toByteArray());
+    nullifier = chainBaseManager.getNullifierStore().get(id.toByteArray());
 
     if (nullifier != null) {
       return BytesMessage.newBuilder().setValue(ByteString.copyFrom(nullifier.getData())).build();
@@ -1194,7 +1203,7 @@ public class Wallet {
       throw new RuntimeException("treeRoot is null, blockNumber:" + (blockNumber - 1));
     }
 
-    IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
+    IncrementalMerkleTreeCapsule treeCapsule = chainBaseManager.getMerkleTreeStore()
         .get(treeRoot);
     if (treeCapsule == null) {
       if ("fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e"
@@ -1287,7 +1296,7 @@ public class Wallet {
     long start = large;
     long end = large + synBlockNum - 1;
 
-    long latestBlockHeaderNumber = dbManager.getDynamicPropertiesStore()
+    long latestBlockHeaderNumber = chainBaseManager.getDynamicPropertiesStore()
         .getLatestBlockHeaderNumber();
 
     if (end > latestBlockHeaderNumber) {
@@ -1453,7 +1462,7 @@ public class Wallet {
   }
 
   public long getShieldedTransactionFee() {
-    return dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
+    return chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee();
   }
 
   public void checkCmValid(List<SpendNote> shieldedSpends, List<ReceiveNote> shieldedReceives)
@@ -1919,7 +1928,7 @@ public class Wallet {
         note.getRcm().toByteArray());
     byte[] nf = baseNote.nullifier(ak, nk, voucherContainer.position());
 
-    if (dbManager.getNullifierStore().has(nf)) {
+    if (chainBaseManager.getNullifierStore().has(nf)) {
       result = SpendResult.newBuilder()
           .setResult(true)
           .setMessage("Input note has been spent")
@@ -2043,7 +2052,7 @@ public class Wallet {
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    ContractStore contractStore = dbManager.getContractStore();
+    ContractStore contractStore = chainBaseManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress()
         .toByteArray();
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
@@ -2068,7 +2077,7 @@ public class Wallet {
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
-    ContractStore contractStore = dbManager.getContractStore();
+    ContractStore contractStore = chainBaseManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress()
         .toByteArray();
     byte[] isContractExist = contractStore
@@ -2096,7 +2105,7 @@ public class Wallet {
     }
 
     Block headBlock;
-    List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore()
+    List<BlockCapsule> blockCapsuleList = chainBaseManager.getBlockStore()
         .getBlockByLatestNum(1);
     if (CollectionUtils.isEmpty(blockCapsuleList)) {
       throw new HeaderNotFound("latest block not found");
@@ -2140,7 +2149,7 @@ public class Wallet {
 
   public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    AccountCapsule accountCapsule = chainBaseManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       logger.error(
           "Get contract failed, the account does not exist or the account "
@@ -2148,7 +2157,7 @@ public class Wallet {
       return null;
     }
 
-    ContractCapsule contractCapsule = dbManager.getContractStore()
+    ContractCapsule contractCapsule = chainBaseManager.getContractStore()
         .get(bytesMessage.getValue().toByteArray());
     if (Objects.nonNull(contractCapsule)) {
       return contractCapsule.getInstance();
@@ -2168,7 +2177,7 @@ public class Wallet {
       return null;
     }
 
-    long latestProposalNum = dbManager.getDynamicPropertiesStore()
+    long latestProposalNum = chainBaseManager.getDynamicPropertiesStore()
         .getLatestProposalNum();
     if (latestProposalNum <= offset) {
       return null;
@@ -2184,7 +2193,7 @@ public class Wallet {
         .asList();
     rangeList.stream().map(ProposalCapsule::calculateDbKey).map(key -> {
       try {
-        return dbManager.getProposalStore().get(key);
+        return chainBaseManager.getProposalStore().get(key);
       } catch (Exception ex) {
         return null;
       }
@@ -2199,7 +2208,7 @@ public class Wallet {
       return null;
     }
 
-    long latestExchangeNum = dbManager.getDynamicPropertiesStore()
+    long latestExchangeNum = chainBaseManager.getDynamicPropertiesStore()
         .getLatestExchangeNum();
     if (latestExchangeNum <= offset) {
       return null;

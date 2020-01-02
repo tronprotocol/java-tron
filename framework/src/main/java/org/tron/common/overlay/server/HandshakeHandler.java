@@ -35,6 +35,7 @@ import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.P2pMessage;
 import org.tron.common.overlay.message.P2pMessageFactory;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
@@ -55,6 +56,9 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   @Autowired
   private Manager manager;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   @Autowired
   private FastForward fastForward;
@@ -114,7 +118,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   protected void sendHelloMsg(ChannelHandlerContext ctx, long time) {
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
-        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), chainBaseManager.getHeadBlockId());
     fastForward.fillHelloMessage(message, channel);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
