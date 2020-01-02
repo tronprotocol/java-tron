@@ -24,7 +24,6 @@ import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
-import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
@@ -223,8 +222,6 @@ public class TronNetDelegate {
           | ZksnarkException e) {
         logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
-      } catch (BlockNotInMainForkException e) {
-        logger.warn("Process block failed, {}, block not in main fork", blockId.getString());
       }
     }
   }

@@ -32,7 +32,6 @@ import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
-import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -108,7 +107,7 @@ public class ManagerTest extends BlockGenerate {
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException,
       NonCommonBlockException, ReceiptCheckErrException, VMIllegalException,
-      TooBigTransactionResultException, ZksnarkException, BlockNotInMainForkException {
+      TooBigTransactionResultException, ZksnarkException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -238,7 +237,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, BlockNotInMainForkException {
+      ZksnarkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     DBConfig.setDebug(true);
     long size = dbManager.getBlockStore().size();
@@ -316,7 +315,7 @@ public class ManagerTest extends BlockGenerate {
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, BlockNotInMainForkException {
+      ZksnarkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     DBConfig.setDebug(true);
     long size = dbManager.getBlockStore().size();
@@ -421,7 +420,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException, BlockNotInMainForkException {
+      ZksnarkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     DBConfig.setDebug(true);
     long size = dbManager.getBlockStore().size();
