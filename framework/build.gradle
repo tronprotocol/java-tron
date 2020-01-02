@@ -87,6 +87,7 @@ dependencies {
     compile project(":protocol")
     compile project(":actuator")
     compile project(":consensus")
+    compile project(":http")
 }
 
 check.dependsOn 'lint'

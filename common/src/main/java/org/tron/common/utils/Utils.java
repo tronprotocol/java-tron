@@ -97,4 +97,10 @@ public interface Utils {
       return ret.toString();
     }
   }
+
+  public static byte[] generateRandomBytes(int size) {
+    byte[] bytes = new byte[size];
+    new SecureRandom().nextBytes(bytes);
+    return bytes;
+  }
 }

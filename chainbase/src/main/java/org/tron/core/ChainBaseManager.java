@@ -1,11 +1,17 @@
 package org.tron.core;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ForkController;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CommonStore;
@@ -14,6 +20,8 @@ import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -144,6 +152,11 @@ public class ChainBaseManager {
   @Getter
   private TransactionHistoryStore transactionHistoryStore;
 
+  protected BlockCapsule genesisBlock;
+
+  @Getter
+  private ForkController forkController = ForkController.instance();
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -152,6 +165,79 @@ public class ChainBaseManager {
       logger.info("failed to close  " + database.getName() + ". " + e);
     } finally {
       logger.info("******** end to close " + database.getName() + " ********");
+    }
+  }
+
+  public synchronized BlockId getHeadBlockId() {
+    return new BlockId(
+        getDynamicPropertiesStore().getLatestBlockHeaderHash(),
+        getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+  }
+
+  public BlockId getSolidBlockId() {
+    try {
+      long num = this.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+      return getBlockIdByNum(num);
+    } catch (Exception e) {
+      return getGenesisBlockId();
+    }
+  }
+
+  public BlockId getGenesisBlockId() {
+    return this.genesisBlock.getBlockId();
+  }
+
+  /**
+   * Get the block id from the number.
+   */
+  public BlockId getBlockIdByNum(final long num) throws ItemNotFoundException {
+    return this.getBlockIndexStore().get(num);
+  }
+
+  public long getHeadBlockTimeStamp() {
+    return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+  }
+
+  public long getHeadSlot() {
+    return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
+        .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
+  }
+
+  public BlockCapsule getGenesisBlock() {
+    return genesisBlock;
+  }
+
+
+  public BlockCapsule getBlockByNum(final long num) throws
+      ItemNotFoundException, BadItemException {
+    return getBlockById(getBlockIdByNum(num));
+  }
+
+  /**
+   * Get a BlockCapsule by id.
+   */
+  public BlockCapsule getBlockById(final Sha256Hash hash)
+      throws BadItemException, ItemNotFoundException {
+    BlockCapsule block = this.khaosDb.getBlock(hash);
+    if (block == null) {
+      block = this.getBlockStore().get(hash.getBytes());
+    }
+    return block;
+  }
+
+  public AssetIssueStore getAssetIssueStoreFinal() {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      return getAssetIssueStore();
+    } else {
+      return getAssetIssueV2Store();
+    }
+  }
+
+  public ExchangeStore getExchangeStoreFinal() {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      return getExchangeStore();
+    } else {
+      return getExchangeV2Store();
     }
   }
 

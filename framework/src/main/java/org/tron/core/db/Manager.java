@@ -145,7 +145,7 @@ import org.tron.protos.Protocol.TransactionRet;
 
 @Slf4j(topic = "DB")
 @Component
-public class Manager {
+public class Manager extends ChainBaseManager{
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
   private static final String SAVE_BLOCK = "save block: ";
@@ -159,7 +159,6 @@ public class Manager {
   private TransactionCache transactionCache;
   @Autowired
   private KhaosDatabase khaosDb;
-  private BlockCapsule genesisBlock;
   @Getter
   @Autowired
   private RevokingDatabase revokingStore;
@@ -191,8 +190,6 @@ public class Manager {
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
-  @Getter
-  private ForkController forkController = ForkController.instance();
   @Autowired
   private AccountStateCallBack accountStateCallBack;
   @Autowired
@@ -324,14 +321,6 @@ public class Manager {
     return chainBaseManager.getBlockIndexStore();
   }
 
-  public ExchangeStore getExchangeStoreFinal() {
-    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      return getExchangeStore();
-    } else {
-      return getExchangeV2Store();
-    }
-  }
-
   public void putExchangeCapsule(ExchangeCapsule exchangeCapsule) {
     if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
@@ -354,11 +343,6 @@ public class Manager {
 
   public BlockingQueue<TransactionCapsule> getRePushTransactions() {
     return rePushTransactions;
-  }
-
-  public long getHeadSlot() {
-    return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
-        .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
   }
 
   // for test only
@@ -384,20 +368,9 @@ public class Manager {
     }
   }
 
-  public synchronized BlockId getHeadBlockId() {
-    return new BlockId(
-        getDynamicPropertiesStore().getLatestBlockHeaderHash(),
-        getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-  }
-
   public long getHeadBlockNum() {
     return getDynamicPropertiesStore().getLatestBlockHeaderNumber();
   }
-
-  public long getHeadBlockTimeStamp() {
-    return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
-  }
-
 
   public void stopRePushThread() {
     isRunRePushThread = false;
@@ -447,7 +420,7 @@ public class Manager {
           Args.getInstance().getOutputDirectory());
       System.exit(1);
     }
-    forkController.init(this.chainBaseManager);
+    chainBaseManager.getForkController().init(this.chainBaseManager);
 
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(this).doWork();
@@ -474,14 +447,6 @@ public class Manager {
     //initActuatorCreator
     ActuatorCreator.init();
     TransactionRegister.registerActuator();
-  }
-
-  public BlockId getGenesisBlockId() {
-    return this.genesisBlock.getBlockId();
-  }
-
-  public BlockCapsule getGenesisBlock() {
-    return genesisBlock;
   }
 
   /**
@@ -1190,18 +1155,6 @@ public class Manager {
   }
 
   /**
-   * Get a BlockCapsule by id.
-   */
-  public BlockCapsule getBlockById(final Sha256Hash hash)
-      throws BadItemException, ItemNotFoundException {
-    BlockCapsule block = this.khaosDb.getBlock(hash);
-    if (block == null) {
-      block = chainBaseManager.getBlockStore().get(hash.getBytes());
-    }
-    return block;
-  }
-
-  /**
    * judge has blocks.
    */
   public boolean hasBlocks() {
@@ -1284,18 +1237,6 @@ public class Manager {
     }
 
     return transactionInfo.getInstance();
-  }
-
-  /**
-   * Get the block id from the number.
-   */
-  public BlockId getBlockIdByNum(final long num) throws ItemNotFoundException {
-    return chainBaseManager.getBlockIndexStore().get(num);
-  }
-
-  public BlockCapsule getBlockByNum(final long num) throws
-      ItemNotFoundException, BadItemException {
-    return getBlockById(getBlockIdByNum(num));
   }
 
   /**
@@ -1509,7 +1450,7 @@ public class Manager {
     if (chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
         <= block.getTimeStamp()) {
       proposalController.processProposals();
-      forkController.reset();
+      chainBaseManager.getForkController().reset();
     }
 
     if (!consensus.applyBlock(block)) {
@@ -1551,7 +1492,7 @@ public class Manager {
   }
 
   public void updateFork(BlockCapsule block) {
-    forkController.update(block);
+    chainBaseManager.getForkController().update(block);
   }
 
   public long getSyncBeginNumber() {
@@ -1567,15 +1508,6 @@ public class Manager {
         - revokingStore.size();
   }
 
-  public BlockId getSolidBlockId() {
-    try {
-      long num = chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-      return getBlockIdByNum(num);
-    } catch (Exception e) {
-      return getGenesisBlockId();
-    }
-  }
-
   public AssetIssueStore getAssetIssueStore() {
     return chainBaseManager.getAssetIssueStore();
   }
@@ -1583,14 +1515,6 @@ public class Manager {
 
   public AssetIssueV2Store getAssetIssueV2Store() {
     return chainBaseManager.getAssetIssueV2Store();
-  }
-
-  public AssetIssueStore getAssetIssueStoreFinal() {
-    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      return getAssetIssueStore();
-    } else {
-      return getAssetIssueV2Store();
-    }
   }
 
   public AccountIdIndexStore getAccountIdIndexStore() {

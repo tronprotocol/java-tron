@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+version '1.0.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile "com.madgag.spongycastle:core:1.58.0.0"
+    compile "com.madgag.spongycastle:prov:1.58.0.0"
+    // http
+    compile 'org.eclipse.jetty:jetty-server:9.4.11.v20180605'
+    compile 'org.eclipse.jetty:jetty-servlet:9.4.11.v20180605'
+    compile 'com.alibaba:fastjson:1.2.60'
+    compile group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
+    compile group: 'commons-io', name: 'commons-io', version: '2.6'
+    // end http
+    compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
+    compile group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
+    compile project(":common")
+    compile project(":chainbase")
+    compile project(":actuator")
+}
