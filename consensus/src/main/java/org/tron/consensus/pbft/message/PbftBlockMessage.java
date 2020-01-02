@@ -8,9 +8,9 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.protos.Protocol.PbftMessage;
-import org.tron.protos.Protocol.PbftMessage.Raw;
-import org.tron.protos.Protocol.PbftMessage.Type;
+import org.tron.protos.Protocol.PBFTMessage;
+import org.tron.protos.Protocol.PBFTMessage.Raw;
+import org.tron.protos.Protocol.PBFTMessage.Type;
 
 public class PbftBlockMessage extends PbftBaseMessage {
 
@@ -22,7 +22,7 @@ public class PbftBlockMessage extends PbftBaseMessage {
   }
 
   public String getNo() {
-    return pbftMessage.getRawData().getBlockNum() + "_" + getType().asByte();
+    return pbftMessage.getRawData().getNumber() + "_" + getType().asByte();
   }
 
   @Override
@@ -34,22 +34,16 @@ public class PbftBlockMessage extends PbftBaseMessage {
     PbftBlockMessage pbftBlockMessage = new PbftBlockMessage();
     Miner miner = Param.getInstance().getMiner();
     ECKey ecKey = ECKey.fromPrivate(miner.getPrivateKey());
+    PBFTMessage.Builder builder = PBFTMessage.newBuilder();
     Raw.Builder rawBuilder = Raw.newBuilder();
-    PbftMessage.Builder builder = PbftMessage.newBuilder();
-    byte[] publicKey = ecKey.getAddress();
-    byte[] dataSign = ecKey.sign(Sha256Hash.hash(blockCapsule.getBlockId().getByteString()
-        .toByteArray())).toByteArray();
-    rawBuilder.setBlockNum(blockCapsule.getNum())
+    rawBuilder.setNumber(blockCapsule.getNum())
         .setPbftMsgType(Type.PREPREPARE)
-        .setTime(System.currentTimeMillis())
-        .setPublicKey(ByteString.copyFrom(publicKey == null ? new byte[0] : publicKey))
-        .setData(blockCapsule.getBlockId().getByteString())
-        .setDataSign(ByteString.copyFrom(dataSign));
+        .setData(blockCapsule.getBlockId().getByteString());
     Raw raw = rawBuilder.build();
     byte[] hash = Sha256Hash.hash(raw.toByteArray());
     ECDSASignature signature = ecKey.sign(hash);
-    builder.setRawData(raw).setSign(ByteString.copyFrom(signature.toByteArray()));
-    PbftMessage message = builder.build();
+    builder.setRawData(raw).setSignature(ByteString.copyFrom(signature.toByteArray()));
+    PBFTMessage message = builder.build();
     pbftBlockMessage.setType(MessageTypes.PBFT_BLOCK_MSG.asByte())
         .setPbftMessage(message).setData(message.toByteArray()).setSwitch(blockCapsule.isSwitch());
     return pbftBlockMessage;
@@ -57,15 +51,14 @@ public class PbftBlockMessage extends PbftBaseMessage {
 
   public static PbftBaseMessage buildFullNodePrePrepareMessage(BlockCapsule blockCapsule) {
     PbftBlockMessage pbftBlockMessage = new PbftBlockMessage();
+    PBFTMessage.Builder builder = PBFTMessage.newBuilder();
     Raw.Builder rawBuilder = Raw.newBuilder();
-    PbftMessage.Builder builder = PbftMessage.newBuilder();
-    rawBuilder.setBlockNum(blockCapsule.getNum())
+    rawBuilder.setNumber(blockCapsule.getNum())
         .setPbftMsgType(Type.PREPREPARE)
-        .setTime(System.currentTimeMillis())
         .setData(blockCapsule.getBlockId().getByteString());
     Raw raw = rawBuilder.build();
     builder.setRawData(raw);
-    PbftMessage message = builder.build();
+    PBFTMessage message = builder.build();
     pbftBlockMessage.setType(MessageTypes.PBFT_BLOCK_MSG.asByte())
         .setPbftMessage(message).setData(message.toByteArray()).setSwitch(blockCapsule.isSwitch());
     return pbftBlockMessage;

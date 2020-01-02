@@ -17,7 +17,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadNumberBlockException;
-import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
@@ -72,7 +71,7 @@ public class KhaosDatabaseTest {
     khaosDatabase.start(blockCapsule);
     try {
       khaosDatabase.push(blockCapsule2);
-    } catch (UnLinkedBlockException | BadNumberBlockException | BlockNotInMainForkException e) {
+    } catch (UnLinkedBlockException | BadNumberBlockException e) {
       System.out.println(e.getMessage());
     }
 
@@ -86,7 +85,7 @@ public class KhaosDatabaseTest {
 
 
   @Test
-  public void checkWeakReference() throws UnLinkedBlockException, BadNumberBlockException, BlockNotInMainForkException {
+  public void checkWeakReference() throws UnLinkedBlockException, BadNumberBlockException {
     BlockCapsule blockCapsule = new BlockCapsule(Block.newBuilder().setBlockHeader(
         BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
             ByteArray

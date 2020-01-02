@@ -11,7 +11,6 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -88,7 +87,7 @@ public class PbftMessageHandle {
     String key = message.getNo();
     if (message.isSwitch()) {//if is block chain switch,remove the before proposal
       logger.warn("block chain switch, again proposal block num: {}, data: {}",
-          message.getBlockNum(), message.getDataString());
+          message.getNumber(), message.getDataString());
       remove(key);
       return;
     }
@@ -159,7 +158,7 @@ public class PbftMessageHandle {
     //The number of votes plus 1
     long agCou = agreeCommit.incrementAndGet(message.getDataKey());
     dataSignCache.getUnchecked(message.getDataKey())
-        .add(message.getPbftMessage().getRawData().getDataSign());
+        .add(message.getPbftMessage().getSignature());
     if (agCou >= Param.getInstance().getAgreeNodeCount()) {
       remove(message.getNo());
       //commit,
@@ -204,9 +203,8 @@ public class PbftMessageHandle {
     if (!Param.getInstance().isEnable()) {//is witness
       return false;
     }
-    if (!witnessScheduleStore.getActiveWitnesses().stream()
-        .anyMatch(witness -> Arrays.equals(witness.toByteArray(),
-            Param.getInstance().getMiner().getPrivateKeyAddress().toByteArray()))) {
+    if (!witnessScheduleStore.getActiveWitnesses()
+        .contains(Param.getInstance().getMiner().getPrivateKeyAddress())) {
       return false;
     }
     return !isSyncing();
@@ -217,7 +215,7 @@ public class PbftMessageHandle {
     if (maintenanceManager == null) {
       return false;
     }
-    long blockNum = msg.getPbftMessage().getRawData().getBlockNum();
+    long blockNum = msg.getNumber();
     List<ByteString> witnessList;
     BlockCapsule blockCapsule = null;
     try {
@@ -231,8 +229,7 @@ public class PbftMessageHandle {
     } else {
       witnessList = maintenanceManager.getBeforeWitness();
     }
-    return witnessList.stream()
-        .anyMatch(witness -> witness.equals(msg.getPbftMessage().getRawData().getPublicKey()));
+    return witnessList.contains(ByteString.copyFrom(msg.getPublicKey()));
   }
 
   public boolean isSyncing() {

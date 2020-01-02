@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -27,8 +26,7 @@ import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.protos.Protocol.DataSign;
-import org.tron.protos.Protocol.PbftMessage.Raw;
+import org.tron.protos.Protocol.PBFTCommitResult;
 
 @Slf4j(topic = "DB")
 @Component
@@ -105,18 +103,12 @@ public class KhaosDatabase extends TronDatabase {
         .orElse(null);
   }
 
-  public boolean isValidatedBlock(BlockCapsule blk, PbftSignCapsule pbftSignCapsule) {
-    DataSign dataSign = pbftSignCapsule.getDataSign();
-    return dataSign.getData().equals(blk.getBlockId().getByteString());
-  }
-
   /**
    * Push the block in the KhoasDB.
    */
   public BlockCapsule push(BlockCapsule blk)
       throws UnLinkedBlockException, BadNumberBlockException {
     KhaosBlock block = new KhaosBlock(blk);
-
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
       if (kblock != null) {
@@ -131,9 +123,7 @@ public class KhaosDatabase extends TronDatabase {
       }
     }
 
-
     miniStore.insert(block);
-
 
     if (head == null || block.num > head.num) {
       head = block;
