@@ -27,7 +27,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_NUMBER = "latest_block_header_number".getBytes();
-  private static final byte[] LATEST_BLOCK_CAPSULE = "latest_block_capsule".getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_HASH = "latest_block_header_hash".getBytes();
   private static final byte[] STATE_FLAG = "state_flag"
       .getBytes(); // 1 : is maintenance, 0 : is not maintenance

@@ -12,7 +12,6 @@ import org.tron.common.utils.Sha256Hash;
 public class CommonDataBase extends TronDatabase<byte[]> {
 
   private static final byte[] LATEST_PBFT_BLOCK_NUM = "LATEST_PBFT_BLOCK_NUM".getBytes();
-  private static final byte[] LATEST_PBFT_BLOCK_HASH = "LATEST_PBFT_BLOCK_HASH".getBytes();
 
   public CommonDataBase() {
     super("common-database");
