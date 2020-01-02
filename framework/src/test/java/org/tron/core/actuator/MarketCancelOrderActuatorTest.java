@@ -559,7 +559,7 @@ public class MarketCancelOrderActuatorTest {
         marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .get(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule.getOrdersList().size(), 2);
+    Assert.assertEquals(orderIdListCapsule.getOrderSize(orderStore), 2);
   }
 
   /**
@@ -638,7 +638,7 @@ public class MarketCancelOrderActuatorTest {
         marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .get(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule.getOrdersList().size(), 2);
+    Assert.assertEquals(orderIdListCapsule.getOrderSize(orderStore), 2);
   }
 
 

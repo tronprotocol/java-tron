@@ -377,27 +377,30 @@ public class MarketSellAssetActuator extends AbstractActuator {
           makerPrice.getSellTokenQuantity(),
           makerPrice.getBuyTokenQuantity()
       );
+
       //if not exists
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
 
-      List<ByteString> ordersList = new ArrayList<>(orderIdListCapsule.getOrdersList());
+      // List<ByteString> ordersList = new ArrayList<>(orderIdListCapsule.getOrdersList());
       boolean ordersListChanged = false;
 
       //match different order same price
       while (takerCapsule.getSellTokenQuantityRemain() != 0
-          && !ordersList.isEmpty()) {
-        ByteString orderId = ordersList.get(0);
-        MarketOrderCapsule makerOrderCapsule = orderStore.get(orderId.toByteArray());
+          && !orderIdListCapsule.isOrderEmpty()) {
+        byte[] orderId = orderIdListCapsule.getHead();
+        MarketOrderCapsule makerOrderCapsule = orderStore.get(orderId);
         matchSingleOrder(takerCapsule, makerOrderCapsule);
 
+        // remove order
         if (makerOrderCapsule.getSellTokenQuantityRemain() == 0) {
-          ordersList.remove(0);
+          orderIdListCapsule.removeOrder(makerOrderCapsule, orderStore,
+              pairPriceKey, pairPriceToOrderStore);
           ordersListChanged = true;
         }
       }
 
       // makerPrice all consumed
-      if (ordersList.isEmpty()) {
+      if (orderIdListCapsule.isOrderEmpty()) {
         pairPriceToOrderStore.delete(pairPriceKey);
 
         // need to delete marketPair
@@ -407,10 +410,11 @@ public class MarketSellAssetActuator extends AbstractActuator {
           break;
         }
 
-      } else if (ordersListChanged) {
-        orderIdListCapsule.setOrdersList(ordersList);
-        pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
       }
+      // else if (ordersListChanged) {
+      //   orderIdListCapsule.setOrdersList(ordersList);
+      //   pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
+      // }
     } // end while
   }
 
@@ -628,7 +632,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       orderIdListCapsule = new MarketOrderIdListCapsule();
     }
 
-    orderIdListCapsule.addOrders(orderCapsule.getID());
+    orderIdListCapsule.addOrder(orderCapsule, orderStore);
     pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
   }
 

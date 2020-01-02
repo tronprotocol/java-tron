@@ -74,6 +74,9 @@ message MarketOrder {
       CANCELED = 2;
     }
     State state = 10;
+
+    bytes prev = 11;
+    bytes next = 12;
 }
 
 message MarketOrderList {
@@ -89,6 +92,7 @@ message MarketAccountOrder {
   bytes owner_address = 1;
   repeated bytes orders = 2; // order_id list
   int64 count = 3;
+
 }
 
 message MarketOrderPosition {
@@ -118,7 +122,10 @@ message MarketPriceList {
 }
 
 message MarketOrderIdList {
-  repeated bytes orders = 1;
+//  repeated bytes orders = 1;
+
+  bytes head = 2;
+  bytes tail = 3;
 }
 
 message ChainParameters {

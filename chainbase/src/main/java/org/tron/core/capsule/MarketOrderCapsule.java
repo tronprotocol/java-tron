@@ -5,8 +5,10 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Hash;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.MarketOrderStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.MarketOrder;
 
@@ -42,25 +44,10 @@ public class MarketOrderCapsule implements ProtoCapsule<MarketOrder> {
         .setBuyTokenQuantity(contract.getBuyTokenQuantity())
         .setSellTokenQuantityRemain(contract.getSellTokenQuantity())
         .setState(State.ACTIVE)
+        .setPrev(ByteString.copyFrom(new byte[0]))
+        .setNext(ByteString.copyFrom(new byte[0]))
         .build();
   }
-
-
-  public MarketOrderCapsule(final byte[] id, ByteString address, long createTime,
-      byte[] sellTokenId, long sellTokenQuantity,
-      byte[] buyTokenId, long buyTokenQuantity, long sellTokenQuantityRemain) {
-    this.order = MarketOrder.newBuilder()
-        .setOrderId(ByteString.copyFrom(id))
-        .setOwnerAddress(address)
-        .setCreateTime(createTime)
-        .setSellTokenId(ByteString.copyFrom(sellTokenId))
-        .setSellTokenQuantity(sellTokenQuantity)
-        .setBuyTokenId(ByteString.copyFrom(buyTokenId))
-        .setBuyTokenQuantity(buyTokenQuantity)
-        .setSellTokenQuantityRemain(sellTokenQuantityRemain)
-        .build();
-  }
-
 
 
   public ByteString getID() {
@@ -159,6 +146,50 @@ public class MarketOrderCapsule implements ProtoCapsule<MarketOrder> {
 
   public boolean isActive(){
     return this.order.getState() == State.ACTIVE;
+  }
+
+  public byte[] getNext() {
+    return this.order.getNext().toByteArray();
+  }
+
+  public void setNext(byte[] next) {
+    this.order = this.order.toBuilder()
+        .setNext(ByteString.copyFrom(next))
+        .build();
+  }
+
+  public byte[] getPrev() {
+    return this.order.getPrev().toByteArray();
+  }
+
+  public void setPrev(byte[] prev) {
+    this.order = this.order.toBuilder()
+        .setPrev(ByteString.copyFrom(prev))
+        .build();
+  }
+
+  public boolean isPreNull() {
+    return this.getPrev() == null || (this.getPrev().length == 0);
+  }
+
+  public boolean isNextNull() {
+    return this.getNext() == null || (this.getNext().length == 0);
+  }
+
+  public MarketOrderCapsule getPrevCapsule(MarketOrderStore orderStore) throws ItemNotFoundException {
+    if (this.isPreNull()) {
+      return null;
+    } else {
+      return orderStore.get(this.getPrev());
+    }
+  }
+
+  public MarketOrderCapsule getNextCapsule(MarketOrderStore orderStore) throws ItemNotFoundException {
+    if (this.isNextNull()) {
+      return null;
+    } else {
+      return orderStore.get(this.getNext());
+    }
   }
 
 

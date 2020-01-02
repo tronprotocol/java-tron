@@ -114,26 +114,17 @@ public class MarketCancelOrderActuator extends AbstractActuator {
           orderCapsule.getBuyTokenQuantity()
       );
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
-      List<ByteString> ordersList = new ArrayList<>(orderIdListCapsule.getOrdersList());
-      Iterator<ByteString> iterator = ordersList.iterator();
-      boolean found = false;
-      while (iterator.hasNext()) {
-        ByteString next = iterator.next();
-        if (Arrays.equals(next.toByteArray(), orderId)) {
-          iterator.remove();
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        throw new ItemNotFoundException("orderId not exists");//should not happen
-      }
 
-      if (!ordersList.isEmpty()) {
-        orderIdListCapsule.setOrdersList(ordersList);
-        pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
-      } else {
-        //if orderList is empty,delete
+      // delete order
+      orderIdListCapsule.removeOrder(orderCapsule, orderStore, pairPriceKey, pairPriceToOrderStore);
+
+      // TODO need check? too much time
+      // if (!found) {
+      //   throw new ItemNotFoundException("orderId not exists");//should not happen
+      // }
+
+      if (orderIdListCapsule.isOrderEmpty()) {
+        //if orderList is empty, delete
         pairPriceToOrderStore.delete(pairPriceKey);
 
         // 3. modify priceList
@@ -200,7 +191,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    //Whether the account  exist
+    //Whether the account exist
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
     if (ownerAccount == null) {
       throw new ContractValidateException("Account does not exist!");
