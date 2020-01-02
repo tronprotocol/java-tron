@@ -24,6 +24,8 @@ import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.exception.P2pException;
+import org.tron.core.ibc.connect.CrossChainHandler;
+import org.tron.core.ibc.connect.CrossChainHandshakeHandler;
 import org.tron.core.net.PbftHandler;
 import org.tron.core.net.TronNetHandler;
 import org.tron.protos.Protocol.ReasonCode;
@@ -53,6 +55,10 @@ public class Channel {
 
   @Autowired
   private PbftHandler pbftHandler;
+  @Autowired
+  private CrossChainHandler crossChainHandler;
+  @Autowired
+  private CrossChainHandshakeHandler crossChainHandshakeHandler;
 
   private ChannelManager channelManager;
   private ChannelHandlerContext ctx;
@@ -69,7 +75,7 @@ public class Channel {
   private boolean isFastForwardPeer;
 
   public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
-      ChannelManager channelManager) {
+      ChannelManager channelManager, boolean isCrossChain) {
 
     this.channelManager = channelManager;
 
@@ -84,7 +90,11 @@ public class Channel {
     pipeline.addLast("lengthDecode", new TrxProtobufVarint32FrameDecoder(this));
 
     //handshake first
-    pipeline.addLast("handshakeHandler", handshakeHandler);
+    if (isCrossChain) {
+      pipeline.addLast("handshakeHandler", crossChainHandshakeHandler);
+    } else {
+      pipeline.addLast("handshakeHandler", handshakeHandler);
+    }
 
     messageCodec.setChannel(this);
     msgQueue.setChannel(this);
@@ -92,21 +102,33 @@ public class Channel {
     p2pHandler.setChannel(this);
     tronNetHandler.setChannel(this);
     pbftHandler.setChannel(this);
+    crossChainHandler.setChannel(this);
+    crossChainHandshakeHandler.setChannel(this, remoteId);
 
     p2pHandler.setMsgQueue(msgQueue);
     tronNetHandler.setMsgQueue(msgQueue);
     pbftHandler.setMsgQueue(msgQueue);
+    crossChainHandler.setMsgQueue(msgQueue);
   }
 
   public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
     isTrustPeer = channelManager.getTrustNodes().getIfPresent(getInetAddress()) != null;
     isFastForwardPeer = channelManager.getFastForwardNodes().containsKey(getInetAddress());
-    ctx.pipeline().remove(handshakeHandler);
+    if (msg.isCrossChainMsg()) {
+      ctx.pipeline().remove(crossChainHandshakeHandler);
+    } else {
+      ctx.pipeline().remove(handshakeHandler);
+    }
     msgQueue.activate(ctx);
     ctx.pipeline().addLast("messageCodec", messageCodec);
     ctx.pipeline().addLast("p2p", p2pHandler);
-    ctx.pipeline().addLast("data", tronNetHandler);
-    ctx.pipeline().addLast("pbft", pbftHandler);
+
+    if (msg.isCrossChainMsg()) {
+      ctx.pipeline().addLast("crossChain", crossChainHandler);
+    } else {
+      ctx.pipeline().addLast("data", tronNetHandler);
+      ctx.pipeline().addLast("pbft", pbftHandler);
+    }
     setStartTime(msg.getTimestamp());
     setTronState(TronState.HANDSHAKE_FINISHED);
     getNodeStatistics().p2pHandShake.add();

@@ -22,12 +22,13 @@ public class HelloMessage extends P2pMessage {
   }
 
   public HelloMessage(Node from, long timestamp, BlockCapsule.BlockId genesisBlockId,
-      BlockCapsule.BlockId solidBlockId, BlockCapsule.BlockId headBlockId) {
+      BlockCapsule.BlockId solidBlockId, BlockCapsule.BlockId headBlockId, boolean isCrossChain) {
 
     Endpoint fromEndpoint = Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(from.getId()))
         .setPort(from.getPort())
         .setAddress(ByteString.copyFrom(ByteArray.fromString(from.getHost())))
+        .setChainId(genesisBlockId.getByteString())
         .build();
 
     Protocol.HelloMessage.BlockId gBlockId = Protocol.HelloMessage.BlockId.newBuilder()
@@ -53,6 +54,7 @@ public class HelloMessage extends P2pMessage {
     builder.setGenesisBlockId(gBlockId);
     builder.setSolidBlockId(sBlockId);
     builder.setHeadBlockId(hBlockId);
+    builder.setCrossChain(isCrossChain);
 
     this.helloMessage = builder.build();
     this.type = MessageTypes.P2P_HELLO.asByte();
@@ -91,6 +93,14 @@ public class HelloMessage extends P2pMessage {
   public BlockCapsule.BlockId getHeadBlockId() {
     return new BlockCapsule.BlockId(this.helloMessage.getHeadBlockId().getHash(),
         this.helloMessage.getHeadBlockId().getNumber());
+  }
+
+  public boolean isCrossChainMsg() {
+    return this.helloMessage.getCrossChain();
+  }
+
+  public ByteString getChainId() {
+    return this.helloMessage.getFrom().getChainId();
   }
 
   @Override

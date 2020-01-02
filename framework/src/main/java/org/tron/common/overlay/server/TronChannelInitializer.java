@@ -27,8 +27,11 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
 
   private boolean peerDiscoveryMode = false;
 
-  public TronChannelInitializer(String remoteId) {
+  private boolean isCrossChain;
+
+  public TronChannelInitializer(String remoteId, boolean isCrossChain) {
     this.remoteId = remoteId;
+    this.isCrossChain = isCrossChain;
   }
 
   @Override
@@ -36,7 +39,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
     try {
       final Channel channel = ctx.getBean(PeerConnection.class);
 
-      channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager);
+      channel.init(ch.pipeline(), remoteId, peerDiscoveryMode, channelManager, isCrossChain);
 
       // limit the size of receiving buffer to 1024
       ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));

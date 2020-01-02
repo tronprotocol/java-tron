@@ -106,7 +106,7 @@ public class SyncPool {
     }
 
     connectNodes.forEach(n -> {
-      peerClient.connectAsync(n, false);
+      peerClient.connectAsync(n, false, false);
       nodeHandlerCache.put(n, System.currentTimeMillis());
     });
   }

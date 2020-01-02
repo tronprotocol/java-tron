@@ -18,14 +18,18 @@ import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.capsule.utils.MerkleTree.ProofLeaf;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.Manager;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.net.message.CrossChainMessage;
+import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Proof;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "Communicate")
 @Service
@@ -40,6 +44,12 @@ public class CommunicateService implements Communicate {
 
   @Autowired
   private SyncPool syncPool;
+
+  @Autowired
+  private Manager manager;
+
+  @Autowired
+  private CrossChainConnectPool crossChainConnectPool;
 
   @Override
   public void sendCrossMessage(CrossMessage crossMessage, boolean save) {
@@ -81,12 +91,12 @@ public class CommunicateService implements Communicate {
   }
 
   @Override
-  public void receiveCrossMessage(CrossMessage crossMessage) {
+  public void receiveCrossMessage(PeerConnection peer, CrossMessage crossMessage) {
     if (validProof(crossMessage)) {
       broadcastCrossMessage(crossMessage);
     } else {
-      //done: disconnect to send end
-      disconnect(crossMessage.getRouteChainId());
+      //todo: create a new reason
+      peer.disconnect(ReasonCode.BAD_PROTOCOL);
     }
   }
 
@@ -150,22 +160,28 @@ public class CommunicateService implements Communicate {
   }
 
   /**
-   * todo:
+   * done: use genesisBlockId to chainId
    */
   public ByteString getLocalChainId() {
-    return ByteString.copyFromUtf8("");
-  }
-
-  private void disconnect(ByteString fromChainId) {
-
+    return manager.getGenesisBlockId().getByteString();
   }
 
   /**
-   * todo:
+   * done:
    */
   private void sendData(CrossMessage crossMessage) {
     ByteString toChainId = crossMessage.getToChainId();
     ByteString routeChainId = crossMessage.getRouteChainId();
-
+    List<PeerConnection> peerConnectionList;
+    if (!getLocalChainId().equals(routeChainId)) {
+      peerConnectionList = crossChainConnectPool.getPeerConnect(routeChainId);
+    } else {
+      peerConnectionList = crossChainConnectPool.getPeerConnect(toChainId);
+    }
+    if (peerConnectionList != null) {
+      peerConnectionList.forEach(peerConnection -> {
+        peerConnection.sendMessage(new CrossChainMessage(crossMessage));
+      });
+    }
   }
 }
