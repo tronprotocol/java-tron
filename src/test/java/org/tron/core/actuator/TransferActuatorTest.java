@@ -466,7 +466,7 @@ public class TransferActuatorTest {
   @Test
   public void transferToSmartContractAddress()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException, BalanceInsufficientException {
-    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
+    dbManager.getDynamicPropertiesStore().saveForbidTransferToContract(1);
     String contractName = "testContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
