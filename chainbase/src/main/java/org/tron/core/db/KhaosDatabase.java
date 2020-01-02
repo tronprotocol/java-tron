@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -28,8 +27,7 @@ import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
-import org.tron.protos.Protocol.DataSign;
-import org.tron.protos.Protocol.PbftMessage.Raw;
+import org.tron.protos.Protocol.PBFTCommitResult;
 
 @Slf4j(topic = "DB")
 @Component
@@ -107,7 +105,7 @@ public class KhaosDatabase extends TronDatabase {
   }
 
   public boolean isValidatedBlock(BlockCapsule blk, PbftSignCapsule pbftSignCapsule) {
-    DataSign dataSign = pbftSignCapsule.getDataSign();
+    PBFTCommitResult dataSign = pbftSignCapsule.getPbftCommitResult();
     return dataSign.getData().equals(blk.getBlockId().getByteString());
   }
 
@@ -121,7 +119,7 @@ public class KhaosDatabase extends TronDatabase {
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getBlockSignData(blk.getNum());
       if (pbftSignCapsule != null && !isValidatedBlock(blk, pbftSignCapsule)) {
-          throw new BlockNotInMainForkException();
+        throw new BlockNotInMainForkException();
       }
 
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
@@ -138,9 +136,7 @@ public class KhaosDatabase extends TronDatabase {
       }
     }
 
-
     miniStore.insert(block);
-
 
     if (head == null || block.num > head.num) {
       head = block;

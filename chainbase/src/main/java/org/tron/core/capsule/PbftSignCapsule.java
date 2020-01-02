@@ -6,35 +6,35 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.protos.Protocol.DataSign;
+import org.tron.protos.Protocol.PBFTCommitResult;
 
 @Slf4j(topic = "pbft")
-public class PbftSignCapsule implements ProtoCapsule<DataSign> {
+public class PbftSignCapsule implements ProtoCapsule<PBFTCommitResult> {
 
   @Getter
-  private DataSign dataSign;
+  private PBFTCommitResult pbftCommitResult;
 
   public PbftSignCapsule(byte[] data) {
     try {
-      dataSign = DataSign.parseFrom(data);
+      pbftCommitResult = PBFTCommitResult.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       logger.error("", e);
     }
   }
 
   public PbftSignCapsule(ByteString data, List<ByteString> signList) {
-    DataSign.Builder builder = DataSign.newBuilder();
-    builder.setData(data).addAllSign(signList.stream().collect(Collectors.toList()));
-    dataSign = builder.build();
+    PBFTCommitResult.Builder builder = PBFTCommitResult.newBuilder();
+    builder.setData(data).addAllSignature(signList.stream().collect(Collectors.toList()));
+    pbftCommitResult = builder.build();
   }
 
   @Override
   public byte[] getData() {
-    return dataSign.toByteArray();
+    return pbftCommitResult.toByteArray();
   }
 
   @Override
-  public DataSign getInstance() {
-    return dataSign;
+  public PBFTCommitResult getInstance() {
+    return pbftCommitResult;
   }
 }
