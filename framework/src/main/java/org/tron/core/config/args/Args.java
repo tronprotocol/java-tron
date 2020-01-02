@@ -1030,7 +1030,6 @@ public class Args extends CommonParameter {
     DBConfig.setChangedDelegation(parameter.getChangedDelegation());
     DBConfig.setActuatorSet(parameter.getActuatorSet());
     DBConfig.setTransactionHistoreSwitch(parameter.getStorage().getTransactionHistoreSwitch());
-    DBConfig.setSaveInternalTx(parameter.saveInternalTx);
     DBConfig.setECKeyCryptoEngine(parameter.isECKeyCryptoEngine());
   }
 

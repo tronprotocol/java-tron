@@ -124,8 +124,4 @@ public class DBConfig {
   @Getter
   @Setter
   private static String transactionHistoreSwitch;
-
-  @Getter
-  @Setter
-  private static boolean saveInternalTx;
 }
