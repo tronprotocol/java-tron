@@ -15,7 +15,6 @@
 
 package org.tron.core.capsule;
 
-import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
@@ -29,13 +28,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.BadItemException;
@@ -44,7 +41,6 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
-import org.tron.protos.Protocol.SrList;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "capsule")
@@ -284,13 +280,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public long getTimeStamp() {
     return this.block.getBlockHeader().getRawData().getTimestamp();
-  }
-
-  public BlockCapsule cleanTransactions(PbftSignCapsule pbftSignCapsule) {
-    BlockHeader blockHeader = this.block.getBlockHeader().toBuilder()
-        .addAllSrsSignature(pbftSignCapsule.getInstance().getSignList()).build();
-    this.block = this.block.toBuilder().setBlockHeader(blockHeader).clearTransactions().build();
-    return this;
   }
 
   @Override

@@ -16,6 +16,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.CrossStore;
 import org.tron.core.event.EventListener;
 import org.tron.core.event.entity.PbftBlockEvent;
+import org.tron.core.ibc.common.CrossUtils;
 import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -60,7 +61,8 @@ public class PbftBlockListener implements EventListener<PbftBlockEvent> {
           //send the ack to an other chain
           if (crossMessage.getToChainId().equals(communicateService.getLocalChainId())) {
             crossMessage = crossMessage.toBuilder().setToChainId(crossMessage.getFromChainId())
-                .setFromChainId(crossMessage.getToChainId()).setType(Type.ACK).build();
+                .setFromChainId(crossMessage.getToChainId()).setType(Type.ACK)
+                .setTransaction(CrossUtils.addSourceTxId(crossMessage.getTransaction())).build();
           }
           communicateService.sendCrossMessage(crossMessage, false);
           logger.info(
@@ -68,9 +70,20 @@ public class PbftBlockListener implements EventListener<PbftBlockEvent> {
               hash, Hex.toHexString(crossMessage.getFromChainId().toByteArray()),
               Hex.toHexString(crossMessage.getToChainId().toByteArray()));
         } else if (crossMessage.getType() == Type.ACK) {
-          //delete the send to end chain data
-          crossStore.removeSendCrossMsg(hash);
-          logger.info("cross chain tx:{} finish.", hash);
+          if (crossMessage.getToChainId().equals(communicateService.getLocalChainId())) {
+            //todo:delete the send to end chain data
+            TransactionCapsule transactionCapsule = chainBaseManager.getTransactionStore()
+                .getUnchecked(hash.getBytes());
+            if (transactionCapsule != null) {
+              crossStore
+                  .removeSendCrossMsg(CrossUtils.getSourceTxId(transactionCapsule.getInstance()));
+            }
+            logger.info("cross chain tx:{} finish.", hash);
+          } else {
+            crossMessage = crossMessage.toBuilder()
+                .setTransaction(CrossUtils.addSourceTxId(crossMessage.getTransaction())).build();
+            communicateService.sendCrossMessage(crossMessage, false);
+          }
         } else {
 
         }

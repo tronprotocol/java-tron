@@ -13,8 +13,8 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.event.EventBusService;
 import org.tron.core.event.entity.PbftBlockEvent;
-import org.tron.protos.Protocol.PbftMessage.Raw;
-import org.tron.protos.Protocol.SrList;
+import org.tron.protos.Protocol.PBFTMessage.Raw;
+import org.tron.protos.Protocol.SRL;
 
 @Slf4j(topic = "pbft")
 @Component
@@ -32,13 +32,13 @@ public class PbftMessageAction {
     switch (message.getType()) {
       case PBFT_BLOCK_MSG: {
         PbftBlockMessage blockMessage = (PbftBlockMessage) message;
-        long blockNum = blockMessage.getBlockNum();
+        long blockNum = blockMessage.getNumber();
         if (blockNum - checkPoint >= Param.getInstance().getCheckMsgCount()) {
           checkPoint = blockNum;
           chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
           Raw raw = blockMessage.getPbftMessage().getRawData();
           chainBaseManager.getPbftSignDataStore()
-              .putBlockSignData(blockNum, new PbftSignCapsule(raw.getData(), dataSignList));
+              .putBlockSignData(blockNum, new PbftSignCapsule(raw.toByteString(), dataSignList));
           logger.info("commit msg block num is:{}", blockNum);
         }
         eventBusService.postEvent(
@@ -48,12 +48,12 @@ public class PbftMessageAction {
       case PBFT_SR_MSG: {
         try {
           PbftSrMessage srMessage = (PbftSrMessage) message;
-          SrList srList = SrList
+          SRL srList = SRL
               .parseFrom(srMessage.getPbftMessage().getRawData().getData().toByteArray());
           Raw raw = srMessage.getPbftMessage().getRawData();
-          chainBaseManager.getPbftSignDataStore()
-              .putSrSignData(srList.getCycle(), new PbftSignCapsule(raw.getData(), dataSignList));
-          logger.info("sr commit msg :{}, cycle:{}", srMessage.getBlockNum(), srList.getCycle());
+          chainBaseManager.getPbftSignDataStore().putSrSignData(srList.getEpoch(),
+              new PbftSignCapsule(raw.toByteString(), dataSignList));
+          logger.info("sr commit msg :{}, cycle:{}", srMessage.getNumber(), srList.getEpoch());
         } catch (Exception e) {
           logger.error("process the sr list error!", e);
         }
