@@ -38,7 +38,7 @@ public class PbftMessageAction {
           chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
           Raw raw = blockMessage.getPbftMessage().getRawData();
           chainBaseManager.getPbftSignDataStore()
-              .putBlockSignData(blockNum, new PbftSignCapsule(raw.getData(), dataSignList));
+              .putBlockSignData(blockNum, new PbftSignCapsule(raw.toByteString(), dataSignList));
           logger.info("commit msg block num is:{}", blockNum);
         }
         eventBusService.postEvent(
@@ -51,8 +51,8 @@ public class PbftMessageAction {
           SRL srList = SRL
               .parseFrom(srMessage.getPbftMessage().getRawData().getData().toByteArray());
           Raw raw = srMessage.getPbftMessage().getRawData();
-          chainBaseManager.getPbftSignDataStore()
-              .putSrSignData(srList.getEpoch(), new PbftSignCapsule(raw.getData(), dataSignList));
+          chainBaseManager.getPbftSignDataStore().putSrSignData(srList.getEpoch(),
+              new PbftSignCapsule(raw.toByteString(), dataSignList));
           logger.info("sr commit msg :{}, cycle:{}", srMessage.getNumber(), srList.getEpoch());
         } catch (Exception e) {
           logger.error("process the sr list error!", e);
