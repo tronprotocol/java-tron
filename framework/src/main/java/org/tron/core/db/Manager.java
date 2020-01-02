@@ -270,11 +270,7 @@ public class Manager {
           }
         }
       };
-
-  @Autowired
-  @Getter
-  private PbftCommitMsgStore pbftCommitMsgStore;
-
+  
   public WitnessStore getWitnessStore() {
     return chainBaseManager.getWitnessStore();
   }
@@ -1056,6 +1052,7 @@ public class Manager {
           return;
         }
       } else {
+
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
           return;
         }
@@ -1065,7 +1062,7 @@ public class Manager {
             .getParentHash()
             .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
           logger.warn(
-              "switch fork! new head num = {}, blockid = {}",
+              "switch fork! new head num = {}, block id = {}",
               newBlock.getNum(),
               newBlock.getBlockId());
 

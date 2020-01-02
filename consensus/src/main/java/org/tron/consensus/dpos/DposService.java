@@ -3,44 +3,29 @@ package org.tron.consensus.dpos;
 
 import static org.tron.consensus.base.Constant.SOLIDIFIED_THRESHOLD;
 
-import com.alibaba.fastjson.JSON;
-import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
-import io.netty.util.internal.ConcurrentSet;
-import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.ListUtils;
 import org.joda.time.DateTime;
-import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.args.GenesisBlock;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.BlockHandle;
 import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Protocol.DataSign;
-import org.tron.protos.Protocol.SrList;
 
 @Slf4j(topic = "consensus")
 @Component
