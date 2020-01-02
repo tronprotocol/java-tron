@@ -104,7 +104,7 @@ public class CommunicateService implements Communicate {
   public boolean validProof(CrossMessage crossMessage) {
     List<Proof> proofList = crossMessage.getProofList();
     Sha256Hash txId = getTxId(crossMessage);
-    Sha256Hash root = getRoot(crossMessage.getRouteChainId(), crossMessage.getRootHeight());
+    Sha256Hash root = getRoot(crossMessage, crossMessage.getRootHeight());
     MerkleTree merkleTree = MerkleTree.getInstance();
     List<ProofLeaf> proofLeafList = proofList.stream().map(proof -> merkleTree.new ProofLeaf(
         Sha256Hash.of(proof.getHash().toByteArray()),
@@ -151,10 +151,14 @@ public class CommunicateService implements Communicate {
   /**
    * todo: other chain block tx merkel root
    */
-  private Sha256Hash getRoot(ByteString fromChainId, long blockHeight) {
-    if ("find the cross chain id".equals(fromChainId)) {
+  private Sha256Hash getRoot(CrossMessage crossMessage, long blockHeight) {
+    ByteString fromChainId = crossMessage.getFromChainId();
+    ByteString routeChainId = crossMessage.getRouteChainId();
+    if (routeChainId.isEmpty() || getLocalChainId().equals(routeChainId)) {
+      //use fromChainId
       return null;
     } else {
+      //use routeChainId
       return null;
     }
   }
@@ -173,7 +177,7 @@ public class CommunicateService implements Communicate {
     ByteString toChainId = crossMessage.getToChainId();
     ByteString routeChainId = crossMessage.getRouteChainId();
     List<PeerConnection> peerConnectionList;
-    if (!getLocalChainId().equals(routeChainId)) {
+    if (!routeChainId.isEmpty() && !getLocalChainId().equals(routeChainId)) {
       peerConnectionList = crossChainConnectPool.getPeerConnect(routeChainId);
     } else {
       peerConnectionList = crossChainConnectPool.getPeerConnect(toChainId);
