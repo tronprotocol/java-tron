@@ -9,6 +9,7 @@ import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.MarketPriceStore;
+import org.tron.protos.Protocol.MarketOrderPosition;
 import org.tron.protos.Protocol.MarketPriceLinkedList;
 import org.tron.protos.Protocol.MarketPrice;
 
@@ -65,8 +66,8 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
     }
 
     int size = 1;
-    while(!head.isNextNull()) {
-      size ++;
+    while (!head.isNextNull()) {
+      size++;
       head = marketPriceStore.get(head.getNext());
     }
     return size;
@@ -117,14 +118,21 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
 
 
   /*
-  * insert price by sort, if same, just return
-  * store ops outside(itself)
-  * return head, null if not changed
-  * */
+   * insert price by sort, if same, just return
+   * store ops outside(itself)
+   * return head, null if not changed
+   * */
   public MarketPriceCapsule insertMarket(MarketPrice marketPrice, byte[] sellTokenID,
-      byte[] buyTokenID, MarketPriceStore marketPriceStore) throws ItemNotFoundException {
+      byte[] buyTokenID, MarketPriceStore marketPriceStore, MarketOrderPosition position)
+      throws ItemNotFoundException {
 
-    MarketPriceCapsule head = new MarketPriceCapsule(this.getBestPrice());
+    MarketPriceCapsule head;
+    //get the start position
+    if (position.getPrePriceKey().isEmpty()) {
+      head = new MarketPriceCapsule(this.getBestPrice());
+    } else {
+      head = marketPriceStore.get(position.getPrePriceKey().toByteArray());
+    }
 
     // dummy.next = head
     MarketPriceCapsule dummy = new MarketPriceCapsule(0, 0);
@@ -136,10 +144,12 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
 
     boolean found = false;
     while (!head.isNextNull()) {
-      if (MarketUtils.isLowerPrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice)) {
+      if (MarketUtils
+          .isLowerPrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice)) {
         head = marketPriceStore.get(head.getNext());
       } else {
-        if (MarketUtils.isSamePrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice)) {
+        if (MarketUtils
+            .isSamePrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice)) {
           found = true;
         }
         break;
@@ -178,8 +188,8 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
   }
 
   /*
-  * delete current price, including head and other node
-  * */
+   * delete current price, including head and other node
+   * */
   public MarketPrice deleteCurrentPrice(MarketPrice currentPrice, byte[] pairPriceKey,
       MarketPriceStore marketPriceStore, byte[] makerPair, MarketPairToPriceStore pairToPriceStore)
       throws ItemNotFoundException {
@@ -198,7 +208,8 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
         pairToPriceStore.delete(makerPair);
       } else {
         // current.pre.next = null
-        MarketPriceCapsule prePriceCapsule = marketPriceStore.get(currentPrice.getPrev().toByteArray());
+        MarketPriceCapsule prePriceCapsule = marketPriceStore
+            .get(currentPrice.getPrev().toByteArray());
         prePriceCapsule.setNext(new byte[0]);
         marketPriceStore.put(prePriceCapsule.getKey(this.getSellTokenId(), this.getBuyTokenId()),
             prePriceCapsule);
@@ -208,7 +219,8 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
         // node.val = node.next.val
         // node.next = node.next.next
         // node.next.next.pre = node.pre
-        MarketPriceCapsule nextPriceCapsule = marketPriceStore.get(currentPrice.getNext().toByteArray());
+        MarketPriceCapsule nextPriceCapsule = marketPriceStore
+            .get(currentPrice.getNext().toByteArray());
         nextPriceCapsule.setPrev(currentPrice.getPrev().toByteArray());
         byte[] nextPriceKey = nextPriceCapsule.getKey(this.getSellTokenId(), this.getBuyTokenId());
         marketPriceStore.put(nextPriceKey, nextPriceCapsule);
@@ -218,14 +230,16 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
           nextPrice = nextPriceCapsule.getInstance();
           this.priceList = this.priceList.toBuilder().setBestPrice(nextPrice).build();
         } else {
-          MarketPriceCapsule prePriceCapsule = marketPriceStore.get(currentPrice.getPrev().toByteArray());
+          MarketPriceCapsule prePriceCapsule = marketPriceStore
+              .get(currentPrice.getPrev().toByteArray());
           prePriceCapsule.setNext(nextPriceKey);
           marketPriceStore.put(prePriceCapsule.getKey(this.getSellTokenId(), this.getBuyTokenId()),
               prePriceCapsule);
 
           // update pre to preListCapsule, because itself has changed
           if (prePriceCapsule.isPrevNull()) {
-            this.priceList = this.priceList.toBuilder().setBestPrice(prePriceCapsule.getInstance()).build();
+            this.priceList = this.priceList.toBuilder().setBestPrice(prePriceCapsule.getInstance())
+                .build();
           }
         }
 

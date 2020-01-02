@@ -169,6 +169,20 @@ public class MarketSellAssetActuatorTest {
             .build());
   }
 
+  private Any getContract(String address, String sellTokenId, long sellTokenQuantity,
+      String buyTokenId, long buyTokenQuantity, ByteString prePriceKey) {
+
+    return Any.pack(
+        MarketSellAssetContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
+            .setSellTokenId(ByteString.copyFrom(sellTokenId.getBytes()))
+            .setSellTokenQuantity(sellTokenQuantity)
+            .setBuyTokenId(ByteString.copyFrom(buyTokenId.getBytes()))
+            .setBuyTokenQuantity(buyTokenQuantity)
+            .setPrePriceKey(prePriceKey)
+            .build());
+  }
+
   private void InitAsset() {
     AssetIssueCapsule assetIssueCapsule1 = new AssetIssueCapsule(
         AssetIssueContract.newBuilder()
@@ -480,18 +494,24 @@ public class MarketSellAssetActuatorTest {
     }
   }
 
+
   /**
-   * validate Success, result is Success .
+   * validate Success without position, result is Success .
    */
   @Test
-  public void validateSuccess() {
+  public void validateSuccessWithoutPosition() throws Exception {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     String sellTokenId = TOKEN_ID_ONE;
-    long sellTokenQuant = 100_000000L;
+    long sellTokenQuant = 100L;
     String buyTokenId = "_";
-    long buyTokenQuant = 200_000000L;
+    long buyTokenQuant = 300L;
+
+    for (int i = 0; i < 10; i++) {
+      addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+          200L + i, OWNER_ADDRESS_FIRST);
+    }
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
@@ -503,7 +523,247 @@ public class MarketSellAssetActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+    } catch (ContractValidateException e) {
+      fail("validateSuccess error");
+    }
+  }
+
+
+  /**
+   * without position, time out
+   */
+  @Test
+  public void withoutPositionTimeOut() throws Exception {
+
+    // Initialize the order
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitAsset();
+
+    //(sell id_1  and buy id_2)
+    // TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 300L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+
+    // Initialize the order book
+    //MAX_SEARCH_NUM = 10
+    for (int i = 0; i < 11; i++) {
+      addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+          200L + i, OWNER_ADDRESS_FIRST);
+    }
+
+    //the final price order should be : order_1, order_current, order_2
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+    String errorMessage = "Maximum number of queries exceeded，10";
+    try {
+      actuator.validate();
+      fail(errorMessage);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(errorMessage, e.getMessage());
+    }
+  }
+
+  /**
+   * position price error ,prePriceKey not exists
+   */
+  @Test
+  public void prePriceKeyNotExists() throws Exception {
+
+    // Initialize the order
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitAsset();
+
+    //(sell id_1  and buy id_2)
+    // TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 300L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+
+    ByteString prePreKey = ByteString.copyFromUtf8("not exists");
+    //the final price order should be : order_1, order_current, order_2
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant, prePreKey));
+
+    String errorMessage = "prePriceKey not exists";
+    try {
+      actuator.validate();
+      fail(errorMessage);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(errorMessage, e.getMessage());
+    }
+  }
+
+  private void prepareAccount(String sellTokenId, String buyTokenId,
+      long sellTokenQuant, long buyTokenQuant, byte[] ownerAddress) {
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+  }
+
+  /**
+   * position price error ,pre price should be less than current price
+   */
+  @Test
+  public void prePriceError() throws Exception {
+
+    // Initialize the order
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitAsset();
+
+    //(sell id_1  and buy id_2)
+    // TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 300L;
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+
+    prepareAccount(sellTokenId, buyTokenId, sellTokenQuant, buyTokenQuant, ownerAddress);
+
+    //pre price should be less than current price
+    addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+        400L, OWNER_ADDRESS_FIRST);
+
+    byte[] prePreKey = MarketUtils
+        .createPairPriceKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 100L, 400L);
+
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant,
+        ByteString.copyFrom(prePreKey)));
+
+    String errorMessage = "pre price should be less than current price";
+    try {
+      actuator.validate();
+      fail(errorMessage);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(errorMessage, e.getMessage());
+    }
+  }
+
+  /**
+   * position  time out
+   */
+  @Test
+  public void positionTimeOut() throws Exception {
+
+    // Initialize the order
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitAsset();
+
+    //(sell id_1  and buy id_2)
+    // TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 300L;
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+
+    prepareAccount(sellTokenId, buyTokenId, sellTokenQuant, buyTokenQuant, ownerAddress);
+
+    //MAX_SEARCH_NUM = 10
+    for (int i = 0; i < 20; i++) {
+      byte[] prePriceKey = null;
+      if (i != 0) {
+        prePriceKey = MarketUtils
+            .createPairPriceKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 100L,
+                200L + i - 1);
+      }
+
+      addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+          200L + i, OWNER_ADDRESS_FIRST, prePriceKey);
+    }
+
+    byte[] prePriceKey = MarketUtils
+        .createPairPriceKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 100L, 209L);
+
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant,
+        ByteString.copyFrom(prePriceKey)));
+
+    String errorMessage = "Maximum number of queries exceeded，10";
+    try {
+      actuator.validate();
+      fail(errorMessage);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(errorMessage, e.getMessage());
+    }
+  }
+
+  /**
+   * validate Success with position, result is Success .
+   */
+  @Test
+  public void validateSuccessWithPosition() throws Exception {
+
+    // Initialize the order
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    InitAsset();
+
+    //(sell id_1  and buy id_2)
+    // TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 300L;
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+
+    prepareAccount(sellTokenId, buyTokenId, sellTokenQuant, buyTokenQuant, ownerAddress);
+
+    //MAX_SEARCH_NUM = 10
+    for (int i = 0; i < 20; i++) {
+      byte[] prePriceKey = null;
+      if (i != 0) {
+        prePriceKey = MarketUtils
+            .createPairPriceKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 100L,
+                200L + i - 1);
+      }
+
+      addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+          200L + i, OWNER_ADDRESS_FIRST, prePriceKey);
+    }
+
+    byte[] prePriceKey = MarketUtils
+        .createPairPriceKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 100L, 210L);
+
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant,
+        ByteString.copyFrom(prePriceKey)));
 
     try {
       actuator.validate();
@@ -514,6 +774,11 @@ public class MarketSellAssetActuatorTest {
 
   private void addOrder(String sellTokenId, long sellTokenQuant,
       String buyTokenId, long buyTokenQuant, String ownAddress) throws Exception {
+    addOrder(sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant, ownAddress);
+  }
+
+  private void addOrder(String sellTokenId, long sellTokenQuant,
+      String buyTokenId, long buyTokenQuant, String ownAddress, byte[] prePreKey) throws Exception {
 
     byte[] ownerAddress = ByteArray.fromHexString(ownAddress);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
@@ -523,8 +788,14 @@ public class MarketSellAssetActuatorTest {
 
     // do process
     MarketSellAssetActuator actuator = new MarketSellAssetActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
-        ownAddress, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+    if (prePreKey == null || prePreKey.length == 0) {
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+          ownAddress, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+    } else {
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+          ownAddress, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant,
+          ByteString.copyFrom(prePreKey)));
+    }
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     actuator.validate();
