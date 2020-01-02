@@ -343,7 +343,7 @@ public class ProposalService {
         if (manager.getDynamicPropertiesStore().getAllowCreationOfContracts() == 0) {
           throw new ContractValidateException(
               "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
-                  + "before [ALLOW_TVM_SOLIDITY_059] can be proposed");
+                  + "before [FORBID_TRANSFER_TO_CONTRACT] can be proposed");
         }
         break;
       }
