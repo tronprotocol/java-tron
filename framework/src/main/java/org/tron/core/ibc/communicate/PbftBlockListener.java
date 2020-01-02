@@ -27,14 +27,15 @@ import org.tron.protos.contract.BalanceContract.CrossTokenContract;
 @Service
 public class PbftBlockListener implements EventListener<PbftBlockEvent> {
 
-  private Cache<Long, List<Sha256Hash>> callBackTx = CacheBuilder.newBuilder().initialCapacity(100)
-      .expireAfterWrite(1, TimeUnit.HOURS).build(new CacheLoader<Long, List<Sha256Hash>>() {
+  private static final Cache<Long, List<Sha256Hash>> callBackTx = CacheBuilder.newBuilder()
+      .initialCapacity(100).expireAfterWrite(1, TimeUnit.HOURS)
+      .build(new CacheLoader<Long, List<Sha256Hash>>() {
         @Override
         public List<Sha256Hash> load(Long aLong) throws Exception {
           return new ArrayList<>();
         }
       });
-  private Cache<Long, List<Sha256Hash>> waitingSendTx = CacheBuilder.newBuilder()
+  private static final Cache<Long, List<Sha256Hash>> waitingSendTx = CacheBuilder.newBuilder()
       .initialCapacity(100).expireAfterWrite(1, TimeUnit.HOURS)
       .build(new CacheLoader<Long, List<Sha256Hash>>() {
         @Override
@@ -47,7 +48,7 @@ public class PbftBlockListener implements EventListener<PbftBlockEvent> {
   private CommunicateService communicateService;
 
   @Autowired
-  private ChainBaseManager chainBaseManager;
+  private static ChainBaseManager chainBaseManager;
 
   @Override
   public void listener(PbftBlockEvent event) {
@@ -108,7 +109,7 @@ public class PbftBlockListener implements EventListener<PbftBlockEvent> {
     waitingSendTx.invalidate(event.getBlockNum());
   }
 
-  public boolean addCallBackTx(long blockNum, TransactionCapsule transactionCapsule) {
+  public static boolean addCallBackTx(long blockNum, TransactionCapsule transactionCapsule) {
     Sha256Hash txHash = transactionCapsule.getTransactionId();
     Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
     if (transactionCapsule.isSource()) {

@@ -275,9 +275,6 @@ public class Manager {
   @Getter
   private PbftCommitMsgStore pbftCommitMsgStore;
 
-  @Autowired
-  private PbftBlockListener pbftBlockListener;
-
   public WitnessStore getWitnessStore() {
     return chainBaseManager.getWitnessStore();
   }
@@ -1539,7 +1536,7 @@ public class Manager {
         if (Objects.nonNull(result)) {
           transationRetCapsule.addTransactionInfo(result);
         }
-        pbftBlockListener.addCallBackTx(block.getNum(), transactionCapsule);
+        PbftBlockListener.addCallBackTx(block.getNum(), transactionCapsule);
       }
       accountStateCallBack.executePushFinish();
     } finally {
