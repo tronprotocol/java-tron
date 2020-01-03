@@ -165,6 +165,17 @@ public class MarketSellAssetActuatorTest {
     chainBaseManager.getMarketPairToPriceStore()
         .delete(MarketUtils.createPairKey(TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes()));
 
+    MarketPriceStore marketPriceStore = chainBaseManager.getMarketPriceStore();
+    marketPriceStore.forEach(marketPriceCapsuleEntry -> {
+      marketPriceStore.delete(marketPriceCapsuleEntry.getKey());
+    });
+
+    MarketPairToPriceStore pairToPriceStore = chainBaseManager
+        .getMarketPairToPriceStore();
+    pairToPriceStore.forEach(
+        marketPriceLinkedListCapsuleEntry -> pairToPriceStore
+            .delete(marketPriceLinkedListCapsuleEntry.getKey()));
+
     //delete orderList
     MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
@@ -555,7 +566,7 @@ public class MarketSellAssetActuatorTest {
     String sellTokenId = TOKEN_ID_ONE;
     long sellTokenQuant = 100L;
     String buyTokenId = TOKEN_ID_TWO;
-    long buyTokenQuant = 700L;
+    long buyTokenQuant = 300L;
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
@@ -695,7 +706,7 @@ public class MarketSellAssetActuatorTest {
     String sellTokenId = TOKEN_ID_ONE;
     long sellTokenQuant = 100L;
     String buyTokenId = TOKEN_ID_TWO;
-    long buyTokenQuant = 600L;
+    long buyTokenQuant = 300L;
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
 
     prepareAccount(sellTokenId, buyTokenId, sellTokenQuant, buyTokenQuant, ownerAddress);
