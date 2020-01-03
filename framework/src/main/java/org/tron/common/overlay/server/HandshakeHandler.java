@@ -118,7 +118,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   protected void sendHelloMsg(ChannelHandlerContext ctx, long time) {
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
-        manager.getChainBaseManager().getGenesisBlockId(), manager.getChainBaseManager().getSolidBlockId(),
+        manager.getChainBaseManager().getGenesisBlockId(),
+        manager.getChainBaseManager().getSolidBlockId(),
         chainBaseManager.getHeadBlockId());
     fastForward.fillHelloMessage(message, channel);
     ctx.writeAndFlush(message.getSendData());
@@ -152,15 +153,19 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     }
 
     if (!Arrays
-        .equals(manager.getChainBaseManager().getGenesisBlockId().getBytes(), msg.getGenesisBlockId().getBytes())) {
+        .equals(manager.getChainBaseManager().getGenesisBlockId().getBytes(),
+            msg.getGenesisBlockId().getBytes())) {
       logger
-          .info("Peer {} different genesis block, peer->{}, me->{}", ctx.channel().remoteAddress(),
-              msg.getGenesisBlockId().getString(), manager.getChainBaseManager().getGenesisBlockId().getString());
+          .info("Peer {} different genesis block, peer->{}, me->{}",
+              ctx.channel().remoteAddress(),
+              msg.getGenesisBlockId().getString(),
+              manager.getChainBaseManager().getGenesisBlockId().getString());
       channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
       return;
     }
 
-    if (manager.getChainBaseManager().getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum() && !manager
+    if (manager.getChainBaseManager().getSolidBlockId().getNum() >=
+        msg.getSolidBlockId().getNum() && !manager
         .containBlockInMainChain(msg.getSolidBlockId())) {
       logger.info("Peer {} different solid block, peer->{}, me->{}", ctx.channel().remoteAddress(),
           msg.getSolidBlockId().getString(), manager.getChainBaseManager().getSolidBlockId().getString());

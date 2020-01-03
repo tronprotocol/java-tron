@@ -389,7 +389,8 @@ public class Manager {
 
     this.initGenesis();
     try {
-      this.khaosDb.start(getChainBaseManager().getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
+      this.khaosDb.start(getChainBaseManager()
+          .getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
     } catch (ItemNotFoundException e) {
       logger.error(
           "Can not find Dynamic highest block from DB! \nnumber={} \nhash={}",

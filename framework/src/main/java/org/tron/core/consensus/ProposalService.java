@@ -118,7 +118,8 @@ public class ProposalService extends ProposalUtil {
         case ALLOW_ADAPTIVE_ENERGY: {
           if (manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
             manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
-            if (manager.getChainBaseManager().getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+            if (manager.getChainBaseManager().getForkController()
+                .pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
               //24 * 60 * 2 . one minute,1/2 total limit.
               manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(2880);
               manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(

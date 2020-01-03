@@ -59,7 +59,8 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
     }
     byte[] rootHash = null;
     try {
-      BlockCapsule parentBlockCapsule = manager.getChainBaseManager().getBlockById(blockCapsule.getParentBlockId());
+      BlockCapsule parentBlockCapsule = manager.getChainBaseManager()
+          .getBlockById(blockCapsule.getParentBlockId());
       rootHash = parentBlockCapsule.getInstance().getBlockHeader().getRawData()
           .getAccountStateRoot().toByteArray();
     } catch (Exception e) {

@@ -379,7 +379,8 @@ public class Wallet extends WalletUtil {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
     List<AssetIssueCapsule> assetIssueList =
-        dbManager.getChainBaseManager().getAssetIssueStoreFinal().getAssetIssuesPaginated(offset, limit);
+        dbManager.getChainBaseManager().getAssetIssueStoreFinal()
+            .getAssetIssuesPaginated(offset, limit);
 
     if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
