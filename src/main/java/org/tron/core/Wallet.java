@@ -1034,6 +1034,14 @@ public class Wallet {
             .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
             .build());
 
+
+    // ShieldedTransactionCreateAccountFee
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getShieldedTransactionCreateAccountFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
+            .build());
+
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAdaptiveResourceLimitTargetRatio")
         .setValue(
