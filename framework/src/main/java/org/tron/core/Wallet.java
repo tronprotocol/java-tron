@@ -311,8 +311,8 @@ public class Wallet {
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
       long expiration =
-              dbManager.getHeadBlockTimeStamp() + Args.getInstance()
-                      .getTrxExpirationTimeInMilliseconds();
+          dbManager.getHeadBlockTimeStamp() + Args.getInstance()
+              .getTrxExpirationTimeInMilliseconds();
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
@@ -482,7 +482,7 @@ public class Wallet {
           }
           String base64 = TransactionCapsule.getBase64FromByteString(sig);
           byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
-                  .isECKeyCryptoEngine());
+              .isECKeyCryptoEngine());
           approveList.add(ByteString.copyFrom(address)); //out put approve list.
         }
         tswBuilder.addAllApprovedList(approveList);
@@ -786,7 +786,8 @@ public class Wallet {
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getShieldedTransactionCreateAccountFee")
-            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
+            .setValue(
+                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -853,21 +854,21 @@ public class Wallet {
   }
 
   private Map<String, Long> setAssetNetLimit(Map<String, Long> assetNetLimitMap,
-                                AccountCapsule accountCapsule) {
+      AccountCapsule accountCapsule) {
     Map<String, Long> allFreeAssetNetUsage;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-                .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
       });
     } else {
       allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-                .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
       });
     }
     return allFreeAssetNetUsage;
