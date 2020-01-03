@@ -24,6 +24,7 @@ import org.tron.common.entity.PeerInfo;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.WitnessProductBlockService.CheatWitnessInfo;
@@ -48,6 +49,9 @@ public class NodeInfoService {
 
   @Autowired
   private Manager dbManager;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
@@ -190,8 +194,8 @@ public class NodeInfoService {
 
   protected void setBlockInfo(NodeInfo nodeInfo) {
     nodeInfo.setBeginSyncNum(dbManager.getSyncBeginNumber());
-    nodeInfo.setBlock(dbManager.getHeadBlockId().getString());
-    nodeInfo.setSolidityBlock(dbManager.getSolidBlockId().getString());
+    nodeInfo.setBlock(chainBaseManager.getHeadBlockId().getString());
+    nodeInfo.setSolidityBlock(dbManager.getChainBaseManager().getSolidBlockId().getString());
   }
 
   protected void setCheatWitnessInfo(NodeInfo nodeInfo) {

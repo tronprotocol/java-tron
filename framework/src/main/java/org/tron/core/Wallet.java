@@ -159,14 +159,9 @@ import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
-import org.tron.protos.Protocol.Exchange;
-import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
@@ -176,9 +171,7 @@ import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j
 @Component
@@ -194,6 +187,10 @@ public class Wallet extends WalletUtil {
   private TronNetDelegate tronNetDelegate;
   @Autowired
   private Manager dbManager;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
   @Autowired
   private NodeManager nodeManager;
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
@@ -248,16 +245,8 @@ public class Wallet extends WalletUtil {
    */
   @Deprecated
   public Transaction createTransaction(TransferContract contract) {
-    AccountStore accountStore = dbManager.getAccountStore();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     return new TransactionCapsule(contract, accountStore).getInstance();
-  }
-
-  public TransactionCapsule createTransactionCapsuleWithoutValidate(
-      com.google.protobuf.Message message,
-      ContractType contractType) {
-    TransactionCapsule trx = new TransactionCapsule(message, contractType);
-    setTransaction(trx);
-    return trx;
   }
 
   /**
@@ -304,7 +293,7 @@ public class Wallet extends WalletUtil {
       } else {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
       }
-      if (dbManager.getDynamicPropertiesStore().supportVM()) {
+      if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
@@ -359,12 +348,53 @@ public class Wallet extends WalletUtil {
     }
   }
 
+  public TransactionCapsule createTransactionCapsuleWithoutValidate(
+      com.google.protobuf.Message message,
+      ContractType contractType) {
+    TransactionCapsule trx = new TransactionCapsule(message, contractType);
+    setTransaction(trx);
+    return trx;
+  }
+
+
+  public Block getBlockByNum(long blockNum) {
+    try {
+      return dbManager.getChainBaseManager().getBlockByNum(blockNum).getInstance();
+    } catch (StoreException e) {
+      logger.info(e.getMessage());
+      return null;
+    }
+  }
+
+  public AssetIssueList getAssetIssueList() {
+    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
+
+    dbManager.getChainBaseManager().getAssetIssueStoreFinal().getAllAssetIssues()
+        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+
+    return builder.build();
+  }
+
+  public AssetIssueList getAssetIssueList(long offset, long limit) {
+    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
+
+    List<AssetIssueCapsule> assetIssueList =
+        dbManager.getChainBaseManager().getAssetIssueStoreFinal().getAssetIssuesPaginated(offset, limit);
+
+    if (CollectionUtils.isEmpty(assetIssueList)) {
+      return null;
+    }
+
+    assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
+    return builder.build();
+  }
+
   public BytesMessage getNullifier(ByteString id) {
     if (Objects.isNull(id)) {
       return null;
     }
     BytesCapsule nullifier = null;
-    nullifier = dbManager.getNullifierStore().get(id.toByteArray());
+    nullifier = chainBaseManager.getNullifierStore().get(id.toByteArray());
 
     if (nullifier != null) {
       return BytesMessage.newBuilder().setValue(ByteString.copyFrom(nullifier.getData())).build();
@@ -402,7 +432,7 @@ public class Wallet extends WalletUtil {
       throw new RuntimeException("treeRoot is null, blockNumber:" + (blockNumber - 1));
     }
 
-    IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
+    IncrementalMerkleTreeCapsule treeCapsule = chainBaseManager.getMerkleTreeStore()
         .get(treeRoot);
     if (treeCapsule == null) {
       if ("fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e"
@@ -416,7 +446,7 @@ public class Wallet extends WalletUtil {
     IncrementalMerkleTreeContainer tree = treeCapsule.toMerkleTreeContainer();
 
     //Get the block of blockNum
-    BlockCapsule block = dbManager.getBlockByNum(blockNumber);
+    BlockCapsule block = dbManager.getChainBaseManager().getBlockByNum(blockNumber);
 
     IncrementalMerkleVoucherContainer witness = null;
 
@@ -495,7 +525,7 @@ public class Wallet extends WalletUtil {
     long start = large;
     long end = large + synBlockNum - 1;
 
-    long latestBlockHeaderNumber = dbManager.getDynamicPropertiesStore()
+    long latestBlockHeaderNumber = chainBaseManager.getDynamicPropertiesStore()
         .getLatestBlockHeaderNumber();
 
     if (end > latestBlockHeaderNumber) {
@@ -504,7 +534,7 @@ public class Wallet extends WalletUtil {
     }
 
     for (long n = start; n <= end; n++) {
-      BlockCapsule block = dbManager.getBlockByNum(n);
+      BlockCapsule block = dbManager.getChainBaseManager().getBlockByNum(n);
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
         Contract contract1 = transaction1.getRawData().getContract(0);
@@ -542,7 +572,7 @@ public class Wallet extends WalletUtil {
     }
 
     for (long n = start; n <= end; n++) {
-      BlockCapsule block = dbManager.getBlockByNum(n);
+      BlockCapsule block = dbManager.getChainBaseManager().getBlockByNum(n);
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
         Contract contract1 = transaction1.getRawData().getContract(0);
@@ -661,7 +691,7 @@ public class Wallet extends WalletUtil {
   }
 
   public long getShieldedTransactionFee() {
-    return dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
+    return chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee();
   }
 
   public void checkCmValid(List<SpendNote> shieldedSpends, List<ReceiveNote> shieldedReceives)
@@ -1115,7 +1145,7 @@ public class Wallet extends WalletUtil {
         note.getRcm().toByteArray());
     byte[] nf = baseNote.nullifier(ak, nk, voucherContainer.position());
 
-    if (dbManager.getNullifierStore().has(nf)) {
+    if (chainBaseManager.getNullifierStore().has(nf)) {
       result = SpendResult.newBuilder()
           .setResult(true)
           .setMessage("Input note has been spent")

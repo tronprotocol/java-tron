@@ -65,7 +65,7 @@ public class AssetUpdateHelper {
         logger.info("The number of block that have processed:{}", blockNum);
       }
       try {
-        BlockCapsule block = dbManager.getBlockByNum(blockNum);
+        BlockCapsule block = dbManager.getChainBaseManager().getBlockByNum(blockNum);
         for (TransactionCapsule transaction : block.getTransactions()) {
           if (transaction.getInstance().getRawData().getContract(0).getType()
               == ContractType.AssetIssueContract) {

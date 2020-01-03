@@ -118,7 +118,7 @@ public class ProposalService extends ProposalUtil {
         case ALLOW_ADAPTIVE_ENERGY: {
           if (manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
             manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
-            if (manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+            if (manager.getChainBaseManager().getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
               //24 * 60 * 2 . one minute,1/2 total limit.
               manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(2880);
               manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(
@@ -182,6 +182,11 @@ public class ProposalService extends ProposalUtil {
         }
         case SHIELDED_TRANSACTION_FEE: {
           manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
+          break;
+        }
+        case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
+          manager.getDynamicPropertiesStore()
+              .saveShieldedTransactionCreateAccountFee(entry.getValue());
           break;
         }
         default:

@@ -142,7 +142,7 @@ public class TransactionStoreTest {
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Hash.wrap(dbManager.getChainBaseManager().getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -211,7 +211,7 @@ public class TransactionStoreTest {
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Hash.wrap(dbManager.getChainBaseManager().getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(

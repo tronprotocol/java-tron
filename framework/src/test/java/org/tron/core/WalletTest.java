@@ -67,7 +67,6 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
-//import org.tron.protos.Protocol.DeferredTransaction;
 
 @Slf4j
 public class WalletTest {
@@ -354,7 +353,7 @@ public class WalletTest {
     Assert.assertTrue("getBlocksByLimit2", blocksByLimit.getBlockList().contains(block4));
     blocksByLimit = wallet.getBlocksByLimitNext(0, 5);
     Assert.assertTrue("getBlocksByLimit3",
-        blocksByLimit.getBlockList().contains(manager.getGenesisBlock().getInstance()));
+        blocksByLimit.getBlockList().contains(manager.getChainBaseManager().getGenesisBlock().getInstance()));
     Assert.assertTrue("getBlocksByLimit4", blocksByLimit.getBlockList().contains(block1));
     Assert.assertTrue("getBlocksByLimit5", blocksByLimit.getBlockList().contains(block2));
     Assert.assertTrue("getBlocksByLimit6", blocksByLimit.getBlockList().contains(block3));

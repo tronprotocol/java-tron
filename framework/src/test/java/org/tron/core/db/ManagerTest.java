@@ -1,14 +1,9 @@
 package org.tron.core.db;
 
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.AssetIssueContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.valueOf;
-
 import com.google.common.collect.Maps;
-import com.google.inject.internal.cglib.proxy.$InvocationHandler;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -136,7 +131,7 @@ public class ManagerTest extends BlockGenerate {
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Hash.wrap(dbManager.getChainBaseManager().getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -188,13 +183,13 @@ public class ManagerTest extends BlockGenerate {
 
     if (isUnlinked) {
       Assert.assertEquals("getBlockIdByNum is error",
-              0,dbManager.getHeadBlockNum());
+              0, chainManager.getHeadBlockNum());
     } else {
       try {
         Assert.assertEquals(
             "getBlockIdByNum is error",
             blockCapsule2.getBlockId().toString(),
-            dbManager.getBlockIdByNum(1).toString());
+            dbManager.getChainBaseManager().getBlockIdByNum(1).toString());
       } catch (ItemNotFoundException e) {
         e.printStackTrace();
       }
@@ -216,9 +211,9 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertTrue(chainManager.getExchangeV2Store() instanceof ExchangeV2Store);
     Assert.assertTrue(chainManager.getExchangeStore() instanceof ExchangeStore);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    Assert.assertTrue(dbManager.getExchangeStoreFinal() instanceof ExchangeStore);
+    Assert.assertTrue(dbManager.getChainBaseManager().getExchangeStoreFinal() instanceof ExchangeStore);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    Assert.assertTrue(dbManager.getExchangeStoreFinal() instanceof ExchangeV2Store);
+    Assert.assertTrue(dbManager.getChainBaseManager().getExchangeStoreFinal() instanceof ExchangeV2Store);
 
   }
 
@@ -242,7 +237,7 @@ public class ManagerTest extends BlockGenerate {
   @Test
   public void getHeadTest() {
     try {
-      BlockCapsule head = dbManager.getHead();
+      BlockCapsule head = chainManager.getHead();
       Assert.assertTrue(head instanceof BlockCapsule);  // successfully
     } catch (HeaderNotFound e) {
       Assert.assertFalse(e instanceof HeaderNotFound);
@@ -251,7 +246,7 @@ public class ManagerTest extends BlockGenerate {
     chainManager.getBlockStore().reset();
 
     try {
-      dbManager.getHead();
+      chainManager.getHead();
       Assert.assertTrue(false);
     } catch (HeaderNotFound e) {
       logger.info(e.getMessage());
@@ -452,7 +447,7 @@ public class ManagerTest extends BlockGenerate {
     byte[] address = ecKey.getAddress();
 
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    dbManager.addWitness(ByteString.copyFrom(address));
+    chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
@@ -530,7 +525,7 @@ public class ManagerTest extends BlockGenerate {
     chainManager.getWitnessStore().put(witnessCapsulef.getAddress().toByteArray(), witnessCapsulef);
     chainManager.getWitnessStore().put(witnessCapsules.getAddress().toByteArray(), witnessCapsules);
     chainManager.getWitnessStore().put(witnessCapsulet.getAddress().toByteArray(), witnessCapsulet);
-    dbManager
+    chainManager
         .getWitnesses()
         .forEach(
             witnessAddress -> {
@@ -538,7 +533,7 @@ public class ManagerTest extends BlockGenerate {
                   "witness address is {}",
                   ByteArray.toHexString(witnessAddress.toByteArray()));
             });
-    int sizeTis = dbManager.getWitnesses().size();
+    int sizeTis = chainManager.getWitnesses().size();
     Assert.assertEquals("update add witness size is ",
         2, sizeTis - sizePrv);
   }
@@ -560,7 +555,7 @@ public class ManagerTest extends BlockGenerate {
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    dbManager.addWitness(ByteString.copyFrom(address));
+    chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
 
@@ -605,17 +600,17 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertEquals(chainManager.getBlockStore().size(), size + 3);
 
     Assert.assertEquals(
-        dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 1),
+        dbManager.getChainBaseManager().getBlockIdByNum(chainManager.getHead().getNum() - 1),
         blockCapsule1.getBlockId());
     Assert.assertEquals(
-        dbManager.getBlockIdByNum(dbManager.getHead().getNum() - 2),
+        dbManager.getChainBaseManager().getBlockIdByNum(chainManager.getHead().getNum() - 2),
         blockCapsule1.getParentHash());
 
     Assert.assertEquals(
         blockCapsule2.getBlockId(),
         chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertEquals(
-        dbManager.getHead().getBlockId(),
+        chainManager.getHead().getBlockId(),
         chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
   }
 
@@ -637,7 +632,7 @@ public class ManagerTest extends BlockGenerate {
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    dbManager.addWitness(ByteString.copyFrom(address));
+    chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
@@ -666,7 +661,7 @@ public class ManagerTest extends BlockGenerate {
 
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
-    context.getBean(KhaosDatabase.class).removeBlk(dbManager.getBlockIdByNum(num));
+    context.getBean(KhaosDatabase.class).removeBlk(dbManager.getChainBaseManager().getBlockIdByNum(num));
     Exception exception = null;
 
     BlockCapsule blockCapsule2 =
@@ -740,7 +735,7 @@ public class ManagerTest extends BlockGenerate {
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    dbManager.addWitness(ByteString.copyFrom(address));
+    chainManager.addWitness(ByteString.copyFrom(address));
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
@@ -813,7 +808,7 @@ public class ManagerTest extends BlockGenerate {
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {
-    dbManager.getWitnesses().clear();
+    chainManager.getWitnesses().clear();
     return IntStream.range(0, 2)
         .mapToObj(
             i -> {
@@ -823,7 +818,7 @@ public class ManagerTest extends BlockGenerate {
 
               WitnessCapsule witnessCapsule = new WitnessCapsule(address);
               chainManager.getWitnessStore().put(address.toByteArray(), witnessCapsule);
-              dbManager.addWitness(address);
+              chainManager.addWitness(address);
 
               AccountCapsule accountCapsule =
                   new AccountCapsule(Account.newBuilder().setAddress(address).build());
@@ -842,8 +837,8 @@ public class ManagerTest extends BlockGenerate {
   }
 
   private BlockCapsule createTestBlockCapsule(long time,
-                                              long number, ByteString hash,
-                                              Map<ByteString, String> addressToProvateKeys) {
+      long number, ByteString hash,
+      Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
         witnessAddress);
@@ -854,8 +849,8 @@ public class ManagerTest extends BlockGenerate {
   }
 
   private BlockCapsule createTestBlockCapsuleError(long time,
-                                                   long number, ByteString hash,
-                                                   Map<ByteString, String> addressToProvateKeys) {
+      long number, ByteString hash,
+      Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
         ByteString.copyFromUtf8("onlyTest"));

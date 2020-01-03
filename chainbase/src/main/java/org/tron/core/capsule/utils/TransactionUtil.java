@@ -21,15 +21,16 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
@@ -105,7 +106,7 @@ public class TransactionUtil {
 
     builder.setReceipt(traceReceipt.getReceipt());
 
-    if (Args.getInstance().isSaveInternalTx() && null != programResult.getInternalTransactions()) {
+    if (CommonParameter.getInstance().isSaveInternalTx() && null != programResult.getInternalTransactions()) {
       for (InternalTransaction internalTransaction : programResult
           .getInternalTransactions()) {
         Protocol.InternalTransaction.Builder internalTrxBuilder = Protocol.InternalTransaction

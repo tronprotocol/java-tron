@@ -16,13 +16,11 @@
 package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
-import com.sun.org.apache.xpath.internal.Arg;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;

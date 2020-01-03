@@ -16,6 +16,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
@@ -64,6 +65,9 @@ public class TronNetDelegate {
   private Manager dbManager;
 
   @Autowired
+  private ChainBaseManager chainBaseManager;
+
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
 
   @Getter
@@ -100,38 +104,38 @@ public class TronNetDelegate {
 
   public long getBlockTime(BlockId id) throws P2pException {
     try {
-      return dbManager.getBlockById(id).getTimeStamp();
+      return dbManager.getChainBaseManager().getBlockById(id).getTimeStamp();
     } catch (BadItemException | ItemNotFoundException e) {
       throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND, id.getString());
     }
   }
 
   public BlockId getHeadBlockId() {
-    return dbManager.getHeadBlockId();
+    return chainBaseManager.getHeadBlockId();
   }
 
   public BlockId getSolidBlockId() {
-    return dbManager.getSolidBlockId();
+    return dbManager.getChainBaseManager().getSolidBlockId();
   }
 
   public BlockId getGenesisBlockId() {
-    return dbManager.getGenesisBlockId();
+    return dbManager.getChainBaseManager().getGenesisBlockId();
   }
 
   public BlockId getBlockIdByNum(long num) throws P2pException {
     try {
-      return dbManager.getBlockIdByNum(num);
+      return dbManager.getChainBaseManager().getBlockIdByNum(num);
     } catch (ItemNotFoundException e) {
       throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND, "num: " + num);
     }
   }
 
   public BlockCapsule getGenesisBlock() {
-    return dbManager.getGenesisBlock();
+    return dbManager.getChainBaseManager().getGenesisBlock();
   }
 
   public long getHeadBlockTimeStamp() {
-    return dbManager.getHeadBlockTimeStamp();
+    return chainBaseManager.getHeadBlockTimeStamp();
   }
 
   public boolean containBlock(BlockId id) {
@@ -167,7 +171,7 @@ public class TronNetDelegate {
     try {
       switch (type) {
         case BLOCK:
-          return new BlockMessage(dbManager.getBlockById(hash));
+          return new BlockMessage(dbManager.getChainBaseManager().getBlockById(hash));
         case TRX:
           TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
           if (tx != null) {

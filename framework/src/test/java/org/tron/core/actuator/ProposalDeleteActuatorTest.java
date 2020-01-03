@@ -125,7 +125,7 @@ public class ProposalDeleteActuatorTest {
     paras.put(0L, 3 * 27 * 1000L);
     ProposalCreateActuator actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setForkUtils(dbManager.getForkController())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);

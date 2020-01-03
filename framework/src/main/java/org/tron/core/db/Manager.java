@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 
 import com.google.common.cache.Cache;
@@ -98,7 +97,6 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -140,12 +138,11 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.TransactionRet;
 
 
 @Slf4j(topic = "DB")
 @Component
-public class Manager extends ChainBaseManager{
+public class Manager {
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
   private static final String SAVE_BLOCK = "save block: ";
@@ -358,16 +355,6 @@ public class Manager extends ChainBaseManager{
     getWitnessScheduleStore().saveActiveWitnesses(witnessAddresses);
   }
 
-  public BlockCapsule getHead() throws HeaderNotFound {
-    List<BlockCapsule> blocks = getBlockStore().getBlockByLatestNum(1);
-    if (CollectionUtils.isNotEmpty(blocks)) {
-      return blocks.get(0);
-    } else {
-      logger.info("Header block Not Found");
-      throw new HeaderNotFound("Header block Not Found");
-    }
-  }
-
   public long getHeadBlockNum() {
     return getDynamicPropertiesStore().getLatestBlockHeaderNumber();
   }
@@ -402,7 +389,7 @@ public class Manager extends ChainBaseManager{
 
     this.initGenesis();
     try {
-      this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
+      this.khaosDb.start(getChainBaseManager().getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
     } catch (ItemNotFoundException e) {
       logger.error(
           "Can not find Dynamic highest block from DB! \nnumber={} \nhash={}",
@@ -453,9 +440,11 @@ public class Manager extends ChainBaseManager{
    * init genesis block.
    */
   public void initGenesis() {
-    this.genesisBlock = BlockUtil.newGenesisBlockCapsule();
-    if (this.containBlock(this.genesisBlock.getBlockId())) {
-      Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
+    chainBaseManager.initGenesis();
+    BlockCapsule genesisBlock = chainBaseManager.getGenesisBlock();
+
+    if (this.containBlock(genesisBlock.getBlockId())) {
+      Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
     } else {
       if (this.hasBlocks()) {
         logger.error(
@@ -464,19 +453,18 @@ public class Manager extends ChainBaseManager{
         System.exit(1);
       } else {
         logger.info("create genesis block");
-        Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
+        Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
 
-        chainBaseManager.getBlockStore().put(this.genesisBlock.getBlockId().getBytes(),
-            this.genesisBlock);
-        chainBaseManager.getBlockIndexStore().put(this.genesisBlock.getBlockId());
+        chainBaseManager.getBlockStore().put(genesisBlock.getBlockId().getBytes(), genesisBlock);
+        chainBaseManager.getBlockIndexStore().put(genesisBlock.getBlockId());
 
-        logger.info(SAVE_BLOCK + this.genesisBlock);
+        logger.info(SAVE_BLOCK + genesisBlock);
         // init Dynamic Properties Store
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderHash(
-            this.genesisBlock.getBlockId().getByteString());
+            genesisBlock.getBlockId().getByteString());
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(
-            this.genesisBlock.getTimeStamp());
+            genesisBlock.getTimeStamp());
         this.initAccount();
         this.initWitness();
         this.khaosDb.start(genesisBlock);
@@ -556,7 +544,7 @@ public class Manager extends ChainBaseManager{
         blockNum -> futures.add(service.submit(() -> {
           try {
             blockCount.incrementAndGet();
-            BlockCapsule blockCapsule = getBlockByNum(blockNum);
+            BlockCapsule blockCapsule = getChainBaseManager().getBlockByNum(blockNum);
             if (blockCapsule.getTransactions().isEmpty()) {
               emptyBlockCount.incrementAndGet();
             }
@@ -665,7 +653,8 @@ public class Manager extends ChainBaseManager{
                 + "solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
             Hex.toHexString(blockHash),
-            getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+            getChainBaseManager().getSolidBlockId().getString(),
+            chainBaseManager.getHeadBlockId().getString()).toString();
         logger.info(str);
         throw new TaposException(str);
       }
@@ -673,7 +662,8 @@ public class Manager extends ChainBaseManager{
       String str = String
           .format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
               ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
-              getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
+              getChainBaseManager().getSolidBlockId().getString(),
+              chainBaseManager.getHeadBlockId().getString()).toString();
       logger.info(str);
       throw new TaposException(str);
     }
@@ -686,7 +676,7 @@ public class Manager extends ChainBaseManager{
           "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
     }
     long transactionExpiration = transactionCapsule.getExpiration();
-    long headBlockTime = getHeadBlockTimeStamp();
+    long headBlockTime = chainBaseManager.getHeadBlockTimeStamp();
     if (transactionExpiration <= headBlockTime
         || transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
       throw new TransactionExpirationException(
@@ -786,7 +776,7 @@ public class Manager extends ChainBaseManager{
   public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException,
       TooBigTransactionResultException {
-    BandwidthProcessor processor = new BandwidthProcessor(this);
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
     processor.consume(trx, trace);
   }
 
@@ -797,7 +787,7 @@ public class Manager extends ChainBaseManager{
   public synchronized void eraseBlock() {
     session.reset();
     try {
-      BlockCapsule oldHeadBlock = getBlockById(
+      BlockCapsule oldHeadBlock = getChainBaseManager().getBlockById(
           getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("begin to erase block:" + oldHeadBlock);
       khaosDb.pop();
@@ -1246,7 +1236,8 @@ public class Manager extends ChainBaseManager{
 
     long postponedTrxCount = 0;
 
-    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockNum() + 1, getHeadBlockId(),
+    BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
+        chainBaseManager.getHeadBlockId(),
         blockTime, miner.getWitnessAddress());
     blockCapsule.generatedByMyself = true;
     session.reset();
@@ -1531,17 +1522,6 @@ public class Manager extends ChainBaseManager{
     logger.info("******** end to close db ********");
   }
 
-  public void closeOneStore(ITronChainBase database) {
-    logger.info("******** begin to close " + database.getName() + " ********");
-    try {
-      database.close();
-    } catch (Exception e) {
-      logger.info("failed to close  " + database.getName() + ". " + e);
-    } finally {
-      logger.info("******** end to close " + database.getName() + " ********");
-    }
-  }
-
   public boolean isTooManyPending() {
     return getPendingTransactions().size() + getRePushTransactions().size()
         > MAX_TRANSACTION_PENDING;
@@ -1656,7 +1636,7 @@ public class Manager extends ChainBaseManager{
         || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
       logger.info("switchfork occurred, post reorgContractTrigger");
       try {
-        BlockCapsule oldHeadBlock = getBlockById(
+        BlockCapsule oldHeadBlock = getChainBaseManager().getBlockById(
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
         for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
           postContractTrigger(trx.getTrxTrace(), true);

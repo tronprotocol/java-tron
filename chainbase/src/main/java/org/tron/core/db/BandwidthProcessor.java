@@ -201,7 +201,9 @@ public class BandwidthProcessor extends ResourceProcessor {
         } catch (Exception ex) {
           throw new RuntimeException(ex.getMessage());
         }
-        toAccount = chainBaseManager.getAccountStore().get(transferContract.getToAddress().toByteArray());
+
+        toAccount =
+            chainBaseManager.getAccountStore().get(transferContract.getToAddress().toByteArray());
         return toAccount == null;
       case TransferAssetContract:
         TransferAssetContract transferAssetContract;
@@ -232,7 +234,9 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     AssetIssueCapsule assetIssueCapsule;
     AssetIssueCapsule assetIssueCapsuleV2;
-    assetIssueCapsule = Commons.getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+
+    assetIssueCapsule = Commons.getAssetIssueStoreFinal(
+        chainBaseManager.getDynamicPropertiesStore(),
         chainBaseManager.getAssetIssueStore(), chainBaseManager.getAssetIssueV2Store())
         .get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
@@ -321,7 +325,8 @@ public class BandwidthProcessor extends ResourceProcessor {
 
       chainBaseManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
-      assetIssueCapsuleV2 = chainBaseManager.getAssetIssueV2Store().get(assetIssueCapsule.createDbV2Key());
+      assetIssueCapsuleV2 =
+          chainBaseManager.getAssetIssueV2Store().get(assetIssueCapsule.createDbV2Key());
       assetIssueCapsuleV2.setPublicFreeAssetNetUsage(newPublicFreeAssetNetUsage);
       assetIssueCapsuleV2.setPublicLatestFreeNetTime(publicLatestFreeNetTime);
       chainBaseManager.getAssetIssueV2Store()
@@ -330,7 +335,8 @@ public class BandwidthProcessor extends ResourceProcessor {
       accountCapsule.putLatestAssetOperationTimeMapV2(tokenID,
           latestAssetOperationTime);
       accountCapsule.putFreeAssetNetUsageV2(tokenID, newFreeAssetNetUsage);
-      chainBaseManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+      chainBaseManager.getAssetIssueV2Store()
+          .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
     }
 
     chainBaseManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);

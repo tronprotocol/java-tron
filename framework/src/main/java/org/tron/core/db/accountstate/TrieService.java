@@ -35,7 +35,7 @@ public class TrieService {
     long latestNumber = blockNumber;
     byte[] rootHash = null;
     try {
-      BlockCapsule blockCapsule = manager.getBlockByNum(latestNumber);
+      BlockCapsule blockCapsule = manager.getChainBaseManager().getBlockByNum(latestNumber);
       ByteString value = blockCapsule.getInstance().getBlockHeader().getRawData()
           .getAccountStateRoot();
       rootHash = value == null ? null : value.toByteArray();
