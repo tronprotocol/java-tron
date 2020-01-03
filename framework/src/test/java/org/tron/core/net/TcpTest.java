@@ -60,7 +60,7 @@ public class TcpTest {
   public void normalTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.normal));
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId(), false);
     sendMessage(channel, message);
     validResultCloseConnect(channel);
   }
@@ -69,7 +69,7 @@ public class TcpTest {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.errorGenesisBlock));
     BlockId genesisBlockId = new BlockId();
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(), genesisBlockId,
-        manager.getSolidBlockId(), manager.getHeadBlockId());
+        manager.getSolidBlockId(), manager.getHeadBlockId(), false);
     sendMessage(channel, message);
     validResultCloseConnect(channel);
   }
@@ -78,7 +78,7 @@ public class TcpTest {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.errorVersion));
     Args.getInstance().setNodeP2pVersion(1);
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId(), false);
     Args.getInstance().setNodeP2pVersion(2);
     sendMessage(channel, message);
     validResultCloseConnect(channel);
@@ -87,7 +87,7 @@ public class TcpTest {
   public void errorSolidBlockIdTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.errorSolid));
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        manager.getGenesisBlockId(), new BlockId(), manager.getHeadBlockId());
+        manager.getGenesisBlockId(), new BlockId(), manager.getHeadBlockId(), false);
     sendMessage(channel, message);
     validResultCloseConnect(channel);
   }
@@ -95,7 +95,7 @@ public class TcpTest {
   public void repeatConnectTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.normal));
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId(), false);
     sendMessage(channel, message);
     validResultUnCloseConnect();
     Channel repeatChannel = BaseNet.connect(new HandshakeHandler(TestType.repeatConnect));
@@ -119,7 +119,7 @@ public class TcpTest {
   public void errorMsgTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.normal));
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId());
+        manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId(), false);
     sendMessage(channel, message);
     validResultUnCloseConnect();
     List<PeerConnection> beforeActivePeers = ReflectUtils.getFieldValue(pool, "activePeers");

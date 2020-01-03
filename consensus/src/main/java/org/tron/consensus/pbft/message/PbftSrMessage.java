@@ -9,10 +9,10 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.message.MessageTypes;
-import org.tron.protos.Protocol.PbftMessage;
-import org.tron.protos.Protocol.PbftMessage.Raw;
-import org.tron.protos.Protocol.PbftMessage.Type;
-import org.tron.protos.Protocol.SrList;
+import org.tron.protos.Protocol.PBFTMessage;
+import org.tron.protos.Protocol.PBFTMessage.Raw;
+import org.tron.protos.Protocol.PBFTMessage.Type;
+import org.tron.protos.Protocol.SRL;
 
 public class PbftSrMessage extends PbftBaseMessage {
 
@@ -26,7 +26,7 @@ public class PbftSrMessage extends PbftBaseMessage {
 
   @Override
   public String getNo() {
-    return pbftMessage.getRawData().getBlockNum() + "_" + getType().asByte();
+    return pbftMessage.getRawData().getNumber() + "_" + getType().asByte();
   }
 
   @Override
@@ -36,27 +36,41 @@ public class PbftSrMessage extends PbftBaseMessage {
 
   public static PbftBaseMessage buildPrePrepareMessage(BlockCapsule block,
       List<ByteString> currentWitness, long epoch) {
-    SrList.Builder srListBuilder = SrList.newBuilder();
+    SRL.Builder srListBuilder = SRL.newBuilder();
     byte[] data = srListBuilder.addAllSrAddress(currentWitness).setEpoch(epoch).build()
         .toByteArray();
     PbftSrMessage pbftSrMessage = new PbftSrMessage();
     Miner miner = Param.getInstance().getMiner();
     ECKey ecKey = ECKey.fromPrivate(miner.getPrivateKey());
     Raw.Builder rawBuilder = Raw.newBuilder();
-    PbftMessage.Builder builder = PbftMessage.newBuilder();
-    byte[] publicKey = ecKey.getAddress();
-    byte[] dataSign = ecKey.sign(Sha256Hash.hash(data)).toByteArray();
-    rawBuilder.setBlockNum(block.getNum())
+    PBFTMessage.Builder builder = PBFTMessage.newBuilder();
+    rawBuilder.setNumber(block.getNum())
         .setPbftMsgType(Type.PREPREPARE)
-        .setTime(System.currentTimeMillis())
-        .setPublicKey(ByteString.copyFrom(publicKey == null ? new byte[0] : publicKey))
-        .setData(ByteString.copyFrom(data))
-        .setDataSign(ByteString.copyFrom(dataSign));
+        .setData(ByteString.copyFrom(data));
     Raw raw = rawBuilder.build();
     byte[] hash = Sha256Hash.hash(raw.toByteArray());
     ECDSASignature signature = ecKey.sign(hash);
-    builder.setRawData(raw).setSign(ByteString.copyFrom(signature.toByteArray()));
-    PbftMessage message = builder.build();
+    builder.setRawData(raw).setSignature(ByteString.copyFrom(signature.toByteArray()));
+    PBFTMessage message = builder.build();
+    pbftSrMessage.setType(MessageTypes.PBFT_SR_MSG.asByte())
+        .setPbftMessage(message).setData(message.toByteArray()).setSwitch(block.isSwitch());
+    return pbftSrMessage;
+  }
+
+  public static PbftBaseMessage buildFullNodePrePrepareMessage(BlockCapsule block,
+      List<ByteString> currentWitness, long epoch) {
+    SRL.Builder srListBuilder = SRL.newBuilder();
+    byte[] data = srListBuilder.addAllSrAddress(currentWitness).setEpoch(epoch).build()
+        .toByteArray();
+    PbftSrMessage pbftSrMessage = new PbftSrMessage();
+    Raw.Builder rawBuilder = Raw.newBuilder();
+    PBFTMessage.Builder builder = PBFTMessage.newBuilder();
+    rawBuilder.setNumber(block.getNum())
+        .setPbftMsgType(Type.PREPREPARE)
+        .setData(ByteString.copyFrom(data));
+    Raw raw = rawBuilder.build();
+    builder.setRawData(raw);
+    PBFTMessage message = builder.build();
     pbftSrMessage.setType(MessageTypes.PBFT_SR_MSG.asByte())
         .setPbftMessage(message).setData(message.toByteArray()).setSwitch(block.isSwitch());
     return pbftSrMessage;

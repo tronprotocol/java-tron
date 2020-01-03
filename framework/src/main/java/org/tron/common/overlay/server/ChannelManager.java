@@ -7,6 +7,7 @@ import static org.tron.protos.Protocol.ReasonCode.UNKNOWN;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.protobuf.ByteString;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -21,6 +22,8 @@ import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.ibc.connect.CrossChainConnectPool;
+import org.tron.core.ibc.connect.CrossChainTcpServer;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -36,6 +39,10 @@ public class ChannelManager {
   private SyncPool syncPool;
   @Autowired
   private FastForward fastForward;
+  @Autowired
+  private CrossChainConnectPool crossChainConnectPool;
+  @Autowired
+  private CrossChainTcpServer crossChainTcpServer;
   private Args args = Args.getInstance();
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
@@ -62,6 +69,11 @@ public class ChannelManager {
           "PeerServerThread").start();
     }
 
+    if (this.args.getCrossChainPort() > 0) {
+      new Thread(() -> crossChainTcpServer.start(Args.getInstance().getCrossChainPort()),
+          "CrossChainServerThread").start();
+    }
+
     InetAddress address;
     for (Node node : args.getPassiveNodes()) {
       address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
@@ -85,6 +97,7 @@ public class ChannelManager {
 
     syncPool.init();
     fastForward.init();
+    crossChainConnectPool.init();
   }
 
   public void processDisconnect(Channel channel, ReasonCode reason) {
@@ -106,6 +119,7 @@ public class ChannelManager {
 
   public void notifyDisconnect(Channel channel) {
     syncPool.onDisconnect(channel);
+    crossChainConnectPool.onDisconnect(channel);
     activePeers.values().remove(channel);
     if (channel != null) {
       if (channel.getNodeStatistics() != null) {
@@ -154,6 +168,21 @@ public class ChannelManager {
     }
     activePeers.put(peer.getNodeIdWrapper(), peer);
     logger.info("Add active peer {}, total active peers: {}", peer, activePeers.size());
+    return true;
+  }
+
+  public synchronized boolean processCrossChainPeer(ByteString chainId, Channel peer) {
+
+    if (recentlyDisconnected.getIfPresent(peer) != null) {
+      logger.info("Peer {} recently disconnected.", peer.getInetAddress());
+      return false;
+    }
+
+    if (badPeers.getIfPresent(peer) != null) {
+      peer.disconnect(peer.getNodeStatistics().getDisconnectReason());
+      return false;
+    }
+
     return true;
   }
 

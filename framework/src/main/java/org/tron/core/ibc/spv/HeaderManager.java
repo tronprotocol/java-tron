@@ -26,8 +26,8 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.HeaderDynamicPropertiesStore;
 import org.tron.protos.Protocol.BlockHeader;
-import org.tron.protos.Protocol.DataSign;
-import org.tron.protos.Protocol.SrList;
+import org.tron.protos.Protocol.PBFTCommitResult;
+import org.tron.protos.Protocol.SRL;
 
 @Slf4j
 @Component
@@ -164,13 +164,14 @@ public class HeaderManager {
     }
   }
 
-  private boolean validSrList(DataSign dataSign, long cycle) throws InvalidProtocolBufferException {
+  private boolean validSrList(PBFTCommitResult dataSign, long epoch)
+      throws InvalidProtocolBufferException {
     //valid sr list
-    SrList srList = SrList.parseFrom(dataSign.getData().toByteArray());
+    SRL srList = SRL.parseFrom(dataSign.getData().toByteArray());
     List<ByteString> addressList = srList.getSrAddressList();
-    List<ByteString> preCycleSrSignList = dataSign.getSignList();
+    List<ByteString> preCycleSrSignList = dataSign.getSignatureList();
     if (addressList.size() != 0) {
-      if (cycle != srList.getEpoch()) {
+      if (epoch != srList.getEpoch()) {
         return false;
       }
       Set<ByteString> preCycleSrSignSet = new ConcurrentSet();
@@ -185,7 +186,7 @@ public class HeaderManager {
       List<Future<Boolean>> futureList = new ArrayList<>();
       for (ByteString sign : preCycleSrSignList) {
         futureList.add(executorService.submit(
-            new ValidSrListTask(cycle, preCycleSrSignSet, dataHash, preCycleSrSet, sign)));
+            new ValidSrListTask(epoch, preCycleSrSignSet, dataHash, preCycleSrSet, sign)));
       }
       for (Future<Boolean> future : futureList) {
         try {
@@ -207,15 +208,15 @@ public class HeaderManager {
 
   private class ValidSrListTask implements Callable<Boolean> {
 
-    long cycle;
+    long epoch;
     Set<ByteString> preCycleSrSignSet;
     byte[] dataHash;
     Set<ByteString> preCycleSrSet;
     ByteString sign;
 
-    ValidSrListTask(long cycle, Set<ByteString> preCycleSrSignSet,
+    ValidSrListTask(long epoch, Set<ByteString> preCycleSrSignSet,
         byte[] dataHash, Set<ByteString> preCycleSrSet, ByteString sign) {
-      this.cycle = cycle;
+      this.epoch = epoch;
       this.preCycleSrSignSet = preCycleSrSignSet;
       this.dataHash = dataHash;
       this.preCycleSrSet = preCycleSrSet;
@@ -232,7 +233,7 @@ public class HeaderManager {
         }
         preCycleSrSignSet.remove(sign);
       } catch (SignatureException e) {
-        logger.error("block {} valid sr list sign fail!", cycle, e);
+        logger.error("block {} valid sr list sign fail!", epoch, e);
         return false;
       }
       return true;

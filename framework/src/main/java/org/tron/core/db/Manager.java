@@ -270,14 +270,7 @@ public class Manager {
           }
         }
       };
-
-  @Autowired
-  @Getter
-  private PbftCommitMsgStore pbftCommitMsgStore;
-
-  @Autowired
-  private PbftBlockListener pbftBlockListener;
-
+  
   public WitnessStore getWitnessStore() {
     return chainBaseManager.getWitnessStore();
   }
@@ -1059,6 +1052,7 @@ public class Manager {
           return;
         }
       } else {
+
         if (newBlock.getNum() <= getDynamicPropertiesStore().getLatestBlockHeaderNumber()) {
           return;
         }
@@ -1068,7 +1062,7 @@ public class Manager {
             .getParentHash()
             .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
           logger.warn(
-              "switch fork! new head num = {}, blockid = {}",
+              "switch fork! new head num = {}, block id = {}",
               newBlock.getNum(),
               newBlock.getBlockId());
 
@@ -1380,6 +1374,7 @@ public class Manager {
         //process cross tx
         Sha256Hash txHash = crossTxQueue.poll();
         CrossMessage crossMessage = getCrossStore().getReceiveCrossMsgUnEx(txHash);
+        //todo:a->o->b
         if (crossMessage != null && crossMessage.getTimeOutBlockHeight() < getHeadBlockNum()) {
           trx = new TransactionCapsule(crossMessage.getTransaction());
           trx.setSource(false);
@@ -1538,7 +1533,7 @@ public class Manager {
         if (Objects.nonNull(result)) {
           transationRetCapsule.addTransactionInfo(result);
         }
-        pbftBlockListener.addCallBackTx(block.getNum(), transactionCapsule.getTransactionId());
+        PbftBlockListener.addCallBackTx(block.getNum(), transactionCapsule);
       }
       accountStateCallBack.executePushFinish();
     } finally {

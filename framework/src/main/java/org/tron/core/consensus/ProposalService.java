@@ -188,6 +188,7 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveCrossChain(entry.getValue());
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(52);
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(53);
+          break;
         }
         default:
           find = false;

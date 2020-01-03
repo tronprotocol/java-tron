@@ -332,6 +332,7 @@ message Transaction {
     bytes scripts = 12;
     int64 timestamp = 14;
     int64 fee_limit = 18;
+    bytes source_tx_id = 19; //give cross chain tx use, if is ack type set value, others is null
   }
 
   raw raw_data = 1;
@@ -511,6 +512,7 @@ message HelloMessage {
   BlockId headBlockId = 6;
   bytes address = 7;
   bytes signature = 8;
+  bool crossChain = 9;
 }
 
 message InternalTransaction {
@@ -637,7 +639,7 @@ message NodeInfo {
   }
 }
 
-message PbftMessage {
+message PBFTMessage {
   enum Type {
     VIEW_CHANGE = 0;
     REQUEST = 1;
@@ -647,24 +649,16 @@ message PbftMessage {
   }
   message Raw {
     Type pbftMsgType = 1;
-    int64 blockNum = 2;
-    int64 time = 3;
-    bytes publicKey = 4;
-    bytes data = 5;
-    bytes data_sign = 6;
+    int64 number = 2;
+    bytes data = 3;
   }
   Raw raw_data = 1;
-  bytes sign = 2;
+  bytes signature = 2;
 }
 
-message PbftMessageList {
-  int64 blockNum = 1;
-  repeated PbftMessage pbftMessage = 2;
-}
-
-message DataSign {
+message PBFTCommitResult {
   bytes data = 1;
-  repeated bytes sign = 2;
+  repeated bytes signature = 2;
 }
 
 message DownloadHeader {
@@ -687,7 +681,7 @@ message CrossMessage {
   bytes to_chain_id = 2;
   bytes from_chain_id = 3;
   bytes route_chain_id = 4;
-  int64 time_out_block_height = 5;
+  int64 time_out_block_height = 5; //this time out height is end node block height
   repeated Proof proof = 6;
   int64 root_height = 7;
   int32 version = 8;
@@ -699,7 +693,7 @@ message Proof {
   bool leftOrRight = 2;
 }
 
-message SrList {
+message SRL {
   int64 epoch = 1;
   repeated bytes srAddress = 2;
 }

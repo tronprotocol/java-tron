@@ -46,5 +46,6 @@ public class CrossChainMsgHandler implements TronMsgHandler {
     }
     crossStore.saveReceiveCrossMsg(txId, crossChainMessage.getCrossMessage());
     manager.addCrossTx(txId);
+    communicateService.broadcastCrossMessage(crossChainMessage.getCrossMessage());
   }
 }

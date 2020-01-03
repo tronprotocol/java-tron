@@ -40,9 +40,9 @@ public class PeerClient {
     });
   }
 
-  public void connect(String host, int port, String remoteId) {
+  public void connect(String host, int port, String remoteId, boolean isCrossChain) {
     try {
-      ChannelFuture f = connectAsync(host, port, remoteId, false);
+      ChannelFuture f = connectAsync(host, port, remoteId, false, isCrossChain);
       f.sync().channel().closeFuture().sync();
     } catch (Exception e) {
       logger
@@ -50,9 +50,11 @@ public class PeerClient {
     }
   }
 
-  public ChannelFuture connectAsync(NodeHandler nodeHandler, boolean discoveryMode) {
+  public ChannelFuture connectAsync(NodeHandler nodeHandler, boolean discoveryMode,
+      boolean isCrossChain) {
     Node node = nodeHandler.getNode();
-    return connectAsync(node.getHost(), node.getPort(), node.getHexId(), discoveryMode)
+    return connectAsync(node.getHost(), node.getPort(), node.getHexId(), discoveryMode,
+        isCrossChain)
         .addListener((ChannelFutureListener) future -> {
           if (!future.isSuccess()) {
             logger.warn("connect to {}:{} fail,cause:{}", node.getHost(), node.getPort(),
@@ -65,12 +67,12 @@ public class PeerClient {
   }
 
   private ChannelFuture connectAsync(String host, int port, String remoteId,
-      boolean discoveryMode) {
+      boolean discoveryMode, boolean isCrossChain) {
 
     logger.info("connect peer {} {} {}", host, port, remoteId);
 
     TronChannelInitializer tronChannelInitializer = ctx
-        .getBean(TronChannelInitializer.class, remoteId);
+        .getBean(TronChannelInitializer.class, remoteId, isCrossChain);
     tronChannelInitializer.setPeerDiscoveryMode(discoveryMode);
 
     Bootstrap b = new Bootstrap();

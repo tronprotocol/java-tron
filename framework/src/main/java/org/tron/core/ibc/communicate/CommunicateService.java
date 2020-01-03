@@ -18,13 +18,18 @@ import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.capsule.utils.MerkleTree.ProofLeaf;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.Manager;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.net.message.CrossChainMessage;
+import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.CrossMessage;
+import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Proof;
+import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "Communicate")
 @Service
@@ -32,7 +37,7 @@ public class CommunicateService implements Communicate {
 
   private Map<String, CrossMessage> data;
 
-  private long timeOut = 1000 * 60 * 60L;
+  private long timeOut = 1000 * 60 * 2L;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -40,11 +45,19 @@ public class CommunicateService implements Communicate {
   @Autowired
   private SyncPool syncPool;
 
+  @Autowired
+  private Manager manager;
+
+  @Autowired
+  private CrossChainConnectPool crossChainConnectPool;
+
   @Override
-  public void sendCrossMessage(CrossMessage crossMessage) {
-    Sha256Hash txId = Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
+  public void sendCrossMessage(CrossMessage crossMessage, boolean save) {
+    Sha256Hash txId = getTxId(crossMessage);
     if (checkCommit(txId)) {
-      chainBaseManager.getCrossStore().saveSendCrossMsg(txId, crossMessage);
+      if (save) {
+        chainBaseManager.getCrossStore().saveSendCrossMsg(txId, crossMessage);
+      }
       try {
         //generate proof path
         BlockStore blockStore = chainBaseManager.getBlockStore();
@@ -78,20 +91,20 @@ public class CommunicateService implements Communicate {
   }
 
   @Override
-  public void receiveCrossMessage(CrossMessage crossMessage) {
+  public void receiveCrossMessage(PeerConnection peer, CrossMessage crossMessage) {
     if (validProof(crossMessage)) {
       broadcastCrossMessage(crossMessage);
     } else {
-      //done: disconnect to send end
-      disconnect(crossMessage.getRouteChainId());
+      //todo: create a new reason
+      peer.disconnect(ReasonCode.BAD_PROTOCOL);
     }
   }
 
   @Override
   public boolean validProof(CrossMessage crossMessage) {
     List<Proof> proofList = crossMessage.getProofList();
-    Sha256Hash txId = Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
-    Sha256Hash root = getRoot(crossMessage.getRouteChainId(), crossMessage.getRootHeight());
+    Sha256Hash txId = getTxId(crossMessage);
+    Sha256Hash root = getRoot(crossMessage, crossMessage.getRootHeight());
     MerkleTree merkleTree = MerkleTree.getInstance();
     List<ProofLeaf> proofLeafList = proofList.stream().map(proof -> merkleTree.new ProofLeaf(
         Sha256Hash.of(proof.getHash().toByteArray()),
@@ -125,34 +138,54 @@ public class CommunicateService implements Communicate {
     return false;
   }
 
+  private Sha256Hash getTxId(CrossMessage crossMessage) {
+    Sha256Hash txId;
+    if (crossMessage.getType() == Type.ACK) {
+      txId = Sha256Hash.wrap(crossMessage.getTransaction().getRawData().getSourceTxId());
+    } else {
+      txId = Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
+    }
+    return txId;
+  }
+
   /**
    * todo: other chain block tx merkel root
    */
-  private Sha256Hash getRoot(ByteString fromChainId, long blockHeight) {
-    if ("find the cross chain id".equals(fromChainId)) {
+  private Sha256Hash getRoot(CrossMessage crossMessage, long blockHeight) {
+    ByteString fromChainId = crossMessage.getFromChainId();
+    ByteString routeChainId = crossMessage.getRouteChainId();
+    if (routeChainId.isEmpty() || getLocalChainId().equals(routeChainId)) {
+      //use fromChainId
       return null;
     } else {
+      //use routeChainId
       return null;
     }
   }
 
   /**
-   * todo:
+   * done: use genesisBlockId to chainId
    */
   public ByteString getLocalChainId() {
-    return ByteString.copyFromUtf8("");
-  }
-
-  private void disconnect(ByteString fromChainId) {
-
+    return manager.getGenesisBlockId().getByteString();
   }
 
   /**
-   * todo:
+   * done:
    */
   private void sendData(CrossMessage crossMessage) {
     ByteString toChainId = crossMessage.getToChainId();
     ByteString routeChainId = crossMessage.getRouteChainId();
-
+    List<PeerConnection> peerConnectionList;
+    if (!routeChainId.isEmpty() && !getLocalChainId().equals(routeChainId)) {
+      peerConnectionList = crossChainConnectPool.getPeerConnect(routeChainId);
+    } else {
+      peerConnectionList = crossChainConnectPool.getPeerConnect(toChainId);
+    }
+    if (peerConnectionList != null) {
+      peerConnectionList.forEach(peerConnection -> {
+        peerConnection.sendMessage(new CrossChainMessage(crossMessage));
+      });
+    }
   }
 }

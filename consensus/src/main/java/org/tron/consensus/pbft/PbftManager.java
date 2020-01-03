@@ -8,6 +8,7 @@ import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.consensus.base.Param;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftBlockMessage;
@@ -35,13 +36,21 @@ public class PbftManager {
 
   public void blockPrePrepare(BlockCapsule block) {
     if (!pbftMessageHandle.isSyncing()) {
-      doAction(PbftBlockMessage.buildPrePrepareMessage(block));
+      if (Param.getInstance().isEnable()) {
+        doAction(PbftBlockMessage.buildPrePrepareMessage(block));
+      } else {
+        doAction(PbftBlockMessage.buildFullNodePrePrepareMessage(block));
+      }
     }
   }
 
   public void srPrePrepare(BlockCapsule block, List<ByteString> currentWitness, long cycle) {
     if (!pbftMessageHandle.isSyncing()) {
-      doAction(PbftSrMessage.buildPrePrepareMessage(block, currentWitness, cycle));
+      if (Param.getInstance().isEnable()) {
+        doAction(PbftSrMessage.buildPrePrepareMessage(block, currentWitness, cycle));
+      } else {
+        doAction(PbftSrMessage.buildFullNodePrePrepareMessage(block, currentWitness, cycle));
+      }
     }
   }
 
