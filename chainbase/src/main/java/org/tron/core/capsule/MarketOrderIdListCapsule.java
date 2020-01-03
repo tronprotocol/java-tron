@@ -118,6 +118,11 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
       // tail changed
       pairPriceToOrderStore.put(pairPriceKey, this);
     }
+
+    // update current
+    currentCapsule.setPrev(new byte[0]);
+    currentCapsule.setNext(new byte[0]);
+    marketOrderStore.put(currentCapsule.getID().toByteArray(), currentCapsule);
   }
 
   public void setHead(byte[] head) {
