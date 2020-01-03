@@ -15,7 +15,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.CrossStore;
 import org.tron.core.event.EventListener;
-import org.tron.core.event.entity.PbftBlockEvent;
+import org.tron.core.event.entity.PbftBlockCommitEvent;
 import org.tron.core.ibc.common.CrossUtils;
 import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
@@ -26,7 +26,7 @@ import org.tron.protos.contract.BalanceContract.CrossTokenContract;
 
 @Slf4j(topic = "pbft-block-listener")
 @Service
-public class PbftBlockListener implements EventListener<PbftBlockEvent> {
+public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
   private static final Cache<Long, List<Sha256Hash>> callBackTx = CacheBuilder.newBuilder()
       .initialCapacity(100).expireAfterWrite(1, TimeUnit.HOURS)
@@ -52,7 +52,7 @@ public class PbftBlockListener implements EventListener<PbftBlockEvent> {
   private static ChainBaseManager chainBaseManager;
 
   @Override
-  public void listener(PbftBlockEvent event) {
+  public void listener(PbftBlockCommitEvent event) {
     List<Sha256Hash> txList = callBackTx.getIfPresent(event.getBlockNum());
     txList.forEach(hash -> {
       if (communicateService.checkCommit(hash)) {
@@ -85,8 +85,11 @@ public class PbftBlockListener implements EventListener<PbftBlockEvent> {
                 .setTransaction(CrossUtils.addSourceTxId(crossMessage.getTransaction())).build();
             communicateService.sendCrossMessage(crossMessage, false);
           }
-        } else {
-
+        } else if (crossMessage.getType() == Type.TIME_OUT) {
+          //todo
+          ContractType contractType = crossMessage.getTransaction().getRawData().getContract(0)
+              .getType();
+          logger.info("cross chain tx:{} timeout", hash);
         }
       }
     });

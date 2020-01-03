@@ -12,7 +12,7 @@ import org.tron.consensus.pbft.message.PbftSrMessage;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.event.EventBusService;
-import org.tron.core.event.entity.PbftBlockEvent;
+import org.tron.core.event.entity.PbftBlockCommitEvent;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
 import org.tron.protos.Protocol.SRL;
 
@@ -42,7 +42,7 @@ public class PbftMessageAction {
           logger.info("commit msg block num is:{}", blockNum);
         }
         eventBusService.postEvent(
-            new PbftBlockEvent(blockNum, blockMessage.getPbftMessage().getRawData().getData()));
+            new PbftBlockCommitEvent(blockNum, blockMessage.getPbftMessage().getRawData().getData()));
       }
       break;
       case PBFT_SR_MSG: {

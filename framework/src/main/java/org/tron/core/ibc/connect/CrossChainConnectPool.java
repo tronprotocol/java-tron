@@ -16,7 +16,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 
-@Slf4j(topic = "cross-chain-connect-pool")
+@Slf4j(topic = "net-cross")
 @Component
 public class CrossChainConnectPool {
 
@@ -29,12 +29,10 @@ public class CrossChainConnectPool {
   private NodeManager nodeManager;
 
   public void init() {
-    Map<String, List<Node>> nodeListMap = Args.getInstance().getCrossChainConnect();
-    for (String key : nodeListMap.keySet()) {
-      nodeListMap.get(key).forEach(n -> {
-        peerClient.connectAsync(nodeManager.getNodeHandler(n), false, true);
-      });
-    }
+    List<Node> nodeList = Args.getInstance().getCrossChainConnect();
+    nodeList.forEach(n -> {
+      peerClient.connectAsync(nodeManager.getNodeHandler(n), false, true);
+    });
   }
 
   public void onConnect(ByteString chainId, Channel channel) {
