@@ -121,13 +121,13 @@ public class BlockHeaderSyncHandler {
 
   public void handleSrList(PeerConnection peer, TronMessage msg) {
     SrListMessage srListMessage = (SrListMessage) msg;
-    verifySrList(srListMessage.getSrList());
+    verifySrList(srListMessage.getSrl());
     long epoch = srListMessage.getEpoch();
     PbftSignCapsule pbftSignCapsule = new PbftSignCapsule(msg.getData());
     pbftSignDataStore.putSrSignData(epoch, pbftSignCapsule);
   }
 
-  private void verifySrList(Protocol.SrList srList) {
+  private void verifySrList(Protocol.SRL srList) {
 
   }
 

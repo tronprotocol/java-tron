@@ -9,19 +9,20 @@ public class SrListMessage extends TronMessage {
 
   @Getter
   @Setter
-  private Protocol.SrList srList;
+  private Protocol.SRL srl;
   @Getter
   @Setter
-  private Protocol.DataSign dataSign;
+  private Protocol.PBFTCommitResult dataSign;
 
   public SrListMessage(byte[] packed) throws InvalidProtocolBufferException {
     super(MessageTypes.SR_LIST.asByte(), packed);
-    dataSign = Protocol.DataSign.parseFrom(packed);
-    srList = Protocol.SrList.parseFrom(dataSign.getData());
+    dataSign = Protocol.PBFTCommitResult.parseFrom(packed);
+    Protocol.PBFTMessage.Raw rawData = Protocol.PBFTMessage.Raw.parseFrom(dataSign.getData());
+    srl = Protocol.SRL.parseFrom(rawData.getData());
   }
 
   public long getEpoch() {
-    return srList.getEpoch();
+    return srl.getEpoch();
   }
 
   @Override

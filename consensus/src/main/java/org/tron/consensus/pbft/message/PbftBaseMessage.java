@@ -145,8 +145,8 @@ public abstract class PbftBaseMessage extends Message {
 
   private String decode() {
     try {
-      SRL srList = SRL.parseFrom(pbftMessage.getRawData().getData().toByteArray());
-      return "cycle = " + srList.getEpoch() + ", sr list = " + srList.getSrAddressList().stream()
+      SRL srl = SRL.parseFrom(pbftMessage.getRawData().getData().toByteArray());
+      return "cycle = " + srl.getEpoch() + ", sr list = " + srl.getSrAddressList().stream()
           .map(
               bytes -> WalletUtil.encode58Check(bytes.toByteArray())).collect(Collectors.toList());
     } catch (InvalidProtocolBufferException e) {
