@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.services.wallet.Wallet;
+import org.tron.core.services.util.WalletUtil;
 import org.tron.protos.Protocol.Transaction;
 
 
@@ -18,7 +18,7 @@ import org.tron.protos.Protocol.Transaction;
 public class GetTransactionByIdServlet extends RateLimiterServlet {
 
   @Autowired
-  private Wallet wallet;
+  private WalletUtil wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {

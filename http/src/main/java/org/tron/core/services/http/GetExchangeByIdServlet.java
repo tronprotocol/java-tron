@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.services.wallet.Wallet;
+import org.tron.core.services.util.WalletUtil;
 
 
 @Component
@@ -17,7 +17,7 @@ import org.tron.core.services.wallet.Wallet;
 public class GetExchangeByIdServlet extends RateLimiterServlet {
 
   @Autowired
-  private Wallet wallet;
+  private WalletUtil wallet;
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {

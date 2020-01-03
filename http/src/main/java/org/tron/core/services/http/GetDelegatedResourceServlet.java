@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.services.wallet.Wallet;
+import org.tron.core.services.util.WalletUtil;
 
 
 @Component
@@ -18,7 +18,7 @@ import org.tron.core.services.wallet.Wallet;
 public class GetDelegatedResourceServlet extends RateLimiterServlet {
 
   @Autowired
-  private Wallet wallet;
+  private WalletUtil wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {

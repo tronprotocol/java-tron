@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.services.wallet.Wallet;
+import org.tron.core.services.util.WalletUtil;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionSign;
 
@@ -18,7 +18,7 @@ import org.tron.protos.Protocol.TransactionSign;
 public class TransactionSignServlet extends RateLimiterServlet {
 
   @Autowired
-  private Wallet wallet;
+  private WalletUtil wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
 

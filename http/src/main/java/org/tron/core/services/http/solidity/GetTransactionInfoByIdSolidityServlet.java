@@ -10,10 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Wallet;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.RateLimiterServlet;
 import org.tron.core.services.http.Util;
+import org.tron.core.services.util.WalletUtil;
 import org.tron.protos.Protocol.TransactionInfo;
 
 
@@ -22,7 +22,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
 
   @Autowired
-  private Wallet wallet;
+  private WalletUtil wallet;
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {

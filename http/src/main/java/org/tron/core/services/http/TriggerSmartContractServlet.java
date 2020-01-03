@@ -17,7 +17,7 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.services.wallet.Wallet;
+import org.tron.core.services.util.WalletUtil;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
@@ -30,7 +30,7 @@ public class TriggerSmartContractServlet extends RateLimiterServlet {
   private final String functionSelector = "function_selector";
 
   @Autowired
-  private Wallet wallet;
+  private WalletUtil wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
   }

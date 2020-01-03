@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.services.wallet.Wallet;
+import org.tron.core.services.util.WalletUtil;
 import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
@@ -22,7 +22,7 @@ import org.tron.protos.Protocol.TransactionInfo.Log;
 public class GetTransactionInfoByIdServlet extends RateLimiterServlet {
 
   @Autowired
-  private Wallet wallet;
+  private WalletUtil wallet;
 
   private static String convertLogAddressToTronAddress(TransactionInfo transactionInfo,
       boolean visible) {
