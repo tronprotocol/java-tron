@@ -40,7 +40,6 @@ public class ActuatorFactory {
             actuatorList
                 .add(getActuatorByContract(contract, manager, transactionCapsule));
           } catch (IllegalAccessException | InstantiationException e) {
-            e.printStackTrace();
             logger.info("getActuatorByContract failed, caused by {}", e.getMessage());
           }
         });
