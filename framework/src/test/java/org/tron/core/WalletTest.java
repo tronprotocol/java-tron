@@ -353,7 +353,8 @@ public class WalletTest {
     Assert.assertTrue("getBlocksByLimit2", blocksByLimit.getBlockList().contains(block4));
     blocksByLimit = wallet.getBlocksByLimitNext(0, 5);
     Assert.assertTrue("getBlocksByLimit3",
-        blocksByLimit.getBlockList().contains(manager.getChainBaseManager().getGenesisBlock().getInstance()));
+        blocksByLimit.getBlockList().contains(manager
+            .getChainBaseManager().getGenesisBlock().getInstance()));
     Assert.assertTrue("getBlocksByLimit4", blocksByLimit.getBlockList().contains(block1));
     Assert.assertTrue("getBlocksByLimit5", blocksByLimit.getBlockList().contains(block2));
     Assert.assertTrue("getBlocksByLimit6", blocksByLimit.getBlockList().contains(block3));

@@ -164,11 +164,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
       return;
     }
 
-    if (manager.getChainBaseManager().getSolidBlockId().getNum() >=
-        msg.getSolidBlockId().getNum() && !manager
+    if (manager.getChainBaseManager().getSolidBlockId().getNum()
+        >= msg.getSolidBlockId().getNum() && !manager
         .containBlockInMainChain(msg.getSolidBlockId())) {
       logger.info("Peer {} different solid block, peer->{}, me->{}", ctx.channel().remoteAddress(),
-          msg.getSolidBlockId().getString(), manager.getChainBaseManager().getSolidBlockId().getString());
+          msg.getSolidBlockId().getString(),
+          manager.getChainBaseManager().getSolidBlockId().getString());
       channel.disconnect(ReasonCode.FORKED);
       return;
     }

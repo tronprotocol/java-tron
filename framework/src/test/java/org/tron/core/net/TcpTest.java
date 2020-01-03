@@ -63,7 +63,9 @@ public class TcpTest {
   public void normalTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.normal));
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        manager.getChainBaseManager().getGenesisBlockId(), manager.getChainBaseManager().getSolidBlockId(), chainBaseManager.getHeadBlockId());
+        manager.getChainBaseManager().getGenesisBlockId()
+        , manager.getChainBaseManager().getSolidBlockId()
+        , chainBaseManager.getHeadBlockId());
     sendMessage(channel, message);
     validResultCloseConnect(channel);
   }
@@ -91,7 +93,8 @@ public class TcpTest {
   public void errorSolidBlockIdTest() throws InterruptedException {
     Channel channel = BaseNet.connect(new HandshakeHandler(TestType.errorSolid));
     HelloMessage message = new HelloMessage(node, System.currentTimeMillis(),
-        manager.getChainBaseManager().getGenesisBlockId(), new BlockId(), chainBaseManager.getHeadBlockId());
+        manager.getChainBaseManager().getGenesisBlockId(),
+        new BlockId(), chainBaseManager.getHeadBlockId());
     sendMessage(channel, message);
     validResultCloseConnect(channel);
   }

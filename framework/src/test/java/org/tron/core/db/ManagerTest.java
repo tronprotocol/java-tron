@@ -211,9 +211,11 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertTrue(chainManager.getExchangeV2Store() instanceof ExchangeV2Store);
     Assert.assertTrue(chainManager.getExchangeStore() instanceof ExchangeStore);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    Assert.assertTrue(dbManager.getChainBaseManager().getExchangeStoreFinal() instanceof ExchangeStore);
+    Assert.assertTrue(dbManager.getChainBaseManager()
+        .getExchangeStoreFinal() instanceof ExchangeStore);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    Assert.assertTrue(dbManager.getChainBaseManager().getExchangeStoreFinal() instanceof ExchangeV2Store);
+    Assert.assertTrue(dbManager.getChainBaseManager()
+        .getExchangeStoreFinal() instanceof ExchangeV2Store);
 
   }
 
@@ -661,7 +663,8 @@ public class ManagerTest extends BlockGenerate {
 
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
-    context.getBean(KhaosDatabase.class).removeBlk(dbManager.getChainBaseManager().getBlockIdByNum(num));
+    context.getBean(KhaosDatabase.class).removeBlk(dbManager
+        .getChainBaseManager().getBlockIdByNum(num));
     Exception exception = null;
 
     BlockCapsule blockCapsule2 =
