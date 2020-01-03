@@ -293,6 +293,10 @@ public class ZenTransactionBuilder {
     receiveDescriptionCapsule.setCEnc(enc.getEncCiphertext());
     receiveDescriptionCapsule.setZkproof(zkProof);
 
+    if(ArrayUtils.isEmpty(output.ovk) || output.ovk.length != 32){
+      throw new ZksnarkException("ovk is null or invalid, should be length of 32 bytes");
+    }
+
     OutgoingPlaintext outPlaintext =
         new OutgoingPlaintext(output.getNote().getPkD(), encryptor.getEsk());
     receiveDescriptionCapsule.setCOut(outPlaintext
