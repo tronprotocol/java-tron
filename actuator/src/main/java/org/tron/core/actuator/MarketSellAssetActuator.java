@@ -391,9 +391,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
       //if not exists
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
 
-      // List<ByteString> ordersList = new ArrayList<>(orderIdListCapsule.getOrdersList());
-      boolean ordersListChanged = false;
-
       //match different order same price
       while (takerCapsule.getSellTokenQuantityRemain() != 0
           && !orderIdListCapsule.isOrderEmpty()) {
@@ -405,7 +402,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
         if (makerOrderCapsule.getSellTokenQuantityRemain() == 0) {
           orderIdListCapsule.removeOrder(makerOrderCapsule, orderStore,
               pairPriceKey, pairPriceToOrderStore);
-          ordersListChanged = true;
         }
       }
 
@@ -421,10 +417,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
         }
 
       }
-      // else if (ordersListChanged) {
-      //   orderIdListCapsule.setOrdersList(ordersList);
-      //   pairPriceToOrderStore.put(pairPriceKey, orderIdListCapsule);
-      // }
     } // end while
   }
 

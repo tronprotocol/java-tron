@@ -68,7 +68,6 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
     return found;
   }
 
-  // TODO check all empty
   // need to delete when all empty
   public void removeOrder(MarketOrderCapsule currentCapsule, MarketOrderStore marketOrderStore,
       byte[] pairPriceKey, MarketPairPriceToOrderStore pairPriceToOrderStore) throws ItemNotFoundException {
@@ -114,7 +113,6 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
         this.setTail(currentCapsule.getPrev());
       } else {
         this.setTail(new byte[0]);
-        // TODO need delete, outside
       }
 
       // tail changed
