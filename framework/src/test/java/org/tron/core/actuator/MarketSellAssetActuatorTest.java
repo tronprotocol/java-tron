@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -121,7 +122,36 @@ public class MarketSellAssetActuatorTest {
     dbManager.getAccountStore()
         .put(ownerAccountSecondCapsule.getAddress().toByteArray(), ownerAccountSecondCapsule);
 
-    // clean
+//    InitAsset();
+
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
+    dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
+  }
+
+
+  private void InitAsset() {
+    AssetIssueCapsule assetIssueCapsule1 = new AssetIssueCapsule(
+        AssetIssueContract.newBuilder()
+            .setName(ByteString.copyFrom("abc".getBytes()))
+            .setId(TOKEN_ID_ONE)
+            .build());
+
+    AssetIssueCapsule assetIssueCapsule2 = new AssetIssueCapsule(
+        AssetIssueContract.newBuilder()
+            .setName(ByteString.copyFrom("def".getBytes()))
+            .setId(TOKEN_ID_TWO)
+            .build());
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule1.createDbV2Key(), assetIssueCapsule1);
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
+  }
+
+  @After
+  public void cleanDb() {
+    byte[] ownerAddressFirstBytes = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    byte[] ownerAddressSecondBytes = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
+
+    // delete order
     cleanMarketOrderByAccount(ownerAddressFirstBytes);
     cleanMarketOrderByAccount(ownerAddressSecondBytes);
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
@@ -129,9 +159,18 @@ public class MarketSellAssetActuatorTest {
     chainBaseManager.getMarketAccountStore().delete(ownerAddressFirstBytes);
     chainBaseManager.getMarketAccountStore().delete(ownerAddressSecondBytes);
 
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
-    dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
+    //delete priceList
+    chainBaseManager.getMarketPairToPriceStore()
+        .delete(MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes()));
+    chainBaseManager.getMarketPairToPriceStore()
+        .delete(MarketUtils.createPairKey(TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes()));
+
+    //delete orderList
+    MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+    pairPriceToOrderStore.forEach(
+        marketOrderIdListCapsuleEntry -> pairPriceToOrderStore
+            .delete(marketOrderIdListCapsuleEntry.getKey()));
   }
 
   private void cleanMarketOrderByAccount(byte[] accountAddress) {
@@ -181,36 +220,6 @@ public class MarketSellAssetActuatorTest {
             .setBuyTokenQuantity(buyTokenQuantity)
             .setPrePriceKey(prePriceKey)
             .build());
-  }
-
-  private void InitAsset() {
-    AssetIssueCapsule assetIssueCapsule1 = new AssetIssueCapsule(
-        AssetIssueContract.newBuilder()
-            .setName(ByteString.copyFrom("abc".getBytes()))
-            .setId(TOKEN_ID_ONE)
-            .build());
-
-    AssetIssueCapsule assetIssueCapsule2 = new AssetIssueCapsule(
-        AssetIssueContract.newBuilder()
-            .setName(ByteString.copyFrom("def".getBytes()))
-            .setId(TOKEN_ID_TWO)
-            .build());
-    dbManager.getAssetIssueV2Store().put(assetIssueCapsule1.createDbV2Key(), assetIssueCapsule1);
-    dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
-
-    // clean
-    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
-    chainBaseManager.getMarketPairToPriceStore()
-        .delete(MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes()));
-    chainBaseManager.getMarketPairToPriceStore()
-        .delete(MarketUtils.createPairKey(TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes()));
-
-    MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
-        .getMarketPairPriceToOrderStore();
-    pairPriceToOrderStore.forEach(
-        marketOrderIdListCapsuleEntry -> pairPriceToOrderStore
-            .delete(marketOrderIdListCapsuleEntry.getKey())
-    );
   }
 
   //test case
@@ -546,7 +555,7 @@ public class MarketSellAssetActuatorTest {
     String sellTokenId = TOKEN_ID_ONE;
     long sellTokenQuant = 100L;
     String buyTokenId = TOKEN_ID_TWO;
-    long buyTokenQuant = 300L;
+    long buyTokenQuant = 700L;
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
@@ -686,7 +695,7 @@ public class MarketSellAssetActuatorTest {
     String sellTokenId = TOKEN_ID_ONE;
     long sellTokenQuant = 100L;
     String buyTokenId = TOKEN_ID_TWO;
-    long buyTokenQuant = 300L;
+    long buyTokenQuant = 600L;
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
 
     prepareAccount(sellTokenId, buyTokenId, sellTokenQuant, buyTokenQuant, ownerAddress);
@@ -705,7 +714,7 @@ public class MarketSellAssetActuatorTest {
     }
 
     byte[] prePriceKey = MarketUtils
-        .createPairPriceKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 100L, 209L);
+        .createPairPriceKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 100L, 208L);
 
     // do process
     MarketSellAssetActuator actuator = new MarketSellAssetActuator();
@@ -774,7 +783,7 @@ public class MarketSellAssetActuatorTest {
 
   private void addOrder(String sellTokenId, long sellTokenQuant,
       String buyTokenId, long buyTokenQuant, String ownAddress) throws Exception {
-    addOrder(sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant, ownAddress);
+    addOrder(sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant, ownAddress, null);
   }
 
   private void addOrder(String sellTokenId, long sellTokenQuant,
@@ -1203,8 +1212,9 @@ public class MarketSellAssetActuatorTest {
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .get(pairPriceKey);
     Assert.assertEquals(orderIdListCapsule.getOrderSize(orderStore), 2);
-    Assert.assertArrayEquals(orderIdListCapsule.getOrderByIndex(1, orderStore).getID().toByteArray(),
-        orderId.toByteArray());
+    Assert
+        .assertArrayEquals(orderIdListCapsule.getOrderByIndex(1, orderStore).getID().toByteArray(),
+            orderId.toByteArray());
   }
 
 
