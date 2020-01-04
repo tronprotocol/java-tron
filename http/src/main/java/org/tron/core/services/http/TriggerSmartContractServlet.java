@@ -41,7 +41,7 @@ public class TriggerSmartContractServlet extends RateLimiterServlet {
         || StringUtil.isNullOrEmpty(jsonObject.getString("owner_address"))) {
       throw new InvalidParameterException("owner_address isn't set.");
     }
-    if (!jsonObject.containsKey("contracat_address")
+    if (!jsonObject.containsKey("contract_address")
         || StringUtil.isNullOrEmpty(jsonObject.getString("contract_address"))) {
       throw new InvalidParameterException("contract_address isn't set.");
     }
