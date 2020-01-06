@@ -57,6 +57,7 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
@@ -94,6 +95,7 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
@@ -389,6 +391,81 @@ public class Manager {
     return chainBaseManager.getWitnessScheduleStore().getActiveWitnesses();
   }
 
+  private boolean checkInSameFork(BlockCapsule newblock) {
+    if (DBConfig.isDebug()) {
+      return true;
+    }
+    if (newblock.getNum() <= chainBaseManager.getCommonDataBase().getLatestPbftBlockNum()) {
+      return true;
+    }
+    Sha256Hash blockHash = chainBaseManager.getCommonDataBase().getLatestPbftBlockHash();
+    if (Objects.isNull(blockHash) || Objects.isNull(newblock)) {
+      return true;
+    }
+    BlockCapsule tmp = newblock;
+    while (tmp != null) {
+      if (tmp.getBlockId().equals(blockHash)) {
+        return true;
+      }
+      tmp = khaosDb.getBlock(tmp.getParentHash());
+    }
+    return false;
+  }
+
+  private BlockCapsule findHighestBlockNum(Sha256Hash blockHash) {
+    KhaosBlock block = khaosDb.getMiniStore().getByHash(blockHash);
+    while (block.getChild() != null) {
+      block = block.getChild();
+    }
+    return block.getBlk();
+  }
+
+  private void printBeforeSwitchFork(BlockCapsule newBlock, final BlockCapsule block) {
+    logger.warn(
+        "switch fork! new head num = {}, blockid = {}",
+        newBlock.getNum(),
+        newBlock.getBlockId());
+
+    logger.warn(
+        "******** before switchFork ******* push block: "
+            + block.toString()
+            + ", new block:"
+            + newBlock.toString()
+            + ", dynamic head num: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
+            + ", dynamic head hash: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
+            + ", dynamic head timestamp: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
+            + ", khaosDb head: "
+            + khaosDb.getHead()
+            + ", khaosDb miniStore size: "
+            + khaosDb.getMiniStore().size()
+            + ", khaosDb unlinkMiniStore size: "
+            + khaosDb.getMiniUnlinkedStore().size());
+  }
+
+  private void printAfterSwitchFork(BlockCapsule newBlock, final BlockCapsule block) {
+    logger.info(SAVE_BLOCK + newBlock);
+    logger.warn(
+        "******** after switchFork ******* push block: "
+            + block.toString()
+            + ", new block:"
+            + newBlock.toString()
+            + ", dynamic head num: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
+            + ", dynamic head hash: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
+            + ", dynamic head timestamp: "
+            + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
+            + ", khaosDb head: "
+            + khaosDb.getHead()
+            + ", khaosDb miniStore size: "
+            + khaosDb.getMiniStore().size()
+            + ", khaosDb unlinkMiniStore size: "
+            + khaosDb.getMiniUnlinkedStore().size());
+  }
+
   // for test only
   public void addWitness(final ByteString address) {
     List<ByteString> witnessAddresses =
@@ -541,6 +618,7 @@ public class Manager {
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderHash(
             this.genesisBlock.getBlockId().getByteString());
+        chainBaseManager.getDynamicPropertiesStore().saveLatestBlockCapsule(this.genesisBlock);
         chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(
             this.genesisBlock.getTimeStamp());
         this.initAccount();
@@ -876,7 +954,8 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
-      NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException {
+      NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException,
+      BlockNotInMainForkException {
     block.generatedByMyself = true;
     long start = System.currentTimeMillis();
     pushBlock(block);
@@ -1015,7 +1094,7 @@ public class Manager {
       TaposException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException, ZksnarkException {
+      ReceiptCheckErrException, VMIllegalException, ZksnarkException, BlockNotInMainForkException {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -1057,56 +1136,25 @@ public class Manager {
           return;
         }
 
-        // switch fork
-        if (!newBlock
-            .getParentHash()
+        BlockCapsule latestBlockCapsule = getDynamicPropertiesStore().getLatestBlockCapsule();
+        if (!checkInSameFork(latestBlockCapsule)) {
+          // check lastest pbft consensus block is in main chain or not
+          Sha256Hash blockHash = chainBaseManager.getCommonDataBase().getLatestPbftBlockHash();
+          printBeforeSwitchFork(newBlock, block);
+          switchFork(findHighestBlockNum(blockHash));
+          printAfterSwitchFork(newBlock, block);
+          return;
+        } else if (checkInSameFork(newBlock) && !newBlock.getParentHash()
             .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
-          logger.warn(
-              "switch fork! new head num = {}, block id = {}",
-              newBlock.getNum(),
-              newBlock.getBlockId());
-
-          logger.warn(
-              "******** before switchFork ******* push block: "
-                  + block.toString()
-                  + ", new block:"
-                  + newBlock.toString()
-                  + ", dynamic head num: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-                  + ", dynamic head hash: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
-                  + ", dynamic head timestamp: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
-                  + ", khaosDb head: "
-                  + khaosDb.getHead()
-                  + ", khaosDb miniStore size: "
-                  + khaosDb.getMiniStore().size()
-                  + ", khaosDb unlinkMiniStore size: "
-                  + khaosDb.getMiniUnlinkedStore().size());
-
+          printBeforeSwitchFork(newBlock, block);
           switchFork(newBlock);
-          logger.info(SAVE_BLOCK + newBlock);
-
-          logger.warn(
-              "******** after switchFork ******* push block: "
-                  + block.toString()
-                  + ", new block:"
-                  + newBlock.toString()
-                  + ", dynamic head num: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-                  + ", dynamic head hash: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
-                  + ", dynamic head timestamp: "
-                  + chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()
-                  + ", khaosDb head: "
-                  + khaosDb.getHead()
-                  + ", khaosDb miniStore size: "
-                  + khaosDb.getMiniStore().size()
-                  + ", khaosDb unlinkMiniStore size: "
-                  + khaosDb.getMiniUnlinkedStore().size());
-
+          printAfterSwitchFork(newBlock, block);
+          return;
+        } else if (!checkInSameFork(newBlock)) {
+          khaosDb.removeBlk(block.getBlockId());
           return;
         }
+
         try (ISession tmpSession = revokingStore.buildSession()) {
 
           applyBlock(newBlock);
@@ -1148,6 +1196,8 @@ public class Manager {
 
     chainBaseManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderNumber(block.getNum());
+    chainBaseManager.getDynamicPropertiesStore()
+        .saveLatestBlockCapsule(block);
     chainBaseManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(block.getTimeStamp());
     revokingStore.setMaxSize((int) (
