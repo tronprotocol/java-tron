@@ -81,12 +81,12 @@ public class JLibsodiumParam {
     private byte[] in;
     @Setter
     @Getter
-    private long inlen;
+    private long inLen;
 
-    public Blake2bUpdateParams(long state, byte[] in, long inlen) throws ZksnarkException {
+    public Blake2bUpdateParams(long state, byte[] in, long inLen) throws ZksnarkException {
       this.state = state;
       this.in = in;
-      this.inlen = inlen;
+      this.inLen = inLen;
 
       valid();
     }
@@ -94,7 +94,7 @@ public class JLibsodiumParam {
     @Override
     public void valid() throws ZksnarkException {
       validValueParams(state);
-      if (in.length != 33 && in.length != 34) {
+      if (in.length != inLen || (in.length != 33 && in.length != 34)) {
         throw new ZksnarkException("param length must be 33 or 34");
       }
     }
@@ -110,12 +110,12 @@ public class JLibsodiumParam {
     private byte[] out;
     @Setter
     @Getter
-    private int outlen;
+    private int outLen;
 
-    public Blake2bFinalParams(long state, byte[] out, int outlen) throws ZksnarkException {
+    public Blake2bFinalParams(long state, byte[] out, int outLen) throws ZksnarkException {
       this.state = state;
       this.out = out;
-      this.outlen = outlen;
+      this.outLen = outLen;
 
       valid();
     }
@@ -123,7 +123,7 @@ public class JLibsodiumParam {
     @Override
     public void valid() throws ZksnarkException {
       validValueParams(state);
-      if (out.length != outlen || (out.length != 11 && out.length != 64)) {
+      if (out.length != outLen || (out.length != 11 && out.length != 64)) {
         throw new ZksnarkException("param length must be 11 or 64");
       }
     }
@@ -136,19 +136,19 @@ public class JLibsodiumParam {
     private byte[] out;
     @Setter
     @Getter
-    private int outlen;
+    private int outLen;
     @Setter
     @Getter
     private byte[] in;
     @Setter
     @Getter
-    private long inlen;
+    private long inLen;
     @Setter
     @Getter
     private byte[] key;
     @Setter
     @Getter
-    private int keylen;
+    private int keyLen;
     @Setter
     @Getter
     private byte[] salt;
@@ -157,14 +157,14 @@ public class JLibsodiumParam {
     private byte[] personal;
 
 
-    public Black2bSaltPersonalParams(byte[] out, int outlen, byte[] in, long inlen, byte[] key,
-        int keylen, byte[] salt, byte[] personal) throws ZksnarkException {
+    public Black2bSaltPersonalParams(byte[] out, int outLen, byte[] in, long inLen, byte[] key,
+        int keyLen, byte[] salt, byte[] personal) throws ZksnarkException {
       this.out = out;
-      this.outlen = outlen;
+      this.outLen = outLen;
       this.in = in;
-      this.inlen = inlen;
+      this.inLen = inLen;
       this.key = key;
-      this.keylen = keylen;
+      this.keyLen = keyLen;
       this.salt = salt;
       this.personal = personal;
 
@@ -173,7 +173,7 @@ public class JLibsodiumParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      if(out.length != outlen || in.length != inlen){
+      if(out.length != outLen || in.length != inLen){
         throw new ZksnarkException("out.length is not equal to outlen "
             + "or in.length is not equal to inlen");
       }
@@ -189,7 +189,7 @@ public class JLibsodiumParam {
     private byte[] m;
     @Setter
     @Getter
-    private long[] mlen_p;
+    private long[] mLenP;
     @Setter
     @Getter
     private byte[] nsec;
@@ -204,7 +204,7 @@ public class JLibsodiumParam {
     private byte[] ad;
     @Setter
     @Getter
-    private long adlen;
+    private long adLen;
     @Setter
     @Getter
     private byte[] npub;
@@ -212,15 +212,15 @@ public class JLibsodiumParam {
     @Getter
     private byte[] k;
 
-    public Chacha20poly1305IetfDecryptParams(byte[] m, long[] mlen_p, byte[] nsec, byte[] c,
-        long clen, byte[] ad, long adlen, byte[] npub, byte[] k) throws ZksnarkException {
+    public Chacha20poly1305IetfDecryptParams(byte[] m, long[] mLenP, byte[] nsec, byte[] c,
+        long clen, byte[] ad, long adLen, byte[] npub, byte[] k) throws ZksnarkException {
       this.m = m;
-      this.mlen_p = mlen_p;
+      this.mLenP = mLenP;
       this.nsec = nsec;
       this.c = c;
       this.clen = clen;
       this.ad = ad;
-      this.adlen = adlen;
+      this.adLen = adLen;
       this.npub = npub;
       this.k = k;
 
