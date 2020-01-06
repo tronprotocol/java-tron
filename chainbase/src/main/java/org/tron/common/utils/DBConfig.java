@@ -74,6 +74,9 @@ public class DBConfig {
   private static long allowShieldedTransaction; //committee parameter
   @Getter
   @Setter
+  private static long allowAllowMarketTransaction; //committee parameter
+  @Getter
+  @Setter
   private static String Blocktimestamp;
   @Getter
   @Setter

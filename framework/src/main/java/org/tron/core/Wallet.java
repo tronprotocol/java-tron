@@ -1082,6 +1082,13 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
         .build());
 
+
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowMarketTransaction")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowMarketTransaction())
+            .build());
+
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMarketSellFee")
         .setValue(dbManager.getDynamicPropertiesStore().getMarketSellFee())
@@ -1096,6 +1103,7 @@ public class Wallet {
         .setKey("getMarketQuantityLimit")
         .setValue(dbManager.getDynamicPropertiesStore().getMarketQuantityLimit())
         .build());
+
 
     return builder.build();
   }
@@ -1451,6 +1459,11 @@ public class Wallet {
   public boolean getFullNodeAllowShieldedTransaction() {
     return Args.getInstance().isFullNodeAllowShieldedTransactionArgs();
   }
+
+  public boolean getFullNodeAllowMarketTransaction() {
+    return Args.getInstance().isFullNodeAllowMarketTransactionArgs();
+  }
+
 
   public BytesMessage getNullifier(ByteString id) {
     if (Objects.isNull(id)) {

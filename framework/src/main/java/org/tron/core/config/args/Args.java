@@ -177,6 +177,7 @@ public class Args extends CommonParameter {
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.fullNodeAllowShieldedTransactionArgs = true;
+    INSTANCE.fullNodeAllowMarketTransactionArgs = true;
     INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
@@ -608,6 +609,11 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
 
+
+    INSTANCE.allowMarketTransaction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
+
     INSTANCE.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)
             ? getEventPluginConfig(config) : null;
@@ -618,6 +624,10 @@ public class Args extends CommonParameter {
     INSTANCE.fullNodeAllowShieldedTransactionArgs =
         !config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)
             || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
+
+    INSTANCE.fullNodeAllowMarketTransactionArgs =
+        !config.hasPath(Constant.NODE_FULLNODE_ALLOW_MARKET_TRANSACTION)
+            || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_MARKET_TRANSACTION);
 
     INSTANCE.zenTokenId = config.hasPath(Constant.NODE_ZEN_TOKENID)
         ? config.getString(Constant.NODE_ZEN_TOKENID) : "000000";
@@ -1056,6 +1066,7 @@ public class Args extends CommonParameter {
     DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
     DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
     DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
+    DBConfig.setAllowAllowMarketTransaction(cfgArgs.getAllowMarketTransaction());
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
     DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
     DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());

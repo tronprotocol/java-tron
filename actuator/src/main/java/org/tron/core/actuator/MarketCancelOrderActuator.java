@@ -175,6 +175,11 @@ public class MarketCancelOrderActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
+    if (!dynamicStore.supportAllowMarketTransaction()) {
+      throw new ContractValidateException("Not support Market Transaction, need to be opened by"
+          + " the committee");
+    }
+
     final MarketCancelOrderContract contract;
     try {
       contract =

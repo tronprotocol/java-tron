@@ -361,10 +361,19 @@ public class CommonParameter {
   @Setter
   protected long allowShieldedTransaction; //committee parameter
 
+  @Getter
+  @Setter
+  protected long allowMarketTransaction; //committee parameter
+
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
   protected boolean fullNodeAllowShieldedTransactionArgs;
+
+  // full node used this parameter to close market transaction
+  @Getter
+  @Setter
+  protected boolean fullNodeAllowMarketTransactionArgs;
 
   @Getter
   @Setter
