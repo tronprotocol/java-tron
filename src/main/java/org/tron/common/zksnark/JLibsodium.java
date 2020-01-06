@@ -20,7 +20,7 @@ public class JLibsodium {
     }
     return INSTANCE
         .cryptoGenerichashBlake2BInitSaltPersonal(params.getState(), params.getKey(),
-            params.getKeylen(), params.getOutlen(), params.getSalt(), params.getPersonal());
+            params.getKeyLen(), params.getOutLen(), params.getSalt(), params.getPersonal());
   }
 
   public static int cryptoGenerichashBlake2bUpdate(Blake2bUpdateParams params) {
@@ -52,9 +52,9 @@ public class JLibsodium {
       return 0;
     }
     return INSTANCE
-        .cryptoAeadChacha20Poly1305IetfDecrypt(params.getM(), params.getMLenP(), params.getNsec(),
-            params.getC(), params.getClen(), params.getAd(),
-            params.getAdLen(), params.getNpub(), params.getK());
+        .cryptoAeadChacha20Poly1305IetfDecrypt(params.getM(), params.getMLenP(), params.getNSec(),
+            params.getC(), params.getCLen(), params.getAd(),
+            params.getAdLen(), params.getNPub(), params.getK());
   }
 
   public static int cryptoAeadChacha20Poly1305IetfEncrypt(Chacha20Poly1305IetfEncryptParams params) {
@@ -62,9 +62,9 @@ public class JLibsodium {
       return 0;
     }
     return INSTANCE
-        .cryptoAeadChacha20Poly1305IetfEncrypt(params.getC(), params.getClen_p(), params.getM(),
-            params.getMlen(), params.getAd(), params.getAdlen(),
-            params.getNsec(), params.getNpub(), params.getK());
+        .cryptoAeadChacha20Poly1305IetfEncrypt(params.getC(), params.getCLenP(), params.getM(),
+            params.getMLen(), params.getAd(), params.getAdLen(),
+            params.getNSec(), params.getNPub(), params.getK());
   }
 
   public static long initState() {

@@ -41,10 +41,10 @@ public class JLibsodiumParam {
     private byte[] key;
     @Setter
     @Getter
-    private int keylen;
+    private int keyLen;
     @Setter
     @Getter
-    private int outlen;
+    private int outLen;
     @Setter
     @Getter
     private byte[] salt;
@@ -52,12 +52,12 @@ public class JLibsodiumParam {
     @Getter
     private byte[] personal;
 
-    public Blake2bInitSaltPersonalParams(long state, byte[] key, int keylen, int outlen,
+    public Blake2bInitSaltPersonalParams(long state, byte[] key, int keyLen, int outLen,
         byte[] salt, byte[] personal) throws ZksnarkException {
       this.state = state;
       this.key = key;
-      this.keylen = keylen;
-      this.outlen = outlen;
+      this.keyLen = keyLen;
+      this.outLen = outLen;
       this.salt = salt;
       this.personal = personal;
 
@@ -192,13 +192,13 @@ public class JLibsodiumParam {
     private long[] mLenP;
     @Setter
     @Getter
-    private byte[] nsec;
+    private byte[] nSec;
     @Setter
     @Getter
     private byte[] c;
     @Setter
     @Getter
-    private long clen;
+    private long cLen;
     @Setter
     @Getter
     private byte[] ad;
@@ -207,21 +207,21 @@ public class JLibsodiumParam {
     private long adLen;
     @Setter
     @Getter
-    private byte[] npub;
+    private byte[] nPub;
     @Setter
     @Getter
     private byte[] k;
 
-    public Chacha20poly1305IetfDecryptParams(byte[] m, long[] mLenP, byte[] nsec, byte[] c,
-        long clen, byte[] ad, long adLen, byte[] npub, byte[] k) throws ZksnarkException {
+    public Chacha20poly1305IetfDecryptParams(byte[] m, long[] mLenP, byte[] nSec, byte[] c,
+        long cLen, byte[] ad, long adLen, byte[] nPub, byte[] k) throws ZksnarkException {
       this.m = m;
       this.mLenP = mLenP;
-      this.nsec = nsec;
+      this.nSec = nSec;
       this.c = c;
-      this.clen = clen;
+      this.cLen = cLen;
       this.ad = ad;
       this.adLen = adLen;
-      this.npub = npub;
+      this.nPub = nPub;
       this.k = k;
 
       valid();
@@ -229,7 +229,7 @@ public class JLibsodiumParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      validParamLength(npub, 12);
+      validParamLength(nPub, 12);
       validParamLength(k, 32);
     }
   }
@@ -241,39 +241,39 @@ public class JLibsodiumParam {
     private byte[] c;
     @Setter
     @Getter
-    private long[] clen_p;
+    private long[] cLenP;
     @Setter
     @Getter
     private byte[] m;
     @Setter
     @Getter
-    private long mlen;
+    private long mLen;
     @Setter
     @Getter
     private byte[] ad;
     @Setter
     @Getter
-    private long adlen;
+    private long adLen;
     @Setter
     @Getter
-    private byte[] nsec;
+    private byte[] nSec;
     @Setter
     @Getter
-    private byte[] npub;
+    private byte[] nPub;
     @Setter
     @Getter
     private byte[] k;
 
-    public Chacha20Poly1305IetfEncryptParams(byte[] c, long[] clen_p, byte[] m, long mlen,
-        byte[] ad, long adlen, byte[] nsec, byte[] npub, byte[] k) throws ZksnarkException {
+    public Chacha20Poly1305IetfEncryptParams(byte[] c, long[] cLenP, byte[] m, long mLen,
+        byte[] ad, long adLen, byte[] nSec, byte[] nPub, byte[] k) throws ZksnarkException {
       this.c = c;
-      this.clen_p = clen_p;
+      this.cLenP = cLenP;
       this.m = m;
-      this.mlen = mlen;
+      this.mLen = mLen;
       this.ad = ad;
-      this.adlen = adlen;
-      this.nsec = nsec;
-      this.npub = npub;
+      this.adLen = adLen;
+      this.nSec = nSec;
+      this.nPub = nPub;
       this.k = k;
 
       valid();
@@ -281,7 +281,7 @@ public class JLibsodiumParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      validParamLength(npub, 12);
+      validParamLength(nPub, 12);
       validParamLength(k, 32);
     }
   }
