@@ -409,6 +409,7 @@ public class FullNodeHttpApiService implements Service {
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
       }
+
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
