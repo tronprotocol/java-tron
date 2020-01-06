@@ -57,7 +57,7 @@ public class UpdateBrokerageActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
+    if (this.any == null) {
       throw new ContractValidateException("No contract!");
     }
     if (chainBaseManager == null) {

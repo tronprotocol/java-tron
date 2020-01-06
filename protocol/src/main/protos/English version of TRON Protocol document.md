@@ -99,7 +99,7 @@
 
      message `ChainInventory` contains `BlockId` and `remain_num`.  
      `BlockId`: the identification of block.  
-     `remain_num`：the remain number of blocks in the synchronizing process. 
+     `remain_num`:the remain number of blocks in the synchronizing process. 
      
      A `BlockId` contains 2 parameters:  
      `hash`: the hash of block.  
@@ -351,7 +351,7 @@ Input, transaction and head block all require signature.
      `ret`: the state of transaction.  
      `fee`: the fee for transaction.
     
-     `code` is definition of `ret` and contains 2 types：`SUCCESS` and `FAILED`.
+     `code` is definition of `ret` and contains 2 types:`SUCCESS` and `FAILED`.
      
         message Result {
           enum code {
@@ -499,7 +499,7 @@ Input, transaction and head block all require signature.
    `Wallet` service contains several RPCs.  
     __`GetBalance`__ :  
     Return balance of an `Account`.  
-    __`CreateTransaction`__ ：  
+    __`CreateTransaction`__ :  
     Create a transaction by giving a `TransferContract`. A Transaction containing a transaction creation will be returned.  
     __`BroadcastTransaction`__ :  
     Broadcast a `Transaction`. A `Return` will be returned indicating if broadcast is success of not.  

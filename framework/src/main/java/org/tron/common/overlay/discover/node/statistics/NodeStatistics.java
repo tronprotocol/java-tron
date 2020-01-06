@@ -56,7 +56,7 @@ public class NodeStatistics {
   public int getReputation() {
     int score = 0;
     if (!isReputationPenalized()) {
-      score += persistedReputation / 5 + reputation.calculate();
+      score += persistedReputation / 5 + reputation.getScore();
     }
     if (isPredefined) {
       score += REPUTATION_PREDEFINED;

@@ -6,7 +6,6 @@ import java.util.Random;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -32,7 +31,6 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 
-@Ignore
 public class TransactionStoreTest {
 
   private static final byte[] key1 = TransactionStoreTest.randomBytes(21);
@@ -54,30 +52,23 @@ public class TransactionStoreTest {
   private static Application AppT;
   private static Manager dbManager;
 
-  static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
-            "-w"
-        },
-        Constant.TEST_CONF
-    );
-  }
-
   /**
    * Init data.
    */
   @BeforeClass
   public static void init() {
+    Args.setParam(new String[]{"--output-directory", dbPath, "--storage-db-directory",
+        dbDirectory, "--storage-index-directory", indexDirectory, "-w"},
+            Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
     dbManager = context.getBean(Manager.class);
     transactionStore = dbManager.getTransactionStore();
-
   }
 
+  /**
+   * release resources.
+   */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
@@ -87,6 +78,9 @@ public class TransactionStoreTest {
     FileUtil.deleteDir(new File(dbPath));
   }
 
+  /**
+   * genarate random bytes.
+   */
   public static byte[] randomBytes(int length) {
     // generate the random number
     byte[] result = new byte[length];
@@ -140,7 +134,7 @@ public class TransactionStoreTest {
   }
 
   @Test
-  public void GetTransactionTest() throws BadItemException, ItemNotFoundException {
+  public void getTransactionTest() throws BadItemException, ItemNotFoundException {
     final BlockStore blockStore = dbManager.getBlockStore();
     final TransactionStore trxStore = dbManager.getTransactionStore();
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -196,7 +190,7 @@ public class TransactionStoreTest {
    * put and get CreateAccountTransaction.
    */
   @Test
-  public void CreateAccountTransactionStoreTest() throws BadItemException {
+  public void createAccountTransactionStoreTest() throws BadItemException {
     AccountCreateContract accountCreateContract = getContract(ACCOUNT_NAME,
         OWNER_ADDRESS);
     TransactionCapsule ret = new TransactionCapsule(accountCreateContract,
@@ -209,7 +203,7 @@ public class TransactionStoreTest {
   }
 
   @Test
-  public void GetUncheckedTransactionTest() {
+  public void getUncheckedTransactionTest() {
     final BlockStore blockStore = dbManager.getBlockStore();
     final TransactionStore trxStore = dbManager.getTransactionStore();
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -265,7 +259,7 @@ public class TransactionStoreTest {
    * put and get CreateWitnessTransaction.
    */
   @Test
-  public void CreateWitnessTransactionStoreTest() throws BadItemException {
+  public void createWitnessTransactionStoreTest() throws BadItemException {
     WitnessCreateContract witnessContract = getWitnessContract(OWNER_ADDRESS, URL);
     TransactionCapsule transactionCapsule = new TransactionCapsule(witnessContract);
     transactionStore.put(key1, transactionCapsule);
@@ -278,7 +272,7 @@ public class TransactionStoreTest {
    * put and get TransferTransaction.
    */
   @Test
-  public void TransferTransactionStorenTest() throws BadItemException {
+  public void transferTransactionStorenTest() throws BadItemException {
     AccountCapsule ownerCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME),
@@ -326,7 +320,7 @@ public class TransactionStoreTest {
    * put value is null and get it.
    */
   @Test
-  public void TransactionValueNullTest() throws BadItemException {
+  public void transactionValueNullTest() throws BadItemException {
     TransactionCapsule transactionCapsule = null;
     transactionStore.put(key2, transactionCapsule);
     Assert.assertNull("put value is null", transactionStore.get(key2));
@@ -337,7 +331,7 @@ public class TransactionStoreTest {
    * put key is null and get it.
    */
   @Test
-  public void TransactionKeyNullTest() throws BadItemException {
+  public void transactionKeyNullTest() throws BadItemException {
     AccountCreateContract accountCreateContract = getContract(ACCOUNT_NAME,
         OWNER_ADDRESS);
     TransactionCapsule ret = new TransactionCapsule(accountCreateContract,

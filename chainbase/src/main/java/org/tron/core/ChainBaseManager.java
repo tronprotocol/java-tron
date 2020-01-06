@@ -1,16 +1,28 @@
 package org.tron.core;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
+import com.google.protobuf.ByteString;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.MerkleContainer;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.CommonStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db.RecentBlockStore;
+import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
+import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -28,6 +40,8 @@ import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
+import org.tron.core.store.TransactionHistoryStore;
+import org.tron.core.store.TransactionRetStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
@@ -122,6 +136,27 @@ public class ChainBaseManager {
   @Getter
   private KhaosDatabase khaosDb;
 
+  @Autowired
+  @Getter
+  private CommonStore commonStore;
+
+  @Autowired
+  @Getter
+  private TransactionStore transactionStore;
+  @Autowired
+  @Getter
+  private TransactionRetStore transactionRetStore;
+  @Autowired
+  @Getter
+  private RecentBlockStore recentBlockStore;
+  @Autowired
+  @Getter
+  private TransactionHistoryStore transactionHistoryStore;
+
+  @Getter
+  @Setter
+  private BlockCapsule genesisBlock;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -134,6 +169,10 @@ public class ChainBaseManager {
   }
 
   public void closeAllStore() {
+    closeOneStore(transactionRetStore);
+    closeOneStore(recentBlockStore);
+    closeOneStore(transactionHistoryStore);
+    closeOneStore(transactionStore);
     closeOneStore(accountStore);
     closeOneStore(blockStore);
     closeOneStore(blockIndexStore);
@@ -156,5 +195,53 @@ public class ChainBaseManager {
     closeOneStore(merkleTreeStore);
     closeOneStore(delegationStore);
     closeOneStore(proofStore);
+    closeOneStore(commonStore);
   }
+
+  // for test only
+  public List<ByteString> getWitnesses() {
+    return witnessScheduleStore.getActiveWitnesses();
+  }
+
+  // for test only
+  public void addWitness(final ByteString address) {
+    List<ByteString> witnessAddresses =
+        witnessScheduleStore.getActiveWitnesses();
+    witnessAddresses.add(address);
+    getWitnessScheduleStore().saveActiveWitnesses(witnessAddresses);
+  }
+
+  public BlockCapsule getHead() throws HeaderNotFound {
+    List<BlockCapsule> blocks = getBlockStore().getBlockByLatestNum(1);
+    if (CollectionUtils.isNotEmpty(blocks)) {
+      return blocks.get(0);
+    } else {
+      logger.info("Header block Not Found");
+      throw new HeaderNotFound("Header block Not Found");
+    }
+  }
+
+  public synchronized BlockId getHeadBlockId() {
+    return new BlockId(
+        dynamicPropertiesStore.getLatestBlockHeaderHash(),
+        dynamicPropertiesStore.getLatestBlockHeaderNumber());
+  }
+
+  public long getHeadBlockNum() {
+    return dynamicPropertiesStore.getLatestBlockHeaderNumber();
+  }
+
+  public long getHeadBlockTimeStamp() {
+    return dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
+  }
+
+  public void initGenesis(){
+    genesisBlock = BlockUtil.newGenesisBlockCapsule();
+  }
+
+  public long getHeadSlot() {
+    return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
+        .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
+  }
+
 }

@@ -120,7 +120,7 @@ public class ProposalCreateActuator extends AbstractActuator {
   }
 
   private void validateValue(Map.Entry<Long, Long> entry) throws ContractValidateException {
-    ProposalUtil.validator(chainBaseManager.getDynamicPropertiesStore(), forkUtils, entry.getKey(),
+    ProposalUtil.validator(chainBaseManager.getDynamicPropertiesStore(), forkController, entry.getKey(),
         entry.getValue());
   }
 

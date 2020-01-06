@@ -400,7 +400,7 @@ public class SendCoinShieldTest {
     ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
     byte[] pkd = paymentAddress2.getPkD();
-    Note note = new Note(paymentAddress2, 4000);//construct function：this.pkD = address.getPkD();
+    Note note = new Note(paymentAddress2, 4000);//construct function:this.pkD = address.getPkD();
     note.setRcm(ByteArray
         .fromHexString("83d36fd4c8eebec516c3a8ce2fe4832e01eb57bd7f9f9c9e0bd68cc69a5b0f06"));
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);

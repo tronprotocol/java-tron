@@ -53,6 +53,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
@@ -66,7 +67,6 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
-//import org.tron.protos.Protocol.DeferredTransaction;
 
 @Slf4j
 public class WalletTest {
@@ -312,7 +312,7 @@ public class WalletTest {
         .getAddress()));
     logger.info("wallet address = {}", ByteArray.toHexString(wallet1
         .getAddress()));
-    assertEquals("Wallet ECKey should match provided ECKey", wallet1.getEcKey(), ecKey);
+    assertEquals("Wallet ECKey should match provided ECKey", wallet1.getCryptoEngine(), ecKey);
   }
 
   @Test
@@ -499,7 +499,7 @@ public class WalletTest {
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
 
     Arrays.stream(ProposalType.values()).forEach(parameters -> {
-      String methodName = Wallet.makeUpperCamelMethod(parameters.name());
+      String methodName = TransactionUtil.makeUpperCamelMethod(parameters.name());
       try {
         builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey(methodName)
