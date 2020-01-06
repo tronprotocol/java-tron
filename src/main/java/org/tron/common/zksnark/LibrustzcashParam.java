@@ -50,13 +50,13 @@ public class LibrustzcashParam {
   }
 
   public static void validValueParams(long value) throws ZksnarkException {
-    if(value < 0){
+    if (value < 0) {
       throw new ZksnarkException("Value should be non-negative.");
     }
   }
 
   public static void validPositionParams(long value) throws ZksnarkException {
-    if(value < 0){
+    if (value < 0) {
       throw new ZksnarkException("Position should be non-negative.");
     }
   }
@@ -803,7 +803,8 @@ public class LibrustzcashParam {
   }
 
   /**
-   * ivk: incoming viewing key, 32 bytes, should be 251bits , not checked; d: 11 bytes pkD: 32 bytes
+   * ivk: incoming viewing key, 32 bytes, should be 251bits , not checked; d: 11 bytes pkD: 32
+   * bytes
    */
   public static class IvkToPkdParams implements ValidParam {
 
@@ -829,7 +830,7 @@ public class LibrustzcashParam {
       valid32Params(ivk);
       valid11Params(d);
       valid32Params(pkD);
-      if((ivk[31] >> 3) != 0){
+      if ((ivk[31] >> 3) != 0) {
         throw new ZksnarkException("Most significant five bits of ivk should be 0.");
       }
     }
@@ -863,7 +864,7 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      if (!((depth < 63) && (depth >=0))) {
+      if (!((depth < 63) && (depth >= 0))) {
         throw new ZksnarkException("Merkle tree depth must be smaller than 63");
       }
       valid32Params(a);

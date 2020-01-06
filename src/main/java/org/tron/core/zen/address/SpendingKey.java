@@ -68,7 +68,7 @@ public class SpendingKey {
   public PaymentAddress defaultAddress() throws BadItemException, ZksnarkException {
     Optional<PaymentAddress> addrOpt =
         fullViewingKey().inViewingKey().address(defaultDiversifier());
-    if (addrOpt.isPresent()){
+    if (addrOpt.isPresent()) {
       return addrOpt.get();
     } else {
       return null;

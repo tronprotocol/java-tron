@@ -8,6 +8,7 @@ import org.tron.core.exception.ZksnarkException;
 public class JLibsodiumParam {
 
   interface ValidParam {
+
     void valid() throws ZksnarkException;
   }
 
@@ -18,7 +19,7 @@ public class JLibsodiumParam {
   }
 
   public static void validValueParams(long value) throws ZksnarkException {
-    if(value < 0){
+    if (value < 0) {
       throw new ZksnarkException("Value should be non-negative.");
     }
   }
@@ -66,11 +67,12 @@ public class JLibsodiumParam {
     @Override
     public void valid() throws ZksnarkException {
       validValueParams(state);
-      validParamLength(personal,16);
+      validParamLength(personal, 16);
     }
   }
 
   public static class Blake2bUpdateParams implements ValidParam {
+
     @Setter
     @Getter
     private long state;
@@ -91,7 +93,7 @@ public class JLibsodiumParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      if(in.length != 33 && in.length != 34){
+      if (in.length != 33 && in.length != 34) {
         throw new ZksnarkException("param length must be 33 or 34");
       }
     }
@@ -119,7 +121,7 @@ public class JLibsodiumParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      if(out.length != 11 && out.length != 64){
+      if (out.length != 11 && out.length != 64) {
         throw new ZksnarkException("param length must be 11 or 64");
       }
     }
@@ -170,8 +172,8 @@ public class JLibsodiumParam {
     @Override
     public void valid() throws ZksnarkException {
 
-      validParamLength(out,32);
-      validParamLength(personal,16);
+      validParamLength(out, 32);
+      validParamLength(personal, 16);
     }
   }
 
@@ -222,8 +224,8 @@ public class JLibsodiumParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      validParamLength(npub,12);
-      validParamLength(k,32);
+      validParamLength(npub, 12);
+      validParamLength(k, 32);
     }
   }
 
@@ -274,8 +276,8 @@ public class JLibsodiumParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      validParamLength(npub,12);
-      validParamLength(k,32);
+      validParamLength(npub, 12);
+      validParamLength(k, 32);
     }
   }
 }
