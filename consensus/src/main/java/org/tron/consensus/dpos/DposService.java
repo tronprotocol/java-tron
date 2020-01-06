@@ -150,11 +150,11 @@ public class DposService implements ConsensusInterface {
   }
 
   private void updateSolidBlock() {
-    List<Long> numbers = consensusDelegate.getActiveWitnesses().stream()
-        .map(address -> consensusDelegate.getWitness(address.toByteArray()).getLatestBlockNum())
-        .sorted()
-        .collect(Collectors.toList());
-    long size = consensusDelegate.getActiveWitnesses().size();
+//    List<Long> numbers = consensusDelegate.getActiveWitnesses().stream()
+//        .map(address -> consensusDelegate.getWitness(address.toByteArray()).getLatestBlockNum())
+//        .sorted()
+//        .collect(Collectors.toList());
+  //  long size = consensusDelegate.getActiveWitnesses().size();
    // int position = (int) (size * (1 - SOLIDIFIED_THRESHOLD * 1.0 / 100));
     long newSolidNum = commonDataBase.getLatestPbftBlockNum();
     long oldSolidNum = consensusDelegate.getLatestSolidifiedBlockNum();
