@@ -423,13 +423,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMarketSellFee();
     } catch (IllegalArgumentException e) {
-      this.saveMarketSellFee(100_000L);
+      this.saveMarketSellFee(0L);
     }
 
     try {
       this.getMarketCancelFee();
     } catch (IllegalArgumentException e) {
-      this.saveMarketCancelFee(100_000L);
+      this.saveMarketCancelFee(0L);
     }
 
     try {

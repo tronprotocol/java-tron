@@ -127,6 +127,7 @@ public class MarketSellAssetActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
     dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
+    dbManager.getDynamicPropertiesStore().saveAllowMarketTransaction(1L);
   }
 
 
