@@ -85,7 +85,9 @@ public class SolidityNode {
     appT.addService(rpcApiService);
     //http
     SolidityNodeHttpApiService httpApiService = context.getBean(SolidityNodeHttpApiService.class);
-    appT.addService(httpApiService);
+    if (CommonParameter.getInstance().solidityNodeHttpEnable) {
+      appT.addService(httpApiService);
+    }
 
     appT.initServices(parameter);
     appT.startServices();
