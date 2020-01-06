@@ -12,6 +12,7 @@ import org.tron.common.utils.Sha256Hash;
 public class CommonDataBase extends TronDatabase<byte[]> {
 
   private static final byte[] LATEST_PBFT_BLOCK_NUM = "LATEST_PBFT_BLOCK_NUM".getBytes();
+  private static final byte[] LATEST_PBFT_BLOCK_HASH = "LATEST_PBFT_BLOCK_HASH".getBytes();
 
   public CommonDataBase() {
     super("common-database");
@@ -50,4 +51,18 @@ public class CommonDataBase extends TronDatabase<byte[]> {
         .map(ByteArray::toLong)
         .orElse(0L);
   }
+
+  public void saveLatestPbftBlockHash(byte[] data) {
+    this.put(LATEST_PBFT_BLOCK_HASH, data);
+  }
+
+  public Sha256Hash getLatestPbftBlockHash() {
+    byte[] date = this.get(LATEST_PBFT_BLOCK_HASH);
+
+    if (ByteUtil.isNullOrZeroArray(date)) {
+      return null;
+    }
+    return Sha256Hash.wrap(date);
+  }
+
 }

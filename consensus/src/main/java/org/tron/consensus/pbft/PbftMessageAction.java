@@ -39,6 +39,7 @@ public class PbftMessageAction {
           Raw raw = blockMessage.getPbftMessage().getRawData();
           chainBaseManager.getPbftSignDataStore()
               .putBlockSignData(blockNum, new PbftSignCapsule(raw.toByteString(), dataSignList));
+          chainBaseManager.getCommonDataBase().saveLatestPbftBlockHash(raw.getData().toByteArray());
           logger.info("commit msg block num is:{}", blockNum);
         }
         eventBusService.postEvent(
