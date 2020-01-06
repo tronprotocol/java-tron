@@ -13,6 +13,7 @@ import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftBlockMessage;
 import org.tron.consensus.pbft.message.PbftSrMessage;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 
 @Slf4j(topic = "pbft")
@@ -25,6 +26,9 @@ public class PbftManager {
   @Autowired
   private MaintenanceManager maintenanceManager;
 
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
   private ExecutorService executorService = Executors.newFixedThreadPool(10,
       r -> new Thread(r, "Pbft"));
 
@@ -35,6 +39,9 @@ public class PbftManager {
   }
 
   public void blockPrePrepare(BlockCapsule block) {
+    if (!chainBaseManager.getDynamicPropertiesStore().allowPBFT()) {
+      return;
+    }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
         doAction(PbftBlockMessage.buildPrePrepareMessage(block));
@@ -44,12 +51,15 @@ public class PbftManager {
     }
   }
 
-  public void srPrePrepare(BlockCapsule block, List<ByteString> currentWitness, long cycle) {
+  public void srPrePrepare(BlockCapsule block, List<ByteString> currentWitness, long epoch) {
+    if (!chainBaseManager.getDynamicPropertiesStore().allowPBFT()) {
+      return;
+    }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
-        doAction(PbftSrMessage.buildPrePrepareMessage(block, currentWitness, cycle));
+        doAction(PbftSrMessage.buildPrePrepareMessage(block, currentWitness, epoch));
       } else {
-        doAction(PbftSrMessage.buildFullNodePrePrepareMessage(block, currentWitness, cycle));
+        doAction(PbftSrMessage.buildFullNodePrePrepareMessage(block, currentWitness, epoch));
       }
     }
   }

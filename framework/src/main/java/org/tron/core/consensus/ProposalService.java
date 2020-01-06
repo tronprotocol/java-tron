@@ -184,6 +184,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
           break;
         }
+        case ALLOW_PBFT: {
+          manager.getDynamicPropertiesStore().saveAllowPBFT(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

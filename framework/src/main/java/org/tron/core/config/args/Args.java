@@ -98,14 +98,6 @@ public class Args extends CommonParameter {
   @Getter
   private FilterQuery eventFilter;
 
-  @Getter
-  @Setter
-  private int agreeNodeCount;
-
-  @Getter
-  @Setter
-  private int checkMsgCount;
-
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -190,6 +182,7 @@ public class Args extends CommonParameter {
     INSTANCE.changedDelegation = 0;
     INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     INSTANCE.checkMsgCount = 1;
+    INSTANCE.allowPBFT = 0;
   }
 
   /**
@@ -663,6 +656,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
             .getInt(Constant.COMMITTEE_CHANGED_DELEGATION) : 0;
 
+    INSTANCE.allowPBFT =
+        config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
+            .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
+
     INSTANCE.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
         .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     INSTANCE.agreeNodeCount = INSTANCE.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
@@ -1069,6 +1066,7 @@ public class Args extends CommonParameter {
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
     DBConfig.setTransactionHistoreSwitch(cfgArgs.getStorage().getTransactionHistoreSwitch());
+    DBConfig.setAllowPBFT(cfgArgs.getAllowPBFT());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

@@ -409,6 +409,18 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  protected int agreeNodeCount;
+
+  @Getter
+  @Setter
+  protected int checkMsgCount;
+
+  @Getter
+  @Setter
+  protected long allowPBFT;
+
+  @Getter
+  @Setter
   protected Set<String> actuatorSet;
 
   @Getter
