@@ -205,16 +205,6 @@ public class NoteEncryption {
       EncPlaintext plaintext = new EncPlaintext();
       plaintext.data = new byte[ZC_ENCPLAINTEXT_SIZE];
       //decrypt cEnc by kEnc.
-//      if (JLibsodium.cryptoAeadChacha20poly1305IetfDecrypt(
-//          plaintext.data, null,
-//          null,
-//          ciphertext.data, ZC_ENCCIPHERTEXT_SIZE,
-//          null,
-//          0,
-//          cipherNonce, kEnc) != 0) {
-//        return Optional.empty();
-//      }
-      
       if (JLibsodium.cryptoAeadChacha20poly1305IetfDecrypt(new Chacha20poly1305IetfDecryptParams(
               plaintext.data, null,
               null,
