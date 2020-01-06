@@ -78,12 +78,6 @@ Bonus point applies in TRON incentives programme. Developers can earn points by 
 
 You can find your points ranking at  [Tronscan](https://tronscan.org/#/developersreward).
 
-The Top 5 scored developers (for every month, quarter and year) can win a cash reward:
-
-|No.1|No.2|No.3|No.4|No.5|
-|--|--|--|--|--|
-|200 USD|180 USD|150 USD|120 USD|100 USD|
-
-Every participated developer will also be honored with a TRON Honorary Developer Certificate.
+The Top 5 scored developers (for every month, quarter and year) can win a cash reward.
 
 For more details, please visit [Incentives Policy](https://tronprotocol.github.io/documentation-en/developers/incentives/).
