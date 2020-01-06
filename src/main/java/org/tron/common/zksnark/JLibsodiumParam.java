@@ -93,6 +93,7 @@ public class JLibsodiumParam {
 
     @Override
     public void valid() throws ZksnarkException {
+      validValueParams(state);
       if (in.length != 33 && in.length != 34) {
         throw new ZksnarkException("param length must be 33 or 34");
       }
@@ -121,7 +122,8 @@ public class JLibsodiumParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      if (out.length != 11 && out.length != 64) {
+      validValueParams(state);
+      if (out.length != outlen || (out.length != 11 && out.length != 64)) {
         throw new ZksnarkException("param length must be 11 or 64");
       }
     }
@@ -171,7 +173,10 @@ public class JLibsodiumParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      if(out.length != outlen || in.length != inlen){
+        throw new ZksnarkException("out.length is not equal to outlen "
+            + "or in.length is not equal to inlen");
+      }
       validParamLength(out, 32);
       validParamLength(personal, 16);
     }
