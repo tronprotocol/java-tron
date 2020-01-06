@@ -1,80 +1,91 @@
 package org.tron.common.zksnark;
 
 import org.tron.common.utils.DBConfig;
-
+import org.tron.common.zksnark.JLibsodiumParam.Black2bSaltPersonalParams;
+import org.tron.common.zksnark.JLibsodiumParam.Blake2bFinalParams;
+import org.tron.common.zksnark.JLibsodiumParam.Blake2bInitSaltPersonalParams;
+import org.tron.common.zksnark.JLibsodiumParam.Blake2bUpdateParams;
+import org.tron.common.zksnark.JLibsodiumParam.Chacha20Poly1305IetfEncryptParams;
+import org.tron.common.zksnark.JLibsodiumParam.Chacha20poly1305IetfDecryptParams;
 
 public class JLibsodium {
-
-  public static final int crypto_generichash_blake2b_PERSONALBYTES = 16;
-  public static final int crypto_aead_chacha20poly1305_IETF_NPUBBYTES = 12;
+  
+  public static final int CRYPTO_GENERICHASH_BLAKE2B_PERSONALBYTES = 16;
+  public static final int CRYPTO_AEAD_CHACHA20POLY1305_IETF_NPUBBYTES = 12;
   private static Libsodium INSTANCE;
-
-  public static int cryptoGenerichashBlake2bInitSaltPersonal(
-      long state, byte[] key, int keylen, int outlen, byte[] salt, byte[] personal) {
+  
+  public static int cryptoGenerichashBlake2bInitSaltPersonal(Blake2bInitSaltPersonalParams params) {
     if (!isOpenZen()) {
       return 0;
     }
     return INSTANCE
-        .cryptoGenerichashBlake2BInitSaltPersonal(state, key, keylen, outlen, salt, personal);
+            .cryptoGenerichashBlake2BInitSaltPersonal(params.getState(), params.getKey(),
+                    params.getKeyLen(), params.getOutLen(), params.getSalt(), params.getPersonal());
   }
-
-  public static int cryptoGenerichashBlake2bUpdate(
-      long state, byte[] in, long inlen) {
-    if (!isOpenZen()) {
-      return 0;
-    }
-    return INSTANCE.cryptoGenerichashBlake2BUpdate(state, in, inlen);
-  }
-
-  public static int cryptoGenerichashBlake2bFinal(
-      long state, byte[] out, int outlen) {
-    if (!isOpenZen()) {
-      return 0;
-    }
-    return INSTANCE.cryptoGenerichashBlake2BFinal(state, out, outlen);
-  }
-
-  public static int cryptoGenerichashBlack2bSaltPersonal(byte[] out, int outlen, byte[] in,
-      long inlen, byte[] key, int keylen, byte[] salt, byte[] personal) {
-    if (!isOpenZen()) {
-      return 0;
-    }
-    return INSTANCE.cryptoGenerichashBlake2BSaltPersonal(out, outlen, in, inlen, key, keylen, salt,
-        personal);
-  }
-
-  public static int cryptoAeadChacha20poly1305IetfDecrypt(byte[] m, long[] mlen_p, byte[] nsec,
-      byte[] c, long clen, byte[] ad, long adlen, byte[] npub, byte[] k) {
+  
+  public static int cryptoGenerichashBlake2bUpdate(Blake2bUpdateParams params) {
     if (!isOpenZen()) {
       return 0;
     }
     return INSTANCE
-        .cryptoAeadChacha20Poly1305IetfDecrypt(m, mlen_p, nsec, c, clen, ad, adlen, npub, k);
+            .cryptoGenerichashBlake2BUpdate(params.getState(), params.getIn(), params.getInLen());
   }
-
-  public static int cryptoAeadChacha20Poly1305IetfEncrypt(byte[] c, long[] clen_p, byte[] m,
-      long mlen, byte[] ad, long adlen, byte[] nsec, byte[] npub, byte[] k) {
+  
+  public static int cryptoGenerichashBlake2bFinal(Blake2bFinalParams params) {
+    if (!isOpenZen()) {
+      return 0;
+    }
+    return INSTANCE.cryptoGenerichashBlake2BFinal(params.getState(),
+            params.getOut(), params.getOutLen());
+  }
+  
+  public static int cryptoGenerichashBlack2bSaltPersonal(Black2bSaltPersonalParams params) {
+    if (!isOpenZen()) {
+      return 0;
+    }
+    return INSTANCE.cryptoGenerichashBlake2BSaltPersonal(params.getOut(), params.getOutLen(),
+            params.getIn(), params.getInLen(), params.getKey(), params.getKeyLen(),
+            params.getSalt(),
+            params.getPersonal());
+  }
+  
+  public static int cryptoAeadChacha20poly1305IetfDecrypt(
+          Chacha20poly1305IetfDecryptParams params) {
     if (!isOpenZen()) {
       return 0;
     }
     return INSTANCE
-        .cryptoAeadChacha20Poly1305IetfEncrypt(c, clen_p, m, mlen, ad, adlen, nsec, npub, k);
+            .cryptoAeadChacha20Poly1305IetfDecrypt(params.getM(), params.getMLenP(),
+                    params.getNSec(),
+                    params.getC(), params.getCLen(), params.getAd(),
+                    params.getAdLen(), params.getNPub(), params.getK());
   }
-
+  
+  public static int cryptoAeadChacha20Poly1305IetfEncrypt(
+          Chacha20Poly1305IetfEncryptParams params) {
+    if (!isOpenZen()) {
+      return 0;
+    }
+    return INSTANCE
+            .cryptoAeadChacha20Poly1305IetfEncrypt(params.getC(), params.getCLenP(), params.getM(),
+                    params.getMLen(), params.getAd(), params.getAdLen(),
+                    params.getNSec(), params.getNPub(), params.getK());
+  }
+  
   public static long initState() {
     if (!isOpenZen()) {
       return 0;
     }
     return INSTANCE.cryptoGenerichashBlake2BStateInit();
   }
-
+  
   public static void freeState(long state) {
     if (!isOpenZen()) {
       return;
     }
     INSTANCE.cryptoGenerichashBlake2BStateFree(state);
   }
-
+  
   private static boolean isOpenZen() {
     boolean res = DBConfig.isFullNodeAllowShieldedTransaction();
     if (res) {
