@@ -17,6 +17,7 @@ package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Hash;
 import org.tron.protos.Protocol.MarketPrice;
 
 public class MarketUtils {
@@ -41,8 +42,7 @@ public class MarketUtils {
     System.arraycopy(countByteArray, 0, result, addressByteArray.length
         + TOKEN_ID_LENGTH + TOKEN_ID_LENGTH, countByteArray.length);
 
-//    return Hash.sha3(result);
-    return result;
+    return Hash.sha3(result);
   }
 
 

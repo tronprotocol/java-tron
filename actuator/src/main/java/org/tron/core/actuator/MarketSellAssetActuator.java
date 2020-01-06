@@ -536,6 +536,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
             marketAccountOrderCapsule.getCount());
     MarketOrderCapsule orderCapsule = new MarketOrderCapsule(orderId, contract);
 
+    long now = dynamicStore.getLatestBlockHeaderTimestamp();
+    orderCapsule.setCreateTime(now);
+
     marketAccountOrderCapsule.addOrders(orderCapsule.getID());
     marketAccountOrderCapsule.setCount(marketAccountOrderCapsule.getCount() + 1);
     marketAccountStore.put(accountCapsule.createDbKey(), marketAccountOrderCapsule);
