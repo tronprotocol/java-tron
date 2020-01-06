@@ -166,6 +166,7 @@ public class HttpTestZenToken006 {
     Assert.assertTrue(beforeNetUsed == afterNetUsed);
 
   }
+
   /**
    * constructor.
    */

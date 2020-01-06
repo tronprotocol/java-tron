@@ -116,7 +116,8 @@ public class WalletTestZenToken011 {
 
   @Test(enabled = true, description = "Test get new shield address ")
   public void test1Shield2ShieldTransaction() {
-    sendShieldAddress = blockingStubFull.getNewShieldedAddress(GrpcAPI.EmptyMessage.newBuilder().build()).getPaymentAddress();
+    sendShieldAddress = blockingStubFull.getNewShieldedAddress(GrpcAPI.EmptyMessage.newBuilder()
+        .build()).getPaymentAddress();
     memo = "Shield memo in" + System.currentTimeMillis();
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress,
         "" + (sendTokenAmount - zenTokenFee), memo);
