@@ -6,9 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.base.Param;
-import org.tron.consensus.pbft.message.PbftBaseMessage;
-import org.tron.consensus.pbft.message.PbftBlockMessage;
-import org.tron.consensus.pbft.message.PbftSrMessage;
+import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.db.CommonDataBase;
 import org.tron.core.db.PbftSignDataStore;
@@ -29,30 +27,28 @@ public class PbftMessageAction {
   @Autowired
   private PbftSignDataStore pbftSignDataStore;
 
-  public void action(PbftBaseMessage message, List<ByteString> dataSignList) {
-    switch (message.getType()) {
-      case PBFT_BLOCK_MSG: {
-        PbftBlockMessage blockMessage = (PbftBlockMessage) message;
-        long blockNum = blockMessage.getNumber();
+  public void action(PbftMessage message, List<ByteString> dataSignList) {
+    switch (message.getDataType()) {
+      case BLOCK: {
+        long blockNum = message.getNumber();
         if (blockNum - checkPoint >= Param.getInstance().getCheckMsgCount()) {
           checkPoint = blockNum;
           commonDataBase.saveLatestPbftBlockNum(blockNum);
-          Raw raw = blockMessage.getPbftMessage().getRawData();
+          Raw raw = message.getPbftMessage().getRawData();
           pbftSignDataStore
               .putBlockSignData(blockNum, new PbftSignCapsule(raw.toByteString(), dataSignList));
           logger.info("commit msg block num is:{}", blockNum);
         }
       }
       break;
-      case PBFT_SR_MSG: {
+      case SRL: {
         try {
-          PbftSrMessage srMessage = (PbftSrMessage) message;
           SRL srList = SRL
-              .parseFrom(srMessage.getPbftMessage().getRawData().getData().toByteArray());
-          Raw raw = srMessage.getPbftMessage().getRawData();
-          pbftSignDataStore.putSrSignData(srList.getEpoch(),
+              .parseFrom(message.getPbftMessage().getRawData().getData().toByteArray());
+          Raw raw = message.getPbftMessage().getRawData();
+          pbftSignDataStore.putSrSignData(message.getEpoch(),
               new PbftSignCapsule(raw.toByteString(), dataSignList));
-          logger.info("sr commit msg :{}, epoch:{}", srMessage.getNumber(), srList.getEpoch());
+          logger.info("sr commit msg :{}, epoch:{}", message.getNumber(), message.getEpoch());
         } catch (Exception e) {
           logger.error("process the sr list error!", e);
         }

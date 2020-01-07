@@ -14,15 +14,14 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
-import org.tron.core.db.Manager;
+import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.peer.PeerConnection;
 
 @Component
 @Scope("prototype")
-public class PbftHandler extends SimpleChannelInboundHandler<PbftBaseMessage> {
+public class PbftHandler extends SimpleChannelInboundHandler<PbftMessage> {
 
-  public static final int MIN_BLOCK_COUNTS = 5;
   protected PeerConnection peer;
 
   private MessageQueue msgQueue;
@@ -35,14 +34,9 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftBaseMessage> {
   @Autowired
   private PbftManager pbftManager;
 
-  @Autowired
-  private Manager manager;
-
   @Override
-  public void channelRead0(final ChannelHandlerContext ctx, PbftBaseMessage msg) throws Exception {
-    if (!validMsgTime(msg)) {
-      return;
-    }
+  public void channelRead0(final ChannelHandlerContext ctx, PbftMessage msg) throws Exception {
+    msgQueue.receivedMessage(msg);
     msg.analyzeSignature();
     String key = buildKey(msg);
     Lock lock = striped.get(key);
@@ -56,7 +50,6 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftBaseMessage> {
       }
       msgCache.put(key, true);
       pbftManager.forwardMessage(msg);
-      msgQueue.receivedMessage(msg);
       pbftManager.doAction(msg);
     } finally {
       lock.unlock();
@@ -78,13 +71,7 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftBaseMessage> {
   }
 
   private String buildKey(PbftBaseMessage msg) {
-    return msg.getKey() + msg.getPbftMessage().getRawData()
-        .getPbftMsgType().toString();
-  }
-
-  private boolean validMsgTime(PbftBaseMessage message) {
-    return manager.getHeadBlockNum() - message.getPbftMessage().getRawData().getNumber()
-        < MIN_BLOCK_COUNTS;
+    return msg.getKey() + msg.getPbftMessage().getRawData().getMsgType().toString();
   }
 
 }
