@@ -418,9 +418,9 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getMarketPriceByPairServlet),
           "/getmarketpricebypair");
       context.addServlet(new ServletHolder(getMarketOrderListByPairServer),
-          "/getmarketorderlistbypairserver");
+          "/getmarketorderlistbypair");
       context.addServlet(new ServletHolder(getMarketPairListServer),
-          "/getmarketpairlistserver");
+          "/getmarketpairlist");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

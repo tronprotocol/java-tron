@@ -296,7 +296,7 @@ service Wallet {
 //  rpc GetMarketOrderById (BytesMessage) returns (MarketOrderList) {
 //  }
 
-  rpc GetMarketOrderByAccount (Account) returns (MarketOrderList) {
+  rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
   }
 
   rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {
@@ -895,7 +895,7 @@ service WalletSolidity {
   //  rpc GetMarketOrderById (BytesMessage) returns (MarketOrderList) {
   //  }
 
-  rpc GetMarketOrderByAccount (Account) returns (MarketOrderList) {
+  rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
   }
 
   rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {

@@ -22,7 +22,7 @@ public class MarketSellAssetServlet extends RateLimiterServlet {
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-
+    doPost(request, response);
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {

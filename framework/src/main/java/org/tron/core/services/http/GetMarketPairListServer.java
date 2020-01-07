@@ -17,17 +17,7 @@ public class GetMarketPairListServer extends RateLimiterServlet {
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-    try {
-
-      MarketOrderPairList reply = wallet.getMarketPairList();
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
-      } else {
-        response.getWriter().println("{}");
-      }
-    } catch (Exception e) {
-      Util.processError(e, response);
-    }
+    doPost(request, response);
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {

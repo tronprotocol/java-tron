@@ -2190,10 +2190,10 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getMarketOrderByAccount(Account request,
+    public void getMarketOrderByAccount(BytesMessage request,
         StreamObserver<MarketOrderList> responseObserver) {
       try {
-        ByteString address = request.getAddress();
+        ByteString address = request.getValue();
 
         MarketOrderList marketOrderList = wallet
             .getMarketOrderByAccount(address);
