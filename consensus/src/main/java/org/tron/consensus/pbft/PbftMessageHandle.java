@@ -29,7 +29,6 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.store.WitnessScheduleStore;
 
 @Slf4j(topic = "pbft")
@@ -203,33 +202,18 @@ public class PbftMessageHandle {
     if (!Param.getInstance().isEnable()) {//is witness
       return false;
     }
-    if (!witnessScheduleStore.getActiveWitnesses()
-        .contains(Param.getInstance().getMiner().getPrivateKeyAddress())) {
+    ByteString publicKey = Param.getInstance().getMiner().getPrivateKeyAddress();
+    List<ByteString> compareList;
+    long epoch = msg.getPbftMessage().getRawData().getEpoch();
+    if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
+      compareList = maintenanceManager.getCurrentWitness();
+    } else {
+      compareList = maintenanceManager.getBeforeWitness();
+    }
+    if (!compareList.contains(publicKey)) {
       return false;
     }
     return !isSyncing();
-  }
-
-  public boolean checkIsWitnessMsg(PbftBaseMessage msg) {
-    //check current node is witness node
-    if (maintenanceManager == null) {
-      return false;
-    }
-    long blockNum = msg.getNumber();
-    List<ByteString> witnessList;
-    BlockCapsule blockCapsule = null;
-    try {
-      blockCapsule = Param.getInstance().getPbftInterface().getBlock(blockNum);
-    } catch (Exception e) {
-      logger.debug("can not find the block,num is: {}, error reason: {}", blockNum, e.getMessage());
-    }
-    if (blockCapsule == null || blockCapsule.getTimeStamp() > maintenanceManager
-        .getBeforeMaintenanceTime()) {
-      witnessList = maintenanceManager.getCurrentWitness();
-    } else {
-      witnessList = maintenanceManager.getBeforeWitness();
-    }
-    return witnessList.contains(ByteString.copyFrom(msg.getPublicKey()));
   }
 
   public boolean isSyncing() {

@@ -44,7 +44,7 @@ public class PbftSrMessage extends PbftBaseMessage {
     ECKey ecKey = ECKey.fromPrivate(miner.getPrivateKey());
     Raw.Builder rawBuilder = Raw.newBuilder();
     PBFTMessage.Builder builder = PBFTMessage.newBuilder();
-    rawBuilder.setNumber(block.getNum())
+    rawBuilder.setNumber(block.getNum()).setEpoch(epoch)
         .setPbftMsgType(Type.PREPREPARE)
         .setData(ByteString.copyFrom(data));
     Raw raw = rawBuilder.build();
@@ -65,7 +65,7 @@ public class PbftSrMessage extends PbftBaseMessage {
     PbftSrMessage pbftSrMessage = new PbftSrMessage();
     Raw.Builder rawBuilder = Raw.newBuilder();
     PBFTMessage.Builder builder = PBFTMessage.newBuilder();
-    rawBuilder.setNumber(block.getNum())
+    rawBuilder.setNumber(block.getNum()).setEpoch(epoch)
         .setPbftMsgType(Type.PREPREPARE)
         .setData(ByteString.copyFrom(data));
     Raw raw = rawBuilder.build();

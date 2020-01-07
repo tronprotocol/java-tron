@@ -5,6 +5,7 @@ import lombok.Getter;
 public class Parameter {
 
   public class ChainConstant {
+
     public static final int MAX_ACTIVE_WITNESS_NUM = 27;
     public static final long TRANSFER_FEE = 0; // free
     public static final int BLOCK_PRODUCED_INTERVAL = 3000; //ms,produce block period, must be divisible by 60. millisecond
@@ -77,6 +78,7 @@ public class Parameter {
     VERSION_3_6(8),
     VERSION_3_6_5(9),
     VERSION_4_0(15),
+    VERSION_4_2(18),
     VERSION_4_3(20);
 
     @Getter
@@ -89,6 +91,7 @@ public class Parameter {
 
   @Deprecated
   public class ForkBlockVersionConsts {
+
     public static final int START_NEW_TRANSACTION = 4;
     public static final int ENERGY_LIMIT = 5;
   }

@@ -125,4 +125,7 @@ public class DBConfig {
   @Getter
   @Setter
   private static long crossChain;
+  @Getter
+  @Setter
+  private static long allowPBFT;
 }

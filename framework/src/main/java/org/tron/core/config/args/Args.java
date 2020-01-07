@@ -102,15 +102,6 @@ public class Args extends CommonParameter {
 
   @Getter
   @Setter
-  private int agreeNodeCount;
-
-  @Getter
-  @Setter
-  private int checkMsgCount;
-
-
-  @Getter
-  @Setter
   private int crossChainPort;
 
   @Getter
@@ -204,6 +195,7 @@ public class Args extends CommonParameter {
     INSTANCE.crossChain = 0;
     INSTANCE.crossChainPort = 0;
     INSTANCE.crossChainConnect = Collections.emptyList();
+    INSTANCE.allowPBFT = 0;
   }
 
   /**
@@ -682,6 +674,9 @@ public class Args extends CommonParameter {
     INSTANCE.crossChain =
         config.hasPath(Constant.COMMITTEE_CROSS_CHAIN) ? config
             .getInt(Constant.COMMITTEE_CROSS_CHAIN) : 0;
+    INSTANCE.allowPBFT =
+        config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
+            .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
 
     INSTANCE.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
         .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
@@ -1111,6 +1106,7 @@ public class Args extends CommonParameter {
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
     DBConfig.setTransactionHistoreSwitch(cfgArgs.getStorage().getTransactionHistoreSwitch());
     DBConfig.setCrossChain(cfgArgs.getCrossChain());
+    DBConfig.setAllowPBFT(cfgArgs.getAllowPBFT());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

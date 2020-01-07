@@ -650,7 +650,8 @@ message PBFTMessage {
   message Raw {
     Type pbftMsgType = 1;
     int64 number = 2;
-    bytes data = 3;
+    int64 epoch = 3;
+    bytes data = 4;
   }
   Raw raw_data = 1;
   bytes signature = 2;

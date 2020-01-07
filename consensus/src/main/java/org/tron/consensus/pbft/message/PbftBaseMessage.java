@@ -116,7 +116,7 @@ public abstract class PbftBaseMessage extends Message {
     PBFTMessage.Builder builder = PBFTMessage.newBuilder();
     Raw.Builder rawBuilder = Raw.newBuilder();
     rawBuilder.setNumber(getPbftMessage().getRawData().getNumber())
-        .setPbftMsgType(type)
+        .setPbftMsgType(type).setEpoch(getPbftMessage().getRawData().getEpoch())
         .setData(getPbftMessage().getRawData().getData());
     Raw raw = rawBuilder.build();
     byte[] hash = Sha256Hash.hash(raw.toByteArray());

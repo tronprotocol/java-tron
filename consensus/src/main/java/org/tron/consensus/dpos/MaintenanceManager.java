@@ -49,8 +49,6 @@ public class MaintenanceManager {
   private final List<ByteString> currentWitness = new ArrayList<>();
   @Getter
   private long beforeMaintenanceTime;
-  @Getter
-  private long maintenanceBlockNum;
 
   public void init() {
     currentWitness.addAll(consensusDelegate.getActiveWitnesses());
@@ -59,23 +57,22 @@ public class MaintenanceManager {
   public void applyBlock(BlockCapsule blockCapsule) {
     long blockNum = blockCapsule.getNum();
     long blockTime = blockCapsule.getTimeStamp();
-    boolean flag = consensusDelegate.getNextMaintenanceTime() <= blockTime;
+    long nextMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
+    boolean flag = nextMaintenanceTime <= blockTime;
     if (flag) {
       if (blockNum != 1) {
         updateWitnessValue(beforeWitness);
-        beforeMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
+        beforeMaintenanceTime = nextMaintenanceTime;
         doMaintenance();
         updateWitnessValue(currentWitness);
         //pbft sr msg
-        pbftManager.srPrePrepare(blockCapsule, currentWitness,
-            consensusDelegate.getNextMaintenanceTime());
-        maintenanceBlockNum = blockNum;
+        pbftManager.srPrePrepare(blockCapsule, currentWitness, nextMaintenanceTime);
       }
       consensusDelegate.updateNextMaintenanceTime(blockTime);
     }
     consensusDelegate.saveStateFlag(flag ? 1 : 0);
     //pbft block msg
-    pbftManager.blockPrePrepare(blockCapsule);
+    pbftManager.blockPrePrepare(blockCapsule, nextMaintenanceTime);
   }
 
   private void updateWitnessValue(List<ByteString> srList) {
