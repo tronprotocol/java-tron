@@ -73,7 +73,7 @@ public class WalletClient {
    * constructor.
    */
 
-  //  Create Wallet with a pritKey
+  //  Creates a Wallet with a pritKey
   public WalletClient(String priKey) {
     ECKey temKey = null;
     try {
@@ -326,7 +326,6 @@ public class WalletClient {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
-
     return builder.build();
   }
 
@@ -399,10 +398,8 @@ public class WalletClient {
     AccountUpdateContract.Builder builder = AccountUpdateContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(address);
     ByteString bsAccountName = ByteString.copyFrom(accountName);
-
     builder.setAccountName(bsAccountName);
     builder.setOwnerAddress(basAddreess);
-
     return builder.build();
   }
 
@@ -416,7 +413,6 @@ public class WalletClient {
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(url));
-
     return builder.build();
   }
 
@@ -442,7 +438,6 @@ public class WalletClient {
       voteBuilder.setVoteCount(count);
       builder.addVotes(voteBuilder.build());
     }
-
     return builder.build();
   }
 
@@ -592,14 +587,14 @@ public class WalletClient {
     }
     if (address.length != CommonConstant.ADDRESS_SIZE) {
       logger.warn(
-          "Warning: Address length need " + CommonConstant.ADDRESS_SIZE + " but " + address.length
-              + " !!");
+          "Warning: Address length needs to be " + CommonConstant.ADDRESS_SIZE 
+              + ", but it is " + address.length + " !!");
       return false;
     }
     byte preFixbyte = address[0];
     if (preFixbyte != getAddressPreFixByte()) {
-      logger.warn("Warning: Address need prefix with " + getAddressPreFixByte() + " but "
-          + preFixbyte + " !!");
+      logger.warn("Warning: Address needs to be prefix with " + getAddressPreFixByte() 
+          + ", but it is" + preFixbyte + " !!");
       return false;
     }
     //Other rule;
@@ -663,7 +658,8 @@ public class WalletClient {
       return false;
     }
     if (priKey.length() != 64) {
-      logger.warn("Warning: PrivateKey length need 64 but " + priKey.length() + " !!");
+      logger.warn("Warning: PrivateKey length needs to be 64, but it is "
+          + priKey.length() + " !!");
       return false;
     }
     //Other rule;
@@ -743,7 +739,7 @@ public class WalletClient {
 
   private Transaction signTransaction(Transaction transaction) {
     if (this.ecKey == null || this.ecKey.getPrivKey() == null) {
-      logger.warn("Warning: Can't sign,there is no private key !!");
+      logger.warn("Warning: Can't sign, there is no private key !!");
       return null;
     }
     transaction = TransactionUtils.setTimestamp(transaction);
@@ -782,11 +778,9 @@ public class WalletClient {
     AccountUpdateContract contract = createAccountUpdateContract(accountNameBytes,
         addressBytes);
     Transaction transaction = rpcCli.createTransaction(contract);
-
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
     }
-
     transaction = signTransaction(transaction);
     return rpcCli.broadcastTransaction(transaction);
   }
@@ -888,7 +882,6 @@ public class WalletClient {
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
     }
-
     transaction = signTransaction(transaction);
     return rpcCli.broadcastTransaction(transaction);
   }
@@ -898,16 +891,12 @@ public class WalletClient {
    */
 
   public boolean freezeBalance(long frozenBalance, long frozenDuration) {
-
     FreezeBalanceContract contract = createFreezeBalanceContract(frozenBalance,
         frozenDuration);
-
     Transaction transaction = rpcCli.createTransaction(contract);
-
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
     }
-
     transaction = signTransaction(transaction);
     return rpcCli.broadcastTransaction(transaction);
   }
@@ -917,10 +906,8 @@ public class WalletClient {
     byte[] address = getAddress();
     FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
-
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
-
     return builder.build();
   }
 
@@ -942,13 +929,11 @@ public class WalletClient {
   }
 
   private UnfreezeBalanceContract createUnfreezeBalanceContract() {
-
     byte[] address = getAddress();
     UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
-
     return builder.build();
   }
 
@@ -958,25 +943,20 @@ public class WalletClient {
 
   public boolean withdrawBalance() {
     WithdrawBalanceContract contract = createWithdrawBalanceContract();
-
     Transaction transaction = rpcCli.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
     }
-
     transaction = signTransaction(transaction);
     return rpcCli.broadcastTransaction(transaction);
   }
 
   private WithdrawBalanceContract createWithdrawBalanceContract() {
-
     byte[] address = getAddress();
     WithdrawBalanceContract.Builder builder = WithdrawBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
-
     builder.setOwnerAddress(byteAddreess);
-
     return builder.build();
   }
 }
