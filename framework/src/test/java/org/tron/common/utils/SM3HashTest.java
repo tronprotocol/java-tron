@@ -17,5 +17,4 @@ public class SM3HashTest {
         Assert.assertEquals(hash0,hash2);
         Assert.assertEquals(hash1,hash3);
     }
-
 }
