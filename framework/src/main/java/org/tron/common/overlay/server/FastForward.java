@@ -123,7 +123,8 @@ public class FastForward {
     }
 
     try {
-      Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(msg.getTimestamp()));
+      Sha256Hash hash = SignUtils.of(ByteArray.fromLong(msg.getTimestamp()),
+          CommonParameter.getInstance().isECKeyCryptoEngine());
       String sig =
               TransactionCapsule.getBase64FromByteString(msg.getSignature());
       byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig,
