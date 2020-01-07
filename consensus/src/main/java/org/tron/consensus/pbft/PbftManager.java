@@ -38,15 +38,15 @@ public class PbftManager {
     pbftMessageHandle.setMaintenanceManager(maintenanceManager);
   }
 
-  public void blockPrePrepare(BlockCapsule block) {
+  public void blockPrePrepare(BlockCapsule block, long epoch) {
     if (!chainBaseManager.getDynamicPropertiesStore().allowPBFT()) {
       return;
     }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
-        doAction(PbftBlockMessage.buildPrePrepareMessage(block));
+        doAction(PbftBlockMessage.buildPrePrepareMessage(block, epoch));
       } else {
-        doAction(PbftBlockMessage.buildFullNodePrePrepareMessage(block));
+        doAction(PbftBlockMessage.buildFullNodePrePrepareMessage(block, epoch));
       }
     }
   }
@@ -66,10 +66,6 @@ public class PbftManager {
 
   public void forwardMessage(PbftBaseMessage message) {
     pbftMessageHandle.forwardMessage(message);
-  }
-
-  public boolean checkIsWitnessMsg(PbftBaseMessage msg) {
-    return pbftMessageHandle.checkIsWitnessMsg(msg);
   }
 
   public boolean doAction(PbftBaseMessage msg) {
@@ -98,6 +94,17 @@ public class PbftManager {
       }
     });
     return true;
+  }
+
+  public boolean checkIsWitnessMsg(PbftBaseMessage msg) {
+    long epoch = msg.getPbftMessage().getRawData().getEpoch();
+    List<ByteString> witnessList;
+    if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
+      witnessList = maintenanceManager.getCurrentWitness();
+    } else {
+      witnessList = maintenanceManager.getBeforeWitness();
+    }
+    return witnessList.contains(ByteString.copyFrom(msg.getPublicKey()));
   }
 
 }

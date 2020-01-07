@@ -57,22 +57,22 @@ public class MaintenanceManager {
   public void applyBlock(BlockCapsule blockCapsule) {
     long blockNum = blockCapsule.getNum();
     long blockTime = blockCapsule.getTimeStamp();
-    boolean flag = consensusDelegate.getNextMaintenanceTime() <= blockTime;
+    long nextMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
+    boolean flag = nextMaintenanceTime <= blockTime;
     if (flag) {
       if (blockNum != 1) {
         updateWitnessValue(beforeWitness);
-        beforeMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
+        beforeMaintenanceTime = nextMaintenanceTime;
         doMaintenance();
         updateWitnessValue(currentWitness);
         //pbft sr msg
-        pbftManager.srPrePrepare(blockCapsule, currentWitness,
-            consensusDelegate.getNextMaintenanceTime());
+        pbftManager.srPrePrepare(blockCapsule, currentWitness, nextMaintenanceTime);
       }
       consensusDelegate.updateNextMaintenanceTime(blockTime);
     }
     consensusDelegate.saveStateFlag(flag ? 1 : 0);
     //pbft block msg
-    pbftManager.blockPrePrepare(blockCapsule);
+    pbftManager.blockPrePrepare(blockCapsule, nextMaintenanceTime);
   }
 
   private void updateWitnessValue(List<ByteString> srList) {

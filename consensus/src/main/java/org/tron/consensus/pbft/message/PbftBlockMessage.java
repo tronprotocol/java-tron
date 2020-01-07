@@ -30,14 +30,14 @@ public class PbftBlockMessage extends PbftBaseMessage {
     return new PbftBlockMessage();
   }
 
-  public static PbftBaseMessage buildPrePrepareMessage(BlockCapsule blockCapsule) {
+  public static PbftBaseMessage buildPrePrepareMessage(BlockCapsule blockCapsule, long epoch) {
     PbftBlockMessage pbftBlockMessage = new PbftBlockMessage();
     Miner miner = Param.getInstance().getMiner();
     ECKey ecKey = ECKey.fromPrivate(miner.getPrivateKey());
     PBFTMessage.Builder builder = PBFTMessage.newBuilder();
     Raw.Builder rawBuilder = Raw.newBuilder();
     rawBuilder.setNumber(blockCapsule.getNum())
-        .setPbftMsgType(Type.PREPREPARE)
+        .setPbftMsgType(Type.PREPREPARE).setEpoch(epoch)
         .setData(blockCapsule.getBlockId().getByteString());
     Raw raw = rawBuilder.build();
     byte[] hash = Sha256Hash.hash(raw.toByteArray());
@@ -49,12 +49,13 @@ public class PbftBlockMessage extends PbftBaseMessage {
     return pbftBlockMessage;
   }
 
-  public static PbftBaseMessage buildFullNodePrePrepareMessage(BlockCapsule blockCapsule) {
+  public static PbftBaseMessage buildFullNodePrePrepareMessage(BlockCapsule blockCapsule,
+      long epoch) {
     PbftBlockMessage pbftBlockMessage = new PbftBlockMessage();
     PBFTMessage.Builder builder = PBFTMessage.newBuilder();
     Raw.Builder rawBuilder = Raw.newBuilder();
     rawBuilder.setNumber(blockCapsule.getNum())
-        .setPbftMsgType(Type.PREPREPARE)
+        .setPbftMsgType(Type.PREPREPARE).setEpoch(epoch)
         .setData(blockCapsule.getBlockId().getByteString());
     Raw raw = rawBuilder.build();
     builder.setRawData(raw);
