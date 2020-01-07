@@ -83,6 +83,10 @@ message MarketOrderList {
     repeated MarketOrder orders = 1;
 }
 
+message MarketOrderPairList {
+  repeated MarketOrderPair orderPair = 1;
+}
+
 message MarketOrderPair{
     bytes sell_token_id = 4;
     bytes buy_token_id = 5;

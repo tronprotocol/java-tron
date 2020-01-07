@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
@@ -70,7 +71,8 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
 
   // need to delete when all empty
   public void removeOrder(MarketOrderCapsule currentCapsule, MarketOrderStore marketOrderStore,
-      byte[] pairPriceKey, MarketPairPriceToOrderStore pairPriceToOrderStore) throws ItemNotFoundException {
+      byte[] pairPriceKey, MarketPairPriceToOrderStore pairPriceToOrderStore)
+      throws ItemNotFoundException {
     MarketOrderCapsule preCapsule = currentCapsule.getPrevCapsule(marketOrderStore);
     MarketOrderCapsule nextCapsule = currentCapsule.getNextCapsule(marketOrderStore);
 
@@ -156,7 +158,8 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
   // }
 
   // add order to linked list
-  public void addOrder(MarketOrderCapsule currentCapsule, MarketOrderStore orderStore) throws ItemNotFoundException {
+  public void addOrder(MarketOrderCapsule currentCapsule, MarketOrderStore orderStore)
+      throws ItemNotFoundException {
     byte[] orderId = currentCapsule.getID().toByteArray();
 
     if (this.isOrderEmpty()) {
@@ -221,8 +224,8 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
     MarketOrderCapsule head = marketOrderStore.get(this.getHead());
 
     int size = 1;
-    while(!head.isNextNull()) {
-      size ++;
+    while (!head.isNextNull()) {
+      size++;
       head = marketOrderStore.get(head.getNext());
     }
 
@@ -238,5 +241,22 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
   public MarketOrderIdList getInstance() {
     return this.orderIdList;
   }
+
+  public List<MarketOrderCapsule> getAllOrder(MarketOrderStore orderStore)
+      throws ItemNotFoundException {
+
+    List<MarketOrderCapsule> result = new ArrayList<>();
+
+    byte[] orderId = this.getHead();
+    if (!ByteArray.isEmpty(orderId)) {
+      MarketOrderCapsule makerOrderCapsule = orderStore.getUnchecked(orderId);
+      while (makerOrderCapsule != null) {
+        result.add(makerOrderCapsule);
+        makerOrderCapsule = makerOrderCapsule.getNextCapsule(orderStore);
+      }
+    }
+    return result;
+  }
+
 
 }

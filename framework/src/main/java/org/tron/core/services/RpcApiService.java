@@ -104,6 +104,7 @@ import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketOrderPair;
+import org.tron.protos.Protocol.MarketOrderPairList;
 import org.tron.protos.Protocol.MarketOrderPosition;
 import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.NodeInfo;
@@ -2175,7 +2176,8 @@ public class RpcApiService implements Service {
         MarketSellAssetContract contract = request.toBuilder()
             .setPrePriceKey(marketOrderPosition.getPrePriceKey()).build();
 
-        createTransactionExtention(contract, ContractType.MarketSellAssetContract, responseObserver);
+        createTransactionExtention(contract, ContractType.MarketSellAssetContract,
+            responseObserver);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
       }
@@ -2216,5 +2218,30 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void getMarketOrderListByPair(org.tron.protos.Protocol.MarketOrderPair request,
+        StreamObserver<MarketOrderList> responseObserver) {
+      try {
+        MarketOrderList orderPairList = wallet
+            .getMarketOrderListByPair(request.getSellTokenId().toByteArray(),
+                request.getBuyTokenId().toByteArray());
+        responseObserver.onNext(orderPairList);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMarketPairList(EmptyMessage request,
+        StreamObserver<MarketOrderPairList> responseObserver) {
+      try {
+        MarketOrderPairList pairList = wallet.getMarketPairList();
+        responseObserver.onNext(pairList);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
   }
 }

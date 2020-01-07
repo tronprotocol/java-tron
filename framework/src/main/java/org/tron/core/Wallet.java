@@ -36,8 +36,10 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
@@ -101,6 +103,8 @@ import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.core.capsule.MarketOrderCapsule;
+import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
@@ -154,6 +158,7 @@ import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.MarketOrderStore;
+import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPriceStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
@@ -173,6 +178,8 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.MarketOrderList;
+import org.tron.protos.Protocol.MarketOrderPair;
+import org.tron.protos.Protocol.MarketOrderPairList;
 import org.tron.protos.Protocol.MarketOrderPosition;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.MarketPriceList;
@@ -2360,6 +2367,61 @@ public class Wallet {
 
     return marketPriceListBuilder.build();
   }
+
+
+  public MarketOrderPairList getMarketPairList() {
+    MarketOrderPairList.Builder builder = MarketOrderPairList.newBuilder();
+    MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
+        .getMarketPairToPriceStore();
+
+    Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = marketPairToPriceStore
+        .iterator();
+    while (iterator.hasNext()) {
+      Entry<byte[], MarketPriceLinkedListCapsule> next = iterator.next();
+      MarketOrderPair pair = MarketOrderPair.newBuilder().
+          setSellTokenId(ByteString.copyFrom(next.getValue().getSellTokenId()))
+          .setBuyTokenId(ByteString.copyFrom(next.getValue().getBuyTokenId())).build();
+      builder.addOrderPair(pair);
+    }
+
+    return builder.build();
+  }
+
+  public MarketOrderList getMarketOrderListByPair(byte[] sellTokenId, byte[] buyTokenId)
+      throws ItemNotFoundException {
+    MarketOrderList.Builder builder = MarketOrderList.newBuilder();
+
+    MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
+        .getMarketPairToPriceStore();
+    MarketPriceStore marketPriceStore = dbManager.getChainBaseManager().getMarketPriceStore();
+    MarketPairPriceToOrderStore pairPriceToOrderStore = dbManager.getChainBaseManager()
+        .getMarketPairPriceToOrderStore();
+    MarketOrderStore orderStore = dbManager.getChainBaseManager().getMarketOrderStore();
+
+    byte[] makerPair = MarketUtils.createPairKey(sellTokenId, buyTokenId);
+    MarketPriceLinkedListCapsule priceListCapsule = marketPairToPriceStore.getUnchecked(makerPair);
+    if (priceListCapsule == null) {
+      return null;
+    }
+
+    List<MarketPrice> marketPrices = priceListCapsule.getPricesList(marketPriceStore);
+
+    for (MarketPrice price : marketPrices) {
+      byte[] pairPriceKey = MarketUtils
+          .createPairPriceKey(sellTokenId, buyTokenId, price.getSellTokenQuantity(),
+              price.getBuyTokenQuantity());
+
+      MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
+          .getUnchecked(pairPriceKey);
+      if(orderIdListCapsule != null){
+        List<MarketOrderCapsule> orderList = orderIdListCapsule.getAllOrder(orderStore);
+        orderList.forEach(order -> builder.addOrders(order.getInstance()));
+      }
+    }
+
+    return builder.build();
+  }
+
 
   //if price exists or price list is empty, pre_price_key = null
   public MarketOrderPosition getMarketOrderPosition(byte[] sellTokenId, byte[] buyTokenId,

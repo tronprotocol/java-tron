@@ -302,6 +302,13 @@ service Wallet {
   rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {
   }
 
+  rpc GetMarketOrderListByPair (MarketOrderPair) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
+  }
+
+
   rpc ListNodes (EmptyMessage) returns (NodeList) {
     option (google.api.http) = {
       post: "/wallet/listnodes"
@@ -894,6 +901,11 @@ service WalletSolidity {
   rpc GetMarketPriceByPair (MarketOrderPair) returns (MarketPriceList) {
   }
 
+  rpc GetMarketOrderListByPair (MarketOrderPair) returns (MarketOrderList) {
+  }
+
+  rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
+  }
 };
 
 service WalletExtension {
