@@ -1082,7 +1082,6 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
         .build());
 
-
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowMarketTransaction")
@@ -1103,7 +1102,6 @@ public class Wallet {
         .setKey("getMarketQuantityLimit")
         .setValue(dbManager.getDynamicPropertiesStore().getMarketQuantityLimit())
         .build());
-
 
     return builder.build();
   }
@@ -2375,7 +2373,7 @@ public class Wallet {
     MarketPriceStore marketPriceStore = dbManager.getChainBaseManager().getMarketPriceStore();
 
     byte[] key = new MarketPriceCapsule(newOrderPrice).getKey(sellTokenId, buyTokenId);
-    if (!marketPriceStore.get(key).isNull()) {
+    if (marketPriceStore.getUnchecked(key) != null && !marketPriceStore.get(key).isNull()) {
       //price exists
       return orderPosition.toBuilder().setPriceExist(true).setPriceListNotEmpty(true).build();
     }

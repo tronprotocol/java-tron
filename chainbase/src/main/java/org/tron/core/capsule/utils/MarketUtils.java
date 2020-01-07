@@ -61,7 +61,8 @@ public class MarketUtils {
     System.arraycopy(buyTokenQuantityBytes, 0, result,
         TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + sellTokenQuantityBytes.length,
         buyTokenQuantityBytes.length);
-    return result;
+
+    return Hash.sha3(result);
   }
 
   public static byte[] createPairKey(byte[] sellTokenId, byte[] buyTokenId) {

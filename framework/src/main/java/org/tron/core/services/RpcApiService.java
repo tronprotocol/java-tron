@@ -2165,7 +2165,20 @@ public class RpcApiService implements Service {
     @Override
     public void marketSellAsset(MarketSellAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.MarketSellAssetContract, responseObserver);
+      try {
+
+        MarketOrderPosition marketOrderPosition = wallet
+            .getMarketOrderPosition(request.getSellTokenId().toByteArray(),
+                request.getBuyTokenId().toByteArray(),
+                request.getSellTokenQuantity(),
+                request.getBuyTokenQuantity());
+        MarketSellAssetContract contract = request.toBuilder()
+            .setPrePriceKey(marketOrderPosition.getPrePriceKey()).build();
+
+        createTransactionExtention(contract, ContractType.MarketSellAssetContract, responseObserver);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
     }
 
     @Override
@@ -2202,23 +2215,6 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
-
-    @Override
-    public void getMarketPositionKey(MarketSellAssetContract request,
-        StreamObserver<MarketOrderPosition> responseObserver) {
-      try {
-        MarketOrderPosition marketOrderPosition = wallet
-            .getMarketOrderPosition(request.getSellTokenId().toByteArray(),
-                request.getBuyTokenId().toByteArray(),
-                request.getSellTokenQuantity(),
-                request.getBuyTokenQuantity());
-        responseObserver.onNext(marketOrderPosition);
-      } catch (Exception e) {
-        responseObserver.onError(getRunTimeException(e));
-      }
-      responseObserver.onCompleted();
-    }
-
 
   }
 }
