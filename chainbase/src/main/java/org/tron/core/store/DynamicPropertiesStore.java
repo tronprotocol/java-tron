@@ -24,6 +24,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_NUMBER = "latest_block_header_number".getBytes();
+  private static final byte[] LATEST_BLOCK_CAPSULE = "latest_block_capsule".getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_HASH = "latest_block_header_hash".getBytes();
   private static final byte[] STATE_FLAG = "state_flag"
       .getBytes(); // 1 : is maintenance, 0 : is not maintenance
@@ -165,6 +166,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getLatestBlockHeaderHash();
     } catch (IllegalArgumentException e) {
       this.saveLatestBlockHeaderHash(ByteString.copyFrom(ByteArray.fromHexString("00")));
+    }
+
+    try {
+      this.getLatestBlockCapsule();
+    } catch (IllegalArgumentException e) {
+      this.saveLatestBlockCapsule(null);
     }
 
     try {
@@ -1609,6 +1616,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toInt)
         .orElseThrow(() -> new IllegalArgumentException("not found maintenance flag"));
+  }
+
+  public BlockCapsule getLatestBlockCapsule() {
+    try {
+      return new BlockCapsule(this.get(LATEST_BLOCK_CAPSULE).getData());
+    } catch (BadItemException | ItemNotFoundException e) {
+      logger.error("get latestBlockCapsule failed");
+    }
+    return null;
+  }
+
+  public void saveLatestBlockCapsule(BlockCapsule blockCapsule) {
+    this.put(LATEST_BLOCK_CAPSULE, new BytesCapsule(blockCapsule.getData()));
   }
 
   /**
