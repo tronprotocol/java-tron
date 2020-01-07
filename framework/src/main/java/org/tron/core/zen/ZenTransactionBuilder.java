@@ -287,7 +287,7 @@ public class ZenTransactionBuilder {
       throw new ZksnarkException("Output proof failed");
     }
   
-    if(ArrayUtils.isEmpty(output.ovk) || output.ovk.length != 32){
+    if (ArrayUtils.isEmpty(output.ovk) || output.ovk.length != 32) {
       throw new ZksnarkException("ovk is null or invalid and ovk should be 32 bytes (256 bit)");
     }
     
