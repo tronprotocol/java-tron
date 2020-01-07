@@ -230,6 +230,10 @@ public class FullNodeHttpApiService implements Service {
   private GetMarketOrderByAccountServlet getMarketOrderByAccountServlet;
   @Autowired
   private GetMarketPriceByPairServlet getMarketPriceByPairServlet;
+  @Autowired
+  private GetMarketOrderListByPairServer getMarketOrderListByPairServer;
+  @Autowired
+  private GetMarketPairListServer getMarketPairListServer;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -413,6 +417,10 @@ public class FullNodeHttpApiService implements Service {
           "/getmarketorderbyaccount");
       context.addServlet(new ServletHolder(getMarketPriceByPairServlet),
           "/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairServer),
+          "/getmarketorderlistbypairserver");
+      context.addServlet(new ServletHolder(getMarketPairListServer),
+          "/getmarketpairlistserver");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
