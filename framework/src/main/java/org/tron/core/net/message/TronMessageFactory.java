@@ -61,7 +61,7 @@ public class TronMessageFactory extends MessageFactory {
       case HEADER_REQUEST_MESSAGE:
         return new BlockHeaderRequestMessage(packed);
       case SR_LIST:
-        return new SrListMessage(packed);
+        return new SRLMessage(packed);
       case HEADER_INVENTORY:
         return new BlockHeaderInventoryMesasge(packed);
       case EPOCH_MESSAGE:

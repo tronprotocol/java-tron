@@ -705,7 +705,7 @@ message EpochMessage {
 
 message BlockHeaderUpdatedNotice {
   bytes chainId = 1;
-  int64 currentBlockHeight = 2;
+  BlockHeader blockHeader = 2;
 }
 
 message BlockHeaderRequestMessage {

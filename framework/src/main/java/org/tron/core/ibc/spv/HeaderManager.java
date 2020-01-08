@@ -93,7 +93,7 @@ public class HeaderManager {
     return false;
   }
 
-  private boolean validBlockPbftSign(BlockHeader header) throws BadBlockException {
+  public boolean validBlockPbftSign(BlockHeader header) throws BadBlockException {
     //valid sr list
     long startTime = System.currentTimeMillis();
     List<ByteString> srSignList = header.getSrsSignatureList();
@@ -164,7 +164,7 @@ public class HeaderManager {
     }
   }
 
-  private boolean validSrList(PBFTCommitResult dataSign, long epoch)
+  public boolean validSrList(PBFTCommitResult dataSign, long epoch)
       throws InvalidProtocolBufferException {
     //valid sr list
     SRL srList = SRL.parseFrom(dataSign.getData().toByteArray());

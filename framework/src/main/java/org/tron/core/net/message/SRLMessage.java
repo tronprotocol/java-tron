@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.protos.Protocol;
 
-public class SrListMessage extends TronMessage {
+public class SRLMessage extends TronMessage {
 
   @Getter
   @Setter
@@ -14,13 +14,20 @@ public class SrListMessage extends TronMessage {
   @Setter
   private Protocol.PBFTCommitResult dataSign;
 
-  public SrListMessage(byte[] packed) throws InvalidProtocolBufferException {
+  public SRLMessage(byte[] packed) throws InvalidProtocolBufferException {
     super(MessageTypes.SR_LIST.asByte(), packed);
     dataSign = Protocol.PBFTCommitResult.parseFrom(packed);
     Protocol.PBFTMessage.Raw rawData = Protocol.PBFTMessage.Raw.parseFrom(dataSign.getData());
     srl = Protocol.SRL.parseFrom(rawData.getData());
   }
 
+  public SRLMessage(Protocol.PBFTCommitResult dataSign) throws InvalidProtocolBufferException {
+    this.dataSign = dataSign;
+    super.type = MessageTypes.SR_LIST.asByte();
+    super.data = this.dataSign.toByteArray();
+    Protocol.PBFTMessage.Raw rawData = Protocol.PBFTMessage.Raw.parseFrom(this.dataSign.getData());
+    srl = Protocol.SRL.parseFrom(rawData.getData());
+  }
   public long getEpoch() {
     return srl.getEpoch();
   }

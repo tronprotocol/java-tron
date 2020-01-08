@@ -20,7 +20,11 @@ public class BlockHeaderUpdatedNoticeMessage extends TronMessage {
   }
 
   public long getCurrentBlockHeight() {
-    return blockHeaderUpdatedNotice.getCurrentBlockHeight();
+    return blockHeaderUpdatedNotice.getBlockHeader().getRawData().getNumber();
+  }
+
+  public Protocol.BlockHeader getBlockHeader() {
+    return blockHeaderUpdatedNotice.getBlockHeader();
   }
 
   @Override
