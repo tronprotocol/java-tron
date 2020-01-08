@@ -210,7 +210,6 @@ public class SM3Hash implements Serializable, Comparable<SM3Hash>, HashInterface
         digest.update(input1, offset1, length1);
         digest.update(input2, offset2, length2);
         byte[] eHash = new byte[digest.getDigestSize()];
-        digest.doFinal(eHash, 0);
         digest.doFinal(eHash,0);
         return eHash;
     }

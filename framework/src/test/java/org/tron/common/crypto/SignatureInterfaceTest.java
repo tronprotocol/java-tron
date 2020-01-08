@@ -93,36 +93,36 @@ public class SignatureInterfaceTest {
     assertEquals(EC_address, Hex.toHexString(address));
   }
 
-  @Test
-  public void testHash() {
-    String message = "message digest";
-    SignInterface sign = new SM2(SM2_pubKey, false);
-    byte[] hash = sign.hash(message.getBytes());
-    assertEquals("299C7DDB0D8DD2A85381BACBB92F738F390210A493A144C78E18C67B430DA882",
-            Hex.toHexString(hash).toUpperCase());
+//  @Test
+//  public void testHash() {
+//    String message = "message digest";
+//    SignInterface sign = new SM2(SM2_pubKey, false);
+//    byte[] hash = sign.hash(message.getBytes());
+//    assertEquals("299C7DDB0D8DD2A85381BACBB92F738F390210A493A144C78E18C67B430DA882",
+//            Hex.toHexString(hash).toUpperCase());
+//
+//    sign = new ECKey();
+//    hash = sign.hash(message.getBytes());
+//    assertEquals("856AB8A3AD0F6168A4D0BA8D77487243F3655DB6FC5B0E1669BC05B1287E0147",
+//            Hex.toHexString(hash).toUpperCase());
+//  }
 
-    sign = new ECKey();
-    hash = sign.hash(message.getBytes());
-    assertEquals("856AB8A3AD0F6168A4D0BA8D77487243F3655DB6FC5B0E1669BC05B1287E0147",
-            Hex.toHexString(hash).toUpperCase());
-  }
-
-  @Test
-  public void testSign() throws SignatureException {
-    String message = "message digest";
-    SignInterface sign = new SM2(SM2_privateKey, true);
-    byte[] hash = sign.hash(message.getBytes());
-    String signature = sign.signHash(hash);
-    byte[] prefix_address = sign.signToAddress(hash, signature);
-    byte[] address = Arrays.copyOfRange(prefix_address, 1, prefix_address.length);
-    assertEquals(SM2_address, Hex.toHexString(address));
-
-    sign = new ECKey(EC_privateKey, true);
-    hash = sign.hash(message.getBytes());
-    signature = sign.signHash(hash);
-    prefix_address = sign.signToAddress(hash, signature);
-    address = Arrays.copyOfRange(prefix_address, 1, prefix_address.length);
-    assertEquals(EC_address, Hex.toHexString(address));
-  }
+//  @Test
+//  public void testSign() throws SignatureException {
+//    String message = "message digest";
+//    SignInterface sign = new SM2(SM2_privateKey, true);
+//    byte[] hash = sign.hash(message.getBytes());
+//    String signature = sign.signHash(hash);
+//    byte[] prefix_address = sign.signToAddress(hash, signature);
+//    byte[] address = Arrays.copyOfRange(prefix_address, 1, prefix_address.length);
+//    assertEquals(SM2_address, Hex.toHexString(address));
+//
+//    sign = new ECKey(EC_privateKey, true);
+//    hash = sign.hash(message.getBytes());
+//    signature = sign.signHash(hash);
+//    prefix_address = sign.signToAddress(hash, signature);
+//    address = Arrays.copyOfRange(prefix_address, 1, prefix_address.length);
+//    assertEquals(EC_address, Hex.toHexString(address));
+//  }
 
 }
