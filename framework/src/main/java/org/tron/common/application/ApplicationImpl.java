@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.BlockStore;
@@ -23,6 +24,9 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private Manager dbManager;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   @Autowired
   private ConsensusService consensusService;
@@ -92,6 +96,11 @@ public class ApplicationImpl implements Application {
   @Override
   public Manager getDbManager() {
     return dbManager;
+  }
+
+  @Override
+  public ChainBaseManager getChainBaseManager() {
+    return chainBaseManager;
   }
 
   public boolean isProducer() {

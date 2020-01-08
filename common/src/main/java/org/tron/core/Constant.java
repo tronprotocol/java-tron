@@ -94,6 +94,8 @@ public class Constant {
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
   public static final String NODE_HTTP_FULLNODE_PORT = "node.http.fullNodePort";
   public static final String NODE_HTTP_SOLIDITY_PORT = "node.http.solidityPort";
+  public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
+  public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
 
   public static final String NODE_RPC_THREAD = "node.rpc.thread";
   public static final String NODE_SOLIDITY_THREADS = "node.solidity.threads";
@@ -194,6 +196,10 @@ public class Constant {
   public static final String RATE_LIMITER = "rate.limiter";
 
   public static final String COMMITTEE_CHANGED_DELEGATION = "committee.changedDelegation";
+
+  public static final String CRYPTO_ENGINE = "crypto.engine";
+
+  public static final String ECKey_ENGINE = "ECKey";
 
   public static final String USE_NATIVE_QUEUE = "event.subscribe.native.useNativeQueue";
 

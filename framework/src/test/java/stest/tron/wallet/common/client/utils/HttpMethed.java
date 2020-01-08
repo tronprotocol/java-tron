@@ -2790,6 +2790,22 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getNewShieldedAddress(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getnewshieldedaddress";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getZenPaymentAddress(String httpNode, String ivk, String d) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getzenpaymentaddress";

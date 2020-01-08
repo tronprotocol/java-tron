@@ -1,12 +1,7 @@
 package org.tron.common.utils;
 
-import static java.util.Arrays.copyOfRange;
-import static org.tron.common.utils.Hash.sha3;
-
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.spongycastle.math.ec.ECPoint;
 import org.tron.core.Constant;
 
 @Slf4j(topic = "Commons")
@@ -37,25 +32,4 @@ public class DecodeUtil {
     return true;
   }
 
-  public static byte[] computeAddress(ECPoint pubPoint) {
-    return computeAddress(pubPoint.getEncoded(/* uncompressed */ false));
-  }
-
-  /**
-   * Calculates RIGTMOST160(SHA3(input)). This is used in address calculations. *
-   *
-   * @param input - data
-   * @return - add_pre_fix + 20 right bytes of the hash keccak of the data
-   */
-  public static byte[] sha3omit12(byte[] input) {
-    byte[] hash = sha3(input);
-    byte[] address = copyOfRange(hash, 11, hash.length);
-    address[0] = DecodeUtil.addressPreFixByte;
-    return address;
-  }
-
-  public static byte[] computeAddress(byte[] pubBytes) {
-    return sha3omit12(
-        Arrays.copyOfRange(pubBytes, 1, pubBytes.length));
-  }
 }

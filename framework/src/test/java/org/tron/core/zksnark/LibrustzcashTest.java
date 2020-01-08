@@ -8,7 +8,7 @@ import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingBindingSi
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingProvingCtxInit;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendProof;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendSig;
-import static org.tron.common.zksnark.JLibsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
+import static org.tron.common.zksnark.JLibsodium.CRYPTO_AEAD_CHACHA20POLY1305_IETF_NPUBBYTES;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -32,6 +32,8 @@ import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.JLibsodium;
+import org.tron.common.zksnark.JLibsodiumParam.Black2bSaltPersonalParams;
+import org.tron.common.zksnark.JLibsodiumParam.Chacha20poly1305IetfDecryptParams;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
@@ -102,33 +104,30 @@ public class LibrustzcashTest {
   private static int randomInt(int minInt, int maxInt) {
     return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
-
-  public static void test(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
+  
+  public static void test(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk)
+          throws ZksnarkException {
     byte[] block = new byte[128];
-
+    
     System.arraycopy(ovk, 0, block, 0, 32);
     System.arraycopy(cv, 0, block, 32, 32);
     System.arraycopy(cm, 0, block, 64, 32);
     System.arraycopy(epk, 0, block, 96, 32);
-
-    byte[] personalization = new byte[32];
+    
+    byte[] personalization = new byte[16];
     byte[] aa = "Zcash_Derive_ock".getBytes();
     System.arraycopy(aa, 0, personalization, 0, aa.length);
-    Assert.assertTrue(JLibsodium.cryptoGenerichashBlack2bSaltPersonal(K, 32,
-        block, 128,
-        null, 0, // No key.
-        null,    // No salt.
-        personalization) == 0);
-
-    byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
-
-    Assert.assertTrue(JLibsodium.cryptoAeadChacha20poly1305IetfDecrypt(
-        new byte[1024], null,
-        null,
-        new byte[1024], 1024,
-        null,
-        0,
-        cipher_nonce, K) != 0);
+    Assert.assertTrue(
+            JLibsodium.cryptoGenerichashBlack2bSaltPersonal(
+                    new Black2bSaltPersonalParams(K, 32, block, 128, null, 0, // No key.
+                            null,    // No salt.
+                            personalization)) == 0);
+    
+    byte[] cipher_nonce = new byte[CRYPTO_AEAD_CHACHA20POLY1305_IETF_NPUBBYTES];
+    Assert.assertTrue(JLibsodium
+            .cryptoAeadChacha20poly1305IetfDecrypt(new Chacha20poly1305IetfDecryptParams(
+                    new byte[1024], null, null, new byte[1024], 1024,
+                    null, 0, cipher_nonce, K)) != 0);
   }
 
   public static void librustzcashInitZksnarkParams() {

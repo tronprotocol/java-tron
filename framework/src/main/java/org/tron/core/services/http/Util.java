@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import static org.tron.common.utils.Commons.decodeFromBase58Check;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -180,7 +182,7 @@ public class Util {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return DecodeUtil.sha3omit12(combined);
+    return Hash.sha3omit12(combined);
   }
 
   public static JSONObject printTransactionToJSON(Transaction transaction, boolean selfType) {
@@ -316,7 +318,7 @@ public class Util {
 
   public static String getHexAddress(final String address) {
     if (address != null) {
-      byte[] addressByte = Wallet.decodeFromBase58Check(address);
+      byte[] addressByte = decodeFromBase58Check(address);
       return ByteArray.toHexString(addressByte);
     } else {
       return null;
