@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
+import org.tron.consensus.base.Param;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
@@ -37,6 +38,9 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftMessage> {
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, PbftMessage msg) throws Exception {
     msgQueue.receivedMessage(msg);
+    if (Param.getInstance().getPbftInterface().isSyncing()) {
+      return;
+    }
     msg.analyzeSignature();
     String key = buildKey(msg);
     Lock lock = striped.get(key);

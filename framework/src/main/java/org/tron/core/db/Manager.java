@@ -272,7 +272,7 @@ public class Manager {
           }
         }
       };
-  
+
   public WitnessStore getWitnessStore() {
     return chainBaseManager.getWitnessStore();
   }
@@ -1583,7 +1583,7 @@ public class Manager {
         if (Objects.nonNull(result)) {
           transationRetCapsule.addTransactionInfo(result);
         }
-        PbftBlockListener.addCallBackTx(block.getNum(), transactionCapsule);
+        PbftBlockListener.addCallBackTx(chainBaseManager, block.getNum(), transactionCapsule);
       }
       accountStateCallBack.executePushFinish();
     } finally {
