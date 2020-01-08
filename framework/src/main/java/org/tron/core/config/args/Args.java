@@ -581,8 +581,10 @@ public class Args {
     INSTANCE.nodeP2pVersion = 0;
     INSTANCE.rpcPort = 0;
     INSTANCE.rpcOnSolidityPort = 0;
+    INSTANCE.rpcOnPBFTPort = 0;
     INSTANCE.fullNodeHttpPort = 0;
     INSTANCE.solidityHttpPort = 0;
+    INSTANCE.pBFTHttpPort = 0;
     INSTANCE.maintenanceTimeInterval = 0;
     INSTANCE.proposalExpireTime = 0;
     INSTANCE.checkFrozenTime = 1;
@@ -886,11 +888,19 @@ public class Args {
     INSTANCE.rpcOnSolidityPort =
         config.hasPath(Constant.NODE_RPC_SOLIDITY_PORT) ? config.getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50061;
 
+    INSTANCE.rpcOnPBFTPort =
+        config.hasPath(Constant.NODE_RPC_SOLIDITY_PORT)
+            ? config.getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50071;
+
     INSTANCE.fullNodeHttpPort =
         config.hasPath(Constant.NODE_HTTP_FULLNODE_PORT) ? config.getInt(Constant.NODE_HTTP_FULLNODE_PORT) : 8090;
 
     INSTANCE.solidityHttpPort =
         config.hasPath(Constant.NODE_HTTP_SOLIDITY_PORT) ? config.getInt(Constant.NODE_HTTP_SOLIDITY_PORT) : 8091;
+
+    INSTANCE.pBFTHttpPort =
+        config.hasPath(Constant.NODE_HTTP_PBFT_PORT)
+            ? config.getInt(Constant.NODE_HTTP_PBFT_PORT) : 8092;
 
     INSTANCE.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)

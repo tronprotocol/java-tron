@@ -20,13 +20,20 @@ import org.tron.core.exception.ItemNotFoundException;
 public class Chainbase implements IRevokingDB {
 
   public static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
+  public enum Cursor {
+    HEAD,
+    SOLIDITY,
+    PBFT
+  }
+
+  protected static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
   //true:fullnode, false:soliditynode
-  private ThreadLocal<Boolean> mode = new ThreadLocal<>();
+  private ThreadLocal<Cursor> cursor = new ThreadLocal<>();
   private Snapshot head;
 
   public Chainbase(Snapshot head) {
     this.head = head;
-    mode.set(true);
+    cursor.set(Cursor.HEAD);
   }
 
   public String getDbName() {
@@ -34,15 +41,20 @@ public class Chainbase implements IRevokingDB {
   }
 
   @Override
-  public void setMode(boolean mode) {
-    this.mode.set(mode);
+  public void setCursor(Cursor cursor) {
+    this.cursor.set(cursor);
   }
 
   private Snapshot head() {
-    if (mode.get() == null || mode.get()) {
-      return head;
-    } else {
-      return head.getSolidity();
+    switch (cursor.get()) {
+      case HEAD:
+        return head;
+      case SOLIDITY:
+        return head.getSolidity();
+      case PBFT:
+
+      default:
+        return head;
     }
   }
 
