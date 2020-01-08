@@ -33,9 +33,6 @@ public class Param {
   private BlockHandle blockHandle;
   @Getter
   @Setter
-  private int CheckMsgCount;
-  @Getter
-  @Setter
   private int agreeNodeCount;
   @Getter
   @Setter
@@ -57,6 +54,7 @@ public class Param {
   }
 
   public class Miner {
+
     @Getter
     @Setter
     private byte[] privateKey;

@@ -191,7 +191,6 @@ public class Args extends CommonParameter {
     INSTANCE.shieldedTransInPendingMaxCounts = 10;
     INSTANCE.changedDelegation = 0;
     INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
-    INSTANCE.checkMsgCount = 1;
     INSTANCE.crossChain = 0;
     INSTANCE.crossChainPort = 0;
     INSTANCE.crossChainConnect = Collections.emptyList();
@@ -685,8 +684,6 @@ public class Args extends CommonParameter {
     if (INSTANCE.isWitness()) {
       INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
-    INSTANCE.checkMsgCount = config.hasPath("node.checkMsgCount") ? config
-        .getInt("node.checkMsgCount") : 1;
 
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {

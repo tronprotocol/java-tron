@@ -3,8 +3,7 @@ package org.tron.core.net.message;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.overlay.message.MessageFactory;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
-import org.tron.consensus.pbft.message.PbftBlockMessage;
-import org.tron.consensus.pbft.message.PbftSrMessage;
+import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.exception.P2pException;
 
 /**
@@ -33,10 +32,8 @@ public class PbftMessageFactory extends MessageFactory {
           "type=" + type + ", len=" + packed.length);
     }
     switch (receivedTypes) {
-      case PBFT_BLOCK_MSG:
-        return new PbftBlockMessage(packed);
-      case PBFT_SR_MSG:
-        return new PbftSrMessage(packed);
+      case PBFT_MSG:
+        return new PbftMessage(packed);
       default:
         throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
             receivedTypes.toString() + ", len=" + packed.length);

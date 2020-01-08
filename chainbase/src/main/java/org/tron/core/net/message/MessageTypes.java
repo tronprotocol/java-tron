@@ -53,9 +53,7 @@ public enum MessageTypes {
 
   DISCOVER_PEERS(0x33),
 
-  PBFT_BLOCK_MSG(0x34),
-
-  PBFT_SR_MSG(0x35),
+  PBFT_MSG(0x34),
 
   CROSS_MSG(0x50),
 
@@ -96,7 +94,7 @@ public enum MessageTypes {
   }
 
   public static boolean inPbftRange(byte code) {
-    return code >= PBFT_BLOCK_MSG.asByte() && code <= PBFT_SR_MSG.asByte();
+    return code == PBFT_MSG.asByte();
   }
 
   public static boolean inHeaderRange(byte code) {

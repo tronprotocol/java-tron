@@ -7,7 +7,7 @@ import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
-import org.tron.consensus.pbft.message.PbftSrMessage;
+import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.protos.Protocol.Block;
 
@@ -27,8 +27,8 @@ public class PbftTest {
         ByteString.copyFrom(ByteArray.fromHexString("41f08012b4881c320eb40b80f1228731898824e09d")));
     srList.add(
         ByteString.copyFrom(ByteArray.fromHexString("41df309fef25b311e7895562bd9e11aab2a58816d2")));
-    PbftSrMessage pbftSrMessage = (PbftSrMessage) PbftSrMessage
-        .buildPrePrepareMessage(blockCapsule, srList, 1);
+    PbftMessage pbftSrMessage = PbftMessage
+        .prePrepareSRLMsg(blockCapsule, srList, 1);
     System.out.println(pbftSrMessage);
   }
 

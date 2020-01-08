@@ -640,18 +640,23 @@ message NodeInfo {
 }
 
 message PBFTMessage {
-  enum Type {
+  enum MsgType {
     VIEW_CHANGE = 0;
     REQUEST = 1;
     PREPREPARE = 2;
     PREPARE = 3;
     COMMIT = 4;
   }
+  enum DataType {
+    BLOCK = 0;
+    SRL = 1;
+  }
   message Raw {
-    Type pbftMsgType = 1;
-    int64 number = 2;
-    int64 epoch = 3;
-    bytes data = 4;
+    MsgType msg_type = 1;
+    DataType data_type = 2;
+    int64 view_n = 3;
+    int64 epoch = 4;
+    bytes data = 5;
   }
   Raw raw_data = 1;
   bytes signature = 2;
@@ -695,6 +700,5 @@ message Proof {
 }
 
 message SRL {
-  int64 epoch = 1;
-  repeated bytes srAddress = 2;
+  repeated bytes srAddress = 1;
 }
