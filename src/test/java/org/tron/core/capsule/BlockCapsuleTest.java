@@ -120,6 +120,15 @@ public class BlockCapsuleTest {
   }
 
   @Test
+  public void testHasWitnessSignature() {
+
+    Assert.assertFalse(blockCapsule0.hasWitnessSignature());
+    blockCapsule0
+        .sign(ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
+    Assert.assertTrue(blockCapsule0.hasWitnessSignature());
+  }
+
+  @Test
   public void testGetTimeStamp() {
     Assert.assertEquals(1234L, blockCapsule0.getTimeStamp());
   }
