@@ -16,20 +16,44 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core.services.interfaceOnSolidity;
+package org.tron.core.services;
 
-import java.util.concurrent.Callable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.db.Manager;
 import org.tron.core.db2.core.Chainbase;
-import org.tron.core.services.WalletOnCursor;
+
+import java.util.concurrent.Callable;
 
 @Slf4j(topic = "API")
-@Component
-public class WalletOnSolidity extends WalletOnCursor {
-  public WalletOnSolidity() {
-    super.cursor = Chainbase.Cursor.SOLIDITY;
+public abstract class WalletOnCursor {
+
+  @Autowired
+  private Manager dbManager;
+
+  protected Chainbase.Cursor cursor = Chainbase.Cursor.HEAD;
+
+  public <T> T futureGet(TronCallable<T> callable) {
+    try {
+      dbManager.setCursor(cursor);
+      return callable.call();
+    } finally {
+      dbManager.setCursor(Chainbase.Cursor.HEAD);
+    }
+  }
+
+  public void futureGet(Runnable runnable) {
+    try {
+      dbManager.setCursor(cursor);
+      runnable.run();
+    } finally {
+      dbManager.setCursor(Chainbase.Cursor.HEAD);
+    }
+  }
+
+  public interface TronCallable<T> extends Callable<T> {
+    @Override
+    T call();
   }
 }
