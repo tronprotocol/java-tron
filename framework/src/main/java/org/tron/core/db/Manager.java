@@ -1657,6 +1657,7 @@ public class Manager {
             - revokingStore.size()));
     logger.info("solidBlockNumber:"
         + chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+    logger.info("pbftNumber:" + chainBaseManager.getCommonDataBase().getLatestPbftBlockNum());
     return chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
         - revokingStore.size();
   }
