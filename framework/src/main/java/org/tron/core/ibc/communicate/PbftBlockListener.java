@@ -105,7 +105,8 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
           if (tx != null) {
             CrossMessage.Builder builder = CrossMessage.newBuilder();
             //todo:set the route chain id
-            builder.setType(Type.DATA).setFromChainId(communicateService.getLocalChainId());
+            builder.setType(Type.DATA).setFromChainId(communicateService.getLocalChainId())
+                .setTransaction(tx.getInstance());
             Contract contract = tx.getInstance().getRawData().getContract(0);
             try {
               if (contract.getType() == ContractType.CrossTokenContract) {
