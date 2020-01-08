@@ -34,8 +34,7 @@ public class PbftMessageAction {
         logger.info("commit msg block num is:{}", blockNum);
 
         eventBusService.postEvent(
-            new PbftBlockCommitEvent(blockNum,
-                message.getPbftMessage().getRawData().getData()));
+            new PbftBlockCommitEvent(blockNum, message.getPbftMessage().getRawData().getData()));
       }
       break;
       case SRL: {

@@ -174,7 +174,7 @@ public class HeaderManager {
     List<ByteString> addressList = srList.getSrAddressList();
     List<ByteString> preCycleSrSignList = dataSign.getSignatureList();
     if (addressList.size() != 0) {
-      if (epoch != srList.getEpoch()) {
+      if (epoch != raw.getEpoch()) {
         return false;
       }
       Set<ByteString> preCycleSrSignSet = new ConcurrentSet();
