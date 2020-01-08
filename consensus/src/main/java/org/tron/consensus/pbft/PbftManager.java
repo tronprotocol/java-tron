@@ -95,7 +95,7 @@ public class PbftManager {
     return true;
   }
 
-  public boolean checkIsWitnessMsg(PbftBaseMessage msg) {
+  public boolean verifyMsg(PbftBaseMessage msg) {
     long epoch = msg.getPbftMessage().getRawData().getEpoch();
     List<ByteString> witnessList;
     if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {

@@ -45,7 +45,7 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftMessage> {
       if (msgCache.getIfPresent(key) != null) {
         return;
       }
-      if (!pbftManager.checkIsWitnessMsg(msg)) {
+      if (!pbftManager.verifyMsg(msg)) {
         throw new P2pException(P2pException.TypeEnum.BAD_MESSAGE, msg.toString());
       }
       msgCache.put(key, true);

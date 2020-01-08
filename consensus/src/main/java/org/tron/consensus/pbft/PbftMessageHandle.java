@@ -21,14 +21,11 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
-import org.tron.core.ChainBaseManager;
-import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.PBFTMessage.DataType;
 
 @Slf4j(topic = "pbft")
@@ -39,22 +36,22 @@ public class PbftMessageHandle {
   //Pre-preparation stage voting information
   private Set<String> preVotes = Sets.newConcurrentHashSet();
   //Preparation stage voting information
-  private Set<String> pareVotes = Sets.newConcurrentHashSet();
+  private Map<String, PbftMessage> pareVoteMap = Maps.newConcurrentMap();
   private AtomicLongMap<String> agreePare = AtomicLongMap.create();
   private Cache<String, PbftMessage> pareMsgCache = CacheBuilder.newBuilder()
-      .initialCapacity(1000).maximumSize(10000).expireAfterWrite(10, TimeUnit.MINUTES).build();
+      .initialCapacity(1000).maximumSize(10000).expireAfterWrite(2, TimeUnit.MINUTES).build();
   //Submit stage voting information
-  private Set<String> commitVotes = Sets.newConcurrentHashSet();
+  private Map<String, PbftMessage> commitVoteMap = Maps.newConcurrentMap();
   private AtomicLongMap<String> agreeCommit = AtomicLongMap.create();
   private Cache<String, PbftMessage> commitMsgCache = CacheBuilder.newBuilder()
-      .initialCapacity(1000).maximumSize(10000).expireAfterWrite(10, TimeUnit.MINUTES).build();
+      .initialCapacity(1000).maximumSize(10000).expireAfterWrite(2, TimeUnit.MINUTES).build();
   //pbft timeout
   private Map<String, Long> timeOuts = Maps.newConcurrentMap();
   //Successfully processed request
   private Map<String, PbftMessage> doneMsg = Maps.newConcurrentMap();
 
   private LoadingCache<String, List<ByteString>> dataSignCache = CacheBuilder.newBuilder()
-      .initialCapacity(100).maximumSize(1000).expireAfterWrite(10, TimeUnit.MINUTES).build(
+      .initialCapacity(100).maximumSize(1000).expireAfterWrite(2, TimeUnit.MINUTES).build(
           new CacheLoader<String, List<ByteString>>() {
             @Override
             public List<ByteString> load(String s) throws Exception {
@@ -62,18 +59,12 @@ public class PbftMessageHandle {
             }
           });
 
-  private PbftMessage srPbftBaseMessage;
+  private PbftMessage srPbftMessage;
 
   private Timer timer;
 
   @Autowired
   private PbftMessageAction pbftMessageAction;
-  @Autowired
-  private ApplicationContext ctx;
-  @Autowired
-  private WitnessScheduleStore witnessScheduleStore;
-  @Autowired
-  private ChainBaseManager chainBaseManager;
   @Setter
   private MaintenanceManager maintenanceManager;
 
@@ -106,7 +97,7 @@ public class PbftMessageHandle {
     PbftBaseMessage paMessage = message.buildPrePareMessage();
     forwardMessage(paMessage);
     if (message.getDataType() == DataType.SRL) {
-      srPbftBaseMessage = message;
+      srPbftMessage = message;
     }
   }
 
@@ -118,11 +109,16 @@ public class PbftMessageHandle {
       pareMsgCache.put(key, message);
       return;
     }
-    if (pareVotes.contains(key)) {
+    if (pareVoteMap.containsKey(key)) {
       //Explain that the vote has been voted and cannot be repeated
+      if (!pareVoteMap.get(key).getPbftMessage().getRawData().getData()
+          .equals(message.getPbftMessage().getRawData().getData())) {
+        //todo:Penalize multiple signatures at the same height
+
+      }
       return;
     }
-    pareVotes.add(key);
+    pareVoteMap.put(key, message);
     //
     checkCommitMsgCache(message.getNo());
     if (!checkIsCanSendMsg(message)) {
@@ -144,16 +140,21 @@ public class PbftMessageHandle {
 
   public void onCommit(PbftMessage message) {
     String key = message.getKey();
-    if (!pareVotes.contains(key)) {
+    if (!pareVoteMap.containsKey(key)) {
       //Must be prepared
       commitMsgCache.put(key, message);
       return;
     }
-    if (commitVotes.contains(key)) {
+    if (commitVoteMap.containsKey(key)) {
       //Explain that the node has voted on the data and cannot vote repeatedly.
+      if (!commitVoteMap.get(key).getPbftMessage().getRawData().getData()
+          .equals(message.getPbftMessage().getRawData().getData())) {
+        //todo:Penalize multiple signatures at the same height
+
+      }
       return;
     }
-    commitVotes.add(key);
+    commitVoteMap.put(key, message);
     //The number of votes plus 1
     long agCou = agreeCommit.incrementAndGet(message.getDataKey());
     dataSignCache.getUnchecked(message.getDataKey())
@@ -163,7 +164,7 @@ public class PbftMessageHandle {
       //commit,
       if (!isSyncing()) {
         pbftMessageAction.action(message, dataSignCache.getUnchecked(message.getDataKey()));
-        srPbftBaseMessage = null;
+        srPbftMessage = null;
       }
     }
   }
@@ -224,8 +225,8 @@ public class PbftMessageHandle {
   private void remove(String no) {
     String pre = String.valueOf(no) + "_";
     preVotes.remove(no);
-    pareVotes.removeIf((vp) -> StringUtils.startsWith(vp, pre));
-    commitVotes.removeIf((vp) -> StringUtils.startsWith(vp, pre));
+    pareVoteMap.keySet().removeIf((vp) -> StringUtils.startsWith(vp, pre));
+    commitVoteMap.keySet().removeIf((vp) -> StringUtils.startsWith(vp, pre));
 
     agreePare.asMap().keySet().forEach(s -> {
       if (StringUtils.startsWith(s, pre)) {
@@ -242,13 +243,13 @@ public class PbftMessageHandle {
     doneMsg.remove(no);
     timeOuts.remove(no);
     //just try once
-    if (srPbftBaseMessage != null && StringUtils.equals(no, srPbftBaseMessage.getNo())) {
+    if (srPbftMessage != null && StringUtils.equals(no, srPbftMessage.getNo())) {
       try {
         Thread.sleep(100);
       } catch (Exception e) {
       }
-      onPrePrepare(srPbftBaseMessage);
-      srPbftBaseMessage = null;
+      onPrePrepare(srPbftMessage);
+      srPbftMessage = null;
     }
   }
 
