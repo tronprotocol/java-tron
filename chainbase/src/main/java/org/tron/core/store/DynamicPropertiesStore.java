@@ -607,7 +607,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getCrossChain();
     } catch (IllegalArgumentException e) {
-      this.saveChangeDelegation(DBConfig.getCrossChain());
+      this.saveCrossChain(DBConfig.getCrossChain());
     }
 
     try {
