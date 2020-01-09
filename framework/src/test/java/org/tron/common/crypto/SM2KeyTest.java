@@ -324,16 +324,4 @@ public class SM2KeyTest {
             Hex.toHexString(eHash));
   }
 
-//  @Test
-//  public void testSM3_2() {
-//    String message = "F4A38489E32B45B6F876E3AC2168CA392362DC8F23459C1D1146FC3DBFB7BC9A6D657"
-//            + "37361676520646967657374";
-//    byte[] hash = SM3.hash(message);
-//
-//    byte[] msg = Hex.decode(message);
-//    byte[] hash2 = SM3.hash(msg);
-//    System.out.println(Hex.toHexString(hash));
-//    System.out.println(Hex.toHexString(hash2));
-//    assertArrayEquals(hash, hash2);
-//  }
 }
