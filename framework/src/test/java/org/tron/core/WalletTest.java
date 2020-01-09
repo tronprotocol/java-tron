@@ -67,7 +67,6 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
-//import org.tron.protos.Protocol.DeferredTransaction;
 
 @Slf4j
 public class WalletTest {

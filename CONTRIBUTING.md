@@ -71,3 +71,13 @@ When filing an issue, make sure to answer these three questions:
 Please take a moment to check that your bug report or improvement proposal
 doesn't already exist. If it does, please add a quick "+1" or "I have this problem too".
 This will help prioritize the most common problems and requests.
+
+## Community Developers Incentives Programme
+
+Bonus point applies in TRON incentives programme. Developers can earn points by contributing to TRON.
+
+You can find your points ranking at  [Tronscan](https://tronscan.org/#/developersreward).
+
+The Top 5 scored developers (for every month, quarter and year) can win a cash reward.
+
+For more details, please visit [Incentives Policy](https://tronprotocol.github.io/documentation-en/developers/incentives/).

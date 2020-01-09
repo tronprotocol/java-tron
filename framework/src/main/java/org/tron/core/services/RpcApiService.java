@@ -85,6 +85,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -160,6 +161,10 @@ public class RpcApiService implements Service {
   private Server apiServer;
   @Autowired
   private Manager dbManager;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
   @Autowired
   private NodeManager nodeManager;
   @Autowired
@@ -364,7 +369,7 @@ public class RpcApiService implements Service {
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
       Block block = null;
       try {
-        block = dbManager.getHead().getInstance();
+        block = chainBaseManager.getHead().getInstance();
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }

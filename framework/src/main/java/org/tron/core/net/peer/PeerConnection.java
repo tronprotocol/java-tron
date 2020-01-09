@@ -90,10 +90,10 @@ public class PeerConnection extends Channel {
   private Set<BlockId> syncBlockInProcess = new HashSet<>();
   @Setter
   @Getter
-  private volatile boolean needSyncFromPeer;
+  private volatile boolean needSyncFromPeer = true;
   @Setter
   @Getter
-  private volatile boolean needSyncFromUs;
+  private volatile boolean needSyncFromUs = true;
 
   public void setBlockBothHave(BlockId blockId) {
     this.blockBothHave = blockId;
@@ -113,10 +113,18 @@ public class PeerConnection extends Channel {
   }
 
   public void onConnect() {
-    if (getHelloMessage().getHeadBlockId().getNum() > tronNetDelegate.getHeadBlockId().getNum()) {
+    long headBlockNum = tronNetDelegate.getHeadBlockId().getNum();
+    long peerHeadBlockNum = getHelloMessage().getHeadBlockId().getNum();
+
+    if (peerHeadBlockNum > headBlockNum) {
+      needSyncFromUs = false;
       setTronState(TronState.SYNCING);
       syncService.startSync(this);
     } else {
+      needSyncFromPeer = false;
+      if (peerHeadBlockNum == headBlockNum) {
+        needSyncFromUs = false;
+      }
       setTronState(TronState.SYNC_COMPLETED);
     }
   }
