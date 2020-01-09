@@ -11,7 +11,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.ForkUtils;
+import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -87,7 +87,7 @@ public class ProposalUtilTest {
   public void validateCheck() {
     ProposalUtil actuatorUtil = new ProposalUtil();
     DynamicPropertiesStore dynamicPropertiesStore = null;
-    ForkUtils forkUtils = null;
+    ForkController forkUtils = null;
     long invalidValue = -1;
 
     try {

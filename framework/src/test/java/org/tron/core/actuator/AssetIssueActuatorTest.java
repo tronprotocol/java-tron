@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -54,6 +55,7 @@ public class AssetIssueActuatorTest {
   private static final String ASSET_NAME_SECOND = "asset_name2";
   private static TronApplicationContext context;
   private static Manager dbManager;
+  private static ChainBaseManager chainBaseManager;
   private static long now = 0;
   private static long startTime = 0;
   private static long endTime = 0;
@@ -72,10 +74,7 @@ public class AssetIssueActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    // Args.setParam(new String[]{"--output-directory", dbPath},
-    // "config-junit.conf");
-    // dbManager = new Manager();
-    // dbManager.init();
+    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**
@@ -110,7 +109,7 @@ public class AssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(24 * 3600 * 1000);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
 
-    now = dbManager.getHeadBlockTimeStamp();
+    now = chainBaseManager.getHeadBlockTimeStamp();
     startTime = now + 48 * 3600 * 1000;
     endTime = now + 72 * 3600 * 1000;
   }

@@ -1,6 +1,6 @@
 package org.tron.core.utils;
 
-import org.tron.common.utils.ForkUtils;
+import org.tron.common.utils.ForkController;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractValidateException;
@@ -13,7 +13,7 @@ public class ProposalUtil {
   private static final String LONG_VALUE_ERROR =
       "Bad chain parameter value, valid range is [0," + LONG_VALUE + "]";
 
-  public static void validator(DynamicPropertiesStore dynamicPropertiesStore, ForkUtils forkUtils,
+  public static void validator(DynamicPropertiesStore dynamicPropertiesStore, ForkController forkController,
       long code, long value)
       throws ContractValidateException {
     ProposalType proposalType = ProposalType.getEnum(code);
@@ -88,10 +88,10 @@ public class ProposalUtil {
         break;
       }
       case TOTAL_ENERGY_LIMIT: { // deprecated
-        if (!forkUtils.pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
+        if (!forkController.pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
-        if (forkUtils.pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
+        if (forkController.pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value < 0 || value > LONG_VALUE) {
@@ -111,7 +111,7 @@ public class ProposalUtil {
         break;
       }
       case TOTAL_CURRENT_ENERGY_LIMIT: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value < 0 || value > LONG_VALUE) {
@@ -120,7 +120,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_MULTI_SIGN: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_5)) {
           throw new ContractValidateException("Bad chain parameter id: ALLOW_MULTI_SIGN");
         }
         if (value != 1) {
@@ -130,7 +130,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_ADAPTIVE_ENERGY: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_5)) {
           throw new ContractValidateException("Bad chain parameter id: ALLOW_ADAPTIVE_ENERGY");
         }
         if (value != 1) {
@@ -140,7 +140,7 @@ public class ProposalUtil {
         break;
       }
       case UPDATE_ACCOUNT_PERMISSION_FEE: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_5)) {
           throw new ContractValidateException(
               "Bad chain parameter id: UPDATE_ACCOUNT_PERMISSION_FEE");
         }
@@ -151,7 +151,7 @@ public class ProposalUtil {
         break;
       }
       case MULTI_SIGN_FEE: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_5)) {
           throw new ContractValidateException("Bad chain parameter id: MULTI_SIGN_FEE");
         }
         if (value < 0 || value > 100_000_000_000L) {
@@ -161,7 +161,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_PROTO_FILTER_NUM: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1 && value != 0) {
@@ -171,7 +171,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_ACCOUNT_STATE_ROOT: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1 && value != 0) {
@@ -181,7 +181,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_TVM_CONSTANTINOPLE: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1) {
@@ -196,7 +196,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_TVM_SOLIDITY_059: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
 
           throw new ContractValidateException(BAD_PARAM_ID);
         }
@@ -212,7 +212,7 @@ public class ProposalUtil {
         break;
       }
       case ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value < 1 || value > 1_000) {
@@ -222,7 +222,7 @@ public class ProposalUtil {
         break;
       }
       case ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value < 1 || value > 10_000L) {
@@ -232,7 +232,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_CHANGE_DELEGATION: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1 && value != 0) {
@@ -242,7 +242,7 @@ public class ProposalUtil {
         break;
       }
       case WITNESS_127_PAY_PER_BLOCK: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
           throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value < 0 || value > LONG_VALUE) {
@@ -251,7 +251,7 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_SHIELDED_TRANSACTION: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_SHIELDED_TRANSACTION]");
         }
@@ -262,7 +262,7 @@ public class ProposalUtil {
         break;
       }
       case SHIELDED_TRANSACTION_FEE: {
-        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
           throw new ContractValidateException("Bad chain parameter id [SHIELD_TRANSACTION_FEE]");
         }
         if (!dynamicPropertiesStore.supportShieldedTransaction()) {
@@ -272,6 +272,16 @@ public class ProposalUtil {
         if (value < 0 || value > 10_000_000_000L) {
           throw new ContractValidateException(
               "Bad SHIELD_TRANSACTION_FEE parameter value, valid range is [0,10_000_000_000L]");
+        }
+        break;
+      }
+      case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          throw new ContractValidateException("Bad chain parameter id [SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE]");
+        }
+        if (value < 0 || value > 10_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value,valid range is [0,10_000_000_000L]");
         }
         break;
       }
@@ -314,7 +324,8 @@ public class ProposalUtil {
     ALLOW_CHANGE_DELEGATION(30), //1, 30
     WITNESS_127_PAY_PER_BLOCK(31), //drop, 31
     ALLOW_TVM_SOLIDITY_059(32), // 1, 32
-    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33); // 10, 33
+    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, 33
+    SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34); // 34
 
     private long code;
 

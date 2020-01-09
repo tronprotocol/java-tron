@@ -80,6 +80,7 @@ This is java-tron's official channel, if you have any question, please join this
 # Contribution
 If you'd like to contribute to java-tron, please follow below.  
 [Contribution](./CONTRIBUTING.md)
+[Community Developers Incentives Programme](./CONTRIBUTING.md#community-developers-incentives-programme)
 
 # Resources
 * [Medium](https://medium.com/@coredevs)  java-tron's official technical articles are published there.    

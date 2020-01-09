@@ -152,6 +152,8 @@ public class Args extends CommonParameter {
     PARAMETER.validContractProtoThreadNum = 1;
     PARAMETER.shieldedTransInPendingMaxCounts = 10;
     PARAMETER.changedDelegation = 0;
+    PARAMETER.fullNodeHttpEnable = true;
+    PARAMETER.solidityNodeHttpEnable = true;
   }
 
   /**
@@ -268,6 +270,14 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(Constant.VM_SUPPORT_CONSTANT)) {
       PARAMETER.supportConstant = config.getBoolean(Constant.VM_SUPPORT_CONSTANT);
+    }
+
+    if (config.hasPath(Constant.NODE_HTTP_FULLNODE_ENABLE)) {
+      PARAMETER.fullNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_FULLNODE_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_HTTP_SOLIDITY_ENABLE)) {
+      PARAMETER.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
     }
 
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {

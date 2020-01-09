@@ -16,6 +16,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
@@ -64,6 +65,9 @@ public class TronNetDelegate {
   private Manager dbManager;
 
   @Autowired
+  private ChainBaseManager chainBaseManager;
+
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
 
   @Getter
@@ -107,7 +111,7 @@ public class TronNetDelegate {
   }
 
   public BlockId getHeadBlockId() {
-    return dbManager.getHeadBlockId();
+    return chainBaseManager.getHeadBlockId();
   }
 
   public BlockId getSolidBlockId() {
@@ -131,7 +135,7 @@ public class TronNetDelegate {
   }
 
   public long getHeadBlockTimeStamp() {
-    return dbManager.getHeadBlockTimeStamp();
+    return chainBaseManager.getHeadBlockTimeStamp();
   }
 
   public boolean containBlock(BlockId id) {
