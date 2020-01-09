@@ -586,15 +586,15 @@ public class WalletClient {
       return false;
     }
     if (address.length != CommonConstant.ADDRESS_SIZE) {
-      logger.warn(
-          "Warning: Address length needs to be " + CommonConstant.ADDRESS_SIZE 
-              + ", but it is " + address.length + " !!");
+      logger.warn("Warning: Address length needs to be " +
+          CommonConstant.ADDRESS_SIZE + ", but it is " +
+          address.length + " !!");
       return false;
     }
     byte preFixbyte = address[0];
     if (preFixbyte != getAddressPreFixByte()) {
-      logger.warn("Warning: Address needs to be prefix with " + getAddressPreFixByte() 
-          + ", but it is" + preFixbyte + " !!");
+      logger.warn("Warning: Address needs to be prefix with " +
+          getAddressPreFixByte() + ", but it is" + preFixbyte + " !!");
       return false;
     }
     //Other rule;
@@ -658,8 +658,8 @@ public class WalletClient {
       return false;
     }
     if (priKey.length() != 64) {
-      logger.warn("Warning: PrivateKey length needs to be 64, but it is "
-          + priKey.length() + " !!");
+      logger.warn("Warning: PrivateKey length needs to be 64, but it is " +
+          priKey.length() + " !!");
       return false;
     }
     //Other rule;
@@ -669,6 +669,7 @@ public class WalletClient {
   /**
    * constructor.
    */
+  
   public static Optional<WitnessList> listWitnesses() {
     Optional<WitnessList> result = rpcCli.listWitnesses();
     if (result.isPresent()) {
