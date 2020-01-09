@@ -38,4 +38,5 @@ public interface RevokingDatabase {
 
   void shutdown();
 
+  void fastFlush();
 }
