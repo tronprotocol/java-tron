@@ -189,8 +189,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(SignUtils.of(this.block.getBlockHeader().getRawData().toByteArray()),
-          getNum());
+      blockId =
+          new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()),  getNum());
     }
     return blockId;
   }
