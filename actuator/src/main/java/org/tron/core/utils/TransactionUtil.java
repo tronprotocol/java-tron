@@ -34,9 +34,12 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
+import org.tron.common.crypto.SignUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
+import org.tron.common.utils.HashInterface;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -162,8 +165,8 @@ public class TransactionUtil {
     return !(id.length > 1 && id[0] == '0');
   }
 
-  public static Sha256Hash getTransactionId(Transaction transaction) {
-    return Sha256Hash.of(transaction.getRawData().toByteArray());
+  public static HashInterface getTransactionId(Transaction transaction) {
+    return SignUtils.of(transaction.getRawData().toByteArray(), CommonParameter.getInstance().isECKeyCryptoEngine());
   }
 
 
