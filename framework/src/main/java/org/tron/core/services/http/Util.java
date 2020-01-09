@@ -29,6 +29,7 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
@@ -232,7 +233,8 @@ public class Util {
     jsonTransaction.put("raw_data", rawData);
     String rawDataHex = ByteArray.toHexString(transaction.getRawData().toByteArray());
     jsonTransaction.put("raw_data_hex", rawDataHex);
-    String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+    String txID = ByteArray.toHexString(SignUtils.hash(transaction.getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine()));
     jsonTransaction.put("txID", txID);
     return jsonTransaction;
   }

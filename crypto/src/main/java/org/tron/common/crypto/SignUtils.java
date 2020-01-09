@@ -1,10 +1,13 @@
 package org.tron.common.crypto;
 
+import java.awt.Shape;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2.SM2Signature;
+import org.tron.common.utils.SM3Hash;
+import org.tron.common.utils.Sha256Hash;
 
 public class SignUtils {
    public static SignInterface getGeneratedRandomSign(boolean isECKeyCryptoEngine) {
@@ -50,5 +53,13 @@ public class SignUtils {
        return ECKey.signatureToAddress(messageHash, (ECDSASignature)signatureInterface);
      }
      return SM2.signatureToAddress(messageHash, (SM2Signature)signatureInterface);
+  }
+
+  public static byte[] hash(byte[] toByteArray, boolean ecKeyCryptoEngine) {
+    if (ecKeyCryptoEngine) {
+      return Sha256Hash.hash(toByteArray);
+    } else {
+      return SM3Hash.hash(toByteArray);
+    }
   }
 }
