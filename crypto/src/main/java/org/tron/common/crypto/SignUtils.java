@@ -68,9 +68,9 @@ public class SignUtils {
   }
 
   public static HashInterface of(byte[] contents, boolean isECKeyCryptoEngine) {
-    if (isECKeyCryptoEngine) {
-      return Sha256Hash.of(contents);
-    }
-    return SM3Hash.of(contents);
+     if (isECKeyCryptoEngine) {
+       return Sha256Hash.of(contents);
+     }
+     return SM3Hash.of(contents);
   }
 }
