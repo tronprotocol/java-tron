@@ -42,7 +42,7 @@ public class ForkUtils {
     }
 
     byte[] stats = dynamicPropertiesStore.statsByVersion(version);
-    return check(stats);
+    return forkUtilCheck(stats);
   }
 
   // when block.version = 5,
@@ -53,7 +53,7 @@ public class ForkUtils {
     return blockNum >= DBConfig.getBlockNumForEneryLimit();
   }
 
-  protected boolean check(byte[] stats) {
+  protected boolean forkUtilCheck(byte[] stats) {
     if (stats == null || stats.length == 0) {
       return false;
     }
@@ -72,7 +72,7 @@ public class ForkUtils {
       int versionValue = versionEnum.getValue();
       if (versionValue > version) {
         byte[] stats = dynamicPropertiesStore.statsByVersion(versionValue);
-        if (!check(stats) && Objects.nonNull(stats)) {
+        if (!forkUtilCheck(stats) && Objects.nonNull(stats)) {
           stats[slot] = VERSION_DOWNGRADE;
           dynamicPropertiesStore.statsByVersion(versionValue, stats);
         }
@@ -85,7 +85,7 @@ public class ForkUtils {
       int versionValue = versionEnum.getValue();
       if (versionValue < version) {
         byte[] stats = dynamicPropertiesStore.statsByVersion(versionValue);
-        if (!check(stats)) {
+        if (!forkUtilCheck(stats)) {
           if (stats == null || stats.length == 0) {
             stats = new byte[slotSize];
           }
@@ -100,7 +100,7 @@ public class ForkUtils {
     for (ForkBlockVersionEnum versionEnum : ForkBlockVersionEnum.values()) {
       int versionValue = versionEnum.getValue();
       byte[] stats = dynamicPropertiesStore.statsByVersion(versionValue);
-      if (!check(stats) && Objects.nonNull(stats)) {
+      if (!forkUtilCheck(stats) && Objects.nonNull(stats)) {
         Arrays.fill(stats, VERSION_DOWNGRADE);
         dynamicPropertiesStore.statsByVersion(versionValue, stats);
       }
