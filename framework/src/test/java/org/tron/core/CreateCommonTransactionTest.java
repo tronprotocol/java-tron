@@ -3,9 +3,12 @@ package org.tron.core;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;
+import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -52,8 +55,13 @@ public class CreateCommonTransactionTest {
             .usePlaintext(true)
             .build());
     CrossContract.Builder builder = CrossContract.newBuilder();
-    builder.setOwnerAddress(owner).setOwnerChainId(ByteString.copyFromUtf8("aaa"))
-        .setToAddress(owner).setToChainId(ByteString.copyFromUtf8("bbb"));
+    builder.setOwnerAddress(owner)
+        .setOwnerChainId(Sha256Hash.wrap(ByteArray
+            .fromHexString("000000000000000019b59068c6058ff466ccf59f2c38a0df1c330b9b7e8dcc4c"))
+            .getByteString())
+        .setToAddress(owner).setToChainId(Sha256Hash.wrap(
+        ByteArray.fromHexString("0000000000000000bff8ab4242b00fac071a0035cb8e98d6351c87f0f1a753dd"))
+        .getByteString());
     Transaction.Builder transaction = Transaction.newBuilder();
     raw.Builder raw = Transaction.raw.newBuilder();
     Contract.Builder contract = Contract.newBuilder();
@@ -69,9 +77,22 @@ public class CreateCommonTransactionTest {
     System.out.println(walletStub.broadcastTransaction(tx));
   }
 
+  public static void query() {
+    WalletBlockingStub walletStub = WalletGrpc
+        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build());
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    builder.setNum(0);
+    System.out.println(new Sha256Hash
+        (0, Sha256Hash.of(walletStub.getBlockByNum(builder.build()).getBlockHeader().getRawData()
+            .toByteArray())));
+  }
+
   public static void main(String[] args) {
 //    testCreateUpdateBrokerageContract();
     testCrossTx();
+//    query();
   }
 
 }
