@@ -47,6 +47,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
@@ -63,10 +64,18 @@ import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.JLibrustzcash;
+import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.args.Args;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Protocol.Permission;
+import org.tron.core.db.Manager;
 
 /**
  * @author Roman Mandeleil
@@ -87,6 +96,7 @@ public class PrecompiledContracts {
 
   private static final BatchValidateSign batchValidateSign = new BatchValidateSign();
   private static final ValidateMultiSign validateMultiSign = new ValidateMultiSign();
+  private static final ValidateProof validateProof = new ValidateProof();
 
 
   private static final DataWord ecRecoverAddr = new DataWord(
@@ -109,6 +119,8 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000000009");
   private static final DataWord validateMultiSignAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000000000a");
+  private static final DataWord validateProofAddr = new DataWord(
+          "000000000000000000000000000000000000000000000000000000000000000F");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -145,6 +157,9 @@ public class PrecompiledContracts {
     }
     if (VMConfig.allowTvmSolidity059() && address.equals(validateMultiSignAddr)) {
       return validateMultiSign;
+    }
+    if (address.equals(validateProofAddr)) {
+      return validateProof;
     }
 
     return null;
@@ -870,6 +885,254 @@ public class PrecompiledContracts {
 
   private static byte[] extractBytes(byte[] data, int offset, int len) {
     return Arrays.copyOfRange(data, offset, offset + len);
+  }
+
+  public static class ValidateProof extends PrecompiledContract {
+
+    //cm,cv,epk,proof, bindingSignature, value, signHash
+    private static final int MINT_SIZE = 416;
+    //spendDescription, receiveDescriptionWithoutC0, receiveDescriptionWithoutC1, bindingSignature, signHash
+    private static final int TRANSFER_SIZE = 1056;
+    //spendDescription, bindingSignature, value, signHash
+    private static final int BURN_SIZE = 512;
+
+    private static final String dbPath = "output_shield_USDT_test";
+    private static TronApplicationContext context;
+    private static Manager dbManager;
+
+    static {
+      Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+      context = new TronApplicationContext(DefaultConfig.class);
+      dbManager = context.getBean(Manager.class);
+      dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+
+    }
+
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 0;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+
+      if (data == null) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+      boolean result;
+
+      switch (data.length) {
+        case MINT_SIZE:
+          result = checkMint(data);
+          break;
+        case TRANSFER_SIZE:
+          result = checkTransfer(data);
+          break;
+        case BURN_SIZE:
+          result = checkBurn(data);
+          break;
+        default:
+          result = false;
+      }
+
+      return Pair.of(result, EMPTY_BYTE_ARRAY);
+    }
+
+
+    private boolean checkMint(byte[] data) {
+      byte[] cv = new byte[32];
+      byte[] cm = new byte[32];
+      byte[] epk = new byte[32];
+      byte[] proof = new byte[192];
+      byte[] bindingSig = new byte[64];
+      byte[] signHash = new byte[32];
+
+      System.arraycopy(data, 0, cm, 0, 32);
+      System.arraycopy(data, 32, cv, 0, 32);
+      System.arraycopy(data, 64, epk, 0, 32);
+      System.arraycopy(data, 96, proof, 0, 192);
+      System.arraycopy(data, 288, bindingSig, 0, 64);
+      long value = parseLong(data, 352);
+      System.arraycopy(data, 384, signHash, 0, 32);
+
+      boolean result;
+
+      //verify receiveProof && bindingSignature
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      try {
+        result = JLibrustzcash.librustzcashSaplingCheckOutput(
+                new LibrustzcashParam.CheckOutputParams(ctx, cv, cm, epk, proof));
+
+        long valueBalance = -value;
+
+        result  &= JLibrustzcash.librustzcashSaplingFinalCheck(
+                new LibrustzcashParam.FinalCheckParams(ctx, valueBalance, bindingSig, signHash));
+      }catch (Throwable any) {
+        result = false;
+      } finally {
+        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      }
+
+      try {
+        MerkleContainer merkleContainer = dbManager.getMerkleContainer();
+        IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
+        logger.info("current Tree size: " + currentMerkle.size());
+        logger.info("current Tree root: " + ByteArray.toHexString(currentMerkle.getRootArray()));
+        currentMerkle.wfcheck();
+        merkleContainer.saveCmIntoMerkleTree(currentMerkle, cm);
+        merkleContainer.setCurrentMerkle(currentMerkle);
+        //log
+        currentMerkle = merkleContainer.getCurrentMerkle();
+        logger.info("current Tree size: " + currentMerkle.size());
+        logger.info("current Tree root: " + ByteArray.toHexString(currentMerkle.getRootArray()));
+//        IncrementalMerkleVoucherContainer voucher = currentMerkle.toVoucher();
+//        byte[] anchor = voucher.root().getContent().toByteArray();
+//        logger.info("After mint, anchlor is: " + ByteArray.toHexString(anchor));
+
+      } catch (Throwable any) {
+        result = false;
+      }
+      logger.info("Mint result is " + result);
+
+      return result;
+
+    }
+
+    //data: spendDescription, outputDescriptionWithoutC0, outputDescriptionWithoutC1, bindingSignature, signHash
+    private boolean checkTransfer(byte[] data) {
+      //spend
+      byte[] spendCv = new byte[32];
+      byte[] anchor = new byte[32];
+      byte[] nullifier = new byte[32];
+      byte[] rk = new byte[32];
+      byte[] spendAuthSig = new byte[64];
+      byte[] spendProof = new byte[192];
+      //receive0
+      byte[] receiveCv0 = new byte[32];
+      byte[] receiveCm0 = new byte[32];
+      byte[] receiveEpk0 = new byte[32];
+      byte[] receiveProof0 = new byte[192];
+      //receive1
+      byte[] receiveCv1 = new byte[32];
+      byte[] receiveCm1 = new byte[32];
+      byte[] receiveEpk1 = new byte[32];
+      byte[] receiveProof1 = new byte[192];
+
+      byte[] bindingSig = new byte[64];
+      byte[] signHash = new byte[32];
+      //spend
+      System.arraycopy(data, 0, spendCv, 0, 32);
+      System.arraycopy(data, 32, anchor, 0, 32);
+      System.arraycopy(data, 64, rk, 0, 32);
+      System.arraycopy(data, 96, spendAuthSig, 0, 64);
+      System.arraycopy(data, 160, spendProof, 0, 192);
+      System.arraycopy(data, 352, nullifier, 0, 32);
+      //receive0
+      System.arraycopy(data, 384, receiveCv0, 0, 32);
+      System.arraycopy(data, 416, receiveCm0, 0, 32);
+      System.arraycopy(data, 448, receiveEpk0, 0, 32);
+      System.arraycopy(data, 480, receiveProof0, 0, 192);
+      //receive1
+      System.arraycopy(data, 672, receiveCv1, 0, 32);
+      System.arraycopy(data, 704, receiveCm1, 0, 32);
+      System.arraycopy(data, 736, receiveEpk1, 0, 32);
+      System.arraycopy(data, 768, receiveProof1, 0, 192);
+
+      System.arraycopy(data, 960, bindingSig, 0, 64);
+      System.arraycopy(data, 1024, signHash, 0, 32);
+
+      boolean result;
+
+      //verify spendProof, receiveProof && bindingSignature
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      try {
+        result = JLibrustzcash.librustzcashSaplingCheckSpend(
+                new LibrustzcashParam.CheckSpendParams(ctx, spendCv, anchor, nullifier, rk, spendProof, spendAuthSig, signHash));
+
+        logger.info("Check spend " + result);
+        result &= JLibrustzcash.librustzcashSaplingCheckOutput(
+                new LibrustzcashParam.CheckOutputParams(ctx, receiveCv0, receiveCm0, receiveEpk0, receiveProof0));
+        logger.info("Check output1 " + result);
+        result &= JLibrustzcash.librustzcashSaplingCheckOutput(
+                new LibrustzcashParam.CheckOutputParams(ctx, receiveCv1, receiveCm1, receiveEpk1, receiveProof1));
+        logger.info("Check output2 " + result);
+        result  &= JLibrustzcash.librustzcashSaplingFinalCheck(
+                new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
+        logger.info("Check Binding Signature " + result);
+      }catch (Throwable any) {
+        result = false;
+      } finally {
+        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      }
+
+      try {
+        MerkleContainer merkleContainer = dbManager.getMerkleContainer();
+        IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
+        currentMerkle.wfcheck();
+        merkleContainer.saveCmIntoMerkleTree(currentMerkle, receiveCm0);
+        merkleContainer.saveCmIntoMerkleTree(currentMerkle, receiveCm1);
+        merkleContainer.setCurrentMerkle(currentMerkle);
+      } catch (Throwable any) {
+        result = false;
+      }
+      logger.info("Transfer result is " + result);
+
+      return result;
+
+    }
+
+    //data: spendDescription, bindingSignature, value, signHash
+    private boolean checkBurn(byte[] data) {
+      //spend
+      byte[] cv = new byte[32];
+      byte[] anchor = new byte[32];
+      byte[] nullifier = new byte[32];
+      byte[] rk = new byte[32];
+      byte[] spendAuthSig = new byte[64];
+      byte[] proof = new byte[192];
+
+      byte[] bindingSig = new byte[64];
+      byte[] signHash = new byte[32];
+      //spend
+      System.arraycopy(data, 0, cv, 0, 32);
+      System.arraycopy(data, 32, anchor, 0, 32);
+      System.arraycopy(data, 64, rk, 0, 32);
+      System.arraycopy(data, 96, spendAuthSig, 0, 64);
+      System.arraycopy(data, 160, proof, 0, 192);
+      System.arraycopy(data, 352, nullifier, 0, 32);
+      long value = parseLong(data, 384);
+      System.arraycopy(data, 416, bindingSig, 0, 64);
+      System.arraycopy(data, 480, signHash, 0, 32);
+
+      boolean result;
+
+      //verify spendProof && bindingSignature
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      try {
+        result = JLibrustzcash.librustzcashSaplingCheckSpend(
+                new LibrustzcashParam.CheckSpendParams(ctx, cv, anchor, nullifier, rk, proof, spendAuthSig, signHash));
+        logger.info("Check spend " + result);
+        long valueBalance = value;
+        result  &= JLibrustzcash.librustzcashSaplingFinalCheck(
+                new LibrustzcashParam.FinalCheckParams(ctx, valueBalance, bindingSig, signHash));
+        logger.info("Check Binding Signature " + result);
+
+      }catch (Throwable any) {
+        result = false;
+      } finally {
+        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      }
+
+      return result;
+
+    }
+
+    private long parseLong(byte[] data, int idx) {
+      byte[] bytes = parseBytes(data, idx, 32);
+      return new DataWord(bytes).longValueSafe();
+    }
+
   }
 
 }
