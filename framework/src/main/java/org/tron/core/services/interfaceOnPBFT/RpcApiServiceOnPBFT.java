@@ -132,21 +132,6 @@ public class RpcApiServiceOnPBFT implements Service {
     return trxExtBuilder.build();
   }
 
-  private BlockExtention block2Extention(Block block) {
-    if (block == null) {
-      return null;
-    }
-    BlockExtention.Builder builder = BlockExtention.newBuilder();
-    BlockCapsule blockCapsule = new BlockCapsule(block);
-    builder.setBlockHeader(block.getBlockHeader());
-    builder.setBlockid(ByteString.copyFrom(blockCapsule.getBlockId().getBytes()));
-    for (int i = 0; i < block.getTransactionsCount(); i++) {
-      Transaction transaction = block.getTransactions(i);
-      builder.addTransactions(transaction2Extention(transaction));
-    }
-    return builder.build();
-  }
-
   @Override
   public void stop() {
     if (apiServer != null) {
