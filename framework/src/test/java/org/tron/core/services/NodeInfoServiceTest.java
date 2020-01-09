@@ -30,9 +30,9 @@ public class NodeInfoServiceTest {
 
   public void test() {
     BlockCapsule blockCapsule1 = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-        100, ByteString.EMPTY);
+        100, ByteString.EMPTY, ByteString.EMPTY);
     BlockCapsule blockCapsule2 = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-        200, ByteString.EMPTY);
+        200, ByteString.EMPTY, ByteString.EMPTY);
     witnessProductBlockService.validWitnessProductTwoBlock(blockCapsule1);
     witnessProductBlockService.validWitnessProductTwoBlock(blockCapsule2);
     NodeInfo nodeInfo = nodeInfoService.getNodeInfo();

@@ -58,7 +58,7 @@ public class ManagerForTest {
     ByteString witnessAddress = getWitnessAddress(time);
 
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
-        witnessAddress);
+        witnessAddress, ByteString.EMPTY);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));

@@ -67,7 +67,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this;
   }
 
-  public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
+  public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress,
+      ByteString chainId) {
     // blockheader raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
     BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
@@ -76,6 +77,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         .setTimestamp(when)
         .setVersion(ChainConstant.BLOCK_VERSION)
         .setWitnessAddress(witnessAddress)
+        .setChainId(chainId)
         .build();
 
     // block header

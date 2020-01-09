@@ -1,5 +1,6 @@
 package org.tron.core.net.services;
 
+import com.google.protobuf.ByteString;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -28,7 +29,7 @@ public class AdvServiceTest {
   @Test
   public void testBroadcast() {
     BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-        System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+        System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString(), ByteString.EMPTY);
     BlockMessage msg = new BlockMessage(blockCapsule);
     service.broadcast(msg);
     Item item = new Item(blockCapsule.getBlockId(), InventoryType.BLOCK);

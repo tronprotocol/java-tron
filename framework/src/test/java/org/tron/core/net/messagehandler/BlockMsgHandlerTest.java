@@ -1,5 +1,6 @@
 package org.tron.core.net.messagehandler;
 
+import com.google.protobuf.ByteString;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
@@ -24,7 +25,7 @@ public class BlockMsgHandlerTest {
   public void testProcessMessage() {
     try {
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString(), ByteString.EMPTY);
       msg = new BlockMessage(blockCapsule);
       handler.processMessage(peer, new BlockMessage(blockCapsule));
     } catch (P2pException e) {
@@ -50,7 +51,8 @@ public class BlockMsgHandlerTest {
 
     try {
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis() + 10000, Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis() + 10000, Sha256Hash.ZERO_HASH.getByteString(),
+          ByteString.EMPTY);
       msg = new BlockMessage(blockCapsule);
       peer.getAdvInvRequest()
           .put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());

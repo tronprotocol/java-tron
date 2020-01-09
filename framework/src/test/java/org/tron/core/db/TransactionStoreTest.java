@@ -152,7 +152,7 @@ public class TransactionStoreTest {
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
-                    ByteArray.fromHexString(key)).getAddress()));
+                    ByteArray.fromHexString(key)).getAddress()), ByteString.EMPTY);
 
     // save in database with block number
     TransferContract tc =
@@ -221,7 +221,7 @@ public class TransactionStoreTest {
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
-                    ByteArray.fromHexString(key)).getAddress()));
+                    ByteArray.fromHexString(key)).getAddress()), ByteString.EMPTY);
 
     // save in database with block number
     TransferContract tc =

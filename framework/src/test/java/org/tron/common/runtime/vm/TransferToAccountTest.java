@@ -281,7 +281,7 @@ public class TransferToAccountTest {
             0, feeLimit, 0, 0);
     TransactionContext context = new TransactionContext(
         new BlockCapsule(dbManager.getHeadBlockNum() + 1,
-            dbManager.getHeadBlockId(), 0, ByteString.EMPTY),
+            dbManager.getHeadBlockId(), 0, ByteString.EMPTY, ByteString.EMPTY),
         new TransactionCapsule(transaction),
         StoreFactory.getInstance(), true,
         false);

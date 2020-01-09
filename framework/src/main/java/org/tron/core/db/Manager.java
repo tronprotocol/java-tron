@@ -1392,7 +1392,7 @@ public class Manager {
     long postponedTrxCount = 0;
 
     BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockNum() + 1, getHeadBlockId(),
-        blockTime, miner.getWitnessAddress());
+        blockTime, miner.getWitnessAddress(), getGenesisBlockId().getByteString());
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());

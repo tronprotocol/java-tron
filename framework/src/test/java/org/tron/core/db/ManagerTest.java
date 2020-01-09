@@ -88,7 +88,7 @@ public class ManagerTest extends BlockGenerate {
                 ECKey.fromPrivate(
                     ByteArray.fromHexString(
                         Args.getInstance().getLocalWitnesses().getPrivateKey()))
-                    .getAddress()));
+                    .getAddress()), ByteString.EMPTY);
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
@@ -119,7 +119,7 @@ public class ManagerTest extends BlockGenerate {
                 ECKey.fromPrivate(
                     ByteArray.fromHexString(
                         Args.getInstance().getLocalWitnesses().getPrivateKey()))
-                    .getAddress()));
+                    .getAddress()), ByteString.EMPTY);
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
@@ -535,7 +535,7 @@ public class ManagerTest extends BlockGenerate {
       long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
-        witnessAddress);
+        witnessAddress, ByteString.EMPTY);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
@@ -546,7 +546,7 @@ public class ManagerTest extends BlockGenerate {
       long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
-        ByteString.copyFromUtf8("onlyTest"));
+        ByteString.copyFromUtf8("onlyTest"), ByteString.EMPTY);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
