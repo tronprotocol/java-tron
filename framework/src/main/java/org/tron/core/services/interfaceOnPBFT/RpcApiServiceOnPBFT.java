@@ -119,19 +119,6 @@ public class RpcApiServiceOnPBFT implements Service {
     }));
   }
 
-  private TransactionExtention transaction2Extention(Transaction transaction) {
-    if (transaction == null) {
-      return null;
-    }
-    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
-    Return.Builder retBuilder = Return.newBuilder();
-    trxExtBuilder.setTransaction(transaction);
-    trxExtBuilder.setTxid(Sha256Hash.of(transaction.getRawData().toByteArray()).getByteString());
-    retBuilder.setResult(true).setCode(response_code.SUCCESS);
-    trxExtBuilder.setResult(retBuilder);
-    return trxExtBuilder.build();
-  }
-
   @Override
   public void stop() {
     if (apiServer != null) {
