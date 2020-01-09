@@ -15,6 +15,8 @@
 
 package org.tron.core.utils;
 
+import static org.tron.common.utils.Hash.sha3omit12;
+
 import com.google.common.base.CaseFormat;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
@@ -239,14 +241,14 @@ public class TransactionUtil {
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-    return DecodeUtil.sha3omit12(combined);
+    return sha3omit12(combined);
   }
 
   public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-    return DecodeUtil.sha3omit12(combined);
+    return sha3omit12(combined);
   }
 
   // for `CREATE`
@@ -255,7 +257,7 @@ public class TransactionUtil {
     byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
     System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
     System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
-    return DecodeUtil.sha3omit12(combined);
+    return sha3omit12(combined);
   }
 
   // for `CREATE2`

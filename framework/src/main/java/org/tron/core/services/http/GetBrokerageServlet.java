@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import static org.tron.common.utils.Commons.decodeFromBase58Check;
+
 import com.alibaba.fastjson.JSONObject;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -54,7 +56,7 @@ public class GetBrokerageServlet extends RateLimiterServlet {
       if (StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
         address = Hex.decode(addressStr);
       } else {
-        address = Wallet.decodeFromBase58Check(addressStr);
+        address = decodeFromBase58Check(addressStr);
       }
     }
     return address;

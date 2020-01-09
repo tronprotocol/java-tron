@@ -10,6 +10,7 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.security.Signature;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +76,8 @@ import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.parameter.CommonParameter;
@@ -82,6 +85,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -157,6 +161,10 @@ public class RpcApiService implements Service {
   private Server apiServer;
   @Autowired
   private Manager dbManager;
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
   @Autowired
   private NodeManager nodeManager;
   @Autowired
@@ -360,7 +368,7 @@ public class RpcApiService implements Service {
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
       Block block = null;
       try {
-        block = dbManager.getHead().getInstance();
+        block = chainBaseManager.getHead().getInstance();
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
@@ -605,9 +613,10 @@ public class RpcApiService implements Service {
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      byte[] priKey = ecKey.getPrivKeyBytes();
-      byte[] address = ecKey.getAddress();
+      SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+          Args.getInstance().isECKeyCryptoEngine());
+      byte[] priKey = cryptoEngine.getPrivateKey();
+      byte[] address = cryptoEngine.getAddress();
       String addressStr = Wallet.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
@@ -910,8 +919,9 @@ public class RpcApiService implements Service {
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
-        ECKey ecKey = ECKey.fromPrivate(privateKey);
-        byte[] owner = ecKey.getAddress();
+        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, Args.getInstance()
+                .isECKeyCryptoEngine());
+        byte[] owner = cryptoEngine.getAddress();
         TransferContract.Builder builder = TransferContract.newBuilder();
         builder.setOwnerAddress(ByteString.copyFrom(owner));
         builder.setToAddress(toAddress);
@@ -961,8 +971,9 @@ public class RpcApiService implements Service {
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
-        ECKey ecKey = ECKey.fromPrivate(privateKey);
-        byte[] owner = ecKey.getAddress();
+        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey,
+            Args.getInstance().isECKeyCryptoEngine());
+        byte[] owner = cryptoEngine.getAddress();
         TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
         builder.setOwnerAddress(ByteString.copyFrom(owner));
         builder.setToAddress(toAddress);
@@ -1799,9 +1810,10 @@ public class RpcApiService implements Service {
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      byte[] priKey = ecKey.getPrivKeyBytes();
-      byte[] address = ecKey.getAddress();
+      SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+          Args.getInstance().isECKeyCryptoEngine());
+      byte[] priKey = cryptoEngine.getPrivateKey();
+      byte[] address = cryptoEngine.getAddress();
       String addressStr = Wallet.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
@@ -1918,7 +1930,7 @@ public class RpcApiService implements Service {
     public void getNewShieldedAddress(EmptyMessage request,
         StreamObserver<ShieldedAddressInfo> responseObserver) {
       try {
-        responseObserver.onNext(wallet.getNewShieldedAddressInfo());
+        responseObserver.onNext(wallet.getNewShieldedAddress());
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
       }

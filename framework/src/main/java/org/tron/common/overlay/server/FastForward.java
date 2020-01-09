@@ -16,6 +16,8 @@ import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.parameter.CommonParameter;
@@ -27,6 +29,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;
+import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "net")
 @Component
@@ -48,8 +51,9 @@ public class FastForward {
   private CommonParameter parameter = Args.getInstance();
   private List<Node> fastForwardNodes = parameter.getFastForwardNodes();
   private ByteString witnessAddress = ByteString
-      .copyFrom(parameter.getLocalWitnesses().getWitnessAccountAddress());
-  private int keySize = parameter.getLocalWitnesses().getPrivateKeys().size();
+      .copyFrom(Args.getLocalWitnesses().getWitnessAccountAddress(CommonParameter.getInstance()
+              .isECKeyCryptoEngine()));
+  private int keySize = Args.getLocalWitnesses().getPrivateKeys().size();
 
   public void init() {
     manager = ctx.getBean(Manager.class);
@@ -83,11 +87,13 @@ public class FastForward {
       fastForwardNodes.forEach(node -> {
         InetAddress address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
         if (address.equals(channel.getInetAddress())) {
-          ECKey ecKey = ECKey
-              .fromPrivate(ByteArray.fromHexString(parameter.getLocalWitnesses().getPrivateKey()));
+          SignInterface cryptoEngine = SignUtils
+              .fromPrivate(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()),
+                  Args.getInstance().isECKeyCryptoEngine());
+
           Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(message.getTimestamp()));
-          ECDSASignature signature = ecKey.sign(hash.getBytes());
-          ByteString sig = ByteString.copyFrom(signature.toByteArray());
+          ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
+                  .signHash(hash.getBytes())));
           message.setHelloMessage(message.getHelloMessage().toBuilder()
               .setAddress(witnessAddress).setSignature(sig).build());
         }
@@ -120,7 +126,8 @@ public class FastForward {
       Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(msg.getTimestamp()));
       String sig =
               TransactionCapsule.getBase64FromByteString(msg.getSignature());
-      byte[] sigAddress = ECKey.signatureToAddress(hash.getBytes(), sig);
+      byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig,
+          Args.getInstance().isECKeyCryptoEngine());
       if (manager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
         return Arrays.equals(sigAddress, msg.getAddress().toByteArray());
       } else {

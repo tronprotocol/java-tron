@@ -7,6 +7,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.protos.Protocol.Witness;
 
+import static org.tron.common.utils.Hash.computeAddress;
+import static org.tron.common.utils.Hash.computeAddress;
+
 @Slf4j(topic = "capsule")
 public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<WitnessCapsule> {
 
@@ -20,7 +23,7 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
     final Witness.Builder witnessBuilder = Witness.newBuilder();
     this.witness = witnessBuilder
         .setPubKey(pubKey)
-        .setAddress(ByteString.copyFrom(DecodeUtil.computeAddress(pubKey.toByteArray())))
+        .setAddress(ByteString.copyFrom(computeAddress(pubKey.toByteArray())))
         .setUrl(url).build();
   }
 
