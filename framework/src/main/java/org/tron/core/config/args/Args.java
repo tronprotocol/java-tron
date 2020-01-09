@@ -448,8 +448,8 @@ public class Args extends CommonParameter {
             ? config.getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50061;
 
     INSTANCE.rpcOnPBFTPort =
-        config.hasPath(Constant.NODE_RPC_SOLIDITY_PORT)
-            ? config.getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50071;
+        config.hasPath(Constant.NODE_RPC_PBFT_PORT)
+            ? config.getInt(Constant.NODE_RPC_PBFT_PORT) : 50071;
 
     INSTANCE.fullNodeHttpPort =
         config.hasPath(Constant.NODE_HTTP_FULLNODE_PORT)

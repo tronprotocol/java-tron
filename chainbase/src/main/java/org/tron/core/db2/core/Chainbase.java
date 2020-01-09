@@ -28,11 +28,13 @@ public class Chainbase implements IRevokingDB {
   protected static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
   //true:fullnode, false:soliditynode
   private ThreadLocal<Cursor> cursor = new ThreadLocal<>();
+  private ThreadLocal<Long> offset = new ThreadLocal<>();
   private Snapshot head;
 
   public Chainbase(Snapshot head) {
     this.head = head;
     cursor.set(Cursor.HEAD);
+    offset.set(0L);
   }
 
   public String getDbName() {
@@ -44,14 +46,36 @@ public class Chainbase implements IRevokingDB {
     this.cursor.set(cursor);
   }
 
+  @Override
+  public void setCursor(Cursor cursor, long offset) {
+    this.cursor.set(cursor);
+    this.offset.set(offset);
+  }
+
   private Snapshot head() {
+    if (cursor.get() == null) {
+      return head;
+    }
+
     switch (cursor.get()) {
       case HEAD:
         return head;
       case SOLIDITY:
         return head.getSolidity();
       case PBFT:
+        if (offset.get() == null) {
+          return head.getSolidity();
+        }
 
+        if (offset.get() >= 0) {
+          Snapshot tmp = head;
+          for (int i = 0; i < offset.get() && tmp != tmp.getRoot(); i++) {
+            tmp = tmp.getPrevious();
+          }
+          return tmp;
+        } else {
+          return head.getSolidity();
+        }
       default:
         return head;
     }

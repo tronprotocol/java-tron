@@ -96,6 +96,11 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   public void setCursor(Chainbase.Cursor cursor) {
   }
 
+  @Override
+  public void setCursor(Chainbase.Cursor cursor, long offset) {
+
+  }
+
   /**
    * This should be called just after an object is created
    */
