@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.PbftSignCapsule;
+import org.tron.core.db.RevokingDatabase;
 import org.tron.core.event.EventBusService;
 import org.tron.core.event.entity.PbftBlockCommitEvent;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
@@ -22,10 +23,14 @@ public class PbftMessageAction {
   @Autowired
   private EventBusService eventBusService;
 
+  @Autowired
+  private RevokingDatabase revokingStore;
+
   public void action(PbftMessage message, List<ByteString> dataSignList) {
     switch (message.getDataType()) {
       case BLOCK: {
         long blockNum = message.getNumber();
+        revokingStore.fastFlush();
         chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
         Raw raw = message.getPbftMessage().getRawData();
         chainBaseManager.getPbftSignDataStore()
