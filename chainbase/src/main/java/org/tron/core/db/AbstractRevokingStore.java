@@ -79,6 +79,11 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
+  public void setCursor(Chainbase.Cursor cursor, long offset) {
+
+  }
+
+  @Override
   public synchronized void check() {
     LevelDbDataSourceImpl check =
         new LevelDbDataSourceImpl(DBConfig.getOutputDirectoryByDbName("tmp"), "tmp", new Options(),

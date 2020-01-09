@@ -170,7 +170,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     return Streams.stream(revokingDB.iterator()).count();
   }
 
-  public void setMode(Chainbase.Cursor cursor) {
+  public void setCursor(Chainbase.Cursor cursor) {
     revokingDB.setCursor(cursor);
   }
 }

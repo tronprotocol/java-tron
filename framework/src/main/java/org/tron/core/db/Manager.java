@@ -1766,7 +1766,17 @@ public class Manager {
   }
 
   public void setCursor(Chainbase.Cursor cursor) {
-    revokingStore.setCursor(cursor);
+    if (cursor == Chainbase.Cursor.PBFT) {
+      long headNum = getHeadBlockNum();
+      long pbftNum = commonDataBase.getLatestPbftBlockNum();
+      revokingStore.setCursor(cursor, headNum - pbftNum);
+    } else {
+      revokingStore.setCursor(cursor);
+    }
+  }
+
+  public void resetCursor() {
+    revokingStore.setCursor(Chainbase.Cursor.HEAD, 0L);
   }
 
   private void startEventSubscribing() {

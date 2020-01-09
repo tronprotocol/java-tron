@@ -122,70 +122,70 @@ public class HttpApiOnPBFTService implements Service {
     try {
       server = new Server(port);
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-      context.setContextPath("/");
+      context.setContextPath("/walletpbft/");
       server.setHandler(context);
 
       // same as FullNode
-      context.addServlet(new ServletHolder(accountOnPBFTServlet), "/wallet/getaccount");
+      context.addServlet(new ServletHolder(accountOnPBFTServlet), "/getaccount");
       context.addServlet(new ServletHolder(listWitnessesOnPBFTServlet),
-          "/wallet/listwitnesses");
+          "/listwitnesses");
       context.addServlet(new ServletHolder(getAssetIssueListOnPBFTServlet),
-          "/wallet/getassetissuelist");
+          "/getassetissuelist");
       context.addServlet(new ServletHolder(getPaginatedAssetIssueListOnPBFTServlet),
-          "/wallet/getpaginatedassetissuelist");
+          "/getpaginatedassetissuelist");
       context.addServlet(new ServletHolder(getAssetIssueByNameOnPBFTServlet),
-          "/wallet/getassetissuebyname");
+          "/getassetissuebyname");
       context.addServlet(new ServletHolder(getAssetIssueByIdOnPBFTServlet),
-          "/wallet/getassetissuebyid");
+          "/getassetissuebyid");
       context.addServlet(new ServletHolder(getAssetIssueListByNameOnPBFTServlet),
-          "/wallet/getassetissuelistbyname");
+          "/getassetissuelistbyname");
       context.addServlet(new ServletHolder(getNowBlockOnPBFTServlet),
-          "/wallet/getnowblock");
+          "/getnowblock");
       context.addServlet(new ServletHolder(getBlockByNumOnPBFTServlet),
-          "/wallet/getblockbynum");
+          "/getblockbynum");
       context.addServlet(new ServletHolder(getDelegatedResourceOnPBFTServlet),
-          "/wallet/getdelegatedresource");
+          "/getdelegatedresource");
       context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexOnPBFTServlet),
-          "/wallet/getdelegatedresourceaccountindex");
+          "/getdelegatedresourceaccountindex");
       context.addServlet(new ServletHolder(getExchangeByIdOnPBFTServlet),
-          "/wallet/getexchangebyid");
+          "/getexchangebyid");
       context.addServlet(new ServletHolder(listExchangesOnPBFTServlet),
-          "/wallet/listexchanges");
+          "/listexchanges");
       context.addServlet(new ServletHolder(getAccountByIdOnPBFTServlet),
-          "/wallet/getaccountbyid");
+          "/getaccountbyid");
       context.addServlet(new ServletHolder(getBlockByIdOnPBFTServlet),
-          "/wallet/getblockbyid");
+          "/getblockbyid");
       context.addServlet(new ServletHolder(getBlockByLimitNextOnPBFTServlet),
-          "/wallet/getblockbylimitnext");
+          "/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumOnPBFTServlet),
-          "/wallet/getblockbylatestnum");
+          "/getblockbylatestnum");
       context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnPBFTServlet),
-          "/wallet/getmerkletreevoucherinfo");
+          "/getmerkletreevoucherinfo");
       context.addServlet(new ServletHolder(scanAndMarkNoteByIvkOnPBFTServlet),
-          "/wallet/scanandmarknotebyivk");
+          "/scanandmarknotebyivk");
       context.addServlet(new ServletHolder(scanNoteByIvkOnPBFTServlet),
-          "/wallet/scannotebyivk");
+          "/scannotebyivk");
       context.addServlet(new ServletHolder(scanNoteByOvkOnPBFTServlet),
-          "/wallet/scannotebyovk");
+          "/scannotebyovk");
       context.addServlet(new ServletHolder(isSpendOnPBFTServlet),
-          "/wallet/isspend");
+          "/isspend");
       context.addServlet(new ServletHolder(triggerConstantContractOnPBFTServlet),
-          "/wallet/triggerconstantcontract");
+          "/triggerconstantcontract");
 
       // only for PBFTNode
       context.addServlet(new ServletHolder(getTransactionByIdOnPBFTServlet),
-          "/wallet/gettransactionbyid");
+          "/gettransactionbyid");
       context
           .addServlet(new ServletHolder(getTransactionInfoByIdOnPBFTServlet),
-              "/wallet/gettransactioninfobyid");
+              "/gettransactioninfobyid");
 
       context
           .addServlet(new ServletHolder(getTransactionCountByBlockNumOnPBFTServlet),
-              "/wallet/gettransactioncountbyblocknum");
+              "/gettransactioncountbyblocknum");
 
-      context.addServlet(new ServletHolder(getNodeInfoOnPBFTServlet), "/wallet/getnodeinfo");
-      context.addServlet(new ServletHolder(getBrokerageServlet), "/wallet/getBrokerage");
-      context.addServlet(new ServletHolder(getRewardServlet), "/wallet/getReward");
+      context.addServlet(new ServletHolder(getNodeInfoOnPBFTServlet), "/getnodeinfo");
+      context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
+      context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));

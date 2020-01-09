@@ -13,6 +13,8 @@ public interface RevokingDatabase {
 
   void setCursor(Chainbase.Cursor cursor);
 
+  void setCursor(Chainbase.Cursor cursor, long offset);
+
   void add(IRevokingDB revokingDB);
 
   void merge() throws RevokingStoreIllegalStateException;

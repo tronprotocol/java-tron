@@ -39,7 +39,7 @@ public abstract class WalletOnCursor {
       dbManager.setCursor(cursor);
       return callable.call();
     } finally {
-      dbManager.setCursor(Chainbase.Cursor.HEAD);
+      dbManager.resetCursor();
     }
   }
 
@@ -48,7 +48,7 @@ public abstract class WalletOnCursor {
       dbManager.setCursor(cursor);
       runnable.run();
     } finally {
-      dbManager.setCursor(Chainbase.Cursor.HEAD);
+      dbManager.resetCursor();
     }
   }
 
