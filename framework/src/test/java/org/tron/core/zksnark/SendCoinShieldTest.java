@@ -187,7 +187,7 @@ public class SendCoinShieldTest {
   private PedersenHash String2PedersenHash(String str) {
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     byte[] bytes1 = ByteArray.fromHexString(str);
-    ZksnarkUtils.sort(bytes1);
+    ByteUtil.reverse(bytes1);
     compressCapsule1.setContent(ByteString.copyFrom(bytes1));
     return compressCapsule1.getInstance();
   }
@@ -237,7 +237,7 @@ public class SendCoinShieldTest {
   public void testStringRevert() throws Exception {
     byte[] bytes = ByteArray
         .fromHexString("6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c");
-    ZksnarkUtils.sort(bytes);
+    ByteUtil.reverse(bytes);
     System.out.println("testStringRevert------" + ByteArray.toHexString(bytes));
   }
 
@@ -830,7 +830,7 @@ public class SendCoinShieldTest {
   @Test
   public void testEmptyRoot() {
     byte[] bytes = IncrementalMerkleTreeContainer.emptyRoot().getContent().toByteArray();
-    ZksnarkUtils.sort(bytes);
+    ByteUtil.reverse(bytes);
     Assert.assertEquals("3e49b5f954aa9d3545bc6c37744661eea48d7c34e3000d82b7f0010c30f4c2fb",
         ByteArray.toHexString(bytes));
   }
