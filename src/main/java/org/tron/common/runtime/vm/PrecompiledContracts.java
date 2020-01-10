@@ -68,6 +68,7 @@ import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -905,7 +906,6 @@ public class PrecompiledContracts {
       context = new TronApplicationContext(DefaultConfig.class);
       dbManager = context.getBean(Manager.class);
       dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-
     }
 
 
@@ -922,6 +922,15 @@ public class PrecompiledContracts {
       }
       boolean result;
 
+//      if (data.length == MINT_SIZE){
+//        return checkMint(data);
+//      }else if(data.length == TRANSFER_SIZE){
+//        return checkTransfer(data);
+//      }else if(data.length == BURN_SIZE){
+//        return checkBurn(data);
+//      }else{
+//        return Pair.of(false, EMPTY_BYTE_ARRAY);
+//      }
       switch (data.length) {
         case MINT_SIZE:
           result = checkMint(data);
@@ -940,7 +949,7 @@ public class PrecompiledContracts {
     }
 
 
-    private boolean checkMint(byte[] data) {
+    private Boolean checkMint(byte[] data) {
       byte[] cv = new byte[32];
       byte[] cm = new byte[32];
       byte[] epk = new byte[32];
@@ -973,23 +982,21 @@ public class PrecompiledContracts {
       } finally {
         JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
       }
+      if(!result){
+        return false;
+      }
 
       try {
         MerkleContainer merkleContainer = dbManager.getMerkleContainer();
         IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
-        logger.info("current Tree size: " + currentMerkle.size());
-        logger.info("current Tree root: " + ByteArray.toHexString(currentMerkle.getRootArray()));
+        logger.info("current Tree size: " + currentMerkle.size() + " current Tree root: " + ByteArray.toHexString(currentMerkle.getRootArray()));
         currentMerkle.wfcheck();
         merkleContainer.saveCmIntoMerkleTree(currentMerkle, cm);
         merkleContainer.setCurrentMerkle(currentMerkle);
         //log
         currentMerkle = merkleContainer.getCurrentMerkle();
-        logger.info("current Tree size: " + currentMerkle.size());
-        logger.info("current Tree root: " + ByteArray.toHexString(currentMerkle.getRootArray()));
-//        IncrementalMerkleVoucherContainer voucher = currentMerkle.toVoucher();
-//        byte[] anchor = voucher.root().getContent().toByteArray();
-//        logger.info("After mint, anchlor is: " + ByteArray.toHexString(anchor));
-
+        logger.info("current Tree size: " + currentMerkle.size() + " current Tree root: " + ByteArray.toHexString(currentMerkle.getRootArray()));
+        dbManager.getMerkleTreeStore().put(currentMerkle.getMerkleTreeKey(), currentMerkle.getTreeCapsule());
       } catch (Throwable any) {
         result = false;
       }
@@ -1000,7 +1007,7 @@ public class PrecompiledContracts {
     }
 
     //data: spendDescription, outputDescriptionWithoutC0, outputDescriptionWithoutC1, bindingSignature, signHash
-    private boolean checkTransfer(byte[] data) {
+    private Boolean checkTransfer(byte[] data) {
       //spend
       byte[] spendCv = new byte[32];
       byte[] anchor = new byte[32];
@@ -1043,6 +1050,12 @@ public class PrecompiledContracts {
       System.arraycopy(data, 1024, signHash, 0, 32);
 
       boolean result;
+      if(!dbManager.getMerkleContainer().merkleRootExist(anchor)){
+        logger.info("Anchor does not exist");
+        return false;
+      }else{
+        logger.info("Anchor does exist");
+      }
 
       //verify spendProof, receiveProof && bindingSignature
       long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
@@ -1065,14 +1078,20 @@ public class PrecompiledContracts {
       } finally {
         JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
       }
+      if(!result){
+        return false;
+      }
 
       try {
         MerkleContainer merkleContainer = dbManager.getMerkleContainer();
         IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
         currentMerkle.wfcheck();
+        logger.info("current Tree size: " + currentMerkle.size() + " current Tree root: " + ByteArray.toHexString(currentMerkle.getRootArray()));
         merkleContainer.saveCmIntoMerkleTree(currentMerkle, receiveCm0);
         merkleContainer.saveCmIntoMerkleTree(currentMerkle, receiveCm1);
         merkleContainer.setCurrentMerkle(currentMerkle);
+        logger.info("current Tree size: " + currentMerkle.size() + " current Tree root: " + ByteArray.toHexString(currentMerkle.getRootArray()));
+        dbManager.getMerkleTreeStore().put(currentMerkle.getMerkleTreeKey(), currentMerkle.getTreeCapsule());
       } catch (Throwable any) {
         result = false;
       }
@@ -1083,7 +1102,7 @@ public class PrecompiledContracts {
     }
 
     //data: spendDescription, bindingSignature, value, signHash
-    private boolean checkBurn(byte[] data) {
+    private Boolean checkBurn(byte[] data) {
       //spend
       byte[] cv = new byte[32];
       byte[] anchor = new byte[32];
@@ -1105,8 +1124,13 @@ public class PrecompiledContracts {
       System.arraycopy(data, 416, bindingSig, 0, 64);
       System.arraycopy(data, 480, signHash, 0, 32);
 
+      if(!dbManager.getMerkleContainer().merkleRootExist(anchor)){
+        logger.info("Anchor does not exist");
+        return false;
+      }else{
+        logger.info("Anchor does exist");
+      }
       boolean result;
-
       //verify spendProof && bindingSignature
       long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
       try {
