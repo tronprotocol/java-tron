@@ -140,6 +140,7 @@ import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.CrossMessage;
+import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -1368,8 +1369,7 @@ public class Manager {
 
   private boolean isCrossChainTx(TransactionCapsule trxCap) {
     ContractType contractType = trxCap.getInstance().getRawData().getContract(0).getType();
-    return (contractType == ContractType.CrossTokenContract
-        || contractType == ContractType.CrossContract) && !trxCap.isSource();
+    return contractType == ContractType.CrossContract && !trxCap.isSource();
   }
 
   /**
@@ -1425,7 +1425,8 @@ public class Manager {
         Sha256Hash txHash = crossTxQueue.poll();
         CrossMessage crossMessage = getCrossStore().getReceiveCrossMsgUnEx(txHash);
         //todo:a->o->b
-        if (crossMessage != null && crossMessage.getTimeOutBlockHeight() < getHeadBlockNum()) {
+        if (crossMessage != null && crossMessage.getType() == Type.DATA
+            && crossMessage.getTimeOutBlockHeight() < getHeadBlockNum()) {
           trx = new TransactionCapsule(crossMessage.getTransaction());
           trx.setSource(false);
         } else {
@@ -1734,6 +1735,11 @@ public class Manager {
     List<Future<Boolean>> futures = new ArrayList<>(transSize);
 
     for (TransactionCapsule transaction : block.getTransactions()) {
+      if (getCrossStore().getReceiveCrossMsgUnEx(transaction.getTransactionId()) != null) {
+        transaction.setSource(false);
+        countDownLatch.countDown();
+        continue;
+      }
       Future<Boolean> future = validateSignService
           .submit(new ValidateSignTask(transaction, countDownLatch, chainBaseManager));
       futures.add(future);

@@ -35,16 +35,6 @@ message TransferContract {
   int64 amount = 3;
 }
 
-message CrossTokenContract {
-  bytes owner_address = 1;
-  bytes owner_chainId = 2;
-  bytes to_address = 3;
-  bytes to_chainId = 4;
-  int64 amount = 5;
-  bytes token_name = 6;
-  int32 precision = 7;
-}
-
 message CrossContract {
   bytes owner_address = 1;
   bytes owner_chainId = 2;

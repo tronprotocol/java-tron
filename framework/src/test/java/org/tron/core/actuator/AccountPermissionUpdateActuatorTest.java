@@ -923,7 +923,6 @@ public class AccountPermissionUpdateActuatorTest {
       if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
           || contractType == ContractType.ClearABIContract
           || contractType == ContractType.UpdateBrokerageContract
-          || contractType == ContractType.CrossTokenContract
           || contractType == ContractType.CrossContract
           ) {
         continue;
@@ -952,7 +951,6 @@ public class AccountPermissionUpdateActuatorTest {
           || contractType == ContractType.AccountPermissionUpdateContract
           || contractType == ContractType.ClearABIContract
           || contractType == ContractType.UpdateBrokerageContract
-          || contractType == ContractType.CrossTokenContract
           || contractType == ContractType.CrossContract
           ) {
         continue;
@@ -976,7 +974,6 @@ public class AccountPermissionUpdateActuatorTest {
     for (ContractType contractType : ContractType.values()) {
       if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
           || contractType == ContractType.UpdateBrokerageContract
-          || contractType == ContractType.CrossTokenContract
           || contractType == ContractType.CrossContract) {
         continue;
       }
@@ -1000,7 +997,6 @@ public class AccountPermissionUpdateActuatorTest {
       if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
           || contractType == ContractType.AccountPermissionUpdateContract
           || contractType == ContractType.UpdateBrokerageContract
-          || contractType == ContractType.CrossTokenContract
           || contractType == ContractType.CrossContract) {
         continue;
       }

@@ -1,5 +1,7 @@
 package org.tron.core.ibc.communicate;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -22,11 +24,12 @@ import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.CrossContract;
-import org.tron.protos.contract.BalanceContract.CrossTokenContract;
 
 @Slf4j(topic = "pbft-block-listener")
 @Service
 public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
+
+  private long timeOut = 1000 * 60 * 2L;
 
   private static final LoadingCache<Long, List<Sha256Hash>> callBackTx = CacheBuilder.newBuilder()
       .initialCapacity(100).expireAfterWrite(1, TimeUnit.HOURS)
@@ -66,6 +69,10 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
               crossMessage = crossMessage.toBuilder().setToChainId(crossMessage.getFromChainId())
                   .setFromChainId(crossMessage.getToChainId()).setType(Type.ACK)
                   .setTransaction(CrossUtils.addSourceTxId(crossMessage.getTransaction())).build();
+            } else {
+              crossMessage = crossMessage.toBuilder().setTimeOutBlockHeight(
+                  timeOut / (BLOCK_PRODUCED_INTERVAL * 2) + communicateService
+                      .getHeight(crossMessage.getToChainId())).build();
             }
             communicateService.sendCrossMessage(crossMessage, false);
             logger.info(
@@ -109,14 +116,10 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
                 .setTransaction(tx.getInstance());
             Contract contract = tx.getInstance().getRawData().getContract(0);
             try {
-              if (contract.getType() == ContractType.CrossTokenContract) {
-                CrossTokenContract crossTokenContract = contract.getParameter()
-                    .unpack(CrossTokenContract.class);
-                builder.setToChainId(crossTokenContract.getToChainId());
-              } else if (contract.getType() == ContractType.CrossContract) {
-                CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
-                builder.setToChainId(crossContract.getToChainId());
-              }
+              CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
+              builder.setToChainId(crossContract.getToChainId())
+                  .setTimeOutBlockHeight(timeOut / BLOCK_PRODUCED_INTERVAL + communicateService
+                      .getHeight(crossContract.getToChainId()) + 1);
             } catch (Exception e) {
               logger.error("", e);
             }
@@ -137,8 +140,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
       Sha256Hash txHash = transactionCapsule.getTransactionId();
       Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
       if (transactionCapsule.isSource()) {
-        if (contract.getType() == ContractType.CrossContract
-            || contract.getType() == ContractType.CrossTokenContract) {
+        if (contract.getType() == ContractType.CrossContract) {
           waitingSendTx.get(blockNum).add(txHash);
           return true;
         } else {

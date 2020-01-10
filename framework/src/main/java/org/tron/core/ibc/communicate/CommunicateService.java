@@ -1,10 +1,7 @@
 package org.tron.core.ibc.communicate;
 
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-
 import com.google.protobuf.ByteString;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +22,6 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.net.message.CrossChainMessage;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Proof;
@@ -34,10 +30,6 @@ import org.tron.protos.Protocol.ReasonCode;
 @Slf4j(topic = "Communicate")
 @Service
 public class CommunicateService implements Communicate {
-
-  private Map<String, CrossMessage> data;
-
-  private long timeOut = 1000 * 60 * 2L;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -63,7 +55,6 @@ public class CommunicateService implements Communicate {
         BlockStore blockStore = chainBaseManager.getBlockStore();
         BlockIndexStore blockIndexStore = chainBaseManager.getBlockIndexStore();
         TransactionStore transactionStore = chainBaseManager.getTransactionStore();
-        DynamicPropertiesStore propertiesStore = chainBaseManager.getDynamicPropertiesStore();
         long blockNum = transactionStore.get(txId.getBytes()).getBlockNum();
         BlockCapsule blockCapsule = blockStore.get(blockIndexStore.get(blockNum).getBytes());
         List<Sha256Hash> hashList = blockCapsule.getInstance().getTransactionsList().stream()
@@ -77,8 +68,6 @@ public class CommunicateService implements Communicate {
         }).collect(Collectors.toList());
         //set the proof and time out height
         crossMessage = crossMessage.toBuilder().addAllProof(proofList)
-            .setTimeOutBlockHeight(timeOut / BLOCK_PRODUCED_INTERVAL
-                + propertiesStore.getLatestSolidifiedBlockNum() + 1)
             .setRootHeight(blockNum).build();
         //send data
         sendData(crossMessage);
@@ -161,6 +150,14 @@ public class CommunicateService implements Communicate {
       //use routeChainId
       return null;
     }
+  }
+
+  /**
+   * todo: other chain block tx merkel root
+   */
+  public long getHeight(ByteString toChainId) {
+    //use toChainId
+    return 0;
   }
 
   /**
