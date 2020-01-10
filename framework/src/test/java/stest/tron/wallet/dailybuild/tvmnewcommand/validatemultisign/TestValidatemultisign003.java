@@ -16,6 +16,8 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Utils;
@@ -164,7 +166,8 @@ public class TestValidatemultisign003 {
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
         fromAddress, 1L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = SignUtils.of(transaction.getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     byte[] tosign = Sha256Hash.hash(merged);
@@ -205,7 +208,8 @@ public class TestValidatemultisign003 {
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
         fromAddress, 1L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = SignUtils.of(transaction.getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     byte[] tosign = Sha256Hash.hash(merged);

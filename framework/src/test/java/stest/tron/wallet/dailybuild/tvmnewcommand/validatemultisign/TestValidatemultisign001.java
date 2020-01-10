@@ -17,6 +17,8 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Utils;
@@ -175,7 +177,8 @@ public class TestValidatemultisign001 {
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
         fromAddress, 1L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = SignUtils.of(transaction.getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     byte[] tosign = Sha256Hash.hash(merged);
@@ -295,7 +298,8 @@ public class TestValidatemultisign001 {
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
         fromAddress, 1L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = SignUtils.of(transaction.getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
 
     // Trigger with wrong PermissionID
     long permissionId = 2;
@@ -400,7 +404,8 @@ public class TestValidatemultisign001 {
     Transaction transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, 0, ownerKey, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = SignUtils.of(transaction.getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     byte[] tosign = Sha256Hash.hash(merged);
@@ -428,9 +433,11 @@ public class TestValidatemultisign001 {
     // Trigger with wrong hash
     transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, 0, ownerKey, blockingStubFull);
-    logger.info("hash: {}", Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes());
+    logger.info("hash: {}", SignUtils.of(transaction.getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes());
 
-    hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    hash = SignUtils.of(transaction.getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
 
     merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     tosign = Sha256Hash.hash(merged);
@@ -440,7 +447,8 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
     transaction = TransactionUtils.setTimestamp(transaction);
-    hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    hash = SignUtils.of(transaction.getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
 
     parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
@@ -462,7 +470,8 @@ public class TestValidatemultisign001 {
         fromAddress, 1L, dev001Address, 0, dev001Key, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
 
-    hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    hash = SignUtils.of(transaction.getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
 
     merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     tosign = Sha256Hash.hash(merged);

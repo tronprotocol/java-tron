@@ -38,7 +38,7 @@ import java.util.Arrays;
  * used as keys in a map. It also checks that the length is correct and provides a bit more type
  * safety.
  */
-public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
+public class Sha256Hash implements Serializable, Comparable<Sha256Hash>, HashInterface {
 
   public static final int LENGTH = 32; // bytes
   public static final Sha256Hash ZERO_HASH = wrap(new byte[LENGTH]);

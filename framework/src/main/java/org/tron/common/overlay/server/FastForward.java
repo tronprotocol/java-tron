@@ -22,6 +22,7 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.HashInterface;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
@@ -123,7 +124,8 @@ public class FastForward {
     }
 
     try {
-      Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(msg.getTimestamp()));
+      HashInterface hash = SignUtils.of(ByteArray.fromLong(msg.getTimestamp()),
+          CommonParameter.getInstance().isECKeyCryptoEngine());
       String sig =
               TransactionCapsule.getBase64FromByteString(msg.getSignature());
       byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig,

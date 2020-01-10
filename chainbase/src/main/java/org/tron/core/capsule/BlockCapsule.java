@@ -34,8 +34,10 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.HashInterface;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
@@ -157,8 +159,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   }
 
-  private Sha256Hash getRawHash() {
-    return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
+  private HashInterface getRawHash() {
+    return SignUtils.of(this.block.getBlockHeader().getRawData().toByteArray(),
+        CommonParameter.getInstance().isECKeyCryptoEngine());
   }
 
   public boolean validateSignature(DynamicPropertiesStore dynamicPropertiesStore,
@@ -186,8 +189,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()),
-          getNum());
+      blockId =
+          new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()),  getNum());
     }
     return blockId;
   }

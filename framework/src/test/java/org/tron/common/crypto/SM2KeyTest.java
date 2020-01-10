@@ -9,20 +9,15 @@ import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 import java.security.KeyPairGenerator;
-import java.security.Security;
 import java.security.SignatureException;
 import java.util.Arrays;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.junit.Test;
 import org.spongycastle.crypto.digests.SM3Digest;
-import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2Signer;
-import org.tron.common.crypto.sm2.SM3;
 import org.tron.core.Wallet;
 
 @Slf4j
@@ -329,16 +324,4 @@ public class SM2KeyTest {
             Hex.toHexString(eHash));
   }
 
-  @Test
-  public void testSM3_2() {
-    String message = "F4A38489E32B45B6F876E3AC2168CA392362DC8F23459C1D1146FC3DBFB7BC9A6D657"
-            + "37361676520646967657374";
-    byte[] hash = SM3.hash(message);
-
-    byte[] msg = Hex.decode(message);
-    byte[] hash2 = SM3.hash(msg);
-    System.out.println(Hex.toHexString(hash));
-    System.out.println(Hex.toHexString(hash2));
-    assertArrayEquals(hash, hash2);
-  }
 }
