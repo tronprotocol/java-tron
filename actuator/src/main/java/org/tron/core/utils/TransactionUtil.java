@@ -37,7 +37,7 @@ import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -162,8 +162,8 @@ public class TransactionUtil {
     return !(id.length > 1 && id[0] == '0');
   }
 
-  public static Sha256Hash getTransactionId(Transaction transaction) {
-    return Sha256Hash.of(transaction.getRawData().toByteArray());
+  public static Sha256Sm3Hash getTransactionId(Transaction transaction) {
+    return Sha256Sm3Hash.of(transaction.getRawData().toByteArray());
   }
 
 
@@ -329,7 +329,7 @@ public class TransactionUtil {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Sm3Hash.hash(trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
@@ -360,7 +360,7 @@ public class TransactionUtil {
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();
         long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
-            Sha256Hash.hash(trx.getRawData().toByteArray()), approveList);
+            Sha256Sm3Hash.hash(trx.getRawData().toByteArray()), approveList);
         tswBuilder.addAllApprovedList(approveList);
         tswBuilder.setCurrentWeight(currentWeight);
       }

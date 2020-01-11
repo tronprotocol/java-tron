@@ -34,6 +34,8 @@ public class Commons {
     }
     byte[] decodeData = new byte[decodeCheck.length - 4];
     System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
+//    byte[] hash0 = Sha256Sm3Hash.hash(decodeData);
+//    byte[] hash1 = Sha256Sm3Hash.hash(hash0);
     byte[] hash0 = Sha256Hash.hash(decodeData);
     byte[] hash1 = Sha256Hash.hash(hash0);
     if (hash1[0] == decodeCheck[decodeData.length] &&

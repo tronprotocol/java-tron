@@ -6,7 +6,7 @@ import lombok.Setter;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkUtils;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
@@ -24,14 +24,14 @@ public class ReceiptCapsule {
   @Setter
   private long multiSignFee;
 
-  private Sha256Hash receiptAddress;
+  private Sha256Sm3Hash receiptAddress;
 
-  public ReceiptCapsule(ResourceReceipt data, Sha256Hash receiptAddress) {
+  public ReceiptCapsule(ResourceReceipt data, Sha256Sm3Hash receiptAddress) {
     this.receipt = data;
     this.receiptAddress = receiptAddress;
   }
 
-  public ReceiptCapsule(Sha256Hash receiptAddress) {
+  public ReceiptCapsule(Sha256Sm3Hash receiptAddress) {
     this.receipt = ResourceReceipt.newBuilder().build();
     this.receiptAddress = receiptAddress;
   }
@@ -53,7 +53,7 @@ public class ReceiptCapsule {
     this.receipt = receipt;
   }
 
-  public Sha256Hash getReceiptAddress() {
+  public Sha256Sm3Hash getReceiptAddress() {
     return this.receiptAddress;
   }
 

@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
@@ -47,11 +47,11 @@ public class BlockUtilTest {
   public void testBlockUtil() {
     //test create GenesisBlockCapsule
     BlockCapsule blockCapsule1 = BlockUtil.newGenesisBlockCapsule();
-    Sha256Hash sha256Hash = Sha256Hash.wrap(ByteArray
+    Sha256Sm3Hash Sha256Sm3Hash = org.tron.common.utils.Sha256Sm3Hash.wrap(ByteArray
         .fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000"));
 
     Assert.assertEquals(0, blockCapsule1.getTimeStamp());
-    Assert.assertEquals(sha256Hash,
+    Assert.assertEquals(Sha256Sm3Hash,
         blockCapsule1.getParentHash());
     Assert.assertEquals(0, blockCapsule1.getNum());
 

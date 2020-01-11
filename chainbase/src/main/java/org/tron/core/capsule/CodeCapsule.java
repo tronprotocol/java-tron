@@ -17,7 +17,7 @@ package org.tron.core.capsule;
 
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 
 @Slf4j(topic = "capsule")
 public class CodeCapsule implements ProtoCapsule<byte[]> {
@@ -28,8 +28,8 @@ public class CodeCapsule implements ProtoCapsule<byte[]> {
     this.code = code;
   }
 
-  public Sha256Hash getCodeHash() {
-    return Sha256Hash.of(this.code);
+  public Sha256Sm3Hash getCodeHash() {
+    return Sha256Sm3Hash.of(this.code);
   }
 
   @Override

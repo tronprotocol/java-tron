@@ -172,7 +172,7 @@ public class TestStorageAndCpu {
       totalNum = totalNum + txsNum;
       if (topNum < txsNum) {
         topNum = txsNum;
-        findOneTxid = ByteArray.toHexString(Sha256Hash.hash(blockingStubFull1
+        findOneTxid = ByteArray.toHexString(Sha256Sm3Hash.hash(blockingStubFull1
             .getBlockByNum(builder.build()).getTransactionsList().get(2)
             .getRawData().toByteArray()));
         //logger.info("find one txid is " + findOneTxid);

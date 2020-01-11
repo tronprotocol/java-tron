@@ -60,7 +60,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.consensus.Consensus;
@@ -196,7 +196,7 @@ public class Manager {
   private long latestSolidifiedBlockNumber;
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
   @Getter
-  private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
+  private Cache<Sha256Sm3Hash, Boolean> transactionIdCache = CacheBuilder
       .newBuilder().maximumSize(100_000).recordStats().build();
   @Getter
   private ForkController forkController = ForkController.instance();
@@ -1170,7 +1170,7 @@ public class Manager {
    *
    * @param blockHash blockHash
    */
-  public boolean containBlock(final Sha256Hash blockHash) {
+  public boolean containBlock(final Sha256Sm3Hash blockHash) {
     try {
       return this.khaosDb.containBlockInMiniStore(blockHash)
           || chainBaseManager.getBlockStore()
@@ -1197,7 +1197,7 @@ public class Manager {
   /**
    * Get a BlockCapsule by id.
    */
-  public BlockCapsule getBlockById(final Sha256Hash hash)
+  public BlockCapsule getBlockById(final Sha256Sm3Hash hash)
       throws BadItemException, ItemNotFoundException {
     BlockCapsule block = this.khaosDb.getBlock(hash);
     if (block == null) {

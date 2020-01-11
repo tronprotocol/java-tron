@@ -14,7 +14,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.DecodeUtil;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
@@ -353,7 +353,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     recordProof(tx.getTransactionId(), true);
   }
 
-  private void recordProof(Sha256Hash tid, boolean result) {
+  private void recordProof(Sha256Sm3Hash tid, boolean result) {
     ZKProofStore proofStore = chainBaseManager.getProofStore();
     proofStore.put(tid.getBytes(), result);
   }

@@ -21,7 +21,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
@@ -103,7 +103,7 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule2 =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(ByteString.copyFrom(
+            Sha256Sm3Hash.wrap(ByteString.copyFrom(
                 ByteArray.fromHexString(
                     "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81"))),
             0,
@@ -136,7 +136,7 @@ public class ManagerTest extends BlockGenerate {
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Sm3Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -845,7 +845,7 @@ public class ManagerTest extends BlockGenerate {
                                               long number, ByteString hash,
                                               Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
-    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
+    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Sm3Hash.wrap(hash), time,
         witnessAddress);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
@@ -857,7 +857,7 @@ public class ManagerTest extends BlockGenerate {
                                                    long number, ByteString hash,
                                                    Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
-    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
+    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Sm3Hash.wrap(hash), time,
         ByteString.copyFromUtf8("onlyTest"));
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();

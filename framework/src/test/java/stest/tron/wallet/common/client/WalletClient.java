@@ -26,6 +26,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.exception.CancelException;
 import org.tron.keystore.CipherException;
@@ -530,8 +531,8 @@ public class WalletClient {
       return null;
     }
     byte[] pwd;
-    pwd = Sha256Hash.hash(password.getBytes());
-    pwd = Sha256Hash.hash(pwd);
+    pwd = Sha256Sm3Hash.hash(password.getBytes());
+    pwd = Sha256Sm3Hash.hash(pwd);
     pwd = Arrays.copyOfRange(pwd, 0, 16);
     return pwd;
   }
@@ -545,7 +546,7 @@ public class WalletClient {
       return null;
     }
     byte[] encKey;
-    encKey = Sha256Hash.hash(password.getBytes());
+    encKey = Sha256Sm3Hash.hash(password.getBytes());
     encKey = Arrays.copyOfRange(encKey, 0, 16);
     return encKey;
   }

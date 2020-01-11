@@ -2,21 +2,21 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 
-public class BlockIdCapsule extends Sha256Hash implements ProtoCapsule {
+public class BlockIdCapsule extends Sha256Sm3Hash implements ProtoCapsule {
 
   private long num;
 
   public BlockIdCapsule() {
-    super(Sha256Hash.ZERO_HASH.getBytes());
+    super(Sha256Sm3Hash.ZERO_HASH.getBytes());
     num = 0;
   }
 
   /**
    * Use {@link #wrap(byte[])} instead.
    */
-  public BlockIdCapsule(Sha256Hash hash, long num) {
+  public BlockIdCapsule(Sha256Sm3Hash hash, long num) {
     super(hash.getBytes());
     this.num = num;
   }
@@ -46,10 +46,10 @@ public class BlockIdCapsule extends Sha256Hash implements ProtoCapsule {
     if (this == o) {
       return true;
     }
-    if (o == null || (getClass() != o.getClass() && !(o instanceof Sha256Hash))) {
+    if (o == null || (getClass() != o.getClass() && !(o instanceof Sha256Sm3Hash))) {
       return false;
     }
-    return Arrays.equals(getBytes(), ((Sha256Hash) o).getBytes());
+    return Arrays.equals(getBytes(), ((Sha256Sm3Hash) o).getBytes());
   }
 
   public String getString() {
@@ -67,7 +67,7 @@ public class BlockIdCapsule extends Sha256Hash implements ProtoCapsule {
   }
 
   @Override
-  public int compareTo(Sha256Hash other) {
+  public int compareTo(Sha256Sm3Hash other) {
     if (other.getClass().equals(BlockIdCapsule.class)) {
       long otherNum = ((BlockIdCapsule) other).getNum();
       return Long.compare(num, otherNum);

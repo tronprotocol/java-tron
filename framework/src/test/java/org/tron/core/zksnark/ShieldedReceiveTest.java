@@ -27,7 +27,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -1624,9 +1624,9 @@ public class ShieldedReceiveTest extends BlockGenerate {
         .setRawData(rawBuilder).build();
 
     byte[] mergedByte = Bytes.concat(
-        Sha256Hash.of(DBConfig.getZenTokenId().getBytes()).getBytes(),
+        Sha256Sm3Hash.of(DBConfig.getZenTokenId().getBytes()).getBytes(),
         transaction.getRawData().toByteArray());
-    return Sha256Hash.of(mergedByte).getBytes();
+    return Sha256Sm3Hash.of(mergedByte).getBytes();
   }
 
   private ZenTransactionBuilder generateShield2ShieldBuilder(ZenTransactionBuilder builder,

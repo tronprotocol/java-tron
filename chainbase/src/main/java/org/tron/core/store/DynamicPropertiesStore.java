@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -1599,11 +1599,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * get id of global latest block.
    */
 
-  public Sha256Hash getLatestBlockHeaderHash() {
+  public Sha256Sm3Hash getLatestBlockHeaderHash() {
     byte[] blockHash = Optional.ofNullable(getUnchecked(LATEST_BLOCK_HEADER_HASH))
         .map(BytesCapsule::getData)
         .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
-    return Sha256Hash.wrap(blockHash);
+    return Sha256Sm3Hash.wrap(blockHash);
   }
 
   /**

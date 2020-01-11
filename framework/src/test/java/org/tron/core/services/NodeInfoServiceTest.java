@@ -10,7 +10,7 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.entity.NodeInfo;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.program.Version;
 import stest.tron.wallet.common.client.Configuration;
@@ -29,9 +29,9 @@ public class NodeInfoServiceTest {
   }
 
   public void test() {
-    BlockCapsule blockCapsule1 = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+    BlockCapsule blockCapsule1 = new BlockCapsule(1, Sha256Sm3Hash.ZERO_HASH,
         100, ByteString.EMPTY);
-    BlockCapsule blockCapsule2 = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+    BlockCapsule blockCapsule2 = new BlockCapsule(1, Sha256Sm3Hash.ZERO_HASH,
         200, ByteString.EMPTY);
     witnessProductBlockService.validWitnessProductTwoBlock(blockCapsule1);
     witnessProductBlockService.validWitnessProductTwoBlock(blockCapsule2);

@@ -155,7 +155,7 @@ public class DelayTransactionStress {
 
     deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
     DeferredTransaction transaction = deferredTransactionById.get();
-    String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction()
+    String finalTxid = ByteArray.toHexString(Sha256Sm3Hash.hash(transaction.getTransaction()
       .getRawData().toByteArray()));
     PublicMethed.getDeferredTransactionById(finalTxid,blockingStubFull);
     logger.info(finalTxid);
@@ -191,7 +191,7 @@ public class DelayTransactionStress {
 
     PublicMethed.getDeferredTransactionById(finalTxid,blockingStubFull);
     deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
-    finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction()
+    finalTxid = ByteArray.toHexString(Sha256Sm3Hash.hash(transaction.getTransaction()
       .getRawData().toByteArray()));
     transaction = deferredTransactionById.get();
     logger.info(finalTxid);

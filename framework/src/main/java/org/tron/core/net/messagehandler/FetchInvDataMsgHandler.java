@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.statistics.MessageCount;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.P2pException;
@@ -53,7 +53,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
 
     int size = 0;
 
-    for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
+    for (Sha256Sm3Hash hash : fetchInvDataMsg.getHashList()) {
       Item item = new Item(hash, type);
       Message message = advService.getMessage(item);
       if (message == null) {
@@ -92,7 +92,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
     if (type == MessageTypes.TRX) {
-      for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
+      for (Sha256Sm3Hash hash : fetchInvDataMsg.getHashList()) {
         if (peer.getAdvInvSpread().getIfPresent(new Item(hash, InventoryType.TRX)) == null) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "not spread inv: {}" + hash);
         }
@@ -106,7 +106,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       }
     } else {
       boolean isAdv = true;
-      for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
+      for (Sha256Sm3Hash hash : fetchInvDataMsg.getHashList()) {
         if (peer.getAdvInvSpread().getIfPresent(new Item(hash, InventoryType.BLOCK)) == null) {
           isAdv = false;
           break;
@@ -125,7 +125,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         if (!peer.isNeedSyncFromUs()) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "no need sync");
         }
-        for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
+        for (Sha256Sm3Hash hash : fetchInvDataMsg.getHashList()) {
           long blockNum = new BlockId(hash).getNum();
           long minBlockNum =
               peer.getLastSyncBlockId().getNum() - 2 * NodeConstant.SYNC_FETCH_BATCH_NUM;

@@ -1,7 +1,7 @@
 package org.tron.core.net.message;
 
 import java.util.List;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
@@ -18,7 +18,7 @@ public class FetchInvDataMessage extends InventoryMessage {
     this.type = MessageTypes.FETCH_INV_DATA.asByte();
   }
 
-  public FetchInvDataMessage(List<Sha256Hash> hashList, InventoryType type) {
+  public FetchInvDataMessage(List<Sha256Sm3Hash> hashList, InventoryType type) {
     super(hashList, type);
     this.type = MessageTypes.FETCH_INV_DATA.asByte();
   }

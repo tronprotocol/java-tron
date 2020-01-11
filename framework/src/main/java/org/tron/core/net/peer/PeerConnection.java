@@ -19,7 +19,7 @@ import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Pair;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.net.TronNetDelegate;
@@ -74,7 +74,7 @@ public class PeerConnection extends Channel {
   @Getter
   private volatile long remainNum;
   @Getter
-  private Cache<Sha256Hash, Long> syncBlockIdCache = CacheBuilder.newBuilder()
+  private Cache<Sha256Sm3Hash, Long> syncBlockIdCache = CacheBuilder.newBuilder()
       .maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).recordStats().build();
   @Setter
   @Getter

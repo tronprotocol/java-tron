@@ -112,7 +112,7 @@ public class DelayTransaction002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
     //DeferredTransaction transaction = deferredTransactionById.get();
-    //String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction()
+    //String finalTxid = ByteArray.toHexString(Sha256Sm3Hash.hash(transaction.getTransaction()
     //   .getRawData().toByteArray()));
 
     //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(finalTxid,receiverAccountAddress

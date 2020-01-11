@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.ItemNotFoundException;
@@ -31,7 +31,7 @@ public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     if (value == null || value.getData() == null) {
       throw new ItemNotFoundException("number: " + num + " is not found!");
     }
-    return new BlockId(Sha256Hash.wrap(value.getData()), num);
+    return new BlockId(Sha256Sm3Hash.wrap(value.getData()), num);
   }
 
   @Override

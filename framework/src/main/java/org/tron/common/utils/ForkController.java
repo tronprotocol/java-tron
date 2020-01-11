@@ -51,7 +51,7 @@ public class ForkController extends ForkUtils {
     downgrade(version, slot);
 
     byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
-    if (check(stats)) {
+    if (forkUtilCheck(stats)) {
       upgrade(version, stats.length);
       return;
     }

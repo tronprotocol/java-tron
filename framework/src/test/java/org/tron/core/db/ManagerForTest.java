@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.capsule.AccountCapsule;
@@ -57,7 +57,7 @@ public class ManagerForTest {
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
     ByteString witnessAddress = getWitnessAddress(time);
 
-    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
+    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Sm3Hash.wrap(hash), time,
         witnessAddress);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();

@@ -9,7 +9,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
@@ -21,7 +21,7 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 public class BlockCapsuleTest {
 
   private static BlockCapsule blockCapsule0 = new BlockCapsule(1,
-      Sha256Hash.wrap(ByteString
+      Sha256Sm3Hash.wrap(ByteString
           .copyFrom(ByteArray
               .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
       1234,
@@ -44,7 +44,7 @@ public class BlockCapsuleTest {
   public void testCalcMerkleRoot() throws Exception {
     blockCapsule0.setMerkleRoot();
     Assert.assertEquals(
-        Sha256Hash.wrap(Sha256Hash.ZERO_HASH.getByteString()).toString(),
+        Sha256Sm3Hash.wrap(Sha256Sm3Hash.ZERO_HASH.getByteString()).toString(),
         blockCapsule0.getMerkleRoot().toString());
 
     logger.info("Transaction[X] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
@@ -116,7 +116,7 @@ public class BlockCapsuleTest {
     Assert.assertEquals(1,
         blockCapsule0.getInstance().getBlockHeader().getRawData().getNumber());
     Assert.assertEquals(blockCapsule0.getParentHash(),
-        Sha256Hash.wrap(blockCapsule0.getParentHashStr()));
+        Sha256Sm3Hash.wrap(blockCapsule0.getParentHashStr()));
   }
 
   @Test

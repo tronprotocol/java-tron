@@ -61,7 +61,7 @@ import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DBConfig;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.vm.config.VMConfig;
@@ -317,9 +317,9 @@ public class PrecompiledContracts {
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
       if (data == null) {
-        return Pair.of(true, Sha256Hash.hash(EMPTY_BYTE_ARRAY));
+        return Pair.of(true, Sha256Sm3Hash.hash(EMPTY_BYTE_ARRAY));
       }
-      return Pair.of(true, Sha256Hash.hash(data));
+      return Pair.of(true, Sha256Sm3Hash.hash(data));
     }
   }
 
@@ -344,9 +344,9 @@ public class PrecompiledContracts {
       if (data == null) {
         data = EMPTY_BYTE_ARRAY;
       }
-      byte[] orig = Sha256Hash.hash(data);
+      byte[] orig = Sha256Sm3Hash.hash(data);
       System.arraycopy(orig, 0, target, 0, 20);
-      return Pair.of(true, Sha256Hash.hash(target));
+      return Pair.of(true, Sha256Sm3Hash.hash(target));
     }
   }
 
@@ -717,7 +717,7 @@ public class PrecompiledContracts {
 
       byte[] combine = ByteUtil
           .merge(convertToTronAddress(addr), ByteArray.fromInt(permissionId), data);
-      byte[] hash = Sha256Hash.hash(combine);
+      byte[] hash = Sha256Sm3Hash.hash(combine);
 
       byte[][] signatures = extractBytesArray(
           words, words[3].intValueSafe() / WORD_SIZE, rawData);

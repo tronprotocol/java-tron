@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.statistics.MessageCount;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
@@ -155,7 +155,7 @@ public class AdvService {
       item = new Item(blockMsg.getMessageId(), InventoryType.BLOCK);
       logger.info("Ready to broadcast block {}", blockMsg.getBlockId().getString());
       blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule -> {
-        Sha256Hash tid = transactionCapsule.getTransactionId();
+        Sha256Sm3Hash tid = transactionCapsule.getTransactionId();
         invToSpread.remove(tid);
         trxCache.put(new Item(tid, InventoryType.TRX),
             new TransactionMessage(transactionCapsule.getInstance()));
@@ -274,14 +274,14 @@ public class AdvService {
 
   class InvSender {
 
-    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
+    private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Sm3Hash>>> send
         = new HashMap<>();
 
     public void clear() {
       this.send.clear();
     }
 
-    public void add(Entry<Sha256Hash, InventoryType> id, PeerConnection peer) {
+    public void add(Entry<Sha256Sm3Hash, InventoryType> id, PeerConnection peer) {
       if (send.containsKey(peer) && !send.get(peer).containsKey(id.getValue())) {
         send.get(peer).put(id.getValue(), new LinkedList<>());
       } else if (!send.containsKey(peer)) {

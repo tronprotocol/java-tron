@@ -1,21 +1,21 @@
 package org.tron.core.net.peer;
 
 import lombok.Getter;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Getter
 public class Item {
 
   @Getter
-  private Sha256Hash hash;
+  private Sha256Sm3Hash hash;
   @Getter
   private InventoryType type;
   @Getter
   private long time;
 
 
-  public Item(Sha256Hash hash, InventoryType type) {
+  public Item(Sha256Sm3Hash hash, InventoryType type) {
     this.hash = hash;
     this.type = type;
     this.time = System.currentTimeMillis();

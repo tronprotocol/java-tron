@@ -10,7 +10,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -61,13 +61,13 @@ public class AdvServiceTest {
 
   private void testAddInv() {
     boolean flag;
-    Item itemTrx = new Item(Sha256Hash.ZERO_HASH, InventoryType.TRX);
+    Item itemTrx = new Item(Sha256Sm3Hash.ZERO_HASH, InventoryType.TRX);
     flag = service.addInv(itemTrx);
     Assert.assertTrue(flag);
     flag = service.addInv(itemTrx);
     Assert.assertFalse(flag);
 
-    Item itemBlock = new Item(Sha256Hash.ZERO_HASH, InventoryType.BLOCK);
+    Item itemBlock = new Item(Sha256Sm3Hash.ZERO_HASH, InventoryType.BLOCK);
     flag = service.addInv(itemBlock);
     Assert.assertTrue(flag);
     flag = service.addInv(itemBlock);
@@ -87,8 +87,8 @@ public class AdvServiceTest {
       List<PeerConnection> peers = Lists.newArrayList();
       peers.add(peer);
       ReflectUtils.setFieldValue(syncPool, "activePeers", peers);
-      BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-              System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+      BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Sm3Hash.ZERO_HASH,
+              System.currentTimeMillis(), Sha256Sm3Hash.ZERO_HASH.getByteString());
       BlockMessage msg = new BlockMessage(blockCapsule);
       service.broadcast(msg);
       Item item = new Item(blockCapsule.getBlockId(), InventoryType.BLOCK);
@@ -110,8 +110,8 @@ public class AdvServiceTest {
       List<PeerConnection> peers = Lists.newArrayList();
       peers.add(peer);
       ReflectUtils.setFieldValue(syncPool, "activePeers", peers);
-      BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-              System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+      BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Sm3Hash.ZERO_HASH,
+              System.currentTimeMillis(), Sha256Sm3Hash.ZERO_HASH.getByteString());
       BlockMessage msg = new BlockMessage(blockCapsule);
       service.fastForward(msg);
       Item item = new Item(blockCapsule.getBlockId(), InventoryType.BLOCK);

@@ -13,7 +13,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Hash;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
@@ -486,7 +486,7 @@ public class RepositoryImpl implements Repository {
   @Override
   public BlockCapsule getBlockByNum(long num) {
     try {
-      Sha256Hash hash = getBlockIdByNum(num);
+      Sha256Sm3Hash hash = getBlockIdByNum(num);
       BlockCapsule block = this.khaosDb.getBlock(hash);
       if (block == null) {
         block = blockStore.get(hash.getBytes());

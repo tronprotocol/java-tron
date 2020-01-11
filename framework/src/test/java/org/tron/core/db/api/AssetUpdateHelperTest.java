@@ -11,7 +11,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -52,7 +52,7 @@ public class AssetUpdateHelperTest {
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
     BlockCapsule blockCapsule = new BlockCapsule(1,
-        Sha256Hash.wrap(ByteString.copyFrom(
+        Sha256Sm3Hash.wrap(ByteString.copyFrom(
             ByteArray.fromHexString(
                 "0000000000000002498b464ac0292229938a342238077182498b464ac0292222"))),
         1234, ByteString.copyFrom("1234567".getBytes()));

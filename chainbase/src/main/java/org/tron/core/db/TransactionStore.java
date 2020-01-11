@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
@@ -42,7 +42,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     List<BlockCapsule> blocksList = blockStore.getLimitNumber(blockNum, 1);
     if (blocksList.size() != 0) {
       for (TransactionCapsule e : blocksList.get(0).getTransactions()) {
-        if (e.getTransactionId().equals(Sha256Hash.wrap(key))) {
+        if (e.getTransactionId().equals(Sha256Sm3Hash.wrap(key))) {
           return e;
         }
       }
@@ -54,7 +54,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     List<KhaosBlock> khaosBlocks = khaosDatabase.getMiniStore().getBlockByNum(high);
     for (KhaosBlock bl : khaosBlocks) {
       for (TransactionCapsule e : bl.getBlk().getTransactions()) {
-        if (e.getTransactionId().equals(Sha256Hash.wrap(key))) {
+        if (e.getTransactionId().equals(Sha256Sm3Hash.wrap(key))) {
           return e;
         }
       }

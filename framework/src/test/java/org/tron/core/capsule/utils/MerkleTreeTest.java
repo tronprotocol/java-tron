@@ -6,31 +6,32 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.utils.MerkleTree.Leaf;
 
 @Slf4j
 public class MerkleTreeTest {
 
-  private static List<Sha256Hash> getHash(int hashNum) {
-    List<Sha256Hash> hashList = new ArrayList<Sha256Hash>();
+  private static List<Sha256Sm3Hash> getHash(int hashNum) {
+    List<Sha256Sm3Hash> hashList = new ArrayList<Sha256Sm3Hash>();
     for (int i = 0; i < hashNum; i++) {
       byte[] bytes = new byte[4];
       bytes[3] = (byte) (i & 0xFF);
       bytes[2] = (byte) ((i >> 8) & 0xFF);
       bytes[1] = (byte) ((i >> 16) & 0xFF);
       bytes[0] = (byte) ((i >> 24) & 0xFF);
-      hashList.add(Sha256Hash.of(bytes));
+      hashList.add(Sha256Sm3Hash.of(bytes));
     }
     return hashList;
   }
 
-  private static Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
-    return Sha256Hash.of(leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
+  private static Sha256Sm3Hash computeHash(Sha256Sm3Hash leftHash, Sha256Sm3Hash rightHash) {
+    return Sha256Sm3Hash.of(leftHash.getByteString()
+        .concat(rightHash.getByteString()).toByteArray());
   }
 
   //number: the number of hash
-  private static void pareTree(Leaf head, List<Sha256Hash> hashList, int maxRank, int curBank,
+  private static void pareTree(Leaf head, List<Sha256Sm3Hash> hashList, int maxRank, int curBank,
       int number) {
     Leaf left = head.getLeft();
     Leaf right = head.getRight();
@@ -83,7 +84,7 @@ public class MerkleTreeTest {
    * Will throw a exception.
    */
   public void test0HashNum() {
-    List<Sha256Hash> hashList = getHash(0);  //Empty list.
+    List<Sha256Sm3Hash> hashList = getHash(0);  //Empty list.
     try {
       MerkleTree.getInstance().createTree(hashList);
       Assert.assertFalse(true);
@@ -102,7 +103,7 @@ public class MerkleTreeTest {
    *  null null
    */
   public void test1HashNum() {
-    List<Sha256Hash> hashList = getHash(1);
+    List<Sha256Sm3Hash> hashList = getHash(1);
     MerkleTree tree = MerkleTree.getInstance().createTree(hashList);
     Leaf root = tree.getRoot();
     Assert.assertEquals(root.getHash(), hashList.get(0));
@@ -125,7 +126,7 @@ public class MerkleTreeTest {
    *null null null null
    */
   public void test2HashNum() {
-    List<Sha256Hash> hashList = getHash(2);
+    List<Sha256Sm3Hash> hashList = getHash(2);
     MerkleTree tree = MerkleTree.getInstance().createTree(hashList);
     Leaf root = tree.getRoot();
     Assert.assertEquals(root.getHash(), computeHash(hashList.get(0), hashList.get(1)));
@@ -163,7 +164,7 @@ public class MerkleTreeTest {
     int maxNum = 128;
     for (int hashNum = 1; hashNum <= maxNum; hashNum++) {
       int maxRank = getRank(hashNum);
-      List<Sha256Hash> hashList = getHash(hashNum);
+      List<Sha256Sm3Hash> hashList = getHash(hashNum);
       MerkleTree tree = MerkleTree.getInstance().createTree(hashList);
       Leaf root = tree.getRoot();
       pareTree(root, hashList, maxRank, 0, 0);

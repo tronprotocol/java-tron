@@ -13,7 +13,7 @@ import org.tron.common.overlay.discover.node.statistics.MessageStatistics;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.common.overlay.message.DisconnectMessage;
 import org.tron.common.overlay.message.PongMessage;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.ChainInventoryMessage;
@@ -139,8 +139,8 @@ public class NodeStatisticsTest {
     statistics.addTcpOutMessage(transactionsMessage);
     Assert.assertEquals(1, statistics.tronInTrxs.getTotalCount());
 
-    BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-            System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+    BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Sm3Hash.ZERO_HASH,
+            System.currentTimeMillis(), Sha256Sm3Hash.ZERO_HASH.getByteString());
     BlockMessage blockMessage = new BlockMessage(blockCapsule);
     statistics.addTcpInMessage(blockMessage);
     statistics.addTcpOutMessage(blockMessage);

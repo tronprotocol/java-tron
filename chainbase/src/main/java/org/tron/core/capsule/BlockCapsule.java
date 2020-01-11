@@ -38,7 +38,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.HashInterface;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -57,13 +57,13 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   @Getter
   @Setter
   private TransactionRetCapsule result;
-  private BlockId blockId = new BlockId(Sha256Hash.ZERO_HASH, 0);
+  private BlockId blockId = new BlockId(Sha256Sm3Hash.ZERO_HASH, 0);
 
   private Block block;
   private List<TransactionCapsule> transactions = new ArrayList<>();
   private StringBuilder toStringBuff = new StringBuilder();
 
-  public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
+  public BlockCapsule(long number, Sha256Sm3Hash hash, long when, ByteString witnessAddress) {
     // blockheader raw
     BlockHeader.raw.Builder blockHeaderRawBuild = BlockHeader.raw.newBuilder();
     BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
@@ -159,9 +159,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   }
 
-  private HashInterface getRawHash() {
-    return SignUtils.of(this.block.getBlockHeader().getRawData().toByteArray(),
-        CommonParameter.getInstance().isECKeyCryptoEngine());
+  private Sha256Sm3Hash getRawHash() {
+    return Sha256Sm3Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
   public boolean validateSignature(DynamicPropertiesStore dynamicPropertiesStore,
@@ -188,21 +187,22 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public BlockId getBlockId() {
-    if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(SignUtils.of(this.block.getBlockHeader().getRawData().toByteArray()),
+    if (blockId.equals(Sha256Sm3Hash.ZERO_HASH)) {
+      blockId =
+          new BlockId(Sha256Sm3Hash.of(this.block.getBlockHeader().getRawData().toByteArray()),
           getNum());
     }
     return blockId;
   }
 
-  public Sha256Hash calcMerkleRoot() {
+  public Sha256Sm3Hash calcMerkleRoot() {
     List<Transaction> transactionsList = this.block.getTransactionsList();
 
     if (CollectionUtils.isEmpty(transactionsList)) {
-      return Sha256Hash.ZERO_HASH;
+      return Sha256Sm3Hash.ZERO_HASH;
     }
 
-    ArrayList<Sha256Hash> ids = transactionsList.stream()
+    ArrayList<Sha256Sm3Hash> ids = transactionsList.stream()
         .map(TransactionCapsule::new)
         .map(TransactionCapsule::getMerkleHash)
         .collect(Collectors.toCollection(ArrayList::new));
@@ -238,16 +238,16 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
 
-  public Sha256Hash getMerkleRoot() {
-    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
+  public Sha256Sm3Hash getMerkleRoot() {
+    return Sha256Sm3Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
   }
 
-  public Sha256Hash getAccountRoot() {
+  public Sha256Sm3Hash getAccountRoot() {
     if (this.block.getBlockHeader().getRawData().getAccountStateRoot() != null
         && !this.block.getBlockHeader().getRawData().getAccountStateRoot().isEmpty()) {
-      return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getAccountStateRoot());
+      return Sha256Sm3Hash.wrap(this.block.getBlockHeader().getRawData().getAccountStateRoot());
     }
-    return Sha256Hash.ZERO_HASH;
+    return Sha256Sm3Hash.ZERO_HASH;
   }
 
   public ByteString getWitnessAddress() {
@@ -264,8 +264,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block;
   }
 
-  public Sha256Hash getParentHash() {
-    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getParentHash());
+  public Sha256Sm3Hash getParentHash() {
+    return Sha256Sm3Hash.wrap(this.block.getBlockHeader().getRawData().getParentHash());
   }
 
   public BlockId getParentBlockId() {
@@ -308,16 +308,16 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return toStringBuff.toString();
   }
 
-  public static class BlockId extends Sha256Hash {
+  public static class BlockId extends Sha256Sm3Hash {
 
     private long num;
 
     public BlockId() {
-      super(Sha256Hash.ZERO_HASH.getBytes());
+      super(Sha256Sm3Hash.ZERO_HASH.getBytes());
       num = 0;
     }
 
-    public BlockId(Sha256Hash blockId) {
+    public BlockId(Sha256Sm3Hash blockId) {
       super(blockId.getBytes());
       byte[] blockNum = new byte[8];
       System.arraycopy(blockId.getBytes(), 0, blockNum, 0, 8);
@@ -327,7 +327,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     /**
      * Use {@link #wrap(byte[])} instead.
      */
-    public BlockId(Sha256Hash hash, long num) {
+    public BlockId(Sha256Sm3Hash hash, long num) {
       super(num, hash);
       this.num = num;
     }
@@ -347,10 +347,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       if (this == o) {
         return true;
       }
-      if (o == null || (getClass() != o.getClass() && !(o instanceof Sha256Hash))) {
+      if (o == null || (getClass() != o.getClass() && !(o instanceof Sha256Sm3Hash))) {
         return false;
       }
-      return Arrays.equals(getBytes(), ((Sha256Hash) o).getBytes());
+      return Arrays.equals(getBytes(), ((Sha256Sm3Hash) o).getBytes());
     }
 
     public String getString() {
@@ -368,7 +368,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     }
 
     @Override
-    public int compareTo(Sha256Hash other) {
+    public int compareTo(Sha256Sm3Hash other) {
       if (other.getClass().equals(BlockId.class)) {
         long otherNum = ((BlockId) other).getNum();
         return Long.compare(num, otherNum);

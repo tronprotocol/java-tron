@@ -21,6 +21,7 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
@@ -33,7 +34,6 @@ import org.tron.protos.contract.BalanceContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import stest.tron.wallet.common.client.utils.Sha256Hash;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 
@@ -192,7 +192,7 @@ public class WalletTestTransfer003 {
       if (times++ < 1) {
         PublicMethed.waitProduceNextBlock(blockingStubFull);
         //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
-        String txId = ByteArray.toHexString(Sha256Hash.hash(sendCoinTransaction
+        String txId = ByteArray.toHexString(Sha256Sm3Hash.hash(sendCoinTransaction
             .getRawData().toByteArray()));
         logger.info(txId);
         ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
@@ -218,7 +218,7 @@ public class WalletTestTransfer003 {
         testKeyForSendCoin, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
-    String txId = ByteArray.toHexString(Sha256Hash.hash(sendCoinTransaction
+    String txId = ByteArray.toHexString(Sha256Sm3Hash.hash(sendCoinTransaction
         .getRawData().toByteArray()));
     logger.info(txId);
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
@@ -242,7 +242,7 @@ public class WalletTestTransfer003 {
         testKeyForSendCoin, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
-    String txId = ByteArray.toHexString(Sha256Hash.hash(sendCoinTransaction
+    String txId = ByteArray.toHexString(Sha256Sm3Hash.hash(sendCoinTransaction
         .getRawData().toByteArray()));
     logger.info(txId);
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));

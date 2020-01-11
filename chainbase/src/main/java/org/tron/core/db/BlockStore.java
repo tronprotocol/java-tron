@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.exception.BadItemException;
@@ -38,7 +38,7 @@ public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
   }
 
   public List<BlockCapsule> getLimitNumber(long startNumber, long limit) {
-    BlockId startBlockId = new BlockId(Sha256Hash.ZERO_HASH, startNumber);
+    BlockId startBlockId = new BlockId(Sha256Sm3Hash.ZERO_HASH, startNumber);
     return revokingDB.getValuesNext(startBlockId.getBytes(), limit).stream()
         .map(bytes -> {
           try {

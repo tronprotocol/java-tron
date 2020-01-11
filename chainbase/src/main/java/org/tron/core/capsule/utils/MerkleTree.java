@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 
 @Getter
 public class MerkleTree {
 
   private static volatile MerkleTree instance;
-  private List<Sha256Hash> hashList;
+  private List<Sha256Sm3Hash> hashList;
   private List<Leaf> leaves;
   private Leaf root;
 
@@ -26,7 +26,7 @@ public class MerkleTree {
     return instance;
   }
 
-  public MerkleTree createTree(List<Sha256Hash> hashList) {
+  public MerkleTree createTree(List<Sha256Sm3Hash> hashList) {
     this.leaves = new ArrayList<>();
     this.hashList = hashList;
     List<Leaf> leaves = createLeaves(hashList);
@@ -51,7 +51,7 @@ public class MerkleTree {
         }).collect(Collectors.toList());
   }
 
-  private List<Leaf> createLeaves(List<Sha256Hash> hashList) {
+  private List<Leaf> createLeaves(List<Sha256Sm3Hash> hashList) {
     int step = 2;
     int len = hashList.size();
     return IntStream.iterate(0, i -> i + step)
@@ -72,21 +72,21 @@ public class MerkleTree {
     return leaf;
   }
 
-  private Leaf createLeaf(Sha256Hash hash) {
+  private Leaf createLeaf(Sha256Sm3Hash hash) {
     Leaf leaf = new Leaf();
     leaf.hash = hash;
     this.leaves.add(leaf);
     return leaf;
   }
 
-  private Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
-    return Sha256Hash.of(leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
+  private Sha256Sm3Hash computeHash(Sha256Sm3Hash leftHash, Sha256Sm3Hash rightHash) {
+    return Sha256Sm3Hash.of(leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
   }
 
   @Getter
   public class Leaf {
 
-    private Sha256Hash hash;
+    private Sha256Sm3Hash hash;
     private Leaf left, right;
   }
 }

@@ -15,7 +15,7 @@ import org.tron.common.backup.BackupServer;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
@@ -154,7 +154,7 @@ public class TronNetDelegate {
     return num >= dbManager.getSyncBeginNumber();
   }
 
-  public boolean contain(Sha256Hash hash, MessageTypes type) {
+  public boolean contain(Sha256Sm3Hash hash, MessageTypes type) {
     if (type.equals(MessageTypes.BLOCK)) {
       return dbManager.containBlock(hash);
     } else if (type.equals(MessageTypes.TRX)) {
@@ -163,7 +163,7 @@ public class TronNetDelegate {
     return false;
   }
 
-  public Message getData(Sha256Hash hash, InventoryType type) throws P2pException {
+  public Message getData(Sha256Sm3Hash hash, InventoryType type) throws P2pException {
     try {
       switch (type) {
         case BLOCK:

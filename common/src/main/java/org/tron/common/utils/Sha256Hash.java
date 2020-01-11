@@ -201,7 +201,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash>, HashInt
    * two ranges and then passing the result to {@link #hashTwice(byte[])}.
    */
   public static byte[] hashTwice(byte[] input1, int offset1, int length1,
-      byte[] input2, int offset2, int length2) {
+                                 byte[] input2, int offset2, int length2) {
     MessageDigest digest = newDigest();
     digest.update(input1, offset1, length1);
     digest.update(input2, offset2, length2);

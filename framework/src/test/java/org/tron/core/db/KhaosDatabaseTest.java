@@ -15,7 +15,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Pair;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -149,17 +149,17 @@ public class KhaosDatabaseTest {
       khaosDatabase.push(block1OnforkB);
       // case: block num of param1 > block num of param2
       Pair result1 = khaosDatabase.getBranch(
-              Sha256Hash.of(
+              Sha256Sm3Hash.of(
                       block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()),
-              Sha256Hash.of(
+              Sha256Sm3Hash.of(
                       block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()));
       Assert.assertEquals(forkA, result1.getKey());
       Assert.assertEquals(forkB, result1.getValue());
       // case: block num of param2 > block num of param1
       Pair result2 = khaosDatabase.getBranch(
-              Sha256Hash.of(
+              Sha256Sm3Hash.of(
                       block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()),
-              Sha256Hash.of(
+              Sha256Sm3Hash.of(
                       block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()));
       Assert.assertEquals(forkB, result2.getKey());
       Assert.assertEquals(forkA, result2.getValue());

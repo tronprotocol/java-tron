@@ -47,7 +47,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.db.TransactionTrace;
@@ -270,9 +270,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction transaction = tx.toBuilder().clearRawData()
         .setRawData(rawBuilder).build();
 
-    byte[] mergedByte = Bytes.concat(Sha256Hash.of(tokenId.getBytes()).getBytes(),
+    byte[] mergedByte = Bytes.concat(Sha256Sm3Hash.of(tokenId.getBytes()).getBytes(),
         transaction.getRawData().toByteArray());
-    return Sha256Hash.of(mergedByte).getBytes();
+    return Sha256Sm3Hash.of(mergedByte).getBytes();
   }
 
   // todo mv this static function to capsule util
@@ -507,13 +507,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     transaction = Transaction.newBuilder().setRawData(transactionBuilder.build()).build();
   }
 
-  public Sha256Hash getMerkleHash() {
+  public Sha256Sm3Hash getMerkleHash() {
     byte[] transBytes = this.transaction.toByteArray();
-    return Sha256Hash.of(transBytes);
+    return Sha256Sm3Hash.of(transBytes);
   }
 
-  private Sha256Hash getRawHash() {
-    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
+  private Sha256Sm3Hash getRawHash() {
+    return Sha256Sm3Hash.of(this.transaction.getRawData().toByteArray());
   }
 
   public void sign(byte[] privateKey) {
@@ -631,7 +631,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return true;
   }
 
-  public Sha256Hash getTransactionId() {
+  public Sha256Sm3Hash getTransactionId() {
     return getRawHash();
   }
 

@@ -4,7 +4,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -26,10 +26,10 @@ public class InventoryMessage extends TronMessage {
     this.data = inv.toByteArray();
   }
 
-  public InventoryMessage(List<Sha256Hash> hashList, InventoryType type) {
+  public InventoryMessage(List<Sha256Sm3Hash> hashList, InventoryType type) {
     Inventory.Builder invBuilder = Inventory.newBuilder();
 
-    for (Sha256Hash hash :
+    for (Sha256Sm3Hash hash :
         hashList) {
       invBuilder.addIds(hash.getByteString());
     }
@@ -59,7 +59,7 @@ public class InventoryMessage extends TronMessage {
 
   @Override
   public String toString() {
-    Deque<Sha256Hash> hashes = new LinkedList<>(getHashList());
+    Deque<Sha256Sm3Hash> hashes = new LinkedList<>(getHashList());
     StringBuilder builder = new StringBuilder();
     builder.append(super.toString()).append("invType: ").append(getInvMessageType())
         .append(", size: ").append(hashes.size())
@@ -70,9 +70,9 @@ public class InventoryMessage extends TronMessage {
     return builder.toString();
   }
 
-  public List<Sha256Hash> getHashList() {
+  public List<Sha256Sm3Hash> getHashList() {
     return getInventory().getIdsList().stream()
-        .map(hash -> Sha256Hash.wrap(hash.toByteArray()))
+        .map(hash -> Sha256Sm3Hash.wrap(hash.toByteArray()))
         .collect(Collectors.toList());
   }
 

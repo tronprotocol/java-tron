@@ -16,7 +16,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkUtils;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Constant;
@@ -95,7 +95,7 @@ public class TransactionTrace {
     this.codeStore = storeFactory.getChainBaseManager().getCodeStore();
     this.accountStore = storeFactory.getChainBaseManager().getAccountStore();
 
-    this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
+    this.receipt = new ReceiptCapsule(Sha256Sm3Hash.ZERO_HASH);
     this.energyProcessor = new EnergyProcessor(dynamicPropertiesStore, accountStore);
     this.runtime = runtime;
     this.forkUtils = new ForkUtils();

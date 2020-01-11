@@ -19,7 +19,7 @@ import java.util.Arrays;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 
 
 @Slf4j(topic = "capsule")
@@ -54,8 +54,8 @@ public class StorageRowCapsule implements ProtoCapsule<byte[]> {
     dirty = true;
   }
 
-  public Sha256Hash getHash() {
-    return Sha256Hash.of(this.rowValue);
+  public Sha256Sm3Hash getHash() {
+    return Sha256Sm3Hash.of(this.rowValue);
   }
 
   public byte[] getValue() {

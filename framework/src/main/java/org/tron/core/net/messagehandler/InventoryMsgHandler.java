@@ -3,7 +3,7 @@ package org.tron.core.net.messagehandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TronMessage;
@@ -36,7 +36,7 @@ public class InventoryMsgHandler implements TronMsgHandler {
       return;
     }
 
-    for (Sha256Hash id : inventoryMessage.getHashList()) {
+    for (Sha256Sm3Hash id : inventoryMessage.getHashList()) {
       Item item = new Item(id, type);
       peer.getAdvInvReceive().put(item, System.currentTimeMillis());
       advService.addInv(item);

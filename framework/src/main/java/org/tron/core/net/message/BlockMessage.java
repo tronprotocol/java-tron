@@ -1,7 +1,7 @@
 package org.tron.core.net.message;
 
 import org.tron.common.overlay.message.Message;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
@@ -40,7 +40,7 @@ public class BlockMessage extends TronMessage {
   }
 
   @Override
-  public Sha256Hash getMessageId() {
+  public Sha256Sm3Hash getMessageId() {
     return getBlockCapsule().getBlockId();
   }
 

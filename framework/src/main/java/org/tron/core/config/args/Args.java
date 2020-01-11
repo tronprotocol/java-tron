@@ -652,10 +652,13 @@ public class Args extends CommonParameter {
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
+  private static final String ADDRESS = "address";
+
   private static Witness createWitness(final ConfigObject witnessAccount) {
+
     final Witness witness = new Witness();
     witness.setAddress(
-        Commons.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
+        Commons.decodeFromBase58Check(witnessAccount.get(ADDRESS).unwrapped().toString()));
     witness.setUrl(witnessAccount.get("url").unwrapped().toString());
     witness.setVoteCount(witnessAccount.toConfig().getLong("voteCount"));
     return witness;
@@ -671,7 +674,7 @@ public class Args extends CommonParameter {
     final Account account = new Account();
     account.setAccountName(asset.get("accountName").unwrapped().toString());
     account.setAccountType(asset.get("accountType").unwrapped().toString());
-    account.setAddress(Commons.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
+    account.setAddress(Commons.decodeFromBase58Check(asset.get(ADDRESS).unwrapped().toString()));
     account.setBalance(asset.get("balance").unwrapped().toString());
     return account;
   }

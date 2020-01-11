@@ -7,7 +7,7 @@ import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2.SM2Signature;
 import org.tron.common.utils.HashInterface;
 import org.tron.common.utils.SM3Hash;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Sha256Sm3Hash;
 
 public class SignUtils {
    public static SignInterface getGeneratedRandomSign(boolean isECKeyCryptoEngine) {
@@ -57,7 +57,7 @@ public class SignUtils {
 
   public static HashInterface of(byte[] contents, boolean isECKeyCryptoEngine) {
      if (isECKeyCryptoEngine) {
-       return Sha256Hash.of(contents);
+       return Sha256Sm3Hash.of(contents);
      }
      return SM3Hash.of(contents);
   }
