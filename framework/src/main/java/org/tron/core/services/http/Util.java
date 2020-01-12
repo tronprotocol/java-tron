@@ -233,8 +233,7 @@ public class Util {
     jsonTransaction.put("raw_data", rawData);
     String rawDataHex = ByteArray.toHexString(transaction.getRawData().toByteArray());
     jsonTransaction.put("raw_data_hex", rawDataHex);
-    String txID = ByteArray.toHexString(SignUtils.hash(transaction.getRawData().toByteArray(),
-        CommonParameter.getInstance().isECKeyCryptoEngine()));
+    String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
     return jsonTransaction;
   }

@@ -177,8 +177,7 @@ public class TestValidatemultisign001 {
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
         fromAddress, 1L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
-    byte[] hash = SignUtils.of(transaction.getRawData().toByteArray(),
-        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
+    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     byte[] tosign = Sha256Hash.hash(merged);
@@ -298,8 +297,7 @@ public class TestValidatemultisign001 {
 
     Transaction transaction = PublicMethedForMutiSign.sendcoinGetTransaction(
         fromAddress, 1L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
-    byte[] hash = SignUtils.of(transaction.getRawData().toByteArray(),
-        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
+    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
 
     // Trigger with wrong PermissionID
     long permissionId = 2;
@@ -404,8 +402,7 @@ public class TestValidatemultisign001 {
     Transaction transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, 0, ownerKey, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
-    byte[] hash = SignUtils.of(transaction.getRawData().toByteArray(),
-        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
+    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     byte[] tosign = Sha256Hash.hash(merged);
@@ -433,11 +430,9 @@ public class TestValidatemultisign001 {
     // Trigger with wrong hash
     transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, 0, ownerKey, blockingStubFull);
-    logger.info("hash: {}", SignUtils.of(transaction.getRawData().toByteArray(),
-        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes());
+    logger.info("hash: {}", Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes());
 
-    hash = SignUtils.of(transaction.getRawData().toByteArray(),
-        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
+    hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
 
     merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     tosign = Sha256Hash.hash(merged);
@@ -447,8 +442,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
     transaction = TransactionUtils.setTimestamp(transaction);
-    hash = SignUtils.of(transaction.getRawData().toByteArray(),
-        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
+    hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
 
     parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
@@ -470,8 +464,7 @@ public class TestValidatemultisign001 {
         fromAddress, 1L, dev001Address, 0, dev001Key, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
 
-    hash = SignUtils.of(transaction.getRawData().toByteArray(),
-        CommonParameter.getInstance().isECKeyCryptoEngine()).getBytes();
+    hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
 
     merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(0), hash);
     tosign = Sha256Hash.hash(merged);

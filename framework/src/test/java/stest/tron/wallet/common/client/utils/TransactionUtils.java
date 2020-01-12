@@ -171,8 +171,7 @@ public class TransactionUtils {
     ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
 
-    byte[] hash = SignUtils.hash(transaction.getRawData().toByteArray(),
-        CommonParameter.getInstance().isECKeyCryptoEngine());
+    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
     List<Contract> listContract = transaction.getRawData().getContractList();
     for (int i = 0; i < listContract.size(); i++) {
       ECDSASignature signature = myKey.sign(hash);
