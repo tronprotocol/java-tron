@@ -186,10 +186,12 @@ public class TestValidatemultisign002 {
     Transaction transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, permissionId, ownerKey, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        transaction.getRawData().toByteArray()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(permissionId), hash);
-    byte[] tosign = Sha256Hash.hash(merged);
+    byte[] tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
 
@@ -265,10 +267,12 @@ public class TestValidatemultisign002 {
     Transaction transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, permissionId, ownerKey, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(permissionId), hash);
-    byte[] tosign = Sha256Hash.hash(merged);
+    byte[] tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     // signatures with Duplicate signatures but weight enough
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
@@ -346,10 +350,12 @@ public class TestValidatemultisign002 {
     Transaction transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, permissionId, ownerKey, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(permissionId), hash);
-    byte[] tosign = Sha256Hash.hash(merged);
+    byte[] tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     // signatures with weight not enough
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
