@@ -6018,10 +6018,8 @@ public class PublicMethed {
     }
     byte[] decodeData = new byte[decodeCheck.length - 4];
     System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
-    byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance()
-        .isECKeyCryptoEngine(), decodeData);
-    byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance()
-        .isECKeyCryptoEngine(), hash0);
+    byte[] hash0 = Sha256Hash.hash(true, decodeData);
+    byte[] hash1 = Sha256Hash.hash(true, hash0);
     if (hash1[0] == decodeCheck[decodeData.length]
         && hash1[1] == decodeCheck[decodeData.length + 1]
         && hash1[2] == decodeCheck[decodeData.length + 2]
