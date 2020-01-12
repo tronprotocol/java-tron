@@ -91,7 +91,8 @@ public class FastForward {
               .fromPrivate(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()),
                   Args.getInstance().isECKeyCryptoEngine());
 
-          Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(message.getTimestamp()));
+          Sha256Hash hash = Sha256Hash.of(CommonParameter.getInstance()
+              .isECKeyCryptoEngine(), ByteArray.fromLong(message.getTimestamp()));
           ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
                   .signHash(hash.getBytes())));
           message.setHelloMessage(message.getHelloMessage().toBuilder()
@@ -123,7 +124,8 @@ public class FastForward {
     }
 
     try {
-      Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(msg.getTimestamp()));
+      Sha256Hash hash = Sha256Hash.of(CommonParameter
+          .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(msg.getTimestamp()));
       String sig =
               TransactionCapsule.getBase64FromByteString(msg.getSignature());
       byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig,

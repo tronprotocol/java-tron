@@ -51,7 +51,8 @@ public class TransactionUtils {
     Transaction.Builder tmp = transaction.toBuilder();
     //tmp.clearId();
 
-    return Sha256Hash.hash(tmp.build().toByteArray());
+    return Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), tmp.build().toByteArray());
   }
 
   /**
@@ -141,7 +142,8 @@ public class TransactionUtils {
     assert (signedTransaction.getSignatureCount()
         == signedTransaction.getRawData().getContractCount());
     List<Transaction.Contract> listContract = signedTransaction.getRawData().getContractList();
-    byte[] hash = Sha256Hash.hash(signedTransaction.getRawData().toByteArray());
+    byte[] hash = Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), signedTransaction.getRawData().toByteArray());
     int count = signedTransaction.getSignatureCount();
     if (count == 0) {
       return false;
@@ -171,7 +173,8 @@ public class TransactionUtils {
     ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
 
-    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
+    byte[] hash = Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), transaction.getRawData().toByteArray());
     List<Contract> listContract = transaction.getRawData().getContractList();
     for (int i = 0; i < listContract.size(); i++) {
       ECDSASignature signature = myKey.sign(hash);
