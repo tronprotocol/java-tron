@@ -91,10 +91,10 @@ public class FastForward {
               .fromPrivate(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()),
                   Args.getInstance().isECKeyCryptoEngine());
 
-          Sha256Hash hash = Sha256Hash.of(CommonParameter.getInstance()
-              .isECKeyCryptoEngine(), ByteArray.fromLong(message.getTimestamp()));
           ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-                  .signHash(hash.getBytes())));
+                  .signHash(Sha256Hash.of(CommonParameter.getInstance()
+                      .isECKeyCryptoEngine(), ByteArray.fromLong(message
+                      .getTimestamp())).getBytes())));
           message.setHelloMessage(message.getHelloMessage().toBuilder()
               .setAddress(witnessAddress).setSignature(sig).build());
         }
