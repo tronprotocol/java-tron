@@ -151,12 +151,6 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
     return this.getHead() == null || this.getHead().length == 0;
   }
 
-  // public void addOrders(ByteString v) {
-  //   this.orderIdList = this.orderIdList.toBuilder()
-  //       .addOrders(v)
-  //       .build();
-  // }
-
   // add order to linked list
   public void addOrder(MarketOrderCapsule currentCapsule, MarketOrderStore orderStore)
       throws ItemNotFoundException {

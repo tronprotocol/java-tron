@@ -79,6 +79,7 @@ public class MarketCancelOrderActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    dbManager.getDynamicPropertiesStore().saveAllowMarketTransaction(1L);
   }
 
   /**
@@ -397,6 +398,9 @@ public class MarketCancelOrderActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, orderId));
 
+    // set fee
+    dbManager.getDynamicPropertiesStore().saveMarketCancelFee(1L);
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -408,6 +412,9 @@ public class MarketCancelOrderActuatorTest {
       Assert.assertEquals("No enough balance !", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
+    } finally {
+      // reset fee
+      dbManager.getDynamicPropertiesStore().saveMarketCancelFee(0L);
     }
   }
 
