@@ -85,6 +85,7 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
@@ -241,8 +242,8 @@ public class Wallet {
   }
 
   public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(input);
-    byte[] hash1 = Sha256Hash.hash(hash0);
+    byte[] hash0 = Sha256Hash.hash(true, input);
+    byte[] hash1 = Sha256Hash.hash(true, hash0);
     byte[] inputCheck = new byte[input.length + 4];
     System.arraycopy(input, 0, inputCheck, 0, input.length);
     System.arraycopy(hash1, 0, inputCheck, input.length, 4);
@@ -460,7 +461,8 @@ public class Wallet {
     TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
@@ -477,7 +479,8 @@ public class Wallet {
 
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();
-        byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
+        byte[] hash = Sha256Hash.hash(CommonParameter
+            .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
         for (ByteString sig : trx.getSignatureList()) {
           if (sig.size() < 65) {
             throw new SignatureFormatException(
@@ -506,7 +509,8 @@ public class Wallet {
   }
 
   public byte[] pass2Key(byte[] passPhrase) {
-    return Sha256Hash.hash(passPhrase);
+    return Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), passPhrase);
   }
 
   public byte[] createAddress(byte[] passPhrase) {

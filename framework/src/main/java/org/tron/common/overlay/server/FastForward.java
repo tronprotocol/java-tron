@@ -22,7 +22,6 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.HashInterface;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
@@ -92,9 +91,10 @@ public class FastForward {
               .fromPrivate(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()),
                   Args.getInstance().isECKeyCryptoEngine());
 
-          Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(message.getTimestamp()));
           ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-                  .signHash(hash.getBytes())));
+                  .signHash(Sha256Hash.of(CommonParameter.getInstance()
+                      .isECKeyCryptoEngine(), ByteArray.fromLong(message
+                      .getTimestamp())).getBytes())));
           message.setHelloMessage(message.getHelloMessage().toBuilder()
               .setAddress(witnessAddress).setSignature(sig).build());
         }
@@ -124,8 +124,8 @@ public class FastForward {
     }
 
     try {
-      HashInterface hash = SignUtils.of(ByteArray.fromLong(msg.getTimestamp()),
-          CommonParameter.getInstance().isECKeyCryptoEngine());
+      Sha256Hash hash = Sha256Hash.of(CommonParameter
+          .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(msg.getTimestamp()));
       String sig =
               TransactionCapsule.getBase64FromByteString(msg.getSignature());
       byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig,
