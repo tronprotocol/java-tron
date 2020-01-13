@@ -74,12 +74,16 @@ This guide walks the user through how to deploy a Fullnode, Solidity node and SR
 [https://tronprotocol.github.io/documentation-en/developers/deployment/](https://tronprotocol.github.io/documentation-en/developers/deployment/)  
 
 # Channel
-This is java-tron's official channel, if you have any question, please join this channel.   
-[Core Devs Gitter](https://gitter.im/tronprotocol/allcoredev)
+This is java-tron's official Gitter channel, if you have any question, please join this channel.   
+[Core Devs Gitter](https://gitter.im/tronprotocol/allcoredev)   
+
+A telegram channel for java-tron community developers, if you want to contribute to java-tron, please join this channel.
+[Core Devs Community telegram](https://t.me/troncoredevscommunity)
 
 # Contribution
 If you'd like to contribute to java-tron, please follow below.  
 [Contribution](./CONTRIBUTING.md)
+[Community Developers Incentives Programme](./CONTRIBUTING.md#community-developers-incentives-programme)
 
 # Resources
 * [Medium](https://medium.com/@coredevs)  java-tron's official technical articles are published there.    

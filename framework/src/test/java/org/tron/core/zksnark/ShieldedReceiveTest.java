@@ -24,6 +24,7 @@ import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
@@ -1638,9 +1639,13 @@ public class ShieldedReceiveTest extends BlockGenerate {
         .setRawData(rawBuilder).build();
 
     byte[] mergedByte = Bytes.concat(
-        Sha256Hash.of(DBConfig.getZenTokenId().getBytes()).getBytes(),
+        Sha256Hash.of(
+            CommonParameter
+                .getInstance().isECKeyCryptoEngine(),
+            DBConfig.getZenTokenId().getBytes()).getBytes(),
         transaction.getRawData().toByteArray());
-    return Sha256Hash.of(mergedByte).getBytes();
+    return Sha256Hash.of(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), mergedByte).getBytes();
   }
 
   private ZenTransactionBuilder generateShield2ShieldBuilder(ZenTransactionBuilder builder,

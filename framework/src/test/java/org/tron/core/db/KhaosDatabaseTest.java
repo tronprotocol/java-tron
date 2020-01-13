@@ -12,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.testng.collections.Lists;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Pair;
@@ -150,17 +151,25 @@ public class KhaosDatabaseTest {
       // case: block num of param1 > block num of param2
       Pair result1 = khaosDatabase.getBranch(
               Sha256Hash.of(
-                      block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()),
+                  CommonParameter
+                      .getInstance().isECKeyCryptoEngine(),
+                  block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()),
               Sha256Hash.of(
-                      block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()));
+                  CommonParameter
+                      .getInstance().isECKeyCryptoEngine(),
+                  block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()));
       Assert.assertEquals(forkA, result1.getKey());
       Assert.assertEquals(forkB, result1.getValue());
       // case: block num of param2 > block num of param1
       Pair result2 = khaosDatabase.getBranch(
               Sha256Hash.of(
-                      block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()),
+                  CommonParameter
+                      .getInstance().isECKeyCryptoEngine(),
+                  block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()),
               Sha256Hash.of(
-                      block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()));
+                  CommonParameter
+                      .getInstance().isECKeyCryptoEngine(),
+                  block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()));
       Assert.assertEquals(forkB, result2.getKey());
       Assert.assertEquals(forkA, result2.getValue());
     } catch (UnLinkedBlockException | BadNumberBlockException | NonCommonBlockException e) {
