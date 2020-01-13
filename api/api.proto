@@ -696,7 +696,6 @@ service Wallet {
   };
 
   rpc UpdateBrokerage (UpdateBrokerageContract) returns (TransactionExtention) {
-
   };
 };
 

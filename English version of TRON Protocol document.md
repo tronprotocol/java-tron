@@ -7,12 +7,14 @@
 + A basic account is able to apply to be a validation node, which has serval parameters, including extra attributes, public key, URL, voting statistics, history performance, etc.
 
      There are three different `Account types`: `Normal`, `AssetIssue`, `Contract`.
-
-      enum AccountType {   
-         Normal = 0;   
-         AssetIssue = 1;   
-         Contract = 2;
-        }
+```protobuf
+enum AccountType {   
+  Normal = 0;   
+  AssetIssue = 1;   
+  Contract = 2; 
+ }
+```
+      
 
      An `Account` contains 7 parameters:  
      `account_name`: the name for this account – e.g. “_BillsAccount_”.  
@@ -21,21 +23,21 @@
      `votes`: received votes on this account – e.g. _{(“0x1b7w…9xj3”,323), (“0x8djq…j12m”,88),…,(“0x82nd…mx6i”,10001)}_.  
      `asset`: other assets expect TRX in this account – e.g. _{<“WishToken”,66666>,<”Dogie”,233>}_.
      `latest_operation_time`: the latest operation time of this account.
-     
-      // Account 
-      message Account {   
-        message Vote {     
-           bytes vote_address = 1;     
-           int64 vote_count = 2;   }   
-        bytes accout_name = 1;   
-        AccountType type = 2;   
-        bytes address = 3;   
-        int64 balance = 4;   
-        repeated Vote votes = 5;   
-        map<string, int64> asset = 6;
-        int64 latest_operation_time = 10; 
-       }
-       
+```protobuf     
+// Account 
+message Account {   
+  message Vote {     
+    bytes vote_address = 1;     
+    int64 vote_count = 2;   }   
+    bytes accout_name = 1;   
+    AccountType type = 2;   
+    bytes address = 3;   
+    int64 balance = 4;   
+    repeated Vote votes = 5;   
+    map<string, int64> asset = 6;
+    int64 latest_operation_time = 10; 
+}
+```       
      A `Witness` contains 8 parameters:  
       `address`: the address of this witness – e.g. “_0xu82h…7237_”.  
      `voteCount`: number of received votes on this witness – e.g. _234234_.  
@@ -45,31 +47,31 @@
      `totalMissed`: the number of blocks this witness missed – e.g. _7_.  
      `latestBlockNum`: the latest height of block – e.g. _4522_.
      `isjobs`: a bool flag.
-     
-      // Witness 
-      message Witness{   
-        bytes address = 1;   
-        int64 voteCount = 2;   
-        bytes pubKey = 3;   
-        string url = 4;   
-        int64 totalProduced = 5;   
-        int64 totalMissed = 6;   
-        int64 latestBlockNum = 7; 
-        bool isJobs = 9;
-       }
-
+```protobuf 
+// Witness 
+message Witness{   
+  bytes address = 1;   
+  int64 voteCount = 2;   
+  bytes pubKey = 3;   
+  string url = 4;  
+  int64 totalProduced = 5;   
+  int64 totalMissed = 6;   
+  int64 latestBlockNum = 7; 
+  bool isJobs = 9;
+}
+```
 +	A block typically contains transaction data and a blockheader, which is a list of basic block information, including timestamp, signature, parent hash, root of Merkle tree and so on.
 
      A block contains `transactions` and a `block_header`.  
      `transactions`: transaction data of this block.   
      `block_header`: one part of a block.
-      
-         // block
-          message Block {   
-           repeated Transaction transactions = 1;   
-           BlockHeader block_header = 2; 
-          }
-
+ ```protobuf      
+ // block
+message Block { 
+  repeated Transaction transactions = 1; 
+  BlockHeader block_header = 2; 
+}
+```
      A `BlockHeader` contains `raw_data` and `witness_signature`.  
      `raw_data`: a `raw` message.  
      `witness_signature`: signature for this block header from witness node.
@@ -81,22 +83,22 @@
      `number`: the height of this block – e.g. _13534657_.  
      `witness_id`: the id of witness which packed this block – e.g. “_0xu82h…7237_”.  
      `witness_address`: the adresss of the witness packed this block – e.g. “_0xu82h…7237_”.
-
-         message BlockHeader {   
-           message raw {     
-             int64 timestamp = 1;     
-             bytes txTrieRoot = 2;     
-             bytes parentHash = 3;     
-             //bytes nonce = 5;     
-             //bytes difficulty = 6;     
-             uint64 number = 7;     
-             uint64 witness_id = 8;     
-             bytes witness_address = 9;   
-          }   
-          raw raw_data = 1;   
-          bytes witness_signature = 2; 
-          }
-
+```protobuf
+message BlockHeader {   
+  message raw {     
+    int64 timestamp = 1;     
+    bytes txTrieRoot = 2;     
+    bytes parentHash = 3;  
+    //bytes nonce = 5; 
+    //bytes difficulty = 6; 
+    uint64 number = 7; 
+    uint64 witness_id = 8; 
+    bytes witness_address = 9; 
+  } 
+  raw raw_data = 1; 
+  bytes witness_signature = 2; 
+}
+```
      message `ChainInventory` contains `BlockId` and `remain_num`.  
      `BlockId`: the identification of block.  
      `remain_num`：the remain number of blocks in the synchronizing process. 
@@ -104,75 +106,75 @@
      A `BlockId` contains 2 parameters:  
      `hash`: the hash of block.  
      `number`: the hash and height of block.
-     
-         message ChainInventory {
-            message BlockId {
-               bytes hash = 1;
-               int64 number = 2;
-             }
-             repeated BlockId ids = 1;
-             int64 remain_num = 2;
-          }
-          
+```protobuf      
+message ChainInventory {
+  message BlockId {
+    bytes hash = 1;
+    int64 number = 2;
+  }
+  repeated BlockId ids = 1;
+  int64 remain_num = 2;
+}
+```       
 +	Transaction contracts mainly includes account create contract, account update contract transfer contract, transfer asset contract, vote asset contract, vote witness contract, witness creation contract, witness update contract, asset issue contract, participate asset issue contract and deploy contract.
 
      An `AccountCreateContract` contains 3 parameters:                                                                                                                                                       
      `type`: What type this account is – e.g. _0_ stands for `Normal`.  
      `account_name`: the name for this account – e.g.”_Billsaccount_”.  
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.
-         
-         message AccountCreateContract {   
-           AccountType type = 1;   
-           bytes account_name = 2;   
-           bytes owner_address = 3; 
-          }
-          
+```protobuf          
+message AccountCreateContract {   
+  AccountType type = 1;   
+  bytes account_name = 2;   
+  bytes owner_address = 3; 
+}
+```          
      A `AccountUpdateContract` contains 2 paremeters:  
      `account_name`: the name for this account – e.g.”_Billsaccount_”.  
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.
-     
-         message AccountUpdateContract {
-           bytes account_name = 1;
-           bytes owner_address = 2;
-          }
-     
+```protobuf     
+message AccountUpdateContract {
+  bytes account_name = 1;
+  bytes owner_address = 2;
+}
+```    
      A `TransferContract` contains 3 parameters:  
      `amount`: the amount of TRX – e.g. _12534_.  
      `to_address`: the receiver address – e.g. “_0xu82h…7237_”.  
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.
-
-         message TransferContract {   
-           bytes owner_address = 1;   
-           bytes to_address = 2;   
-           int64 amount = 3;
-          }
-
+```protobuf 
+message TransferContract {   
+  bytes owner_address = 1;   
+  bytes to_address = 2;   
+  int64 amount = 3;
+}
+```
      A `TransferAssetContract` contains 4 parameters:  
      `asset_name`: the name for asset – e.g.”_Billsaccount_”.  
      `to_address`: the receiver address – e.g. “_0xu82h…7237_”.  
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.  
      `amount`: the amount of target asset - e.g._12353_.
-
-         message TransferAssetContract {   
-           bytes asset_name = 1;   
-           bytes owner_address = 2;   
-           bytes to_address = 3;   
-           int64 amount = 4; 
-          }
-
+```protobuf 
+message TransferAssetContract {   
+  bytes asset_name = 1;   
+  bytes owner_address = 2;   
+  bytes to_address = 3;   
+  int64 amount = 4; 
+}
+```
      A `VoteAssetContract` contains 4 parameters:  
      `vote_address`: the voted address of the asset.  
      `support`: is the votes supportive or not – e.g. _true_.  
      `owner_address`: the address of contract owner – e.g. “_0xu82h…7237_”.  
      `count`: the count number of votes- e.g. _2324234_.
-
+```protobuf 
          message VoteAssetContract {   
            bytes owner_address = 1;   
            repeated bytes vote_address = 2;   
            bool support = 3;   
            int32 count = 5; 
           }
-
+```
      A `VoteWitnessContract` contains 4 parameters:  
      `vote_address`: the addresses of those who voted.  
      `support`: is the votes supportive or not - e.g. _true_.  
