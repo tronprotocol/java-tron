@@ -354,11 +354,11 @@ public class PrecompiledContracts {
 
   /**
    * Computes modular exponentiation on big numbers
-   *
+   * <p>
    * format of data[] array: [length_of_BASE] [length_of_EXPONENT] [length_of_MODULUS] [BASE]
    * [EXPONENT] [MODULUS] where every length is a 32-byte left-padded integer representing the
    * number of bytes. Call data is assumed to be infinitely right-padded with zero bytes.
-   *
+   * <p>
    * Returns an output as a byte array with the same length as the modulus
    */
   public static class ModExp extends PrecompiledContract {
@@ -471,11 +471,11 @@ public class PrecompiledContracts {
 
   /**
    * Computes point addition on Barreto–Naehrig curve. See {@link BN128Fp} for details<br/> <br/>
-   *
+   * <p>
    * input data[]:<br/> two points encoded as (x, y), where x and y are 32-byte left-padded
    * integers,<br/> if input is shorter than expected, it's assumed to be right-padded with zero
    * bytes<br/> <br/>
-   *
+   * <p>
    * output:<br/> resulting point (x', y'), where x and y encoded as 32-byte left-padded
    * integers<br/>
    */
@@ -518,11 +518,11 @@ public class PrecompiledContracts {
   /**
    * Computes multiplication of scalar value on a point belonging to Barreto–Naehrig curve. See
    * {@link BN128Fp} for details<br/> <br/>
-   *
+   * <p>
    * input data[]:<br/> point encoded as (x, y) is followed by scalar s, where x, y and s are
    * 32-byte left-padded integers,<br/> if input is shorter than expected, it's assumed to be
    * right-padded with zero bytes<br/> <br/>
-   *
+   * <p>
    * output:<br/> resulting point (x', y'), where x and y encoded as 32-byte left-padded
    * integers<br/>
    */
@@ -558,7 +558,7 @@ public class PrecompiledContracts {
 
   /**
    * Computes pairing check. <br/> See {@link PairingCheck} for details.<br/> <br/>
-   *
+   * <p>
    * Input data[]: <br/> an array of points (a1, b1, ... , ak, bk), <br/> where "ai" is a point of
    * {@link BN128Fp} curve and encoded as two 32-byte left-padded integers (x; y) <br/> "bi" is a
    * point of {@link BN128G2} curve and encoded as four 32-byte left-padded integers {@code (ai + b;
@@ -566,7 +566,7 @@ public class PrecompiledContracts {
    * {@code a} in the encoding: {@code (b, a; d, c)} <br/> thus each pair (ai, bi) has 192 bytes
    * length, if 192 is not a multiple of {@code data.length} then execution fails <br/> the number
    * of pairs is derived from input length by dividing it by 192 (the length of a pair) <br/> <br/>
-   *
+   * <p>
    * output: <br/> pairing product which is either 0 or 1, encoded as 32-byte left-padded integer
    * <br/>
    */
@@ -780,7 +780,7 @@ public class PrecompiledContracts {
       }
       byte[] res = new byte[WORD_SIZE];
       if (isConstantCall()) {
-        //for static call not use thread pool to avoid potential effect
+        //for constant call not use thread pool to avoid potential effect
         for (int i = 0; i < cnt; i++) {
           if (DataWord
               .equalAddressByteArray(addresses[i], recoverAddrBySign(signatures[i], hash))) {

@@ -55,13 +55,14 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private boolean byTransaction = true;
   private boolean byTestingSuite = false;
   private int callDeep = 0;
+  private boolean isStaticCall = false;
   private boolean isConstantCall = false;
 
   public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance,
       DataWord callValue, DataWord tokenValue, DataWord tokenId, byte[] msgData,
       DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
       DataWord difficulty,
-      Deposit deposit, int callDeep, boolean isConstantCall, boolean byTestingSuite,
+      Deposit deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite,
       long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
     this.address = address;
     this.origin = origin;
@@ -83,7 +84,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
     this.deposit = deposit;
     this.byTransaction = false;
-    this.isConstantCall = isConstantCall;
+    this.isStaticCall = isStaticCall;
     this.byTestingSuite = byTestingSuite;
     this.vmStartInUs = vmStartInUs;
     this.vmShouldEndInUs = vmShouldEndInUs;
@@ -260,8 +261,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean isConstantCall() {
-    return isConstantCall;
+  public boolean isStaticCall() {
+    return isStaticCall;
   }
 
   @Override
@@ -372,17 +373,22 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setConstantCall() {
-    isConstantCall = true;
-  }
-
-  @Override
   public BlockCapsule getBlockByNum(int index) {
     try {
       return deposit.getDbManager().getBlockByNum(index);
     } catch (StoreException e) {
       throw new IllegalOperationException("cannot find block num");
     }
+  }
+
+  @Override
+  public void setConstantCall() {
+    isConstantCall = true;
+  }
+
+  @Override
+  public boolean isConstantCall() {
+    return isConstantCall;
   }
 
 }

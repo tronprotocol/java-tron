@@ -79,7 +79,7 @@ public class TransferAssetActuatorTest {
   private static Any contract;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a146a";
@@ -1281,7 +1281,7 @@ public class TransferAssetActuatorTest {
   public void transferToContractAddress()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
       ContractValidateException, BalanceInsufficientException {
-    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
+    dbManager.getDynamicPropertiesStore().saveForbidTransferToContract(1);
     createAssertSameTokenNameActive();
     VMConfig.initAllowMultiSign(1);
     VMConfig.initAllowTvmTransferTrc10(1);
