@@ -124,8 +124,8 @@ public class TransferActuator extends AbstractActuator {
       if (toAccount == null) {
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
-      //after TvmSolidity059 proposal, send trx to smartContract by actuator is not allowed.
-      if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1
+      //after ForbidTransferToContract proposal, send trx to smartContract by actuator is not allowed.
+      if (dbManager.getDynamicPropertiesStore().getForbidTransferToContract() == 1
               && toAccount != null
               && toAccount.getType() == AccountType.Contract) {
         throw new ContractValidateException("Cannot transfer TRX to a smartContract.");

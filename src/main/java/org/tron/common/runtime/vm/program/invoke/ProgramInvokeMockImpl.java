@@ -50,6 +50,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   private boolean isConstantCall;
 
+  private boolean isStaticCall;
+
   public ProgramInvokeMockImpl(byte[] msgDataRaw) {
     this();
     this.msgData = Arrays.clone(msgDataRaw);
@@ -224,8 +226,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean isConstantCall() {
-    return isConstantCall;
+  public boolean isStaticCall() {
+    return isStaticCall;
   }
 
   @Override
@@ -243,17 +245,22 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setConstantCall() {
-    isConstantCall = true;
-  }
-
-  @Override
   public BlockCapsule getBlockByNum(int index) {
     try {
       return deposit.getDbManager().getBlockByNum(index);
     } catch (StoreException e) {
       throw new IllegalOperationException("cannot find block num");
     }
+  }
+
+  @Override
+  public void setConstantCall() {
+    isConstantCall = true;
+  }
+
+  @Override
+  public boolean isConstantCall() {
+    return isConstantCall;
   }
 
   @Override

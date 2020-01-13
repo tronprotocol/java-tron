@@ -53,7 +53,7 @@ public class TransferActuatorTest {
   private static TronApplicationContext context;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -70,7 +70,7 @@ public class TransferActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     //    Args.setParam(new String[]{"--output-directory", dbPath},
     //        "config-junit.conf");
     //    dbManager = new Manager();
@@ -439,9 +439,8 @@ public class TransferActuatorTest {
 
   @Test
   public void transferToSmartContractAddress()
-      throws ContractExeException, ReceiptCheckErrException, VMIllegalException,
-      ContractValidateException, BalanceInsufficientException {
-    dbManager.getDynamicPropertiesStore().saveAllowTvmSolidity059(1);
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException, BalanceInsufficientException {
+    dbManager.getDynamicPropertiesStore().saveForbidTransferToContract(1);
     String contractName = "testContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[]";

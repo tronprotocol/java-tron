@@ -363,6 +363,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long forbidTransferToContract; //committee parameter
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -551,6 +555,7 @@ public class Args {
     INSTANCE.allowDelegateResource = 0;
     INSTANCE.allowSameTokenName = 0;
     INSTANCE.allowTvmSolidity059 = 0;
+    INSTANCE.forbidTransferToContract = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -908,6 +913,10 @@ public class Args {
     INSTANCE.allowTvmSolidity059 =
             config.hasPath("committee.allowTvmSolidity059") ? config
                     .getInt("committee.allowTvmSolidity059") : 0;
+
+    INSTANCE.forbidTransferToContract =
+        config.hasPath("committee.forbidTransferToContract") ? config
+            .getInt("committee.forbidTransferToContract") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;

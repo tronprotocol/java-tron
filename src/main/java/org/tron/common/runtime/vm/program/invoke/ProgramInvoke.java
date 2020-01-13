@@ -63,7 +63,7 @@ public interface ProgramInvoke {
 
   Deposit getDeposit();
 
-  boolean isConstantCall();
+  boolean isStaticCall();
 
   long getVmShouldEndInUs();
 
@@ -71,7 +71,9 @@ public interface ProgramInvoke {
 
   long getEnergyLimit();
 
+  BlockCapsule getBlockByNum(int index);
+
   void setConstantCall();
 
-  BlockCapsule getBlockByNum(int index);
+  boolean isConstantCall();
 }

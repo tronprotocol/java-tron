@@ -116,17 +116,17 @@ public class TransferToAccountTest {
 
   /**
    * pragma solidity ^0.5.4;
-   *
+   * <p>
    * contract TestTransferTo { constructor() public payable{}
-   *
+   * <p>
    * function depositIn() public payable{}
-   *
+   * <p>
    * function transferTokenTo(address  payable toAddress, trcToken id,uint256 amount) public payable
    * { toAddress.transferToken(amount,id); }
-   *
+   * <p>
    * function transferTo(address  payable toAddress ,uint256 amount) public payable {
    * toAddress.transfer(amount); }
-   *
+   * <p>
    * }
    */
   @Test
@@ -256,8 +256,7 @@ public class TransferToAccountTest {
     runtimeImpl.execute();
     runtimeImpl.go();
 
-    Assert.assertEquals("Attempt to call a state modifying opcode inside STATICCALL",
-        runtimeImpl.getRuntimeError());
+    Assert.assertNull(runtimeImpl.getRuntimeError());
 
 
   }

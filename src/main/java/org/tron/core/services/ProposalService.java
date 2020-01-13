@@ -56,7 +56,8 @@ public class ProposalService {
     ALLOW_CHANGE_DELEGATION(30), //1, 30
     WITNESS_127_PAY_PER_BLOCK(31), //drop, 31
     ALLOW_TVM_SOLIDITY_059(32), // 1, 32
-    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33); // 10, 33
+    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, 33
+    FORBID_TRANSFER_TO_CONTRACT(35); // 1, 35
 
     ProposalType(long code) {
       this.code = code;
@@ -332,6 +333,24 @@ public class ProposalService {
         }
         break;
       }
+
+      case FORBID_TRANSFER_TO_CONTRACT: {
+        if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_6)) {
+
+          throw new ContractValidateException(BAD_PARAM_ID);
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[FORBID_TRANSFER_TO_CONTRACT] is only allowed to be 1");
+        }
+        if (manager.getDynamicPropertiesStore().getAllowCreationOfContracts() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
+                  + "before [FORBID_TRANSFER_TO_CONTRACT] can be proposed");
+        }
+        break;
+      }
+
       case ALLOW_SHIELDED_TRANSACTION: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
           throw new ContractValidateException(
@@ -528,6 +547,10 @@ public class ProposalService {
         }
         case SHIELDED_TRANSACTION_FEE: {
           manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
+          break;
+        }
+        case FORBID_TRANSFER_TO_CONTRACT: {
+          manager.getDynamicPropertiesStore().saveForbidTransferToContract(entry.getValue());
           break;
         }
         default:
