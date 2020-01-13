@@ -37,7 +37,6 @@ import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.common.zksnark.MerklePath;
 import org.tron.common.zksnark.ZksnarkClient;
-import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;

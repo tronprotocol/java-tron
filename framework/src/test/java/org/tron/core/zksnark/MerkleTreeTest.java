@@ -20,7 +20,6 @@ import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.MerklePath;
-import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
