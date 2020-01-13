@@ -17,9 +17,7 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
@@ -69,7 +67,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
   private MarketPriceStore marketPriceStore;
 
-  private final Integer MAX_SEARCH_NUM = 10;
+  private static final Integer MAX_SEARCH_NUM = 10;
 
   private byte[] sellTokenID = null;
   private byte[] buyTokenID = null;
@@ -117,10 +115,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       // fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
-      // Add to blackhole address
+      // add to blackhole address
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
 
-      // 1. Transfer of balance
+      // 1. transfer of balance
       transferBalanceOrToken(accountCapsule, contract);
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
 
@@ -140,7 +138,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
       ret.setStatus(fee, code.SUCESS);
-    } catch (ItemNotFoundException | InvalidProtocolBufferException | BalanceInsufficientException e) {
+    } catch (ItemNotFoundException
+        | InvalidProtocolBufferException
+        | BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
