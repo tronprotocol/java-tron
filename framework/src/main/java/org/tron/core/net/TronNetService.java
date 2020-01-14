@@ -109,6 +109,7 @@ public class TronNetService {
           break;
         case CROSS_MSG:
           crossChainMsgHandler.processMessage(peer, msg);
+          break;
         default:
           throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }

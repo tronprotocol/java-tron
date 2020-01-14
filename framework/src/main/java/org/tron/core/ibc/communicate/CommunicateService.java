@@ -26,6 +26,8 @@ import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Proof;
 import org.tron.protos.Protocol.ReasonCode;
+import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j(topic = "Communicate")
 @Service
@@ -91,6 +93,10 @@ public class CommunicateService implements Communicate {
 
   @Override
   public boolean validProof(CrossMessage crossMessage) {
+    Contract contract = crossMessage.getTransaction().getRawData().getContract(0);
+    if (contract.getType() != ContractType.CrossContract) {
+      return false;
+    }
     List<Proof> proofList = crossMessage.getProofList();
     Sha256Hash txId = getTxId(crossMessage);
     Sha256Hash root = getRoot(crossMessage, crossMessage.getRootHeight());

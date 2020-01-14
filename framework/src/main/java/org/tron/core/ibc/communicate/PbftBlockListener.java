@@ -139,13 +139,12 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
     try {
       Sha256Hash txHash = transactionCapsule.getTransactionId();
       Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
+      if (contract.getType() != ContractType.CrossContract) {
+        return false;
+      }
       if (transactionCapsule.isSource()) {
-        if (contract.getType() == ContractType.CrossContract) {
-          waitingSendTx.get(blockNum).add(txHash);
-          return true;
-        } else {
-          return false;
-        }
+        waitingSendTx.get(blockNum).add(txHash);
+        return true;
       }
       CrossStore crossStore = chainBaseManager.getCrossStore();
       CrossMessage crossMessage = crossStore.getReceiveCrossMsgUnEx(txHash);
