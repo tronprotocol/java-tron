@@ -350,8 +350,13 @@ public class Wallet {
       CreateSmartContract contract = ContractCapsule
           .getSmartContractFromTransaction(trx.getInstance());
       long percent = contract.getNewContract().getConsumeUserResourcePercent();
+      byte[] data = contract.getNewContract().getBytecode().toByteArray();
+
       if (percent < 0 || percent > 100) {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
+      }
+      if(ArrayUtils.isEmpty(data)){
+        throw new ContractValidateException("bytecode must have");
       }
     }
     setTransaction(trx);
