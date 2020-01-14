@@ -39,7 +39,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +50,8 @@ public class BlockHeaderSyncHandler {
 
   private static final long BLOCK_HEADER_LENGTH = 10;
 
+  private static final String CHAIN_ID = "";
+
   @Autowired
   private BlockHeaderStore blockHeaderStore;
 
@@ -60,11 +61,14 @@ public class BlockHeaderSyncHandler {
   @Autowired
   private PbftSignDataStore pbftSignDataStore;
 
-  @Autowired
-  private CommonDataBase commonDataBase;
+  private CommonDataBase commonDataBase = new CommonDataBase("chain-common-data-base");
 
   @Autowired
   private HeaderManager headerManager;
+
+  @Setter
+  @Getter
+  private boolean syncDisabled;
 
   private ConcurrentMap<Long, BlockHeaderCapsule> blockHeaderMap = new ConcurrentHashMap<>();
   private Queue<Pair<PeerConnection, BlockHeaderCapsule>> latestBlockHeaders = new ConcurrentLinkedQueue<>();
@@ -80,7 +84,7 @@ public class BlockHeaderSyncHandler {
   private ExecutorService sendRequestExecutor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder().setNameFormat("sendRequestExecutor").build());
 
-  private ExecutorService sendNoticeExecutor = Executors.newSingleThreadExecutor(
+  private ExecutorService triggerNoticeExecutor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder().setNameFormat("sendNoticeExecutor").build());
 
   private ExecutorService sendEpochExecutor = Executors.newSingleThreadExecutor(
@@ -93,10 +97,9 @@ public class BlockHeaderSyncHandler {
   private void init() {
     updateHeaderExecutor.execute(this::updateBlockHeader);
     sendRequestExecutor.execute(this::sendRequest);
-    sendNoticeExecutor.execute(this::sendNotice);
+    triggerNoticeExecutor.execute(this::triggerNotice);
     handleLatestBlockHeaderExecutor.execute(this::handleLatestBlockHeader);
   }
-
 
   public void initSender() {
 
@@ -106,9 +109,16 @@ public class BlockHeaderSyncHandler {
 
   }
 
-  public void HandleUpdatedNotice(PeerConnection peer, TronMessage msg) throws BadBlockException {
+  public void HandleUpdatedNotice(PeerConnection peer, TronMessage msg) {
     BlockHeaderUpdatedNoticeMessage noticeMessage = (BlockHeaderUpdatedNoticeMessage) msg;
     latestBlockHeaders.add(Pair.of(peer, new BlockHeaderCapsule(noticeMessage.getBlockHeader())));
+    Pair<PeerConnection, BlockHeaderCapsule> pair = latestBlockHeaders.peek();
+    long recieveBlockHeaderHeight = (pair == null ? 0 : pair.getRight().getNum());
+    String chainId = new BlockHeaderCapsule(noticeMessage.getBlockHeader()).getChainId();
+    long min = Longs.min(getLatestSyncBlockHeight(chainId), recieveBlockHeaderHeight);
+    if (noticeMessage.getCurrentBlockHeight() - min >= 2) {
+      syncDisabled = false;
+    }
   }
 
   public void handleRequest(PeerConnection peer, TronMessage msg) throws ItemNotFoundException, BadItemException {
@@ -118,9 +128,9 @@ public class BlockHeaderSyncHandler {
     long blockHeight = requestMessage.getBlockHeight();
     long length = requestMessage.getLength();
 
-    long currentBlockheight = getLatestPbftBlockHeight();
+    long currentBlockheight = getLatestSyncBlockHeight(chainIdString);
     if (currentBlockheight > blockHeight) {
-      long min = calculateLength(currentBlockheight - blockHeight, length);
+      long min = min(currentBlockheight - blockHeight, length);
       List<Protocol.BlockHeader> blockHeaders = new ArrayList<>();
       for (int i = 1; i < min; i++) {
         long height = currentBlockheight + i;
@@ -128,12 +138,13 @@ public class BlockHeaderSyncHandler {
         BlockHeaderCapsule blockHeaderCapsule = blockHeaderStore.get(blockId.getBytes());
         blockHeaders.add(blockHeaderCapsule.getInstance());
       }
-      BlockHeaderInventoryMesasge inventoryMesasge = new BlockHeaderInventoryMesasge(currentBlockheight, blockHeaders);
+
+      BlockHeaderInventoryMesasge inventoryMesasge = new BlockHeaderInventoryMesasge(chainIdString, currentBlockheight, blockHeaders);
       peer.sendMessage(inventoryMesasge);
     }
   }
 
-  public void handleInventory(PeerConnection peer, TronMessage msg) throws BadBlockException {
+  public void handleInventory(PeerConnection peer, TronMessage msg) throws BadBlockException, ItemNotFoundException {
     BlockHeaderInventoryMesasge blockHeaderInventoryMesasge = (BlockHeaderInventoryMesasge) msg;
     List<Protocol.BlockHeader> blockHeaders = blockHeaderInventoryMesasge.getBlockHeaders();
     for (Protocol.BlockHeader blockHeader : blockHeaders) {
@@ -177,24 +188,26 @@ public class BlockHeaderSyncHandler {
     return pbftSignDataStore.getSrSignData(epoch).getInstance();
   }
 
-  public void simpleVerifyHeader(Protocol.BlockHeader blockHeader) throws BadBlockException {
+  public void simpleVerifyHeader(Protocol.BlockHeader blockHeader) throws BadBlockException, ItemNotFoundException {
+    String chainId = ByteArray.toHexString(blockHeader.getRawData().getChainId().toByteArray());
     long blockHeight = blockHeader.getRawData().getNumber();
-    long localBlockHeight = getLatestPbftBlockHeight();
-    byte[] localBlockHash = getLatestPbftBlockHash();
+    long localBlockHeight = getLatestSyncBlockHeight(chainId);
+    byte[] localBlockHash = getLatestSyncBlockHash(chainId);
     // srlist verifyHeader
 
     if (localBlockHeight >= blockHeight) {
       return;
     }
 
-    if (Arrays.equals(blockHeader.getRawData().getParentHash().toByteArray(), localBlockHash)) {
+    if (!Arrays.equals(blockHeader.getRawData().getParentHash().toByteArray(), localBlockHash)) {
       handleMisbehaviour(blockHeader);
     }
   }
 
   public void verifyHeader(Protocol.BlockHeader blockHeader) throws BadBlockException {
+    String chainId = ByteArray.toHexString(blockHeader.getRawData().getChainId().toByteArray());
     long blockHeight = blockHeader.getRawData().getNumber();
-    long localBlockHeight = getLatestPbftBlockHeight();
+    long localBlockHeight = getLatestPBFTBlockHeight(chainId);
     // srlist verifyHeader
 
     if (localBlockHeight >= blockHeight) {
@@ -232,41 +245,78 @@ public class BlockHeaderSyncHandler {
   public void updateBlockHeader() {
     while (true) {
       try {
-        long currentBlockHeight = commonDataBase.getLatestPbftBlockNum();
-        BlockHeaderCapsule headerCapsule = blockHeaderMap.get(currentBlockHeight);
+        if (isSyncDisabled()) {
+          TimeUnit.SECONDS.sleep(1);
+          continue;
+        }
+
+        if (getLatestSyncBlockHeight(CHAIN_ID) == getLatestPBFTBlockHeight(CHAIN_ID)) {
+          blockHeaderMap.clear();
+          commonDataBase.saveFirstPBFTBlockNum(CHAIN_ID, 0L);
+          syncDisabled = true;
+          continue;
+        }
+
+        long currentBlockHeight = getLatestSyncBlockHeight(CHAIN_ID);
+        long nextBlockHeight = currentBlockHeight + 1;
+        BlockHeaderCapsule headerCapsule = blockHeaderMap.get(nextBlockHeight);
         if (headerCapsule == null) {
           TimeUnit.MILLISECONDS.sleep(50);
           continue;
         }
-        storeBlockHeader(headerCapsule);
+
+        storeSyncBlockHeader(headerCapsule);
+        blockHeaderMap.remove(nextBlockHeight);
       } catch (Exception e) {
         logger.info("updateBlockHeader {}", e.getMessage());
       }
     }
   }
 
-  public void storeBlockHeader(BlockHeaderCapsule headerCapsule) {
+  public void storePBFTBlockHeader(BlockHeaderCapsule headerCapsule) {
     String chainId = headerCapsule.getChainId();
     BlockCapsule.BlockId blockId = headerCapsule.getBlockId();
     blockHeaderIndexStore.put(chainId, blockId);
-    blockHeaderStore.put(blockId.getBytes(), headerCapsule);
-    commonDataBase.saveLatestPbftBlockNum(blockId.getNum());
+    blockHeaderStore.put(chainId, headerCapsule);
+    commonDataBase.saveFirstPBFTBlockNum(chainId, blockId.getNum());
+    saveLatestSyncBlockNum(headerCapsule);
   }
 
-  public long calculateLength(long... arrays) {
+  public void storeSyncBlockHeader(BlockHeaderCapsule headerCapsule) {
+    String chainId = headerCapsule.getChainId();
+    BlockCapsule.BlockId blockId = headerCapsule.getBlockId();
+    blockHeaderIndexStore.put(chainId, blockId);
+    blockHeaderStore.put(chainId, headerCapsule);
+    commonDataBase.saveLatestSyncBlockNum(chainId, blockId.getNum());
+  }
+
+  public void saveLatestSyncBlockNum(BlockHeaderCapsule headerCapsule) {
+    if (isSyncDisabled()) {
+      String chainId = headerCapsule.getChainId();
+      BlockCapsule.BlockId blockId = headerCapsule.getBlockId();
+      commonDataBase.saveLatestSyncBlockNum(chainId, blockId.getNum());
+    }
+  }
+
+  public long min(long... arrays) {
     return Longs.min(arrays);
   }
 
   public void sendRequest() {
     while (true) {
       try {
-        if (blockHeaderMap.size() >= 50 || hasBeenSentHeight - getLatestPbftBlockHeight() >= 50) {
+        if (isSyncDisabled()) {
+          TimeUnit.SECONDS.sleep(1);
+          continue;
+        }
+
+        if (!blockHeaderMap.isEmpty() || hasBeenSentHeight - getLatestSyncBlockHeight(CHAIN_ID) > 0) {
           TimeUnit.MILLISECONDS.sleep(100);
           continue;
         }
 
-        long localLatestHeight = getLatestPbftBlockHeight();
-        long diff = latestHeaderHeightOnChain - localLatestHeight;
+        long localLatestHeight = getLatestSyncBlockHeight(CHAIN_ID);
+        long diff = getFirstPBFTBlockHeight(CHAIN_ID) - localLatestHeight;
         long quot = diff / BLOCK_HEADER_LENGTH;
         long mod = diff % BLOCK_HEADER_LENGTH;
         if (hasBeenSentHeight == 0) {
@@ -307,7 +357,7 @@ public class BlockHeaderSyncHandler {
 //    }
 //  }
 
-  public void sendNotice() {
+  public void triggerNotice() {
 
   }
 
@@ -342,7 +392,7 @@ public class BlockHeaderSyncHandler {
   }
 
   public long calculateNextEpoch() {
-
+    return 0;
   }
 
   public Long getCurrentEpoch() {
@@ -363,30 +413,49 @@ public class BlockHeaderSyncHandler {
         long currentBlockHeight = headerCapsule.getNum();
         peerInfoMap.compute(peer, (k,v) -> new PeerInfo()).setCurrentBlockHeight(currentBlockHeight);
         updateLatestHeaderOnChain();
-        storeBlockHeader(new BlockHeaderCapsule(headerCapsule.getInstance()));
+
+        String chainId = headerCapsule.getChainId();
+        if (commonDataBase.getFirstPBFTBlockNum(chainId) == 0) {
+          commonDataBase.saveFirstPBFTBlockNum(chainId, headerCapsule.getNum());
+        }
+
+        storePBFTBlockHeader(new BlockHeaderCapsule(headerCapsule.getInstance()));
       } catch (Exception e) {
         logger.info("handleLatestBlockHeader {}", e.getMessage());
       }
     }
   }
 
-  public byte[] getLatestPbftBlockHash() {
-    List<BlockHeaderCapsule> blockHeaderCapsules = blockHeaderStore.getBlockHeaderByLatestNum(1);
-    if (blockHeaderCapsules.isEmpty()) {
-      return new byte[0];// genesis block hash
-    }
-
-    return blockHeaderCapsules.get(0).getBlockId().getBytes();
+  public byte[] getLatestPBFTBlockHash(String chainId) throws ItemNotFoundException {
+    long latestPBFTBlockHeight = commonDataBase.getLatestPBFTBlockNum(chainId);
+    BlockCapsule.BlockId blockId = blockHeaderIndexStore.get(chainId, latestPBFTBlockHeight);
+    return blockId.getBytes();
   }
 
-  public long getLatestPbftBlockHeight() {
-    List<BlockHeaderCapsule> blockHeaderCapsules = blockHeaderStore.getBlockHeaderByLatestNum(1);
-    if (blockHeaderCapsules.isEmpty()) {
-      return 0;// genesis block number
-    }
-
-    return blockHeaderCapsules.get(0).getBlockId().getNum();
+  public long getLatestPBFTBlockHeight(String chainId) {
+    return commonDataBase.getLatestPBFTBlockNum(chainId);
   }
+
+  public byte[] getLatestSyncBlockHash(String chainId) throws ItemNotFoundException {
+    long latestSyncBlockHeight = commonDataBase.getLatestSyncBlockNum(chainId);
+    BlockCapsule.BlockId blockId = blockHeaderIndexStore.get(chainId, latestSyncBlockHeight);
+    return blockId.getBytes();
+  }
+
+  public long getLatestSyncBlockHeight(String chainId) {
+    return commonDataBase.getLatestSyncBlockNum(chainId);
+  }
+
+  public byte[] getFirstPBFTBlockHash(String chainId) throws ItemNotFoundException {
+    long firstPBFTBlockHeight = commonDataBase.getFirstPBFTBlockNum(chainId);
+    BlockCapsule.BlockId blockId = blockHeaderIndexStore.get(chainId, firstPBFTBlockHeight);
+    return blockId.getBytes();
+  }
+
+  public long getFirstPBFTBlockHeight(String chainId) {
+    return commonDataBase.getFirstPBFTBlockNum(chainId);
+  }
+
 
   public void updateLatestHeaderOnChain() {
     latestHeaderHeightOnChain = peerInfoMap.values().stream()

@@ -1,6 +1,8 @@
 package org.tron.core.net.message;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol;
 
 import java.util.List;
@@ -14,8 +16,12 @@ public class BlockHeaderInventoryMesasge extends TronMessage {
     this.blockHeaderInventory = Protocol.BlockHeaderInventory.parseFrom(packed);
   }
 
-  public BlockHeaderInventoryMesasge(long currentBlockHeight, List<Protocol.BlockHeader> blockHeaders) {
-
+  public BlockHeaderInventoryMesasge(String chainId, long currentBlockHeight, List<Protocol.BlockHeader> blockHeaders) {
+    this.blockHeaderInventory = Protocol.BlockHeaderInventory.newBuilder()
+        .setChainId(ByteString.copyFrom(ByteArray.fromHexString(chainId)))
+        .setCurrentBlockHeight(currentBlockHeight)
+        .addAllBlockHeader(blockHeaders)
+        .build();
   }
 
   public List<Protocol.BlockHeader> getBlockHeaders() {

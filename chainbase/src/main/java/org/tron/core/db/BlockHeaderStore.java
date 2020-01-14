@@ -19,19 +19,27 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Longs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BlockHeaderCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j(topic = "DB")
 @Component
 public class BlockHeaderStore extends TronStoreWithRevoking<BlockHeaderCapsule> {
+
+  private static final String SPLIT = "_";
 
   @Autowired
   private BlockHeaderStore(@Value("block_header") String dbName) {
@@ -67,4 +75,23 @@ public class BlockHeaderStore extends TronStoreWithRevoking<BlockHeaderCapsule> 
         .sorted(Comparator.comparing(BlockHeaderCapsule::getNum))
         .collect(Collectors.toList());
   }
+
+  private byte[] buildKey(String chainId, BlockId blockId) {
+    return Bytes.concat((chainId + SPLIT).getBytes(), blockId.getBytes());
+  }
+
+  public void put(String chainId, BlockHeaderCapsule headerCapsule) {
+    put(buildKey(chainId, headerCapsule.getBlockId()), headerCapsule);
+  }
+
+  public BlockHeaderCapsule get(String chainId, BlockId blockId)
+      throws ItemNotFoundException {
+    BlockHeaderCapsule value = getUnchecked(buildKey(chainId, blockId));
+    if (value == null || value.getData() == null) {
+      throw new ItemNotFoundException("block hash: " + blockId.getString() + " is not found!");
+    }
+    return value;
+  }
+
+
 }
