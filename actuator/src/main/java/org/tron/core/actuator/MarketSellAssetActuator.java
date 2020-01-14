@@ -17,6 +17,7 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -78,7 +79,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     super(ContractType.MarketSellAssetContract, MarketSellAssetContract.class);
   }
 
-  private void initStores(){
+  private void initStores() {
     accountStore = chainBaseManager.getAccountStore();
     dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     assetIssueStore = chainBaseManager.getAssetIssueStore();
@@ -302,7 +303,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // search from the bestPrice
       // check if price list or bestPrice exists
       MarketPriceCapsule bestPrice = null;
-      byte[] makerPair = MarketUtils.createPairKey(sellTokenID,buyTokenID);
+      byte[] makerPair = MarketUtils.createPairKey(sellTokenID, buyTokenID);
       MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.getUnchecked(makerPair);
       if (priceListCapsule != null) {
         bestPrice = new MarketPriceCapsule(priceListCapsule.getBestPrice());
@@ -360,7 +361,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       return false;
     }
 
-    return priceMatch(takerPrice, bestPrice);
+    return MarketUtils.priceMatch(takerPrice, bestPrice);
   }
 
   public void matchOrder(MarketOrderCapsule takerCapsule, MarketPrice takerPrice)
@@ -423,16 +424,21 @@ public class MarketSellAssetActuator extends AbstractActuator {
   public void matchSingleOrder(MarketOrderCapsule takerOrderCapsule,
       MarketOrderCapsule makerOrderCapsule) {
 
+    BigInteger takerSellRemainQuantity = BigInteger
+        .valueOf(takerOrderCapsule.getSellTokenQuantityRemain());
+    BigInteger makerSellQuantity = BigInteger.valueOf(makerOrderCapsule.getSellTokenQuantity());
+    BigInteger makerBuyQuantity = BigInteger.valueOf(makerOrderCapsule.getBuyTokenQuantity());
+    BigInteger makerSellRemainQuantity = BigInteger
+        .valueOf(makerOrderCapsule.getSellTokenQuantityRemain());
+
     // according to the price of maker, calculate the quantity of taker can buy
     // for makerPrice,sellToken is A,buyToken is TRX.
     // for takerPrice,buyToken is A,sellToken is TRX.
 
     // makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX = takerBuyTokenQuantityCurrent_A/takerSellTokenQuantityRemain_TRX
     // => takerBuyTokenQuantityCurrent_A = takerSellTokenQuantityRemain_TRX * makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
-    long takerBuyTokenQuantityRemain = Math.floorDiv(
-        Math.multiplyExact(takerOrderCapsule.getSellTokenQuantityRemain(),
-            makerOrderCapsule.getSellTokenQuantity()),
-        makerOrderCapsule.getBuyTokenQuantity());
+    long takerBuyTokenQuantityRemain = takerSellRemainQuantity.multiply(makerSellQuantity)
+        .divide(makerBuyQuantity).longValue();
 
     if (takerBuyTokenQuantityRemain == 0) {
       // quantity too small, return sellToken to user
@@ -448,9 +454,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // taker == maker
 
       // makerSellTokenQuantityRemain_A/makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
-      makerBuyTokenQuantityReceive = Math
-          .floorDiv(Math.multiplyExact(makerOrderCapsule.getSellTokenQuantityRemain(),
-              makerOrderCapsule.getBuyTokenQuantity()), makerOrderCapsule.getSellTokenQuantity());
+      // => makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantityRemain_A * makerBuyTokenQuantity_TRX / makerSellTokenQuantity_A
+
+      makerBuyTokenQuantityReceive = makerSellRemainQuantity.multiply(makerBuyQuantity)
+          .divide(makerSellQuantity).longValue();
       takerBuyTokenQuantityReceive = makerOrderCapsule.getSellTokenQuantityRemain();
 
       long takerSellTokenLeft =
@@ -486,9 +493,11 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // if the quantity of taker want to buy is bigger than the remain of maker want to sell,
       // consume the order of maker
       // makerSellTokenQuantityRemain_A/makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
-      makerBuyTokenQuantityReceive = Math
-          .floorDiv(Math.multiplyExact(makerOrderCapsule.getSellTokenQuantityRemain(),
-              makerOrderCapsule.getBuyTokenQuantity()), makerOrderCapsule.getSellTokenQuantity());
+//      makerBuyTokenQuantityReceive = Math
+//          .floorDiv(Math.multiplyExact(makerOrderCapsule.getSellTokenQuantityRemain(),
+//              makerOrderCapsule.getBuyTokenQuantity()), makerOrderCapsule.getSellTokenQuantity());
+      makerBuyTokenQuantityReceive = makerSellRemainQuantity.multiply(makerBuyQuantity)
+          .divide(makerSellQuantity).longValue();
 
       makerOrderCapsule.setState(State.INACTIVE);
       if (makerBuyTokenQuantityReceive == 0) {
@@ -591,22 +600,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
   }
 
 
-  public boolean priceMatch(MarketPrice takerPrice, MarketPrice makerPrice) {
-
-    // for takerPrice, buyToken is A,sellToken is TRX.
-    // price_A_taker * buyQuantity_taker = Price_TRX * sellQuantity_taker
-    // ==> price_A_taker = Price_TRX * sellQuantity_taker/buyQuantity_taker
-
-    // price_A_taker must be greater or equal to price_A_maker
-    // price_A_taker / price_A_maker >= 1
-    // ==> Price_TRX * sellQuantity_taker/buyQuantity_taker >= Price_TRX * buyQuantity_maker/sellQuantity_maker
-    // ==> sellQuantity_taker * sellQuantity_maker > buyQuantity_taker * buyQuantity_maker
-
-    return Math.multiplyExact(takerPrice.getSellTokenQuantity(), makerPrice.getSellTokenQuantity())
-        >= Math.multiplyExact(takerPrice.getBuyTokenQuantity(), makerPrice.getBuyTokenQuantity());
-  }
-
-
   public void saveRemainOrder(MarketOrderCapsule orderCapsule, MarketPrice currentPrice,
       MarketOrderPosition position)
       throws ItemNotFoundException {
@@ -618,12 +611,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
       priceListCapsule = new MarketPriceLinkedListCapsule(sellTokenID, buyTokenID);
     }
 
-    MarketPriceCapsule headPriceCapsule = priceListCapsule
+    priceListCapsule
         .insertMarket(currentPrice, sellTokenID, buyTokenID, marketPriceStore, position);
-    if (headPriceCapsule != null) {
-      priceListCapsule.setBestPrice(headPriceCapsule);
-      pairToPriceStore.put(pairKey, priceListCapsule);
-    }
+    pairToPriceStore.put(pairKey, priceListCapsule);
 
     // add order into orderList
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(

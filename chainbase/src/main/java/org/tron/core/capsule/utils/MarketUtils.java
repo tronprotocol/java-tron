@@ -83,28 +83,51 @@ public class MarketUtils {
     // ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
     // ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
 
-    BigInteger bigPrice1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
-    BigInteger bigPrice1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
-    BigInteger bigPrice2BuyQuantity = BigInteger.valueOf(price2.getBuyTokenQuantity());
-    BigInteger bigPrice2SellQuantity = BigInteger.valueOf(price2.getSellTokenQuantity());
+    BigInteger price1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
+    BigInteger price1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
+    BigInteger price2BuyQuantity = BigInteger.valueOf(price2.getBuyTokenQuantity());
+    BigInteger price2SellQuantity = BigInteger.valueOf(price2.getSellTokenQuantity());
 
-    return bigPrice1BuyQuantity.multiply(bigPrice2SellQuantity).compareTo(bigPrice2BuyQuantity
-        .multiply(bigPrice1SellQuantity)) == -1;
+    return price1BuyQuantity.multiply(price2SellQuantity).compareTo(price2BuyQuantity
+        .multiply(price1SellQuantity)) == -1;
 
   }
 
 
-
   public static boolean isSamePrice(MarketPrice price1, MarketPrice price2) {
 
-    BigInteger bigPrice1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
-    BigInteger bigPrice1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
-    BigInteger bigPrice2BuyQuantity = BigInteger.valueOf(price2.getBuyTokenQuantity());
-    BigInteger bigPrice2SellQuantity = BigInteger.valueOf(price2.getSellTokenQuantity());
+    BigInteger price1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
+    BigInteger price1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
+    BigInteger price2BuyQuantity = BigInteger.valueOf(price2.getBuyTokenQuantity());
+    BigInteger price2SellQuantity = BigInteger.valueOf(price2.getSellTokenQuantity());
 
-    return bigPrice1BuyQuantity.multiply(bigPrice2SellQuantity).equals(bigPrice2BuyQuantity
-        .multiply(bigPrice1SellQuantity)) ;
+    return price1BuyQuantity.multiply(price2SellQuantity).equals(price2BuyQuantity
+        .multiply(price1SellQuantity));
 
+  }
+
+
+  public static boolean priceMatch(MarketPrice takerPrice, MarketPrice makerPrice) {
+
+    // for takerPrice, buyToken is A,sellToken is TRX.
+    // price_A_taker * buyQuantity_taker = Price_TRX * sellQuantity_taker
+    // ==> price_A_taker = Price_TRX * sellQuantity_taker/buyQuantity_taker
+
+    // price_A_taker must be greater or equal to price_A_maker
+    // price_A_taker / price_A_maker >= 1
+    // ==> Price_TRX * sellQuantity_taker/buyQuantity_taker >= Price_TRX * buyQuantity_maker/sellQuantity_maker
+    // ==> sellQuantity_taker * sellQuantity_maker > buyQuantity_taker * buyQuantity_maker
+
+//    return Math.multiplyExact(takerPrice.getSellTokenQuantity(), makerPrice.getSellTokenQuantity())
+//        >= Math.multiplyExact(takerPrice.getBuyTokenQuantity(), makerPrice.getBuyTokenQuantity());
+
+    BigInteger takerBuyQuantity = BigInteger.valueOf(takerPrice.getBuyTokenQuantity());
+    BigInteger takerSellQuantity = BigInteger.valueOf(takerPrice.getSellTokenQuantity());
+    BigInteger makerPriceBuyQuantity = BigInteger.valueOf(makerPrice.getBuyTokenQuantity());
+    BigInteger makerPriceSellQuantity = BigInteger.valueOf(makerPrice.getSellTokenQuantity());
+
+    return takerSellQuantity.multiply(makerPriceSellQuantity)
+        .compareTo(takerBuyQuantity.multiply(makerPriceBuyQuantity)) >= 0;
   }
 
 
