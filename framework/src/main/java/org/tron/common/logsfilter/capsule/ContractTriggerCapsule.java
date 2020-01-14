@@ -10,13 +10,12 @@ import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
-import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.utils.Hash;
+import org.tron.common.crypto.Hash;
 import org.tron.core.config.args.Args;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 

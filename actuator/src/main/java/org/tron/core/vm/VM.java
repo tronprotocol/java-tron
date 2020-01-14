@@ -1,7 +1,7 @@
 package org.tron.core.vm;
 
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.common.utils.Hash.sha3;
+import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.core.vm.OpCode.CALL;
 import static org.tron.core.vm.OpCode.CALLTOKEN;
 import static org.tron.core.vm.OpCode.CALLTOKENID;

@@ -9,7 +9,7 @@ import org.junit.Test;
 import org.testng.Assert;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Hash;
+import org.tron.common.crypto.Hash;
 import org.tron.core.Wallet;
 import org.tron.core.vm.LogInfoTriggerParser;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;

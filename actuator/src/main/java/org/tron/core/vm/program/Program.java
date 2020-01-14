@@ -48,7 +48,7 @@ import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.Hash;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
