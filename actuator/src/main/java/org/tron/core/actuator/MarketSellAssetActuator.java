@@ -600,8 +600,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
   }
 
 
-
-
   public void saveRemainOrder(MarketOrderCapsule orderCapsule, MarketPrice currentPrice,
       MarketOrderPosition position)
       throws ItemNotFoundException {
@@ -614,8 +612,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
     }
 
     priceListCapsule
-        .insertMarket(currentPrice, sellTokenID, buyTokenID, marketPriceStore,pairToPriceStore, position);
-
+        .insertMarket(currentPrice, sellTokenID, buyTokenID, marketPriceStore, position);
+    pairToPriceStore.put(pairKey, priceListCapsule);
 
     // add order into orderList
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(

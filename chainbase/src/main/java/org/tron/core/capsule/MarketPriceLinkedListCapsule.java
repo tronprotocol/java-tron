@@ -121,7 +121,7 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
    * insert price by sort, if same, just return
    * */
   public void insertMarket(MarketPrice marketPrice, byte[] sellTokenID,
-      byte[] buyTokenID, MarketPriceStore marketPriceStore, MarketPairToPriceStore pairToPriceStore,
+      byte[] buyTokenID, MarketPriceStore marketPriceStore,
       MarketOrderPosition position)
       throws ItemNotFoundException {
 
@@ -181,9 +181,7 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
 
       // update the best price
       MarketPriceCapsule headPriceCapsule = marketPriceStore.get(dummy.getNext());
-      byte[] pairKey = MarketUtils.createPairKey(sellTokenID, buyTokenID);
       this.setBestPrice(headPriceCapsule);
-      pairToPriceStore.put(pairKey, this);
     }
   }
 
