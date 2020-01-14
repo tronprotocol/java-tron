@@ -355,7 +355,7 @@ public class Wallet {
       if (percent < 0 || percent > 100) {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
-      if(ArrayUtils.isEmpty(data)){
+      if (ArrayUtils.isEmpty(data)) {
         throw new ContractValidateException("bytecode must have");
       }
     }
