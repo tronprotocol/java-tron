@@ -98,7 +98,7 @@ public class HeaderManager {
   private boolean validBlockPbftSign(BlockHeader header) throws BadBlockException {
     //valid sr list
     long startTime = System.currentTimeMillis();
-    List<ByteString> srSignList = header.getSrsSignatureList();
+    List<ByteString> srSignList = null;//todo
     if (srSignList.size() != 0) {
       Set<ByteString> srSignSet = new ConcurrentSet();
       srSignSet.addAll(srSignList);

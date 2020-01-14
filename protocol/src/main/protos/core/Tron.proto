@@ -403,7 +403,6 @@ message BlockHeader {
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
-  repeated bytes srs_signature = 3;
 }
 
 // block
