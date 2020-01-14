@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
-import org.tron.consensus.pbft.message.PbftBlockMessage;
-import org.tron.consensus.pbft.message.PbftSrMessage;
+import org.tron.consensus.pbft.message.PbftMessage;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 
 @Slf4j(topic = "pbft")
@@ -25,6 +25,9 @@ public class PbftManager {
   @Autowired
   private MaintenanceManager maintenanceManager;
 
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
   private ExecutorService executorService = Executors.newFixedThreadPool(10,
       r -> new Thread(r, "Pbft"));
 
@@ -34,22 +37,28 @@ public class PbftManager {
     pbftMessageHandle.setMaintenanceManager(maintenanceManager);
   }
 
-  public void blockPrePrepare(BlockCapsule block) {
+  public void blockPrePrepare(BlockCapsule block, long epoch) {
+    if (!chainBaseManager.getDynamicPropertiesStore().allowPBFT()) {
+      return;
+    }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
-        doAction(PbftBlockMessage.buildPrePrepareMessage(block));
+        doAction(PbftMessage.prePrepareBlockMsg(block, epoch));
       } else {
-        doAction(PbftBlockMessage.buildFullNodePrePrepareMessage(block));
+        doAction(PbftMessage.fullNodePrePrepareBlockMsg(block, epoch));
       }
     }
   }
 
-  public void srPrePrepare(BlockCapsule block, List<ByteString> currentWitness, long cycle) {
+  public void srPrePrepare(BlockCapsule block, List<ByteString> currentWitness, long epoch) {
+    if (!chainBaseManager.getDynamicPropertiesStore().allowPBFT()) {
+      return;
+    }
     if (!pbftMessageHandle.isSyncing()) {
       if (Param.getInstance().isEnable()) {
-        doAction(PbftSrMessage.buildPrePrepareMessage(block, currentWitness, cycle));
+        doAction(PbftMessage.prePrepareSRLMsg(block, currentWitness, epoch));
       } else {
-        doAction(PbftSrMessage.buildFullNodePrePrepareMessage(block, currentWitness, cycle));
+        doAction(PbftMessage.fullNodePrePrepareSRLMsg(block, currentWitness, epoch));
       }
     }
   }
@@ -58,14 +67,10 @@ public class PbftManager {
     pbftMessageHandle.forwardMessage(message);
   }
 
-  public boolean checkIsWitnessMsg(PbftBaseMessage msg) {
-    return pbftMessageHandle.checkIsWitnessMsg(msg);
-  }
-
-  public boolean doAction(PbftBaseMessage msg) {
+  public boolean doAction(PbftMessage msg) {
     executorService.submit(() -> {
       logger.info("receive pbft msg: {}", msg);
-      switch (msg.getPbftMessage().getRawData().getPbftMsgType()) {
+      switch (msg.getPbftMessage().getRawData().getMsgType()) {
         case PREPREPARE:
           pbftMessageHandle.onPrePrepare(msg);
           break;
@@ -88,6 +93,17 @@ public class PbftManager {
       }
     });
     return true;
+  }
+
+  public boolean verifyMsg(PbftBaseMessage msg) {
+    long epoch = msg.getPbftMessage().getRawData().getEpoch();
+    List<ByteString> witnessList;
+    if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
+      witnessList = maintenanceManager.getCurrentWitness();
+    } else {
+      witnessList = maintenanceManager.getBeforeWitness();
+    }
+    return witnessList.contains(ByteString.copyFrom(msg.getPublicKey()));
   }
 
 }

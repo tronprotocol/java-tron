@@ -34,6 +34,9 @@ public class CrossChainActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    if (!chainBaseManager.getDynamicPropertiesStore().allowCrossChain()) {
+      return false;
+    }
     return true;
   }
 

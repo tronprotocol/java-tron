@@ -113,6 +113,7 @@ public class TronNetService {
           break;
         case CROSS_MSG:
           crossChainMsgHandler.processMessage(peer, msg);
+          break;
         case HEADER_UPDATED_NOTICE:
           blockHeaderSyncHandler.HandleUpdatedNotice(peer, msg);
           break;

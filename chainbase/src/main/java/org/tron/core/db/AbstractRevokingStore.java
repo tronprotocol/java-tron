@@ -219,6 +219,10 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
+  public void fastFlush() {
+  }
+
+  @Override
   public synchronized void revoke() {
     if (disabled) {
       return;

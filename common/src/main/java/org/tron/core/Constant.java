@@ -195,7 +195,7 @@ public class Constant {
 
   public static final String COMMITTEE_CHANGED_DELEGATION = "committee.changedDelegation";
 
-  public static final String COMMITTEE_CROSS_CHAIN = "committee.crossChain";
+  public static final String COMMITTEE_CROSS_CHAIN = "committee.allowCrossChain";
 
   public static final String USE_NATIVE_QUEUE = "event.subscribe.native.useNativeQueue";
 
@@ -237,4 +237,5 @@ public class Constant {
 
   public static final String NODE_CROSS_CHAIN_CONNECT = "node.crossChain.ip";
   public static final String NODE_CROSS_CHAIN_PORT = "node.crossChain.port";
+  public static final String COMMITTEE_ALLOW_PBFT = "committee.allowPBFT";
 }

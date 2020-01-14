@@ -38,7 +38,7 @@ import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
 
-@Slf4j(topic = "net")
+@Slf4j(topic = "net-cross")
 @Component
 @Scope("prototype")
 public class CrossChainHandshakeHandler extends ByteToMessageDecoder {
@@ -63,7 +63,7 @@ public class CrossChainHandshakeHandler extends ByteToMessageDecoder {
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
-    logger.info("channel active, {}", ctx.channel().remoteAddress());
+    logger.info("cross chain channel active, {}", ctx.channel().remoteAddress());
     channel.setChannelHandlerContext(ctx);
     if (remoteId.length == 64) {
       channel.initNode(remoteId, ((InetSocketAddress) ctx.channel().remoteAddress()).getPort());
@@ -78,7 +78,7 @@ public class CrossChainHandshakeHandler extends ByteToMessageDecoder {
     buffer.readBytes(encoded);
     P2pMessage msg = messageFactory.create(encoded);
 
-    logger.info("Handshake Receive from {}, {}", ctx.channel().remoteAddress(), msg);
+    logger.info("cross chain handshake Receive from {}, {}", ctx.channel().remoteAddress(), msg);
 
     switch (msg.getType()) {
       case P2P_HELLO:
@@ -112,7 +112,7 @@ public class CrossChainHandshakeHandler extends ByteToMessageDecoder {
         manager.getGenesisBlockId(), manager.getSolidBlockId(), manager.getHeadBlockId(), true);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
-    logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
+    logger.info("cross chain handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {

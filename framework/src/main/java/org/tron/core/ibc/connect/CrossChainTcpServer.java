@@ -52,7 +52,7 @@ public class CrossChainTcpServer {
       b.childHandler(tronChannelInitializer);
 
       // Start the client.
-      logger.info("TCP listener started, bind port {}", port);
+      logger.info("cross chain listener started, bind port {}", port);
 
       channelFuture = b.bind(port).sync();
 
@@ -61,10 +61,10 @@ public class CrossChainTcpServer {
       // Wait until the connection is closed.
       channelFuture.channel().closeFuture().sync();
 
-      logger.info("TCP listener is closed");
+      logger.info("cross chain listener is closed");
 
     } catch (Exception e) {
-      logger.error("Start TCP server failed.", e);
+      logger.error("Start cross chain server failed.", e);
     } finally {
       workerGroup.shutdownGracefully();
       bossGroup.shutdownGracefully();
@@ -75,10 +75,10 @@ public class CrossChainTcpServer {
   public void close() {
     if (listening && channelFuture != null && channelFuture.channel().isOpen()) {
       try {
-        logger.info("Closing TCP server...");
+        logger.info("Closing cross chain server...");
         channelFuture.channel().close().sync();
       } catch (Exception e) {
-        logger.warn("Closing TCP server failed.", e);
+        logger.warn("Closing cross chain server failed.", e);
       }
     }
   }

@@ -285,6 +285,17 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_PBFT: {
+        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_PBFT]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_PBFT] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -325,7 +336,8 @@ public class ProposalUtil {
     WITNESS_127_PAY_PER_BLOCK(31), //drop, 31
     ALLOW_TVM_SOLIDITY_059(32), // 1, 32
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, 33
-    CROSS_CHAIN(40);
+    ALLOW_PBFT(40),// 1,40
+    CROSS_CHAIN(41);
 
     private long code;
 

@@ -27,6 +27,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_NUMBER = "latest_block_header_number".getBytes();
+  private static final byte[] LATEST_BLOCK_CAPSULE = "latest_block_capsule".getBytes();
   private static final byte[] LATEST_BLOCK_HEADER_HASH = "latest_block_header_hash".getBytes();
   private static final byte[] STATE_FLAG = "state_flag"
       .getBytes(); // 1 : is maintenance, 0 : is not maintenance
@@ -134,6 +135,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] SR_LIST_CURRENT_CYCLE = "SR_LIST_CURRENT_CYCLE".getBytes();
   //cross
   private static final byte[] CROSS_CHAIN = "CROSS_CHAIN".getBytes();
+  private static final byte[] ALLOW_PBFT = "ALLOW_PBFT".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -167,6 +169,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getLatestBlockHeaderHash();
     } catch (IllegalArgumentException e) {
       this.saveLatestBlockHeaderHash(ByteString.copyFrom(ByteArray.fromHexString("00")));
+    }
+
+    try {
+      this.getLatestBlockCapsule();
+    } catch (IllegalArgumentException e) {
+      this.saveLatestBlockCapsule(null);
     }
 
     try {
@@ -599,7 +607,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getCrossChain();
     } catch (IllegalArgumentException e) {
-      this.saveChangeDelegation(DBConfig.getCrossChain());
+      this.saveCrossChain(DBConfig.getCrossChain());
+    }
+
+    try {
+      this.getAllowPBFT();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowPBFT(DBConfig.getAllowPBFT());
     }
 
   }
@@ -1607,6 +1621,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(() -> new IllegalArgumentException("not found maintenance flag"));
   }
 
+  public BlockCapsule getLatestBlockCapsule() {
+    try {
+      return new BlockCapsule(this.get(LATEST_BLOCK_CAPSULE).getData());
+    } catch (BadItemException | ItemNotFoundException e) {
+      logger.error("get latestBlockCapsule failed");
+    }
+    return null;
+  }
+
+  public void saveLatestBlockCapsule(BlockCapsule blockCapsule) {
+    this.put(LATEST_BLOCK_CAPSULE, new BytesCapsule(blockCapsule.getData()));
+  }
+
   /**
    * get id of global latest block.
    */
@@ -1789,6 +1816,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getChangeDelegation() == 1;
   }
 
+  public void saveAllowPBFT(long number) {
+    this.put(ALLOW_PBFT, new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getAllowPBFT() {
+    return Optional.ofNullable(getUnchecked(ALLOW_PBFT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_PBFT"));
+  }
+
+  public boolean allowPBFT() {
+    return getAllowPBFT() == 1;
+  }
+
   public void saveCrossChain(long number) {
     this.put(CROSS_CHAIN,
         new BytesCapsule(ByteArray.fromLong(number)));
@@ -1828,12 +1870,14 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_NET_WEIGHT = "TOTAL_NET_WEIGHT".getBytes();
     //ONE_DAY_NET_LIMIT - PUBLIC_NET_LIMIT，current TOTAL_NET_LIMIT
     private static final byte[] TOTAL_NET_LIMIT = "TOTAL_NET_LIMIT".getBytes();
-    private static final byte[] TOTAL_ENERGY_TARGET_LIMIT = "TOTAL_ENERGY_TARGET_LIMIT".getBytes();
+    private static final byte[] TOTAL_ENERGY_TARGET_LIMIT = "TOTAL_ENERGY_TARGET_LIMIT"
+        .getBytes();
     private static final byte[] TOTAL_ENERGY_CURRENT_LIMIT = "TOTAL_ENERGY_CURRENT_LIMIT"
         .getBytes();
     private static final byte[] TOTAL_ENERGY_AVERAGE_USAGE = "TOTAL_ENERGY_AVERAGE_USAGE"
         .getBytes();
-    private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
+    private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME"
+        .getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();

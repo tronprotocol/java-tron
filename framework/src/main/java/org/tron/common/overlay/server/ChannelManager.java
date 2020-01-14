@@ -174,7 +174,7 @@ public class ChannelManager {
   public synchronized boolean processCrossChainPeer(ByteString chainId, Channel peer) {
 
     if (recentlyDisconnected.getIfPresent(peer) != null) {
-      logger.info("Peer {} recently disconnected.", peer.getInetAddress());
+      logger.info("cross chain peer {} recently disconnected.", peer.getInetAddress());
       return false;
     }
 

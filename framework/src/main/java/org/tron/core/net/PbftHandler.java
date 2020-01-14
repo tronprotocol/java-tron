@@ -12,17 +12,17 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
+import org.tron.consensus.base.Param;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
-import org.tron.core.db.Manager;
+import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.peer.PeerConnection;
 
 @Component
 @Scope("prototype")
-public class PbftHandler extends SimpleChannelInboundHandler<PbftBaseMessage> {
+public class PbftHandler extends SimpleChannelInboundHandler<PbftMessage> {
 
-  public static final int MIN_BLOCK_COUNTS = 5;
   protected PeerConnection peer;
 
   private MessageQueue msgQueue;
@@ -35,12 +35,10 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftBaseMessage> {
   @Autowired
   private PbftManager pbftManager;
 
-  @Autowired
-  private Manager manager;
-
   @Override
-  public void channelRead0(final ChannelHandlerContext ctx, PbftBaseMessage msg) throws Exception {
-    if (!validMsgTime(msg)) {
+  public void channelRead0(final ChannelHandlerContext ctx, PbftMessage msg) throws Exception {
+    msgQueue.receivedMessage(msg);
+    if (Param.getInstance().getPbftInterface().isSyncing()) {
       return;
     }
     msg.analyzeSignature();
@@ -51,12 +49,11 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftBaseMessage> {
       if (msgCache.getIfPresent(key) != null) {
         return;
       }
-      if (!pbftManager.checkIsWitnessMsg(msg)) {
+      if (!pbftManager.verifyMsg(msg)) {
         throw new P2pException(P2pException.TypeEnum.BAD_MESSAGE, msg.toString());
       }
       msgCache.put(key, true);
       pbftManager.forwardMessage(msg);
-      msgQueue.receivedMessage(msg);
       pbftManager.doAction(msg);
     } finally {
       lock.unlock();
@@ -78,13 +75,7 @@ public class PbftHandler extends SimpleChannelInboundHandler<PbftBaseMessage> {
   }
 
   private String buildKey(PbftBaseMessage msg) {
-    return msg.getKey() + msg.getPbftMessage().getRawData()
-        .getPbftMsgType().toString();
-  }
-
-  private boolean validMsgTime(PbftBaseMessage message) {
-    return manager.getHeadBlockNum() - message.getPbftMessage().getRawData().getNumber()
-        < MIN_BLOCK_COUNTS;
+    return msg.getKey() + msg.getPbftMessage().getRawData().getMsgType().toString();
   }
 
 }

@@ -1,7 +1,5 @@
 package org.tron.consensus.pbft;
 
-import static org.tron.core.net.message.MessageTypes.PBFT_SR_MSG;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -23,14 +21,12 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
-import org.tron.core.ChainBaseManager;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.store.WitnessScheduleStore;
+import org.tron.consensus.pbft.message.PbftMessage;
+import org.tron.protos.Protocol.PBFTMessage.DataType;
 
 @Slf4j(topic = "pbft")
 @Component
@@ -40,22 +36,22 @@ public class PbftMessageHandle {
   //Pre-preparation stage voting information
   private Set<String> preVotes = Sets.newConcurrentHashSet();
   //Preparation stage voting information
-  private Set<String> pareVotes = Sets.newConcurrentHashSet();
+  private Map<String, PbftMessage> pareVoteMap = Maps.newConcurrentMap();
   private AtomicLongMap<String> agreePare = AtomicLongMap.create();
-  private Cache<String, PbftBaseMessage> pareMsgCache = CacheBuilder.newBuilder()
-      .initialCapacity(1000).maximumSize(10000).expireAfterWrite(10, TimeUnit.MINUTES).build();
+  private Cache<String, PbftMessage> pareMsgCache = CacheBuilder.newBuilder()
+      .initialCapacity(1000).maximumSize(10000).expireAfterWrite(2, TimeUnit.MINUTES).build();
   //Submit stage voting information
-  private Set<String> commitVotes = Sets.newConcurrentHashSet();
+  private Map<String, PbftMessage> commitVoteMap = Maps.newConcurrentMap();
   private AtomicLongMap<String> agreeCommit = AtomicLongMap.create();
-  private Cache<String, PbftBaseMessage> commitMsgCache = CacheBuilder.newBuilder()
-      .initialCapacity(1000).maximumSize(10000).expireAfterWrite(10, TimeUnit.MINUTES).build();
+  private Cache<String, PbftMessage> commitMsgCache = CacheBuilder.newBuilder()
+      .initialCapacity(1000).maximumSize(10000).expireAfterWrite(2, TimeUnit.MINUTES).build();
   //pbft timeout
   private Map<String, Long> timeOuts = Maps.newConcurrentMap();
   //Successfully processed request
-  private Map<String, PbftBaseMessage> doneMsg = Maps.newConcurrentMap();
+  private Map<String, PbftMessage> doneMsg = Maps.newConcurrentMap();
 
   private LoadingCache<String, List<ByteString>> dataSignCache = CacheBuilder.newBuilder()
-      .initialCapacity(100).maximumSize(1000).expireAfterWrite(10, TimeUnit.MINUTES).build(
+      .initialCapacity(100).maximumSize(1000).expireAfterWrite(2, TimeUnit.MINUTES).build(
           new CacheLoader<String, List<ByteString>>() {
             @Override
             public List<ByteString> load(String s) throws Exception {
@@ -63,18 +59,12 @@ public class PbftMessageHandle {
             }
           });
 
-  private PbftBaseMessage srPbftBaseMessage;
+  private PbftMessage srPbftMessage;
 
   private Timer timer;
 
   @Autowired
   private PbftMessageAction pbftMessageAction;
-  @Autowired
-  private ApplicationContext ctx;
-  @Autowired
-  private WitnessScheduleStore witnessScheduleStore;
-  @Autowired
-  private ChainBaseManager chainBaseManager;
   @Setter
   private MaintenanceManager maintenanceManager;
 
@@ -83,7 +73,7 @@ public class PbftMessageHandle {
     start();
   }
 
-  public void onPrePrepare(PbftBaseMessage message) {
+  public void onPrePrepare(PbftMessage message) {
     String key = message.getNo();
     if (message.isSwitch()) {//if is block chain switch,remove the before proposal
       logger.warn("block chain switch, again proposal block num: {}, data: {}",
@@ -106,12 +96,12 @@ public class PbftMessageHandle {
     }
     PbftBaseMessage paMessage = message.buildPrePareMessage();
     forwardMessage(paMessage);
-    if (message.getType() == PBFT_SR_MSG) {
-      srPbftBaseMessage = message;
+    if (message.getDataType() == DataType.SRL) {
+      srPbftMessage = message;
     }
   }
 
-  public void onPrepare(PbftBaseMessage message) {
+  public void onPrepare(PbftMessage message) {
     String key = message.getKey();
 
     if (!preVotes.contains(message.getNo())) {
@@ -119,11 +109,16 @@ public class PbftMessageHandle {
       pareMsgCache.put(key, message);
       return;
     }
-    if (pareVotes.contains(key)) {
+    if (pareVoteMap.containsKey(key)) {
       //Explain that the vote has been voted and cannot be repeated
+      if (!pareVoteMap.get(key).getPbftMessage().getRawData().getData()
+          .equals(message.getPbftMessage().getRawData().getData())) {
+        //todo:Penalize multiple signatures at the same height
+
+      }
       return;
     }
-    pareVotes.add(key);
+    pareVoteMap.put(key, message);
     //
     checkCommitMsgCache(message.getNo());
     if (!checkIsCanSendMsg(message)) {
@@ -135,7 +130,7 @@ public class PbftMessageHandle {
       if (agCou >= Param.getInstance().getAgreeNodeCount()) {
         agreePare.remove(message.getDataKey());
         //Entering the submission stage
-        PbftBaseMessage cmMessage = message.buildCommitMessage();
+        PbftMessage cmMessage = message.buildCommitMessage();
         doneMsg.put(message.getNo(), cmMessage);
         forwardMessage(cmMessage);
       }
@@ -143,18 +138,23 @@ public class PbftMessageHandle {
     //Subsequent votes will definitely not be satisfied, timeout will be automatically cleared.
   }
 
-  public void onCommit(PbftBaseMessage message) {
+  public void onCommit(PbftMessage message) {
     String key = message.getKey();
-    if (!pareVotes.contains(key)) {
+    if (!pareVoteMap.containsKey(key)) {
       //Must be prepared
       commitMsgCache.put(key, message);
       return;
     }
-    if (commitVotes.contains(key)) {
+    if (commitVoteMap.containsKey(key)) {
       //Explain that the node has voted on the data and cannot vote repeatedly.
+      if (!commitVoteMap.get(key).getPbftMessage().getRawData().getData()
+          .equals(message.getPbftMessage().getRawData().getData())) {
+        //todo:Penalize multiple signatures at the same height
+
+      }
       return;
     }
-    commitVotes.add(key);
+    commitVoteMap.put(key, message);
     //The number of votes plus 1
     long agCou = agreeCommit.incrementAndGet(message.getDataKey());
     dataSignCache.getUnchecked(message.getDataKey())
@@ -164,7 +164,7 @@ public class PbftMessageHandle {
       //commit,
       if (!isSyncing()) {
         pbftMessageAction.action(message, dataSignCache.getUnchecked(message.getDataKey()));
-        srPbftBaseMessage = null;
+        srPbftMessage = null;
       }
     }
   }
@@ -182,7 +182,7 @@ public class PbftMessageHandle {
   }
 
   private void checkPrepareMsgCache(String key) {
-    for (Entry<String, PbftBaseMessage> entry : pareMsgCache.asMap().entrySet()) {
+    for (Entry<String, PbftMessage> entry : pareMsgCache.asMap().entrySet()) {
       if (StringUtils.startsWith(entry.getKey(), key)) {
         pareMsgCache.invalidate(entry.getKey());
         onPrepare(entry.getValue());
@@ -191,7 +191,7 @@ public class PbftMessageHandle {
   }
 
   private void checkCommitMsgCache(String key) {
-    for (Entry<String, PbftBaseMessage> entry : commitMsgCache.asMap().entrySet()) {
+    for (Entry<String, PbftMessage> entry : commitMsgCache.asMap().entrySet()) {
       if (StringUtils.startsWith(entry.getKey(), key)) {
         commitMsgCache.invalidate(entry.getKey());
         onCommit(entry.getValue());
@@ -199,37 +199,22 @@ public class PbftMessageHandle {
     }
   }
 
-  public boolean checkIsCanSendMsg(PbftBaseMessage msg) {
+  public boolean checkIsCanSendMsg(PbftMessage msg) {
     if (!Param.getInstance().isEnable()) {//is witness
       return false;
     }
-    if (!witnessScheduleStore.getActiveWitnesses()
-        .contains(Param.getInstance().getMiner().getPrivateKeyAddress())) {
+    ByteString publicKey = Param.getInstance().getMiner().getPrivateKeyAddress();
+    List<ByteString> compareList;
+    long epoch = msg.getPbftMessage().getRawData().getEpoch();
+    if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
+      compareList = maintenanceManager.getCurrentWitness();
+    } else {
+      compareList = maintenanceManager.getBeforeWitness();
+    }
+    if (!compareList.contains(publicKey)) {
       return false;
     }
     return !isSyncing();
-  }
-
-  public boolean checkIsWitnessMsg(PbftBaseMessage msg) {
-    //check current node is witness node
-    if (maintenanceManager == null) {
-      return false;
-    }
-    long blockNum = msg.getNumber();
-    List<ByteString> witnessList;
-    BlockCapsule blockCapsule = null;
-    try {
-      blockCapsule = Param.getInstance().getPbftInterface().getBlock(blockNum);
-    } catch (Exception e) {
-      logger.debug("can not find the block,num is: {}, error reason: {}", blockNum, e.getMessage());
-    }
-    if (blockCapsule == null || blockCapsule.getTimeStamp() > maintenanceManager
-        .getBeforeMaintenanceTime()) {
-      witnessList = maintenanceManager.getCurrentWitness();
-    } else {
-      witnessList = maintenanceManager.getBeforeWitness();
-    }
-    return witnessList.contains(ByteString.copyFrom(msg.getPublicKey()));
   }
 
   public boolean isSyncing() {
@@ -240,8 +225,8 @@ public class PbftMessageHandle {
   private void remove(String no) {
     String pre = String.valueOf(no) + "_";
     preVotes.remove(no);
-    pareVotes.removeIf((vp) -> StringUtils.startsWith(vp, pre));
-    commitVotes.removeIf((vp) -> StringUtils.startsWith(vp, pre));
+    pareVoteMap.keySet().removeIf((vp) -> StringUtils.startsWith(vp, pre));
+    commitVoteMap.keySet().removeIf((vp) -> StringUtils.startsWith(vp, pre));
 
     agreePare.asMap().keySet().forEach(s -> {
       if (StringUtils.startsWith(s, pre)) {
@@ -258,13 +243,13 @@ public class PbftMessageHandle {
     doneMsg.remove(no);
     timeOuts.remove(no);
     //just try once
-    if (srPbftBaseMessage != null && StringUtils.equals(no, srPbftBaseMessage.getNo())) {
+    if (srPbftMessage != null && StringUtils.equals(no, srPbftMessage.getNo())) {
       try {
         Thread.sleep(100);
       } catch (Exception e) {
       }
-      onPrePrepare(srPbftBaseMessage);
-      srPbftBaseMessage = null;
+      onPrePrepare(srPbftMessage);
+      srPbftMessage = null;
     }
   }
 

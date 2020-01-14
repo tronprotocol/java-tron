@@ -11,7 +11,7 @@ import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
-@Slf4j
+@Slf4j(topic = "net-cross")
 @Component
 public class CrossChainService {
 
@@ -52,11 +52,11 @@ public class CrossChainService {
           code = ReasonCode.UNKNOWN;
           break;
       }
-      logger.error("Message from {} process failed, {} \n type: {}, detail: {}.",
+      logger.error("cross chain message from {} process failed, {} \n type: {}, detail: {}.",
           peer.getInetAddress(), msg, type, ex.getMessage());
     } else {
       code = ReasonCode.UNKNOWN;
-      logger.error("Message from {} process failed, {}",
+      logger.error("cross chain message from {} process failed, {}",
           peer.getInetAddress(), msg, ex);
     }
     peer.disconnect(code);

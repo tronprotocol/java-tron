@@ -88,6 +88,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
       if (transactionCapsule == null) {
         transactionCapsule = getTransactionFromKhaosDatabase(key, blockHigh);
       }
+      transactionCapsule.setBlockNum(blockHigh);
     }
 
     return transactionCapsule == null ? new TransactionCapsule(value) : transactionCapsule;

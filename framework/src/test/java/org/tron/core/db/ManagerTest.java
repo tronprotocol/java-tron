@@ -32,6 +32,7 @@ import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
+import org.tron.core.exception.BlockNotInMainForkException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -87,7 +88,7 @@ public class ManagerTest extends BlockGenerate {
                 ECKey.fromPrivate(
                     ByteArray.fromHexString(
                         Args.getInstance().getLocalWitnesses().getPrivateKey()))
-                    .getAddress()));
+                    .getAddress()), ByteString.EMPTY);
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
@@ -107,7 +108,7 @@ public class ManagerTest extends BlockGenerate {
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException,
       NonCommonBlockException, ReceiptCheckErrException, VMIllegalException,
-      TooBigTransactionResultException, ZksnarkException {
+      TooBigTransactionResultException, ZksnarkException, BlockNotInMainForkException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -118,7 +119,7 @@ public class ManagerTest extends BlockGenerate {
                 ECKey.fromPrivate(
                     ByteArray.fromHexString(
                         Args.getInstance().getLocalWitnesses().getPrivateKey()))
-                    .getAddress()));
+                    .getAddress()), ByteString.EMPTY);
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
@@ -237,7 +238,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
+      ZksnarkException, BlockNotInMainForkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     DBConfig.setDebug(true);
     long size = dbManager.getBlockStore().size();
@@ -315,7 +316,7 @@ public class ManagerTest extends BlockGenerate {
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
+      ZksnarkException, BlockNotInMainForkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     DBConfig.setDebug(true);
     long size = dbManager.getBlockStore().size();
@@ -420,7 +421,7 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
+      ZksnarkException, BlockNotInMainForkException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     DBConfig.setDebug(true);
     long size = dbManager.getBlockStore().size();
@@ -534,7 +535,7 @@ public class ManagerTest extends BlockGenerate {
       long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
-        witnessAddress);
+        witnessAddress, ByteString.EMPTY);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
@@ -545,7 +546,7 @@ public class ManagerTest extends BlockGenerate {
       long number, ByteString hash, Map<ByteString, String> addressToProvateKeys) {
     ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
     BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(hash), time,
-        ByteString.copyFromUtf8("onlyTest"));
+        ByteString.copyFromUtf8("onlyTest"), ByteString.EMPTY);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));

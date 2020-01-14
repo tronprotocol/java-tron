@@ -11,6 +11,7 @@ import org.tron.common.config.DbBackupConfig;
 import org.tron.common.setting.RocksDbSettings;
 
 public class CommonParameter {
+
   @Parameter(names = {"-c", "--config"}, description = "Config File")
   protected String shellConfFileName = "";
 
@@ -406,6 +407,14 @@ public class CommonParameter {
   @Getter
   @Setter
   protected long changedDelegation;
+
+  @Getter
+  @Setter
+  protected int agreeNodeCount;
+
+  @Getter
+  @Setter
+  protected long allowPBFT;
 
   @Getter
   @Setter

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.PbftSignCapsule;
+import org.tron.protos.Protocol.PBFTMessage.DataType;
 
 import java.util.Arrays;
 
@@ -41,12 +42,12 @@ public class PbftSignDataStore extends TronDatabase<PbftSignCapsule> {
     return dbSource.getData(key) != null;
   }
 
-  public void putSrSignData(long cycle, PbftSignCapsule item) {
-    put(buildSrSignKey(cycle), item);
+  public void putSrSignData(long epoch, PbftSignCapsule item) {
+    put(buildSrSignKey(epoch), item);
   }
 
-  public PbftSignCapsule getSrSignData(long cycle) {
-    return get(buildSrSignKey(cycle));
+  public PbftSignCapsule getSrSignData(long epoch) {
+    return get(buildSrSignKey(epoch));
   }
 
   public void putBlockSignData(long blockNum, PbftSignCapsule item) {
@@ -57,11 +58,13 @@ public class PbftSignDataStore extends TronDatabase<PbftSignCapsule> {
     return get(buildBlockSignKey(blockNum));
   }
 
-  private byte[] buildSrSignKey(long cycle) {
-    return Bytes.concat( "SrSign_".getBytes(), ByteArray.fromLong(cycle));
+
+  //todo:use type
+  private byte[] buildSrSignKey(long epoch) {
+    return (DataType.SRL.toString() + epoch).getBytes();
   }
 
   private byte[] buildBlockSignKey(long blockNum) {
-    return Bytes.concat( "BlockSign_".getBytes(), ByteArray.fromLong(blockNum));
+    return (DataType.BLOCK.toString() + blockNum).getBytes();
   }
 }

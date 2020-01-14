@@ -55,7 +55,7 @@ public class AssetUpdateHelperTest {
         Sha256Hash.wrap(ByteString.copyFrom(
             ByteArray.fromHexString(
                 "0000000000000002498b464ac0292229938a342238077182498b464ac0292222"))),
-        1234, ByteString.copyFrom("1234567".getBytes()));
+        1234, ByteString.copyFrom("1234567".getBytes()),ByteString.EMPTY);
 
     blockCapsule.addTransaction(new TransactionCapsule(contract, ContractType.AssetIssueContract));
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1L);

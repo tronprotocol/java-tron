@@ -20,11 +20,15 @@ public class BlockHeaderUpdatedNoticeMessage extends TronMessage {
   }
 
   public long getCurrentBlockHeight() {
-    return blockHeaderUpdatedNotice.getBlockHeader().getRawData().getNumber();
+    return blockHeaderUpdatedNotice.getSignedBlockHeader().getBlockHeader().getRawData().getNumber();
   }
 
   public Protocol.BlockHeader getBlockHeader() {
-    return blockHeaderUpdatedNotice.getBlockHeader();
+    return blockHeaderUpdatedNotice.getSignedBlockHeader().getBlockHeader();
+  }
+
+  public Protocol.SignedBlockHeader getSignedBlockHeader() {
+    return blockHeaderUpdatedNotice.getSignedBlockHeader();
   }
 
   @Override

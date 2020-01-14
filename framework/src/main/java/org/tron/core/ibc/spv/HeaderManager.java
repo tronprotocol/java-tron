@@ -27,6 +27,8 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.HeaderDynamicPropertiesStore;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.PBFTCommitResult;
+import org.tron.protos.Protocol.PBFTMessage;
+import org.tron.protos.Protocol.PBFTMessage.Raw;
 import org.tron.protos.Protocol.SRL;
 
 @Slf4j
@@ -167,11 +169,12 @@ public class HeaderManager {
   public boolean validSrList(PBFTCommitResult dataSign, long epoch)
       throws InvalidProtocolBufferException {
     //valid sr list
-    SRL srList = SRL.parseFrom(dataSign.getData().toByteArray());
+    PBFTMessage.Raw raw = Raw.parseFrom(dataSign.getData().toByteArray());
+    SRL srList = SRL.parseFrom(raw.getData().toByteArray());
     List<ByteString> addressList = srList.getSrAddressList();
     List<ByteString> preCycleSrSignList = dataSign.getSignatureList();
     if (addressList.size() != 0) {
-      if (epoch != srList.getEpoch()) {
+      if (epoch != raw.getEpoch()) {
         return false;
       }
       Set<ByteString> preCycleSrSignSet = new ConcurrentSet();

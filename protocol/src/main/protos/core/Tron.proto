@@ -272,7 +272,6 @@ message Transaction {
       ClearABIContract = 48;
       UpdateBrokerageContract = 49;
       ShieldedTransferContract = 51;
-      CrossTokenContract = 52;
       CrossContract = 53;
     }
     ContractType type = 1;
@@ -640,17 +639,23 @@ message NodeInfo {
 }
 
 message PBFTMessage {
-  enum Type {
+  enum MsgType {
     VIEW_CHANGE = 0;
     REQUEST = 1;
     PREPREPARE = 2;
     PREPARE = 3;
     COMMIT = 4;
   }
+  enum DataType {
+    BLOCK = 0;
+    SRL = 1;
+  }
   message Raw {
-    Type pbftMsgType = 1;
-    int64 number = 2;
-    bytes data = 3;
+    MsgType msg_type = 1;
+    DataType data_type = 2;
+    int64 view_n = 3;
+    int64 epoch = 4;
+    bytes data = 5;
   }
   Raw raw_data = 1;
   bytes signature = 2;
@@ -694,10 +699,8 @@ message Proof {
 }
 
 message SRL {
-  int64 epoch = 1;
-  repeated bytes srAddress = 2;
+  repeated bytes srAddress = 1;
 }
-
 message EpochMessage {
   bytes chainId = 1;
   int64 currentEpoch = 2;
@@ -705,7 +708,7 @@ message EpochMessage {
 
 message BlockHeaderUpdatedNotice {
   bytes chainId = 1;
-  BlockHeader blockHeader = 2;
+  SignedBlockHeader signedBlockHeader = 2;
 }
 
 message BlockHeaderRequestMessage {
@@ -719,3 +722,9 @@ message BlockHeaderInventory {
   int64 currentBlockHeight = 2;
   repeated BlockHeader blockHeader = 3;
 }
+
+message SignedBlockHeader {
+  BlockHeader blockHeader = 1;
+  repeated bytes srs_signature = 2;
+}
+

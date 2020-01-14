@@ -14,22 +14,24 @@ public class SRLMessage extends TronMessage {
   @Setter
   private Protocol.PBFTCommitResult dataSign;
 
+  private Protocol.PBFTMessage.Raw raw;
+
   public SRLMessage(byte[] packed) throws InvalidProtocolBufferException {
     super(MessageTypes.SR_LIST.asByte(), packed);
     dataSign = Protocol.PBFTCommitResult.parseFrom(packed);
-    Protocol.PBFTMessage.Raw rawData = Protocol.PBFTMessage.Raw.parseFrom(dataSign.getData());
-    srl = Protocol.SRL.parseFrom(rawData.getData());
+    raw = Protocol.PBFTMessage.Raw.parseFrom(dataSign.getData());
+    srl = Protocol.SRL.parseFrom(raw.getData());
   }
 
   public SRLMessage(Protocol.PBFTCommitResult dataSign) throws InvalidProtocolBufferException {
     this.dataSign = dataSign;
     super.type = MessageTypes.SR_LIST.asByte();
     super.data = this.dataSign.toByteArray();
-    Protocol.PBFTMessage.Raw rawData = Protocol.PBFTMessage.Raw.parseFrom(this.dataSign.getData());
-    srl = Protocol.SRL.parseFrom(rawData.getData());
+    raw = Protocol.PBFTMessage.Raw.parseFrom(this.dataSign.getData());
+    srl = Protocol.SRL.parseFrom(raw.getData());
   }
   public long getEpoch() {
-    return srl.getEpoch();
+    return raw.getEpoch();
   }
 
   @Override

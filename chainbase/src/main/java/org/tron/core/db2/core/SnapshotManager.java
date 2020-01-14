@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,6 +40,7 @@ public class SnapshotManager implements RevokingDatabase {
   public static final int DEFAULT_MAX_FLUSH_COUNT = 500;
   public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
+  private AtomicBoolean needFlush = new AtomicBoolean(false);
   @Getter
   private List<Chainbase> dbs = new ArrayList<>();
   @Getter
@@ -231,7 +233,7 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private boolean shouldBeRefreshed() {
-    return flushCount >= maxFlushCount;
+    return needFlush.get() || flushCount >= maxFlushCount;
   }
 
   private void refresh() {
@@ -272,6 +274,13 @@ public class SnapshotManager implements RevokingDatabase {
       next.getNext().setPrevious(root);
       root.setNext(next.getNext());
     }
+  }
+
+  @Override
+  public void fastFlush() {
+    needFlush.set(true);
+    flush();
+    needFlush.set(false);
   }
 
   public void flush() {

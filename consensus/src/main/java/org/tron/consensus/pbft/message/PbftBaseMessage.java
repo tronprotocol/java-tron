@@ -1,25 +1,19 @@
 package org.tron.consensus.pbft.message;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.security.SignatureException;
 import java.util.stream.Collectors;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.WalletUtil;
-import org.tron.consensus.base.Param;
-import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.P2pException;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Protocol.PBFTMessage;
-import org.tron.protos.Protocol.PBFTMessage.Raw;
-import org.tron.protos.Protocol.PBFTMessage.Type;
+import org.tron.protos.Protocol.PBFTMessage.DataType;
 import org.tron.protos.Protocol.SRL;
 
 public abstract class PbftBaseMessage extends Message {
@@ -87,68 +81,46 @@ public abstract class PbftBaseMessage extends Message {
   }
 
   public long getNumber() {
-    return pbftMessage.getRawData().getNumber();
+    return pbftMessage.getRawData().getViewN();
+  }
+
+  public long getEpoch() {
+    return pbftMessage.getRawData().getEpoch();
+  }
+
+  public DataType getDataType() {
+    return pbftMessage.getRawData().getDataType();
   }
 
   public abstract String getNo();
 
-  public abstract PbftBaseMessage createMessage();
-
-  public void analyzeSignature()
-      throws SignatureException {
+  public void analyzeSignature() throws SignatureException {
     byte[] hash = Sha256Hash.hash(getPbftMessage().getRawData().toByteArray());
     publicKey = ECKey.signatureToAddress(hash, TransactionCapsule
         .getBase64FromByteString(getPbftMessage().getSignature()));
   }
 
-  public PbftBaseMessage buildPrePareMessage() {
-    return buildMessageCapsule(Type.PREPARE);
-  }
-
-  public PbftBaseMessage buildCommitMessage() {
-    return buildMessageCapsule(Type.COMMIT);
-  }
-
-  private PbftBaseMessage buildMessageCapsule(Type type) {
-    PbftBaseMessage pbftMessage = createMessage();
-    Miner miner = Param.getInstance().getMiners().get(0);
-    ECKey ecKey = ECKey.fromPrivate(miner.getPrivateKey());
-    PBFTMessage.Builder builder = PBFTMessage.newBuilder();
-    Raw.Builder rawBuilder = Raw.newBuilder();
-    rawBuilder.setNumber(getPbftMessage().getRawData().getNumber())
-        .setPbftMsgType(type)
-        .setData(getPbftMessage().getRawData().getData());
-    Raw raw = rawBuilder.build();
-    byte[] hash = Sha256Hash.hash(raw.toByteArray());
-    ECDSASignature signature = ecKey.sign(hash);
-    builder.setRawData(raw).setSignature(ByteString.copyFrom(signature.toByteArray()));
-    PBFTMessage message = builder.build();
-    pbftMessage.setType(getType().asByte())
-        .setPbftMessage(message).setData(message.toByteArray());
-    return pbftMessage;
-  }
-
   @Override
   public String toString() {
-    return "PbftMsgType:" + pbftMessage.getRawData().getPbftMsgType()
+    return "DataType:" + getDataType() + ", MsgType:" + pbftMessage.getRawData().getMsgType()
         + ", node address:" + (ByteUtil.isNullOrZeroArray(publicKey) ? null
         : Hex.toHexString(publicKey))
-        + ", number:" + pbftMessage.getRawData().getNumber()
+        + ", viewN:" + pbftMessage.getRawData().getViewN()
+        + ", epoch:" + pbftMessage.getRawData().getEpoch()
         + ", data:" + getDataString()
         + ", " + super.toString();
   }
 
   public String getDataString() {
-    return getType() == MessageTypes.PBFT_SR_MSG ? decode()
+    return getDataType() == DataType.SRL ? decode()
         : Hex.toHexString(pbftMessage.getRawData().getData().toByteArray());
   }
 
   private String decode() {
     try {
-      SRL srl = SRL.parseFrom(pbftMessage.getRawData().getData().toByteArray());
-      return "cycle = " + srl.getEpoch() + ", sr list = " + srl.getSrAddressList().stream()
-          .map(
-              bytes -> WalletUtil.encode58Check(bytes.toByteArray())).collect(Collectors.toList());
+      SRL srList = SRL.parseFrom(pbftMessage.getRawData().getData().toByteArray());
+      return "sr list = " + srList.getSrAddressList().stream().map(
+          bytes -> WalletUtil.encode58Check(bytes.toByteArray())).collect(Collectors.toList());
     } catch (InvalidProtocolBufferException e) {
     }
     return "decode error";

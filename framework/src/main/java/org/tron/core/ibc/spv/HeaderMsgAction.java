@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.server.SyncPool;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.db.BlockStore;
@@ -19,6 +18,7 @@ import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
+import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.ibc.spv.message.BlockHeaderMessage;
 import org.tron.core.ibc.spv.message.DownloadHeaderMessage;
 import org.tron.core.ibc.spv.message.NotDataDownloadMessage;
@@ -44,7 +44,7 @@ public class HeaderMsgAction {
   @Autowired
   private HeaderManager headerManager;
   @Autowired
-  private SyncPool syncPool;
+  private CrossChainConnectPool connectPool;
 
   private Cache<String, Boolean> uuidCache = CacheBuilder.newBuilder().initialCapacity(100)
       .maximumSize(1000).expireAfterWrite(10, TimeUnit.MINUTES).build();
@@ -129,8 +129,8 @@ public class HeaderMsgAction {
 
   }
 
-  private PeerConnection selectPeer(String chainId) {
-    List<PeerConnection> peerConnectionList = syncPool.getActivePeers();
+  private PeerConnection selectPeer(ByteString chainId) {
+    List<PeerConnection> peerConnectionList = connectPool.getPeerConnect(chainId);
     return peerConnectionList.get(0);
   }
 

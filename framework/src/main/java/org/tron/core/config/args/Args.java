@@ -9,7 +9,6 @@ import static org.tron.core.Constant.NODE_CROSS_CHAIN_PORT;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
-import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -25,10 +24,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -105,20 +102,11 @@ public class Args extends CommonParameter {
 
   @Getter
   @Setter
-  private int agreeNodeCount;
-
-  @Getter
-  @Setter
-  private int checkMsgCount;
-
-
-  @Getter
-  @Setter
   private int crossChainPort;
 
   @Getter
   @Setter
-  private Map<String, List<Node>> crossChainConnect;
+  private List<Node> crossChainConnect;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -203,10 +191,10 @@ public class Args extends CommonParameter {
     INSTANCE.shieldedTransInPendingMaxCounts = 10;
     INSTANCE.changedDelegation = 0;
     INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
-    INSTANCE.checkMsgCount = 1;
     INSTANCE.crossChain = 0;
     INSTANCE.crossChainPort = 0;
-    INSTANCE.crossChainConnect = Maps.newConcurrentMap();
+    INSTANCE.crossChainConnect = Collections.emptyList();
+    INSTANCE.allowPBFT = 0;
   }
 
   /**
@@ -685,6 +673,9 @@ public class Args extends CommonParameter {
     INSTANCE.crossChain =
         config.hasPath(Constant.COMMITTEE_CROSS_CHAIN) ? config
             .getInt(Constant.COMMITTEE_CROSS_CHAIN) : 0;
+    INSTANCE.allowPBFT =
+        config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
+            .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
 
     INSTANCE.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
         .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
@@ -693,8 +684,6 @@ public class Args extends CommonParameter {
     if (INSTANCE.isWitness()) {
       INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
-    INSTANCE.checkMsgCount = config.hasPath("node.checkMsgCount") ? config
-        .getInt("node.checkMsgCount") : 1;
 
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -782,24 +771,20 @@ public class Args extends CommonParameter {
     return ret;
   }
 
-  private static Map<String, List<Node>> getCrossNodes(final com.typesafe.config.Config config) {
-    Map<String, List<Node>> ret = new ConcurrentHashMap<>();
+  private static List<Node> getCrossNodes(final com.typesafe.config.Config config) {
+    List<Node> ret = new ArrayList<>();
     INSTANCE.crossChainPort = config.hasPath(Constant.NODE_CROSS_CHAIN_PORT) ? config
         .getInt(NODE_CROSS_CHAIN_PORT) : 0;
     if (config.hasPath(Constant.NODE_CROSS_CHAIN_CONNECT)) {
       List<String> list = config.getStringList(NODE_CROSS_CHAIN_CONNECT);
       for (String configString : list) {
-        String[] chainIdAndIp = configString.split(":");
-        Node n = Node.instanceOf(chainIdAndIp[1] + ":" + INSTANCE.crossChainPort);
+        Node n = Node.instanceOf(configString);
         if (!(INSTANCE.nodeDiscoveryBindIp.equals(n.getHost())
             || INSTANCE.nodeExternalIp.equals(n.getHost())
             || "127.0.0.1".equals(n.getHost()))
             || INSTANCE.nodeListenPort != n.getPort()
             || INSTANCE.backupPort != n.getPort()) {
-          if (!INSTANCE.crossChainConnect.containsKey(chainIdAndIp[0])) {
-            INSTANCE.crossChainConnect.put(chainIdAndIp[0], new ArrayList<>());
-          }
-          INSTANCE.crossChainConnect.get(chainIdAndIp[0]).add(n);
+          ret.add(n);
         }
       }
     }
@@ -1118,6 +1103,7 @@ public class Args extends CommonParameter {
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
     DBConfig.setTransactionHistoreSwitch(cfgArgs.getStorage().getTransactionHistoreSwitch());
     DBConfig.setCrossChain(cfgArgs.getCrossChain());
+    DBConfig.setAllowPBFT(cfgArgs.getAllowPBFT());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
