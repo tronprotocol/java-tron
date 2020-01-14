@@ -137,6 +137,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
   public static boolean addCallBackTx(ChainBaseManager chainBaseManager, long blockNum,
       TransactionCapsule transactionCapsule) {
     try {
+      //todo,if node is sync then return
       Sha256Hash txHash = transactionCapsule.getTransactionId();
       Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
       if (contract.getType() != ContractType.CrossContract) {

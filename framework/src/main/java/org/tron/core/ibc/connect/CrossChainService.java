@@ -20,6 +20,9 @@ public class CrossChainService {
 
   protected void onMessage(PeerConnection peer, TronMessage msg) {
     try {
+      if (!communicateService.isSyncFinish()) {
+        return;
+      }
       switch (msg.getType()) {
         case CROSS_MSG: {
           CrossChainMessage crossChainMessage = (CrossChainMessage) msg;

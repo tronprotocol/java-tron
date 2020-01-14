@@ -31,6 +31,9 @@ public class CrossChainMsgHandler implements TronMsgHandler {
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
     CrossChainMessage crossChainMessage = (CrossChainMessage) msg;
     CrossStore crossStore = chainBaseManager.getCrossStore();
+    if (!communicateService.isSyncFinish()) {
+      return;
+    }
     if (!communicateService.validProof(crossChainMessage.getCrossMessage())) {
       //todo: define a new reason code
       peer.disconnect(ReasonCode.BAD_TX);

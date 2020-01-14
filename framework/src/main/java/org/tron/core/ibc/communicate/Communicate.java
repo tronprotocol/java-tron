@@ -15,4 +15,6 @@ public interface Communicate {
   boolean checkCommit(Sha256Hash hash);
 
   boolean broadcastCrossMessage(CrossMessage crossMessage);
+
+  boolean isSyncFinish();
 }

@@ -13,6 +13,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.capsule.utils.MerkleTree.ProofLeaf;
+import org.tron.core.consensus.PbftBaseImpl;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -44,6 +45,9 @@ public class CommunicateService implements Communicate {
 
   @Autowired
   private CrossChainConnectPool crossChainConnectPool;
+
+  @Autowired
+  private PbftBaseImpl pbftBaseImpl;
 
   @Override
   public void sendCrossMessage(CrossMessage crossMessage, boolean save) {
@@ -126,11 +130,14 @@ public class CommunicateService implements Communicate {
 
   @Override
   public boolean broadcastCrossMessage(CrossMessage crossMessage) {
-    syncPool.getActivePeers().forEach(peerConnection -> {
-          peerConnection.sendMessage(new CrossChainMessage(crossMessage));
-        }
-    );
+    syncPool.getActivePeers().stream().filter(peerConnection -> peerConnection.isNeedSyncFromUs())
+        .forEach(peerConnection -> peerConnection.sendMessage(new CrossChainMessage(crossMessage)));
     return false;
+  }
+
+  @Override
+  public boolean isSyncFinish() {
+    return !pbftBaseImpl.isSyncing();
   }
 
   private Sha256Hash getTxId(CrossMessage crossMessage) {
