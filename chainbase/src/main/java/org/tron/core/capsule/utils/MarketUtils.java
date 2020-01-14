@@ -16,6 +16,7 @@
 package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Hash;
 import org.tron.protos.Protocol.MarketPrice;
@@ -81,13 +82,29 @@ public class MarketUtils {
     // price_A_maker_1 < price_A_maker_2
     // ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
     // ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
-    return Math.multiplyExact(price1.getBuyTokenQuantity(), price2.getSellTokenQuantity())
-        < Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
+
+    BigInteger bigPrice1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
+    BigInteger bigPrice1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
+    BigInteger bigPrice2BuyQuantity = BigInteger.valueOf(price2.getBuyTokenQuantity());
+    BigInteger bigPrice2SellQuantity = BigInteger.valueOf(price2.getSellTokenQuantity());
+
+    return bigPrice1BuyQuantity.multiply(bigPrice2SellQuantity).compareTo(bigPrice2BuyQuantity
+        .multiply(bigPrice1SellQuantity)) == -1;
+
   }
 
+
+
   public static boolean isSamePrice(MarketPrice price1, MarketPrice price2) {
-    return Math.multiplyExact(price1.getBuyTokenQuantity(), price2.getSellTokenQuantity())
-        == Math.multiplyExact(price2.getBuyTokenQuantity(), price1.getSellTokenQuantity());
+
+    BigInteger bigPrice1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
+    BigInteger bigPrice1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
+    BigInteger bigPrice2BuyQuantity = BigInteger.valueOf(price2.getBuyTokenQuantity());
+    BigInteger bigPrice2SellQuantity = BigInteger.valueOf(price2.getSellTokenQuantity());
+
+    return bigPrice1BuyQuantity.multiply(bigPrice2SellQuantity).equals(bigPrice2BuyQuantity
+        .multiply(bigPrice1SellQuantity)) ;
+
   }
 
 

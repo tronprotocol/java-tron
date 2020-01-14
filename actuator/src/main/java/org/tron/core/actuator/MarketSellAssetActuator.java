@@ -80,9 +80,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     super(ContractType.MarketSellAssetContract, MarketSellAssetContract.class);
   }
 
-  @Override
-  public boolean execute(Object object) throws ContractExeException {
-
+  private void initStores(){
     accountStore = chainBaseManager.getAccountStore();
     dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     assetIssueStore = chainBaseManager.getAssetIssueStore();
@@ -93,6 +91,12 @@ public class MarketSellAssetActuator extends AbstractActuator {
     pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     pairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
     marketPriceStore = chainBaseManager.getMarketPriceStore();
+  }
+
+  @Override
+  public boolean execute(Object object) throws ContractExeException {
+
+    initStores();
 
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
@@ -121,7 +125,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
 
       // 1. Transfer of balance
-      transferBalanceOrToken(accountCapsule, contract);
+      transferBalanceOrToken(accountCapsule);
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
 
       //2. create and save order
@@ -158,17 +162,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No account store or dynamic store!");
     }
 
-    accountStore = chainBaseManager.getAccountStore();
-    dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    assetIssueStore = chainBaseManager.getAssetIssueStore();
-    assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
-
-    marketAccountStore = chainBaseManager.getMarketAccountStore();
-    orderStore = chainBaseManager.getMarketOrderStore();
-    pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
-    pairPriceToOrderStore = chainBaseManager
-        .getMarketPairPriceToOrderStore();
-    marketPriceStore = chainBaseManager.getMarketPriceStore();
+    initStores();
 
     if (!this.any.is(MarketSellAssetContract.class)) {
       throw new ContractValidateException(
@@ -548,9 +542,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   }
 
 
-  public void transferBalanceOrToken(AccountCapsule accountCapsule,
-      MarketSellAssetContract contract) {
-    byte[] sellTokenID = contract.getSellTokenId().toByteArray();
+  public void transferBalanceOrToken(AccountCapsule accountCapsule) {
 
     if (Arrays.equals(sellTokenID, "_".getBytes())) {
       accountCapsule.setBalance(Math.subtractExact(accountCapsule.getBalance(), sellTokenQuantity));

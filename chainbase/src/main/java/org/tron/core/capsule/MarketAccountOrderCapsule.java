@@ -53,20 +53,10 @@ public class MarketAccountOrderCapsule implements ProtoCapsule<MarketAccountOrde
   public void addOrders(ByteString order) {
     this.accountOrder = this.accountOrder.toBuilder()
         .addOrders(order)
-//        .setCount(accountOrder.getCount() + 1)
         .build();
 
   }
 
-  public void removeOrders(ByteString order) {
-    List<ByteString> ordersList = this.accountOrder.getOrdersList();
-    ordersList.remove(order);
-
-    this.accountOrder = this.accountOrder.toBuilder()
-        .clearOrders()
-        .addAllOrders(ordersList)
-        .build();
-  }
 
   public void setCount(long o) {
     this.accountOrder = this.accountOrder.toBuilder()

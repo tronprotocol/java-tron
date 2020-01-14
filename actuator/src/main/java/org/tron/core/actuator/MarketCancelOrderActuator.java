@@ -65,9 +65,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     super(ContractType.MarketCancelOrderContract, MarketCancelOrderContract.class);
   }
 
-  @Override
-  public boolean execute(Object object) throws ContractExeException {
-
+  private void initStores(){
     accountStore = chainBaseManager.getAccountStore();
     dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     assetIssueStore = chainBaseManager.getAssetIssueStore();
@@ -76,6 +74,12 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     pairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
     marketPriceStore = chainBaseManager.getMarketPriceStore();
+  }
+
+  @Override
+  public boolean execute(Object object) throws ContractExeException {
+
+    initStores();
 
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
@@ -160,14 +164,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       throw new ContractValidateException("No account store or dynamic store!");
     }
 
-    accountStore = chainBaseManager.getAccountStore();
-    dynamicStore = chainBaseManager.getDynamicPropertiesStore();
-    assetIssueStore = chainBaseManager.getAssetIssueStore();
-
-    orderStore = chainBaseManager.getMarketOrderStore();
-    pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
-    pairPriceToOrderStore = chainBaseManager
-        .getMarketPairPriceToOrderStore();
+    initStores();
 
     if (!this.any.is(MarketCancelOrderContract.class)) {
       throw new ContractValidateException(
