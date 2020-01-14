@@ -356,7 +356,7 @@ public class Wallet {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
       if (ArrayUtils.isEmpty(data)) {
-        throw new ContractValidateException("bytecode must have");
+        throw new ContractValidateException("bytecode must not be empty");
       }
     }
     setTransaction(trx);
