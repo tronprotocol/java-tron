@@ -613,12 +613,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
       priceListCapsule = new MarketPriceLinkedListCapsule(sellTokenID, buyTokenID);
     }
 
-    MarketPriceCapsule headPriceCapsule = priceListCapsule
-        .insertMarket(currentPrice, sellTokenID, buyTokenID, marketPriceStore, position);
-    if (headPriceCapsule != null) {
-      priceListCapsule.setBestPrice(headPriceCapsule);
-      pairToPriceStore.put(pairKey, priceListCapsule);
-    }
+    priceListCapsule
+        .insertMarket(currentPrice, sellTokenID, buyTokenID, marketPriceStore,pairToPriceStore, position);
+
 
     // add order into orderList
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(

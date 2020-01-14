@@ -119,11 +119,10 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
 
   /*
    * insert price by sort, if same, just return
-   * store ops outside(itself)
-   * return head, null if not changed
    * */
-  public MarketPriceCapsule insertMarket(MarketPrice marketPrice, byte[] sellTokenID,
-      byte[] buyTokenID, MarketPriceStore marketPriceStore, MarketOrderPosition position)
+  public void insertMarket(MarketPrice marketPrice, byte[] sellTokenID,
+      byte[] buyTokenID, MarketPriceStore marketPriceStore, MarketPairToPriceStore pairToPriceStore,
+      MarketOrderPosition position)
       throws ItemNotFoundException {
 
     MarketPriceCapsule head;
@@ -164,8 +163,8 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
           .setPrev(ByteString.copyFrom(head.getKey(sellTokenID, buyTokenID)))
           .build();
 
-      MarketPriceCapsule marketPriceCapsule = new MarketPriceCapsule(marketPrice);
-      byte[] priceKey = marketPriceCapsule.getKey(sellTokenID, buyTokenID);
+      MarketPriceCapsule newMarketPriceCapsule = new MarketPriceCapsule(marketPrice);
+      byte[] priceKey = newMarketPriceCapsule.getKey(sellTokenID, buyTokenID);
 
       // head.next.pre = node
       if (!head.isNextNull()) {
@@ -178,13 +177,14 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
       head.setNext(priceKey);
       marketPriceStore.put(head.getKey(sellTokenID, buyTokenID), head);
 
-      marketPriceStore.put(priceKey, marketPriceCapsule);
+      marketPriceStore.put(priceKey, newMarketPriceCapsule);
 
-      // dummy.next
-      return marketPriceStore.get(dummy.getNext());
+      // update the best price
+      MarketPriceCapsule headPriceCapsule = marketPriceStore.get(dummy.getNext());
+      byte[] pairKey = MarketUtils.createPairKey(sellTokenID, buyTokenID);
+      this.setBestPrice(headPriceCapsule);
+      pairToPriceStore.put(pairKey, this);
     }
-
-    return null;
   }
 
   /*
