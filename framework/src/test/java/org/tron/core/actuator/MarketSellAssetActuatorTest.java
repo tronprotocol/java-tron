@@ -79,6 +79,7 @@ public class MarketSellAssetActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    dbManager.getDynamicPropertiesStore().saveAllowMarketTransaction(1L);
   }
 
   /**
@@ -127,7 +128,6 @@ public class MarketSellAssetActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
     dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
-    dbManager.getDynamicPropertiesStore().saveAllowMarketTransaction(1L);
   }
 
 

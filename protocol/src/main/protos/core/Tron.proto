@@ -58,15 +58,15 @@ message Exchange {
   int64 second_token_balance = 9;
 }
 
-//market
+// market
 message MarketOrder {
     bytes order_id = 1;
     bytes owner_address = 2;
     int64 create_time = 3;
     bytes sell_token_id = 4;
-    int64 sell_token_quantity = 6;
-    bytes buy_token_id = 5;
-    int64 buy_token_quantity = 7;//min to receive
+    int64 sell_token_quantity = 5;
+    bytes buy_token_id = 6;
+    int64 buy_token_quantity = 7; // min to receive
     int64 sell_token_quantity_remain = 9;
     enum State {
       ACTIVE = 0;
@@ -88,8 +88,8 @@ message MarketOrderPairList {
 }
 
 message MarketOrderPair{
-    bytes sell_token_id = 4;
-    bytes buy_token_id = 5;
+    bytes sell_token_id = 1;
+    bytes buy_token_id = 2;
 }
 
 message MarketAccountOrder {
@@ -126,10 +126,8 @@ message MarketPriceList {
 }
 
 message MarketOrderIdList {
-//  repeated bytes orders = 1;
-
-  bytes head = 2;
-  bytes tail = 3;
+  bytes head = 1;
+  bytes tail = 2;
 }
 
 message ChainParameters {

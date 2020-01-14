@@ -17,10 +17,7 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
@@ -110,7 +107,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       orderCapsule.setState(State.CANCELED);
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
 
-      //2. clear orderList
+      // 2. clear orderList
       byte[] pairPriceKey = MarketUtils.createPairPriceKey(
           orderCapsule.getSellTokenId(),
           orderCapsule.getBuyTokenId(),
@@ -122,13 +119,8 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       // delete order
       orderIdListCapsule.removeOrder(orderCapsule, orderStore, pairPriceKey, pairPriceToOrderStore);
 
-      // TODO need check? too much time
-      // if (!found) {
-      //   throw new ItemNotFoundException("orderId not exists");//should not happen
-      // }
-
       if (orderIdListCapsule.isOrderEmpty()) {
-        //if orderList is empty, delete
+        // if orderList is empty, delete
         pairPriceToOrderStore.delete(pairPriceKey);
 
         // 3. modify priceList
@@ -185,7 +177,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    //Parameters check
+    // Parameters check
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     ByteString orderId = contract.getOrderId();
 
@@ -193,13 +185,13 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    //Whether the account exist
+    // Whether the account exist
     AccountCapsule ownerAccount = accountStore.get(ownerAddress);
     if (ownerAccount == null) {
       throw new ContractValidateException("Account does not exist!");
     }
 
-    //Whether the order exist
+    // Whether the order exist
     MarketOrderCapsule marketOrderCapsule;
     try {
       marketOrderCapsule = orderStore.get(orderId.toByteArray());
@@ -216,7 +208,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       throw new ContractValidateException("Order does not belong to the account!");
     }
 
-    //Whether the balance is enough
+    // Whether the balance is enough
     long fee = calcFee();
     if (ownerAccount.getBalance() < fee) {
       throw new ContractValidateException("No enough balance !");
