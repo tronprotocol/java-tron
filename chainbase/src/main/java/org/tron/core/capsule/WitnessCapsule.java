@@ -4,11 +4,10 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DecodeUtil;
 import org.tron.protos.Protocol.Witness;
 
-import static org.tron.common.utils.Hash.computeAddress;
-import static org.tron.common.utils.Hash.computeAddress;
+import static org.tron.common.crypto.Hash.computeAddress;
+import static org.tron.common.crypto.Hash.computeAddress;
 
 @Slf4j(topic = "capsule")
 public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<WitnessCapsule> {

@@ -13,7 +13,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.core.config.args;
+package org.tron.common.utils;
 
 import com.google.common.collect.Lists;
 import java.util.List;

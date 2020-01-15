@@ -18,8 +18,6 @@
 
 package org.tron.core;
 
-import static org.tron.common.utils.DecodeUtil.ADDRESS_SIZE;
-import static org.tron.common.utils.DecodeUtil.addressValid;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
@@ -79,7 +77,6 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
 import org.tron.api.GrpcAPI.WitnessList;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
@@ -488,7 +485,7 @@ public class Wallet {
           }
           String base64 = TransactionCapsule.getBase64FromByteString(sig);
           byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
-                  .isECKeyCryptoEngine());
+              .isECKeyCryptoEngine());
           approveList.add(ByteString.copyFrom(address)); //out put approve list.
         }
         tswBuilder.addAllApprovedList(approveList);
@@ -862,21 +859,21 @@ public class Wallet {
   }
 
   private Map<String, Long> setAssetNetLimit(Map<String, Long> assetNetLimitMap,
-                                AccountCapsule accountCapsule) {
+      AccountCapsule accountCapsule) {
     Map<String, Long> allFreeAssetNetUsage;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-                .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
       });
     } else {
       allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-                .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
       });
     }
     return allFreeAssetNetUsage;

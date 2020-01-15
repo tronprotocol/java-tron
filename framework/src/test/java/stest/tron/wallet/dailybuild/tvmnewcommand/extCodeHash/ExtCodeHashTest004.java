@@ -1,6 +1,6 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.extCodeHash;
 
-import static org.tron.common.utils.Hash.sha3;
+import static org.tron.common.crypto.Hash.sha3;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;

@@ -16,7 +16,7 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.utils;
+package org.tron.common.crypto;
 
 import static java.util.Arrays.copyOfRange;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
@@ -30,6 +30,7 @@ import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.math.ec.ECPoint;
 import org.tron.common.crypto.jce.TronCastleProvider;
+import org.tron.common.utils.DecodeUtil;
 
 @Slf4j(topic = "crypto")
 public class Hash {

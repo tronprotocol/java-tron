@@ -15,7 +15,7 @@
 
 package org.tron.core.utils;
 
-import static org.tron.common.utils.Hash.sha3omit12;
+import static org.tron.common.crypto.Hash.sha3omit12;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.primitives.Longs;
@@ -34,11 +34,8 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
-import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DecodeUtil;
-import org.tron.common.utils.Hash;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
