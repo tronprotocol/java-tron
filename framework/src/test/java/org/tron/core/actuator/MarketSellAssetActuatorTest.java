@@ -5,7 +5,6 @@ import static org.testng.Assert.fail;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -167,9 +166,9 @@ public class MarketSellAssetActuatorTest {
         .delete(MarketUtils.createPairKey(TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes()));
 
     MarketPriceStore marketPriceStore = chainBaseManager.getMarketPriceStore();
-    marketPriceStore.forEach(marketPriceCapsuleEntry -> {
-      marketPriceStore.delete(marketPriceCapsuleEntry.getKey());
-    });
+    marketPriceStore.forEach(marketPriceCapsuleEntry ->
+      marketPriceStore.delete(marketPriceCapsuleEntry.getKey())
+    );
 
     MarketPairToPriceStore pairToPriceStore = chainBaseManager
         .getMarketPairToPriceStore();
@@ -285,7 +284,7 @@ public class MarketSellAssetActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_NOT_EXIST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Assert.assertEquals(null, accountCapsule);
+    Assert.assertNull(accountCapsule);
 
     MarketSellAssetActuator actuator = new MarketSellAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
@@ -886,7 +885,7 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 1);
+    Assert.assertEquals(1, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(0);
 
     //check order
@@ -896,9 +895,9 @@ public class MarketSellAssetActuatorTest {
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
-    Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 1);
-    Assert.assertTrue(Arrays.equals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes()));
-    Assert.assertTrue(Arrays.equals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes()));
+    Assert.assertEquals(1, priceListCapsule.getPriceSize(marketPriceStore));
+    Assert.assertArrayEquals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes());
+    Assert.assertArrayEquals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes());
 
     MarketPrice marketPrice = priceListCapsule.getBestPrice();
     Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
@@ -910,7 +909,7 @@ public class MarketSellAssetActuatorTest {
         marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .get(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule.getOrderSize(orderStore), 1);
+    Assert.assertEquals(1, orderIdListCapsule.getOrderSize(orderStore));
     Assert.assertArrayEquals(orderIdListCapsule.getHead(),
         orderId.toByteArray());
   }
@@ -961,7 +960,7 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 1);
+    Assert.assertEquals(1, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(0);
 
     //check order
@@ -971,9 +970,9 @@ public class MarketSellAssetActuatorTest {
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
-    Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 1);
-    Assert.assertTrue(Arrays.equals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes()));
-    Assert.assertTrue(Arrays.equals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes()));
+    Assert.assertEquals(1, priceListCapsule.getPriceSize(marketPriceStore));
+    Assert.assertArrayEquals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes());
+    Assert.assertArrayEquals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes());
 
     MarketPrice marketPrice = priceListCapsule.getBestPrice();
     Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
@@ -985,7 +984,7 @@ public class MarketSellAssetActuatorTest {
         marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .get(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule.getOrderSize(orderStore), 1);
+    Assert.assertEquals(1, orderIdListCapsule.getOrderSize(orderStore));
     Assert.assertArrayEquals(orderIdListCapsule.getHead(),
         orderId.toByteArray());
   }
@@ -1037,7 +1036,7 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 1);
+    Assert.assertEquals(1, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(0);
 
     //check order
@@ -1047,9 +1046,9 @@ public class MarketSellAssetActuatorTest {
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
-    Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 1);
-    Assert.assertTrue(Arrays.equals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes()));
-    Assert.assertTrue(Arrays.equals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes()));
+    Assert.assertEquals(1, priceListCapsule.getPriceSize(marketPriceStore));
+    Assert.assertArrayEquals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes());
+    Assert.assertArrayEquals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes());
 
     MarketPrice marketPrice = priceListCapsule.getBestPrice();
     Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
@@ -1061,9 +1060,9 @@ public class MarketSellAssetActuatorTest {
         marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .get(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule.getOrderSize(orderStore), 1);
-    Assert.assertTrue(Arrays.equals(orderIdListCapsule.getHead(),
-        orderId.toByteArray()));
+    Assert.assertEquals(1, orderIdListCapsule.getOrderSize(orderStore));
+    Assert.assertArrayEquals(orderIdListCapsule.getHead(),
+        orderId.toByteArray());
   }
 
 
@@ -1123,13 +1122,13 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 3);
+    Assert.assertEquals(3, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(2);
 
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
-    Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 3);
+    Assert.assertEquals(3, priceListCapsule.getPriceSize(marketPriceStore));
 
     //This order should be second one
     MarketPrice marketPrice = priceListCapsule.getPriceByIndex(1, marketPriceStore).getInstance();
@@ -1142,9 +1141,9 @@ public class MarketSellAssetActuatorTest {
         marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .get(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule.getOrderSize(orderStore), 1);
-    Assert.assertTrue(Arrays.equals(orderIdListCapsule.getHead(),
-        orderId.toByteArray()));
+    Assert.assertEquals(1, orderIdListCapsule.getOrderSize(orderStore));
+    Assert.assertArrayEquals(orderIdListCapsule.getHead(),
+        orderId.toByteArray());
   }
 
 
@@ -1204,13 +1203,13 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 3);
+    Assert.assertEquals(3, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(2);
 
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
-    Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 2);
+    Assert.assertEquals(2, priceListCapsule.getPriceSize(marketPriceStore));
 
     //This order should be second one
     MarketPrice marketPrice = priceListCapsule.getPriceByIndex(1, marketPriceStore).getInstance();
@@ -1223,7 +1222,7 @@ public class MarketSellAssetActuatorTest {
         marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .get(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule.getOrderSize(orderStore), 2);
+    Assert.assertEquals(2, orderIdListCapsule.getOrderSize(orderStore));
     Assert
         .assertArrayEquals(orderIdListCapsule.getOrderByIndex(1, orderStore).getID().toByteArray(),
             orderId.toByteArray());
@@ -1288,7 +1287,7 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 4);
+    Assert.assertEquals(4, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(3);
 
     //check order
@@ -1299,8 +1298,8 @@ public class MarketSellAssetActuatorTest {
     byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
     Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 1);
-    Assert.assertTrue(Arrays.equals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes()));
-    Assert.assertTrue(Arrays.equals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes()));
+    Assert.assertArrayEquals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes());
+    Assert.assertArrayEquals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes());
 
     MarketPrice marketPrice = priceListCapsule.getBestPrice();
     Assert.assertEquals(marketPrice.getSellTokenQuantity(), sellTokenQuant);
@@ -1312,7 +1311,7 @@ public class MarketSellAssetActuatorTest {
         marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .get(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule.getOrderSize(orderStore), 1);
+    Assert.assertEquals(1, orderIdListCapsule.getOrderSize(orderStore));
     Assert.assertArrayEquals(orderIdListCapsule.getHead(),
         orderId.toByteArray());
   }
@@ -1387,7 +1386,7 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 7);
+    Assert.assertEquals(7, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(6);
 
     //check order
@@ -1397,7 +1396,7 @@ public class MarketSellAssetActuatorTest {
     //check pairToPrice
     byte[] marketPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(marketPair);
-    Assert.assertEquals(priceListCapsule.getPriceSize(marketPriceStore), 4);
+    Assert.assertEquals(4, priceListCapsule.getPriceSize(marketPriceStore));
     Assert.assertArrayEquals(priceListCapsule.getSellTokenId(), sellTokenId.getBytes());
     Assert.assertArrayEquals(priceListCapsule.getBuyTokenId(), buyTokenId.getBytes());
 
@@ -1411,7 +1410,7 @@ public class MarketSellAssetActuatorTest {
         marketPrice.getSellTokenQuantity(), marketPrice.getBuyTokenQuantity());
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .get(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule.getOrderSize(orderStore), 1);
+    Assert.assertEquals(1, orderIdListCapsule.getOrderSize(orderStore));
     Assert
         .assertArrayEquals(orderIdListCapsule.getOrderByIndex(0, orderStore).getID().toByteArray(),
             orderId.toByteArray());
@@ -1489,41 +1488,41 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 1);
+    Assert.assertEquals(1, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(0);
 
     MarketAccountOrderCapsule makerAccountOrderCapsule = marketAccountStore.get(makerAddress);
-    Assert.assertEquals(makerAccountOrderCapsule.getCount(), 6);
+    Assert.assertEquals(6, makerAccountOrderCapsule.getCount());
     ByteString makerOrderId1 = makerAccountOrderCapsule.getOrdersList().get(0);
     ByteString makerOrderId2 = makerAccountOrderCapsule.getOrdersList().get(1);
 
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
-    Assert.assertEquals(orderCapsule.getSellTokenQuantityRemain(), 0L);
-    Assert.assertEquals(orderCapsule.getSt(), State.INACTIVE);
+    Assert.assertEquals(0L, orderCapsule.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.INACTIVE, orderCapsule.getSt());
 
     MarketOrderCapsule makerOrderCapsule1 = orderStore.get(makerOrderId1.toByteArray());
-    Assert.assertEquals(makerOrderCapsule1.getSellTokenQuantityRemain(), 0L);
-    Assert.assertEquals(makerOrderCapsule1.getSt(), State.INACTIVE);
+    Assert.assertEquals(0L, makerOrderCapsule1.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.INACTIVE, makerOrderCapsule1.getSt());
 
     MarketOrderCapsule makerOrderCapsule2 = orderStore.get(makerOrderId2.toByteArray());
-    Assert.assertEquals(makerOrderCapsule2.getSellTokenQuantityRemain(), 0L);
-    Assert.assertEquals(makerOrderCapsule2.getSt(), State.INACTIVE);
+    Assert.assertEquals(0L, makerOrderCapsule2.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.INACTIVE, makerOrderCapsule2.getSt());
 
     //check pairToPrice
     byte[] takerPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule takerPriceListCapsule = pairToPriceStore.get(takerPair);
-    Assert.assertEquals(takerPriceListCapsule.getPriceSize(marketPriceStore), 3);
+    Assert.assertEquals(3, takerPriceListCapsule.getPriceSize(marketPriceStore));
     MarketPrice takerPrice = takerPriceListCapsule.getBestPrice();
-    Assert.assertEquals(takerPrice.getSellTokenQuantity(), 100L);
-    Assert.assertEquals(takerPrice.getBuyTokenQuantity(), 200L);
+    Assert.assertEquals(100L, takerPrice.getSellTokenQuantity());
+    Assert.assertEquals(200L, takerPrice.getBuyTokenQuantity());
 
     byte[] makerPair = MarketUtils.createPairKey(TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes());
     MarketPriceLinkedListCapsule makerPriceListCapsule = pairToPriceStore.get(makerPair);
-    Assert.assertEquals(makerPriceListCapsule.getPriceSize(marketPriceStore), 1);
+    Assert.assertEquals(1, makerPriceListCapsule.getPriceSize(marketPriceStore));
     MarketPrice marketPrice = makerPriceListCapsule.getBestPrice();
-    Assert.assertEquals(marketPrice.getSellTokenQuantity(), 100L);
-    Assert.assertEquals(marketPrice.getBuyTokenQuantity(), 300L);
+    Assert.assertEquals(100L, marketPrice.getSellTokenQuantity());
+    Assert.assertEquals(300L, marketPrice.getBuyTokenQuantity());
 
     //check pairPriceToOrder
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(
@@ -1531,14 +1530,14 @@ public class MarketSellAssetActuatorTest {
         100L, 200L);
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule, null);
+    Assert.assertNull(orderIdListCapsule);
 
     pairPriceKey = MarketUtils.createPairPriceKey(
         TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(),
         400L, 200L);
     orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule, null);
+    Assert.assertNull(orderIdListCapsule);
   }
 
   /**
@@ -1604,7 +1603,7 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 1);
+    Assert.assertEquals(1, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(0);
 
     MarketAccountOrderCapsule makerAccountOrderCapsule = marketAccountStore.get(makerAddress);
@@ -1614,31 +1613,31 @@ public class MarketSellAssetActuatorTest {
 
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
-    Assert.assertEquals(orderCapsule.getSellTokenQuantityRemain(), 300L);
-    Assert.assertEquals(orderCapsule.getSt(), State.ACTIVE);
+    Assert.assertEquals(300L, orderCapsule.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.ACTIVE, orderCapsule.getSt());
 
     MarketOrderCapsule makerOrderCapsule1 = orderStore.get(makerOrderId1.toByteArray());
-    Assert.assertEquals(makerOrderCapsule1.getSellTokenQuantityRemain(), 0L);
-    Assert.assertEquals(makerOrderCapsule1.getSt(), State.INACTIVE);
+    Assert.assertEquals(0L, makerOrderCapsule1.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.INACTIVE, makerOrderCapsule1.getSt());
 
     MarketOrderCapsule makerOrderCapsule2 = orderStore.get(makerOrderId2.toByteArray());
-    Assert.assertEquals(makerOrderCapsule2.getSellTokenQuantityRemain(), 0L);
-    Assert.assertEquals(makerOrderCapsule2.getSt(), State.INACTIVE);
+    Assert.assertEquals(0L, makerOrderCapsule2.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.INACTIVE, makerOrderCapsule2.getSt());
 
     //check pairToPrice
     byte[] takerPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule takerPriceListCapsule = pairToPriceStore.get(takerPair);
-    Assert.assertEquals(takerPriceListCapsule.getPriceSize(marketPriceStore), 1);
+    Assert.assertEquals(1, takerPriceListCapsule.getPriceSize(marketPriceStore));
     MarketPrice takerPrice = takerPriceListCapsule.getBestPrice();
-    Assert.assertEquals(takerPrice.getSellTokenQuantity(), 800L);
-    Assert.assertEquals(takerPrice.getBuyTokenQuantity(), 200L);
+    Assert.assertEquals(800L, takerPrice.getSellTokenQuantity());
+    Assert.assertEquals(200L, takerPrice.getBuyTokenQuantity());
 
     byte[] makerPair = MarketUtils.createPairKey(TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes());
     MarketPriceLinkedListCapsule makerPriceListCapsule = pairToPriceStore.get(makerPair);
-    Assert.assertEquals(makerPriceListCapsule.getPriceSize(marketPriceStore), 1);
+    Assert.assertEquals(1, makerPriceListCapsule.getPriceSize(marketPriceStore));
     MarketPrice marketPrice = makerPriceListCapsule.getBestPrice();
-    Assert.assertEquals(marketPrice.getSellTokenQuantity(), 100L);
-    Assert.assertEquals(marketPrice.getBuyTokenQuantity(), 500L);
+    Assert.assertEquals(100L, marketPrice.getSellTokenQuantity());
+    Assert.assertEquals(500L, marketPrice.getBuyTokenQuantity());
 
     //check pairPriceToOrder
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(
@@ -1646,14 +1645,14 @@ public class MarketSellAssetActuatorTest {
         100L, 200L);
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule, null);
+    Assert.assertNull(orderIdListCapsule);
 
     pairPriceKey = MarketUtils.createPairPriceKey(
         TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes(),
         100L, 300L);
     orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule, null);
+    Assert.assertNull(orderIdListCapsule);
   }
 
   /**
@@ -1719,38 +1718,38 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 1);
+    Assert.assertEquals(1, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(0);
 
     MarketAccountOrderCapsule makerAccountOrderCapsule = marketAccountStore.get(makerAddress);
-    Assert.assertEquals(makerAccountOrderCapsule.getCount(), 3);
+    Assert.assertEquals(3, makerAccountOrderCapsule.getCount());
     ByteString makerOrderId1 = makerAccountOrderCapsule.getOrdersList().get(0);
     ByteString makerOrderId2 = makerAccountOrderCapsule.getOrdersList().get(1);
 
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
-    Assert.assertEquals(orderCapsule.getSellTokenQuantityRemain(), 0L);
-    Assert.assertEquals(orderCapsule.getSt(), State.INACTIVE);
+    Assert.assertEquals(0L, orderCapsule.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.INACTIVE, orderCapsule.getSt());
 
     MarketOrderCapsule makerOrderCapsule1 = orderStore.get(makerOrderId1.toByteArray());
-    Assert.assertEquals(makerOrderCapsule1.getSellTokenQuantityRemain(), 0L);
-    Assert.assertEquals(makerOrderCapsule1.getSt(), State.INACTIVE);
+    Assert.assertEquals(0L, makerOrderCapsule1.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.INACTIVE, makerOrderCapsule1.getSt());
 
     MarketOrderCapsule makerOrderCapsule2 = orderStore.get(makerOrderId2.toByteArray());
-    Assert.assertEquals(makerOrderCapsule2.getSellTokenQuantityRemain(), 50L);
-    Assert.assertEquals(makerOrderCapsule2.getSt(), State.ACTIVE);
+    Assert.assertEquals(50L, makerOrderCapsule2.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.ACTIVE, makerOrderCapsule2.getSt());
 
     //check pairToPrice
     byte[] takerPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule takerPriceListCapsule = pairToPriceStore.getUnchecked(takerPair);
-    Assert.assertEquals(takerPriceListCapsule, null);
+    Assert.assertNull(takerPriceListCapsule);
 
     byte[] makerPair = MarketUtils.createPairKey(TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes());
     MarketPriceLinkedListCapsule makerPriceListCapsule = pairToPriceStore.get(makerPair);
-    Assert.assertEquals(makerPriceListCapsule.getPriceSize(marketPriceStore), 2);
+    Assert.assertEquals(2, makerPriceListCapsule.getPriceSize(marketPriceStore));
     MarketPrice marketPrice = makerPriceListCapsule.getBestPrice();
-    Assert.assertEquals(marketPrice.getSellTokenQuantity(), 200L);
-    Assert.assertEquals(marketPrice.getBuyTokenQuantity(), 800L);
+    Assert.assertEquals(200L, marketPrice.getSellTokenQuantity());
+    Assert.assertEquals(800L, marketPrice.getBuyTokenQuantity());
 
     //check pairPriceToOrder
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(
@@ -1758,14 +1757,14 @@ public class MarketSellAssetActuatorTest {
         100L, 200L);
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule, null);
+    Assert.assertNull(orderIdListCapsule);
 
     pairPriceKey = MarketUtils.createPairPriceKey(
         TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(),
         800L, 200L);
     orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule, null);
+    Assert.assertNull(orderIdListCapsule);
   }
 
 
@@ -1833,38 +1832,38 @@ public class MarketSellAssetActuatorTest {
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
-    Assert.assertEquals(accountOrderCapsule.getCount(), 1);
+    Assert.assertEquals(1, accountOrderCapsule.getCount());
     ByteString orderId = accountOrderCapsule.getOrdersList().get(0);
 
     MarketAccountOrderCapsule makerAccountOrderCapsule = marketAccountStore.get(makerAddress);
-    Assert.assertEquals(makerAccountOrderCapsule.getCount(), 3);
+    Assert.assertEquals(3, makerAccountOrderCapsule.getCount());
     ByteString makerOrderId1 = makerAccountOrderCapsule.getOrdersList().get(0);
     ByteString makerOrderId2 = makerAccountOrderCapsule.getOrdersList().get(1);
 
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
-    Assert.assertEquals(orderCapsule.getSellTokenQuantityRemain(), 0L);
-    Assert.assertEquals(orderCapsule.getSt(), State.INACTIVE);
+    Assert.assertEquals(0L, orderCapsule.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.INACTIVE, orderCapsule.getSt());
 
     MarketOrderCapsule makerOrderCapsule1 = orderStore.get(makerOrderId1.toByteArray());
-    Assert.assertEquals(makerOrderCapsule1.getSellTokenQuantityRemain(), 0L);
-    Assert.assertEquals(makerOrderCapsule1.getSt(), State.INACTIVE);
+    Assert.assertEquals(0L, makerOrderCapsule1.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.INACTIVE, makerOrderCapsule1.getSt());
 
     MarketOrderCapsule makerOrderCapsule2 = orderStore.get(makerOrderId2.toByteArray());
-    Assert.assertEquals(makerOrderCapsule2.getSellTokenQuantityRemain(), 100L);
-    Assert.assertEquals(makerOrderCapsule2.getSt(), State.ACTIVE);
+    Assert.assertEquals(100L, makerOrderCapsule2.getSellTokenQuantityRemain());
+    Assert.assertEquals(State.ACTIVE, makerOrderCapsule2.getSt());
 
     //check pairToPrice
     byte[] takerPair = MarketUtils.createPairKey(sellTokenId.getBytes(), buyTokenId.getBytes());
     MarketPriceLinkedListCapsule takerPriceListCapsule = pairToPriceStore.getUnchecked(takerPair);
-    Assert.assertEquals(takerPriceListCapsule, null);
+    Assert.assertNull(takerPriceListCapsule);
 
     byte[] makerPair = MarketUtils.createPairKey(TOKEN_ID_TWO.getBytes(), TOKEN_ID_ONE.getBytes());
     MarketPriceLinkedListCapsule makerPriceListCapsule = pairToPriceStore.get(makerPair);
-    Assert.assertEquals(makerPriceListCapsule.getPriceSize(marketPriceStore), 2);
+    Assert.assertEquals(2, makerPriceListCapsule.getPriceSize(marketPriceStore));
     MarketPrice marketPrice = makerPriceListCapsule.getBestPrice();
-    Assert.assertEquals(marketPrice.getSellTokenQuantity(), 100L);
-    Assert.assertEquals(marketPrice.getBuyTokenQuantity(), 200L);
+    Assert.assertEquals(100L, marketPrice.getSellTokenQuantity());
+    Assert.assertEquals(200L, marketPrice.getBuyTokenQuantity());
 
     //check pairPriceToOrder
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(
@@ -1872,7 +1871,7 @@ public class MarketSellAssetActuatorTest {
         201L, 100L);
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
-    Assert.assertEquals(orderIdListCapsule, null);
+    Assert.assertNull(orderIdListCapsule);
   }
 
 }

@@ -493,9 +493,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // if the quantity of taker want to buy is bigger than the remain of maker want to sell,
       // consume the order of maker
       // makerSellTokenQuantityRemain_A/makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
-//      makerBuyTokenQuantityReceive = Math
-//          .floorDiv(Math.multiplyExact(makerOrderCapsule.getSellTokenQuantityRemain(),
-//              makerOrderCapsule.getBuyTokenQuantity()), makerOrderCapsule.getSellTokenQuantity());
+      // makerBuyTokenQuantityReceive = Math
+      //     .floorDiv(Math.multiplyExact(makerOrderCapsule.getSellTokenQuantityRemain(),
+      //         makerOrderCapsule.getBuyTokenQuantity()), makerOrderCapsule.getSellTokenQuantity());
       makerBuyTokenQuantityReceive = makerSellRemainQuantity.multiply(makerBuyQuantity)
           .divide(makerSellQuantity).longValue();
 
