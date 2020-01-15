@@ -159,7 +159,7 @@ public class WalletUtils {
       if (password0.equals(password1)) {
         break;
       }
-      System.out.println("The passwords do not match, please input again.");
+      System.out.println("Two passwords do not match, please input again.");
     }
     return password0;
   }

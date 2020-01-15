@@ -72,7 +72,7 @@ public class BackupManager implements EventHandler {
     try {
       localIp = InetAddress.getLocalHost().getHostAddress();
     } catch (Exception e) {
-      logger.warn("Get local ip failed.");
+      logger.warn("Getting local ip failed.");
     }
 
     for (String member : parameter.getBackupMembers()) {

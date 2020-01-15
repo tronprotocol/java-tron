@@ -1379,11 +1379,11 @@ public class Wallet {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
     if (request.getBlockNum() < 0 || request.getBlockNum() > 1000) {
-      throw new BadItemException("request.BlockNum must be specified with range in【0，1000】");
+      throw new BadItemException("request.BlockNum must be specified with range in [0, 1000]");
     }
 
     if (request.getOutPointsCount() < 1 || request.getOutPointsCount() > 10) {
-      throw new BadItemException("request.OutPointsCount must be speccified with range in【1，10】");
+      throw new BadItemException("request.OutPointsCount must be speccified with range in[1, 10]");
     }
 
     for (OutputPoint outputPoint : request.getOutPointsList()) {
