@@ -1,7 +1,7 @@
 package stest.tron.wallet.common.client.utils;
 
-import static org.tron.common.utils.Hash.sha3;
-import static org.tron.common.utils.Hash.sha3omit12;
+import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.common.crypto.Hash.sha3omit12;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -66,7 +66,6 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;

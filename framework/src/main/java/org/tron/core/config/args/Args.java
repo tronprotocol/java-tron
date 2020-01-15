@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,9 +35,7 @@ import org.tron.common.args.Account;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
 import org.tron.common.config.DbBackupConfig;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
-import org.tron.common.crypto.SignUtils;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
@@ -49,6 +46,7 @@ import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.LocalWitnesses;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
@@ -68,7 +66,7 @@ public class Args extends CommonParameter {
 
   @Getter
   @Setter
-  private   static  LocalWitnesses localWitnesses = new LocalWitnesses();
+  private   static LocalWitnesses localWitnesses = new LocalWitnesses();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";

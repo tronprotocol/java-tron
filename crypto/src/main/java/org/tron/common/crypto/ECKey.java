@@ -17,9 +17,7 @@ package org.tron.common.crypto;
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
-import static org.tron.common.utils.ByteUtil.byteArrayToInt;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -69,7 +67,6 @@ import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.BigIntegers;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.cryptohash.Keccak256;
 import org.tron.common.crypto.jce.ECKeyAgreement;
 import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.ECKeyPairGenerator;
@@ -77,7 +74,6 @@ import org.tron.common.crypto.jce.ECSignatureFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Hash;
 
 @Slf4j(topic = "crypto")
 public class ECKey implements Serializable, SignInterface {
