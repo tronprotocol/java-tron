@@ -1037,8 +1037,6 @@ public class Args extends CommonParameter {
     DBConfig.setLongRunningTime(parameter.getLongRunningTime());
     DBConfig.setChangedDelegation(parameter.getChangedDelegation());
     DBConfig.setActuatorSet(parameter.getActuatorSet());
-    DBConfig.setTransactionHistoreSwitch(parameter.getStorage().getTransactionHistoreSwitch());
-    DBConfig.setECKeyCryptoEngine(parameter.isECKeyCryptoEngine());
   }
 
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

@@ -207,7 +207,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             "Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
-      byte[] address = SignUtils.signatureToAddress(hash, base64, DBConfig.isECKeyCryptoEngine());
+      byte[] address = SignUtils.signatureToAddress(hash, base64, CommonParameter.getInstance().isECKeyCryptoEngine());
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
@@ -522,7 +522,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void sign(byte[] privateKey) {
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
     //    ByteString sig = ByteString.copyFrom(signature.getBytes());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
@@ -553,7 +553,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
     }
     List<ByteString> approveList = new ArrayList<>();
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     byte[] address = cryptoEngine.getAddress();
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),
