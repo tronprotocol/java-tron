@@ -475,6 +475,7 @@ public class MarketCancelOrderActuatorTest {
     MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
+    AccountStore accountStore = dbManager.getAccountStore();
     MarketPriceStore marketPriceStore = chainBaseManager.getMarketPriceStore();
 
     addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
@@ -710,6 +711,7 @@ public class MarketCancelOrderActuatorTest {
 
     //get storeDb
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    AccountStore accountStore = dbManager.getAccountStore();
     MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
     MarketOrderStore orderStore = chainBaseManager.getMarketOrderStore();
     MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
