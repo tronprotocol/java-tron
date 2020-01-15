@@ -34,10 +34,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
-
 import org.tron.core.Constant;
-
-
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -457,7 +454,8 @@ public class Util {
       addressStr = jsonObject.getString(addressParam);
     }
     if (org.apache.commons.lang3.StringUtils.isNotBlank(addressStr)) {
-      if (org.apache.commons.lang3.StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
+      if (org.apache.commons.lang3.StringUtils.startsWith(addressStr,
+              Constant.ADD_PRE_FIX_STRING_MAINNET)) {
         address = Hex.decode(addressStr);
       } else {
         address = decodeFromBase58Check(addressStr);
