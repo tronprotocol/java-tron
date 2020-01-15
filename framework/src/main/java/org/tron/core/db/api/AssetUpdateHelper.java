@@ -31,14 +31,14 @@ public class AssetUpdateHelper {
 
   public void doWork() {
     long start = System.currentTimeMillis();
-    logger.info("Start updating the asset");
+    logger.info("Start to update the asset");
     init();
     updateAsset();
     updateExchange();
     updateAccount();
     finish();
     logger.info(
-        "Complete the asset update,Total time:{} milliseconds", System.currentTimeMillis() - start);
+        "Complete the asset update, Total time:{} milliseconds", System.currentTimeMillis() - start);
   }
 
   public void init() {
@@ -62,7 +62,7 @@ public class AssetUpdateHelper {
     long blockNum = 1;
     while (blockNum <= latestBlockHeaderNumber) {
       if (blockNum % 100000 == 0) {
-        logger.info("The number of block that have processed:{}", blockNum);
+        logger.info("The number of block that have processed: {}", blockNum);
       }
       try {
         BlockCapsule block = dbManager.getBlockByNum(blockNum);
@@ -84,7 +84,7 @@ public class AssetUpdateHelper {
         }
 
       } catch (Exception e) {
-        throw new RuntimeException("Block not exists,num:" + blockNum);
+        throw new RuntimeException("Block does not exist, num:" + blockNum);
       }
 
       blockNum++;
@@ -117,7 +117,7 @@ public class AssetUpdateHelper {
     }
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenIdNum);
 
-    logger.info("Complete the asset store update,Total assets:{}", count);
+    logger.info("Complete the asset store update, Total assets:{}", count);
   }
 
   public void updateExchange() {
@@ -138,7 +138,7 @@ public class AssetUpdateHelper {
       dbManager.getExchangeV2Store().put(exchangeCapsule.createDbKey(), exchangeCapsule);
     }
 
-    logger.info("Complete the exchange store update,Total exchanges:{}", count);
+    logger.info("Complete the exchange store update, Total exchanges:{}", count);
   }
 
   public void updateAccount() {
@@ -186,12 +186,12 @@ public class AssetUpdateHelper {
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
       if (count % 50000 == 0) {
-        logger.info("The number of accounts that have completed the update :{}", count);
+        logger.info("The number of accounts that have completed the update: {}", count);
       }
       count++;
     }
 
-    logger.info("Complete the account store update,Total assets:{}", count);
+    logger.info("Complete the account store update, total assets: {}", count);
   }
 
   public void finish() {

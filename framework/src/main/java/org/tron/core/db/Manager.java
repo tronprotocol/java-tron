@@ -767,7 +767,7 @@ public class Manager {
           }
         } catch (BalanceInsufficientException e) {
           throw new AccountResourceInsufficientException(
-              "Account Insufficient  balance[" + fee + "] to MultiSign");
+              "Account Insufficient balance[" + fee + "] to MultiSign");
         }
       }
 
@@ -791,10 +791,10 @@ public class Manager {
     try {
       BlockCapsule oldHeadBlock = getBlockById(
           getDynamicPropertiesStore().getLatestBlockHeaderHash());
-      logger.info("begin to erase block:" + oldHeadBlock);
+      logger.info("start to erase block:" + oldHeadBlock);
       khaosDb.pop();
       revokingStore.fastPop();
-      logger.info("end to erase block:" + oldHeadBlock);
+      logger.info("stop to erase block:" + oldHeadBlock);
       poppedTransactions.addAll(oldHeadBlock.getTransactions());
 
     } catch (ItemNotFoundException | BadItemException e) {
@@ -852,8 +852,8 @@ public class Manager {
               newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (NonCommonBlockException e) {
       logger.info(
-          "this is not the most recent common ancestor, need to remove all "
-              + "blocks in the fork chain.");
+          "this is not the most recent common ancestor, " +
+                  "need to remove all blocks in the fork chain.");
       BlockCapsule tmp = newHead;
       while (tmp != null) {
         khaosDb.removeBlk(tmp.getBlockId());
@@ -1189,7 +1189,7 @@ public class Manager {
 
     if (!trxCap.validateSignature(chainBaseManager.getAccountStore(),
         chainBaseManager.getDynamicPropertiesStore())) {
-      throw new ValidateSignatureException("trans sig validate failed");
+      throw new ValidateSignatureException("transaction signature validate failed");
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
@@ -1663,7 +1663,7 @@ public class Manager {
       blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
       boolean result = triggerCapsuleQueue.offer(blockLogTriggerCapsule);
       if (!result) {
-        logger.info("too many trigger, lost block trigger: {}", newBlock.getBlockId());
+        logger.info("too many triggers, block trigger lost: {}", newBlock.getBlockId());
       }
     }
 
@@ -1679,7 +1679,7 @@ public class Manager {
       trx.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
       boolean result = triggerCapsuleQueue.offer(trx);
       if (!result) {
-        logger.info("too many trigger, lost transaction trigger: {}", trxCap.getTransactionId());
+        logger.info("too many triggers, transaction trigger lost: {}", trxCap.getTransactionId());
       }
     }
   }
@@ -1696,7 +1696,7 @@ public class Manager {
           postContractTrigger(trx.getTrxTrace(), true);
         }
       } catch (BadItemException | ItemNotFoundException e) {
-        logger.error("block header hash not exists or bad: {}",
+        logger.error("block header hash does not exist or bad: {}",
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
       }
     }
@@ -1713,7 +1713,7 @@ public class Manager {
         contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
         if (!triggerCapsuleQueue.offer(contractEventTriggerCapsule)) {
           logger
-              .info("too many trigger, lost contract log trigger: {}", trigger.getTransactionId());
+              .info("too many triggers, contract log trigger lost: {}", trigger.getTransactionId());
         }
       }
     }

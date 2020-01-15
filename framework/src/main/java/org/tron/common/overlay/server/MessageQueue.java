@@ -65,11 +65,11 @@ public class MessageQueue {
           Message msg = msgQueue.take();
           ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
             if (!future.isSuccess() && !channel.isDisconnect()) {
-              logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(), msg);
+              logger.error("Failed to send to {}, {}", ctx.channel().remoteAddress(), msg);
             }
           });
         } catch (Exception e) {
-          logger.error("Fail send to {}, error info: {}", ctx.channel().remoteAddress(),
+          logger.error("Failed to send to {}, error info: {}", ctx.channel().remoteAddress(),
               e.getMessage());
         }
       }

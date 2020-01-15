@@ -41,7 +41,7 @@ public class PeerConnectionCheckService {
 
   @PostConstruct
   public void check() {
-    logger.info("start the PeerConnectionCheckService");
+    logger.info("start the PeerConnectionCheck service");
     scheduledExecutorService
         .scheduleWithFixedDelay(new CheckDataTransferTask(), 5, 5, TimeUnit.MINUTES);
     if (Args.getInstance().isOpenFullTcpDisconnect()) {
@@ -77,7 +77,7 @@ public class PeerConnectionCheckService {
           > Args.getInstance().getNodeMaxActiveNodes() * maxConnectNumberFactor) {
         Collections.shuffle(willDisconnectPeerList);
         for (int i = 0; i < willDisconnectPeerList.size() * disconnectNumberFactor; i++) {
-          logger.error("{} not have data transfer, disconnect the peer",
+          logger.error("{} does not have data transfer, disconnect the peer",
               willDisconnectPeerList.get(i).getInetAddress());
           willDisconnectPeerList.get(i).disconnect(ReasonCode.TOO_MANY_PEERS);
         }
@@ -103,7 +103,7 @@ public class PeerConnectionCheckService {
           peerList = CollectionUtils.truncateRandom(peerList, 2, 1);
         }
         for (PeerConnection peerConnection : peerList) {
-          logger.warn("connection pool is full, disconnect the peer : {}",
+          logger.warn("connection pool is full, disconnect the peer: {}",
               peerConnection.getInetAddress());
           peerConnection.disconnect(ReasonCode.RESET);
         }
