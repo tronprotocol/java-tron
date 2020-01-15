@@ -355,9 +355,9 @@ public class MarketSellAssetActuatorTest {
   public void invalidTokenId() {
 
     {
-      String sellTokenId = "456";
+      String sellTokenId = "aaa";
       long sellTokenQuant = 100000000L;
-      String buyTokenId = "aaa";
+      String buyTokenId = "456";
       long buyTokenQuant = 200000000L;
 
       MarketSellAssetActuator actuator = new MarketSellAssetActuator();
@@ -372,9 +372,9 @@ public class MarketSellAssetActuatorTest {
       }
     }
     {
-      String sellTokenId = "aaa";
+      String sellTokenId = "456";
       long sellTokenQuant = 100000000L;
-      String buyTokenId = "456";
+      String buyTokenId = "aaa";
       long buyTokenQuant = 200000000L;
 
       MarketSellAssetActuator actuator = new MarketSellAssetActuator();
