@@ -502,8 +502,6 @@ public class MarketSellAssetActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
     String errorMessage = "No buyTokenID !";
     try {
       actuator.validate();
@@ -1607,7 +1605,7 @@ public class MarketSellAssetActuatorTest {
     ByteString orderId = accountOrderCapsule.getOrdersList().get(0);
 
     MarketAccountOrderCapsule makerAccountOrderCapsule = marketAccountStore.get(makerAddress);
-    Assert.assertEquals(makerAccountOrderCapsule.getCount(), 3);
+    Assert.assertEquals(3, makerAccountOrderCapsule.getCount());
     ByteString makerOrderId1 = makerAccountOrderCapsule.getOrdersList().get(0);
     ByteString makerOrderId2 = makerAccountOrderCapsule.getOrdersList().get(1);
 
