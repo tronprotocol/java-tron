@@ -146,7 +146,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   // TODO add unit test for sig2.getbytes
   public void sign(byte[] privateKey) {
-    SignInterface ecKeyEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+    SignInterface ecKeyEngine = SignUtils.fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
 
     ByteString sig = ByteString.copyFrom(ecKeyEngine.Base64toBytes(ecKeyEngine.signHash(getRawHash()
             .getBytes())));
@@ -169,7 +169,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       byte[] sigAddress = SignUtils.signatureToAddress(getRawHash().getBytes(),
           TransactionCapsule.getBase64FromByteString(
                   block.getBlockHeader().getWitnessSignature()),
-          DBConfig.isECKeyCryptoEngine());
+          CommonParameter.getInstance().isECKeyCryptoEngine());
       byte[] witnessAccountAddress = block.getBlockHeader().getRawData().getWitnessAddress()
           .toByteArray();
 
