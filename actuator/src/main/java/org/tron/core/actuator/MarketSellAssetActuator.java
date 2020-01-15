@@ -338,7 +338,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     }
 
     if (count > MAX_SEARCH_NUM) {
-      throw new ContractValidateException("Maximum number of queries exceeded，10");
+      throw new ContractValidateException("Maximum number of queries exceeded，" + MAX_SEARCH_NUM);
     }
 
   }

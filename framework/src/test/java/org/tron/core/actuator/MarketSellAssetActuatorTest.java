@@ -80,6 +80,10 @@ public class MarketSellAssetActuatorTest {
   public static void init() {
     dbManager = context.getBean(Manager.class);
     dbManager.getDynamicPropertiesStore().saveAllowMarketTransaction(1L);
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
+    dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
   }
 
   /**
@@ -125,9 +129,6 @@ public class MarketSellAssetActuatorTest {
 
 //    InitAsset();
 
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
-    dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
   }
 
 
@@ -237,112 +238,182 @@ public class MarketSellAssetActuatorTest {
   //test case
   //
   // validate:
-  // ownerAddress,token,Account,TokenQuantity
+  // ownerAddress,token,Account,TokenQuantity,position
   // balance(fee) not enough,token not enough
 
 
-  /**
-   * use Invalid Address, result is failed, exception is "Invalid address".
-   */
   @Test
   public void invalidOwnerAddress() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+
     InitAsset();
     String sellTokenId = "123";
     long sellTokenQuant = 100000000L;
     String buyTokenId = "456";
     long buyTokenQuant = 200000000L;
 
-    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
-        OWNER_ADDRESS_INVALID, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+    //use Invalid Address, result is failed, exception is "Invalid address".
+    {
+      MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+          OWNER_ADDRESS_INVALID, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail("Invalid address");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Invalid address", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      try {
+        actuator.validate();
+        fail("Invalid address");
+      } catch (ContractValidateException e) {
+        Assert.assertTrue(e instanceof ContractValidateException);
+        Assert.assertEquals("Invalid address", e.getMessage());
+      }
     }
+    // Account not exist , result is failed, exception is "Account does not exist!".
+    {
+      byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_NOT_EXIST);
+      AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+      Assert.assertEquals(null, accountCapsule);
+
+      MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+          OWNER_ADDRESS_NOT_EXIST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+      try {
+        actuator.validate();
+        fail("Account does not exist!");
+      } catch (ContractValidateException e) {
+        Assert.assertTrue(e instanceof ContractValidateException);
+        Assert.assertEquals("Account does not exist!", e.getMessage());
+      }
+    }
+
   }
 
-  /**
-   * Account not exist , result is failed, exception is "token quantity must greater than zero".
-   */
   @Test
-  public void notExistAccount() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+  public void invalidQuantity() {
+
     InitAsset();
-    String sellTokenId = "123";
-    long sellTokenQuant = 100000000L;
-    String buyTokenId = "456";
-    long buyTokenQuant = 200000000L;
+    // use negative sell quantity, result is failed, exception is "token quantity must greater than zero".
+    {
+      String sellTokenId = "123";
+      long sellTokenQuant = -100000000L;
+      String buyTokenId = "456";
+      long buyTokenQuant = 200000000L;
 
-    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_NOT_EXIST);
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Assert.assertEquals(null, accountCapsule);
+      MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+          OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
-        OWNER_ADDRESS_NOT_EXIST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
-
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail("Account does not exist!");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account does not exist!", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      try {
+        actuator.validate();
+        fail("token quantity must greater than zero");
+      } catch (ContractValidateException e) {
+        Assert.assertTrue(e instanceof ContractValidateException);
+        Assert.assertEquals("token quantity must greater than zero", e.getMessage());
+      }
     }
+
+    {
+      String sellTokenId = "123";
+      long sellTokenQuant = 100000000L;
+      String buyTokenId = "456";
+      long buyTokenQuant = -200000000L;
+
+      MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+          OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+      try {
+        actuator.validate();
+        fail("token quantity must greater than zero");
+      } catch (ContractValidateException e) {
+        Assert.assertTrue(e instanceof ContractValidateException);
+        Assert.assertEquals("token quantity must greater than zero", e.getMessage());
+      }
+    }
+
+    {
+      long quantityLimit = dbManager.getChainBaseManager().getDynamicPropertiesStore()
+          .getMarketQuantityLimit();
+      String sellTokenId = "123";
+      long sellTokenQuant = quantityLimit + 1;
+      String buyTokenId = "456";
+      long buyTokenQuant = 200000000L;
+
+      MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+          OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+      try {
+        actuator.validate();
+        fail("token quantity must less than " + quantityLimit);
+      } catch (ContractValidateException e) {
+        Assert.assertTrue(e instanceof ContractValidateException);
+        Assert.assertEquals("token quantity must less than " + quantityLimit, e.getMessage());
+      }
+    }
+
   }
 
-  /**
-   * use negative sell quantity, result is failed, exception is "sellTokenQuantity must greater than
-   * 0!".
-   */
   @Test
-  public void invalidSellQuantity() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    InitAsset();
-    String sellTokenId = "123";
-    long sellTokenQuant = -100000000L;
-    String buyTokenId = "456";
-    long buyTokenQuant = 200000000L;
+  public void invalidTokenId() {
 
-    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
-        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+    {
+      String sellTokenId = "456";
+      long sellTokenQuant = 100000000L;
+      String buyTokenId = "aaa";
+      long buyTokenQuant = 200000000L;
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
+      MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+          OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+      try {
+        actuator.validate();
+        fail("sellTokenID is not a valid number");
+      } catch (ContractValidateException e) {
+        Assert.assertTrue(e instanceof ContractValidateException);
+        Assert.assertEquals("sellTokenID is not a valid number", e.getMessage());
+      }
+    }
+    {
+      String sellTokenId = "aaa";
+      long sellTokenQuant = 100000000L;
+      String buyTokenId = "456";
+      long buyTokenQuant = 200000000L;
 
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail("token quantity must greater than zero");
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("token quantity must greater than zero", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+          OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+      try {
+        actuator.validate();
+        fail("buyTokenID is not a valid number");
+      } catch (ContractValidateException e) {
+        Assert.assertTrue(e instanceof ContractValidateException);
+        Assert.assertEquals("buyTokenID is not a valid number", e.getMessage());
+      }
+    }
+    {
+      String sellTokenId = "456";
+      long sellTokenQuant = 100000000L;
+      String buyTokenId = "456";
+      long buyTokenQuant = 200000000L;
+
+      MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+          OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+      try {
+        actuator.validate();
+        fail("cannot exchange same tokens");
+      } catch (ContractValidateException e) {
+        Assert.assertTrue(e instanceof ContractValidateException);
+        Assert.assertEquals("cannot exchange same tokens", e.getMessage());
+      }
     }
   }
-
 
   /**
    * no Enough Balance For Selling TRX, result is failed, exception is "No enough balance !".
    */
   @Test
   public void noEnoughBalanceForSellingTRX() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+
     InitAsset();
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
@@ -360,18 +431,13 @@ public class MarketSellAssetActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
     String errorMessage = "No enough balance !";
     try {
       actuator.validate();
-      actuator.execute(ret);
       fail(errorMessage);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(errorMessage, e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -381,7 +447,7 @@ public class MarketSellAssetActuatorTest {
    */
   @Test
   public void noEnoughBalanceForSellingToken() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+
     InitAsset();
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
@@ -399,18 +465,13 @@ public class MarketSellAssetActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
     String errorMessage = "No enough balance !";
     try {
       actuator.validate();
-      actuator.execute(ret);
       fail(errorMessage);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(errorMessage, e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -420,7 +481,7 @@ public class MarketSellAssetActuatorTest {
    */
   @Test
   public void noSellTokenID() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+
     InitAsset();
 
     String sellTokenId = "123";
@@ -432,18 +493,13 @@ public class MarketSellAssetActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
     String errorMessage = "No sellTokenID !";
     try {
       actuator.validate();
-      actuator.execute(ret);
       fail(errorMessage);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(errorMessage, e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -453,7 +509,7 @@ public class MarketSellAssetActuatorTest {
    */
   @Test
   public void notEnoughSellToken() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+
     InitAsset();
 
     String sellTokenId = TOKEN_ID_ONE;
@@ -465,18 +521,13 @@ public class MarketSellAssetActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
     String errorMessage = "SellToken balance is not enough !";
     try {
       actuator.validate();
-      actuator.execute(ret);
       fail(errorMessage);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(errorMessage, e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -485,7 +536,7 @@ public class MarketSellAssetActuatorTest {
    */
   @Test
   public void noBuyTokenID() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+
     InitAsset();
 
     String sellTokenId = TOKEN_ID_ONE;
@@ -503,8 +554,6 @@ public class MarketSellAssetActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
     String errorMessage = "No buyTokenID !";
     try {
       actuator.validate();
@@ -517,11 +566,11 @@ public class MarketSellAssetActuatorTest {
 
 
   /**
-   * validate Success without position, result is Success .
+   * validate Success without position, result is Success. Search from the bestPrice
    */
   @Test
   public void validateSuccessWithoutPosition() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+
     InitAsset();
 
     String sellTokenId = TOKEN_ID_ONE;
@@ -553,13 +602,11 @@ public class MarketSellAssetActuatorTest {
 
 
   /**
-   * without position, time out
+   * without position, time out,Maximum number of queries exceeded. Search from the bestPrice
    */
   @Test
-  public void withoutPositionTimeOut() throws Exception {
+  public void timeOutWithoutPosition() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -605,8 +652,6 @@ public class MarketSellAssetActuatorTest {
   @Test
   public void prePriceKeyNotExists() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -655,8 +700,6 @@ public class MarketSellAssetActuatorTest {
   @Test
   public void prePriceError() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -696,10 +739,8 @@ public class MarketSellAssetActuatorTest {
    * position  time out
    */
   @Test
-  public void positionTimeOut() throws Exception {
+  public void timeOutWithPosition() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -745,13 +786,57 @@ public class MarketSellAssetActuatorTest {
   }
 
   /**
+   * price exist
+   */
+  @Test
+  public void validateSuccessWithPositionPriceExist() throws Exception {
+
+    InitAsset();
+
+    //(sell id_1  and buy id_2)
+    // TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 219L;
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+
+    prepareAccount(sellTokenId, buyTokenId, sellTokenQuant, buyTokenQuant, ownerAddress);
+
+    //MAX_SEARCH_NUM = 10
+    for (int i = 0; i < 20; i++) {
+      byte[] prePriceKey = null;
+      if (i != 0) {
+        prePriceKey = MarketUtils
+            .createPairPriceKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 100L,
+                200L + i - 1);
+      }
+
+      addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
+          200L + i, OWNER_ADDRESS_FIRST, prePriceKey);
+    }
+
+    byte[] prePriceKey = MarketUtils
+        .createPairPriceKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 100L, 200L);
+
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant,
+        ByteString.copyFrom(prePriceKey)));
+
+    try {
+      actuator.validate();
+    } catch (ContractValidateException e) {
+      fail("validateSuccess error");
+    }
+  }
+  /**
    * validate Success with position, result is Success .
    */
   @Test
-  public void validateSuccessWithPosition() throws Exception {
+  public void validateSuccessWithPositionLimitCount() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -830,15 +915,15 @@ public class MarketSellAssetActuatorTest {
   //    trx to abc
   // Scenes：
   //    no buy orders before,add first sell order
-  //    no buy orders before，add multiple sell orders, need to maintain the correct order
-  //    no buy orders before，add multiple sell orders, need to maintain the correct order,
+  //    no buy orders before，add multiple sell orders, need to maintain the correct sequence
+  //    no buy orders before，add multiple sell orders, need to maintain the correct sequence,
   //      same price
   //    has buy orders before，add first sell order，not match
   //    has buy orders and sell orders before，add sell order，not match,
-  //      need to maintain the correct order
+  //      need to maintain the correct sequence
 
   //    all match with 2 existing same price buy orders and complete all 3 orders
-  //    part match with 2 existing buy orders and complete the maker,
+  //    part match with 2 existing buy orders and complete the makers,
   //        left enough
   //        left not enough and return left（Accuracy problem）
   //    part match with 2 existing buy orders and complete the taker,
@@ -850,7 +935,7 @@ public class MarketSellAssetActuatorTest {
    */
   @Test
   public void noBuyAddFirstSellOrder1() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+
     InitAsset();
 
     String sellTokenId = "_";
@@ -920,7 +1005,7 @@ public class MarketSellAssetActuatorTest {
    */
   @Test
   public void noBuyAddFirstSellOrder2() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+
     InitAsset();
 
     String sellTokenId = TOKEN_ID_ONE;
@@ -996,7 +1081,7 @@ public class MarketSellAssetActuatorTest {
    */
   @Test
   public void noBuyAddFirstSellOrder3() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+
     InitAsset();
 
     String sellTokenId = TOKEN_ID_ONE;
@@ -1068,13 +1153,11 @@ public class MarketSellAssetActuatorTest {
 
 
   /**
-   * no buy orders before，add multiple sell orders,need to maintain the correct order
+   * no buy orders before，add multiple sell orders,need to maintain the correct sequence
    */
   @Test
   public void noBuyAddMultiSellOrder1() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -1149,13 +1232,11 @@ public class MarketSellAssetActuatorTest {
 
 
   /**
-   * no buy orders before，add multiple sell orders,need to maintain the correct order,same price
+   * no buy orders before，add multiple sell orders,need to maintain the correct sequence,same price
    */
   @Test
   public void noBuyAddMultiSellOrderSamePrice1() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -1236,8 +1317,6 @@ public class MarketSellAssetActuatorTest {
   @Test
   public void hasBuyAddFirstSellOrderNotMatch1() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //TOKEN_ID_ONE has the same value as TOKEN_ID_ONE
@@ -1319,14 +1398,12 @@ public class MarketSellAssetActuatorTest {
 
 
   /**
-   * has buy orders and sell orders before，add sell order ，not match,need to maintain the correct
+   * has buy orders and sell orders before，add sell order ，not match,need to maintain the sequence
    * order
    */
   @Test
   public void hasBuySellAddSellOrderNotMatch1() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -1423,8 +1500,6 @@ public class MarketSellAssetActuatorTest {
   @Test
   public void matchAll2SamePriceBuyOrders1() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -1542,13 +1617,11 @@ public class MarketSellAssetActuatorTest {
   }
 
   /**
-   * match with 2 existing buy orders and complete the maker,
+   * match with 2 existing buy orders and complete the makers
    */
   @Test
   public void partMatchMakerBuyOrders1() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -1657,13 +1730,11 @@ public class MarketSellAssetActuatorTest {
   }
 
   /**
-   * match with 2 existing buy orders and complete this order
+   * match with 2 existing buy orders and complete the taker
    */
   @Test
   public void partMatchTakerBuyOrders1() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
@@ -1776,8 +1847,6 @@ public class MarketSellAssetActuatorTest {
   @Test
   public void partMatchMakerLeftNotEnoughBuyOrders1() throws Exception {
 
-    // Initialize the order
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //(sell id_1  and buy id_2)
