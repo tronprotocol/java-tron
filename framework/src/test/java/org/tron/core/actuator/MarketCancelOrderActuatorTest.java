@@ -80,6 +80,10 @@ public class MarketCancelOrderActuatorTest {
   public static void init() {
     dbManager = context.getBean(Manager.class);
     dbManager.getDynamicPropertiesStore().saveAllowMarketTransaction(1L);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
+    dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
   }
 
   /**
@@ -130,9 +134,7 @@ public class MarketCancelOrderActuatorTest {
     chainBaseManager.getMarketAccountStore().delete(ownerAddressFirstBytes);
     chainBaseManager.getMarketAccountStore().delete(ownerAddressSecondBytes);
 
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
-    dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
+
   }
 
   private void cleanMarketOrderByAccount(byte[] accountAddress) {
@@ -214,7 +216,6 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void invalidOwnerAddress() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
     ByteString orderId = ByteString.copyFromUtf8("123");
 
@@ -222,17 +223,12 @@ public class MarketCancelOrderActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_INVALID, orderId));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
     try {
       actuator.validate();
-      actuator.execute(ret);
       fail("Invalid address");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid address", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -241,7 +237,6 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void notExistAccount() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
     ByteString orderId = ByteString.copyFromUtf8("123");
 
@@ -249,17 +244,12 @@ public class MarketCancelOrderActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_NOT_EXIST, orderId));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
     try {
       actuator.validate();
-      actuator.execute(ret);
       fail("Account does not exist!");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Account does not exist!", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -268,25 +258,18 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void notExistOrder() {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
     ByteString orderId = ByteString.copyFromUtf8("123");
 
     MarketCancelOrderActuator actuator = new MarketCancelOrderActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, orderId));
-
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
     try {
       actuator.validate();
-      actuator.execute(ret);
       fail("orderId not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("orderId not exists", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -295,7 +278,6 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void orderNotActive() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //prepare env
@@ -317,17 +299,12 @@ public class MarketCancelOrderActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, orderId));
 
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-
     try {
       actuator.validate();
-      actuator.execute(ret);
       fail("Order is not active!");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Order is not active!", e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
     }
   }
 
@@ -338,7 +315,6 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void notBelongToTheAccount() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //prepare env
@@ -375,7 +351,6 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void noEnoughBalance() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //prepare env
@@ -423,8 +398,6 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void validateSuccess() throws Exception {
-
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //prepare env
@@ -492,7 +465,6 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void multipleOrdersAtThisPrice1() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //get storeDb
@@ -502,6 +474,7 @@ public class MarketCancelOrderActuatorTest {
     MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
+    AccountStore accountStore = dbManager.getAccountStore();
     MarketPriceStore marketPriceStore = chainBaseManager.getMarketPriceStore();
 
     addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
@@ -516,7 +489,7 @@ public class MarketCancelOrderActuatorTest {
         400L, OWNER_ADDRESS_FIRST);
 
     //record account state
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
+    AccountCapsule accountCapsule = accountStore
         .get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
     long balanceBefore = accountCapsule.getBalance();
 
@@ -527,12 +500,15 @@ public class MarketCancelOrderActuatorTest {
     // cancel the third order
     cancelOrder(orderId);
 
-    //check balance
-    accountCapsule = dbManager.getAccountStore()
+    //check fee
+    accountCapsule = accountStore
         .get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
 
     Assert.assertEquals(balanceBefore,
         dbManager.getDynamicPropertiesStore().getMarketCancelFee() + accountCapsule.getBalance());
+
+    //check token number return
+    Assert.assertEquals(100L,accountCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
@@ -569,7 +545,6 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void multipleOrdersAtThisPrice2() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //get storeDb
@@ -648,7 +623,6 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void onlyOneOrderAtThisPriceAndHasMultiplePrices() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //get storeDb
@@ -668,7 +642,7 @@ public class MarketCancelOrderActuatorTest {
         400L, OWNER_ADDRESS_FIRST);
 
     //record account state
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
+    AccountCapsule accountCapsule = accountStore
         .get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
     long balanceBefore = accountCapsule.getBalance();
 
@@ -679,13 +653,16 @@ public class MarketCancelOrderActuatorTest {
     // cancel the second order
     cancelOrder(orderId);
 
-    //check balance
-    accountCapsule = dbManager.getAccountStore()
+    //check fee
+    accountCapsule = accountStore
         .get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
 
     Assert.assertEquals(
         balanceBefore - dbManager.getDynamicPropertiesStore().getMarketCancelFee(),
         +accountCapsule.getBalance());
+
+    //check token number return
+    Assert.assertEquals(100L,accountCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
@@ -727,11 +704,11 @@ public class MarketCancelOrderActuatorTest {
    */
   @Test
   public void onlyOneOrderAtThisPriceAndHasOnlyOnePrice() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     InitAsset();
 
     //get storeDb
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    AccountStore accountStore = dbManager.getAccountStore();
     MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
     MarketOrderStore orderStore = chainBaseManager.getMarketOrderStore();
     MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
@@ -742,7 +719,7 @@ public class MarketCancelOrderActuatorTest {
         300L, OWNER_ADDRESS_FIRST);//cancel this one
 
     //record account state
-    AccountCapsule accountCapsule = dbManager.getAccountStore()
+    AccountCapsule accountCapsule = accountStore
         .get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
     long balanceBefore = accountCapsule.getBalance();
 
@@ -754,12 +731,15 @@ public class MarketCancelOrderActuatorTest {
     cancelOrder(orderId);
 
     //check balance
-    accountCapsule = dbManager.getAccountStore()
+    accountCapsule = accountStore
         .get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
 
     Assert.assertEquals(
         balanceBefore - dbManager.getDynamicPropertiesStore().getMarketCancelFee(),
         +accountCapsule.getBalance());
+
+    //check token number return
+    Assert.assertEquals(100L,accountCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
