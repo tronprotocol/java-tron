@@ -627,6 +627,7 @@ public class MarketCancelOrderActuatorTest {
 
     //get storeDb
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    AccountStore accountStore = chainBaseManager.getAccountStore();
     MarketAccountStore marketAccountStore = chainBaseManager.getMarketAccountStore();
     MarketOrderStore orderStore = chainBaseManager.getMarketOrderStore();
     MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
@@ -640,6 +641,8 @@ public class MarketCancelOrderActuatorTest {
         300L, OWNER_ADDRESS_FIRST);//cancel this one
     addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
         400L, OWNER_ADDRESS_FIRST);
+
+
 
     //record account state
     AccountCapsule accountCapsule = accountStore
