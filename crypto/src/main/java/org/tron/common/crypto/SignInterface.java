@@ -4,7 +4,7 @@ import java.security.SignatureException;
 
 public interface SignInterface {
 
-  byte[] hash(byte[] message);
+  //byte[] hash(byte[] message);
 
   byte[] getPrivateKey();
 

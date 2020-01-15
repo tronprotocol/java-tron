@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
@@ -49,7 +50,8 @@ public class BlockGenerate {
         .build();
 
     ECKey ecKey = ECKey.fromPrivate(privateKey);
-    ECDSASignature signature = ecKey.sign(Sha256Hash.of(raw.toByteArray()).getBytes());
+    ECDSASignature signature = ecKey.sign(Sha256Hash.of(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), raw.toByteArray()).getBytes());
     ByteString sign = ByteString.copyFrom(signature.toByteArray());
 
     BlockHeader blockHeader = block.getBlockHeader().toBuilder()

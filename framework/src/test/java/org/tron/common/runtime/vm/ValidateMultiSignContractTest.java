@@ -13,6 +13,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Hash;
@@ -107,12 +108,14 @@ public class ValidateMultiSignContractTest {
 
     byte[] address = key.getAddress();
     int permissionId = 2;
-    byte[] data = Sha256Hash.hash(longData);
+    byte[] data = Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), longData);
 
     //combine data
     byte[] merged = ByteUtil.merge(address, ByteArray.fromInt(permissionId), data);
     //sha256 of it
-    byte[] toSign = Sha256Hash.hash(merged);
+    byte[] toSign = Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), merged);
 
     //sign data
 

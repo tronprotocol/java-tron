@@ -802,11 +802,6 @@ public class ECKey implements Serializable, SignInterface {
     return nodeId;
   }
 
-  @Override
-  public byte[] hash(byte[] message) {
-    Keccak256 hashFun = new Keccak256();
-    return hashFun.digest(message);
-  }
 
   @Override
   public byte[] getPrivateKey() {

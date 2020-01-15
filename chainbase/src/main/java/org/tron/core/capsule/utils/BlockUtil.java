@@ -33,11 +33,7 @@ public class BlockUtil {
     GenesisBlock genesisBlockArg = DBConfig.getGenesisBlock();
     List<Transaction> transactionList =
         genesisBlockArg.getAssets().stream()
-            .map(key -> {
-              byte[] address = key.getAddress();
-              long balance = key.getBalance();
-              return TransactionUtil.newGenesisTransaction(address, balance);
-            })
+            .map(key -> TransactionUtil.newGenesisTransaction(key.getAddress(), key.getBalance()))
             .collect(Collectors.toList());
 
     long timestamp = Long.parseLong(genesisBlockArg.getTimestamp());

@@ -55,6 +55,7 @@ import org.tron.common.crypto.zksnark.BN128G1;
 import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
@@ -317,9 +318,11 @@ public class PrecompiledContracts {
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
       if (data == null) {
-        return Pair.of(true, Sha256Hash.hash(EMPTY_BYTE_ARRAY));
+        return Pair.of(true, Sha256Hash.hash(CommonParameter
+            .getInstance().isECKeyCryptoEngine(), EMPTY_BYTE_ARRAY));
       }
-      return Pair.of(true, Sha256Hash.hash(data));
+      return Pair.of(true, Sha256Hash.hash(CommonParameter
+          .getInstance().isECKeyCryptoEngine(), data));
     }
   }
 
@@ -344,9 +347,11 @@ public class PrecompiledContracts {
       if (data == null) {
         data = EMPTY_BYTE_ARRAY;
       }
-      byte[] orig = Sha256Hash.hash(data);
+      byte[] orig = Sha256Hash.hash(CommonParameter.getInstance()
+          .isECKeyCryptoEngine(), data);
       System.arraycopy(orig, 0, target, 0, 20);
-      return Pair.of(true, Sha256Hash.hash(target));
+      return Pair.of(true, Sha256Hash.hash(CommonParameter.getInstance()
+          .isECKeyCryptoEngine(), target));
     }
   }
 
@@ -717,7 +722,8 @@ public class PrecompiledContracts {
 
       byte[] combine = ByteUtil
           .merge(convertToTronAddress(addr), ByteArray.fromInt(permissionId), data);
-      byte[] hash = Sha256Hash.hash(combine);
+      byte[] hash = Sha256Hash.hash(CommonParameter
+          .getInstance().isECKeyCryptoEngine(), combine);
 
       byte[][] signatures = extractBytesArray(
           words, words[3].intValueSafe() / WORD_SIZE, rawData);

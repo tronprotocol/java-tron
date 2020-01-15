@@ -17,6 +17,8 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Utils;
@@ -184,10 +186,12 @@ public class TestValidatemultisign002 {
     Transaction transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, permissionId, ownerKey, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        transaction.getRawData().toByteArray()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(permissionId), hash);
-    byte[] tosign = Sha256Hash.hash(merged);
+    byte[] tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
 
@@ -263,10 +267,12 @@ public class TestValidatemultisign002 {
     Transaction transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, permissionId, ownerKey, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(permissionId), hash);
-    byte[] tosign = Sha256Hash.hash(merged);
+    byte[] tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     // signatures with Duplicate signatures but weight enough
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
@@ -344,10 +350,12 @@ public class TestValidatemultisign002 {
     Transaction transaction = PublicMethedForMutiSign.sendcoinWithPermissionIdNotSign(
         fromAddress, 1L, ownerAddress, permissionId, ownerKey, blockingStubFull);
     transaction = TransactionUtils.setTimestamp(transaction);
-    byte[] hash = Sha256Hash.of(transaction.getRawData().toByteArray()).getBytes();
+    byte[] hash = Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(permissionId), hash);
-    byte[] tosign = Sha256Hash.hash(merged);
+    byte[] tosign = Sha256Hash.hash(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), merged);
 
     // signatures with weight not enough
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
