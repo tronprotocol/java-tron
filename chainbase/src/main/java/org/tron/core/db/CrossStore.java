@@ -3,6 +3,7 @@ package org.tron.core.db;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.CrossMessage;
@@ -81,11 +82,61 @@ public class CrossStore extends TronDatabase<byte[]> {
     return null;
   }
 
+  public void saveTokenMapping(long sourceToken, long descToken) {
+    this.put(buildTokenKey(sourceToken), ByteArray.fromLong(descToken));
+  }
+
+  public Long getDescTokenFromMapping(long sourceToken) {
+    byte[] data = get(buildTokenKey(sourceToken));
+    if (!ByteUtil.isNullOrZeroArray(data)) {
+      return ByteArray.toLong(data);
+    }
+    return null;
+  }
+
+  public void saveOutTokenCount(long tokenId, long count) {
+    this.put(buildOutKey(tokenId), ByteArray.fromLong(count));
+  }
+
+  public long getOutTokenCount(long tokenId) {
+    byte[] data = get(buildOutKey(tokenId));
+    if (!ByteUtil.isNullOrZeroArray(data)) {
+      return ByteArray.toLong(data);
+    } else {
+      return 0;
+    }
+  }
+
+  public void saveInTokenCount(long tokenId, long count) {
+    this.put(buildInKey(tokenId), ByteArray.fromLong(count));
+  }
+
+  public long getInTokenCount(long tokenId) {
+    byte[] data = get(buildInKey(tokenId));
+    if (!ByteUtil.isNullOrZeroArray(data)) {
+      return ByteArray.toLong(data);
+    } else {
+      return 0;
+    }
+  }
+
   private byte[] buildSendKey(Sha256Hash txId) {
     return ("send_" + txId.toString()).getBytes();
   }
 
   private byte[] buildReceiveKey(Sha256Hash txId) {
     return ("receive_" + txId.toString()).getBytes();
+  }
+
+  private byte[] buildTokenKey(long tokenId) {
+    return ("token_" + tokenId).getBytes();
+  }
+
+  private byte[] buildOutKey(long tokenId) {
+    return ("out_" + tokenId).getBytes();
+  }
+
+  private byte[] buildInKey(long tokenId) {
+    return ("in_" + tokenId).getBytes();
   }
 }

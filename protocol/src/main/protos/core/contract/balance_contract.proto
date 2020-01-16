@@ -41,4 +41,15 @@ message CrossContract {
   bytes to_address = 3;
   bytes to_chainId = 4;
   bytes data = 5;
+  CrossDataType type = 6;
+  enum CrossDataType {
+    TOKEN = 0;
+  }
+}
+
+message CrossToken {
+  int64 amount = 1;
+  bytes token_id = 2;
+  bytes token_name = 3;
+  int32 precision = 4;
 }

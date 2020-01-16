@@ -200,4 +200,14 @@ public class AssetIssueCapsule implements ProtoCapsule<AssetIssueContract> {
     this.assetIssueContract = this.assetIssueContract.toBuilder()
         .setDescription(description).build();
   }
+
+  public void setTotalSupply(long totalSupply) {
+    this.assetIssueContract = this.assetIssueContract.toBuilder()
+        .setTotalSupply(totalSupply)
+        .build();
+  }
+
+  public long getTotalSupply() {
+    return assetIssueContract.getTotalSupply();
+  }
 }

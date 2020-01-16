@@ -9,6 +9,7 @@ import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CommonDataBase;
+import org.tron.core.db.CrossRevokingStore;
 import org.tron.core.db.CrossStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
@@ -142,6 +143,10 @@ public class ChainBaseManager {
   @Getter
   private CrossStore crossStore;
 
+  @Autowired
+  @Getter
+  private CrossRevokingStore crossRevokingStore;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -180,5 +185,6 @@ public class ChainBaseManager {
     closeOneStore(pbftSignDataStore);
     closeOneStore(commonDataBase);
     closeOneStore(crossStore);
+    closeOneStore(crossRevokingStore);
   }
 }

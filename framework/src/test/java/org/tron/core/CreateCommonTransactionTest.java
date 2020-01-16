@@ -14,6 +14,8 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.BalanceContract.CrossContract;
+import org.tron.protos.contract.BalanceContract.CrossContract.CrossDataType;
+import org.tron.protos.contract.BalanceContract.CrossToken;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -54,6 +56,9 @@ public class CreateCommonTransactionTest {
         .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
             .usePlaintext(true)
             .build());
+    CrossToken.Builder crossToken = CrossToken.newBuilder();
+    crossToken.setAmount(10).setTokenId(ByteString.copyFrom(ByteArray.fromString("1")))
+        .setTokenName(ByteString.copyFrom(ByteArray.fromString("test"))).setPrecision(0);
     CrossContract.Builder builder = CrossContract.newBuilder();
     builder.setOwnerAddress(owner)
         .setOwnerChainId(Sha256Hash.wrap(ByteArray
@@ -61,7 +66,7 @@ public class CreateCommonTransactionTest {
             .getByteString())
         .setToAddress(owner).setToChainId(Sha256Hash.wrap(
         ByteArray.fromHexString("0000000000000000bff8ab4242b00fac071a0035cb8e98d6351c87f0f1a753dd"))
-        .getByteString());
+        .getByteString()).setType(CrossDataType.TOKEN).setData(crossToken.build().toByteString());
     Transaction.Builder transaction = Transaction.newBuilder();
     raw.Builder raw = Transaction.raw.newBuilder();
     Contract.Builder contract = Contract.newBuilder();
