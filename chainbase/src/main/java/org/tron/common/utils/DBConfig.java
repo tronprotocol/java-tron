@@ -72,48 +72,4 @@ public class DBConfig {
   @Getter
   @Setter
   private static long blockNumForEneryLimit;
-  @Getter
-  @Setter
-  private static long allowProtoFilterNum;
-  @Getter
-  @Setter
-  private static String dbDirectory;
-  @Getter
-  @Setter
-  private static boolean fullNodeAllowShieldedTransaction;
-  @Getter
-  @Setter
-  private static boolean vmTrace;
-  @Getter
-  @Setter
-  private static int validContractProtoThreadNum;
-  @Getter
-  @Setter
-  private static boolean supportConstant;
-  @Getter
-  @Setter
-  private static int longRunningTime;
-  @Getter
-  @Setter
-  private static long changedDelegation;
-
-  @Getter
-  @Setter
-  private static String zenTokenId;
-
-  @Getter
-  @Setter
-  private static Set<String> actuatorSet;
-
-  @Getter
-  @Setter
-  private static boolean debug;
-
-  @Getter
-  @Setter
-  private static boolean solidityNode;
-
-  @Getter
-  @Setter
-  private static long proposalExpireTime; // (ms)
 }

@@ -1,6 +1,7 @@
 package org.tron.common.zksnark;
 
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DBConfig;
@@ -283,7 +284,7 @@ public class JLibrustzcash {
   }
 
   public static boolean isOpenZen() {
-    boolean res = DBConfig.isFullNodeAllowShieldedTransaction();
+    boolean res = CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs();
     if (res) {
       INSTANCE = LibrustzcashWrapper.getInstance();
     }

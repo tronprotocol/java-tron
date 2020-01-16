@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -129,7 +130,7 @@ public class AdvServiceTest {
 
   private void testTrxBroadcast() {
     Protocol.Transaction trx = Protocol.Transaction.newBuilder().build();
-    DBConfig.setValidContractProtoThreadNum(1);
+    CommonParameter.getInstance().setValidContractProtoThreadNum(1);
     TransactionMessage msg = new TransactionMessage(trx);
     service.broadcast(msg);
     Item item = new Item(msg.getMessageId(), InventoryType.TRX);

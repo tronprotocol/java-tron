@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
@@ -964,10 +965,10 @@ public class Program {
 
   public void checkCPUTimeLimit(String opName) {
 
-    if (DBConfig.isDebug()) {
+    if (CommonParameter.getInstance().isDebug()) {
       return;
     }
-    if (DBConfig.isSolidityNode()) {
+    if (CommonParameter.getInstance().isSolidityNode()) {
       return;
     }
     long vmNowInUs = System.nanoTime() / 1000;

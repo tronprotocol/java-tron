@@ -85,7 +85,8 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private static final ExecutorService executorService = Executors
-      .newFixedThreadPool(DBConfig.getValidContractProtoThreadNum());
+      .newFixedThreadPool(CommonParameter.getInstance()
+          .getValidContractProtoThreadNum());
   private static final String OWNER_ADDRESS = "ownerAddress_";
 
   private Transaction transaction;
@@ -230,7 +231,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   //No exception will be thrown here
   public static byte[] getShieldTransactionHashIgnoreTypeException(Transaction tx) {
     try {
-      return hashShieldTransaction(tx, DBConfig.getZenTokenId());
+      return hashShieldTransaction(tx, CommonParameter.getInstance()
+          .getZenTokenId());
     } catch (ContractValidateException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }

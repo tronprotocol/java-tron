@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.DecodeUtil;
@@ -38,6 +39,7 @@ import org.tron.core.store.ZKProofStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
@@ -51,7 +53,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   public ShieldedTransferActuator() {
     super(ContractType.ShieldedTransferContract, ShieldedTransferContract.class);
-    zenTokenId = DBConfig.getZenTokenId();
+    zenTokenId = CommonParameter.getInstance().getZenTokenId();
   }
 
   @Override
@@ -169,7 +171,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       nullifierStore.put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
-    if (DBConfig.isFullNodeAllowShieldedTransaction()) {
+    if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()) {
       IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
       try {
         currentMerkle.wfcheck();
@@ -235,7 +237,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }
         nfSet.add(spendDescription.getNullifier());
-        if (DBConfig.isFullNodeAllowShieldedTransaction()
+        if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()
             && !merkleContainer.merkleRootExist(spendDescription.getAnchor().toByteArray())) {
           throw new ContractValidateException("Rt is invalid.");
         }

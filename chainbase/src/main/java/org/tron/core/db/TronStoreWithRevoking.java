@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.DBConfig;
@@ -58,7 +59,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
                     new WriteOptions().sync(DBConfig.isDbSync())))));
       } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
         String parentPath = Paths
-            .get(StorageUtils.getOutputDirectoryByDbName(dbName), DBConfig.getDbDirectory()).toString();
+            .get(StorageUtils.getOutputDirectoryByDbName(dbName), CommonParameter
+                .getInstance().getStorage().getDbDirectory()).toString();
 
         this.revokingDB = new Chainbase(new SnapshotRoot(
             new RocksDB(

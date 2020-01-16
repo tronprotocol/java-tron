@@ -9,6 +9,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
@@ -589,13 +590,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowProtoFilterNum();
     } catch (IllegalArgumentException e) {
-      this.saveAllowProtoFilterNum(DBConfig.getAllowProtoFilterNum());
+      this.saveAllowProtoFilterNum(CommonParameter.getInstance()
+          .getAllowProtoFilterNum());
     }
 
     try {
       this.getChangeDelegation();
     } catch (IllegalArgumentException e) {
-      this.saveChangeDelegation(DBConfig.getChangedDelegation());
+      this.saveChangeDelegation(CommonParameter.getInstance()
+          .getChangedDelegation());
     }
 
   }

@@ -57,7 +57,6 @@ public class BlockMsgHandlerTest {
       for (int i = 0; i < 1100000; i++) {
         transactionList.add(Transaction.newBuilder().build());
       }
-      DBConfig.setValidContractProtoThreadNum(1);
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH.getByteString(),
           System.currentTimeMillis() + 10000, transactionList);
       msg = new BlockMessage(blockCapsule);
