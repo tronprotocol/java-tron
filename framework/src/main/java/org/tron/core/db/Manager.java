@@ -852,8 +852,8 @@ public class Manager {
               newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (NonCommonBlockException e) {
       logger.info(
-          "this is not the most recent common ancestor, " +
-                  "need to remove all blocks in the fork chain.");
+          "this is not the most recent common ancestor, "
+                  + "need to remove all blocks in the fork chain.");
       BlockCapsule tmp = newHead;
       while (tmp != null) {
         khaosDb.removeBlk(tmp.getBlockId());
