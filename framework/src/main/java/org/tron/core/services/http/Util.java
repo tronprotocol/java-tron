@@ -20,8 +20,8 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.util.StringUtil;
-import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.BlockList;
@@ -45,6 +45,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+
 
 @Slf4j(topic = "API")
 public class Util {
@@ -374,7 +375,7 @@ public class Util {
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
     //System.out.println(methodSign + ":" + Hex.toHexString(selector));
-    if (StringUtils.isNullOrEmpty(input)) {
+    if (StringUtils.isEmpty(input)) {
       return Hex.toHexString(selector);
     }
 
@@ -446,15 +447,15 @@ public class Util {
     byte[] address = null;
     String addressParam = "address";
     String addressStr = request.getParameter(addressParam);
-    if (org.apache.commons.lang3.StringUtils.isBlank(addressStr)) {
+    if (StringUtils.isBlank(addressStr)) {
       String input = request.getReader().lines()
               .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
       addressStr = jsonObject.getString(addressParam);
     }
-    if (org.apache.commons.lang3.StringUtils.isNotBlank(addressStr)) {
-      if (org.apache.commons.lang3.StringUtils.startsWith(addressStr,
+    if (StringUtils.isNotBlank(addressStr)) {
+      if (StringUtils.startsWith(addressStr,
               Constant.ADD_PRE_FIX_STRING_MAINNET)) {
         address = Hex.decode(addressStr);
       } else {
