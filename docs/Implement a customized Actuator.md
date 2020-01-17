@@ -56,7 +56,7 @@ service Wallet {
 
 *目前 java-tron 采用的是 protoc v3.4.0，自行编译时确保 protoc 版本一致。*
 
-```shell script
+```shell
 # recommended
 ./gradlew build -x test
 
