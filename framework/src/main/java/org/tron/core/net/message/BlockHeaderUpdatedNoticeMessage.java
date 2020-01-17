@@ -15,6 +15,12 @@ public class BlockHeaderUpdatedNoticeMessage extends TronMessage {
     blockHeaderUpdatedNotice = Protocol.BlockHeaderUpdatedNotice.parseFrom(packed);
   }
 
+  public BlockHeaderUpdatedNoticeMessage(Protocol.BlockHeaderUpdatedNotice blockHeaderUpdatedNotice) {
+    this.blockHeaderUpdatedNotice = blockHeaderUpdatedNotice;
+    super.type = MessageTypes.HEADER_UPDATED_NOTICE.asByte();
+    super.data = blockHeaderUpdatedNotice.toByteArray();
+  }
+
   public byte[] getChainId() {
     return blockHeaderUpdatedNotice.getChainId().toByteArray();
   }

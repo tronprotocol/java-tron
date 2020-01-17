@@ -8,6 +8,7 @@ import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.ibc.communicate.CommunicateService;
 import org.tron.core.net.message.CrossChainMessage;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.messagehandler.BlockHeaderSyncHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -18,6 +19,9 @@ public class CrossChainService {
   @Autowired
   private CommunicateService communicateService;
 
+  @Autowired
+  private BlockHeaderSyncHandler blockHeaderSyncHandler;
+
   protected void onMessage(PeerConnection peer, TronMessage msg) {
     try {
       switch (msg.getType()) {
@@ -26,6 +30,20 @@ public class CrossChainService {
           communicateService.receiveCrossMessage(peer, crossChainMessage.getCrossMessage());
           break;
         }
+        case HEADER_UPDATED_NOTICE:
+          blockHeaderSyncHandler.HandleUpdatedNotice(peer, msg);
+          break;
+        case HEADER_REQUEST_MESSAGE:
+          blockHeaderSyncHandler.handleRequest(peer, msg);
+          break;
+        case HEADER_INVENTORY:
+          blockHeaderSyncHandler.handleInventory(peer, msg);
+          break;
+        case SR_LIST:
+          blockHeaderSyncHandler.handleSrList(peer, msg);
+          break;
+        case EPOCH_MESSAGE:
+          blockHeaderSyncHandler.handleEpoch(peer, msg);
         default:
           throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }

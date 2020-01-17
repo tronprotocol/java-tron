@@ -2,6 +2,7 @@ package org.tron.core.net.messagehandler;
 
 import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,16 +12,19 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockHeaderCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.db.BlockHeaderIndexStore;
 import org.tron.core.db.BlockHeaderStore;
+import org.tron.core.db.BlockStore;
 import org.tron.core.db.CommonDataBase;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.ibc.spv.HeaderManager;
 import org.tron.core.net.message.BlockHeaderInventoryMesasge;
 import org.tron.core.net.message.BlockHeaderRequestMessage;
@@ -50,7 +54,7 @@ public class BlockHeaderSyncHandler {
 
   private static final long BLOCK_HEADER_LENGTH = 10;
 
-  private static final String CHAIN_ID = "";
+  private static final String CHAIN_ID = "00000000000000001ebf88508a03865c71d452e25f4d51194196a1d22b6653dc";
 
   @Autowired
   private BlockHeaderStore blockHeaderStore;
@@ -65,6 +69,12 @@ public class BlockHeaderSyncHandler {
 
   @Autowired
   private HeaderManager headerManager;
+
+  @Autowired
+  private CrossChainConnectPool crossChainConnectPool;
+
+  @Autowired
+  private BlockStore blockstore;
 
   @Setter
   @Getter
@@ -92,6 +102,7 @@ public class BlockHeaderSyncHandler {
 
   private ExecutorService handleLatestBlockHeaderExecutor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder().setNameFormat("handleLatestBlockHeaderExecutor").build());
+  private long latestPBFTBlockHeight = 0;
 
   @PostConstruct
   private void init() {
@@ -354,7 +365,35 @@ public class BlockHeaderSyncHandler {
 //  }
 
   public void triggerNotice() {
+    while (true) {
+      try {
+        if (commonDataBase.getLatestPbftBlockNum() <= latestPBFTBlockHeight) {
+          TimeUnit.SECONDS.sleep(1);
+          continue;
+        }
 
+        List<PeerConnection> peerConnections =
+            crossChainConnectPool.getPeerConnect(ByteString.copyFrom(ByteArray.fromHexString(CHAIN_ID)));
+        Sha256Hash hash = commonDataBase.getLatestPbftBlockHash();
+        BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(hash);
+
+        PbftSignCapsule pbftSignCapsule = pbftSignDataStore.getBlockSignData(blockId.getNum());
+        Protocol.SignedBlockHeader.Builder signedBlockHeaderBuilder = Protocol.SignedBlockHeader.newBuilder();
+        signedBlockHeaderBuilder.setBlockHeader(blockstore.get(blockId.getBytes()).getInstance().getBlockHeader())
+            .addAllSrsSignature(pbftSignCapsule.getInstance().getSignatureList());
+        Protocol.BlockHeaderUpdatedNotice notice = Protocol.BlockHeaderUpdatedNotice.newBuilder()
+            .setChainId(ByteString.copyFrom(ByteArray.fromHexString(CHAIN_ID)))
+            .setSignedBlockHeader(signedBlockHeaderBuilder)
+            .build();
+
+        for (PeerConnection peerConnection : peerConnections) {
+          peerConnection.sendMessage(new BlockHeaderUpdatedNoticeMessage(notice));
+        }
+        latestPBFTBlockHeight = commonDataBase.getLatestPbftBlockNum();
+      } catch (Exception e) {
+        logger.info("triggerNotice {}", e.getMessage());
+      }
+    }
   }
 
   public void sendEpoch() {
@@ -365,7 +404,7 @@ public class BlockHeaderSyncHandler {
           continue;
         }
 
-        byte[] chainId = new byte[0];
+        byte[] chainId = ByteArray.fromHexString(CHAIN_ID);
         long nextEpoch = calculateNextEpoch();
         thatPeerInfoMap.keySet().forEach(peerConnection -> peerConnection.sendMessage(new EpochMessage(chainId, nextEpoch)));
       } catch (Exception e) {
