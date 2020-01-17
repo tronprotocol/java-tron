@@ -434,6 +434,10 @@ public class CommonParameter {
   @Getter
   protected GenesisBlock genesisBlock;
 
+  @Parameter(names = {"-i", "--inter-chain-node"})
+  @Getter
+  protected boolean interChainNode;
+
   @Getter
   @Setter
   protected long crossChain;

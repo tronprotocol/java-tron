@@ -4,6 +4,8 @@ import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -14,8 +16,10 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BlockHeaderCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockHeaderIndexStore;
 import org.tron.core.db.BlockHeaderStore;
 import org.tron.core.db.BlockStore;
@@ -46,6 +50,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import org.tron.protos.Protocol.BlockHeader;
 
 @Slf4j(topic = "net")
 @Component
@@ -82,6 +87,7 @@ public class BlockHeaderSyncHandler {
 
   private ConcurrentMap<Long, BlockHeaderCapsule> blockHeaderMap = new ConcurrentHashMap<>();
   private Queue<Pair<PeerConnection, BlockHeaderCapsule>> latestBlockHeaders = new ConcurrentLinkedQueue<>();
+  private Set<BlockId> latestBlockIds = new HashSet<>();
   private ConcurrentMap<PeerConnection, PeerInfo> thatPeerInfoMap = new ConcurrentHashMap<>();
   private List<PeerConnection> thisChainPeers = new ArrayList<>();
   private long latestHeaderHeightOnChain;
@@ -94,8 +100,7 @@ public class BlockHeaderSyncHandler {
   private ExecutorService sendRequestExecutor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder().setNameFormat("sendRequestExecutor").build());
 
-  private ExecutorService triggerNoticeExecutor = Executors.newSingleThreadExecutor(
-      new ThreadFactoryBuilder().setNameFormat("sendNoticeExecutor").build());
+  private ExecutorService triggerNoticeExecutor;
 
   private ExecutorService sendEpochExecutor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder().setNameFormat("sendEpochExecutor").build());
@@ -108,17 +113,23 @@ public class BlockHeaderSyncHandler {
   private void init() {
     updateHeaderExecutor.execute(this::updateBlockHeader);
     sendRequestExecutor.execute(this::sendRequest);
-    triggerNoticeExecutor.execute(this::triggerNotice);
     handleLatestBlockHeaderExecutor.execute(this::handleLatestBlockHeader);
     sendEpochExecutor.execute(this::sendEpoch);
+    if (Args.getInstance().isInterChainNode()) {
+      triggerNoticeExecutor = Executors.newSingleThreadExecutor(
+          new ThreadFactoryBuilder().setNameFormat("sendNoticeExecutor").build());
+      triggerNoticeExecutor.execute(this::triggerNotice);
+    }
   }
 
-  public void HandleUpdatedNotice(PeerConnection peer, TronMessage msg) throws BadBlockException {
+  public void HandleUpdatedNotice(PeerConnection peer, TronMessage msg)
+      throws BadBlockException, ItemNotFoundException {
     BlockHeaderUpdatedNoticeMessage noticeMessage = (BlockHeaderUpdatedNoticeMessage) msg;
     verifyHeader(noticeMessage.getBlockHeader());
     forwardUpdatedNoticeMessage(noticeMessage);
-    latestBlockHeaders.add(Pair.of(peer, new BlockHeaderCapsule(noticeMessage.getBlockHeader())));
-
+    BlockHeaderCapsule headerCapsule = new BlockHeaderCapsule(noticeMessage.getBlockHeader());
+    latestBlockHeaders.add(Pair.of(peer, headerCapsule));
+    latestBlockIds.add(headerCapsule.getBlockId());
     Pair<PeerConnection, BlockHeaderCapsule> pair = latestBlockHeaders.peek();
     long recieveBlockHeaderHeight = (pair == null ? 0 : pair.getRight().getNum());
     String chainId = new BlockHeaderCapsule(noticeMessage.getBlockHeader()).getChainId();
@@ -441,7 +452,12 @@ public class BlockHeaderSyncHandler {
   private void handleLatestBlockHeader() {
     while (true) {
       try {
-        Pair<PeerConnection, BlockHeaderCapsule> pair = latestBlockHeaders.poll();
+        Pair<PeerConnection, BlockHeaderCapsule> pair = latestBlockHeaders.peek();
+        if (pair == null) {
+          TimeUnit.MILLISECONDS.sleep(50);
+          continue;
+        }
+
         PeerConnection peer = pair.getLeft();
         BlockHeaderCapsule headerCapsule = pair.getRight();
         long currentBlockHeight = headerCapsule.getNum();
@@ -453,7 +469,9 @@ public class BlockHeaderSyncHandler {
           commonDataBase.saveFirstPBFTBlockNum(chainId, headerCapsule.getNum());
         }
 
-        storePBFTBlockHeader(new BlockHeaderCapsule(headerCapsule.getInstance()));
+        storePBFTBlockHeader(headerCapsule);
+        latestBlockHeaders.poll();
+        latestBlockIds.remove(pair.getRight().getBlockId());
       } catch (Exception e) {
         logger.info("handleLatestBlockHeader {}", e.getMessage());
       }
@@ -511,7 +529,16 @@ public class BlockHeaderSyncHandler {
         .orElse(0L);
   }
 
-  public void forwardUpdatedNoticeMessage(BlockHeaderUpdatedNoticeMessage message) {
+  public void forwardUpdatedNoticeMessage(BlockHeaderUpdatedNoticeMessage message)
+      throws ItemNotFoundException {
+    BlockHeader blockHeader = message.getBlockHeader();
+    BlockHeaderCapsule headerCapsule = new BlockHeaderCapsule(blockHeader);
+    String chainId = headerCapsule.getChainId();
+    BlockId blockId = headerCapsule.getBlockId();
+    if (latestBlockIds.contains(blockId) || blockHeaderStore.get(chainId, blockId) != null) {
+      return;
+    }
+
     for (PeerConnection peer : thisChainPeers) {
       peer.sendMessage(message);
     }
