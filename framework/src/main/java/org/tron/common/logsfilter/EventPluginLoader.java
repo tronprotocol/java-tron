@@ -279,7 +279,7 @@ public class EventPluginLoader {
           .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
     } else {
       eventListeners.forEach(listener ->
-          listener.handleBlockEvent(toJsonString(trigger)));
+          listener.handleSolidityTrigger(toJsonString(trigger)));
     }
   }
 
