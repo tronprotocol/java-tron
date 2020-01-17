@@ -2,8 +2,8 @@ package org.tron.core.config.args;
 
 import static java.lang.Math.max;
 import static java.lang.System.exit;
-import static org.tron.consensus.base.Constant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 
 import com.beust.jcommander.JCommander;
 import com.typesafe.config.Config;
