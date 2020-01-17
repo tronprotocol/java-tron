@@ -153,6 +153,7 @@ public class DposService implements ConsensusInterface {
       return;
     }
     consensusDelegate.saveLatestSolidifiedBlockNum(newSolidNum);
+
     logger.info("Update solid block number to {}", newSolidNum);
   }
 
