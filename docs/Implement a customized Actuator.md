@@ -72,7 +72,7 @@ protoc -I=src/main/protos/api -I=src/main/protos/core -I=src/main/protos  --java
 
 下面是基于编译更新后的 java 文件的 `SumActuator` 实现：
 
-```
+```java
 public class SumActuator extends AbstractActuator {
 
   public SumActuator() {
@@ -121,8 +121,8 @@ public class SumActuator extends AbstractActuator {
   /**
    * define the rule to validate the contract
    *
-   * this demo first checks whether contract is null, then check whether ${any} is a instanceof SumContract,
-   * then validates the ownerAddress, finally check params are not less than 0.
+   * this demo first checks whether contract is null, then checks whether ${any} is a instanceof SumContract,
+   * then validates the ownerAddress, finally checks params are not less than 0.
    */
   @Override
   public boolean validate() throws ContractValidateException {
@@ -177,7 +177,7 @@ public class SumActuator extends AbstractActuator {
 
 确定 `SumActuator` 的实现后，还需要在 RpcApiService 的子类 WalletApi 中继承并实现 `invokeSum(MathContract.SumContract req, StreamObserver<Transaction> responseObserver)` 方法用于接收并处理 `SumContract`
 
-```
+```java
 public class WalletApi extends WalletImplBase {
   ...
   @Override
@@ -201,7 +201,7 @@ public class WalletApi extends WalletImplBase {
 
 最后实现一个测试类来验证上述步骤的正确性:
 
-```
+```java
 public class SumActuatorTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
   private String serviceNode = "127.0.0.1:50051";
