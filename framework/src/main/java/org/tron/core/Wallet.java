@@ -1383,7 +1383,7 @@ public class Wallet {
     }
 
     if (request.getOutPointsCount() < 1 || request.getOutPointsCount() > 10) {
-      throw new BadItemException("request.OutPointsCount must be speccified with range in[1, 10]");
+      throw new BadItemException("request.OutPointsCount must be speccified with range in [1, 10]");
     }
 
     for (OutputPoint outputPoint : request.getOutPointsList()) {

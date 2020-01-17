@@ -794,7 +794,7 @@ public class Manager {
       logger.info("start to erase block:" + oldHeadBlock);
       khaosDb.pop();
       revokingStore.fastPop();
-      logger.info("stop to erase block:" + oldHeadBlock);
+      logger.info("end to erase block:" + oldHeadBlock);
       poppedTransactions.addAll(oldHeadBlock.getTransactions());
 
     } catch (ItemNotFoundException | BadItemException e) {
@@ -1696,7 +1696,7 @@ public class Manager {
           postContractTrigger(trx.getTrxTrace(), true);
         }
       } catch (BadItemException | ItemNotFoundException e) {
-        logger.error("block header hash does not exist or bad: {}",
+        logger.error("block header hash does not exist or is bad: {}",
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
       }
     }

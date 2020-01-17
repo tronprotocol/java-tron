@@ -104,7 +104,7 @@ public class BackupDbUtil {
     logger
         .info("current block number is {}, backup all store use {} ms!", block.getNum(), timeUsed);
     if (timeUsed >= 3000) {
-      logger.warn("backup db uses too much time.");
+      logger.warn("backing up db uses too much time.");
     }
   }
 
