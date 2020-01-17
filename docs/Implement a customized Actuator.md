@@ -1,5 +1,7 @@
 # 自定义 SumActuator
 
+基于java-tron搭建一条自定义公链时，实现一个定制的actuator是不可缺少的一环，本文演示如何基于 java-tron 开发一个 `SumActuator`。
+
 Actuator 模块抽象出4个方法并定义在 Actuator 接口中：
 
 1. `execute()`: 负责交易执行的逻辑，如状态修改、流程跳转、逻辑判断等
@@ -7,13 +9,19 @@ Actuator 模块抽象出4个方法并定义在 Actuator 接口中：
 3. `getOwnerAddress()`: 获取交易发起方的地址
 4. `calcFee()`: 定义手续费计算逻辑
 
-本文演示如何基于 java-tron 开发一个 `SumActuator`。
+
 
 ## 定义并注册合约
 
-目前 java-tron 支持的合约定义在 Protocol 模块的 src/main/protos/core/contract 目录中，在这个目录下新建一个 math_contract.proto 文件并声明 `SumContract`。`SumContract` 的逻辑是将两个数值相加求和：
+目前 java-tron 支持的合约定义在 Protocol 模块的 src/main/protos/core/contract 目录中，在这个目录下新建一个 math_contract.proto 文件并声明 `SumContract`。基于篇幅有限本文只提供 sum 的实现，用户也可以实现 minus 等实现。
+
+`SumContract` 的逻辑是将两个数值相加求和：
 
 ```protobuf
+syntax = "proto3";
+package protocol;
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
 message SumContract {
     int64 param1 = 1;
     int64 param2 = 2;
@@ -70,7 +78,7 @@ protoc -I=src/main/protos/api -I=src/main/protos/core -I=src/main/protos  --java
 
 ## 实现 SumActuator
 
-下面是基于编译更新后的 java 文件的 `SumActuator` 实现：
+目前 java-tron 默认支持的 Actuator 存放在该模块的 org.tron.core.actuator 目录下，同样在该目录下创建 `SumActuator` ：
 
 ```java
 public class SumActuator extends AbstractActuator {
