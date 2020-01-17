@@ -68,8 +68,6 @@ public class RuntimeTransferComplexTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

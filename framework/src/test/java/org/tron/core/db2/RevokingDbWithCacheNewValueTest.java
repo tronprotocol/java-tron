@@ -41,8 +41,6 @@ public class RevokingDbWithCacheNewValueTest {
   @After
   public void removeDb() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     tronDatabase.close();
     FileUtil.deleteDir(new File("output_revokingStore_test"));

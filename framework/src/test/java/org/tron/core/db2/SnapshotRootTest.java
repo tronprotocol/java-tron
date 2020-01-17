@@ -42,8 +42,6 @@ public class SnapshotRootTest {
   @After
   public void removeDb() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File("output_revokingStore_test"));
   }

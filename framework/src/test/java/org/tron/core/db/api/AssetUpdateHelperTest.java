@@ -86,8 +86,6 @@ public class AssetUpdateHelperTest {
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }

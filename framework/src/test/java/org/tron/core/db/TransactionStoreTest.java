@@ -72,8 +72,6 @@ public class TransactionStoreTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
