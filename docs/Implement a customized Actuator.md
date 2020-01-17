@@ -56,7 +56,7 @@ service Wallet {
 
 *目前 java-tron 采用的是 protoc v3.4.0，自行编译时确保 protoc 版本一致。*
 
-```
+```shell script
 # recommended
 ./gradlew build -x test
 
@@ -290,7 +290,7 @@ public class SumActuatorTest {
 
 运行 SumActuatorTest 测试类即可在log文件中看到 `SumActuator: param1 = 1, param2 = 2, sum = 3` 类似的输出字样，得到如下输出：
 
-```
+```text
 INFO [o.r.Reflections] Reflections took 420 ms to scan 9 urls, producing 381 keys and 2047 values 
 INFO [discover] homeNode : Node{ host='0.0.0.0', port=6666, id=1d4bbab782f4021586b4dd2027da2d8438a10297ade13b1e33c3e83354a7cfaf608dfe23677757921c38068a4baf3ce6a9deedaa2f43696f8441f683246a7083}
 INFO [net] start the PeerConnectionCheckService
