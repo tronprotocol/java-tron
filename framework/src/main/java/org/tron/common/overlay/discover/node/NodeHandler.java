@@ -47,6 +47,7 @@ public class NodeHandler {
   private volatile boolean waitForPong = false;
   private volatile boolean waitForNeighbors = false;
   private volatile long pingSent;
+
   public NodeHandler(Node node, NodeManager nodeManager) {
     this.node = node;
     this.nodeManager = nodeManager;
