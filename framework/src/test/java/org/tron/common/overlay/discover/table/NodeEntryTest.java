@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.tron.common.overlay.discover.node.Node;
 
 public class NodeEntryTest {
+
   @Test
   public void test() throws InterruptedException {
     Node node1 = Node.instanceOf("127.0.0.1:10001");

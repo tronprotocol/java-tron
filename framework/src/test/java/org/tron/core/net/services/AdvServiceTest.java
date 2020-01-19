@@ -26,10 +26,10 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 //@Ignore
 public class AdvServiceTest {
 
+  protected TronApplicationContext context;
   private AdvService service;
   private PeerConnection peer;
   private SyncPool syncPool;
-  protected TronApplicationContext context;
 
   /**
    * init context.
@@ -37,7 +37,7 @@ public class AdvServiceTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"--output-directory", "output-directory", "--debug"},
-            Constant.TEST_CONF);
+        Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(AdvService.class);
   }
@@ -88,7 +88,7 @@ public class AdvServiceTest {
       peers.add(peer);
       ReflectUtils.setFieldValue(syncPool, "activePeers", peers);
       BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-              System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
       BlockMessage msg = new BlockMessage(blockCapsule);
       service.broadcast(msg);
       Item item = new Item(blockCapsule.getBlockId(), InventoryType.BLOCK);
@@ -111,7 +111,7 @@ public class AdvServiceTest {
       peers.add(peer);
       ReflectUtils.setFieldValue(syncPool, "activePeers", peers);
       BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-              System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
       BlockMessage msg = new BlockMessage(blockCapsule);
       service.fastForward(msg);
       Item item = new Item(blockCapsule.getBlockId(), InventoryType.BLOCK);

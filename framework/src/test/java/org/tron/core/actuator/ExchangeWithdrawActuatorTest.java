@@ -52,7 +52,7 @@ public class ExchangeWithdrawActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -1816,9 +1816,9 @@ public class ExchangeWithdrawActuatorTest {
   }
 
   private void processAndCheckInvalid(ExchangeWithdrawActuator actuator,
-                                      TransactionResultCapsule ret,
-                                      String failMsg,
-                                      String expectedMsg) {
+      TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
     try {
       actuator.validate();
       actuator.execute(ret);

@@ -29,7 +29,7 @@ public class MerkleTreeTest {
 
   private static Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
     return Sha256Hash.of(CommonParameter
-        .getInstance().isECKeyCryptoEngine(),
+            .getInstance().isECKeyCryptoEngine(),
         leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
   }
 

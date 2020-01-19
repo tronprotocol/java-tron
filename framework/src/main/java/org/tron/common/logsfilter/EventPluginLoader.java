@@ -62,6 +62,96 @@ public class EventPluginLoader {
     return instance;
   }
 
+  public static boolean matchFilter(ContractTrigger trigger) {
+    long blockNumber = trigger.getBlockNumber();
+
+    FilterQuery filterQuery = EventPluginLoader.getInstance().getFilterQuery();
+    if (Objects.isNull(filterQuery)) {
+      return true;
+    }
+
+    long fromBlockNumber = filterQuery.getFromBlock();
+    long toBlockNumber = filterQuery.getToBlock();
+
+    boolean matched = false;
+    if (fromBlockNumber == FilterQuery.LATEST_BLOCK_NUM
+        || toBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+      logger.error("invalid filter: fromBlockNumber: {}, toBlockNumber: {}",
+          fromBlockNumber, toBlockNumber);
+      return false;
+    }
+
+    if (toBlockNumber == FilterQuery.LATEST_BLOCK_NUM) {
+      if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+        matched = true;
+      } else {
+        if (blockNumber >= fromBlockNumber) {
+          matched = true;
+        }
+      }
+    } else {
+      if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
+        if (blockNumber <= toBlockNumber) {
+          matched = true;
+        }
+      } else {
+        if (blockNumber >= fromBlockNumber && blockNumber <= toBlockNumber) {
+          matched = true;
+        }
+      }
+    }
+
+    if (!matched) {
+      return false;
+    }
+
+    return filterContractAddress(trigger, filterQuery.getContractAddressList())
+        && filterContractTopicList(trigger, filterQuery.getContractTopicList());
+  }
+
+  private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
+    addressList = addressList.stream().filter(item ->
+        org.apache.commons.lang3.StringUtils.isNotEmpty(item))
+        .collect(Collectors.toList());
+    if (Objects.isNull(addressList) || addressList.isEmpty()) {
+      return true;
+    }
+
+    String contractAddress = trigger.getContractAddress();
+    if (Objects.isNull(contractAddress)) {
+      return false;
+    }
+
+    for (String address : addressList) {
+      if (contractAddress.equalsIgnoreCase(address)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean filterContractTopicList(ContractTrigger trigger, List<String> topList) {
+    topList = topList.stream().filter(item -> org.apache.commons.lang3.StringUtils.isNotEmpty(item))
+        .collect(Collectors.toList());
+    if (Objects.isNull(topList) || topList.isEmpty()) {
+      return true;
+    }
+
+    Set<String> hset = null;
+    if (trigger instanceof ContractLogTrigger) {
+      hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());
+    } else {
+      hset = new HashSet<>(((ContractEventTrigger) trigger).getTopicMap().values());
+    }
+
+    for (String top : topList) {
+      if (hset.contains(top)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private boolean launchNativeQueue(EventPluginConfig config) {
 
     if (!NativeMessageQueue.getInstance()
@@ -313,95 +403,5 @@ public class EventPluginLoader {
 
   public synchronized void setFilterQuery(FilterQuery filterQuery) {
     this.filterQuery = filterQuery;
-  }
-
-  public static boolean matchFilter(ContractTrigger trigger) {
-    long blockNumber = trigger.getBlockNumber();
-
-    FilterQuery filterQuery = EventPluginLoader.getInstance().getFilterQuery();
-    if (Objects.isNull(filterQuery)) {
-      return true;
-    }
-
-    long fromBlockNumber = filterQuery.getFromBlock();
-    long toBlockNumber = filterQuery.getToBlock();
-
-    boolean matched = false;
-    if (fromBlockNumber == FilterQuery.LATEST_BLOCK_NUM
-        || toBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-      logger.error("invalid filter: fromBlockNumber: {}, toBlockNumber: {}",
-          fromBlockNumber, toBlockNumber);
-      return false;
-    }
-
-    if (toBlockNumber == FilterQuery.LATEST_BLOCK_NUM) {
-      if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-        matched = true;
-      } else {
-        if (blockNumber >= fromBlockNumber) {
-          matched = true;
-        }
-      }
-    } else {
-      if (fromBlockNumber == FilterQuery.EARLIEST_BLOCK_NUM) {
-        if (blockNumber <= toBlockNumber) {
-          matched = true;
-        }
-      } else {
-        if (blockNumber >= fromBlockNumber && blockNumber <= toBlockNumber) {
-          matched = true;
-        }
-      }
-    }
-
-    if (!matched) {
-      return false;
-    }
-
-    return filterContractAddress(trigger, filterQuery.getContractAddressList())
-        && filterContractTopicList(trigger, filterQuery.getContractTopicList());
-  }
-
-  private static boolean filterContractAddress(ContractTrigger trigger, List<String> addressList) {
-    addressList = addressList.stream().filter(item ->
-        org.apache.commons.lang3.StringUtils.isNotEmpty(item))
-        .collect(Collectors.toList());
-    if (Objects.isNull(addressList) || addressList.isEmpty()) {
-      return true;
-    }
-
-    String contractAddress = trigger.getContractAddress();
-    if (Objects.isNull(contractAddress)) {
-      return false;
-    }
-
-    for (String address : addressList) {
-      if (contractAddress.equalsIgnoreCase(address)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean filterContractTopicList(ContractTrigger trigger, List<String> topList) {
-    topList = topList.stream().filter(item -> org.apache.commons.lang3.StringUtils.isNotEmpty(item))
-        .collect(Collectors.toList());
-    if (Objects.isNull(topList) || topList.isEmpty()) {
-      return true;
-    }
-
-    Set<String> hset = null;
-    if (trigger instanceof ContractLogTrigger) {
-      hset = ((ContractLogTrigger) trigger).getTopicList().stream().collect(Collectors.toSet());
-    } else {
-      hset = new HashSet<>(((ContractEventTrigger) trigger).getTopicMap().values());
-    }
-
-    for (String top : topList) {
-      if (hset.contains(top)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

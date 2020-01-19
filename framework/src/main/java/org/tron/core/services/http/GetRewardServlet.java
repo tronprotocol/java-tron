@@ -13,7 +13,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Constant;
-import org.tron.core.Wallet;
 import org.tron.core.db.Manager;
 
 

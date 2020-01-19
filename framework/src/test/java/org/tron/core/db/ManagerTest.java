@@ -26,7 +26,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -65,7 +64,6 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract;
-
 
 
 @Slf4j
@@ -183,7 +181,7 @@ public class ManagerTest extends BlockGenerate {
 
     if (isUnlinked) {
       Assert.assertEquals("getBlockIdByNum is error",
-              0, chainManager.getHeadBlockNum());
+          0, chainManager.getHeadBlockNum());
     } else {
       try {
         Assert.assertEquals(
@@ -274,7 +272,6 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertFalse(e instanceof BalanceInsufficientException);
     }
 
-
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
@@ -285,7 +282,6 @@ public class ManagerTest extends BlockGenerate {
           StringUtil.createReadableString(account.createDbKey()) + " insufficient balance",
           e.getMessage());
     }
-
 
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
@@ -464,7 +460,6 @@ public class ManagerTest extends BlockGenerate {
             latestHeadHash,
             addressToProvateKeys);
 
-
     dbManager.pushBlock(blockCapsule1);
 
     BlockCapsule blockCapsule2 =
@@ -547,7 +542,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
-    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -727,7 +722,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
-    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";

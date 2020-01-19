@@ -5,16 +5,13 @@ import static junit.framework.TestCase.fail;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.io.File;
-
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
@@ -60,7 +57,7 @@ public class UpdateEnergyLimitContractActuatorTest {
   private static String OWNER_ADDRESS_NOTEXIST;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
@@ -340,9 +337,9 @@ public class UpdateEnergyLimitContractActuatorTest {
   }
 
   private void processAndCheckInvalid(UpdateEnergyLimitContractActuator actuator,
-                                      TransactionResultCapsule ret,
-                                      String failMsg,
-                                      String expectedMsg) {
+      TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
     try {
       actuator.validate();
       actuator.execute(ret);

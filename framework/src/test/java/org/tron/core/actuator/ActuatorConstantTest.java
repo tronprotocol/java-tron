@@ -1,7 +1,6 @@
 package org.tron.core.actuator;
 
 import java.io.File;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -28,7 +27,7 @@ public class ActuatorConstantTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
   }

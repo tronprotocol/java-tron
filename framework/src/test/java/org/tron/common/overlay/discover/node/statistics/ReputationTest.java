@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ReputationTest {
+
   NodeStatistics nodeStatistics = new NodeStatistics();
   Reputation reputation = new Reputation(nodeStatistics);
 

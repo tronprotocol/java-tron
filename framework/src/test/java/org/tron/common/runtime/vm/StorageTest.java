@@ -11,7 +11,6 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.DBConfig;
-import org.tron.core.Wallet;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
