@@ -38,7 +38,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
   public boolean execute(Object object) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();

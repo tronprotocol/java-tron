@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
@@ -34,7 +35,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
   public boolean execute(Object result) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -118,7 +119,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
-    long witnessAllowanceFrozenTime = dynamicStore.getWitnessAllowanceFrozenTime() * 86_400_000L;
+    long witnessAllowanceFrozenTime = dynamicStore.getWitnessAllowanceFrozenTime() * FROZEN_PERIOD;
 
     if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
       throw new ContractValidateException("The last withdraw time is "
