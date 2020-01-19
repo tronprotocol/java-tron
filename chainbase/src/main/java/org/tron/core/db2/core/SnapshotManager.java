@@ -278,10 +278,10 @@ public class SnapshotManager implements RevokingDatabase {
 
   @Override
   public void fastFlush(long blockNum, long latestSolidifiedBlockNum) {
-    if (blockNum <= latestSolidifiedBlockNum) {
+    flushCount = (int)(blockNum - latestSolidifiedBlockNum) + flushCount;
+    if (flushCount <= 0) {
       return;
     }
-    flushCount = (int)(blockNum - latestSolidifiedBlockNum);
     needFlush.set(true);
     flush();
     needFlush.set(false);
