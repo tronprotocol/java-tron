@@ -30,7 +30,8 @@ public class PbftMessageAction {
     switch (message.getDataType()) {
       case BLOCK: {
         long blockNum = message.getNumber();
-        revokingStore.fastFlush(blockNum);
+        revokingStore.fastFlush(blockNum,
+            chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
         chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
         Raw raw = message.getPbftMessage().getRawData();
         chainBaseManager.getPbftSignDataStore()

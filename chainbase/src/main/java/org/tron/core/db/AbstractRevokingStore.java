@@ -219,7 +219,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void fastFlush(long blockNum) {
+  public void fastFlush(long blockNum, long latestSolidifiedBlockNum) {
   }
 
   @Override
