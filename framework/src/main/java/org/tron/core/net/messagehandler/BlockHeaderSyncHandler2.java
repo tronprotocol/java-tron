@@ -351,7 +351,7 @@ public class BlockHeaderSyncHandler2 {
         logger.info("updateBlockHeader, currentBlockHeight:{}, nextBlockHeight num:{}, header:{}, chainId:{}",
             currentBlockHeight, nextBlockHeight, headerCapsule != null ? headerCapsule.getNum() : 0, chainId);
 
-        if (headerCapsule == null && nextBlockHeight < latestNoticeHeight) {
+        if (headerCapsule == null || nextBlockHeight < latestNoticeHeight) {
           unSends.add(nextBlockHeight);
           logger.info("updateBlockHeader, unrecieve:{}, unsends:{}", nextBlockHeight, unSends);
           TimeUnit.MILLISECONDS.sleep(1);
