@@ -33,6 +33,7 @@ import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.store.CheckTmpStore;
+import org.tron.core.store.DynamicPropertiesStore;
 
 @Slf4j(topic = "DB")
 public class SnapshotManager implements RevokingDatabase {
@@ -63,6 +64,10 @@ public class SnapshotManager implements RevokingDatabase {
   @Setter
   @Getter
   private CheckTmpStore checkTmpStore;
+
+  @Autowired
+  @Getter
+  private DynamicPropertiesStore dynamicPropertiesStore;
 
   @Setter
   private volatile int maxFlushCount = DEFAULT_MIN_FLUSH_COUNT;
@@ -277,10 +282,15 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
-  public void fastFlush() {
+  public void fastFlush(long blockNum) {
+    if (blockNum <= dynamicPropertiesStore.getLatestSolidifiedBlockNum()) {
+      return;
+    }
+    flushCount = (int)(blockNum - dynamicPropertiesStore.getLatestSolidifiedBlockNum());
     needFlush.set(true);
     flush();
     needFlush.set(false);
+    flushCount = 0;
   }
 
   public void flush() {
