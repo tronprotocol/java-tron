@@ -9,6 +9,7 @@ import org.tron.core.ibc.communicate.CommunicateService;
 import org.tron.core.net.message.CrossChainMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.messagehandler.BlockHeaderSyncHandler;
+import org.tron.core.net.messagehandler.BlockHeaderSyncHandler2;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -20,7 +21,7 @@ public class CrossChainService {
   private CommunicateService communicateService;
 
   @Autowired
-  private BlockHeaderSyncHandler blockHeaderSyncHandler;
+  private BlockHeaderSyncHandler2 blockHeaderSyncHandler;
 
   protected void onMessage(PeerConnection peer, TronMessage msg) {
     try {

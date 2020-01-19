@@ -93,5 +93,10 @@ public class BlockHeaderStore extends TronStoreWithRevoking<BlockHeaderCapsule> 
     return value;
   }
 
+  public BlockHeaderCapsule getUnchecked(String chainId, BlockId blockId) {
+    BlockHeaderCapsule value = getUnchecked(buildKey(chainId, blockId));
+    return value;
+  }
+
 
 }

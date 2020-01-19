@@ -22,6 +22,8 @@ public class BlockHeaderInventoryMesasge extends TronMessage {
         .setCurrentBlockHeight(currentBlockHeight)
         .addAllBlockHeader(blockHeaders)
         .build();
+    super.type = MessageTypes.HEADER_INVENTORY.asByte();
+    super.data = blockHeaderInventory.toByteArray();
   }
 
   public List<Protocol.BlockHeader> getBlockHeaders() {

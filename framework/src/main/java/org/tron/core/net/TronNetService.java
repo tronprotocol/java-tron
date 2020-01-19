@@ -10,6 +10,7 @@ import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.messagehandler.BlockHeaderSyncHandler;
+import org.tron.core.net.messagehandler.BlockHeaderSyncHandler2;
 import org.tron.core.net.messagehandler.BlockMsgHandler;
 import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
 import org.tron.core.net.messagehandler.CrossChainMsgHandler;
@@ -62,7 +63,7 @@ public class TronNetService {
   private CrossChainMsgHandler crossChainMsgHandler;
 
   @Autowired
-  private BlockHeaderSyncHandler blockHeaderSyncHandler;
+  private BlockHeaderSyncHandler2 blockHeaderSyncHandler;
 
   public void start() {
     channelManager.init();

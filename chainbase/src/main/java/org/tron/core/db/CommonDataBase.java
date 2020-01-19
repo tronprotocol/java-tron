@@ -69,7 +69,7 @@ public class CommonDataBase extends TronDatabase<byte[]> {
 
   public void saveLatestPBFTBlockNum(String chainId, long number) {
     if (number <= getLatestPBFTBlockNum(chainId)) {
-      logger.warn("chainId: {}, pbft number {} <= latest number {}", chainId, number, getLatestPbftBlockNum());
+      logger.warn("chainId: {}, pbft number {} <= latest number {}", chainId, number, getLatestPBFTBlockNum(chainId));
       return;
     }
     this.put(buildKey(LATEST_PBFT_BLOCK_NUM, chainId), Longs.toByteArray(number));
@@ -83,7 +83,8 @@ public class CommonDataBase extends TronDatabase<byte[]> {
 
   public void saveLatestSyncBlockNum(String chainId, long number) {
     if (number <= getLatestSyncBlockNum(chainId)) {
-      logger.warn("chainId: {}, pbft number {} <= latest number {}", chainId, number, getLatestPbftBlockNum());
+      logger.warn("chainId: {}, sync number {} <= latest number {}",
+          chainId, number, getLatestSyncBlockNum(chainId));
       return;
     }
     this.put(buildKey(LATEST_SYNC_BLOCK_NUM, chainId), Longs.toByteArray(number));
@@ -97,7 +98,8 @@ public class CommonDataBase extends TronDatabase<byte[]> {
 
   public void saveFirstPBFTBlockNum(String chainId, long number) {
     if (number <= getFirstPBFTBlockNum(chainId)) {
-      logger.warn("chainId: {}, pbft number {} <= latest number {}", chainId, number, getLatestPbftBlockNum());
+      logger.warn("chainId: {}, pbft number {} <= latest number {}",
+          chainId, number, getFirstPBFTBlockNum(chainId));
       return;
     }
     this.put(buildKey(FIRST_PBFT_BLOCK_NUM, chainId), Longs.toByteArray(number));

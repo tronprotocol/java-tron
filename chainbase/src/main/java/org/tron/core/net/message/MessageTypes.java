@@ -96,7 +96,8 @@ public enum MessageTypes {
   }
 
   public static boolean inTronRange(byte code) {
-    return code == CROSS_MSG.asByte() || (code <= TRX_INVENTORY.asByte() && code >= FIRST.asByte());
+    return code == CROSS_MSG.asByte() || (code <= TRX_INVENTORY.asByte() && code >= FIRST.asByte())
+        || code <= EPOCH_MESSAGE.asByte() && code >= HEADER_UPDATED_NOTICE.asByte();
   }
 
   public byte asByte() {

@@ -1273,7 +1273,7 @@ public class Manager {
       throws BadItemException, ItemNotFoundException {
     BlockCapsule block = this.khaosDb.getBlock(hash);
     if (block == null) {
-      block = chainBaseManager.getBlockStore().get(hash.getBytes());
+      block = chainBaseManager.getBlockStore().getUnchecked(hash.getBytes());
     }
     return block;
   }
