@@ -395,9 +395,10 @@ public class Manager {
   }
 
   private boolean checkInSameFork(BlockCapsule newblock) {
-    if (DBConfig.isDebug()) {
+    if (DBConfig.isDebug() || !getDynamicPropertiesStore().allowCrossChain()) {
       return true;
     }
+
     if (newblock.getNum() <= chainBaseManager.getCommonDataBase().getLatestPbftBlockNum()) {
       return true;
     }

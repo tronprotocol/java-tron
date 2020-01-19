@@ -27,6 +27,7 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.CommonDataBase;
+import org.tron.core.exception.ContractValidateException;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -150,13 +151,19 @@ public class DposService implements ConsensusInterface {
   }
 
   private void updateSolidBlock() {
-//    List<Long> numbers = consensusDelegate.getActiveWitnesses().stream()
-//        .map(address -> consensusDelegate.getWitness(address.toByteArray()).getLatestBlockNum())
-//        .sorted()
-//        .collect(Collectors.toList());
-  //  long size = consensusDelegate.getActiveWitnesses().size();
-   // int position = (int) (size * (1 - SOLIDIFIED_THRESHOLD * 1.0 / 100));
-    long newSolidNum = commonDataBase.getLatestPbftBlockNum();
+    long newSolidNum;
+    if (!consensusDelegate.getDynamicPropertiesStore().allowCrossChain()) {
+      List<Long> numbers = consensusDelegate.getActiveWitnesses().stream()
+        .map(address -> consensusDelegate.getWitness(address.toByteArray()).getLatestBlockNum())
+        .sorted()
+        .collect(Collectors.toList());
+        long size = consensusDelegate.getActiveWitnesses().size();
+       int position = (int) (size * (1 - SOLIDIFIED_THRESHOLD * 1.0 / 100));
+      newSolidNum = numbers.get(position);
+    } else {
+      newSolidNum = commonDataBase.getLatestPbftBlockNum();
+    }
+
     long oldSolidNum = consensusDelegate.getLatestSolidifiedBlockNum();
     if (newSolidNum < oldSolidNum) {
       logger.warn("Update solid block number failed, new: {} < old: {}", newSolidNum, oldSolidNum);
