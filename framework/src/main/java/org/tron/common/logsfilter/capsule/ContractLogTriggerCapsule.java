@@ -5,7 +5,6 @@ import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.logsfilter.EventPluginLoader;
-import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 
 public class ContractLogTriggerCapsule extends TriggerCapsule {

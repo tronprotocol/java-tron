@@ -58,8 +58,7 @@ public class TransactionStoreTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"--output-directory", dbPath, "--storage-db-directory",
-        dbDirectory, "--storage-index-directory", indexDirectory, "-w"},
-            Constant.TEST_CONF);
+        dbDirectory, "--storage-index-directory", indexDirectory, "-w"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
     dbManager = context.getBean(Manager.class);

@@ -1,7 +1,6 @@
 package org.tron.core.net.messagehandler;
 
 import java.util.List;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,9 +22,9 @@ import org.tron.protos.Protocol.Transaction;
 
 public class BlockMsgHandlerTest {
 
+  protected TronApplicationContext context;
   private BlockMsgHandler handler;
   private PeerConnection peer;
-  protected TronApplicationContext context;
 
   /**
    * init context.
@@ -33,7 +32,7 @@ public class BlockMsgHandlerTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"--output-directory", "output-directory", "--debug"},
-            Constant.TEST_CONF);
+        Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     handler = context.getBean(BlockMsgHandler.class);
     peer = context.getBean(PeerConnection.class);
@@ -84,10 +83,10 @@ public class BlockMsgHandlerTest {
 
     try {
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-              System.currentTimeMillis() + 1000, Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis() + 1000, Sha256Hash.ZERO_HASH.getByteString());
       msg = new BlockMessage(blockCapsule);
       peer.getSyncBlockRequested()
-              .put(msg.getBlockId(), System.currentTimeMillis());
+          .put(msg.getBlockId(), System.currentTimeMillis());
       handler.processMessage(peer, msg);
     } catch (P2pException e) {
       //System.out.println(e);
@@ -95,10 +94,10 @@ public class BlockMsgHandlerTest {
 
     try {
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-              System.currentTimeMillis() + 1000, Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis() + 1000, Sha256Hash.ZERO_HASH.getByteString());
       msg = new BlockMessage(blockCapsule);
       peer.getAdvInvRequest()
-              .put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
+          .put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
       handler.processMessage(peer, msg);
     } catch (NullPointerException | P2pException e) {
       System.out.println(e);

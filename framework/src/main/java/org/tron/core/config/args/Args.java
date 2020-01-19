@@ -66,7 +66,7 @@ public class Args extends CommonParameter {
 
   @Getter
   @Setter
-  private   static LocalWitnesses localWitnesses = new LocalWitnesses();
+  private static LocalWitnesses localWitnesses = new LocalWitnesses();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
@@ -538,8 +538,8 @@ public class Args extends CommonParameter {
 
     PARAMETER.validateSignThreadNum =
         config.hasPath(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) ? config
-        .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
-        : Runtime.getRuntime().availableProcessors() / 2;
+            .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
+            : Runtime.getRuntime().availableProcessors() / 2;
 
     PARAMETER.walletExtensionApi =
         config.hasPath(Constant.NODE_WALLET_EXTENSION_API)

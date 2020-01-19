@@ -425,7 +425,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     System.arraycopy(
         checkSpendParams.getZkproof(), 0, checkSpendParamsData, 128, 192);
     System.arraycopy(
-        checkSpendParams.getSpendAuthSig(),0, checkSpendParamsData,320,64);
+        checkSpendParams.getSpendAuthSig(), 0, checkSpendParamsData, 320, 64);
 
     // generate CheckOutputParams
     ReceiveDescription receiveDescription =

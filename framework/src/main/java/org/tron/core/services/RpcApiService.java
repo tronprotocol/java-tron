@@ -10,7 +10,6 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.security.Signature;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +74,6 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
@@ -921,7 +919,7 @@ public class RpcApiService implements Service {
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
         SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, Args.getInstance()
-                .isECKeyCryptoEngine());
+            .isECKeyCryptoEngine());
         byte[] owner = cryptoEngine.getAddress();
         TransferContract.Builder builder = TransferContract.newBuilder();
         builder.setOwnerAddress(ByteString.copyFrom(owner));

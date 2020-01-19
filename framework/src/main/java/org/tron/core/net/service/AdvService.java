@@ -234,9 +234,8 @@ public class AdvService {
         invToFetchCache.invalidate(item);
         return;
       }
-      peers.stream()
-          .filter(peer -> peer.getAdvInvReceive().getIfPresent(item) != null
-              && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
+      peers.stream().filter(peer -> peer.getAdvInvReceive().getIfPresent(item) != null
+          && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
           .sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
           .findFirst().ifPresent(peer -> {
             invSender.add(item, peer);

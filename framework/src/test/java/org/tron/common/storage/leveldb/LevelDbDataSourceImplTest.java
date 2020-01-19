@@ -278,7 +278,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void testGetTotal() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-            Args.getInstance().getOutputDirectory(), "test_getTotal_key");
+        Args.getInstance().getOutputDirectory(), "test_getTotal_key");
     dataSource.initDB();
     dataSource.resetDb();
 
