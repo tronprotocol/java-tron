@@ -13,6 +13,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.capsule.utils.MerkleTree.ProofLeaf;
+import org.tron.core.config.args.Args;
 import org.tron.core.consensus.PbftBaseImpl;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
@@ -48,6 +49,10 @@ public class CommunicateService implements Communicate {
 
   @Autowired
   private PbftBaseImpl pbftBaseImpl;
+
+  public void setPbftBlockListener(PbftBlockListener pbftBlockListener) {
+    manager.setPbftBlockListener(pbftBlockListener);
+  }
 
   @Override
   public void sendCrossMessage(CrossMessage crossMessage, boolean save) {
@@ -178,6 +183,10 @@ public class CommunicateService implements Communicate {
    */
   public ByteString getLocalChainId() {
     return manager.getGenesisBlockId().getByteString();
+  }
+
+  public ByteString getRouteChainId() {
+    return Args.getInstance().getRouteChainId();
   }
 
   /**

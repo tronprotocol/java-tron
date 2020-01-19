@@ -1,6 +1,7 @@
 package org.tron.common.parameter;
 
 import com.beust.jcommander.Parameter;
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -111,6 +112,10 @@ public class CommonParameter {
   @Getter
   @Setter
   protected String chainId;
+
+  @Setter
+  @Getter
+  protected ByteString routeChainId = ByteString.EMPTY;
 
   @Getter
   @Setter
