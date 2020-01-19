@@ -236,6 +236,7 @@ public class BlockHeaderSyncHandler2 {
         peer, blockHeaders.get(0).getRawData().getNumber(), ByteArray.toHexString(blockHeaders.get(0).getRawData().getChainId().toByteArray()));
     for (BlockHeader blockHeader : blockHeaders) {
       unHandles.put(blockHeader.getRawData().getNumber(), new BlockHeaderCapsule(blockHeader));
+      unRecieves.remove(blockHeader.getRawData().getNumber());
     }
   }
 
@@ -351,10 +352,12 @@ public class BlockHeaderSyncHandler2 {
         logger.info("updateBlockHeader, currentBlockHeight:{}, nextBlockHeight num:{}, header:{}, chainId:{}",
             currentBlockHeight, nextBlockHeight, headerCapsule != null ? headerCapsule.getNum() : 0, chainId);
 
-        if (headerCapsule == null && nextBlockHeight < latestNoticeHeight) {
+        if (headerCapsule == null
+            && nextBlockHeight < latestNoticeHeight
+            && !unRecieves.contains(nextBlockHeight)) {
           unSends.add(nextBlockHeight);
           logger.info("updateBlockHeader, unrecieve:{}, unsends:{}", nextBlockHeight, unSends);
-          TimeUnit.MILLISECONDS.sleep(1);
+          TimeUnit.MILLISECONDS.sleep(500);
           continue;
         }
 
@@ -366,7 +369,23 @@ public class BlockHeaderSyncHandler2 {
 //        simpleVerifyHeader(headerCapsule.getInstance());
         storeSyncBlockHeader(headerCapsule);
         unHandles.remove(nextBlockHeight);
+        Long lower = unHandles.lowerKey(nextBlockHeight);
+        while (lower != null) {
+          unHandles.remove(lower);
+          lower = unHandles.lowerKey(nextBlockHeight);
+        }
         unSends.remove(nextBlockHeight);
+        lower = unSends.lower(nextBlockHeight);
+        while (lower != null) {
+          unSends.remove(lower);
+          lower = unSends.lower(nextBlockHeight);
+        }
+        lower = unRecieves.lower(nextBlockHeight);
+        while (lower != null) {
+          unRecieves.remove(lower);
+          lower = unRecieves.lower(nextBlockHeight);
+        }
+
         if (Args.getInstance().isInterChainNode()) {
           broadcastNotice(headerCapsule);
         }
@@ -436,6 +455,7 @@ public class BlockHeaderSyncHandler2 {
         List<PeerConnection> connections = new ArrayList<>(thatPeerInfoMap.keySet());
         connections.get(0).sendMessage(new BlockHeaderRequestMessage(chainId, unSendHeight, BLOCK_HEADER_LENGTH));
         logger.info("sendRequest, localLatestHeight:{}, peer: {}, chainId:{}", unSendHeight, connections.get(0), chainId);
+        unRecieves.add(unSendHeight);
         unSends.remove(unSendHeight);
       } catch (Exception e) {
         logger.info("sendRequest " + e.getMessage(), e);
