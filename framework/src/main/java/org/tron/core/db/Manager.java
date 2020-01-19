@@ -230,6 +230,8 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> repushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
   private BlockingQueue<Sha256Hash> crossTxQueue;
+  @Setter
+  private PbftBlockListener pbftBlockListener;
   /**
    * Cycle thread to repush Transactions
    */
@@ -1584,7 +1586,7 @@ public class Manager {
         if (Objects.nonNull(result)) {
           transationRetCapsule.addTransactionInfo(result);
         }
-        PbftBlockListener.addCallBackTx(chainBaseManager, block.getNum(), transactionCapsule);
+        pbftBlockListener.addCallBackTx(chainBaseManager, block.getNum(), transactionCapsule);
       }
       accountStateCallBack.executePushFinish();
     } finally {

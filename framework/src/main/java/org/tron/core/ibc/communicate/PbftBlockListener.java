@@ -8,6 +8,7 @@ import com.google.common.cache.LoadingCache;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,11 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
   @Autowired
   private ChainBaseManager chainBaseManager;
+
+  @PostConstruct
+  public void init() {
+    communicateService.setPbftBlockListener(this);
+  }
 
   @Override
   public void listener(PbftBlockCommitEvent event) {
@@ -113,7 +119,8 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
             CrossMessage.Builder builder = CrossMessage.newBuilder();
             //todo:set the route chain id
             builder.setType(Type.DATA).setFromChainId(communicateService.getLocalChainId())
-                .setTransaction(tx.getInstance());
+                .setTransaction(tx.getInstance())
+                .setRouteChainId(communicateService.getRouteChainId());
             Contract contract = tx.getInstance().getRawData().getContract(0);
             try {
               CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
@@ -134,10 +141,13 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
     }
   }
 
-  public static boolean addCallBackTx(ChainBaseManager chainBaseManager, long blockNum,
+  public boolean addCallBackTx(ChainBaseManager chainBaseManager, long blockNum,
       TransactionCapsule transactionCapsule) {
     try {
-      //todo,if node is sync then return
+      //if node is sync then return
+      if (!communicateService.isSyncFinish()) {
+        return false;
+      }
       Sha256Hash txHash = transactionCapsule.getTransactionId();
       Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
       if (contract.getType() != ContractType.CrossContract) {
