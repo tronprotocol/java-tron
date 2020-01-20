@@ -29,7 +29,6 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url 'http://repo.spring.io/plugins-release' }
         maven { url 'https://jitpack.io' }
     }
 

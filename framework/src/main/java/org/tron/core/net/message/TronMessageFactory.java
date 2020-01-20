@@ -56,6 +56,16 @@ public class TronMessageFactory extends MessageFactory {
         return new TransactionInventoryMessage(packed);
       case CROSS_MSG:
         return new CrossChainMessage(packed);
+      case HEADER_UPDATED_NOTICE:
+        return new BlockHeaderUpdatedNoticeMessage(packed);
+      case HEADER_REQUEST_MESSAGE:
+        return new BlockHeaderRequestMessage(packed);
+      case SR_LIST:
+        return new SRLMessage(packed);
+      case HEADER_INVENTORY:
+        return new BlockHeaderInventoryMesasge(packed);
+      case EPOCH_MESSAGE:
+        return new EpochMessage(packed);
       default:
         throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
             receivedTypes.toString() + DATA_LEN + packed.length);

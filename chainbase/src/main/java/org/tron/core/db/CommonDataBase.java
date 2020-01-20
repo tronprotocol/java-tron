@@ -1,6 +1,9 @@
 package org.tron.core.db;
 
 import java.util.Optional;
+
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Longs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
@@ -12,10 +15,16 @@ import org.tron.common.utils.Sha256Hash;
 public class CommonDataBase extends TronDatabase<byte[]> {
 
   private static final byte[] LATEST_PBFT_BLOCK_NUM = "LATEST_PBFT_BLOCK_NUM".getBytes();
+  private static final byte[] LATEST_SYNC_BLOCK_NUM = "LATEST_SYNC_BLOCK_NUM".getBytes();
+  private static final byte[] FIRST_PBFT_BLOCK_NUM = "FIRST_PBFT_BLOCK_NUM".getBytes();
   private static final byte[] LATEST_PBFT_BLOCK_HASH = "LATEST_PBFT_BLOCK_HASH".getBytes();
 
   public CommonDataBase() {
     super("common-database");
+  }
+
+  public CommonDataBase(String dbName) {
+    super(dbName);
   }
 
   @Override
@@ -50,6 +59,54 @@ public class CommonDataBase extends TronDatabase<byte[]> {
     return Optional.ofNullable(get(LATEST_PBFT_BLOCK_NUM))
         .map(ByteArray::toLong)
         .orElse(0L);
+  }
+
+  public long getLatestPBFTBlockNum(String chainId) {
+    return Optional.ofNullable(get(buildKey(LATEST_PBFT_BLOCK_NUM, chainId)))
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveLatestPBFTBlockNum(String chainId, long number) {
+    if (number <= getLatestPBFTBlockNum(chainId)) {
+      logger.warn("chainId: {}, pbft number {} <= latest number {}", chainId, number, getLatestPBFTBlockNum(chainId));
+      return;
+    }
+    this.put(buildKey(LATEST_PBFT_BLOCK_NUM, chainId), Longs.toByteArray(number));
+  }
+
+  public long getLatestSyncBlockNum(String chainId) {
+    return Optional.ofNullable(get(buildKey(LATEST_SYNC_BLOCK_NUM, chainId)))
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveLatestSyncBlockNum(String chainId, long number) {
+    if (number <= getLatestSyncBlockNum(chainId)) {
+      logger.warn("chainId: {}, sync number {} <= latest number {}",
+          chainId, number, getLatestSyncBlockNum(chainId));
+      return;
+    }
+    this.put(buildKey(LATEST_SYNC_BLOCK_NUM, chainId), Longs.toByteArray(number));
+  }
+
+  public long getFirstPBFTBlockNum(String chainId) {
+    return Optional.ofNullable(get(buildKey(FIRST_PBFT_BLOCK_NUM, chainId)))
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveFirstPBFTBlockNum(String chainId, long number) {
+    if (number <= getFirstPBFTBlockNum(chainId)) {
+      logger.warn("chainId: {}, pbft number {} <= latest number {}",
+          chainId, number, getFirstPBFTBlockNum(chainId));
+      return;
+    }
+    this.put(buildKey(FIRST_PBFT_BLOCK_NUM, chainId), Longs.toByteArray(number));
+  }
+
+  private byte[] buildKey(byte[] prefix, String chainId) {
+    return Bytes.concat(prefix, chainId.getBytes());
   }
 
   public void saveLatestPbftBlockHash(byte[] data) {
