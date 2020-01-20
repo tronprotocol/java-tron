@@ -28,7 +28,7 @@ public class ActuatorFactory {
       Manager manager) {
     List<Actuator> actuatorList = Lists.newArrayList();
     if (null == transactionCapsule || null == transactionCapsule.getInstance()) {
-      logger.info("transactionCapsule or Transaction is null");
+      logger.info("TransactionCapsule or Transaction is null");
       return actuatorList;
     }
 

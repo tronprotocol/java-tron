@@ -58,7 +58,7 @@ public class SolidityNode {
    * Start the SolidityNode.
    */
   public static void main(String[] args) {
-    logger.info("Solidity node running.");
+    logger.info("Solidity node is running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     CommonParameter parameter = Args.getInstance();
 
@@ -67,7 +67,7 @@ public class SolidityNode {
             .toBoolean(parameter.getStorage().getIndexSwitch())));
 
     if (StringUtils.isEmpty(parameter.getTrustNodeAddr())) {
-      logger.error("Trust node not set.");
+      logger.error("Trust node is not set.");
       return;
     }
     parameter.setSolidityNode(true);

@@ -240,7 +240,7 @@ public class Args extends CommonParameter {
             privateKeys.add(prikey);
           } catch (IOException | CipherException e) {
             logger.error(e.getMessage());
-            logger.error("Witness node start faild!");
+            logger.error("Witness node start failed!");
             exit(-1);
           }
         }
@@ -263,7 +263,7 @@ public class Args extends CommonParameter {
 
     if (PARAMETER.isWitness()
         && CollectionUtils.isEmpty(localWitnesses.getPrivateKeys())) {
-      logger.warn("This is a witness node,but localWitnesses is null");
+      logger.warn("This is a witness node, but localWitnesses is null");
     }
 
     if (config.hasPath(Constant.VM_SUPPORT_CONSTANT)) {

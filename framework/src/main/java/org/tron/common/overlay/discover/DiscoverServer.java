@@ -106,7 +106,7 @@ public class DiscoverServer {
           logger.info("Shutdown discovery server");
           break;
         }
-        logger.warn(" Restart discovery server after 5 sec pause...");
+        logger.warn("Restart discovery server after 5 sec pause...");
         Thread.sleep(5000);
       }
     } catch (Exception e) {
