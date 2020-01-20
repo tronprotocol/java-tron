@@ -363,7 +363,7 @@ public class Manager {
     delegationService
         .initStore(chainBaseManager.getWitnessStore(), chainBaseManager.getDelegationStore(),
             chainBaseManager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
-    accountStateCallBack.setManager(this);
+    accountStateCallBack.setChainBaseManager(chainBaseManager);
     trieService.setManager(this);
     revokingStore.disable();
     revokingStore.check();
@@ -379,7 +379,8 @@ public class Manager {
 
     this.initGenesis();
     try {
-      this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
+      this.khaosDb.start(chainBaseManager.getBlockById(
+          getDynamicPropertiesStore().getLatestBlockHeaderHash()));
     } catch (ItemNotFoundException e) {
       logger.error(
           "Can not find Dynamic highest block from DB! \nnumber={} \nhash={}",
@@ -440,7 +441,7 @@ public class Manager {
     if (chainBaseManager.containBlock(genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
     } else {
-      if (this.hasBlocks()) {
+      if (chainBaseManager.hasBlocks()) {
         logger.error(
             "genesis block modify, please delete database directory({}) and restart",
             Args.getInstance().getOutputDirectory());
@@ -779,7 +780,7 @@ public class Manager {
   public synchronized void eraseBlock() {
     session.reset();
     try {
-      BlockCapsule oldHeadBlock = getBlockById(
+      BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
           getDynamicPropertiesStore().getLatestBlockHeaderHash());
       logger.info("start to erase block:" + oldHeadBlock);
       khaosDb.pop();
@@ -1113,25 +1114,6 @@ public class Manager {
   }
 
   /**
-   * Get a BlockCapsule by id.
-   */
-  public BlockCapsule getBlockById(final Sha256Hash hash)
-      throws BadItemException, ItemNotFoundException {
-    BlockCapsule block = this.khaosDb.getBlock(hash);
-    if (block == null) {
-      block = chainBaseManager.getBlockStore().get(hash.getBytes());
-    }
-    return block;
-  }
-
-  /**
-   * judge has blocks.
-   */
-  public boolean hasBlocks() {
-    return chainBaseManager.getBlockStore().iterator().hasNext() || this.khaosDb.hasData();
-  }
-
-  /**
    * Process transaction.
    */
   public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
@@ -1218,7 +1200,7 @@ public class Manager {
 
   public BlockCapsule getBlockByNum(final long num) throws
       ItemNotFoundException, BadItemException {
-    return getBlockById(getBlockIdByNum(num));
+    return chainBaseManager.getBlockById(getBlockIdByNum(num));
   }
 
   /**
@@ -1658,7 +1640,7 @@ public class Manager {
         || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
       logger.info("switchfork occurred, post reorgContractTrigger");
       try {
-        BlockCapsule oldHeadBlock = getBlockById(
+        BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
         for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
           postContractTrigger(trx.getTrxTrace(), true);

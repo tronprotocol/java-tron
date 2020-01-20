@@ -193,7 +193,7 @@ public class ManagerTest extends BlockGenerate {
       }
     }
 
-    Assert.assertTrue("hasBlocks is error", dbManager.hasBlocks());
+    Assert.assertTrue("hasBlocks is error", chainManager.hasBlocks());
   }
 
   @Test

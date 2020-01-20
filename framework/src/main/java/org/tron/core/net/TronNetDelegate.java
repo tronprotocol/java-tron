@@ -104,7 +104,7 @@ public class TronNetDelegate {
 
   public long getBlockTime(BlockId id) throws P2pException {
     try {
-      return dbManager.getBlockById(id).getTimeStamp();
+      return chainBaseManager.getBlockById(id).getTimeStamp();
     } catch (BadItemException | ItemNotFoundException e) {
       throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND, id.getString());
     }
@@ -171,9 +171,9 @@ public class TronNetDelegate {
     try {
       switch (type) {
         case BLOCK:
-          return new BlockMessage(dbManager.getBlockById(hash));
+          return new BlockMessage(chainBaseManager.getBlockById(hash));
         case TRX:
-          TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
+          TransactionCapsule tx = chainBaseManager.getTransactionStore().get(hash.getBytes());
           if (tx != null) {
             return new TransactionMessage(tx.getInstance());
           }

@@ -272,4 +272,25 @@ public class ChainBaseManager {
     }
   }
 
+
+
+  /**
+   * Get a BlockCapsule by id.
+   */
+  public BlockCapsule getBlockById(final Sha256Hash hash)
+      throws BadItemException, ItemNotFoundException {
+    BlockCapsule block = this.khaosDb.getBlock(hash);
+    if (block == null) {
+      block = getBlockStore().get(hash.getBytes());
+    }
+    return block;
+  }
+
+  /**
+   * judge has blocks.
+   */
+  public boolean hasBlocks() {
+    return getBlockStore().iterator().hasNext() || this.khaosDb.hasData();
+  }
+
 }
