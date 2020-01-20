@@ -17,6 +17,8 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db2.core.Snapshot;
+import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -1834,6 +1836,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveCrossChain(long number) {
     this.put(CROSS_CHAIN,
         new BytesCapsule(ByteArray.fromLong(number)));
+    SnapshotManager.allowCrossChain = allowCrossChain();
   }
 
   public long getCrossChain() {

@@ -67,6 +67,8 @@ public class SnapshotManager implements RevokingDatabase {
   @Setter
   private volatile int maxFlushCount = DEFAULT_MIN_FLUSH_COUNT;
 
+  public static boolean allowCrossChain = false;
+
   public SnapshotManager(String checkpointPath) {
   }
 
@@ -91,11 +93,13 @@ public class SnapshotManager implements RevokingDatabase {
       disabled = false;
     }
 
-    if (size > maxSize.get()) {
-      flushCount = flushCount + (size - maxSize.get());
-      updateSolidity(size - maxSize.get());
-      size = maxSize.get();
-      flush();
+    if (allowCrossChain == false) {
+      if (size > maxSize.get()) {
+        flushCount = flushCount + (size - maxSize.get());
+        updateSolidity(size - maxSize.get());
+        size = maxSize.get();
+        flush();
+      }
     }
 
     advance();
@@ -283,6 +287,8 @@ public class SnapshotManager implements RevokingDatabase {
       return;
     }
     needFlush.set(true);
+    updateSolidity((int)(blockNum - latestSolidifiedBlockNum));
+    size = maxSize.get();
     flush();
     needFlush.set(false);
     flushCount = 0;
