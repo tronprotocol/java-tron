@@ -9,10 +9,12 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.raw;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract.CrossContract;
 import org.tron.protos.contract.BalanceContract.CrossContract.CrossDataType;
 import org.tron.protos.contract.BalanceContract.CrossToken;
@@ -94,10 +96,40 @@ public class CreateCommonTransactionTest {
             .toByteArray())));
   }
 
+  public static void createAsset(String tokenName) {
+    WalletBlockingStub walletStub = WalletGrpc
+        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build());
+    AssetIssueContract assetIssueContract =
+        AssetIssueContract.newBuilder()
+            .setOwnerAddress(owner)
+            .setName(ByteString.copyFrom(ByteArray.fromString(tokenName)))
+            .setTotalSupply(100000000)
+            .setPrecision(0)
+            .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+
+    Transaction.Builder transaction = Transaction.newBuilder();
+    raw.Builder raw = Transaction.raw.newBuilder();
+    Contract.Builder contract = Contract.newBuilder();
+    contract.setType(ContractType.AssetIssueContract)
+        .setParameter(Any.pack(assetIssueContract));
+    raw.addContract(contract.build());
+    transaction.setRawData(raw.build());
+    TransactionExtention transactionExtention = walletStub
+        .createCommonTransaction(transaction.build());
+    System.out.println("Common AssetIssueContract: " + transactionExtention);
+    Transaction tx = PublicMethed
+        .addTransactionSign(transactionExtention.getTransaction(), pk, walletStub);
+    System.out.println(walletStub.broadcastTransaction(tx));
+  }
+
   public static void main(String[] args) {
 //    testCreateUpdateBrokerageContract();
-    testCrossTx();
+//    testCrossTx();
 //    query();
+    createAsset("testCross");
   }
 
 }
