@@ -57,6 +57,16 @@ public enum MessageTypes {
 
   CROSS_MSG(0x50),
 
+  HEADER_UPDATED_NOTICE(0x51),
+
+  HEADER_REQUEST_MESSAGE(0x52),
+
+  HEADER_INVENTORY(0x53),
+
+  SR_LIST(0x54),
+
+  EPOCH_MESSAGE(0x55),
+
   LAST(0xFF);
 
   private static final Map<Integer, MessageTypes> intToTypeMap = new HashMap<>();
@@ -86,7 +96,8 @@ public enum MessageTypes {
   }
 
   public static boolean inTronRange(byte code) {
-    return code == CROSS_MSG.asByte() || (code <= TRX_INVENTORY.asByte() && code >= FIRST.asByte());
+    return code == CROSS_MSG.asByte() || (code <= TRX_INVENTORY.asByte() && code >= FIRST.asByte())
+        || code <= EPOCH_MESSAGE.asByte() && code >= HEADER_UPDATED_NOTICE.asByte();
   }
 
   public byte asByte() {

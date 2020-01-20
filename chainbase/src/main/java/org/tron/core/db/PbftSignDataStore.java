@@ -1,10 +1,14 @@
 package org.tron.core.db;
 
+import com.google.common.primitives.Bytes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.protos.Protocol.PBFTMessage.DataType;
+
+import java.util.Arrays;
 
 @Slf4j
 @Component
@@ -53,6 +57,7 @@ public class PbftSignDataStore extends TronDatabase<PbftSignCapsule> {
   public PbftSignCapsule getBlockSignData(long blockNum) {
     return get(buildBlockSignKey(blockNum));
   }
+
 
   //todo:use type
   private byte[] buildSrSignKey(long epoch) {

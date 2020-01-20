@@ -167,6 +167,8 @@ public class Manager {
   @Autowired
   private RecentBlockStore recentBlockStore;
   @Autowired
+  private CommonDataBase commonDataBase;
+  @Autowired
   private TransactionHistoryStore transactionHistoryStore;
   // for network
   @Autowired
@@ -1277,7 +1279,7 @@ public class Manager {
       throws BadItemException, ItemNotFoundException {
     BlockCapsule block = this.khaosDb.getBlock(hash);
     if (block == null) {
-      block = chainBaseManager.getBlockStore().get(hash.getBytes());
+      block = chainBaseManager.getBlockStore().getUnchecked(hash.getBytes());
     }
     return block;
   }

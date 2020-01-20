@@ -700,3 +700,30 @@ message Proof {
 message SRL {
   repeated bytes srAddress = 1;
 }
+message EpochMessage {
+  bytes chainId = 1;
+  int64 currentEpoch = 2;
+}
+
+message BlockHeaderUpdatedNotice {
+  bytes chainId = 1;
+  SignedBlockHeader signedBlockHeader = 2;
+}
+
+message BlockHeaderRequestMessage {
+  bytes chainId = 1;
+  int64 blockHeight = 2;
+  int64 length = 3;
+}
+
+message BlockHeaderInventory {
+  bytes chainId = 1;
+  int64 currentBlockHeight = 2;
+  repeated BlockHeader blockHeader = 3;
+}
+
+message SignedBlockHeader {
+  BlockHeader blockHeader = 1;
+  repeated bytes srs_signature = 2;
+}
+

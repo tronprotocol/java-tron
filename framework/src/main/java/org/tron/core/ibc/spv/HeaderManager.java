@@ -95,7 +95,7 @@ public class HeaderManager {
     return false;
   }
 
-  private boolean validBlockPbftSign(BlockHeader header) throws BadBlockException {
+  public boolean validBlockPbftSign(BlockHeader header) throws BadBlockException {
     //valid sr list
     long startTime = System.currentTimeMillis();
     List<ByteString> srSignList = null;//todo
@@ -166,7 +166,7 @@ public class HeaderManager {
     }
   }
 
-  private boolean validSrList(PBFTCommitResult dataSign, long epoch)
+  public boolean validSrList(PBFTCommitResult dataSign, long epoch)
       throws InvalidProtocolBufferException {
     //valid sr list
     PBFTMessage.Raw raw = Raw.parseFrom(dataSign.getData().toByteArray());

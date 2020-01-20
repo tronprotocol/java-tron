@@ -34,6 +34,14 @@ public class BlockHeaderIndexStore extends TronStoreWithRevoking<BytesCapsule> {
     return new BlockId(Sha256Hash.wrap(value.getData()), num);
   }
 
+  public BlockId getUnchecked(String chainId, Long num) {
+    BytesCapsule value = getUnchecked(buildKey(chainId, num));
+    if (value == null || value.getData() == null) {
+      return null;
+    }
+    return new BlockId(Sha256Hash.wrap(value.getData()), num);
+  }
+
   @Override
   public BytesCapsule get(byte[] key)
       throws ItemNotFoundException {
