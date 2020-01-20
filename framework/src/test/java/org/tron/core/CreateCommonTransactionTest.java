@@ -10,6 +10,7 @@ import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -28,6 +29,7 @@ public class CreateCommonTransactionTest {
   private static ByteString owner = ByteString
       .copyFrom(Wallet.decodeFromBase58Check("TJCnKsPa7y5okkXvQAidZBzqx3QyQ6sxMW"));
   private static String pk = "D95611A9AF2A2A45359106222ED1AFED48853D9A44DEFF8DC7913F5CBA727366";
+  private static final String URL = "https://tron.network";
 
   /**
    * for example create UpdateBrokerageContract
@@ -59,8 +61,8 @@ public class CreateCommonTransactionTest {
             .usePlaintext(true)
             .build());
     CrossToken.Builder crossToken = CrossToken.newBuilder();
-    crossToken.setAmount(10).setTokenId(ByteString.copyFrom(ByteArray.fromString("1")))
-        .setTokenName(ByteString.copyFrom(ByteArray.fromString("test"))).setPrecision(0);
+    crossToken.setAmount(100).setTokenId(ByteString.copyFrom(ByteArray.fromString("1000001")))
+        .setTokenName(ByteString.copyFrom(ByteArray.fromString("testCross"))).setPrecision(0);
     CrossContract.Builder builder = CrossContract.newBuilder();
     builder.setOwnerAddress(owner)
         .setOwnerChainId(Sha256Hash.wrap(ByteArray
@@ -89,11 +91,14 @@ public class CreateCommonTransactionTest {
         .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
             .usePlaintext(true)
             .build());
-    NumberMessage.Builder builder = NumberMessage.newBuilder();
-    builder.setNum(0);
-    System.out.println(new Sha256Hash
-        (0, Sha256Hash.of(walletStub.getBlockByNum(builder.build()).getBlockHeader().getRawData()
-            .toByteArray())));
+//    NumberMessage.Builder builder = NumberMessage.newBuilder();
+//    builder.setNum(0);
+//    System.out.println(new Sha256Hash
+//        (0, Sha256Hash.of(walletStub.getBlockByNum(builder.build()).getBlockHeader().getRawData()
+//            .toByteArray())));
+    Account.Builder account = Account.newBuilder();
+    account.setAddress(owner);
+    System.out.println(walletStub.getAccount(account.build()));
   }
 
   public static void createAsset(String tokenName) {
@@ -107,8 +112,11 @@ public class CreateCommonTransactionTest {
             .setName(ByteString.copyFrom(ByteArray.fromString(tokenName)))
             .setTotalSupply(100000000)
             .setPrecision(0)
+            .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+            .setStartTime(1579705931000L)
+            .setEndTime(1579805931000L)
+            .setTrxNum(1).setNum(1)
             .build();
-    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
 
     Transaction.Builder transaction = Transaction.newBuilder();
     raw.Builder raw = Transaction.raw.newBuilder();
@@ -127,9 +135,9 @@ public class CreateCommonTransactionTest {
 
   public static void main(String[] args) {
 //    testCreateUpdateBrokerageContract();
-//    testCrossTx();
+    testCrossTx();
 //    query();
-    createAsset("testCross");
+//    createAsset("testCross");
   }
 
 }

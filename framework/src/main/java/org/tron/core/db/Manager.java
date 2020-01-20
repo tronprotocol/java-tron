@@ -1787,7 +1787,7 @@ public class Manager {
   public void setCursor(Chainbase.Cursor cursor) {
     if (cursor == Chainbase.Cursor.PBFT) {
       long headNum = getHeadBlockNum();
-      long pbftNum = commonDataBase.getLatestPbftBlockNum();
+      long pbftNum = chainBaseManager.getCommonDataBase().getLatestPbftBlockNum();
       revokingStore.setCursor(cursor, headNum - pbftNum);
     } else {
       revokingStore.setCursor(cursor);

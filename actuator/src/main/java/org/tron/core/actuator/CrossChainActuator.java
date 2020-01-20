@@ -60,11 +60,14 @@ public class CrossChainActuator extends AbstractActuator {
               crossRevokingStore
                   .saveOutTokenCount(tokenId, outTokenCount == null ? 0 : outTokenCount + amount);
             }
-            accountStore.get(ownerAddress).reduceAssetAmountV2(ByteArray.fromString(tokenId),
+            AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+            accountCapsule.reduceAssetAmountV2(ByteArray.fromString(tokenId),
                 amount, dynamicStore, assetIssueStore);
             AssetIssueCapsule assetIssueCapsule = assetIssueV2Store
                 .getUnchecked(ByteArray.fromString(tokenId));
             assetIssueCapsule.setTotalSupply(assetIssueCapsule.getTotalSupply() - amount);
+            accountStore.put(ownerAddress, accountCapsule);
+            assetIssueV2Store.put(ByteArray.fromString(tokenId), assetIssueCapsule);
           }
           break;
           default:
@@ -83,16 +86,22 @@ public class CrossChainActuator extends AbstractActuator {
               AssetIssueCapsule assetIssueCapsule = assetIssueV2Store
                   .getUnchecked(ByteArray.fromString(tokenId));
               assetIssueCapsule.setTotalSupply(assetIssueCapsule.getTotalSupply() + amount);
-              accountStore.get(toAddress).addAssetAmountV2(ByteArray.fromString(tokenId),
+              AccountCapsule accountCapsule = accountStore.get(toAddress);
+              accountCapsule.addAssetAmountV2(ByteArray.fromString(tokenId),
                   amount, dynamicStore, assetIssueStore);
+              accountStore.put(ownerAddress, accountCapsule);
+              assetIssueV2Store.put(ByteArray.fromString(tokenId), assetIssueCapsule);
             } else {
               String destTokenId = crossRevokingStore.getDestTokenFromMapping(tokenId);
               if (StringUtils.isNotBlank(destTokenId)) {//Exist dest token
                 AssetIssueCapsule assetIssueCapsule = assetIssueV2Store
                     .getUnchecked(ByteArray.fromString(destTokenId));
                 assetIssueCapsule.setTotalSupply(assetIssueCapsule.getTotalSupply() + amount);
-                accountStore.get(toAddress).addAssetAmountV2(ByteArray.fromString(destTokenId),
+                AccountCapsule accountCapsule = accountStore.get(toAddress);
+                accountCapsule.addAssetAmountV2(ByteArray.fromString(destTokenId),
                     amount, dynamicStore, assetIssueStore);
+                accountStore.put(ownerAddress, accountCapsule);
+                assetIssueV2Store.put(ByteArray.fromString(tokenId), assetIssueCapsule);
               } else {
                 //create the asset
                 long descTokenId = createAsset(crossToken, crossContract);
