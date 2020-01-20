@@ -22,6 +22,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.utils.DBConfig;
@@ -40,7 +41,7 @@ public class InterpreterTest {
 
   @BeforeClass
   public static void init() {
-    DBConfig.setDebug(true);
+    CommonParameter.getInstance().setDebug(true);
   }
 
   @AfterClass

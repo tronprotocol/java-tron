@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.DecodeUtil;
@@ -46,12 +47,10 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 @Slf4j(topic = "actuator")
 public class ShieldedTransferActuator extends AbstractActuator {
 
-  public static String zenTokenId;
   private ShieldedTransferContract shieldedTransferContract;
 
   public ShieldedTransferActuator() {
     super(ContractType.ShieldedTransferContract, ShieldedTransferContract.class);
-    zenTokenId = DBConfig.getZenTokenId();
   }
 
   @Override
@@ -79,7 +78,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
             shieldedTransferContract.getFromAmount(), ret,fee);
       }
       Commons.adjustAssetBalanceV2(accountStore.getBlackhole().createDbKey(),
-          zenTokenId, fee, accountStore, assetIssueStore, dynamicStore);
+          CommonParameter.getInstance().getZenTokenId(), fee,
+          accountStore, assetIssueStore, dynamicStore);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(0, code.FAILED);
@@ -119,7 +119,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     try {
-      Commons.adjustAssetBalanceV2(ownerAddress, zenTokenId, -amount, accountStore, assetIssueStore,
+      Commons.adjustAssetBalanceV2(ownerAddress, CommonParameter.getInstance()
+              .getZenTokenId(), -amount, accountStore, assetIssueStore,
           dynamicStore);
     } catch (BalanceInsufficientException e) {
       ret.setStatus(0, code.FAILED);
@@ -143,7 +144,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
             dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
         accountStore.put(toAddress, toAccount);
       }
-      Commons.adjustAssetBalanceV2(toAddress, zenTokenId, amount, accountStore, assetIssueStore,
+      Commons.adjustAssetBalanceV2(toAddress, CommonParameter.getInstance().getZenTokenId(),
+          amount, accountStore, assetIssueStore,
           dynamicStore);
     } catch (BalanceInsufficientException e) {
       ret.setStatus(0, code.FAILED);
@@ -169,7 +171,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       nullifierStore.put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
-    if (DBConfig.isFullNodeAllowShieldedTransaction()) {
+    if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()) {
       IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
       try {
         currentMerkle.wfcheck();
@@ -235,7 +237,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }
         nfSet.add(spendDescription.getNullifier());
-        if (DBConfig.isFullNodeAllowShieldedTransaction()
+        if (CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs()
             && !merkleContainer.merkleRootExist(spendDescription.getAnchor().toByteArray())) {
           throw new ContractValidateException("Rt is invalid.");
         }
@@ -461,10 +463,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private long getZenBalance(AccountCapsule account) {
-    if (account.getAssetMapV2().get(zenTokenId) == null) {
+    if (account.getAssetMapV2().get(CommonParameter
+        .getInstance().getZenTokenId()) == null) {
       return 0L;
     } else {
-      return account.getAssetMapV2().get(zenTokenId);
+      return account.getAssetMapV2().get(CommonParameter
+          .getInstance().getZenTokenId());
     }
   }
 

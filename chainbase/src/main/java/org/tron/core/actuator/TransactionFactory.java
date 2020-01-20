@@ -4,6 +4,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DBConfig;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
@@ -21,7 +22,7 @@ public class TransactionFactory {
 
   public static void register(ContractType type, Class<? extends Actuator> actuatorClass,
       Class<? extends GeneratedMessageV3> clazz) {
-    Set<String> actuatorSet = DBConfig.getActuatorSet();
+    Set<String> actuatorSet = CommonParameter.getInstance().getActuatorSet();
     if (actuatorClass != null && !actuatorSet.isEmpty() && !actuatorSet
         .contains(actuatorClass.getSimpleName())) {
       return;

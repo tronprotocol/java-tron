@@ -1002,7 +1002,6 @@ public class Args extends CommonParameter {
       DBConfig.setDbEngine(parameter.getStorage().getDbEngine());
       DBConfig.setPropertyMap(parameter.getStorage().getPropertyMap());
       DBConfig.setDbSync(parameter.getStorage().isDbSync());
-      DBConfig.setDbDirectory(parameter.getStorage().getDbDirectory());
     }
 
     if (Objects.nonNull(parameter.getGenesisBlock())) {
@@ -1023,25 +1022,11 @@ public class Args extends CommonParameter {
     DBConfig.setAllowCreationOfContracts(parameter.getAllowCreationOfContracts());
     DBConfig.setAllowShieldedTransaction(parameter.getAllowShieldedTransaction());
     DBConfig.setAllowAccountStateRoot(parameter.getAllowAccountStateRoot());
-    DBConfig.setAllowProtoFilterNum(parameter.getAllowProtoFilterNum());
-    DBConfig.setProposalExpireTime(parameter.getProposalExpireTime());
     DBConfig.setBlockNumForEneryLimit(parameter.getBlockNumForEneryLimit());
-    DBConfig.setFullNodeAllowShieldedTransaction(parameter
-        .isFullNodeAllowShieldedTransactionArgs());
-    DBConfig.setZenTokenId(parameter.getZenTokenId());
-    DBConfig.setValidContractProtoThreadNum(parameter.getValidContractProtoThreadNum());
-    DBConfig.setVmTrace(parameter.isVmTrace());
-    DBConfig.setDebug(parameter.isDebug());
-    DBConfig.setSolidityNode(parameter.isSolidityNode());
-    DBConfig.setSupportConstant(parameter.isSupportConstant());
-    DBConfig.setLongRunningTime(parameter.getLongRunningTime());
-    DBConfig.setChangedDelegation(parameter.getChangedDelegation());
-    DBConfig.setActuatorSet(parameter.getActuatorSet());
   }
 
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
     PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
-    DBConfig.setFullNodeAllowShieldedTransaction(fullNodeAllowShieldedTransaction);
   }
 
   /**
