@@ -2,7 +2,7 @@
 
 基于java-tron搭建一条自定义公链时，实现一个定制的actuator是不可缺少的一环，本文演示如何基于 java-tron 开发一个 `SumActuator`。
 
-Actuator 模块抽象出4个方法并定义在 Actuator 接口中：
+Actuator 模块抽象出4个方法并定义在 `Actuator` 接口中：
 
 1. `execute()`: 负责交易执行的逻辑，如状态修改、流程跳转、逻辑判断等
 2. `validate()`: 定义交易校验逻辑
@@ -13,7 +13,7 @@ Actuator 模块抽象出4个方法并定义在 Actuator 接口中：
 
 ## 定义并注册合约
 
-目前 java-tron 支持的合约定义在 Protocol 模块的 src/main/protos/core/contract 目录中，在这个目录下新建一个 math_contract.proto 文件并声明 `SumContract`。基于篇幅有限本文只提供 sum 的实现，用户也可以实现 minus 等实现。
+目前 java-tron 支持的合约定义在 Protocol 模块的 src/main/protos/core/contract 目录中，在这个目录下新建一个 math_contract.proto 文件并声明 `SumContract`。基于篇幅有限本文只提供 sum 的实现，用户也可以自行实现 minus 等功能。
 
 `SumContract` 的逻辑是将两个数值相加求和：
 
