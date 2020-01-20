@@ -94,8 +94,8 @@ public class DposService implements ConsensusInterface {
       });
       sortWitness(witnesses);
       consensusDelegate.saveActiveWitnesses(witnesses);
-      maintenanceManager.init();
     }
+    maintenanceManager.init();
 
     dposTask.init();
   }
