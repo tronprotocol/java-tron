@@ -167,6 +167,8 @@ public class Manager {
   @Autowired
   private RecentBlockStore recentBlockStore;
   @Autowired
+  private CommonDataBase commonDataBase;
+  @Autowired
   private TransactionHistoryStore transactionHistoryStore;
   // for network
   @Autowired
