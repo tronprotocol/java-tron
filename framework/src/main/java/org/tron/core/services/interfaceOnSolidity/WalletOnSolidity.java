@@ -23,35 +23,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.db.Manager;
+import org.tron.core.db2.core.Chainbase;
+import org.tron.core.services.WalletOnCursor;
 
 @Slf4j(topic = "API")
 @Component
-public class WalletOnSolidity {
-
-  @Autowired
-  private Manager dbManager;
-
-  public <T> T futureGet(TronCallable<T> callable) {
-    try {
-      dbManager.setMode(false);
-      return callable.call();
-    } finally {
-      dbManager.setMode(true);
-    }
-  }
-
-  public void futureGet(Runnable runnable) {
-    try {
-      dbManager.setMode(false);
-      runnable.run();
-    } finally {
-      dbManager.setMode(true);
-    }
-  }
-
-  public interface TronCallable<T> extends Callable<T> {
-
-    @Override
-    T call();
+public class WalletOnSolidity extends WalletOnCursor {
+  public WalletOnSolidity() {
+    super.cursor = Chainbase.Cursor.SOLIDITY;
   }
 }

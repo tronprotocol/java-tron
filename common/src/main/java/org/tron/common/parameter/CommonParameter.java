@@ -197,11 +197,19 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  protected int rpcOnPBFTPort;
+
+  @Getter
+  @Setter
   protected int fullNodeHttpPort;
 
   @Getter
   @Setter
   protected int solidityHttpPort;
+
+  @Getter
+  @Setter
+  protected int pBFTHttpPort;
 
   @Getter
   @Setter
