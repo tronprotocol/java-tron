@@ -16,6 +16,8 @@ import org.tron.core.db.TransactionCache;
 import org.tron.core.db.backup.BackupRocksDBAspect;
 import org.tron.core.db.backup.NeedBeanCondition;
 import org.tron.core.db2.core.SnapshotManager;
+import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
+import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
@@ -75,6 +77,28 @@ public class DefaultConfig {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     if (!isSolidityNode && dbVersion == 2) {
       return new HttpApiOnSolidityService();
+    }
+
+    return null;
+  }
+
+  @Bean
+  public RpcApiServiceOnPBFT getRpcApiServiceOnPBFT() {
+    boolean isSolidityNode = Args.getInstance().isSolidityNode();
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (!isSolidityNode && dbVersion == 2) {
+      return new RpcApiServiceOnPBFT();
+    }
+
+    return null;
+  }
+
+  @Bean
+  public HttpApiOnPBFTService getHttpApiOnPBFTService() {
+    boolean isSolidityNode = Args.getInstance().isSolidityNode();
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (!isSolidityNode && dbVersion == 2) {
+      return new HttpApiOnPBFTService();
     }
 
     return null;
