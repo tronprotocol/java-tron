@@ -14,6 +14,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
@@ -291,6 +292,38 @@ public class ChainBaseManager {
    */
   public boolean hasBlocks() {
     return getBlockStore().iterator().hasNext() || this.khaosDb.hasData();
+  }
+
+  public void setBlockReference(TransactionCapsule trans) {
+    byte[] headHash = getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes();
+    long headNum = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    trans.setReference(headNum, headHash);
+  }
+
+  public BlockId getSolidBlockId() {
+    try {
+      long num = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+      return getBlockIdByNum(num);
+    } catch (Exception e) {
+      return getGenesisBlockId();
+    }
+  }
+
+  public BlockId getGenesisBlockId() {
+    return getGenesisBlock().getBlockId();
+  }
+
+
+  /**
+   * Get the block id from the number.
+   */
+  public BlockId getBlockIdByNum(final long num) throws ItemNotFoundException {
+    return getBlockIndexStore().get(num);
+  }
+
+  public BlockCapsule getBlockByNum(final long num) throws
+      ItemNotFoundException, BadItemException {
+    return getBlockById(getBlockIdByNum(num));
   }
 
 }

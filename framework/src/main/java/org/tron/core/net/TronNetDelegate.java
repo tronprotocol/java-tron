@@ -115,16 +115,16 @@ public class TronNetDelegate {
   }
 
   public BlockId getSolidBlockId() {
-    return dbManager.getSolidBlockId();
+    return chainBaseManager.getSolidBlockId();
   }
 
   public BlockId getGenesisBlockId() {
-    return dbManager.getGenesisBlockId();
+    return chainBaseManager.getGenesisBlockId();
   }
 
   public BlockId getBlockIdByNum(long num) throws P2pException {
     try {
-      return dbManager.getBlockIdByNum(num);
+      return chainBaseManager.getBlockIdByNum(num);
     } catch (ItemNotFoundException e) {
       throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND, "num: " + num);
     }

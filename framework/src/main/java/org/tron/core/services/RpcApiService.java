@@ -379,7 +379,7 @@ public class RpcApiService implements Service {
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       Block block = null;
       try {
-        block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
@@ -571,7 +571,7 @@ public class RpcApiService implements Service {
         StreamObserver<NumberMessage> responseObserver) {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       try {
-        Block block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        Block block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
         builder.setNum(block.getTransactionsCount());
       } catch (StoreException e) {
         logger.error(e.getMessage());
@@ -1387,7 +1387,7 @@ public class RpcApiService implements Service {
         StreamObserver<NumberMessage> responseObserver) {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       try {
-        Block block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        Block block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
         builder.setNum(block.getTransactionsCount());
       } catch (StoreException e) {
         logger.error(e.getMessage());

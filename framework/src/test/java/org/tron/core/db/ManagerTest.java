@@ -129,7 +129,7 @@ public class ManagerTest extends BlockGenerate {
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Hash.wrap(chainManager.getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -151,7 +151,7 @@ public class ManagerTest extends BlockGenerate {
       dbManager.pushBlock(blockCapsule);
       Assert.assertEquals(1,
           chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-      dbManager.setBlockReference(trx);
+      chainManager.setBlockReference(trx);
       Assert.assertEquals(1,
           ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
     }
@@ -163,7 +163,7 @@ public class ManagerTest extends BlockGenerate {
     dbManager.pushBlock(blockCapsule);
     Assert.assertEquals(1,
         chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-    dbManager.setBlockReference(trx);
+    chainManager.setBlockReference(trx);
     Assert.assertEquals(1,
         ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
   }
@@ -187,7 +187,7 @@ public class ManagerTest extends BlockGenerate {
         Assert.assertEquals(
             "getBlockIdByNum is error",
             blockCapsule2.getBlockId().toString(),
-            dbManager.getBlockIdByNum(1).toString());
+            chainManager.getBlockIdByNum(1).toString());
       } catch (ItemNotFoundException e) {
         e.printStackTrace();
       }
@@ -199,7 +199,7 @@ public class ManagerTest extends BlockGenerate {
   @Test
   public void GetterInstanceTest() {
 
-    Assert.assertTrue(dbManager.getTransactionStore() instanceof TransactionStore);
+    Assert.assertTrue(chainManager.getTransactionStore() instanceof TransactionStore);
     Assert.assertTrue(chainManager.getDynamicPropertiesStore() instanceof DynamicPropertiesStore);
     Assert.assertTrue(chainManager.getMerkleTreeStore() instanceof IncrementalMerkleTreeStore);
     Assert.assertTrue(chainManager.getBlockIndexStore() instanceof BlockIndexStore);
@@ -595,10 +595,10 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertEquals(chainManager.getBlockStore().size(), size + 3);
 
     Assert.assertEquals(
-        dbManager.getBlockIdByNum(chainManager.getHead().getNum() - 1),
+        chainManager.getBlockIdByNum(chainManager.getHead().getNum() - 1),
         blockCapsule1.getBlockId());
     Assert.assertEquals(
-        dbManager.getBlockIdByNum(chainManager.getHead().getNum() - 2),
+        chainManager.getBlockIdByNum(chainManager.getHead().getNum() - 2),
         blockCapsule1.getParentHash());
 
     Assert.assertEquals(
@@ -656,7 +656,7 @@ public class ManagerTest extends BlockGenerate {
 
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
-    context.getBean(KhaosDatabase.class).removeBlk(dbManager.getBlockIdByNum(num));
+    context.getBean(KhaosDatabase.class).removeBlk(chainManager.getBlockIdByNum(num));
     Exception exception = null;
 
     BlockCapsule blockCapsule2 =

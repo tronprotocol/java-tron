@@ -364,7 +364,7 @@ public class Manager {
         .initStore(chainBaseManager.getWitnessStore(), chainBaseManager.getDelegationStore(),
             chainBaseManager.getDynamicPropertiesStore(), chainBaseManager.getAccountStore());
     accountStateCallBack.setChainBaseManager(chainBaseManager);
-    trieService.setManager(this);
+    trieService.setChainBaseManager(chainBaseManager);
     revokingStore.disable();
     revokingStore.check();
     this.setProposalController(ProposalController.createInstance(this));
@@ -401,7 +401,7 @@ public class Manager {
     forkController.init(this.chainBaseManager);
 
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
-      new AssetUpdateHelper(this).doWork();
+      new AssetUpdateHelper(chainBaseManager).doWork();
     }
 
     //for test only
@@ -425,10 +425,6 @@ public class Manager {
     //initActuatorCreator
     ActuatorCreator.init();
     TransactionRegister.registerActuator();
-  }
-
-  public BlockId getGenesisBlockId() {
-    return this.chainBaseManager.getGenesisBlock().getBlockId();
   }
 
   /**
@@ -539,7 +535,7 @@ public class Manager {
         blockNum -> futures.add(service.submit(() -> {
           try {
             blockCount.incrementAndGet();
-            BlockCapsule blockCapsule = getBlockByNum(blockNum);
+            BlockCapsule blockCapsule = chainBaseManager.getBlockByNum(blockNum);
             if (blockCapsule.getTransactions().isEmpty()) {
               emptyBlockCount.incrementAndGet();
             }
@@ -648,7 +644,7 @@ public class Manager {
                 + "solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
             Hex.toHexString(blockHash),
-            getSolidBlockId().getString(),
+            chainBaseManager.getSolidBlockId().getString(),
             chainBaseManager.getHeadBlockId().getString()).toString();
         logger.info(str);
         throw new TaposException(str);
@@ -657,7 +653,7 @@ public class Manager {
       String str = String
           .format("Tapos failed, block not found, ref block %s, %s , solid block %s head block %s",
               ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
-              getSolidBlockId().getString(),
+              chainBaseManager.getSolidBlockId().getString(),
               chainBaseManager.getHeadBlockId().getString()).toString();
       logger.info(str);
       throw new TaposException(str);
@@ -1107,12 +1103,6 @@ public class Manager {
     return result;
   }
 
-  public void setBlockReference(TransactionCapsule trans) {
-    byte[] headHash = getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes();
-    long headNum = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    trans.setReference(headNum, headHash);
-  }
-
   /**
    * Process transaction.
    */
@@ -1189,18 +1179,6 @@ public class Manager {
     }
 
     return transactionInfo.getInstance();
-  }
-
-  /**
-   * Get the block id from the number.
-   */
-  public BlockId getBlockIdByNum(final long num) throws ItemNotFoundException {
-    return chainBaseManager.getBlockIndexStore().get(num);
-  }
-
-  public BlockCapsule getBlockByNum(final long num) throws
-      ItemNotFoundException, BadItemException {
-    return chainBaseManager.getBlockById(getBlockIdByNum(num));
   }
 
   /**
@@ -1471,15 +1449,6 @@ public class Manager {
         + chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     return chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
         - revokingStore.size();
-  }
-
-  public BlockId getSolidBlockId() {
-    try {
-      long num = chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-      return getBlockIdByNum(num);
-    } catch (Exception e) {
-      return getGenesisBlockId();
-    }
   }
 
   public AssetIssueStore getAssetIssueStore() {
