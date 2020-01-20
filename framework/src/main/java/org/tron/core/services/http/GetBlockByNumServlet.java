@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
@@ -42,7 +41,8 @@ public class GetBlockByNumServlet extends RateLimiterServlet {
     }
   }
 
-  private void fillResponse(boolean visible, long num, HttpServletResponse response) throws IOException {
+  private void fillResponse(boolean visible, long num, HttpServletResponse response)
+      throws IOException {
     Block reply = wallet.getBlockByNum(num);
     if (reply != null) {
       response.getWriter().println(Util.printBlock(reply, visible));
