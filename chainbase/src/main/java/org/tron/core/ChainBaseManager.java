@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -22,7 +23,9 @@ import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -242,6 +245,31 @@ public class ChainBaseManager {
   public long getHeadSlot() {
     return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
         .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
+  }
+
+
+
+  /**
+   * judge id.
+   *
+   * @param blockHash blockHash
+   */
+  public boolean containBlock(final Sha256Hash blockHash) {
+    try {
+      return this.khaosDb.containBlockInMiniStore(blockHash)
+          || getBlockStore()
+          .get(blockHash.getBytes()) != null;
+    } catch (ItemNotFoundException | BadItemException e) {
+      return false;
+    }
+  }
+
+  public boolean containBlockInMainChain(BlockId blockId) {
+    try {
+      return getBlockStore().get(blockId.getBytes()) != null;
+    } catch (ItemNotFoundException | BadItemException e) {
+      return false;
+    }
   }
 
 }

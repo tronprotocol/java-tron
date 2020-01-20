@@ -139,11 +139,11 @@ public class TronNetDelegate {
   }
 
   public boolean containBlock(BlockId id) {
-    return dbManager.containBlock(id);
+    return chainBaseManager.containBlock(id);
   }
 
   public boolean containBlockInMainChain(BlockId id) {
-    return dbManager.containBlockInMainChain(id);
+    return chainBaseManager.containBlockInMainChain(id);
   }
 
   public List<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) throws P2pException {
@@ -160,7 +160,7 @@ public class TronNetDelegate {
 
   public boolean contain(Sha256Hash hash, MessageTypes type) {
     if (type.equals(MessageTypes.BLOCK)) {
-      return dbManager.containBlock(hash);
+      return chainBaseManager.containBlock(hash);
     } else if (type.equals(MessageTypes.TRX)) {
       return dbManager.getTransactionStore().has(hash.getBytes());
     }

@@ -437,7 +437,7 @@ public class Manager {
     chainBaseManager.initGenesis();
     BlockCapsule genesisBlock = chainBaseManager.getGenesisBlock();
 
-    if (this.containBlock(genesisBlock.getBlockId())) {
+    if (chainBaseManager.containBlock(genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(genesisBlock.getBlockId().toString());
     } else {
       if (this.hasBlocks()) {
@@ -1104,29 +1104,6 @@ public class Manager {
     result.add(blockCapsules.peekLast().getBlk().getParentBlockId());
 
     return result;
-  }
-
-  /**
-   * judge id.
-   *
-   * @param blockHash blockHash
-   */
-  public boolean containBlock(final Sha256Hash blockHash) {
-    try {
-      return this.khaosDb.containBlockInMiniStore(blockHash)
-          || chainBaseManager.getBlockStore()
-          .get(blockHash.getBytes()) != null;
-    } catch (ItemNotFoundException | BadItemException e) {
-      return false;
-    }
-  }
-
-  public boolean containBlockInMainChain(BlockId blockId) {
-    try {
-      return chainBaseManager.getBlockStore().get(blockId.getBytes()) != null;
-    } catch (ItemNotFoundException | BadItemException e) {
-      return false;
-    }
   }
 
   public void setBlockReference(TransactionCapsule trans) {
