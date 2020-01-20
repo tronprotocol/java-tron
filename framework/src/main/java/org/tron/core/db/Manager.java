@@ -430,10 +430,6 @@ public class Manager {
     return this.chainBaseManager.getGenesisBlock().getBlockId();
   }
 
-  public BlockCapsule getGenesisBlock() {
-    return chainBaseManager.getGenesisBlock();
-  }
-
   /**
    * init genesis block.
    */

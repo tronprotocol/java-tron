@@ -265,7 +265,7 @@ public class Wallet {
         chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
-    long genesisTimeStamp = dbManager.getGenesisBlock().getTimeStamp();
+    long genesisTimeStamp = chainBaseManager.getGenesisBlock().getTimeStamp();
     accountCapsule.setLatestConsumeTime(genesisTimeStamp
         + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTime());
     accountCapsule.setLatestConsumeFreeTime(genesisTimeStamp

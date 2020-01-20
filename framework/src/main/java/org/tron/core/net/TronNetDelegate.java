@@ -131,7 +131,7 @@ public class TronNetDelegate {
   }
 
   public BlockCapsule getGenesisBlock() {
-    return dbManager.getGenesisBlock();
+    return chainBaseManager.getGenesisBlock();
   }
 
   public long getHeadBlockTimeStamp() {
