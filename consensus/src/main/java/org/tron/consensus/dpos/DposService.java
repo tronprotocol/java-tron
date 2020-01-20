@@ -9,8 +9,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,7 +25,6 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.CommonDataBase;
-import org.tron.core.exception.ContractValidateException;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -71,9 +68,6 @@ public class DposService implements ConsensusInterface {
   private GenesisBlock genesisBlock;
   @Getter
   private Map<ByteString, Miner> miners = new HashMap<>();
-
-  private ExecutorService executorService = Executors.newFixedThreadPool(27,
-      r -> new Thread(r, "valid-pbft-sign"));
 
   @Override
   public void start(Param param) {
@@ -154,11 +148,11 @@ public class DposService implements ConsensusInterface {
     long newSolidNum;
     if (!consensusDelegate.getDynamicPropertiesStore().allowCrossChain()) {
       List<Long> numbers = consensusDelegate.getActiveWitnesses().stream()
-        .map(address -> consensusDelegate.getWitness(address.toByteArray()).getLatestBlockNum())
-        .sorted()
-        .collect(Collectors.toList());
-        long size = consensusDelegate.getActiveWitnesses().size();
-       int position = (int) (size * (1 - SOLIDIFIED_THRESHOLD * 1.0 / 100));
+          .map(address -> consensusDelegate.getWitness(address.toByteArray()).getLatestBlockNum())
+          .sorted()
+          .collect(Collectors.toList());
+      long size = consensusDelegate.getActiveWitnesses().size();
+      int position = (int) (size * (1 - SOLIDIFIED_THRESHOLD * 1.0 / 100));
       newSolidNum = numbers.get(position);
     } else {
       newSolidNum = commonDataBase.getLatestPbftBlockNum();
