@@ -144,8 +144,8 @@ public class Manager {
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
   private static final String SAVE_BLOCK = "save block: ";
-  private final int SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = Args.getInstance()
-      .getShieldedTransInPendingMaxCounts();
+  private final int shieldedTransInPendingMaxCounts =
+      Args.getInstance().getShieldedTransInPendingMaxCounts();
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
@@ -716,7 +716,7 @@ public class Manager {
 
       synchronized (this) {
         if (isShieldedTransaction(trx.getInstance())
-            && shieldedTransInPendingCounts.get() >= SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) {
+            && shieldedTransInPendingCounts.get() >= shieldedTransInPendingMaxCounts) {
           return false;
         }
         if (!session.valid()) {
