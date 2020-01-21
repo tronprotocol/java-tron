@@ -1,6 +1,6 @@
 package org.tron.core.actuator;
 
-import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
+import static org.tron.core.config.Parameter.ChainSymbol.UNDERCODE;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -93,13 +93,13 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
       long newBalance = accountCapsule.getBalance() - calcFee();
 
-      if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
+      if (Arrays.equals(tokenID, UNDERCODE)) {
         accountCapsule.setBalance(newBalance + tokenQuant);
       } else {
         accountCapsule.addAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
       }
 
-      if (Arrays.equals(anotherTokenID, TRX_SYMBOL_BYTES)) {
+      if (Arrays.equals(anotherTokenID, UNDERCODE)) {
         accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
         accountCapsule
@@ -186,7 +186,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     long anotherTokenQuant;
 
     if (dynamicStore.getAllowSameTokenName() == 1 &&
-            !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
+            !Arrays.equals(tokenID, UNDERCODE) &&
             !TransactionUtil.isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }
