@@ -1,6 +1,6 @@
 package org.tron.core.capsule;
 
-import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
+import static org.tron.core.config.Parameter.ChainSymbol.UNDERCODE;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -149,10 +149,10 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
       byte[] secondTokenName = this.exchange.getSecondTokenId().toByteArray();
       byte[] firstTokenID = firstTokenName;
       byte[] secondTokenID = secondTokenName;
-      if (!Arrays.equals(firstTokenName, TRX_SYMBOL_BYTES)) {
+      if (!Arrays.equals(firstTokenName, UNDERCODE)) {
         firstTokenID = assetIssueStore.get(firstTokenName).getId().getBytes();
       }
-      if (!Arrays.equals(secondTokenName, TRX_SYMBOL_BYTES)) {
+      if (!Arrays.equals(secondTokenName, UNDERCODE)) {
         secondTokenID = assetIssueStore.get(secondTokenName).getId().getBytes();
       }
       this.exchange = this.exchange.toBuilder()
