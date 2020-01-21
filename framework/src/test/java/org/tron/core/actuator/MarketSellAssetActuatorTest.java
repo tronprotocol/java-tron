@@ -30,7 +30,6 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketAccountStore;
@@ -1701,7 +1700,7 @@ public class MarketSellAssetActuatorTest {
     ByteString orderId = accountOrderCapsule.getOrdersList().get(0);
 
     MarketAccountOrderCapsule makerAccountOrderCapsule = marketAccountStore.get(makerAddress);
-    Assert.assertEquals(makerAccountOrderCapsule.getCount(), 3);
+    Assert.assertEquals(3, makerAccountOrderCapsule.getCount());
     ByteString makerOrderId1 = makerAccountOrderCapsule.getOrdersList().get(0);
     ByteString makerOrderId2 = makerAccountOrderCapsule.getOrdersList().get(1);
 
