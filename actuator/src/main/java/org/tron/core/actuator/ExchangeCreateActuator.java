@@ -61,14 +61,14 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
       accountCapsule.setBalance(newBalance);
 
-      if (Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES)) {
+      if (Arrays.equals(firstTokenID, UNDERCODE)) {
         accountCapsule.setBalance(newBalance - firstTokenBalance);
       } else {
         accountCapsule
             .reduceAssetAmountV2(firstTokenID, firstTokenBalance, dynamicStore, assetIssueStore);
       }
 
-      if (Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES)) {
+      if (Arrays.equals(secondTokenID, UNDERCODE)) {
         accountCapsule.setBalance(newBalance - secondTokenBalance);
       } else {
         accountCapsule
