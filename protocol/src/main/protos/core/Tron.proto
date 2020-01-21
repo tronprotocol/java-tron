@@ -308,6 +308,13 @@ message ResourceReceipt {
   Transaction.Result.contractResult result = 7;
 }
 
+message MarketOrderDetail {
+  bytes makerOrderId = 1;
+  bytes takerOrderId = 2;
+  int64 fillSellQuantity = 3;
+  int64 fillBuyQuantity = 4;
+}
+
 message Transaction {
   message Contract {
     enum ContractType {
@@ -388,6 +395,10 @@ message Transaction {
     int64 exchange_withdraw_another_amount = 20;
     int64 exchange_id = 21;
     int64 shielded_transaction_fee = 22;
+
+
+    bytes orderId = 25;
+    repeated MarketOrderDetail orderDetails = 26;
   }
 
   message raw {
@@ -411,6 +422,8 @@ message Transaction {
   repeated bytes signature = 2;
   repeated Result ret = 5;
 }
+
+
 
 message TransactionInfo {
   enum code {
@@ -442,6 +455,10 @@ message TransactionInfo {
   int64 exchange_withdraw_another_amount = 20;
   int64 exchange_id = 21;
   int64 shielded_transaction_fee = 22;
+
+  bytes orderId = 25;
+  repeated MarketOrderDetail orderDetails = 26;
+
 }
 
 message TransactionRet {

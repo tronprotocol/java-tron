@@ -47,6 +47,7 @@ import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.MarketPriceStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.MarketOrder.State;
+import org.tron.protos.Protocol.MarketOrderDetail;
 import org.tron.protos.Protocol.MarketOrderPosition;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -131,7 +132,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       MarketOrderCapsule orderCapsule = createAndSaveOrder(accountCapsule, contract);
 
       // 3. match order
-      matchOrder(orderCapsule, takerPrice);
+      matchOrder(orderCapsule, takerPrice, ret);
 
       // 4. save remain order into order book
       if (orderCapsule.getSellTokenQuantityRemain() != 0) {
@@ -142,6 +143,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       }
 
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
+      ret.setOrderId(orderCapsule.getID());
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException
         | InvalidProtocolBufferException
@@ -364,7 +366,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
     return MarketUtils.priceMatch(takerPrice, bestPrice);
   }
 
-  public void matchOrder(MarketOrderCapsule takerCapsule, MarketPrice takerPrice)
+  public void matchOrder(MarketOrderCapsule takerCapsule, MarketPrice takerPrice,
+      TransactionResultCapsule ret)
       throws ItemNotFoundException {
 
     byte[] makerPair = MarketUtils.createPairKey(buyTokenID, sellTokenID);
@@ -396,7 +399,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
           && !orderIdListCapsule.isOrderEmpty()) {
         byte[] orderId = orderIdListCapsule.getHead();
         MarketOrderCapsule makerOrderCapsule = orderStore.get(orderId);
-        matchSingleOrder(takerCapsule, makerOrderCapsule);
+        matchSingleOrder(takerCapsule, makerOrderCapsule, ret);
 
         // remove order
         if (makerOrderCapsule.getSellTokenQuantityRemain() == 0) {
@@ -422,7 +425,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
   // return all match or not
   public void matchSingleOrder(MarketOrderCapsule takerOrderCapsule,
-      MarketOrderCapsule makerOrderCapsule) {
+      MarketOrderCapsule makerOrderCapsule, TransactionResultCapsule ret) {
 
     BigInteger takerSellRemainQuantity = BigInteger
         .valueOf(takerOrderCapsule.getSellTokenQuantityRemain());
@@ -525,6 +528,13 @@ public class MarketSellAssetActuator extends AbstractActuator {
     // add token into account
     addTrxOrToken(takerOrderCapsule, takerBuyTokenQuantityReceive);
     addTrxOrToken(makerOrderCapsule, makerBuyTokenQuantityReceive);
+
+    MarketOrderDetail orderDetail = MarketOrderDetail.newBuilder().
+        setMakerOrderId(makerOrderCapsule.getID()).
+        setTakerOrderId(takerOrderCapsule.getID()).
+        setFillSellQuantity(makerBuyTokenQuantityReceive).
+        setFillBuyQuantity(takerBuyTokenQuantityReceive).build();
+    ret.addOrderDetails(orderDetail);
 
   }
 

@@ -102,6 +102,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.MarketOrder;
 import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketOrderPairList;
@@ -2198,6 +2199,21 @@ public class RpcApiService implements Service {
         MarketOrderList marketOrderList = wallet
             .getMarketOrderByAccount(address);
         responseObserver.onNext(marketOrderList);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMarketOrderById(BytesMessage request,
+        StreamObserver<MarketOrder> responseObserver) {
+      try {
+        ByteString address = request.getValue();
+
+        MarketOrder marketOrder = wallet
+            .getMarketOrderById(address);
+        responseObserver.onNext(marketOrder);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
       }

@@ -177,6 +177,7 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.MarketOrder;
 import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketOrderPairList;
@@ -2311,6 +2312,23 @@ public class Wallet {
     return nodeListBuilder.build();
   }
 
+  public MarketOrder getMarketOrderById(ByteString orderId) {
+
+    if (orderId == null || orderId.isEmpty()) {
+      return null;
+    }
+
+    MarketOrderStore marketOrderStore = dbManager.getChainBaseManager().getMarketOrderStore();
+
+    try {
+      return marketOrderStore.get(orderId.toByteArray()).getInstance();
+    } catch (ItemNotFoundException e) {
+      logger.error("orderId = " + orderId.toString() + " not found");
+      throw new IllegalStateException("order not found in store");
+    }
+
+  }
+
   public MarketOrderList getMarketOrderByAccount(ByteString accountAddress) {
 
     if (accountAddress == null || accountAddress.isEmpty()) {
@@ -2413,7 +2431,7 @@ public class Wallet {
 
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
           .getUnchecked(pairPriceKey);
-      if(orderIdListCapsule != null){
+      if (orderIdListCapsule != null) {
         List<MarketOrderCapsule> orderList = orderIdListCapsule.getAllOrder(orderStore);
         orderList.forEach(order -> builder.addOrders(order.getInstance()));
       }

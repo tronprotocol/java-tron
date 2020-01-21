@@ -73,6 +73,8 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     builder.setExchangeWithdrawAnotherAmount(
         programResult.getRet().getExchangeWithdrawAnotherAmount());
     builder.setShieldedTransactionFee(programResult.getRet().getShieldedTransactionFee());
+    builder.setOrderId(programResult.getRet().getOrderId());
+    builder.addAllOrderDetails(programResult.getRet().getOrderDetailsList());
 
     List<Log> logList = new ArrayList<>();
     programResult.getLogInfoList().forEach(

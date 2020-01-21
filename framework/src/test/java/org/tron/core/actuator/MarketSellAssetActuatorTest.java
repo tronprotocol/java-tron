@@ -40,6 +40,7 @@ import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.MarketPriceStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.MarketOrder.State;
+import org.tron.protos.Protocol.MarketOrderDetail;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
@@ -997,6 +998,10 @@ public class MarketSellAssetActuatorTest {
     Assert.assertEquals(1, orderIdListCapsule.getOrderSize(orderStore));
     Assert.assertArrayEquals(orderIdListCapsule.getHead(),
         orderId.toByteArray());
+
+
+    Assert.assertEquals(orderCapsule.getID(),ret.getOrderId());
+    Assert.assertEquals(0,ret.getOrderDetailsList().size());
   }
 
   /**
@@ -1613,6 +1618,22 @@ public class MarketSellAssetActuatorTest {
     orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
     Assert.assertNull(orderIdListCapsule);
+
+
+    Assert.assertEquals(2,ret.getOrderDetailsList().size());
+
+    MarketOrderDetail orderDetail = ret.getOrderDetailsList().get(0);
+    Assert.assertEquals(makerOrderCapsule1.getID(),orderDetail.getMakerOrderId());
+    Assert.assertEquals(orderCapsule.getID(),orderDetail.getTakerOrderId());
+    Assert.assertEquals(200L,orderDetail.getFillSellQuantity());
+    Assert.assertEquals(100L,orderDetail.getFillBuyQuantity());
+
+    orderDetail = ret.getOrderDetailsList().get(1);
+    Assert.assertEquals(makerOrderCapsule2.getID(),orderDetail.getMakerOrderId());
+    Assert.assertEquals(orderCapsule.getID(),orderDetail.getTakerOrderId());
+    Assert.assertEquals(200L,orderDetail.getFillSellQuantity());
+    Assert.assertEquals(100L,orderDetail.getFillBuyQuantity());
+
   }
 
   /**
@@ -1726,6 +1747,22 @@ public class MarketSellAssetActuatorTest {
     orderIdListCapsule = pairPriceToOrderStore
         .getUnchecked(pairPriceKey);
     Assert.assertNull(orderIdListCapsule);
+
+
+    Assert.assertEquals(2,ret.getOrderDetailsList().size());
+
+    MarketOrderDetail orderDetail = ret.getOrderDetailsList().get(0);
+    Assert.assertEquals(makerOrderCapsule1.getID(),orderDetail.getMakerOrderId());
+    Assert.assertEquals(orderCapsule.getID(),orderDetail.getTakerOrderId());
+    Assert.assertEquals(200L,orderDetail.getFillSellQuantity());
+    Assert.assertEquals(100L,orderDetail.getFillBuyQuantity());
+
+    orderDetail = ret.getOrderDetailsList().get(1);
+    Assert.assertEquals(makerOrderCapsule2.getID(),orderDetail.getMakerOrderId());
+    Assert.assertEquals(orderCapsule.getID(),orderDetail.getTakerOrderId());
+    Assert.assertEquals(300L,orderDetail.getFillSellQuantity());
+    Assert.assertEquals(100L,orderDetail.getFillBuyQuantity());
+
   }
 
   /**

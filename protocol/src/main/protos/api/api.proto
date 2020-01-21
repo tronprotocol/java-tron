@@ -293,8 +293,8 @@ service Wallet {
   rpc MarketCancelOrder (MarketCancelOrderContract) returns (TransactionExtention) {
   }
 
-//  rpc GetMarketOrderById (BytesMessage) returns (MarketOrderList) {
-//  }
+  rpc GetMarketOrderById (BytesMessage) returns (MarketOrder) {
+  }
 
   rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
   }
@@ -892,8 +892,8 @@ service WalletSolidity {
   rpc MarketCancelOrder (MarketCancelOrderContract) returns (TransactionExtention) {
   }
 
-  //  rpc GetMarketOrderById (BytesMessage) returns (MarketOrderList) {
-  //  }
+  rpc GetMarketOrderById (BytesMessage) returns (MarketOrder) {
+  }
 
   rpc GetMarketOrderByAccount (BytesMessage) returns (MarketOrderList) {
   }
@@ -906,6 +906,9 @@ service WalletSolidity {
 
   rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
   }
+
+
+
 };
 
 service WalletExtension {
