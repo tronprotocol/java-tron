@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
@@ -171,7 +172,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
     long minFrozenTime = dynamicStore.getMinFrozenTime();
     long maxFrozenTime = dynamicStore.getMaxFrozenTime();
 
-    boolean needCheckFrozeTime = VMConfig.getCheckFrozenTime() == 1;//for test
+    boolean needCheckFrozeTime = CommonParameter.getInstance()
+        .getCheckFrozenTime() == 1;//for test
     if (needCheckFrozeTime && !(frozenDuration >= minFrozenTime
         && frozenDuration <= maxFrozenTime)) {
       throw new ContractValidateException(

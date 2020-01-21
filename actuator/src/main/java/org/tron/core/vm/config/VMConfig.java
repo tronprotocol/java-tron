@@ -27,18 +27,6 @@ import lombok.Setter;
  */
 public class VMConfig {
 
-  @Getter
-  @Setter
-  private static double maxTimeRatio;
-
-  @Getter
-  @Setter
-  private static double minTimeRatio;
-
-  @Getter
-  @Setter
-  private static int checkFrozenTime; // for test only
-
   public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
 
   private static boolean vmTraceCompressed = false;
