@@ -391,8 +391,7 @@ public class Manager {
           Args.getInstance().getOutputDirectory());
       System.exit(1);
     } catch (BadItemException e) {
-      e.printStackTrace();
-      logger.error("DB data broken!");
+      logger.error("DB data broken! {}", e);
       logger.error(
           "Please delete database directory({}) and restart",
           Args.getInstance().getOutputDirectory());
@@ -535,11 +534,10 @@ public class Manager {
         blockNum -> futures.add(service.submit(() -> {
           try {
             blockCount.incrementAndGet();
-            BlockCapsule blockCapsule = chainBaseManager.getBlockByNum(blockNum);
-            if (blockCapsule.getTransactions().isEmpty()) {
+            if (chainBaseManager.getBlockByNum(blockNum).getTransactions().isEmpty()) {
               emptyBlockCount.incrementAndGet();
             }
-            blockCapsule.getTransactions().stream()
+            chainBaseManager.getBlockByNum(blockNum).getTransactions().stream()
                 .map(tc -> tc.getTransactionId().getBytes())
                 .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(blockNum)))
                 .forEach(e -> transactionCache
