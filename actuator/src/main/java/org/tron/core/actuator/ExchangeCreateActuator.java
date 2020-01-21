@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -59,14 +61,14 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
       accountCapsule.setBalance(newBalance);
 
-      if (Arrays.equals(firstTokenID, "_".getBytes())) {
+      if (Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance - firstTokenBalance);
       } else {
         accountCapsule
             .reduceAssetAmountV2(firstTokenID, firstTokenBalance, dynamicStore, assetIssueStore);
       }
 
-      if (Arrays.equals(secondTokenID, "_".getBytes())) {
+      if (Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance - secondTokenBalance);
       } else {
         accountCapsule
@@ -89,11 +91,11 @@ public class ExchangeCreateActuator extends AbstractActuator {
         exchangeStore.put(exchangeCapsule.createDbKey(), exchangeCapsule);
 
         //save to new asset store
-        if (!Arrays.equals(firstTokenID, "_".getBytes())) {
+        if (!Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES)) {
           String firstTokenRealID = assetIssueStore.get(firstTokenID).getId();
           firstTokenID = firstTokenRealID.getBytes();
         }
-        if (!Arrays.equals(secondTokenID, "_".getBytes())) {
+        if (!Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES)) {
           String secondTokenRealID = assetIssueStore.get(secondTokenID).getId();
           secondTokenID = secondTokenRealID.getBytes();
         }
@@ -173,10 +175,10 @@ public class ExchangeCreateActuator extends AbstractActuator {
     long secondTokenBalance = contract.getSecondTokenBalance();
 
     if (dynamicStore.getAllowSameTokenName() == 1) {
-      if (!Arrays.equals(firstTokenID, "_".getBytes()) && !TransactionUtil.isNumber(firstTokenID)) {
+      if (!Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES) && !TransactionUtil.isNumber(firstTokenID)) {
         throw new ContractValidateException("first token id is not a valid number");
       }
-      if (!Arrays.equals(secondTokenID, "_".getBytes()) && !TransactionUtil
+      if (!Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES) && !TransactionUtil
           .isNumber(secondTokenID)) {
         throw new ContractValidateException("second token id is not a valid number");
       }
@@ -195,7 +197,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
       throw new ContractValidateException("token balance must less than " + balanceLimit);
     }
 
-    if (Arrays.equals(firstTokenID, "_".getBytes())) {
+    if (Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES)) {
       if (accountCapsule.getBalance() < (firstTokenBalance + calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
@@ -205,7 +207,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
       }
     }
 
-    if (Arrays.equals(secondTokenID, "_".getBytes())) {
+    if (Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES)) {
       if (accountCapsule.getBalance() < (secondTokenBalance + calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
