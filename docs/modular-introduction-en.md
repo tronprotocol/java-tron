@@ -1,14 +1,16 @@
-# Introduce Modularization
+# Modularization Introduction
 
 ## Motivation
 
-An Ethereum-based game called CryptoKitties took up 16% of the platform's traffic at peak hours, making the network heavily congested. Though TRON network is 100 times more efficient than Ethereum, there's still a ceiling to it, so we have to expand the capacity horizontally by splitting java-tron into isolated modules. The modularized java-tron will allow DApp developers to easily create and deploy their own blockchains rather than simply develop an App on the chain (One DApp is One Chain), thus cutting the cost to build blockchain infrastructure and helping developers customize modules to their own needs, for example, by allowing them to select a well-suited consensus mechanism within an abstract consensus module. By modularizing java-tron, developers no longer get hassled by the underlying implementation details of a blockchain, and thus can focus more on their business scenarios.
+An Ethereum-based game called CryptoKitties took up 16% of the platform's traffic at peak hours, making the network heavily congested. Though TRON network is 100 times more efficient than Ethereum, there's still a ceiling to it, so we have to expand the capacity horizontally by splitting java-tron into isolated modules.
+
+The modularized java-tron will allow DApp developers to easily create and deploy their own blockchains rather than simply develop an App on the chain (One DApp is One Chain), thus cutting the cost to build blockchain infrastructure and helping developers customize modules to their own needs, for example, by allowing them to select a well-suited consensus mechanism within an abstract consensus module. By modularizing java-tron, developers no longer get hassled by the underlying implementation details of a blockchain, and thus can focus more on their business scenarios.
 
 The aim of java-tron modularization is to enable developers to easily build a dedicated blockchain for an App. It has great advantages:
 
-1. Modularized code is easy to maintain and expand and makes the system architecture clearer.
+1. Modularized code is easy to maintain and expand and making the system architecture clearer.
 2. With modularization, each module is an isolated component, making it easier to productize and perfect them.
-3. An interface-oriented develop mode further decouples the modules, making them pluggable to adapt to different business scenarios.
+3. An interface-oriented development decouples the modules further, making them pluggable to adapt to different business scenarios.
 
 ## Architecture of modularized java-tron
 
@@ -18,14 +20,14 @@ A modularized java-tron consists of six modules: framework, protocol, common, ch
 
 ### framework
 
-As the core module of java-tron, framework functions as both a gateway to the blockchain and an adhesive that effectively connects all other modules. Framework initializes each module and facilitates communication between modules.
+As the core module of java-tron, framework performs as both a gateway to the blockchain and an adhesive that effectively connects all other modules. Framework initializes each module and facilitates communication between modules.
 
 ### protocol
 
 A concise and efficient data transfer protocol is essential to a distributed network like blockchain. Protocol module defines the format of the binary protocol under which java-tron interacts with the outside world, allowing java-tron to interact with multiple platforms in diverse languages. The module also defines:
 
-1. the communication protocol between nodes within java-tron
-2. protocols that java-tron provides to the public
+1. the communication protocol between java-tron nodes
+2. protocol that java-tron provides to the public
 
 ### common
 
