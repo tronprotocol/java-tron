@@ -1001,28 +1001,9 @@ public class Args extends CommonParameter {
       DBConfig.setDbVersion(parameter.getStorage().getDbVersion());
       DBConfig.setDbEngine(parameter.getStorage().getDbEngine());
       DBConfig.setPropertyMap(parameter.getStorage().getPropertyMap());
-      DBConfig.setDbSync(parameter.getStorage().isDbSync());
-    }
-
-    if (Objects.nonNull(parameter.getGenesisBlock())) {
-      DBConfig.setBlocktimestamp(parameter.getGenesisBlock().getTimestamp());
-      DBConfig.setGenesisBlock(parameter.getGenesisBlock());
     }
 
     DBConfig.setOutputDirectoryConfig(parameter.getOutputDirectory());
-    DBConfig.setRocksDbSettings(parameter.getRocksDBCustomSettings());
-    DBConfig.setAllowMultiSign(parameter.getAllowMultiSign());
-    DBConfig.setMaintenanceTimeInterval(parameter.getMaintenanceTimeInterval());
-    DBConfig.setAllowAdaptiveEnergy(parameter.getAllowAdaptiveEnergy());
-    DBConfig.setAllowDelegateResource(parameter.getAllowDelegateResource());
-    DBConfig.setAllowTvmTransferTrc10(parameter.getAllowTvmTransferTrc10());
-    DBConfig.setAllowTvmConstantinople(parameter.getAllowTvmConstantinople());
-    DBConfig.setAllowTvmSolidity059(parameter.getAllowTvmSolidity059());
-    DBConfig.setAllowSameTokenName(parameter.getAllowSameTokenName());
-    DBConfig.setAllowCreationOfContracts(parameter.getAllowCreationOfContracts());
-    DBConfig.setAllowShieldedTransaction(parameter.getAllowShieldedTransaction());
-    DBConfig.setAllowAccountStateRoot(parameter.getAllowAccountStateRoot());
-    DBConfig.setBlockNumForEneryLimit(parameter.getBlockNumForEneryLimit());
   }
 
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

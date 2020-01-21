@@ -8,6 +8,7 @@ import java.util.HashMap;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
@@ -544,7 +545,8 @@ public class RepositoryImpl implements Repository {
 
   public long getHeadSlot() {
     return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() -
-        Long.parseLong(DBConfig.getGenesisBlock().getTimestamp()))
+        Long.parseLong(CommonParameter.getInstance()
+            .getGenesisBlock().getTimestamp()))
         / BLOCK_PRODUCED_INTERVAL;
   }
 

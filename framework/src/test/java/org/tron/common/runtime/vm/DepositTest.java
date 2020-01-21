@@ -11,6 +11,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
@@ -105,7 +106,8 @@ public class DepositTest {
     this.manager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     this.manager.getDynamicPropertiesStore()
-        .saveLatestBlockHeaderNumber(DBConfig.getBlockNumForEneryLimit() + 1);
+        .saveLatestBlockHeaderNumber(CommonParameter.getInstance()
+            .getBlockNumForEneryLimit() + 1);
 
     String contractA = "A";
     String contractB = "B";

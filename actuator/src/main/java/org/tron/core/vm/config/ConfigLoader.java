@@ -30,7 +30,8 @@ public class ConfigLoader {
 
   private static boolean checkForEnergyLimit(DynamicPropertiesStore ds) {
     long blockNum = ds.getLatestBlockHeaderNumber();
-    return blockNum >= DBConfig.getBlockNumForEneryLimit();
+    return blockNum >= CommonParameter.getInstance()
+        .getBlockNumForEneryLimit();
   }
 
 }
