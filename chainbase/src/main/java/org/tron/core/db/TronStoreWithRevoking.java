@@ -56,7 +56,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
                 new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName),
                     dbName,
                     StorageUtils.getOptionsByDbName(dbName),
-                    new WriteOptions().sync(DBConfig.isDbSync())))));
+                    new WriteOptions().sync(CommonParameter.getInstance()
+                        .getStorage().isDbSync())))));
       } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
         String parentPath = Paths
             .get(StorageUtils.getOutputDirectoryByDbName(dbName), CommonParameter
@@ -65,7 +66,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
         this.revokingDB = new Chainbase(new SnapshotRoot(
             new RocksDB(
                 new RocksDbDataSourceImpl(parentPath,
-                    dbName, DBConfig.getRocksDbSettings()))));
+                    dbName, CommonParameter.getInstance()
+                    .getRocksDBCustomSettings()))));
       }
     } else {
       throw new RuntimeException("db version is error.");

@@ -4,6 +4,7 @@ import static java.lang.Long.max;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DBConfig;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -23,7 +24,8 @@ public class EnergyProcessor extends ResourceProcessor {
 
   public static long getHeadSlot(DynamicPropertiesStore dynamicPropertiesStore) {
     return (dynamicPropertiesStore.getLatestBlockHeaderTimestamp() -
-        Long.parseLong(DBConfig.getGenesisBlock().getTimestamp()))
+        Long.parseLong(CommonParameter.getInstance()
+            .getGenesisBlock().getTimestamp()))
         / BLOCK_PRODUCED_INTERVAL;
   }
 

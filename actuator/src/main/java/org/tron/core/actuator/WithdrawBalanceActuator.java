@@ -9,6 +9,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.DecodeUtil;
@@ -109,7 +110,8 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-    boolean isGP = DBConfig.getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
+    boolean isGP = CommonParameter.getInstance()
+        .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
         Arrays.equals(ownerAddress, witness.getAddress()));
     if (isGP) {
       throw new ContractValidateException(

@@ -6,6 +6,7 @@ import java.io.File;
 import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
+import org.tron.common.parameter.CommonParameter;
 
 
 public class StorageUtils {
@@ -35,18 +36,22 @@ public class StorageUtils {
   }
 
   private static boolean hasProperty(String dbName) {
-    if (DBConfig.getPropertyMap() != null) {
-      return DBConfig.getPropertyMap().containsKey(dbName);
+    if (CommonParameter.getInstance().getStorage()
+        .getPropertyMap() != null) {
+      return CommonParameter.getInstance().getStorage()
+          .getPropertyMap().containsKey(dbName);
     }
     return false;
   }
 
   private static Property getProperty(String dbName) {
-    return DBConfig.getPropertyMap().get(dbName);
+    return CommonParameter.getInstance().getStorage()
+        .getPropertyMap().get(dbName);
   }
 
   public static String getOutputDirectory() {
-    if (!"".equals(DBConfig.getOutputDirectoryConfig()) && !DBConfig.getOutputDirectoryConfig().endsWith(File.separator)) {
+    if (!"".equals(CommonParameter.getInstance().getOutputDirectory())
+        && !CommonParameter.getInstance().getOutputDirectory().endsWith(File.separator)) {
       return DBConfig.getOutputDirectoryConfig() + File.separator;
     }
     return DBConfig.getOutputDirectoryConfig();
