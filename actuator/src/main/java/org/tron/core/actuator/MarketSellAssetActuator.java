@@ -403,6 +403,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
         // remove order
         if (makerOrderCapsule.getSellTokenQuantityRemain() == 0) {
+          // remove from market order list
           orderIdListCapsule.removeOrder(makerOrderCapsule, orderStore,
               pairPriceKey, pairPriceToOrderStore);
         }
@@ -425,7 +426,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
   // return all match or not
   public void matchSingleOrder(MarketOrderCapsule takerOrderCapsule,
-      MarketOrderCapsule makerOrderCapsule, TransactionResultCapsule ret) {
+      MarketOrderCapsule makerOrderCapsule, TransactionResultCapsule ret)
+      throws ItemNotFoundException {
 
     BigInteger takerSellRemainQuantity = BigInteger
         .valueOf(takerOrderCapsule.getSellTokenQuantityRemain());
@@ -446,7 +448,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     if (takerBuyTokenQuantityRemain == 0) {
       // quantity too small, return sellToken to user
       returnSellTokenRemain(takerOrderCapsule);
-      takerOrderCapsule.setState(State.INACTIVE);
+      MarketUtils.updateOrderState(takerOrderCapsule, State.INACTIVE, marketAccountStore);
       return;
     }
 
@@ -469,9 +471,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
       makerOrderCapsule.setSellTokenQuantityRemain(0);
 
       if (takerSellTokenLeft == 0) {
-        takerOrderCapsule.setState(State.INACTIVE);
+        MarketUtils.updateOrderState(takerOrderCapsule, State.INACTIVE, marketAccountStore);
       }
-      makerOrderCapsule.setState(State.INACTIVE);
+      MarketUtils.updateOrderState(makerOrderCapsule, State.INACTIVE, marketAccountStore);
 
 
     } else if (takerBuyTokenQuantityRemain < makerOrderCapsule.getSellTokenQuantityRemain()) {
@@ -483,7 +485,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       makerBuyTokenQuantityReceive = takerOrderCapsule.getSellTokenQuantityRemain();
 
       takerOrderCapsule.setSellTokenQuantityRemain(0);
-      takerOrderCapsule.setState(State.INACTIVE);
+      MarketUtils.updateOrderState(takerOrderCapsule, State.INACTIVE, marketAccountStore);
 
       makerOrderCapsule.setSellTokenQuantityRemain(Math.subtractExact(
           makerOrderCapsule.getSellTokenQuantityRemain(), takerBuyTokenQuantityRemain));
@@ -502,7 +504,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       makerBuyTokenQuantityReceive = makerSellRemainQuantity.multiply(makerBuyQuantity)
           .divide(makerSellQuantity).longValue();
 
-      makerOrderCapsule.setState(State.INACTIVE);
+      MarketUtils.updateOrderState(makerOrderCapsule, State.INACTIVE, marketAccountStore);
       if (makerBuyTokenQuantityReceive == 0) {
         // the quantity is too small, return the remain of sellToken to maker
         // it would not happen here

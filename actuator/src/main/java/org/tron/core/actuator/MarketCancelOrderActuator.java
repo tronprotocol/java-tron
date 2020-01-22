@@ -35,6 +35,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
@@ -53,6 +54,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
   private DynamicPropertiesStore dynamicStore;
   private AssetIssueStore assetIssueStore;
 
+  private MarketAccountStore marketAccountStore;
   private MarketOrderStore orderStore;
   private MarketPairToPriceStore pairToPriceStore;
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
@@ -67,6 +69,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     assetIssueStore = chainBaseManager.getAssetIssueStore();
 
+    marketAccountStore = chainBaseManager.getMarketAccountStore();
     orderStore = chainBaseManager.getMarketOrderStore();
     pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     pairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
@@ -104,7 +107,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       // 1. return balance and token
       returnSellTokenRemain(orderCapsule);
 
-      orderCapsule.setState(State.CANCELED);
+      MarketUtils.updateOrderState(orderCapsule, State.CANCELED, marketAccountStore);
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
 
       // 2. clear orderList

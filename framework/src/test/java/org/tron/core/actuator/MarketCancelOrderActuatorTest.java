@@ -512,8 +512,8 @@ public class MarketCancelOrderActuatorTest {
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
-    Assert.assertEquals(5, accountOrderCapsule.getCount());
-    orderId = accountOrderCapsule.getOrdersList().get(2);
+    Assert.assertEquals(4, accountOrderCapsule.getCount());
+    // orderId = accountOrderCapsule.getOrdersList().get(2);
 
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
@@ -589,8 +589,8 @@ public class MarketCancelOrderActuatorTest {
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
-    Assert.assertEquals(5, accountOrderCapsule.getCount());
-    orderId = accountOrderCapsule.getOrdersList().get(2);
+    Assert.assertEquals(4, accountOrderCapsule.getCount());
+    // orderId = accountOrderCapsule.getOrdersList().get(2);
 
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
@@ -669,8 +669,8 @@ public class MarketCancelOrderActuatorTest {
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
-    Assert.assertEquals(3, accountOrderCapsule.getCount());
-    orderId = accountOrderCapsule.getOrdersList().get(1);
+    Assert.assertEquals(2, accountOrderCapsule.getCount());
+    // orderId = accountOrderCapsule.getOrdersList().get(1);
 
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
@@ -746,8 +746,8 @@ public class MarketCancelOrderActuatorTest {
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
-    Assert.assertEquals(1, accountOrderCapsule.getCount());
-    orderId = accountOrderCapsule.getOrdersList().get(0);
+    Assert.assertEquals(0, accountOrderCapsule.getCount());
+    // orderId = accountOrderCapsule.getOrdersList().get(0);
 
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());

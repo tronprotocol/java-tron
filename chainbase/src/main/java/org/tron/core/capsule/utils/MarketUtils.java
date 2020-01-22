@@ -19,6 +19,11 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Hash;
+import org.tron.core.capsule.MarketAccountOrderCapsule;
+import org.tron.core.capsule.MarketOrderCapsule;
+import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.store.MarketAccountStore;
+import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketPrice;
 
 public class MarketUtils {
@@ -130,5 +135,16 @@ public class MarketUtils {
         .compareTo(takerBuyQuantity.multiply(makerPriceBuyQuantity)) >= 0;
   }
 
+  public static void updateOrderState(MarketOrderCapsule orderCapsule,
+      State state, MarketAccountStore marketAccountStore) throws ItemNotFoundException {
+    orderCapsule.setState(state);
+
+    // remove from account order list
+    if (state == State.INACTIVE || state == State.CANCELED) {
+      MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore
+          .get(orderCapsule.getOwnerAddress().toByteArray());
+      accountOrderCapsule.removeOrder(orderCapsule.getID(), marketAccountStore);
+    }
+  }
 
 }
