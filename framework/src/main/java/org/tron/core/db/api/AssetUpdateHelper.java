@@ -1,6 +1,6 @@
 package org.tron.core.db.api;
 
-import static org.tron.core.config.Parameter.ChainSymbol.UNDERCODE;
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -128,12 +128,12 @@ public class AssetUpdateHelper {
 
     for (ExchangeCapsule exchangeCapsule : dbManager.getExchangeStore().getAllExchanges()) {
       count++;
-      if (!Arrays.equals(exchangeCapsule.getFirstTokenId(), UNDERCODE)) {
+      if (!Arrays.equals(exchangeCapsule.getFirstTokenId(), TRX_SYMBOL_BYTES)) {
         exchangeCapsule.setFirstTokenId(
             assetNameToIdMap.get(ByteArray.toStr(exchangeCapsule.getFirstTokenId())));
       }
 
-      if (!Arrays.equals(exchangeCapsule.getSecondTokenId(), UNDERCODE)) {
+      if (!Arrays.equals(exchangeCapsule.getSecondTokenId(), TRX_SYMBOL_BYTES)) {
         exchangeCapsule.setSecondTokenId(
             assetNameToIdMap.get(ByteArray.toStr(exchangeCapsule.getSecondTokenId())));
       }
