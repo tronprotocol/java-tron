@@ -1948,6 +1948,7 @@ public class MarketSellAssetActuatorTest {
     //check order
     MarketOrderCapsule orderCapsule = orderStore.get(orderId.toByteArray());
     Assert.assertEquals(0L, orderCapsule.getSellTokenQuantityRemain());
+    Assert.assertEquals(1L, orderCapsule.getSellTokenQuantityReturn());
     Assert.assertEquals(State.INACTIVE, orderCapsule.getSt());
 
     MarketOrderCapsule makerOrderCapsule1 = orderStore.get(makerOrderId1.toByteArray());

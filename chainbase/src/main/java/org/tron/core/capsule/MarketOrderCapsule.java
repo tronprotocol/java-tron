@@ -113,6 +113,22 @@ public class MarketOrderCapsule implements ProtoCapsule<MarketOrder> {
         .build();
   }
 
+  public long getSellTokenQuantityReturn() {
+    return this.order.getSellTokenQuantityReturn();
+  }
+
+  public void setSellTokenQuantityReturn() {
+    this.order = this.order.toBuilder()
+        .setSellTokenQuantityReturn(this.order.getSellTokenQuantityRemain())
+        .build();
+  }
+
+  public void setSellTokenQuantityReturn(long sellTokenQuantityReturn) {
+    this.order = this.order.toBuilder()
+        .setSellTokenQuantityReturn(sellTokenQuantityReturn)
+        .build();
+  }
+
   public byte[] getBuyTokenId() {
     return this.order.getBuyTokenId().toByteArray();
   }

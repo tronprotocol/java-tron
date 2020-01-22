@@ -445,6 +445,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     if (takerBuyTokenQuantityRemain == 0) {
       // quantity too small, return sellToken to user
+      takerOrderCapsule.setSellTokenQuantityReturn();
       returnSellTokenRemain(takerOrderCapsule);
       takerOrderCapsule.setState(State.INACTIVE);
       return;
@@ -512,6 +513,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
         // the following conditions:
         // makerOrderCapsule.getSellTokenQuantityRemain() - takerBuyTokenQuantityRemain = 1
         // 200 - 200/100 * X = 1 ===> X = 199/2，and this comports with the fact that X is integer.
+        makerOrderCapsule.setSellTokenQuantityReturn();
         returnSellTokenRemain(makerOrderCapsule);
         return;
       } else {
