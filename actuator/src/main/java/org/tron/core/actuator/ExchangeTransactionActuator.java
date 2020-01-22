@@ -118,7 +118,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     ExchangeV2Store exchangeV2Store = chainBaseManager.getExchangeV2Store();
     if (!this.any.is(ExchangeTransactionContract.class)) {
       throw new ContractValidateException(
-          "contract type error, expected type [ExchangeTransactionContract],real type[" + any
+          "contract type error,expected type [ExchangeTransactionContract],real type[" + any
               .getClass() + "]");
     }
     final ExchangeTransactionContract contract;
