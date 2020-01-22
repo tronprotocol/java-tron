@@ -985,16 +985,8 @@ public class Args extends CommonParameter {
   }
 
   public static void initConfig(CommonParameter parameter) {
-    initVMConfig(parameter);
     initDBConfig(parameter);
   }
-
-  public static void initVMConfig(CommonParameter parameter) {
-    VMConfig.setMaxTimeRatio(parameter.getMaxTimeRatio());
-    VMConfig.setMinTimeRatio(parameter.getMinTimeRatio());
-    VMConfig.setCheckFrozenTime(parameter.getCheckFrozenTime());
-  }
-
 
   public static void initDBConfig(CommonParameter parameter) {
     if (Objects.nonNull(parameter.getStorage())) {
