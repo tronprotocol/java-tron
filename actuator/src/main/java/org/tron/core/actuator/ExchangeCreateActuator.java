@@ -142,7 +142,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(ExchangeCreateContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ExchangeCreateContract],real type[" + any
+          "contract type error, expected type [ExchangeCreateContract],real type[" + any
               .getClass() + "]");
     }
     final ExchangeCreateContract contract;
