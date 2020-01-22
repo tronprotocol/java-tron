@@ -45,8 +45,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private RevokingDatabase revokingDatabase;
 
   protected TronStoreWithRevoking(String dbName) {
-    int dbVersion = DBConfig.getDbVersion();
-    String dbEngine = DBConfig.getDbEngine();
+    int dbVersion = CommonParameter.getInstance()
+        .getStorage().getDbVersion();
+    String dbEngine = CommonParameter.getInstance()
+        .getStorage().getDbEngine();
     if (dbVersion == 1) {
       this.revokingDB = new RevokingDBWithCachingOldValue(dbName);
     } else if (dbVersion == 2) {
@@ -75,7 +77,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   }
 
   protected TronStoreWithRevoking(DB<byte[], byte[]> db) {
-    int dbVersion = DBConfig.getDbVersion();
+    int dbVersion = CommonParameter.getInstance()
+        .getStorage().getDbVersion();
     if (dbVersion == 2) {
       this.revokingDB = new Chainbase(new SnapshotRoot(db));
     } else {

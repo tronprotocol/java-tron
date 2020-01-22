@@ -1,6 +1,6 @@
 package org.tron.common.utils;
 
-import static org.tron.common.utils.DBConfig.ENERGY_LIMIT_HARD_FORK;
+import static org.tron.common.parameter.CommonParameter.ENERGY_LIMIT_HARD_FORK;
 
 import java.io.File;
 import org.apache.commons.lang3.StringUtils;
@@ -52,9 +52,10 @@ public class StorageUtils {
   public static String getOutputDirectory() {
     if (!"".equals(CommonParameter.getInstance().getOutputDirectory())
         && !CommonParameter.getInstance().getOutputDirectory().endsWith(File.separator)) {
-      return DBConfig.getOutputDirectoryConfig() + File.separator;
+      return CommonParameter.getInstance()
+          .getOutputDirectory() + File.separator;
     }
-    return DBConfig.getOutputDirectoryConfig();
+    return CommonParameter.getInstance().getOutputDirectory();
   }
 
   public static Options getOptionsByDbName(String dbName) {
