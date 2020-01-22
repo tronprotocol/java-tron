@@ -1,11 +1,7 @@
 package org.tron.common.utils;
 
-import java.util.Map;
-import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.setting.RocksDbSettings;
-import org.tron.common.args.GenesisBlock;
 
 public class DBConfig {
 
@@ -21,7 +17,4 @@ public class DBConfig {
   @Getter
   @Setter
   private static String outputDirectoryConfig;
-  @Getter
-  @Setter
-  private static Map<String, Property> propertyMap;
 }

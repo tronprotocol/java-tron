@@ -1000,7 +1000,6 @@ public class Args extends CommonParameter {
     if (Objects.nonNull(parameter.getStorage())) {
       DBConfig.setDbVersion(parameter.getStorage().getDbVersion());
       DBConfig.setDbEngine(parameter.getStorage().getDbEngine());
-      DBConfig.setPropertyMap(parameter.getStorage().getPropertyMap());
     }
 
     DBConfig.setOutputDirectoryConfig(parameter.getOutputDirectory());
