@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigDecimal;
@@ -91,13 +93,13 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
       long newBalance = accountCapsule.getBalance() - calcFee();
 
-      if (Arrays.equals(tokenID, "_".getBytes())) {
+      if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance + tokenQuant);
       } else {
         accountCapsule.addAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
       }
 
-      if (Arrays.equals(anotherTokenID, "_".getBytes())) {
+      if (Arrays.equals(anotherTokenID, TRX_SYMBOL_BYTES)) {
         accountCapsule.setBalance(newBalance + anotherTokenQuant);
       } else {
         accountCapsule
@@ -183,10 +185,10 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
     long anotherTokenQuant;
 
-    if (dynamicStore.getAllowSameTokenName() == 1) {
-      if (!Arrays.equals(tokenID, "_".getBytes()) && !TransactionUtil.isNumber(tokenID)) {
-        throw new ContractValidateException("token id is not a valid number");
-      }
+    if (dynamicStore.getAllowSameTokenName() == 1) && 
+         !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) && 
+         !TransactionUtil.isNumber(tokenID)) {
+      throw new ContractValidateException("token id is not a valid number");
     }
 
     if (!Arrays.equals(tokenID, firstTokenID) && !Arrays.equals(tokenID, secondTokenID)) {
