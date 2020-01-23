@@ -179,7 +179,7 @@ public class SumActuator extends AbstractActuator {
 }
 ```
 
-For simplicity, the above implementation prints the output of SumActuator directly to a log file. If there is any information that need to be stored, consider create a new chainbase to store the data (guidance on how to create a chainbase will be revealed soon).
+For simplicity, the above implementation prints the output of SumActuator directly to a log file. If there is any information that need to be stored, consider creating a new chainbase to store the data (guidance on how to create a chainbase will be revealed soon).
 
 As `SumActuator` finished, `invokeSum(MathContract.SumContract req, StreamObserver<Transaction> responseObserver)` function in RpcApiService's sub-class `WalletApi` need to be implemented to receive and process `SumContract`.
 
