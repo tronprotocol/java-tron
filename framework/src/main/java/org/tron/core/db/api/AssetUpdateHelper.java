@@ -1,5 +1,7 @@
 package org.tron.core.db.api;
 
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -127,12 +129,12 @@ public class AssetUpdateHelper {
 
     for (ExchangeCapsule exchangeCapsule : chainBaseManager.getExchangeStore().getAllExchanges()) {
       count++;
-      if (!Arrays.equals(exchangeCapsule.getFirstTokenId(), "_".getBytes())) {
+      if (!Arrays.equals(exchangeCapsule.getFirstTokenId(), TRX_SYMBOL_BYTES)) {
         exchangeCapsule.setFirstTokenId(
             assetNameToIdMap.get(ByteArray.toStr(exchangeCapsule.getFirstTokenId())));
       }
 
-      if (!Arrays.equals(exchangeCapsule.getSecondTokenId(), "_".getBytes())) {
+      if (!Arrays.equals(exchangeCapsule.getSecondTokenId(), TRX_SYMBOL_BYTES)) {
         exchangeCapsule.setSecondTokenId(
             assetNameToIdMap.get(ByteArray.toStr(exchangeCapsule.getSecondTokenId())));
       }
