@@ -1855,5 +1855,4 @@ public class ExchangeInjectActuatorTest {
     }
   }
 
-
 }
