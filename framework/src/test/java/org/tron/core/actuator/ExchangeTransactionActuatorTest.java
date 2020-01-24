@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -148,7 +149,7 @@ public class ExchangeTransactionActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             1,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "abc".getBytes());
     exchangeCapsule.setBalance(1_000_000_000_000L, 10_000_000L); // 1M TRX == 10M abc
     ExchangeCapsule exchangeCapsule2 =
@@ -167,7 +168,7 @@ public class ExchangeTransactionActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             1,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "1".getBytes());
     exchangeCapsule3.setBalance(1_000_000_000_000L, 10_000_000L); // 1M TRX == 10M abc
     ExchangeCapsule exchangeCapsule4 =
@@ -204,7 +205,7 @@ public class ExchangeTransactionActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             1,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "123".getBytes());
     exchangeCapsule.setBalance(1_000_000_000_000L, 10_000_000L); // 1M TRX == 10M abc
     ExchangeCapsule exchangeCapsule2 =
