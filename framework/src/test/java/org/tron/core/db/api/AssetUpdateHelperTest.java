@@ -1,5 +1,7 @@
 package org.tron.core.db.api;
 
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
+
 import com.google.protobuf.ByteString;
 import java.io.File;
 import org.junit.AfterClass;
@@ -67,7 +69,7 @@ public class AssetUpdateHelperTest {
             Exchange.newBuilder()
                 .setExchangeId(1L)
                 .setFirstTokenId(assetName)
-                .setSecondTokenId(ByteString.copyFrom("_".getBytes()))
+                .setSecondTokenId(ByteString.copyFrom(TRX_SYMBOL_BYTES))
                 .build());
     chainBaseManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
 
