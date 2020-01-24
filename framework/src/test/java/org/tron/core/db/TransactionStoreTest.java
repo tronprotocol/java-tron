@@ -14,6 +14,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -50,7 +51,7 @@ public class TransactionStoreTest {
   private static TransactionStore transactionStore;
   private static TronApplicationContext context;
   private static Application AppT;
-  private static Manager dbManager;
+  private static ChainBaseManager chainBaseManager;
 
   /**
    * Init data.
@@ -61,8 +62,8 @@ public class TransactionStoreTest {
         dbDirectory, "--storage-index-directory", indexDirectory, "-w"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
-    dbManager = context.getBean(Manager.class);
-    transactionStore = dbManager.getTransactionStore();
+    chainBaseManager = context.getBean(ChainBaseManager.class);
+    transactionStore = chainBaseManager.getTransactionStore();
   }
 
   /**
@@ -134,14 +135,14 @@ public class TransactionStoreTest {
 
   @Test
   public void getTransactionTest() throws BadItemException, ItemNotFoundException {
-    final BlockStore blockStore = dbManager.getBlockStore();
-    final TransactionStore trxStore = dbManager.getTransactionStore();
+    final BlockStore blockStore = chainBaseManager.getBlockStore();
+    final TransactionStore trxStore = chainBaseManager.getTransactionStore();
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Hash.wrap(chainBaseManager.getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -193,7 +194,7 @@ public class TransactionStoreTest {
     AccountCreateContract accountCreateContract = getContract(ACCOUNT_NAME,
         OWNER_ADDRESS);
     TransactionCapsule ret = new TransactionCapsule(accountCreateContract,
-        dbManager.getAccountStore());
+        chainBaseManager.getAccountStore());
     transactionStore.put(key1, ret);
     Assert.assertEquals("Store CreateAccountTransaction is error",
         transactionStore.get(key1).getInstance(),
@@ -203,14 +204,14 @@ public class TransactionStoreTest {
 
   @Test
   public void getUncheckedTransactionTest() {
-    final BlockStore blockStore = dbManager.getBlockStore();
-    final TransactionStore trxStore = dbManager.getTransactionStore();
+    final BlockStore blockStore = chainBaseManager.getBlockStore();
+    final TransactionStore trxStore = chainBaseManager.getTransactionStore();
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Hash.wrap(chainBaseManager.getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -279,10 +280,10 @@ public class TransactionStoreTest {
             AccountType.AssetIssue,
             1000000L
         );
-    dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+    chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     TransferContract transferContract = getContract(AMOUNT, OWNER_ADDRESS, TO_ADDRESS);
     TransactionCapsule transactionCapsule = new TransactionCapsule(transferContract,
-        dbManager.getAccountStore());
+        chainBaseManager.getAccountStore());
     transactionStore.put(key1, transactionCapsule);
     Assert.assertEquals("Store TransferTransaction is error",
         transactionStore.get(key1).getInstance(),
@@ -305,7 +306,7 @@ public class TransactionStoreTest {
     long frozenBalance = 1_000_000_000_000L;
     long duration = 3;
     ownerAccountFirstCapsule.setFrozen(frozenBalance, duration);
-    dbManager.getAccountStore()
+    chainBaseManager.getAccountStore()
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
     VoteWitnessContract actuator = getVoteWitnessContract(OWNER_ADDRESS, WITNESS_ADDRESS, 1L);
     TransactionCapsule transactionCapsule = new TransactionCapsule(actuator);
@@ -334,7 +335,7 @@ public class TransactionStoreTest {
     AccountCreateContract accountCreateContract = getContract(ACCOUNT_NAME,
         OWNER_ADDRESS);
     TransactionCapsule ret = new TransactionCapsule(accountCreateContract,
-        dbManager.getAccountStore());
+        chainBaseManager.getAccountStore());
     byte[] key = null;
     transactionStore.put(key, ret);
     try {
