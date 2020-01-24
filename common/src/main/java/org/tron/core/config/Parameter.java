@@ -26,6 +26,10 @@ public class Parameter {
     public static final long TRX_PRECISION = 1000_000L;
   }
 
+  public static class ChainSymbol {
+    public static final byte[] TRX_SYMBOL_BYTES = "_".getBytes(); // TRX symbol
+  }
+  
   public class NodeConstant {
     public static final int MAX_TRANSACTION_PENDING = 2000;
     public static final int MAX_HTTP_CONNECT_NUMBER = 50;
