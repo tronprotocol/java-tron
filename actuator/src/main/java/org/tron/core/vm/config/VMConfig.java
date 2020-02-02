@@ -17,9 +17,8 @@
  */
 package org.tron.core.vm.config;
 
-import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.DBConfig;
 
 /**
  * For developer only
@@ -62,7 +61,7 @@ public class VMConfig {
   }
 
   public static void initVmHardFork(boolean pass) {
-    CommonParameter.ENERGY_LIMIT_HARD_FORK = pass;
+    DBConfig.setENERGY_LIMIT_HARD_FORK(pass);
   }
 
   public static void initAllowMultiSign(long allow) {

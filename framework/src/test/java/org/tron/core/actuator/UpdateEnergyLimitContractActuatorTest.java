@@ -14,7 +14,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
@@ -94,7 +93,7 @@ public class UpdateEnergyLimitContractActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
-    CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
+    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   /**

@@ -255,7 +255,7 @@ public class DepositTest {
     Assert
         .assertEquals(checkN2.getRuntime().getResult().getHReturn(),
             new DataWord(1000).getData());
-    CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
+    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   @Test
@@ -410,7 +410,7 @@ public class DepositTest {
     Assert
         .assertEquals(checkN2.getRuntime().getResult().getHReturn(),
             new DataWord(1000).getData());
-    CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
+    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
 

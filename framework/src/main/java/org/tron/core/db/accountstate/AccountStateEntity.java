@@ -38,10 +38,6 @@ public class AccountStateEntity {
     return this;
   }
 
-  public byte[] toByteArrays() {
-    return account.toByteArray();
-  }
-
   @Override
   public String toString() {
     return "address:" + Wallet.encode58Check(account.getAddress().toByteArray()) + "; " + account

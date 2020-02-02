@@ -1,7 +1,5 @@
 package org.tron.common.utils;
 
-import static org.tron.common.parameter.CommonParameter.ENERGY_LIMIT_HARD_FORK;
-
 import java.io.File;
 import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
@@ -17,7 +15,7 @@ public class StorageUtils {
   public static final int DEFAULT_MAX_OPEN_FILES = 100;
 
   public static boolean getEnergyLimitHardFork() {
-    return ENERGY_LIMIT_HARD_FORK;
+    return DBConfig.isENERGY_LIMIT_HARD_FORK();
   }
 
   public static String getOutputDirectoryByDbName(String dbName) {
