@@ -52,9 +52,9 @@ public class StorageUtils {
   public static String getOutputDirectory() {
     if (!"".equals(CommonParameter.getInstance().getOutputDirectory())
         && !CommonParameter.getInstance().getOutputDirectory().endsWith(File.separator)) {
-      return DBConfig.getOutputDirectoryConfig() + File.separator;
+      return CommonParameter.getInstance().getOutputDirectory() + File.separator;
     }
-    return DBConfig.getOutputDirectoryConfig();
+    return CommonParameter.getInstance().getOutputDirectory();
   }
 
   public static Options getOptionsByDbName(String dbName) {
