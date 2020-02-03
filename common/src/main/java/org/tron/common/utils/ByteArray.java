@@ -92,6 +92,22 @@ public class ByteArray {
   }
 
   /**
+   * get bytes data from object data.
+   */
+  public static byte[] fromObject(Object obj) {
+    byte[] bytes = null;
+    try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+      objectOutputStream.writeObject(obj);
+      objectOutputStream.flush();
+      bytes = byteArrayOutputStream.toByteArray();
+    } catch (IOException e) {
+      logger.error("objectToByteArray failed: " + e.getMessage(), e);
+    }
+    return bytes;
+  }
+
+  /**
    * Generate a subarray of a given byte array.
    *
    * @param input the input byte array
