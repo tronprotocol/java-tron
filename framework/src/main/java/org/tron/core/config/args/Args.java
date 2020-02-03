@@ -651,7 +651,6 @@ public class Args extends CommonParameter {
             : Collections.emptySet();
 
     logConfig();
-    initConfig(PARAMETER);
   }
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
@@ -982,19 +981,6 @@ public class Args extends CommonParameter {
     logger.info("DB engine : {}", parameter.getStorage().getDbEngine());
     logger.info("***************************************************************");
     logger.info("\n");
-  }
-
-  public static void initConfig(CommonParameter parameter) {
-    initDBConfig(parameter);
-  }
-
-  public static void initDBConfig(CommonParameter parameter) {
-    if (Objects.nonNull(parameter.getStorage())) {
-      DBConfig.setDbVersion(parameter.getStorage().getDbVersion());
-      DBConfig.setDbEngine(parameter.getStorage().getDbEngine());
-    }
-
-    DBConfig.setOutputDirectoryConfig(parameter.getOutputDirectory());
   }
 
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
