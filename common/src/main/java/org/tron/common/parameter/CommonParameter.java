@@ -480,6 +480,7 @@ public class CommonParameter {
   @Setter
   public boolean solidityNodeHttpEnable = true;
 
+  @Getter
   @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
 
