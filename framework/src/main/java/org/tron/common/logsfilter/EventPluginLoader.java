@@ -52,8 +52,6 @@ public class EventPluginLoader {
 
   private boolean useNativeQueue = false;
 
-  private final String solidity_topic = "solidity";
-
   public static EventPluginLoader getInstance() {
     if (Objects.isNull(instance)) {
       synchronized (EventPluginLoader.class) {
