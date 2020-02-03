@@ -480,6 +480,9 @@ public class CommonParameter {
   @Setter
   public boolean solidityNodeHttpEnable = true;
 
+  @Setter
+  public static boolean ENERGY_LIMIT_HARD_FORK = false;
+
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;

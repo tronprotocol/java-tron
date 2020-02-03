@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;

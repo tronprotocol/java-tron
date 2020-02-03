@@ -9,7 +9,6 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;

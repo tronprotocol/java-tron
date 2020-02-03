@@ -7,7 +7,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.testng.collections.Lists;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;

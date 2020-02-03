@@ -24,7 +24,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.crypto.Hash;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.vm.repository.Repository;
