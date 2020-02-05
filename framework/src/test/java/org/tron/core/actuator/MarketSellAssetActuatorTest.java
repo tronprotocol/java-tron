@@ -563,6 +563,49 @@ public class MarketSellAssetActuatorTest {
     }
   }
 
+  @Test
+  public void exceedMakerBuyOrderNumLimit() throws Exception {
+
+    InitAsset();
+
+    //(sell id_1  and buy id_2)
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 100L;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 200L;
+
+    long orderNum = 100L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant * orderNum,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant * orderNum);
+
+    // Initialize the order book
+
+    //add three order(sell id_2 and buy id_1) with different price by the same account
+    //TOKEN_ID_TWO is twice as expensive as TOKEN_ID_ONE
+    for (int i = 0; i < orderNum; i++) {
+      addOrder(TOKEN_ID_ONE, sellTokenQuant, TOKEN_ID_TWO,
+          buyTokenQuant, OWNER_ADDRESS_FIRST);
+    }
+
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+    String errorMessage = "Maximum number of orders exceeded，100";
+    try {
+      actuator.validate();
+      fail(errorMessage);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals(errorMessage, e.getMessage());
+    }
+  }
 
   /**
    * validate Success without position, result is Success. Search from the bestPrice

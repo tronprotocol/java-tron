@@ -70,6 +70,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private MarketPriceStore marketPriceStore;
 
   private static final Integer MAX_SEARCH_NUM = 10;
+  private static final Integer MAX_ACTIVE_ORDER_NUM = 100;
 
   private byte[] sellTokenID = null;
   private byte[] buyTokenID = null;
@@ -223,6 +224,15 @@ public class MarketSellAssetActuator extends AbstractActuator {
     long quantityLimit = dynamicStore.getMarketQuantityLimit();
     if (sellTokenQuantity > quantityLimit || buyTokenQuantity > quantityLimit) {
       throw new ContractValidateException("token quantity must less than " + quantityLimit);
+    }
+
+    // check order num
+    MarketAccountOrderCapsule marketAccountOrderCapsule = marketAccountStore
+        .getUnchecked(ownerAddress);
+    if (marketAccountOrderCapsule != null
+        && marketAccountOrderCapsule.getCount() >= MAX_ACTIVE_ORDER_NUM) {
+      throw new ContractValidateException(
+          "Maximum number of orders exceeded，" + MAX_ACTIVE_ORDER_NUM);
     }
 
     try {
