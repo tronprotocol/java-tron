@@ -1028,6 +1028,8 @@ public class Manager {
 
           applyBlock(newBlock);
           tmpSession.commit();
+          // if event subscribe is enabled, post solidity trigger to queue
+          postSolidityTrigger(getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
         } catch (Throwable throwable) {
@@ -1574,7 +1576,7 @@ public class Manager {
   }
 
   private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
-    if (eventPluginLoaded) {
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
       SolidityTriggerCapsule solidityTriggerCapsule
           = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
       boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
@@ -1586,7 +1588,6 @@ public class Manager {
   }
 
   private void postBlockTrigger(final BlockCapsule newBlock) {
-    postSolidityTrigger(getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
       BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
       blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()

@@ -48,6 +48,8 @@ public class EventPluginLoader {
 
   private boolean contractLogTriggerEnable = false;
 
+  private boolean solidityLogTriggerEnable = true;
+
   private FilterQuery filterQuery;
 
   private boolean useNativeQueue = false;
@@ -273,9 +275,16 @@ public class EventPluginLoader {
       if (!useNativeQueue) {
         setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
       }
-    }
-    if (!useNativeQueue) {
-      setPluginTopic(Trigger.SOLIDITY_TRIGGER, Trigger.SOLIDITY_TOPIC);
+    } else if (EventPluginConfig.SOLIDITY_TRIGGER_NAME
+        .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        solidityLogTriggerEnable = true;
+      } else {
+        solidityLogTriggerEnable = false;
+      }
+      if (!useNativeQueue) {
+        setPluginTopic(Trigger.SOLIDITY_TRIGGER, triggerConfig.getTopic());
+      }
     }
   }
 
@@ -291,6 +300,10 @@ public class EventPluginLoader {
 
   public synchronized boolean isBlockLogTriggerEnable() {
     return blockLogTriggerEnable;
+  }
+
+  public synchronized boolean isSolidityLogTriggerEnable() {
+    return solidityLogTriggerEnable;
   }
 
   public synchronized boolean isTransactionLogTriggerEnable() {

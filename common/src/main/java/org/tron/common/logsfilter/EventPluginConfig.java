@@ -11,6 +11,7 @@ public class EventPluginConfig {
   public static final String TRANSACTION_TRIGGER_NAME = "transaction";
   public static final String CONTRACTEVENT_TRIGGER_NAME = "contractevent";
   public static final String CONTRACTLOG_TRIGGER_NAME = "contractlog";
+  public static final String SOLIDITY_TRIGGER_NAME = "solidity";
 
   @Getter
   @Setter
