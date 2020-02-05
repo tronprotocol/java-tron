@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +52,7 @@ public class CrossChainConnectPool {
   }
 
   public synchronized void onDisconnect(Channel peer) {
+    logger.info("disconnect the cross chain peer:{}", peer);
     PeerConnection peerConnection = (PeerConnection) peer;
     for (ByteString key : crossChainConnectPool.keySet()) {
       if (crossChainConnectPool.get(key).contains(peerConnection)) {

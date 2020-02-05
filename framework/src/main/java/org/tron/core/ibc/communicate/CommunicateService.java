@@ -7,14 +7,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tron.common.overlay.server.SyncPool;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.BlockHeaderCapsule;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.capsule.utils.MerkleTree.ProofLeaf;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.PbftBaseImpl;
+import org.tron.core.db.BlockHeaderIndexStore;
+import org.tron.core.db.BlockHeaderStore;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -49,6 +54,12 @@ public class CommunicateService implements Communicate {
 
   @Autowired
   private PbftBaseImpl pbftBaseImpl;
+
+  @Autowired
+  private BlockHeaderStore blockHeaderStore;
+
+  @Autowired
+  private BlockHeaderIndexStore blockHeaderIndexStore;
 
   public void setPbftBlockListener(PbftBlockListener pbftBlockListener) {
     manager.setPbftBlockListener(pbftBlockListener);
@@ -108,7 +119,10 @@ public class CommunicateService implements Communicate {
     }
     List<Proof> proofList = crossMessage.getProofList();
     Sha256Hash txId = getTxId(crossMessage);
-    Sha256Hash root = getRoot(crossMessage, crossMessage.getRootHeight());
+    Sha256Hash root = getRoot(crossMessage);
+    if (root == null) {
+      return false;
+    }
     MerkleTree merkleTree = MerkleTree.getInstance();
     List<ProofLeaf> proofLeafList = proofList.stream().map(proof -> merkleTree.new ProofLeaf(
         Sha256Hash.of(proof.getHash().toByteArray()),
@@ -156,26 +170,34 @@ public class CommunicateService implements Communicate {
   }
 
   /**
-   * todo: other chain block tx merkel root
+   * other chain block tx merkel root
    */
-  private Sha256Hash getRoot(CrossMessage crossMessage, long blockHeight) {
+  private Sha256Hash getRoot(CrossMessage crossMessage) {
     ByteString fromChainId = crossMessage.getFromChainId();
     ByteString routeChainId = crossMessage.getRouteChainId();
+    String chainId = null;
     if (routeChainId.isEmpty() || getLocalChainId().equals(routeChainId)) {
       //use fromChainId
-      return null;
+      chainId = ByteArray.toHexString(fromChainId.toByteArray());
     } else {
       //use routeChainId
-      return null;
+      chainId = ByteArray.toHexString(routeChainId.toByteArray());
     }
+    BlockId blockId = blockHeaderIndexStore.getUnchecked(chainId, crossMessage.getRootHeight());
+    BlockHeaderCapsule blockHeaderCapsule = blockHeaderStore.getUnchecked(chainId, blockId);
+    if (blockHeaderCapsule != null) {
+      return blockHeaderCapsule.getMerkleRoot();
+    }
+    return null;
   }
 
   /**
-   * todo: other chain block tx merkel root
+   *
    */
   public long getHeight(ByteString toChainId) {
     //use toChainId
-    return 0;
+    return chainBaseManager.getCommonDataBase()
+        .getLatestSyncBlockNum(ByteArray.toHexString(toChainId.toByteArray()));
   }
 
   /**
