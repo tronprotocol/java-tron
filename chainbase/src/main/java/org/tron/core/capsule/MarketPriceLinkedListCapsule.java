@@ -143,12 +143,13 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
 
     boolean found = false;
     while (!head.isNextNull()) {
-      if (MarketUtils
-          .isLowerPrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice)) {
+      int comparePrice = MarketUtils
+          .comparePrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice);
+
+      if (comparePrice == -1) {
         head = marketPriceStore.get(head.getNext());
       } else {
-        if (MarketUtils
-            .isSamePrice(marketPriceStore.get(head.getNext()).getInstance(), marketPrice)) {
+        if (comparePrice == 0) {
           found = true;
         }
         break;

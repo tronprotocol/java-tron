@@ -60,7 +60,7 @@ public class MarketAccountOrderCapsule implements ProtoCapsule<MarketAccountOrde
 
   }
 
-  public void removeOrder(ByteString orderId, MarketAccountStore marketAccountStore) {
+  public void removeOrder(ByteString orderId) {
     List<ByteString> orderList = Lists.newArrayList();
     orderList.addAll(this.getOrdersList());
     orderList.remove(orderId);
@@ -71,7 +71,7 @@ public class MarketAccountOrderCapsule implements ProtoCapsule<MarketAccountOrde
         .addAllOrders(orderList)
         .build();
 
-    marketAccountStore.put(createDbKey(), this);
+
   }
 
   public void setCount(long o) {

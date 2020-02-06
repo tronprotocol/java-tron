@@ -78,6 +78,29 @@ public class MarketUtils {
     return result;
   }
 
+  public static int comparePrice(MarketPrice price1, MarketPrice price2) {
+    try {
+      long price1BuyQuantity = price1.getBuyTokenQuantity();
+      long price1SellQuantity = price1.getSellTokenQuantity();
+      long price2BuyQuantity = price2.getBuyTokenQuantity();
+      long price2SellQuantity = price2.getSellTokenQuantity();
+
+      return Long.compare(Math.multiplyExact(price1BuyQuantity, price2SellQuantity),
+          Math.multiplyExact(price2BuyQuantity, price1SellQuantity));
+
+    } catch (ArithmeticException ex) {
+
+    }
+
+    BigInteger price1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
+    BigInteger price1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
+    BigInteger price2BuyQuantity = BigInteger.valueOf(price2.getBuyTokenQuantity());
+    BigInteger price2SellQuantity = BigInteger.valueOf(price2.getSellTokenQuantity());
+
+    return price1BuyQuantity.multiply(price2SellQuantity).compareTo(price2BuyQuantity
+        .multiply(price1SellQuantity));
+  }
+
   public static boolean isLowerPrice(MarketPrice price1, MarketPrice price2) {
     // ex.
     // for sellToken is A,buyToken is TRX.
@@ -106,31 +129,6 @@ public class MarketUtils {
 
     return price1BuyQuantity.multiply(price2SellQuantity).compareTo(price2BuyQuantity
         .multiply(price1SellQuantity)) == -1;
-
-  }
-
-
-  public static boolean isSamePrice(MarketPrice price1, MarketPrice price2) {
-
-    try {
-      long price1BuyQuantity = price1.getBuyTokenQuantity();
-      long price1SellQuantity = price1.getSellTokenQuantity();
-      long price2BuyQuantity = price2.getBuyTokenQuantity();
-      long price2SellQuantity = price2.getSellTokenQuantity();
-
-      return Math.multiplyExact(price1BuyQuantity, price2SellQuantity)
-          == Math.multiplyExact(price2BuyQuantity, price1SellQuantity);
-    } catch (ArithmeticException ex) {
-
-    }
-
-    BigInteger price1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
-    BigInteger price1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
-    BigInteger price2BuyQuantity = BigInteger.valueOf(price2.getBuyTokenQuantity());
-    BigInteger price2SellQuantity = BigInteger.valueOf(price2.getSellTokenQuantity());
-
-    return price1BuyQuantity.multiply(price2SellQuantity).equals(price2BuyQuantity
-        .multiply(price1SellQuantity));
 
   }
 
@@ -174,7 +172,8 @@ public class MarketUtils {
     if (state == State.INACTIVE || state == State.CANCELED) {
       MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore
           .get(orderCapsule.getOwnerAddress().toByteArray());
-      accountOrderCapsule.removeOrder(orderCapsule.getID(), marketAccountStore);
+      accountOrderCapsule.removeOrder(orderCapsule.getID());
+      marketAccountStore.put(accountOrderCapsule.createDbKey(), accountOrderCapsule);
     }
   }
 

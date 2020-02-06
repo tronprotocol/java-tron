@@ -951,7 +951,6 @@ public class MarketSellAssetActuatorTest {
     actuator.execute(ret);
   }
 
-
   // execute: combination
   // Trading object：
   //    abc to def
@@ -1542,11 +1541,11 @@ public class MarketSellAssetActuatorTest {
   }
 
 
-//    @Test
+//  @Test
   public void matchTimeTest() throws Exception {
     InitAsset();
     int num = 10;
-    int numMatch = 1000;
+    int numMatch = 20;
     int k = 0;
     long sum = 0;
     while (k < num) {
@@ -1557,7 +1556,7 @@ public class MarketSellAssetActuatorTest {
     System.out.println("time:" + sum / num);
   }
 
-//  @Test
+  //  @Test
   public void searchTimeTest() throws Exception {
     InitAsset();
     int num = 10;
@@ -1614,9 +1613,6 @@ public class MarketSellAssetActuatorTest {
     for (int i = 0; i < num; i++) {
       addOrder(TOKEN_ID_TWO, 1000L + i / 10, TOKEN_ID_ONE,
           2000L, OWNER_ADDRESS_SECOND);
-      if (i % 100 == 0) {
-        System.out.println("i:" + i);
-      }
     }
 
     // do process
@@ -1625,11 +1621,11 @@ public class MarketSellAssetActuatorTest {
         OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    long l = System.currentTimeMillis();
+    long l = System.nanoTime();
     actuator.validate();
     actuator.execute(ret);
 //    System.out.println("time:"+(System.currentTimeMillis() - l));
-    return (System.currentTimeMillis() - l);
+    return (System.nanoTime() - l);
   }
 
 
