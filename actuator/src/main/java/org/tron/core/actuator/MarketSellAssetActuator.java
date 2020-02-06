@@ -70,7 +70,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private MarketPriceStore marketPriceStore;
 
   public static Integer MAX_SEARCH_NUM = 10;
-  private static final Integer MAX_ACTIVE_ORDER_NUM = 100;
+  public static Integer MAX_ACTIVE_ORDER_NUM = 100;
 
   private byte[] sellTokenID = null;
   private byte[] buyTokenID = null;
@@ -434,17 +434,16 @@ public class MarketSellAssetActuator extends AbstractActuator {
     } // end while
   }
 
+
   // return all match or not
   public void matchSingleOrder(MarketOrderCapsule takerOrderCapsule,
       MarketOrderCapsule makerOrderCapsule, TransactionResultCapsule ret)
       throws ItemNotFoundException {
 
-    BigInteger takerSellRemainQuantity = BigInteger
-        .valueOf(takerOrderCapsule.getSellTokenQuantityRemain());
-    BigInteger makerSellQuantity = BigInteger.valueOf(makerOrderCapsule.getSellTokenQuantity());
-    BigInteger makerBuyQuantity = BigInteger.valueOf(makerOrderCapsule.getBuyTokenQuantity());
-    BigInteger makerSellRemainQuantity = BigInteger
-        .valueOf(makerOrderCapsule.getSellTokenQuantityRemain());
+    long takerSellRemainQuantity = takerOrderCapsule.getSellTokenQuantityRemain();
+    long makerSellQuantity = makerOrderCapsule.getSellTokenQuantity();
+    long makerBuyQuantity = makerOrderCapsule.getBuyTokenQuantity();
+    long makerSellRemainQuantity = makerOrderCapsule.getSellTokenQuantityRemain();
 
     // according to the price of maker, calculate the quantity of taker can buy
     // for makerPrice,sellToken is A,buyToken is TRX.
@@ -452,8 +451,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     // makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX = takerBuyTokenQuantityCurrent_A/takerSellTokenQuantityRemain_TRX
     // => takerBuyTokenQuantityCurrent_A = takerSellTokenQuantityRemain_TRX * makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
-    long takerBuyTokenQuantityRemain = takerSellRemainQuantity.multiply(makerSellQuantity)
-        .divide(makerBuyQuantity).longValue();
+
+    long takerBuyTokenQuantityRemain = MarketUtils
+        .multiplyAndDivide(takerSellRemainQuantity, makerSellQuantity, makerBuyQuantity);
 
     if (takerBuyTokenQuantityRemain == 0) {
       // quantity too small, return sellToken to user
@@ -472,8 +472,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // makerSellTokenQuantityRemain_A/makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
       // => makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantityRemain_A * makerBuyTokenQuantity_TRX / makerSellTokenQuantity_A
 
-      makerBuyTokenQuantityReceive = makerSellRemainQuantity.multiply(makerBuyQuantity)
-          .divide(makerSellQuantity).longValue();
+      makerBuyTokenQuantityReceive = MarketUtils
+          .multiplyAndDivide(makerSellRemainQuantity, makerBuyQuantity, makerSellQuantity);
       takerBuyTokenQuantityReceive = makerOrderCapsule.getSellTokenQuantityRemain();
 
       long takerSellTokenLeft =
@@ -512,8 +512,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // makerBuyTokenQuantityReceive = Math
       //     .floorDiv(Math.multiplyExact(makerOrderCapsule.getSellTokenQuantityRemain(),
       //         makerOrderCapsule.getBuyTokenQuantity()), makerOrderCapsule.getSellTokenQuantity());
-      makerBuyTokenQuantityReceive = makerSellRemainQuantity.multiply(makerBuyQuantity)
-          .divide(makerSellQuantity).longValue();
+      makerBuyTokenQuantityReceive = MarketUtils
+          .multiplyAndDivide(makerSellRemainQuantity, makerBuyQuantity, makerSellQuantity);
 
       MarketUtils.updateOrderState(makerOrderCapsule, State.INACTIVE, marketAccountStore);
       if (makerBuyTokenQuantityReceive == 0) {

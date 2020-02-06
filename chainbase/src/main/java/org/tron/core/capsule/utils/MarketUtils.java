@@ -87,6 +87,17 @@ public class MarketUtils {
     // price_A_maker_1 < price_A_maker_2
     // ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
     // ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
+    try {
+      long price1BuyQuantity = price1.getBuyTokenQuantity();
+      long price1SellQuantity = price1.getSellTokenQuantity();
+      long price2BuyQuantity = price2.getBuyTokenQuantity();
+      long price2SellQuantity = price2.getSellTokenQuantity();
+
+      return Math.multiplyExact(price1BuyQuantity, price2SellQuantity)
+          < Math.multiplyExact(price2BuyQuantity, price1SellQuantity);
+    } catch (ArithmeticException ex) {
+
+    }
 
     BigInteger price1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
     BigInteger price1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
@@ -100,6 +111,18 @@ public class MarketUtils {
 
 
   public static boolean isSamePrice(MarketPrice price1, MarketPrice price2) {
+
+    try {
+      long price1BuyQuantity = price1.getBuyTokenQuantity();
+      long price1SellQuantity = price1.getSellTokenQuantity();
+      long price2BuyQuantity = price2.getBuyTokenQuantity();
+      long price2SellQuantity = price2.getSellTokenQuantity();
+
+      return Math.multiplyExact(price1BuyQuantity, price2SellQuantity)
+          == Math.multiplyExact(price2BuyQuantity, price1SellQuantity);
+    } catch (ArithmeticException ex) {
+
+    }
 
     BigInteger price1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
     BigInteger price1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
@@ -123,8 +146,16 @@ public class MarketUtils {
     // ==> Price_TRX * sellQuantity_taker/buyQuantity_taker >= Price_TRX * buyQuantity_maker/sellQuantity_maker
     // ==> sellQuantity_taker * sellQuantity_maker > buyQuantity_taker * buyQuantity_maker
 
-//    return Math.multiplyExact(takerPrice.getSellTokenQuantity(), makerPrice.getSellTokenQuantity())
-//        >= Math.multiplyExact(takerPrice.getBuyTokenQuantity(), makerPrice.getBuyTokenQuantity());
+//
+
+    try {
+      return
+          Math.multiplyExact(takerPrice.getSellTokenQuantity(), makerPrice.getSellTokenQuantity())
+              >= Math
+              .multiplyExact(takerPrice.getBuyTokenQuantity(), makerPrice.getBuyTokenQuantity());
+    } catch (ArithmeticException ex) {
+
+    }
 
     BigInteger takerBuyQuantity = BigInteger.valueOf(takerPrice.getBuyTokenQuantity());
     BigInteger takerSellQuantity = BigInteger.valueOf(takerPrice.getSellTokenQuantity());
@@ -145,6 +176,23 @@ public class MarketUtils {
           .get(orderCapsule.getOwnerAddress().toByteArray());
       accountOrderCapsule.removeOrder(orderCapsule.getID(), marketAccountStore);
     }
+  }
+
+
+  public static long multiplyAndDivide(long a, long b, long c) {
+    try {
+      long tmp = Math.multiplyExact(a, b);
+      return Math.floorDiv(tmp, c);
+    } catch (ArithmeticException ex) {
+
+    }
+
+    BigInteger aBig = BigInteger.valueOf(a);
+    BigInteger bBig = BigInteger.valueOf(b);
+    BigInteger cBig = BigInteger.valueOf(c);
+
+    return aBig.multiply(bBig).divide(cBig).longValue();
+
   }
 
 }

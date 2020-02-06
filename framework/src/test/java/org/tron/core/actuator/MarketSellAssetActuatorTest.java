@@ -1561,7 +1561,7 @@ public class MarketSellAssetActuatorTest {
   public void searchTimeTest() throws Exception {
     InitAsset();
     int num = 10;
-    int numMatch = 2000;
+    int numMatch = 1000;
     int k = 0;
     long sum = 0;
     while (k < num) {
@@ -1575,6 +1575,7 @@ public class MarketSellAssetActuatorTest {
   public long searchTimeTest(int num) throws Exception {
 
     MarketSellAssetActuator.MAX_SEARCH_NUM = 10000;
+    MarketSellAssetActuator.MAX_ACTIVE_ORDER_NUM = 100000;
     for (int i = 0; i < num; i++) {
       addOrder(TOKEN_ID_TWO, 1001L + i, TOKEN_ID_ONE,
           2000L, OWNER_ADDRESS_SECOND);
@@ -1592,6 +1593,7 @@ public class MarketSellAssetActuatorTest {
 
   public long matchTimeTest(int num) throws Exception {
 
+    MarketSellAssetActuator.MAX_ACTIVE_ORDER_NUM = 10000;
     //(sell id_1  and buy id_2)
     String sellTokenId = TOKEN_ID_ONE;
     long sellTokenQuant = 2000L * num;
