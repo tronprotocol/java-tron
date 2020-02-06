@@ -1836,7 +1836,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveCrossChain(long number) {
     this.put(CROSS_CHAIN,
         new BytesCapsule(ByteArray.fromLong(number)));
-    SnapshotManager.allowCrossChain = allowCrossChain();
   }
 
   public long getCrossChain() {

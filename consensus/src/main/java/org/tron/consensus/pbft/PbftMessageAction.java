@@ -9,6 +9,7 @@ import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.db.RevokingDatabase;
+import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.event.EventBusService;
 import org.tron.core.event.entity.PbftBlockCommitEvent;
 import org.tron.protos.Protocol.PBFTMessage.Raw;
@@ -30,6 +31,8 @@ public class PbftMessageAction {
     switch (message.getDataType()) {
       case BLOCK: {
         long blockNum = message.getNumber();
+        SnapshotManager.allowCrossChain = chainBaseManager
+            .getDynamicPropertiesStore().allowCrossChain();
         revokingStore.fastFlush(blockNum,
             chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
         chainBaseManager.getCommonDataBase().saveLatestPbftBlockNum(blockNum);
