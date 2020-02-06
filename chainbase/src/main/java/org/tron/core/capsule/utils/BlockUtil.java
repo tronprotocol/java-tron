@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.protos.Protocol.Transaction;
 

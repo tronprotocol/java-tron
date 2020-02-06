@@ -1,6 +1,6 @@
 package org.tron.common.utils;
 
-import static org.tron.common.utils.DBConfig.ENERGY_LIMIT_HARD_FORK;
+import static org.tron.common.parameter.CommonParameter.ENERGY_LIMIT_HARD_FORK;
 import static org.tron.common.utils.DbOptionalsUtils.createDefaultDbOptions;
 
 import java.io.File;

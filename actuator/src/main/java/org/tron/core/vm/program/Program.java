@@ -47,7 +47,6 @@ import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.WalletUtil;

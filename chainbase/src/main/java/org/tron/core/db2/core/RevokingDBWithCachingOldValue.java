@@ -9,7 +9,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingStore;

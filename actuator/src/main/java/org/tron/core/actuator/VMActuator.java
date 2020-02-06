@@ -23,7 +23,6 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
