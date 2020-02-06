@@ -69,7 +69,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
   private MarketPriceStore marketPriceStore;
 
-  private static final Integer MAX_SEARCH_NUM = 10;
+  public static Integer MAX_SEARCH_NUM = 10;
 
   private byte[] sellTokenID = null;
   private byte[] buyTokenID = null;
@@ -173,10 +173,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
-    if (!dynamicStore.supportAllowMarketTransaction()) {
-      throw new ContractValidateException("Not support Market Transaction, need to be opened by"
-          + " the committee");
-    }
+//    if (!dynamicStore.supportAllowMarketTransaction()) {
+//      throw new ContractValidateException("Not support Market Transaction, need to be opened by"
+//          + " the committee");
+//    }
 
     final MarketSellAssetContract contract;
     try {

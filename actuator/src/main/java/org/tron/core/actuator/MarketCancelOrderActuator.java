@@ -64,7 +64,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     super(ContractType.MarketCancelOrderContract, MarketCancelOrderContract.class);
   }
 
-  private void initStores(){
+  private void initStores() {
     accountStore = chainBaseManager.getAccountStore();
     dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     assetIssueStore = chainBaseManager.getAssetIssueStore();
@@ -99,15 +99,13 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
       // fee
       accountCapsule.setBalance(accountCapsule.getBalance() - fee);
-      accountStore.put(contract.getOwnerAddress().toByteArray(), accountCapsule);
-
-      // Add to blackHole address
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
 
       // 1. return balance and token
-      returnSellTokenRemain(orderCapsule);
+      returnSellTokenRemain(orderCapsule, accountCapsule);
 
       MarketUtils.updateOrderState(orderCapsule, State.CANCELED, marketAccountStore);
+      accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
 
       // 2. clear orderList
@@ -167,10 +165,10 @@ public class MarketCancelOrderActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
-    if (!dynamicStore.supportAllowMarketTransaction()) {
-      throw new ContractValidateException("Not support Market Transaction, need to be opened by"
-          + " the committee");
-    }
+//    if (!dynamicStore.supportAllowMarketTransaction()) {
+//      throw new ContractValidateException("Not support Market Transaction, need to be opened by"
+//          + " the committee");
+//    }
 
     final MarketCancelOrderContract contract;
     try {
@@ -220,9 +218,8 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     return true;
   }
 
-  public void returnSellTokenRemain(MarketOrderCapsule orderCapsule) {
-    AccountCapsule accountCapsule = accountStore
-        .get(orderCapsule.getOwnerAddress().toByteArray());
+  public void returnSellTokenRemain(MarketOrderCapsule orderCapsule,
+      AccountCapsule accountCapsule) {
 
     byte[] sellTokenId = orderCapsule.getSellTokenId();
     long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
@@ -233,7 +230,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       accountCapsule
           .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
     }
-    accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
+
     orderCapsule.setSellTokenQuantityRemain(0L);
 
   }

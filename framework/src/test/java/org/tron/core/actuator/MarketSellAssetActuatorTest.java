@@ -830,6 +830,7 @@ public class MarketSellAssetActuatorTest {
       fail("validateSuccess error");
     }
   }
+
   /**
    * validate Success with position, result is Success .
    */
@@ -906,6 +907,7 @@ public class MarketSellAssetActuatorTest {
     actuator.validate();
     actuator.execute(ret);
   }
+
 
   // execute: combination
   // Trading object：
@@ -998,9 +1000,8 @@ public class MarketSellAssetActuatorTest {
     Assert.assertArrayEquals(orderIdListCapsule.getHead(),
         orderId.toByteArray());
 
-
-    Assert.assertEquals(orderCapsule.getID(),ret.getOrderId());
-    Assert.assertEquals(0,ret.getOrderDetailsList().size());
+    Assert.assertEquals(orderCapsule.getID(), ret.getOrderId());
+    Assert.assertEquals(0, ret.getOrderDetailsList().size());
   }
 
   /**
@@ -1497,6 +1498,96 @@ public class MarketSellAssetActuatorTest {
             orderId.toByteArray());
   }
 
+
+//    @Test
+  public void matchTimeTest() throws Exception {
+    InitAsset();
+    int num = 10;
+    int numMatch = 1000;
+    int k = 0;
+    long sum = 0;
+    while (k < num) {
+      sum += matchTimeTest(numMatch);
+      k++;
+      System.out.println("sum:" + sum);
+    }
+    System.out.println("time:" + sum / num);
+  }
+
+//  @Test
+  public void searchTimeTest() throws Exception {
+    InitAsset();
+    int num = 10;
+    int numMatch = 2000;
+    int k = 0;
+    long sum = 0;
+    while (k < num) {
+      sum += searchTimeTest(numMatch);
+      k++;
+      System.out.println("sum:" + sum);
+    }
+    System.out.println("time:" + sum / num);
+  }
+
+  public long searchTimeTest(int num) throws Exception {
+
+    MarketSellAssetActuator.MAX_SEARCH_NUM = 10000;
+    for (int i = 0; i < num; i++) {
+      addOrder(TOKEN_ID_TWO, 1001L + i, TOKEN_ID_ONE,
+          2000L, OWNER_ADDRESS_SECOND);
+      if (i % 100 == 0) {
+        System.out.println("i:" + i);
+      }
+    }
+    long l = System.currentTimeMillis();
+    addOrder(TOKEN_ID_TWO, 100L, TOKEN_ID_ONE,
+        200L, OWNER_ADDRESS_SECOND);
+    return (System.currentTimeMillis() - l);
+
+
+  }
+
+  public long matchTimeTest(int num) throws Exception {
+
+    //(sell id_1  and buy id_2)
+    String sellTokenId = TOKEN_ID_ONE;
+    long sellTokenQuant = 2000L * num;
+    String buyTokenId = TOKEN_ID_TWO;
+    long buyTokenQuant = 1000L * num;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
+    accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
+    dbManager.getAccountStore().put(ownerAddress, accountCapsule);
+    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+
+    // Initialize the order book
+
+    //add three order(sell id_2 and buy id_1) with different price by the same account
+    //TOKEN_ID_TWO is twice as expensive as TOKEN_ID_ONE
+    for (int i = 0; i < num; i++) {
+      addOrder(TOKEN_ID_TWO, 1000L + i / 10, TOKEN_ID_ONE,
+          2000L, OWNER_ADDRESS_SECOND);
+      if (i % 100 == 0) {
+        System.out.println("i:" + i);
+      }
+    }
+
+    // do process
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    long l = System.currentTimeMillis();
+    actuator.validate();
+    actuator.execute(ret);
+//    System.out.println("time:"+(System.currentTimeMillis() - l));
+    return (System.currentTimeMillis() - l);
+  }
+
+
   /**
    * all match with 2 existing same price buy orders and complete this order
    */
@@ -1618,8 +1709,7 @@ public class MarketSellAssetActuatorTest {
         .getUnchecked(pairPriceKey);
     Assert.assertNull(orderIdListCapsule);
 
-
-    Assert.assertEquals(2,ret.getOrderDetailsList().size());
+    Assert.assertEquals(2, ret.getOrderDetailsList().size());
 
     MarketOrderDetail orderDetail = ret.getOrderDetailsList().get(0);
     // Assert.assertEquals(makerOrderCapsule1.getID(), orderDetail.getMakerOrderId());
@@ -1755,14 +1845,13 @@ public class MarketSellAssetActuatorTest {
         .getUnchecked(pairPriceKey);
     Assert.assertNull(orderIdListCapsule);
 
-
-    Assert.assertEquals(2,ret.getOrderDetailsList().size());
+    Assert.assertEquals(2, ret.getOrderDetailsList().size());
 
     MarketOrderDetail orderDetail = ret.getOrderDetailsList().get(0);
     // Assert.assertEquals(makerOrderCapsule1.getID(), orderDetail.getMakerOrderId());
-    Assert.assertEquals(orderCapsule.getID(),orderDetail.getTakerOrderId());
-    Assert.assertEquals(200L,orderDetail.getFillSellQuantity());
-    Assert.assertEquals(100L,orderDetail.getFillBuyQuantity());
+    Assert.assertEquals(orderCapsule.getID(), orderDetail.getTakerOrderId());
+    Assert.assertEquals(200L, orderDetail.getFillSellQuantity());
+    Assert.assertEquals(100L, orderDetail.getFillBuyQuantity());
     MarketOrderCapsule makerOrderCapsule1 = orderStore
         .get(orderDetail.getMakerOrderId().toByteArray());
     Assert.assertEquals(0L, makerOrderCapsule1.getSellTokenQuantityRemain());
@@ -1770,9 +1859,9 @@ public class MarketSellAssetActuatorTest {
 
     orderDetail = ret.getOrderDetailsList().get(1);
     // Assert.assertEquals(makerOrderCapsule2.getID(), orderDetail.getMakerOrderId());
-    Assert.assertEquals(orderCapsule.getID(),orderDetail.getTakerOrderId());
-    Assert.assertEquals(300L,orderDetail.getFillSellQuantity());
-    Assert.assertEquals(100L,orderDetail.getFillBuyQuantity());
+    Assert.assertEquals(orderCapsule.getID(), orderDetail.getTakerOrderId());
+    Assert.assertEquals(300L, orderDetail.getFillSellQuantity());
+    Assert.assertEquals(100L, orderDetail.getFillBuyQuantity());
     MarketOrderCapsule makerOrderCapsule2 = orderStore.
         get(orderDetail.getMakerOrderId().toByteArray());
     Assert.assertEquals(0L, makerOrderCapsule2.getSellTokenQuantityRemain());
