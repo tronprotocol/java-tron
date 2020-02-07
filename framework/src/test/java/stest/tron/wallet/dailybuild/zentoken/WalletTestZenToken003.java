@@ -55,7 +55,9 @@ public class WalletTestZenToken003 {
   private byte[] tokenId = zenTokenId.getBytes();
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
-  private Long costTokenAmount = 10 * zenTokenFee;
+  private Long zenTokenWhenCreateNewAddress = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.zenTokenWhenCreateNewAddress");
+  private Long costTokenAmount = 20 * zenTokenFee;
   private String txid;
   private Optional<TransactionInfo> infoById;
   private Optional<Transaction> byId;
@@ -167,7 +169,12 @@ public class WalletTestZenToken003 {
     final Long beforeBalance = PublicMethed
         .queryAccount(receiverPublicAddress, blockingStubFull).getBalance();
     Long sendToShiledAddress1Amount = 1 * zenTokenFee;
-    Long sendToPublicAddressAmount = costTokenAmount - sendToShiledAddress1Amount - zenTokenFee;
+    //When receiver public address don't active,the fee is 1000000
+    Long sendToPublicAddressAmount = costTokenAmount
+        - sendToShiledAddress1Amount - zenTokenWhenCreateNewAddress;
+    logger.info("costTokenAmount " + costTokenAmount);
+    logger.info("sendToShiledAddress1Amount " + sendToShiledAddress1Amount);
+    logger.info("sendToPublicAddressAmount " + sendToPublicAddressAmount);
     shieldOutList.clear();
     String memo1 = "Public to  shield address1 transaction";
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress1,
@@ -182,7 +189,7 @@ public class WalletTestZenToken003 {
     logger.info("txid:" + txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getShieldedTransactionFee() == zenTokenFee);
+    Assert.assertTrue(infoById.get().getShieldedTransactionFee() == zenTokenWhenCreateNewAddress);
     byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     Assert.assertTrue(byId.get().getSignatureCount() == 1);
 

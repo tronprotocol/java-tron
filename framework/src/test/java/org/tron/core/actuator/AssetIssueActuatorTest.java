@@ -4,9 +4,7 @@ import static org.testng.Assert.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-
 import java.io.File;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -21,6 +19,7 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -35,7 +34,6 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract.FrozenSupply;
 
@@ -54,12 +52,13 @@ public class AssetIssueActuatorTest {
   private static final String ASSET_NAME_SECOND = "asset_name2";
   private static TronApplicationContext context;
   private static Manager dbManager;
+  private static ChainBaseManager chainBaseManager;
   private static long now = 0;
   private static long startTime = 0;
   private static long endTime = 0;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ADDRESS_SECOND = Wallet
@@ -72,10 +71,7 @@ public class AssetIssueActuatorTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    // Args.setParam(new String[]{"--output-directory", dbPath},
-    // "config-junit.conf");
-    // dbManager = new Manager();
-    // dbManager.init();
+    chainBaseManager = context.getBean(ChainBaseManager.class);
   }
 
   /**
@@ -110,7 +106,7 @@ public class AssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(24 * 3600 * 1000);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
 
-    now = dbManager.getHeadBlockTimeStamp();
+    now = chainBaseManager.getHeadBlockTimeStamp();
     startTime = now + 48 * 3600 * 1000;
     endTime = now + 72 * 3600 * 1000;
   }
@@ -1371,8 +1367,8 @@ public class AssetIssueActuatorTest {
   }
 
   /**
-   * 1. start time should not be null 2. end time should not be null 3. start time
-   * >= getHeadBlockTimeStamp 4. start time < end time
+   * 1. start time should not be null 2. end time should not be null 3. start time >=
+   * getHeadBlockTimeStamp 4. start time < end time
    */
   @Test
   public void issueTimeTest() {
@@ -1793,9 +1789,9 @@ public class AssetIssueActuatorTest {
   }
 
   /**
-   * SameTokenName close, check invalid param "PublicFreeAssetNetUsage must be 0!"
-   * "Invalid FreeAssetNetLimit" "Invalid PublicFreeAssetNetLimit" "Account not
-   * exists" "No enough balance for fee!"
+   * SameTokenName close, check invalid param "PublicFreeAssetNetUsage must be 0!" "Invalid
+   * FreeAssetNetLimit" "Invalid PublicFreeAssetNetLimit" "Account not exists" "No enough balance
+   * for fee!"
    */
   @Test
   public void SameTokenNameCloseInvalidparam() {
@@ -1857,8 +1853,7 @@ public class AssetIssueActuatorTest {
   }
 
   /**
-   * SameTokenName close, account not good "Account not exists" "No enough balance
-   * for fee!"
+   * SameTokenName close, account not good "Account not exists" "No enough balance for fee!"
    */
   @Test
   public void SameTokenNameCloseInvalidAccount() {
@@ -1931,8 +1926,8 @@ public class AssetIssueActuatorTest {
   }
 
   private void processAndCheckInvalid(AssetIssueActuator actuator, TransactionResultCapsule ret,
-                                      String failMsg,
-                                      String expectedMsg) {
+      String failMsg,
+      String expectedMsg) {
     try {
       actuator.validate();
       actuator.execute(ret);

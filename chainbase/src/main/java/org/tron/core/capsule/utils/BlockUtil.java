@@ -22,7 +22,6 @@ import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.Transaction;
 
 public class BlockUtil {
@@ -31,16 +30,11 @@ public class BlockUtil {
    * create genesis block from transactions.
    */
   public static BlockCapsule newGenesisBlockCapsule() {
-
-    CommonParameter parameter = Args.getInstance();
-    GenesisBlock genesisBlockArg = parameter.getGenesisBlock();
+    GenesisBlock genesisBlockArg = CommonParameter.getInstance()
+        .getGenesisBlock();
     List<Transaction> transactionList =
         genesisBlockArg.getAssets().stream()
-            .map(key -> {
-              byte[] address = key.getAddress();
-              long balance = key.getBalance();
-              return TransactionUtil.newGenesisTransaction(address, balance);
-            })
+            .map(key -> TransactionUtil.newGenesisTransaction(key.getAddress(), key.getBalance()))
             .collect(Collectors.toList());
 
     long timestamp = Long.parseLong(genesisBlockArg.getTimestamp());

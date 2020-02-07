@@ -46,7 +46,7 @@ public class FreezeBalanceActuatorTest {
   private static TronApplicationContext context;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
@@ -122,8 +122,8 @@ public class FreezeBalanceActuatorTest {
   }
 
   private Any getDelegatedContractForBandwidth(String ownerAddress, String receiverAddress,
-                                               long frozenBalance,
-                                               long duration) {
+      long frozenBalance,
+      long duration) {
     return Any.pack(
         FreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
@@ -134,8 +134,8 @@ public class FreezeBalanceActuatorTest {
   }
 
   private Any getDelegatedContractForCpu(String ownerAddress, String receiverAddress,
-                                         long frozenBalance,
-                                         long duration) {
+      long frozenBalance,
+      long duration) {
     return Any.pack(
         FreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))

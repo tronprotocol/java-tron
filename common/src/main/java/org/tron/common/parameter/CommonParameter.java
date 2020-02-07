@@ -12,7 +12,7 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.setting.RocksDbSettings;
-import org.tron.core.config.args.LocalWitnesses;
+import org.tron.core.Constant;
 import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
@@ -463,15 +463,25 @@ public class CommonParameter {
   public SeedNode seedNode;
 
   @Getter
-  @Setter
-  public LocalWitnesses localWitnesses = new LocalWitnesses();
-
-  @Getter
   public EventPluginConfig eventPluginConfig;
 
   @Getter
   public FilterQuery eventFilter;
 
+  @Getter
+  @Setter
+  public String cryptoEngine = Constant.ECKey_ENGINE;
+
+  @Getter
+  @Setter
+  public boolean fullNodeHttpEnable = true;
+
+  @Getter
+  @Setter
+  public boolean solidityNodeHttpEnable = true;
+
+  @Setter
+  public static boolean ENERGY_LIMIT_HARD_FORK = false;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
@@ -480,5 +490,10 @@ public class CommonParameter {
 
   public static CommonParameter getInstance() {
     return PARAMETER;
+  }
+
+  public boolean isECKeyCryptoEngine() {
+
+    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
 }
