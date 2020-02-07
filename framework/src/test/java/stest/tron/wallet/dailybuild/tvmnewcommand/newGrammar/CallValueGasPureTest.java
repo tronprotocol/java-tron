@@ -28,7 +28,7 @@ import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class callValueGasPureTest {
+public class CallValueGasPureTest {
 
   private final String foundationKey001 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
@@ -114,7 +114,7 @@ public class callValueGasPureTest {
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    String param = "\""+ Base58.encode58Check(testAddress001)+"\"";
+    String param = "\"" + Base58.encode58Check(testAddress001) + "\"";
     TransactionExtention extention = PublicMethed
         .triggerConstantContractForExtention(contractAddress, "check(address)",
             param, false, 0, 1000000000L, "0", 0, testAddress001,
