@@ -354,7 +354,6 @@ public class InternalTransactionCallTest {
   @After
   public void destroy() {
     context.destroy();
-    AppT.shutdown();
     Args.clearParam();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

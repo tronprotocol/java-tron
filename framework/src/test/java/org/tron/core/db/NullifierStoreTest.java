@@ -42,8 +42,6 @@ public class NullifierStoreTest {
   public static void destroy() {
     Args.clearParam();
     context.destroy();
-    AppT.shutdownServices();
-    AppT.shutdown();
     FileUtil.deleteDir(new File(dbPath));
   }
 
