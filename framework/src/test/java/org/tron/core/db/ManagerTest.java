@@ -88,7 +88,7 @@ public class ManagerTest extends BlockGenerate {
 
   @Before
   public void init() {
-    Args.setParam(new String[] {"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     context = new TronApplicationContext(DefaultConfig.class);
 
@@ -224,13 +224,12 @@ public class ManagerTest extends BlockGenerate {
   @Test
   public void pushBlockInvalidSignature() {
     // invalid witness address cause invalid signature
-    String invalideWitness = "bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f";
-    blockCapsule2.setWitness(invalideWitness);
+    String invalidWitness = "bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f";
+    blockCapsule2.setWitness(invalidWitness);
     try {
       dbManager.pushBlock(blockCapsule2);
       Assert.assertTrue(false);
     } catch (BadBlockException e) {
-      Assert.assertTrue(e instanceof BadBlockException);
       Assert.assertEquals("The signature is not validated", e.getMessage());
     } catch (Exception e) {
       Assert.assertFalse(e instanceof Exception);
@@ -285,7 +284,6 @@ public class ManagerTest extends BlockGenerate {
       dbManager.adjustBalance(accountAddress.getBytes(), -40);
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
-      Assert.assertTrue(e instanceof BalanceInsufficientException);
       Assert.assertEquals(
           StringUtil.createReadableString(account.createDbKey()) + " insufficient balance",
           e.getMessage());
@@ -629,7 +627,7 @@ public class ManagerTest extends BlockGenerate {
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
-    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
