@@ -69,8 +69,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
   private MarketPriceStore marketPriceStore;
 
-  public static Integer MAX_SEARCH_NUM = 10;
+  public static Integer MAX_SEARCH_NUM = 100;
   public static Integer MAX_ACTIVE_ORDER_NUM = 100;
+  public static Integer MAX_MATCH_NUM = 20;
 
   private byte[] sellTokenID = null;
   private byte[] buyTokenID = null;
@@ -149,7 +150,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException
         | InvalidProtocolBufferException
-        | BalanceInsufficientException e) {
+        | BalanceInsufficientException
+        | ContractValidateException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -379,7 +381,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
   public void matchOrder(MarketOrderCapsule takerCapsule, MarketPrice takerPrice,
       TransactionResultCapsule ret, AccountCapsule takerAccountCapsule)
-      throws ItemNotFoundException {
+      throws ItemNotFoundException, ContractValidateException {
 
     byte[] makerPair = MarketUtils.createPairKey(buyTokenID, sellTokenID);
     MarketPriceLinkedListCapsule makerPriceListCapsule = pairToPriceStore.getUnchecked(makerPair);
@@ -389,6 +391,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       return;
     }
 
+    int matchOrderCount = 0;
     // match different price
     while (takerCapsule.getSellTokenQuantityRemain() != 0
         && hasMatch(makerPriceListCapsule, takerPrice)) {
@@ -418,6 +421,11 @@ public class MarketSellAssetActuator extends AbstractActuator {
           // remove from market order list
           orderIdListCapsule.removeOrder(makerOrderCapsule, orderStore,
               pairPriceKey, pairPriceToOrderStore);
+        }
+
+        matchOrderCount++;
+        if (matchOrderCount > MAX_MATCH_NUM) {
+          throw new ContractValidateException("Too many matches. MAX_MATCH_NUM = " + MAX_MATCH_NUM);
         }
       }
 
