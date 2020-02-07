@@ -241,7 +241,8 @@ public class NegativeArrayTest {
         .getTransactionInfoById(triggerTxid5, blockingStubFull);
     logger.info("infoById5" + infoById5);
     Assert.assertEquals(1, infoById5.get().getResultValue());
-    Assert.assertEquals("Invalid operation code: opCode[fe];", infoById5.get().getResMessage().toStringUtf8());
+    Assert.assertEquals("Invalid operation code: opCode[fe];", infoById5.get()
+        .getResMessage().toStringUtf8());
   }
 
   @AfterClass
