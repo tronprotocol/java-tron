@@ -421,6 +421,7 @@ public class Manager {
 
   private BlockCapsule findHighestBlockNum(Sha256Hash blockHash) {
     KhaosBlock block = khaosDb.getMiniStore().getByHash(blockHash);
+    if (block == null) return null;
     while (block.getChild() != null) {
       block = block.getChild();
     }
@@ -1147,10 +1148,13 @@ public class Manager {
         if (!checkInSameFork(latestBlockCapsule)) {
           // check lastest pbft consensus block is in main chain or not
           Sha256Hash blockHash = chainBaseManager.getCommonDataBase().getLatestPbftBlockHash();
-          printBeforeSwitchFork(newBlock, block);
-          switchFork(findHighestBlockNum(blockHash));
-          printAfterSwitchFork(newBlock, block);
-          return;
+          BlockCapsule highestBlockCapsule = findHighestBlockNum(blockHash);
+          if (highestBlockCapsule != null) {
+            printBeforeSwitchFork(newBlock, block);
+            switchFork(highestBlockCapsule);
+            printAfterSwitchFork(newBlock, block);
+            return;
+          }
         } else if (checkInSameFork(newBlock) && !newBlock.getParentHash()
             .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
           printBeforeSwitchFork(newBlock, block);
