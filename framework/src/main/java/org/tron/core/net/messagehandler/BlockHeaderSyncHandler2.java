@@ -48,6 +48,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
@@ -125,7 +126,7 @@ public class BlockHeaderSyncHandler2 {
   private long latestPBFTBlockHeight = 0;
 
   private ConcurrentSkipListSet<Long> unSends = new ConcurrentSkipListSet<>();
-  private ConcurrentSkipListSet<Long> unRecieves = new ConcurrentSkipListSet<>();
+  private ConcurrentSkipListMap<Long, Long> unRecieves = new ConcurrentSkipListMap<>();
   private ConcurrentSkipListMap<Long, BlockHeaderCapsule> unHandles = new ConcurrentSkipListMap<>();
   private long latestNoticeHeight = 0;
 
@@ -168,7 +169,7 @@ public class BlockHeaderSyncHandler2 {
         needHandleHeight = unSends.last();
       } catch (NoSuchElementException e) {
         try {
-          needHandleHeight = unRecieves.last();
+          needHandleHeight = unRecieves.lastKey();
         } catch (NoSuchElementException e1) {
           try {
             needHandleHeight = unHandles.lastKey();
@@ -354,7 +355,7 @@ public class BlockHeaderSyncHandler2 {
 
         if (headerCapsule == null
             && nextBlockHeight < latestNoticeHeight
-            && !unRecieves.contains(nextBlockHeight)) {
+            && !unRecieves.containsKey(nextBlockHeight)) {
           unSends.add(nextBlockHeight);
           logger.info("updateBlockHeader, unrecieve:{}, unsends:{}", nextBlockHeight, unSends);
           TimeUnit.MILLISECONDS.sleep(500);
@@ -380,10 +381,10 @@ public class BlockHeaderSyncHandler2 {
           unSends.remove(lower);
           lower = unSends.lower(nextBlockHeight);
         }
-        lower = unRecieves.lower(nextBlockHeight);
+        lower = unRecieves.lowerKey(nextBlockHeight);
         while (lower != null) {
           unRecieves.remove(lower);
-          lower = unRecieves.lower(nextBlockHeight);
+          lower = unRecieves.lowerKey(nextBlockHeight);
         }
 
         if (Args.getInstance().isInterChainNode()) {
@@ -448,14 +449,21 @@ public class BlockHeaderSyncHandler2 {
         }
 
         long unSendHeight = unSends.first();
-        if (unRecieves.contains(unSendHeight) || unHandles.containsKey(unSendHeight)) {
+        if (unRecieves.containsKey(unSendHeight) || unHandles.containsKey(unSendHeight)) {
           continue;
         }
 
         List<PeerConnection> connections = new ArrayList<>(thatPeerInfoMap.keySet());
         connections.get(0).sendMessage(new BlockHeaderRequestMessage(chainId, unSendHeight, BLOCK_HEADER_LENGTH));
         logger.info("sendRequest, localLatestHeight:{}, peer: {}, chainId:{}", unSendHeight, connections.get(0), chainId);
-        unRecieves.add(unSendHeight);
+        long now = System.currentTimeMillis();
+        for (Map.Entry<Long, Long> e : unRecieves.entrySet()) {
+          if (now - e.getValue() >= 1_000L) {
+            logger.info("sendRequest, unRecieves timeout:{}, {}", e.getKey(), e.getValue());
+            unRecieves.remove(e.getKey());
+          }
+        }
+        unRecieves.put(unSendHeight, now);
         unSends.remove(unSendHeight);
       } catch (Exception e) {
         logger.info("sendRequest " + e.getMessage(), e);
