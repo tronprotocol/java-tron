@@ -41,6 +41,11 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.core.store.MarketAccountStore;
+import org.tron.core.store.MarketOrderStore;
+import org.tron.core.store.MarketPairPriceToOrderStore;
+import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.core.store.MarketPriceStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
@@ -98,6 +103,21 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private ExchangeV2Store exchangeV2Store;
+  @Autowired
+  @Getter
+  private MarketAccountStore marketAccountStore;
+  @Autowired
+  @Getter
+  private MarketOrderStore marketOrderStore;
+  @Autowired
+  @Getter
+  private MarketPairPriceToOrderStore marketPairPriceToOrderStore;
+  @Autowired
+  @Getter
+  private MarketPairToPriceStore marketPairToPriceStore;
+  @Autowired
+  @Getter
+  private MarketPriceStore marketPriceStore;
   @Autowired
   @Getter
   private CodeStore codeStore;

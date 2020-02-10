@@ -225,6 +225,20 @@ public class FullNodeHttpApiService implements Service {
   private UpdateBrokerageServlet updateBrokerageServlet;
   @Autowired
   private CreateCommonTransactionServlet createCommonTransactionServlet;
+  @Autowired
+  private MarketSellAssetServlet marketSellAssetServlet;
+  @Autowired
+  private MarketCancelOrderServlet marketCancelOrderServlet;
+  @Autowired
+  private GetMarketOrderByAccountServlet getMarketOrderByAccountServlet;
+  @Autowired
+  private GetMarketOrderByIdServlet getMarketOrderByIdServlet;
+  @Autowired
+  private GetMarketPriceByPairServlet getMarketPriceByPairServlet;
+  @Autowired
+  private GetMarketOrderListByPairServer getMarketOrderListByPairServer;
+  @Autowired
+  private GetMarketPairListServer getMarketPairListServer;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -404,6 +418,18 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/createCommonTransaction");
+      context.addServlet(new ServletHolder(marketSellAssetServlet), "/marketsellasset");
+      context.addServlet(new ServletHolder(marketCancelOrderServlet), "/marketcancelorder");
+      context.addServlet(new ServletHolder(getMarketOrderByAccountServlet),
+          "/getmarketorderbyaccount");
+      context.addServlet(new ServletHolder(getMarketOrderByIdServlet),
+          "/getmarketorderbyid");
+      context.addServlet(new ServletHolder(getMarketPriceByPairServlet),
+          "/getmarketpricebypair");
+      context.addServlet(new ServletHolder(getMarketOrderListByPairServer),
+          "/getmarketorderlistbypair");
+      context.addServlet(new ServletHolder(getMarketPairListServer),
+          "/getmarketpairlist");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

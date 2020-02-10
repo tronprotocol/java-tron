@@ -189,6 +189,16 @@ public class ProposalService extends ProposalUtil {
               .saveShieldedTransactionCreateAccountFee(entry.getValue());
           break;
         }
+        case ALLOW_MARKET_TRANSACTION: {
+          if (manager.getDynamicPropertiesStore().getAllowMarketTransaction() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowMarketTransaction(entry.getValue());
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(60);
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(61);
+          }
+          break;
+        }
+
+
         default:
           find = false;
           break;

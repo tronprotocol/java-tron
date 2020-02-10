@@ -143,6 +143,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowMultiSign = 0;
     PARAMETER.trxExpirationTimeInMilliseconds = 0;
     PARAMETER.fullNodeAllowShieldedTransactionArgs = true;
+    PARAMETER.fullNodeAllowMarketTransactionArgs = true;
     PARAMETER.zenTokenId = "000000";
     PARAMETER.allowProtoFilterNum = 0;
     PARAMETER.allowAccountStateRoot = 0;
@@ -589,6 +590,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
 
+    PARAMETER.allowMarketTransaction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
+
     PARAMETER.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)
             ? getEventPluginConfig(config) : null;
@@ -599,6 +604,10 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeAllowShieldedTransactionArgs =
         !config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)
             || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
+
+    PARAMETER.fullNodeAllowMarketTransactionArgs =
+        !config.hasPath(Constant.NODE_FULLNODE_ALLOW_MARKET_TRANSACTION)
+            || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_MARKET_TRANSACTION);
 
     PARAMETER.zenTokenId = config.hasPath(Constant.NODE_ZEN_TOKENID)
         ? config.getString(Constant.NODE_ZEN_TOKENID) : "000000";
