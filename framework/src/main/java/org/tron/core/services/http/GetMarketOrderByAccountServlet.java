@@ -7,13 +7,10 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.MarketOrderList;
-import org.tron.protos.Protocol.TransactionInfo;
 
 
 @Component
@@ -24,7 +21,23 @@ public class GetMarketOrderByAccountServlet extends RateLimiterServlet {
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-    doPost(request, response);
+    try {
+      boolean visible = Util.getVisible(request);
+      String address = request.getParameter("value");
+      if (visible) {
+        address = Util.getHexAddress(address);
+      }
+      MarketOrderList reply = wallet
+          .getMarketOrderByAccount(ByteString.copyFrom(ByteArray.fromHexString(address)));
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (Exception e) {
+      Util.processError(e, response);
+    }
+
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
