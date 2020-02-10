@@ -20,7 +20,22 @@ public class GetMarketOrderListByPairServer extends RateLimiterServlet {
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-    doPost(request, response);
+    try {
+      boolean visible = Util.getVisible(request);
+
+      String sellTokenId = request.getParameter("sell_token_id");
+      String buyTokenId = request.getParameter("buy_token_id");
+
+      MarketOrderList reply = wallet.getMarketOrderListByPair(ByteArray.fromHexString(sellTokenId),
+          ByteArray.fromHexString(buyTokenId));
+      if (reply != null) {
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (Exception e) {
+      Util.processError(e, response);
+    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
