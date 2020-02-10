@@ -1,5 +1,7 @@
 package org.tron.common.runtime;
 
+import static org.tron.core.capsule.utils.TransactionUtil.buildTransactionInfoInstance;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -75,8 +78,6 @@ public class ProgramResultTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
@@ -337,7 +338,7 @@ public class ProgramResultTest {
     TransactionTrace traceFailed = TvmTestUtils
         .processTransactionAndReturnTrace(trx2, deposit, null);
     runtime = traceFailed.getRuntime();
-    byte[] bContract2 = Wallet
+    byte[] bContract2 = TransactionUtil
         .generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
     List<InternalTransaction> internalTransactionsListFail = runtime.getResult()
         .getInternalTransactions();
@@ -511,8 +512,8 @@ public class ProgramResultTest {
 
   public void checkTransactionInfo(TransactionTrace trace, Transaction trx, BlockCapsule block,
       List<InternalTransaction> internalTransactionsList) {
-    TransactionInfoCapsule trxInfoCapsule = TransactionInfoCapsule
-        .buildInstance(new TransactionCapsule(trx), null, trace);
+    TransactionInfoCapsule trxInfoCapsule =
+        buildTransactionInfoInstance(new TransactionCapsule(trx), null, trace);
     List<Protocol.InternalTransaction> internalTransactionListFromProtocol = trxInfoCapsule
         .getInstance().getInternalTransactionsList();
     for (int i = 0; i < internalTransactionListFromProtocol.size(); i++) {

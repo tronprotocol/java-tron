@@ -1,7 +1,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
-import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
+import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -26,6 +26,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j
@@ -463,5 +464,26 @@ public class TransferActuatorTest {
     } finally {
       dbManager.getAccountStore().delete(ByteArray.fromHexString(To_ACCOUNT_INVALID));
     }
+  }
+
+
+  @Test
+  public void commonErrorCheck() {
+    TransferActuator actuator = new TransferActuator();
+    ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
+    actuatorTest.noContract();
+
+    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+        .build());
+    actuatorTest.setInvalidContract(invalidContractTypes);
+    actuatorTest.setInvalidContractTypeMsg("contract type error",
+        "contract type error, expected type [TransferContract], real type [");
+    actuatorTest.invalidContractType();
+
+    actuatorTest.setContract(getContract(OWNER_BALANCE - TRANSFER_FEE));
+    actuatorTest.nullTransationResult();
+
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.nullDBManger();
   }
 }

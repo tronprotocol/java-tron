@@ -204,7 +204,7 @@ public class FreezeAndSendcoin {
       logger.info("Now the toaddress balance is " + Long.toString(toAccountInfo.getBalance()));
       NumberMessage beforeGetTotalTransaction = blockingStubFull
           .totalTransaction(GrpcAPI.EmptyMessage.newBuilder().build());
-      logger.info("Now total transation is " + Long.toString(beforeGetTotalTransaction.getNum()));
+      logger.info("Now total transaction is " + Long.toString(beforeGetTotalTransaction.getNum()));
       ret = false;
       sendRet = false;
       i++;

@@ -9,9 +9,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.Hash;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -22,6 +23,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
@@ -50,7 +52,7 @@ public class TvmTestUtils {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, abi,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
     processTransactionAndReturnRuntime(trx, deposit, block);
-    return Wallet.generateContractAddress(trx);
+    return WalletUtil.generateContractAddress(trx);
   }
 
   public static byte[] deployContractWholeProcessReturnContractAddress(String contractName,
@@ -63,7 +65,7 @@ public class TvmTestUtils {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, abi,
         code, value, feeLimit, consumeUserResourcePercent, tokenValue, tokenId, libraryAddressPair);
     processTransactionAndReturnRuntime(trx, deposit, block);
-    return Wallet.generateContractAddress(trx);
+    return WalletUtil.generateContractAddress(trx);
   }
 
   public static Runtime triggerContractWholeProcessReturnContractAddress(byte[] callerAddress,
@@ -173,7 +175,7 @@ public class TvmTestUtils {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     deposit.commit();
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(deposit.getDbManager()));    // init
+        new RuntimeImpl());    // init
     trace.init(block);
     //exec
     trace.exec();
@@ -190,7 +192,7 @@ public class TvmTestUtils {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
 
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(dbmanager));
+        new RuntimeImpl());
     // init
     trace.init(block);
     //exec
@@ -208,7 +210,7 @@ public class TvmTestUtils {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     deposit.commit();
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(deposit.getDbManager()));    // init
+        new RuntimeImpl());    // init
     trace.init(block);
     //exec
     trace.exec();
@@ -228,10 +230,10 @@ public class TvmTestUtils {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, abi,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
 
-    byte[] contractAddress = Wallet.generateContractAddress(trx);
+    byte[] contractAddress = WalletUtil.generateContractAddress(trx);
 
     return processTransactionAndReturnTvmTestResult(trx, dbManager, blockCap)
-        .setContractAddress(Wallet.generateContractAddress(trx));
+        .setContractAddress(WalletUtil.generateContractAddress(trx));
   }
 
   public static TVMTestResult deployContractWithCreatorEnergyLimitAndReturnTvmTestResult(
@@ -245,10 +247,10 @@ public class TvmTestUtils {
         contractName, callerAddress, abi,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair, creatorEnergyLimit);
 
-    byte[] contractAddress = Wallet.generateContractAddress(trx);
+    byte[] contractAddress = WalletUtil.generateContractAddress(trx);
 
     return processTransactionAndReturnTvmTestResult(trx, dbManager, blockCap)
-        .setContractAddress(Wallet.generateContractAddress(trx));
+        .setContractAddress(WalletUtil.generateContractAddress(trx));
   }
 
   public static TVMTestResult triggerContractAndReturnTvmTestResult(byte[] callerAddress,
@@ -269,7 +271,7 @@ public class TvmTestUtils {
       ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(dbManager));
+        new RuntimeImpl());
     // init
     trace.init(blockCap);
     //exec

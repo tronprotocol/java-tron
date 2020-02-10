@@ -94,6 +94,8 @@ public class Constant {
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
   public static final String NODE_HTTP_FULLNODE_PORT = "node.http.fullNodePort";
   public static final String NODE_HTTP_SOLIDITY_PORT = "node.http.solidityPort";
+  public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
+  public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
 
   public static final String NODE_RPC_THREAD = "node.rpc.thread";
   public static final String NODE_SOLIDITY_THREADS = "node.solidity.threads";
@@ -199,6 +201,10 @@ public class Constant {
 
   public static final String COMMITTEE_CHANGED_DELEGATION = "committee.changedDelegation";
 
+  public static final String CRYPTO_ENGINE = "crypto.engine";
+
+  public static final String ECKey_ENGINE = "ECKey";
+
   public static final String USE_NATIVE_QUEUE = "event.subscribe.native.useNativeQueue";
 
   public static final String NATIVE_QUEUE_BIND_PORT = "event.subscribe.native.bindport";
@@ -221,10 +227,20 @@ public class Constant {
 
   public static final String NODE_BACKUP_PRIORITY = "node.backup.priority";
   public static final String NODE_BACKUP_PORT = "node.backup.port";
+  public static final String NODE_BACKUP_KEEPALIVEINTERVAL = "node.backup.keepAliveInterval";
   public static final String NODE_BACKUP_MEMBERS = "node.backup.members";
 
   public static final String STORAGE_BACKUP_ENABLE = "storage.backup.enable";
   public static final String STORAGE_BACKUP_PROP_PATH = "storage.backup.propPath";
+  public static final String STORAGE_BACKUP_BAK1PATH = "storage.backup.bak1path";
+  public static final String STORAGE_BACKUP_BAK2PATH = "storage.backup.bak2path";
+  public static final String STORAGE_BACKUP_FREQUENCY = "storage.backup.frequency";
+  public static final String STORAGE_DB_SETTING = "storage.dbSettings.";
 
   public static final String ACTUATOR_WHITELIST = "actuator.whitelist";
+
+  public static final String RATE_LIMITER_HTTP = "rate.limiter.http";
+  public static final String RATE_LIMITER_RPC = "rate.limiter.rpc";
+
+  public static final String SEED_NODE_IP_LIST = "seed.node.ip.list";
 }

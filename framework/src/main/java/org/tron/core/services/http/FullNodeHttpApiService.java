@@ -12,6 +12,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
@@ -184,6 +185,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetSpendingKeyServlet getSpendingKeyServlet;
   @Autowired
+  private GetNewShieldedAddressServlet getNewShieldedAddressServlet;
+  @Autowired
   private GetDiversifierServlet getDiversifierServlet;
   @Autowired
   private GetIncomingViewingKeyServlet getIncomingViewingKeyServlet;
@@ -282,7 +285,7 @@ public class FullNodeHttpApiService implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter args) {
     librustzcashInitZksnarkParams();
   }
 
@@ -389,6 +392,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getAkFromAskServlet), "/getakfromask");
       context.addServlet(new ServletHolder(getNkFromNskServlet), "/getnkfromnsk");
       context.addServlet(new ServletHolder(getSpendingKeyServlet), "/getspendingkey");
+      context
+          .addServlet(new ServletHolder(getNewShieldedAddressServlet), "/getnewshieldedaddress");
       context.addServlet(new ServletHolder(getDiversifierServlet), "/getdiversifier");
       context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
       context.addServlet(new ServletHolder(getZenPaymentAddressServlet), "/getzenpaymentaddress");

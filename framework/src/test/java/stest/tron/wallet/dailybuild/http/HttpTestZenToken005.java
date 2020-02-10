@@ -64,7 +64,7 @@ public class HttpTestZenToken005 {
             sendTokenAmount, foundationZenTokenKey);
     org.junit.Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
     logger.info("sendShieldAddress:" + sendShieldAddress);

@@ -25,15 +25,15 @@ import org.tron.common.utils.Bech32.Bech32Data;
 
 public class KeyIo {
 
-  private static int ConvertedSaplingPaymentAddressSize = ((32 + 11) * 8 + 4) / 5;
+  private static int CONVERTED_SAPLING_PAYMENT_ADDRESS_SIZE = ((32 + 11) * 8 + 4) / 5;
   private static String SAPLING_PAYMENT_ADDRESS = "ztron";
 
   public static PaymentAddress decodePaymentAddress(String str) {
     byte[] data;
     Bech32Data bech = Bech32.decode(str);
     if (bech.hrp.equals(SAPLING_PAYMENT_ADDRESS)
-        && bech.data.length == ConvertedSaplingPaymentAddressSize) {
-      data = convertBits(bech.data, 0, ConvertedSaplingPaymentAddressSize, 5, 8, false);
+        && bech.data.length == CONVERTED_SAPLING_PAYMENT_ADDRESS_SIZE) {
+      data = convertBits(bech.data, 0, CONVERTED_SAPLING_PAYMENT_ADDRESS_SIZE, 5, 8, false);
       return PaymentAddress.decode(data);
     }
     return null;
@@ -68,14 +68,14 @@ public class KeyIo {
     ByteArrayOutputStream out = new ByteArrayOutputStream(size); // todo:size
 
     final int maxv = (1 << toBits) - 1;
-    final int max_acc = (1 << (fromBits + toBits - 1)) - 1;
+    final int maxAcc = (1 << (fromBits + toBits - 1)) - 1;
     for (int i = 0; i < inLen; i++) {
       int value = in[i + inStart] & 0xff;
       if ((value >>> fromBits) != 0) {
         throw new IllegalArgumentException(
             String.format("Input value '%X' exceeds '%d' bit size", value, fromBits));
       }
-      acc = ((acc << fromBits) | value) & max_acc;
+      acc = ((acc << fromBits) | value) & maxAcc;
       bits += fromBits;
       while (bits >= toBits) {
         bits -= toBits;

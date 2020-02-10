@@ -1,7 +1,7 @@
 package org.tron.consensus.dpos;
 
 
-import static org.tron.consensus.base.Constant.SOLIDIFIED_THRESHOLD;
+import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;

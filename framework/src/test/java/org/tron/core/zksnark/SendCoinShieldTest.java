@@ -1,5 +1,7 @@
 package org.tron.core.zksnark;
 
+import static org.tron.core.capsule.TransactionCapsule.getShieldTransactionHashIgnoreTypeException;
+
 import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -18,6 +20,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.testng.collections.Lists;
 import org.tron.api.GrpcAPI;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
@@ -35,7 +38,6 @@ import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.common.zksnark.MerklePath;
 import org.tron.common.zksnark.ZksnarkClient;
-import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -185,7 +187,7 @@ public class SendCoinShieldTest {
   private PedersenHash String2PedersenHash(String str) {
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     byte[] bytes1 = ByteArray.fromHexString(str);
-    ZksnarkUtils.sort(bytes1);
+    ByteUtil.reverse(bytes1);
     compressCapsule1.setContent(ByteString.copyFrom(bytes1));
     return compressCapsule1.getInstance();
   }
@@ -235,7 +237,7 @@ public class SendCoinShieldTest {
   public void testStringRevert() throws Exception {
     byte[] bytes = ByteArray
         .fromHexString("6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c");
-    ZksnarkUtils.sort(bytes);
+    ByteUtil.reverse(bytes);
     System.out.println("testStringRevert------" + ByteArray.toHexString(bytes));
   }
 
@@ -398,7 +400,7 @@ public class SendCoinShieldTest {
     ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
     byte[] pkd = paymentAddress2.getPkD();
-    Note note = new Note(paymentAddress2, 4000);//construct function：this.pkD = address.getPkD();
+    Note note = new Note(paymentAddress2, 4000);//construct function:this.pkD = address.getPkD();
     note.setRcm(ByteArray
         .fromHexString("83d36fd4c8eebec516c3a8ce2fe4832e01eb57bd7f9f9c9e0bd68cc69a5b0f06"));
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
@@ -625,7 +627,8 @@ public class SendCoinShieldTest {
   }
 
   private byte[] getHash() {
-    return Sha256Hash.of("this is a test".getBytes()).getBytes();
+    return Sha256Hash.of(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), "this is a test".getBytes()).getBytes();
   }
 
   public void checkZksnark() throws BadItemException, ZksnarkException {
@@ -655,7 +658,7 @@ public class SendCoinShieldTest {
     TransactionCapsule transactionCap = builder.build();
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     boolean ret = ZksnarkClient.getInstance().checkZksnarkProof(transactionCap.getInstance(),
-        TransactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCap),
+        getShieldTransactionHashIgnoreTypeException(transactionCap.getInstance()),
         10 * 1000000);
     Assert.assertTrue(ret);
   }
@@ -828,7 +831,7 @@ public class SendCoinShieldTest {
   @Test
   public void testEmptyRoot() {
     byte[] bytes = IncrementalMerkleTreeContainer.emptyRoot().getContent().toByteArray();
-    ZksnarkUtils.sort(bytes);
+    ByteUtil.reverse(bytes);
     Assert.assertEquals("3e49b5f954aa9d3545bc6c37744661eea48d7c34e3000d82b7f0010c30f4c2fb",
         ByteArray.toHexString(bytes));
   }
@@ -1013,7 +1016,7 @@ public class SendCoinShieldTest {
           ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
           110_000_000L);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 110_000_000L).build());
 
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
@@ -1049,7 +1052,7 @@ public class SendCoinShieldTest {
           110_000_000L);
 
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 110_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
 
@@ -1236,7 +1239,7 @@ public class SendCoinShieldTest {
           220_000_000L);
 
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 220_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 220_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 210_000_000L);
 
@@ -1264,7 +1267,7 @@ public class SendCoinShieldTest {
           ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
           230_000_000L);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 230_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 230_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 220_000_000L);
 

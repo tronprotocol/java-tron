@@ -43,6 +43,8 @@ import org.tron.core.db.ByteArrayWrapper;
 public class RLP {
 
   private static final Logger logger = LoggerFactory.getLogger("rlp");
+  private static final String NOT_NUM = "not a number";
+  private static final String WRONG_DECODE_ATTEMPT = "wrong decode attempt";
   private static final int MAX_DEPTH = 16;
   /**
    * Allow for content up to size of 2^64 bytes *
@@ -123,7 +125,7 @@ public class RLP {
     // equivalent to the empty byte array)
 
     if (data[index] == 0x00) {
-      throw new RuntimeException("not a number");
+      throw new RuntimeException(NOT_NUM);
     } else if ((data[index] & 0xFF) < OFFSET_SHORT_ITEM) {
 
       return data[index];
@@ -141,7 +143,7 @@ public class RLP {
 
       // If there are more than 4 bytes, it is not going
       // to decode properly into an int.
-      throw new RuntimeException("wrong decode attempt");
+      throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
     return value;
   }
@@ -151,7 +153,7 @@ public class RLP {
     short value = 0;
 
     if (data[index] == 0x00) {
-      throw new RuntimeException("not a number");
+      throw new RuntimeException(NOT_NUM);
     } else if ((data[index] & 0xFF) < OFFSET_SHORT_ITEM) {
 
       return data[index];
@@ -169,7 +171,7 @@ public class RLP {
 
       // If there are more than 2 bytes, it is not going
       // to decode properly into a short.
-      throw new RuntimeException("wrong decode attempt");
+      throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
     return value;
   }
@@ -179,7 +181,7 @@ public class RLP {
     long value = 0;
 
     if (data[index] == 0x00) {
-      throw new RuntimeException("not a number");
+      throw new RuntimeException(NOT_NUM);
     } else if ((data[index] & 0xFF) < OFFSET_SHORT_ITEM) {
 
       return data[index];
@@ -197,7 +199,7 @@ public class RLP {
 
       // If there are more than 8 bytes, it is not going
       // to decode properly into a long.
-      throw new RuntimeException("wrong decode attempt");
+      throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
     return value;
   }
@@ -1183,7 +1185,7 @@ public class RLP {
       System.arraycopy(data, index + 1 + lengthOfLength, valueBytes, 0, length);
       return valueBytes;
     } else {
-      throw new RuntimeException("wrong decode attempt");
+      throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
   }
 
@@ -1213,7 +1215,7 @@ public class RLP {
       return (byte) 1;
 
     } else {
-      throw new RuntimeException("wrong decode attempt");
+      throw new RuntimeException(WRONG_DECODE_ATTEMPT);
     }
   }
 

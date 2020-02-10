@@ -79,7 +79,7 @@ public class WalletTestZenToken005 {
     Assert.assertTrue(PublicMethed.sendcoin(receiverPublicAddress, 1000000L,
         fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
   }
 
   @Test(enabled = true, description = "The receiver shield address can't more then 2")
