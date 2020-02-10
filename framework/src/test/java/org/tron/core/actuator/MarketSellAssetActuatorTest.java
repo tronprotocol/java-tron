@@ -666,7 +666,7 @@ public class MarketSellAssetActuatorTest {
     Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
 
     // Initialize the order book
-    //MAX_SEARCH_NUM = 10
+    MarketSellAssetActuator.MAX_SEARCH_NUM = 10;
     for (int i = 0; i < 11; i++) {
       addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
           200L + i, OWNER_ADDRESS_FIRST);
@@ -795,7 +795,7 @@ public class MarketSellAssetActuatorTest {
 
     prepareAccount(sellTokenId, buyTokenId, sellTokenQuant, buyTokenQuant, ownerAddress);
 
-    //MAX_SEARCH_NUM = 10
+    MarketSellAssetActuator.MAX_SEARCH_NUM = 10;
     for (int i = 0; i < 20; i++) {
       byte[] prePriceKey = null;
       if (i != 0) {
