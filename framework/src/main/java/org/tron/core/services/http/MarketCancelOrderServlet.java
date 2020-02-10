@@ -10,9 +10,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.MarketContract.MarketCancelOrderContract;
-import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 
 
 @Component
@@ -23,7 +21,6 @@ public class MarketCancelOrderServlet extends RateLimiterServlet {
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-    doPost(request, response);
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
