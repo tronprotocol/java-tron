@@ -238,4 +238,6 @@ public class Constant {
   public static final String NODE_CROSS_CHAIN_CONNECT = "node.crossChain.ip";
   public static final String NODE_CROSS_CHAIN_PORT = "node.crossChain.port";
   public static final String COMMITTEE_ALLOW_PBFT = "committee.allowPBFT";
+  public static final String INTER_CHAIN_NODE = "crossChain.inter.chain.node";
+
 }

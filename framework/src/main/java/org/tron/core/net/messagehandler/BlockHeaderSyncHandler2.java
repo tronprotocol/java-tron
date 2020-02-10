@@ -192,7 +192,7 @@ public class BlockHeaderSyncHandler2 {
 
   private void printVar(long notice) {
     logger.info("unSends: {}, unRecieves:{}, unHandles:{}, latestHeight:{}, notice:{}",
-        unSends, unRecieves, unHandles.keySet(), StringUtils.isNotEmpty(chainId) ? getLatestSyncBlockHeight(chainId) : 0, notice);
+        unSends, unRecieves.keySet(), unHandles.keySet(), StringUtils.isNotEmpty(chainId) ? getLatestSyncBlockHeight(chainId) : 0, notice);
   }
 
   public void handleRequest(PeerConnection peer, TronMessage msg) throws ItemNotFoundException, BadItemException {
@@ -460,6 +460,7 @@ public class BlockHeaderSyncHandler2 {
         for (Map.Entry<Long, Long> e : unRecieves.entrySet()) {
           if (now - e.getValue() >= 1_000L) {
             logger.info("sendRequest, unRecieves timeout:{}, {}", e.getKey(), e.getValue());
+            unSends.add(e.getKey());
             unRecieves.remove(e.getKey());
           }
         }

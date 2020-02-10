@@ -112,6 +112,7 @@ public class Args extends CommonParameter {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
     INSTANCE.witness = false;
+    INSTANCE.interChainNode = false;
     INSTANCE.seedNodes = new ArrayList<>();
     INSTANCE.privateKey = "";
     INSTANCE.witnessAddress = "";
@@ -695,6 +696,12 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.ACTUATOR_WHITELIST)
             ? new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
             : Collections.emptySet();
+
+    if (config.hasPath(Constant.INTER_CHAIN_NODE)) {
+      INSTANCE.interChainNode = config.getBoolean(Constant.INTER_CHAIN_NODE);
+    } else {
+      INSTANCE.interChainNode = false;
+    }
 
     logConfig();
     initConfig(INSTANCE);
