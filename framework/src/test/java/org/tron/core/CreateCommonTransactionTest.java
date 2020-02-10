@@ -86,6 +86,37 @@ public class CreateCommonTransactionTest {
     System.out.println(walletStub.broadcastTransaction(tx));
   }
 
+  public static void testCrossTxBack() {
+    WalletBlockingStub walletStub = WalletGrpc
+        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build());
+    CrossToken.Builder crossToken = CrossToken.newBuilder();
+    crossToken.setAmount(100).setTokenId(ByteString.copyFrom(ByteArray.fromString("1000001")))
+        .setTokenName(ByteString.copyFrom(ByteArray.fromString("testCross"))).setPrecision(0);
+    CrossContract.Builder builder = CrossContract.newBuilder();
+    builder.setOwnerAddress(owner)
+        .setToChainId(Sha256Hash.wrap(ByteArray
+            .fromHexString("000000000000000019b59068c6058ff466ccf59f2c38a0df1c330b9b7e8dcc4c"))
+            .getByteString())
+        .setToAddress(owner).setOwnerChainId(Sha256Hash.wrap(
+        ByteArray.fromHexString("0000000000000000bff8ab4242b00fac071a0035cb8e98d6351c87f0f1a753dd"))
+        .getByteString()).setType(CrossDataType.TOKEN).setData(crossToken.build().toByteString());
+    Transaction.Builder transaction = Transaction.newBuilder();
+    raw.Builder raw = Transaction.raw.newBuilder();
+    Contract.Builder contract = Contract.newBuilder();
+    contract.setType(ContractType.CrossContract)
+        .setParameter(Any.pack(builder.build()));
+    raw.addContract(contract.build());
+    transaction.setRawData(raw.build());
+    TransactionExtention transactionExtention = walletStub
+        .createCommonTransaction(transaction.build());
+    System.out.println("Common CrossContract: " + transactionExtention);
+    Transaction tx = PublicMethed
+        .addTransactionSign(transactionExtention.getTransaction(), pk, walletStub);
+    System.out.println(walletStub.broadcastTransaction(tx));
+  }
+
   public static void query() {
     WalletBlockingStub walletStub = WalletGrpc
         .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
@@ -113,8 +144,8 @@ public class CreateCommonTransactionTest {
             .setTotalSupply(100000000)
             .setPrecision(0)
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
-            .setStartTime(1579705931000L)
-            .setEndTime(1579805931000L)
+            .setStartTime(1589705931000L)
+            .setEndTime(1589805931000L)
             .setTrxNum(1).setNum(1)
             .build();
 
@@ -135,8 +166,9 @@ public class CreateCommonTransactionTest {
 
   public static void main(String[] args) {
 //    testCreateUpdateBrokerageContract();
-    testCrossTx();
-//    query();
+//    testCrossTx();
+//    testCrossTxBack();
+    query();
 //    createAsset("testCross");
   }
 

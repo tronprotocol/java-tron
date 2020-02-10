@@ -18,4 +18,11 @@ public class CrossUtils {
         .setRawData(transaction.getRawData().toBuilder().clearSourceTxId().build()).build()
         .getRawData().toByteArray());
   }
+
+  public static Sha256Hash getSourceMerkleTxHash(Transaction transaction) {
+    return Sha256Hash.of(transaction.toBuilder()
+        .setRawData(transaction.getRawData().toBuilder().clearSourceTxId().build()).build()
+        .toByteArray());
+  }
 }
+

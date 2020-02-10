@@ -18,7 +18,9 @@ package org.tron.core.capsule;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
-import lombok.NonNull;
+import java.security.SignatureException;
+import java.util.Arrays;
+import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -31,12 +33,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
-
-import javax.annotation.Nonnull;
-import java.security.SignatureException;
-import java.util.Arrays;
 
 @Slf4j(topic = "capsule")
 public class BlockHeaderCapsule implements ProtoCapsule<BlockHeader> {
@@ -156,7 +153,7 @@ public class BlockHeaderCapsule implements ProtoCapsule<BlockHeader> {
   /* only for genisis */
   public void setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw = blockHeader.getRawData().toBuilder().setWitnessAddress(
-            ByteString.copyFrom(witness.getBytes())).build();
+        ByteString.copyFrom(witness.getBytes())).build();
 
     blockHeader = blockHeader.toBuilder().setRawData(blockHeaderRaw).build();
   }

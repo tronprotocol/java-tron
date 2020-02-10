@@ -1,7 +1,12 @@
 package org.tron.core.ibc.communicate;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,19 +31,23 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.ibc.common.CrossUtils;
 import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.net.message.CrossChainMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Proof;
-import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j(topic = "Communicate")
 @Service
 public class CommunicateService implements Communicate {
+
+  private Cache<Sha256Hash, CrossMessage> receiveCrossMsgCache = CacheBuilder.newBuilder()
+      .initialCapacity(1000).maximumSize(10000).expireAfterWrite(5, TimeUnit.MINUTES).build();
+  private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -63,6 +72,19 @@ public class CommunicateService implements Communicate {
 
   public void setPbftBlockListener(PbftBlockListener pbftBlockListener) {
     manager.setPbftBlockListener(pbftBlockListener);
+    executorService
+        .scheduleWithFixedDelay(() -> receiveCrossMsgCache.asMap().forEach((hash, crossMessage) -> {
+          try {
+            if (validProof(crossMessage)) {
+              broadcastCrossMessage(crossMessage);
+              receiveCrossMsgCache.invalidate(hash);
+            } else {
+              logger.warn("valid proof fail!");
+            }
+          } catch (Exception e) {
+            logger.error("", e);
+          }
+        }), 1, 1, TimeUnit.SECONDS);
   }
 
   @Override
@@ -80,9 +102,10 @@ public class CommunicateService implements Communicate {
         long blockNum = transactionStore.get(txId.getBytes()).getBlockNum();
         BlockCapsule blockCapsule = blockStore.get(blockIndexStore.get(blockNum).getBytes());
         List<Sha256Hash> hashList = blockCapsule.getInstance().getTransactionsList().stream()
-            .map(transaction -> Sha256Hash.of(transaction.getRawData().toByteArray()))
+            .map(transaction -> Sha256Hash.of(transaction.toByteArray()))
             .collect(Collectors.toList());
-        List<ProofLeaf> proofLeafList = MerkleTree.getInstance().generateProofPath(hashList, txId);
+        List<ProofLeaf> proofLeafList = MerkleTree.getInstance()
+            .generateProofPath(hashList, getTxMerkleHash(crossMessage));
         List<Proof> proofList = proofLeafList.stream().map(proofLeaf -> {
           Proof.Builder builder = Proof.newBuilder();
           return builder.setHash(proofLeaf.getHash().getByteString())
@@ -103,12 +126,8 @@ public class CommunicateService implements Communicate {
 
   @Override
   public void receiveCrossMessage(PeerConnection peer, CrossMessage crossMessage) {
-    if (validProof(crossMessage)) {
-      broadcastCrossMessage(crossMessage);
-    } else {
-      //todo: create a new reason
-      peer.disconnect(ReasonCode.BAD_PROTOCOL);
-    }
+    Sha256Hash txId = getTxId(crossMessage);
+    receiveCrossMsgCache.put(txId, crossMessage);
   }
 
   @Override
@@ -118,7 +137,7 @@ public class CommunicateService implements Communicate {
       return false;
     }
     List<Proof> proofList = crossMessage.getProofList();
-    Sha256Hash txId = getTxId(crossMessage);
+    Sha256Hash txHash = getTxMerkleHash(crossMessage);
     Sha256Hash root = getRoot(crossMessage);
     if (root == null) {
       return false;
@@ -127,7 +146,8 @@ public class CommunicateService implements Communicate {
     List<ProofLeaf> proofLeafList = proofList.stream().map(proof -> merkleTree.new ProofLeaf(
         Sha256Hash.of(proof.getHash().toByteArray()),
         proof.getLeftOrRight())).collect(Collectors.toList());
-    return merkleTree.validProof(root, proofLeafList, txId);
+    logger.info("root:{}, tx:{}", root, txHash);
+    return merkleTree.validProof(root, proofLeafList, txHash);
   }
 
   /**
@@ -149,8 +169,12 @@ public class CommunicateService implements Communicate {
 
   @Override
   public boolean broadcastCrossMessage(CrossMessage crossMessage) {
-    syncPool.getActivePeers().stream().filter(peerConnection -> peerConnection.isNeedSyncFromUs())
-        .forEach(peerConnection -> peerConnection.sendMessage(new CrossChainMessage(crossMessage)));
+    logger.info("ready broadcastCrossMessage");
+    syncPool.getActivePeers().stream().filter(peer -> !peer.isNeedSyncFromUs())
+        .forEach(peer -> {
+          peer.sendMessage(new CrossChainMessage(crossMessage));
+          logger.info("to {} broadcast cross msg, txid is {}", peer, getTxId(crossMessage));
+        });
     return false;
   }
 
@@ -165,6 +189,16 @@ public class CommunicateService implements Communicate {
       txId = Sha256Hash.wrap(crossMessage.getTransaction().getRawData().getSourceTxId());
     } else {
       txId = Sha256Hash.of(crossMessage.getTransaction().getRawData().toByteArray());
+    }
+    return txId;
+  }
+
+  private Sha256Hash getTxMerkleHash(CrossMessage crossMessage) {
+    Sha256Hash txId;
+    if (crossMessage.getType() == Type.ACK) {
+      txId = CrossUtils.getSourceMerkleTxHash(crossMessage.getTransaction());
+    } else {
+      txId = Sha256Hash.of(crossMessage.getTransaction().toByteArray());
     }
     return txId;
   }
@@ -184,6 +218,9 @@ public class CommunicateService implements Communicate {
       chainId = ByteArray.toHexString(routeChainId.toByteArray());
     }
     BlockId blockId = blockHeaderIndexStore.getUnchecked(chainId, crossMessage.getRootHeight());
+    if (blockId == null) {
+      return null;
+    }
     BlockHeaderCapsule blockHeaderCapsule = blockHeaderStore.getUnchecked(chainId, blockId);
     if (blockHeaderCapsule != null) {
       return blockHeaderCapsule.getMerkleRoot();
@@ -229,4 +266,6 @@ public class CommunicateService implements Communicate {
       });
     }
   }
+
+
 }

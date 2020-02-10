@@ -1431,11 +1431,14 @@ public class Manager {
         Sha256Hash txHash = crossTxQueue.poll();
         CrossMessage crossMessage = getCrossStore().getReceiveCrossMsgUnEx(txHash);
         //todo:a->o->b
-        if (crossMessage != null && crossMessage.getType() == Type.DATA
-            && crossMessage.getTimeOutBlockHeight() < getHeadBlockNum()) {
+        if (crossMessage != null && (crossMessage.getType() == Type.DATA
+            || crossMessage.getType() == Type.ACK)
+            && crossMessage.getTimeOutBlockHeight() > getHeadBlockNum()) {
           trx = new TransactionCapsule(crossMessage.getTransaction());
           trx.setSource(false);
         } else {
+          logger.warn("cross tx time out, timeOutHeight:{}, now block height:{}",
+              crossMessage.getTimeOutBlockHeight(), getHeadBlockNum());
           continue;
         }
       } else {

@@ -19,6 +19,8 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.CrossMessage;
+import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -36,6 +38,13 @@ public class CrossChainActuator extends AbstractActuator {
   public boolean execute(Object result) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     try {
+      //ack don't execute，todo：a->o->b
+      CrossMessage crossMessage = chainBaseManager.getCrossStore()
+          .getReceiveCrossMsgUnEx(tx.getTransactionId());
+      if (crossMessage != null && crossMessage.getType() == Type.ACK) {
+        return true;
+      }
+      //
       long fee = calcFee();
       AccountStore accountStore = chainBaseManager.getAccountStore();
       DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -58,7 +67,7 @@ public class CrossChainActuator extends AbstractActuator {
             } else {//source token
               Long outTokenCount = crossRevokingStore.getOutTokenCount(tokenId);
               crossRevokingStore
-                  .saveOutTokenCount(tokenId, outTokenCount == null ? 0 : outTokenCount + amount);
+                  .saveOutTokenCount(tokenId, outTokenCount == null ? amount : outTokenCount + amount);
             }
             AccountCapsule accountCapsule = accountStore.get(ownerAddress);
             accountCapsule.reduceAssetAmountV2(ByteArray.fromString(tokenId),
@@ -109,7 +118,7 @@ public class CrossChainActuator extends AbstractActuator {
               }
               Long inTokenCount = crossRevokingStore.getInTokenCount(tokenId);
               crossRevokingStore
-                  .saveInTokenCount(tokenId, inTokenCount == null ? 0 : inTokenCount + amount);
+                  .saveInTokenCount(tokenId, inTokenCount == null ? amount : inTokenCount + amount);
             }
           }
           break;
@@ -144,6 +153,12 @@ public class CrossChainActuator extends AbstractActuator {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+    //ack don't valid
+    CrossMessage crossMessage = chainBaseManager.getCrossStore()
+        .getReceiveCrossMsgUnEx(tx.getTransactionId());
+    if (crossMessage != null && crossMessage.getType() == Type.ACK) {
+      return true;
+    }
     try {
       CrossContract crossContract = any.unpack(CrossContract.class);
       if (tx.isSource()) {
