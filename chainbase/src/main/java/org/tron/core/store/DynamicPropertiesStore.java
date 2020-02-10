@@ -428,7 +428,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowMarketTransaction();
     } catch (IllegalArgumentException e) {
-      this.saveAllowMarketTransaction(DBConfig.getAllowAllowMarketTransaction());
+      this.saveAllowMarketTransaction(CommonParameter.getInstance().getAllowMarketTransaction());
     }
 
     try {

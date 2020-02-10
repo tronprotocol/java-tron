@@ -17,8 +17,8 @@ package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Hash;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.exception.ItemNotFoundException;
