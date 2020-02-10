@@ -3,7 +3,8 @@ package org.tron.core.actuator;
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
 import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
 import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
-import static org.tron.core.config.args.Parameter.ChainConstant.MAX_VOTE_NUMBER;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_VOTE_NUMBER;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
@@ -40,7 +41,7 @@ public class VoteWitnessActuator extends AbstractActuator {
   public boolean execute(Object object) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -126,7 +127,7 @@ public class VoteWitnessActuator extends AbstractActuator {
 
       long tronPower = accountCapsule.getTronPower();
 
-      sum = LongMath.checkedMultiply(sum, 1000000L); //trx -> drop. The vote count is based on TRX
+      sum = LongMath.checkedMultiply(sum, TRX_PRECISION); //trx -> drop. The vote count is based on TRX
       if (sum > tronPower) {
         throw new ContractValidateException(
             "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower

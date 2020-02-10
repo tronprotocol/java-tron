@@ -3,7 +3,7 @@ package org.tron.core.consensus;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.Manager;
 import org.tron.core.utils.ProposalUtil;
 
@@ -182,6 +182,11 @@ public class ProposalService extends ProposalUtil {
         }
         case SHIELDED_TRANSACTION_FEE: {
           manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
+          break;
+        }
+        case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
+          manager.getDynamicPropertiesStore()
+              .saveShieldedTransactionCreateAccountFee(entry.getValue());
           break;
         }
         default:

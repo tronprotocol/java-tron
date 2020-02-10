@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
 
@@ -46,11 +47,11 @@ public class SyncPool {
 
   private ChannelManager channelManager;
 
-  private Args args = Args.getInstance();
+  private CommonParameter commonParameter = CommonParameter.getInstance();
 
-  private int maxActiveNodes = args.getNodeMaxActiveNodes();
+  private int maxActiveNodes = commonParameter.getNodeMaxActiveNodes();
 
-  private int maxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
+  private int maxActivePeersWithSameIp = commonParameter.getNodeMaxActiveNodesWithSameIp();
 
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 

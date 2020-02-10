@@ -48,12 +48,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
 import org.tron.common.crypto.zksnark.BN128G1;
 import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
@@ -66,6 +68,7 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol.Permission;
+import org.tron.common.crypto.SignatureInterface;
 
 /**
  * @author Roman Mandeleil
@@ -177,9 +180,12 @@ public class PrecompiledContracts {
       if (v < 27) {
         v += 27;
       }
-      ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
+
+      SignatureInterface signature = SignUtils.fromComponents(r, s, v,
+          CommonParameter.getInstance().isECKeyCryptoEngine());
       if (signature.validateComponents()) {
-        out = ECKey.signatureToAddress(hash, signature);
+        out = SignUtils.signatureToAddress(hash, signature,
+            CommonParameter.getInstance().isECKeyCryptoEngine());
       }
     } catch (Throwable any) {
       logger.info("ECRecover error", any.getMessage());
@@ -313,9 +319,11 @@ public class PrecompiledContracts {
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
       if (data == null) {
-        return Pair.of(true, Sha256Hash.hash(EMPTY_BYTE_ARRAY));
+        return Pair.of(true, Sha256Hash.hash(CommonParameter
+            .getInstance().isECKeyCryptoEngine(), EMPTY_BYTE_ARRAY));
       }
-      return Pair.of(true, Sha256Hash.hash(data));
+      return Pair.of(true, Sha256Hash.hash(CommonParameter
+          .getInstance().isECKeyCryptoEngine(), data));
     }
   }
 
@@ -340,9 +348,11 @@ public class PrecompiledContracts {
       if (data == null) {
         data = EMPTY_BYTE_ARRAY;
       }
-      byte[] orig = Sha256Hash.hash(data);
+      byte[] orig = Sha256Hash.hash(CommonParameter.getInstance()
+          .isECKeyCryptoEngine(), data);
       System.arraycopy(orig, 0, target, 0, 20);
-      return Pair.of(true, Sha256Hash.hash(target));
+      return Pair.of(true, Sha256Hash.hash(CommonParameter.getInstance()
+          .isECKeyCryptoEngine(), target));
     }
   }
 
@@ -380,9 +390,11 @@ public class PrecompiledContracts {
         int sLength = data.length < 128 ? data.length - 96 : 32;
         System.arraycopy(data, 96, s, 0, sLength);
 
-        ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v[31]);
+        SignatureInterface signature = SignUtils.fromComponents(r, s, v[31]
+            , CommonParameter.getInstance().isECKeyCryptoEngine());
         if (validateV(v) && signature.validateComponents()) {
-          out = new DataWord(ECKey.signatureToAddress(h, signature));
+          out = new DataWord(SignUtils.signatureToAddress(h, signature
+              , CommonParameter.getInstance().isECKeyCryptoEngine()));
         }
       } catch (Throwable any) {
       }
@@ -713,7 +725,8 @@ public class PrecompiledContracts {
 
       byte[] combine = ByteUtil
           .merge(convertToTronAddress(addr), ByteArray.fromInt(permissionId), data);
-      byte[] hash = Sha256Hash.hash(combine);
+      byte[] hash = Sha256Hash.hash(CommonParameter
+          .getInstance().isECKeyCryptoEngine(), combine);
 
       byte[][] signatures = extractBytesArray(
           words, words[3].intValueSafe() / WORD_SIZE, rawData);

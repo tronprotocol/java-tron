@@ -30,6 +30,7 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -62,6 +63,7 @@ public class BandWidthRuntimeTest {
   private static String indexDirectory = "index_BandWidthRuntimeTest_test";
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
+  private static ChainBaseManager chainBaseManager;
 
   private static String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
   private static String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
@@ -86,6 +88,7 @@ public class BandWidthRuntimeTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526547838000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10_000_000L);
@@ -114,7 +117,7 @@ public class BandWidthRuntimeTest {
         AccountType.Normal,
         totalBalance);
     accountCapsule3.setNetUsage(5000L);
-    accountCapsule3.setLatestConsumeFreeTime(dbManager.getHeadSlot());
+    accountCapsule3.setLatestConsumeFreeTime(chainBaseManager.getHeadSlot());
     accountCapsule3.setFrozenForEnergy(10_000_000L, 0L);
     dbManager.getAccountStore()
         .put(Commons.decodeFromBase58Check(TriggerOwnerTwoAddress), accountCapsule3);
@@ -129,7 +132,6 @@ public class BandWidthRuntimeTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    ApplicationFactory.create(context).shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
@@ -149,7 +151,7 @@ public class BandWidthRuntimeTest {
               .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000)).build();
       TransactionCapsule trxCap = new TransactionCapsule(transaction);
       TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-          new RuntimeImpl(dbManager));
+          new RuntimeImpl());
       dbManager.consumeBandwidth(trxCap, trace);
       BlockCapsule blockCapsule = null;
       DepositImpl deposit = DepositImpl.createRoot(dbManager);
@@ -182,7 +184,7 @@ public class BandWidthRuntimeTest {
               .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000)).build();
       TransactionCapsule trxCap = new TransactionCapsule(transaction);
       TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-          new RuntimeImpl(dbManager));
+          new RuntimeImpl());
       dbManager.consumeBandwidth(trxCap, trace);
       long bandWidth = trxCap.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
       BlockCapsule blockCapsule = null;
@@ -238,7 +240,7 @@ public class BandWidthRuntimeTest {
             .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)).build();
     TransactionCapsule trxCap = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
-        new RuntimeImpl(dbManager));
+        new RuntimeImpl());
     dbManager.consumeBandwidth(trxCap, trace);
     BlockCapsule blockCapsule = null;
     DepositImpl deposit = DepositImpl.createRoot(dbManager);

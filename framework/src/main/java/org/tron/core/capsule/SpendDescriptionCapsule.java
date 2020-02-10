@@ -48,21 +48,17 @@ public class SpendDescriptionCapsule implements ProtoCapsule<SpendDescription> {
     return this.spendDescription.getValueCommitment();
   }
 
-  public void setValueCommitment(ByteString bytes) {
-    this.spendDescription = this.spendDescription.toBuilder().setValueCommitment(bytes).build();
-  }
-
   public void setValueCommitment(byte[] bytes) {
     this.spendDescription =
         this.spendDescription.toBuilder().setValueCommitment(ByteString.copyFrom(bytes)).build();
   }
 
-  public ByteString getAnchor() {
-    return this.spendDescription.getAnchor();
+  public void setValueCommitment(ByteString bytes) {
+    this.spendDescription = this.spendDescription.toBuilder().setValueCommitment(bytes).build();
   }
 
-  public void setAnchor(ByteString bytes) {
-    this.spendDescription = this.spendDescription.toBuilder().setAnchor(bytes).build();
+  public ByteString getAnchor() {
+    return this.spendDescription.getAnchor();
   }
 
   public void setAnchor(byte[] bytes) {
@@ -70,12 +66,12 @@ public class SpendDescriptionCapsule implements ProtoCapsule<SpendDescription> {
         this.spendDescription.toBuilder().setAnchor(ByteString.copyFrom(bytes)).build();
   }
 
-  public ByteString getNullifier() {
-    return this.spendDescription.getNullifier();
+  public void setAnchor(ByteString bytes) {
+    this.spendDescription = this.spendDescription.toBuilder().setAnchor(bytes).build();
   }
 
-  public void setNullifier(ByteString bytes) {
-    this.spendDescription = this.spendDescription.toBuilder().setNullifier(bytes).build();
+  public ByteString getNullifier() {
+    return this.spendDescription.getNullifier();
   }
 
   public void setNullifier(byte[] bytes) {
@@ -83,12 +79,12 @@ public class SpendDescriptionCapsule implements ProtoCapsule<SpendDescription> {
         this.spendDescription.toBuilder().setNullifier(ByteString.copyFrom(bytes)).build();
   }
 
-  public ByteString getRk() {
-    return this.spendDescription.getRk();
+  public void setNullifier(ByteString bytes) {
+    this.spendDescription = this.spendDescription.toBuilder().setNullifier(bytes).build();
   }
 
-  public void setRk(ByteString bytes) {
-    this.spendDescription = this.spendDescription.toBuilder().setRk(bytes).build();
+  public ByteString getRk() {
+    return this.spendDescription.getRk();
   }
 
   public void setRk(byte[] bytes) {
@@ -96,17 +92,21 @@ public class SpendDescriptionCapsule implements ProtoCapsule<SpendDescription> {
         this.spendDescription.toBuilder().setRk(ByteString.copyFrom(bytes)).build();
   }
 
-  public ByteString getZkproof() {
-    return this.spendDescription.getZkproof();
+  public void setRk(ByteString bytes) {
+    this.spendDescription = this.spendDescription.toBuilder().setRk(bytes).build();
   }
 
-  public void setZkproof(ByteString proof) {
-    this.spendDescription = this.spendDescription.toBuilder().setZkproof(proof).build();
+  public ByteString getZkproof() {
+    return this.spendDescription.getZkproof();
   }
 
   public void setZkproof(byte[] proof) {
     ByteString proof1 = ByteString.copyFrom(proof);
     this.spendDescription = this.spendDescription.toBuilder().setZkproof(proof1).build();
+  }
+
+  public void setZkproof(ByteString proof) {
+    this.spendDescription = this.spendDescription.toBuilder().setZkproof(proof).build();
   }
 
   public ByteString getSpendAuthoritySignature() {

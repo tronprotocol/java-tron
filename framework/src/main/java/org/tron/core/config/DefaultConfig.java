@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.tron.common.utils.StorageUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
@@ -46,7 +47,7 @@ public class DefaultConfig {
         revokingDatabase = RevokingStore.getInstance();
       } else if (dbVersion == 2) {
         revokingDatabase = new SnapshotManager(
-            Args.getInstance().getOutputDirectoryByDbName("block"));
+            StorageUtils.getOutputDirectoryByDbName("block"));
       } else {
         throw new RuntimeException("db version is error.");
       }

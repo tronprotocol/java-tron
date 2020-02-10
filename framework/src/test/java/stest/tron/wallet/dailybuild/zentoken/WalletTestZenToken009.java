@@ -129,7 +129,7 @@ public class WalletTestZenToken009 {
 
   @Test(enabled = true, description = "Public to shield transaction with mutisign")
   public void test1Public2ShieldTransaction() {
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     shieldAddressInfo = PublicMethed.generateShieldAddress();
     shieldAddress = shieldAddressInfo.get().getAddress();
     logger.info("shieldAddress:" + shieldAddress);

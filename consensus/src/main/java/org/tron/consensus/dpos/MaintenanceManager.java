@@ -1,7 +1,6 @@
 package org.tron.consensus.dpos;
 
-
-import static org.tron.core.config.args.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;

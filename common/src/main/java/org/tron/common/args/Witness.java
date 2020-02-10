@@ -43,7 +43,7 @@ public class Witness implements Serializable {
   public void setAddress(final byte[] address) {
     if (!addressValid(address)) {
       throw new IllegalArgumentException(
-          "The address(" + StringUtil.createReadableString(address) + ") must be a 21 bytes.");
+          "The address(" + StringUtil.createReadableString(address) + ") must be 21 bytes.");
     }
     this.address = address;
   }

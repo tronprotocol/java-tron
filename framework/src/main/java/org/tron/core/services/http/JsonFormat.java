@@ -74,6 +74,8 @@ public class JsonFormat {
       Pattern.CASE_INSENSITIVE);
   private static final String WRITING_STRING_BUILDER_EXCEPTION
       = "Writing to a StringBuilder threw an IOException (should never happen).";
+  private static final String EXPECTED_STRING = "Expected string.";
+  private static final String MISSING_END_QUOTE = "String missing ending quote.";
 
   /**
    * Outputs a textual representation of the Protocol Message supplied into the parameter output.
@@ -1484,12 +1486,12 @@ public class JsonFormat {
     public String consumeString() throws ParseException {
       char quote = currentToken.length() > 0 ? currentToken.charAt(0) : '\0';
       if ((quote != '\"') && (quote != '\'')) {
-        throw parseException("Expected string.");
+        throw parseException(EXPECTED_STRING);
       }
 
       if ((currentToken.length() < 2)
           || (currentToken.charAt(currentToken.length() - 1) != quote)) {
-        throw parseException("String missing ending quote.");
+        throw parseException(MISSING_END_QUOTE);
       }
 
       try {
@@ -1505,12 +1507,12 @@ public class JsonFormat {
     public ByteString consumeByteString() throws ParseException {
       char quote = currentToken.length() > 0 ? currentToken.charAt(0) : '\0';
       if ((quote != '\"') && (quote != '\'')) {
-        throw parseException("Expected string.");
+        throw parseException(EXPECTED_STRING);
       }
 
       if ((currentToken.length() < 2)
           || (currentToken.charAt(currentToken.length() - 1) != quote)) {
-        throw parseException("String missing ending quote.");
+        throw parseException(MISSING_END_QUOTE);
       }
 
       try {
@@ -1527,12 +1529,12 @@ public class JsonFormat {
         throws ParseException {
       char quote = currentToken.length() > 0 ? currentToken.charAt(0) : '\0';
       if ((quote != '\"') && (quote != '\'')) {
-        throw parseException("Expected string.");
+        throw parseException(EXPECTED_STRING);
       }
 
       if ((currentToken.length() < 2)
           || (currentToken.charAt(currentToken.length() - 1) != quote)) {
-        throw parseException("String missing ending quote.");
+        throw parseException(MISSING_END_QUOTE);
       }
 
       try {

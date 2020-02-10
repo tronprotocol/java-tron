@@ -36,7 +36,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
   public boolean execute(Object object) throws ContractExeException {
     TransactionResultCapsule result = (TransactionResultCapsule) object;
     if (Objects.isNull(result)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     AccountStore accountStore = chainBaseManager.getAccountStore();

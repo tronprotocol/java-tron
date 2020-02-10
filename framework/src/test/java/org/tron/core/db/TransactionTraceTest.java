@@ -215,7 +215,7 @@ public class TransactionTraceTest {
 
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
 
     trace.init(null);
     trace.exec();
@@ -281,7 +281,7 @@ public class TransactionTraceTest {
             .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000L)).build();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction2);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
     trace.init(null);
     trace.exec();
     trace.pay();
@@ -341,7 +341,7 @@ public class TransactionTraceTest {
             .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000L)).build();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction2);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
     trace.init(null);
     trace.exec();
     trace.pay();
@@ -367,7 +367,7 @@ public class TransactionTraceTest {
 
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace trace = new TransactionTrace(transactionCapsule, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
     trace.init(null);
     trace.exec();
     trace.pay();
@@ -431,7 +431,7 @@ public class TransactionTraceTest {
 
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, StoreFactory
-        .getInstance(), new RuntimeImpl(dbManager));
+        .getInstance(), new RuntimeImpl());
     transactionTrace.setBill(0L);
     transactionTrace.pay();
     AccountCapsule accountCapsule1 = dbManager.getAccountStore().get(ownerAddress.toByteArray());

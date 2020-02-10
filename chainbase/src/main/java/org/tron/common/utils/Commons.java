@@ -6,6 +6,7 @@ import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -19,7 +20,6 @@ import org.tron.core.store.ExchangeV2Store;
 @Slf4j(topic = "Commons")
 public class Commons {
 
-  public static final int ADDRESS_SIZE = 42;
   public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
 
   public static byte[] clone(byte[] value) {
@@ -35,8 +35,10 @@ public class Commons {
     }
     byte[] decodeData = new byte[decodeCheck.length - 4];
     System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
-    byte[] hash0 = Sha256Hash.hash(decodeData);
-    byte[] hash1 = Sha256Hash.hash(hash0);
+    byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        decodeData);
+    byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        hash0);
     if (hash1[0] == decodeCheck[decodeData.length] &&
         hash1[1] == decodeCheck[decodeData.length + 1] &&
         hash1[2] == decodeCheck[decodeData.length + 2] &&

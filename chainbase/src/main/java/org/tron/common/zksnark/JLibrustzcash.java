@@ -1,8 +1,9 @@
 package org.tron.common.zksnark;
 
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
@@ -95,7 +96,7 @@ public class JLibrustzcash {
    */
   public static byte[] librustzcashAskToAk(byte[] ask) throws ZksnarkException {
     if (!isOpenZen()) {
-      return ByteArray.EMPTY_BYTE_ARRAY;
+      return ByteUtil.EMPTY_BYTE_ARRAY;
     }
     LibrustzcashParam.valid32Params(ask);
     byte[] ak = new byte[32];
@@ -109,7 +110,7 @@ public class JLibrustzcash {
    */
   public static byte[] librustzcashNskToNk(byte[] nsk) throws ZksnarkException {
     if (!isOpenZen()) {
-      return ByteArray.EMPTY_BYTE_ARRAY;
+      return ByteUtil.EMPTY_BYTE_ARRAY;
     }
     LibrustzcashParam.valid32Params(nsk);
     byte[] nk = new byte[32];
@@ -124,7 +125,7 @@ public class JLibrustzcash {
    */
   public static byte[] librustzcashSaplingGenerateR(byte[] r) throws ZksnarkException {
     if (!isOpenZen()) {
-      return ByteArray.EMPTY_BYTE_ARRAY;
+      return ByteUtil.EMPTY_BYTE_ARRAY;
     }
     LibrustzcashParam.valid32Params(r);
     INSTANCE.librustzcashSaplingGenerateR(r);
@@ -282,7 +283,7 @@ public class JLibrustzcash {
   }
 
   public static boolean isOpenZen() {
-    boolean res = DBConfig.isFullNodeAllowShieldedTransaction();
+    boolean res = CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs();
     if (res) {
       INSTANCE = LibrustzcashWrapper.getInstance();
     }
