@@ -42,7 +42,8 @@ public class FullNode {
    */
   public static void main(String[] args) {
     logger.info("Full node running.");
-    Args.setParam(args, Constant.TESTNET_CONF);
+//    Args.setParam(args, Constant.TESTNET_CONF);
+    Args.setParam(args, "config-localtest.conf");
     CommonParameter parameter = Args.getInstance();
 
     load(parameter.getLogbackPath());
