@@ -17,7 +17,6 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -573,9 +572,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
       marketAccountOrderCapsule = new MarketAccountOrderCapsule(contract.getOwnerAddress());
     }
 
+    // note: here use total_count
     byte[] orderId = MarketUtils
         .calculateOrderId(contract.getOwnerAddress(), sellTokenID, buyTokenID,
-            marketAccountOrderCapsule.getCount());
+            marketAccountOrderCapsule.getTotalCount());
     MarketOrderCapsule orderCapsule = new MarketOrderCapsule(orderId, contract);
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
@@ -583,6 +583,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
     marketAccountOrderCapsule.addOrders(orderCapsule.getID());
     marketAccountOrderCapsule.setCount(marketAccountOrderCapsule.getCount() + 1);
+    marketAccountOrderCapsule.setTotalCount(marketAccountOrderCapsule.getTotalCount() + 1);
     marketAccountStore.put(accountCapsule.createDbKey(), marketAccountOrderCapsule);
     orderStore.put(orderId, orderCapsule);
 

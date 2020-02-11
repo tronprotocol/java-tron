@@ -99,7 +99,8 @@ message MarketOrderPair{
 message MarketAccountOrder {
   bytes owner_address = 1;
   repeated bytes orders = 2; // order_id list
-  int64 count = 3;
+  int64 count = 3; // active count
+  int64 total_count = 4;
 
 }
 

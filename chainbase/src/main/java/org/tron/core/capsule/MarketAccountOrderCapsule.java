@@ -5,7 +5,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.store.MarketAccountStore;
 import org.tron.protos.Protocol.MarketAccountOrder;
 
 @Slf4j(topic = "capsule")
@@ -88,6 +87,16 @@ public class MarketAccountOrderCapsule implements ProtoCapsule<MarketAccountOrde
     this.accountOrder = this.accountOrder.toBuilder()
         .setCount(count)
         .build();
+  }
+
+  public void setTotalCount(long o) {
+    this.accountOrder = this.accountOrder.toBuilder()
+        .setTotalCount(o)
+        .build();
+  }
+
+  public long getTotalCount() {
+    return this.accountOrder.getTotalCount();
   }
 
 
