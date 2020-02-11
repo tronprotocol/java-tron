@@ -513,6 +513,7 @@ public class MarketCancelOrderActuatorTest {
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
     Assert.assertEquals(4, accountOrderCapsule.getCount());
+    Assert.assertEquals(5, accountOrderCapsule.getTotalCount());
     // orderId = accountOrderCapsule.getOrdersList().get(2);
 
     //check order
@@ -590,6 +591,7 @@ public class MarketCancelOrderActuatorTest {
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
     Assert.assertEquals(4, accountOrderCapsule.getCount());
+    Assert.assertEquals(5, accountOrderCapsule.getTotalCount());
     // orderId = accountOrderCapsule.getOrdersList().get(2);
 
     //check order
@@ -670,6 +672,7 @@ public class MarketCancelOrderActuatorTest {
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
     Assert.assertEquals(2, accountOrderCapsule.getCount());
+    Assert.assertEquals(3, accountOrderCapsule.getTotalCount());
     // orderId = accountOrderCapsule.getOrdersList().get(1);
 
     //check order
@@ -747,6 +750,7 @@ public class MarketCancelOrderActuatorTest {
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
     Assert.assertEquals(0, accountOrderCapsule.getCount());
+    Assert.assertEquals(1, accountOrderCapsule.getTotalCount());
     // orderId = accountOrderCapsule.getOrdersList().get(0);
 
     //check order
