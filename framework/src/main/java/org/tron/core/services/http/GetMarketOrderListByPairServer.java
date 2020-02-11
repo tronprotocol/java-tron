@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -10,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.MarketOrderList;
+import org.tron.protos.Protocol.MarketOrderPair;
 
 
 @Component
@@ -25,6 +25,11 @@ public class GetMarketOrderListByPairServer extends RateLimiterServlet {
 
       String sellTokenId = request.getParameter("sell_token_id");
       String buyTokenId = request.getParameter("buy_token_id");
+
+      if (visible) {
+        sellTokenId = Util.getHexString(sellTokenId);
+        buyTokenId = Util.getHexString(buyTokenId);
+      }
 
       MarketOrderList reply = wallet.getMarketOrderListByPair(ByteArray.fromHexString(sellTokenId),
           ByteArray.fromHexString(buyTokenId));
@@ -44,13 +49,12 @@ public class GetMarketOrderListByPairServer extends RateLimiterServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
 
-      String sellTokenId = jsonObject.getString("sell_token_id");
-      String buyTokenId = jsonObject.getString("buy_token_id");
+      MarketOrderPair.Builder build = MarketOrderPair.newBuilder();
+      JsonFormat.merge(input, build, visible);
 
-      MarketOrderList reply = wallet.getMarketOrderListByPair(ByteArray.fromHexString(sellTokenId),
-          ByteArray.fromHexString(buyTokenId));
+      MarketOrderList reply = wallet.getMarketOrderListByPair(build.getSellTokenId().toByteArray(),
+          build.getBuyTokenId().toByteArray());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
