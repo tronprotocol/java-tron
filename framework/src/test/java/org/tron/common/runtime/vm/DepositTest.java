@@ -417,8 +417,6 @@ public class DepositTest {
   @After
   public void destroy() {
     Args.clearParam();
-    ApplicationFactory.create(context).shutdown();
-    ApplicationFactory.create(context).shutdownServices();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
