@@ -46,7 +46,7 @@ public class Credentials {
     Credentials that = (Credentials) o;
 
     if (cryptoEngine != null ? !cryptoEngine
-            .equals(that.cryptoEngine) : that.cryptoEngine != null) {
+        .equals(that.cryptoEngine) : that.cryptoEngine != null) {
       return false;
     }
 

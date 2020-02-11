@@ -10,9 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
@@ -22,7 +24,9 @@ import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.RecentBlockStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -242,6 +246,84 @@ public class ChainBaseManager {
   public long getHeadSlot() {
     return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
         .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
+  }
+
+
+
+  /**
+   * judge id.
+   *
+   * @param blockHash blockHash
+   */
+  public boolean containBlock(final Sha256Hash blockHash) {
+    try {
+      return this.khaosDb.containBlockInMiniStore(blockHash)
+          || getBlockStore()
+          .get(blockHash.getBytes()) != null;
+    } catch (ItemNotFoundException | BadItemException e) {
+      return false;
+    }
+  }
+
+  public boolean containBlockInMainChain(BlockId blockId) {
+    try {
+      return getBlockStore().get(blockId.getBytes()) != null;
+    } catch (ItemNotFoundException | BadItemException e) {
+      return false;
+    }
+  }
+
+
+
+  /**
+   * Get a BlockCapsule by id.
+   */
+  public BlockCapsule getBlockById(final Sha256Hash hash)
+      throws BadItemException, ItemNotFoundException {
+    BlockCapsule block = this.khaosDb.getBlock(hash);
+    if (block == null) {
+      block = getBlockStore().get(hash.getBytes());
+    }
+    return block;
+  }
+
+  /**
+   * judge has blocks.
+   */
+  public boolean hasBlocks() {
+    return getBlockStore().iterator().hasNext() || this.khaosDb.hasData();
+  }
+
+  public void setBlockReference(TransactionCapsule trans) {
+    byte[] headHash = getDynamicPropertiesStore().getLatestBlockHeaderHash().getBytes();
+    long headNum = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    trans.setReference(headNum, headHash);
+  }
+
+  public BlockId getSolidBlockId() {
+    try {
+      long num = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+      return getBlockIdByNum(num);
+    } catch (Exception e) {
+      return getGenesisBlockId();
+    }
+  }
+
+  public BlockId getGenesisBlockId() {
+    return getGenesisBlock().getBlockId();
+  }
+
+
+  /**
+   * Get the block id from the number.
+   */
+  public BlockId getBlockIdByNum(final long num) throws ItemNotFoundException {
+    return getBlockIndexStore().get(num);
+  }
+
+  public BlockCapsule getBlockByNum(final long num) throws
+      ItemNotFoundException, BadItemException {
+    return getBlockById(getBlockIdByNum(num));
   }
 
 }

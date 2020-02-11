@@ -18,8 +18,6 @@
 
 package org.tron.core;
 
-import static org.tron.common.utils.DecodeUtil.ADDRESS_SIZE;
-import static org.tron.common.utils.DecodeUtil.addressValid;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
@@ -79,12 +77,12 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
 import org.tron.api.GrpcAPI.WitnessList;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
@@ -241,8 +239,8 @@ public class Wallet {
   }
 
   public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(input);
-    byte[] hash1 = Sha256Hash.hash(hash0);
+    byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), input);
+    byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), hash0);
     byte[] inputCheck = new byte[input.length + 4];
     System.arraycopy(input, 0, inputCheck, 0, input.length);
     System.arraycopy(hash1, 0, inputCheck, input.length, 4);
@@ -267,7 +265,7 @@ public class Wallet {
         chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
-    long genesisTimeStamp = dbManager.getGenesisBlock().getTimeStamp();
+    long genesisTimeStamp = chainBaseManager.getGenesisBlock().getTimeStamp();
     accountCapsule.setLatestConsumeTime(genesisTimeStamp
         + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTime());
     accountCapsule.setLatestConsumeFreeTime(genesisTimeStamp
@@ -313,7 +311,7 @@ public class Wallet {
     try {
       BlockId blockId = chainBaseManager.getHeadBlockId();
       if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
-        blockId = dbManager.getSolidBlockId();
+        blockId = chainBaseManager.getSolidBlockId();
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
       long expiration = chainBaseManager.getHeadBlockTimeStamp() + Args.getInstance()
@@ -460,7 +458,8 @@ public class Wallet {
     TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
@@ -477,7 +476,8 @@ public class Wallet {
 
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();
-        byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
+        byte[] hash = Sha256Hash.hash(CommonParameter
+            .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
         for (ByteString sig : trx.getSignatureList()) {
           if (sig.size() < 65) {
             throw new SignatureFormatException(
@@ -485,7 +485,7 @@ public class Wallet {
           }
           String base64 = TransactionCapsule.getBase64FromByteString(sig);
           byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
-                  .isECKeyCryptoEngine());
+              .isECKeyCryptoEngine());
           approveList.add(ByteString.copyFrom(address)); //out put approve list.
         }
         tswBuilder.addAllApprovedList(approveList);
@@ -506,7 +506,8 @@ public class Wallet {
   }
 
   public byte[] pass2Key(byte[] passPhrase) {
-    return Sha256Hash.hash(passPhrase);
+    return Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), passPhrase);
   }
 
   public byte[] createAddress(byte[] passPhrase) {
@@ -527,7 +528,7 @@ public class Wallet {
 
   public Block getBlockByNum(long blockNum) {
     try {
-      return dbManager.getBlockByNum(blockNum).getInstance();
+      return chainBaseManager.getBlockByNum(blockNum).getInstance();
     } catch (StoreException e) {
       logger.info(e.getMessage());
       return null;
@@ -538,7 +539,7 @@ public class Wallet {
     long count = 0;
 
     try {
-      Block block = dbManager.getBlockByNum(blockNum).getInstance();
+      Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
       count = block.getTransactionsCount();
     } catch (StoreException e) {
       logger.error(e.getMessage());
@@ -786,6 +787,13 @@ public class Wallet {
             .setKey("getShieldedTransactionFee")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee())
             .build());
+    // ShieldedTransactionCreateAccountFee
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getShieldedTransactionCreateAccountFee")
+            .setValue(
+                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
+            .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAdaptiveResourceLimitTargetRatio")
@@ -851,21 +859,21 @@ public class Wallet {
   }
 
   private Map<String, Long> setAssetNetLimit(Map<String, Long> assetNetLimitMap,
-                                AccountCapsule accountCapsule) {
+      AccountCapsule accountCapsule) {
     Map<String, Long> allFreeAssetNetUsage;
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-                .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
       });
     } else {
       allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-                .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
       });
     }
     return allFreeAssetNetUsage;
@@ -1217,7 +1225,7 @@ public class Wallet {
     IncrementalMerkleTreeContainer tree = treeCapsule.toMerkleTreeContainer();
 
     //Get the block of blockNum
-    BlockCapsule block = dbManager.getBlockByNum(blockNumber);
+    BlockCapsule block = chainBaseManager.getBlockByNum(blockNumber);
 
     IncrementalMerkleVoucherContainer witness = null;
 
@@ -1305,7 +1313,7 @@ public class Wallet {
     }
 
     for (long n = start; n <= end; n++) {
-      BlockCapsule block = dbManager.getBlockByNum(n);
+      BlockCapsule block = chainBaseManager.getBlockByNum(n);
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
         Contract contract1 = transaction1.getRawData().getContract(0);
@@ -1343,7 +1351,7 @@ public class Wallet {
     }
 
     for (long n = start; n <= end; n++) {
-      BlockCapsule block = dbManager.getBlockByNum(n);
+      BlockCapsule block = chainBaseManager.getBlockByNum(n);
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
         Contract contract1 = transaction1.getRawData().getContract(0);
@@ -1371,11 +1379,11 @@ public class Wallet {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
     if (request.getBlockNum() < 0 || request.getBlockNum() > 1000) {
-      throw new BadItemException("request.BlockNum must be specified with range in【0，1000】");
+      throw new BadItemException("request.BlockNum must be specified with range in [0, 1000]");
     }
 
     if (request.getOutPointsCount() < 1 || request.getOutPointsCount() > 10) {
-      throw new BadItemException("request.OutPointsCount must be speccified with range in【1，10】");
+      throw new BadItemException("request.OutPointsCount must be speccified with range in [1, 10]");
     }
 
     for (OutputPoint outputPoint : request.getOutPointsList()) {

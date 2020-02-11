@@ -12,7 +12,6 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.EasyTransferAssetMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.core.Wallet;
@@ -47,7 +46,7 @@ public class EasyTransferAssetServlet extends RateLimiterServlet {
       JsonFormat.merge(input, build, visible);
       byte[] privateKey = wallet.pass2Key(build.getPassPhrase().toByteArray());
       SignInterface ecKey = SignUtils.fromPrivate(privateKey, Args.getInstance()
-              .isECKeyCryptoEngine());
+          .isECKeyCryptoEngine());
       byte[] owner = ecKey.getAddress();
       TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(owner));

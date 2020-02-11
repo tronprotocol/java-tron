@@ -3,8 +3,8 @@ package org.tron.core.capsule;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -42,7 +42,8 @@ public class ReceiptCapsule {
 
   private static boolean checkForEnergyLimit(DynamicPropertiesStore ds) {
     long blockNum = ds.getLatestBlockHeaderNumber();
-    return blockNum >= DBConfig.getBlockNumForEneryLimit();
+    return blockNum >= CommonParameter.getInstance()
+        .getBlockNumForEneryLimit();
   }
 
   public ResourceReceipt getReceipt() {

@@ -15,7 +15,7 @@
 
 package org.tron.core.utils;
 
-import static org.tron.common.utils.Hash.sha3omit12;
+import static org.tron.common.crypto.Hash.sha3omit12;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.primitives.Longs;
@@ -34,9 +34,8 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DecodeUtil;
-import org.tron.common.utils.Hash;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -163,7 +162,8 @@ public class TransactionUtil {
   }
 
   public static Sha256Hash getTransactionId(Transaction transaction) {
-    return Sha256Hash.of(transaction.getRawData().toByteArray());
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        transaction.getRawData().toByteArray());
   }
 
 
@@ -248,21 +248,6 @@ public class TransactionUtil {
     return false;
   }
 
-  public static byte[] generateContractAddress(Transaction trx) {
-
-    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-    TransactionCapsule trxCap = new TransactionCapsule(trx);
-    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
-
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return sha3omit12(combined);
-
-  }
-
   public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
 
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
@@ -329,7 +314,8 @@ public class TransactionUtil {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
@@ -360,7 +346,8 @@ public class TransactionUtil {
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();
         long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
-            Sha256Hash.hash(trx.getRawData().toByteArray()), approveList);
+            Sha256Hash.hash(CommonParameter.getInstance()
+                .isECKeyCryptoEngine(), trx.getRawData().toByteArray()), approveList);
         tswBuilder.addAllApprovedList(approveList);
         tswBuilder.setCurrentWeight(currentWeight);
       }

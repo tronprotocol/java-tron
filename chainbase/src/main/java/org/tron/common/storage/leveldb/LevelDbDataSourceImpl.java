@@ -42,8 +42,8 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.common.DbSourceInter;
@@ -70,7 +70,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       WriteOptions writeOptions) {
     this.parentPath = Paths.get(
         parentPath,
-        DBConfig.getDbDirectory()
+        CommonParameter.getInstance().getStorage().getDbDirectory()
     ).toString();
     this.dataBaseName = dataBaseName;
     this.options = options;
@@ -81,7 +81,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   public LevelDbDataSourceImpl(String parentPath, String dataBaseName) {
     this.parentPath = Paths.get(
         parentPath,
-        DBConfig.getDbDirectory()
+        CommonParameter.getInstance().getStorage().getDbDirectory()
     ).toString();
 
     this.dataBaseName = dataBaseName;

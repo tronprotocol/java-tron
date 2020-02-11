@@ -61,7 +61,9 @@ public class HttpTestZenToken004 {
   byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
-  private Long sendTokenAmount = 8 * zenTokenFee;
+  private Long zenTokenWhenCreateNewAddress = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.zenTokenWhenCreateNewAddress");
+  private Long sendTokenAmount = 18 * zenTokenFee;
   private JSONObject responseContent;
   private HttpResponse response;
 
@@ -90,7 +92,6 @@ public class HttpTestZenToken004 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     HttpMethed.waitToProduceOneBlock(httpnode);
-    HttpMethed.waitToProduceOneBlock(httpnode);
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 
     receiverShieldAddressInfo1 = HttpMethed.generateShieldAddress(httpnode);
@@ -117,7 +118,6 @@ public class HttpTestZenToken004 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 
-    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
 
     receiverNote1 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo1.get()).get(0);
@@ -147,7 +147,6 @@ public class HttpTestZenToken004 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     HttpMethed.waitToProduceOneBlock(httpnode);
-    HttpMethed.waitToProduceOneBlock(httpnode);
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 
     receiverShieldAddressInfo3 = HttpMethed.generateShieldAddress(httpnode);
@@ -166,7 +165,8 @@ public class HttpTestZenToken004 {
 
     shieldOutList.clear();
     Long sendToPublicAddressAmount = 1 * zenTokenFee;
-    Long sendToShiledAddressAmount = sendTokenAmount - sendToPublicAddressAmount - zenTokenFee;
+    Long sendToShiledAddressAmount = sendTokenAmount - sendToPublicAddressAmount
+        - zenTokenWhenCreateNewAddress;
     memo3 = "Send shield to receiver shield memo in" + System.currentTimeMillis();
     shieldOutList = HttpMethed.addShieldOutputList(httpnode, shieldOutList, receiverShieldAddress3,
         "" + sendToShiledAddressAmount, memo3);
@@ -227,7 +227,6 @@ public class HttpTestZenToken004 {
             null, 0, foundationZenTokenKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 

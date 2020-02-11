@@ -7,6 +7,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -168,7 +169,7 @@ contract isTestCtr {
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
         null);
-    byte[] factoryAddress = TransactionUtil.generateContractAddress(trx);
+    byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = Wallet.encode58Check(factoryAddress);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
@@ -176,7 +177,7 @@ contract isTestCtr {
     trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
         null);
-    byte[] factoryAddressOther = TransactionUtil.generateContractAddress(trx);
+    byte[] factoryAddressOther = WalletUtil.generateContractAddress(trx);
     String factoryAddressStrOther = Wallet.encode58Check(factoryAddressOther);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());

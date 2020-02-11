@@ -19,8 +19,8 @@ import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.tron.common.args.GenesisBlock;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.protos.Protocol.Transaction;
 
@@ -30,14 +30,11 @@ public class BlockUtil {
    * create genesis block from transactions.
    */
   public static BlockCapsule newGenesisBlockCapsule() {
-    GenesisBlock genesisBlockArg = DBConfig.getGenesisBlock();
+    GenesisBlock genesisBlockArg = CommonParameter.getInstance()
+        .getGenesisBlock();
     List<Transaction> transactionList =
         genesisBlockArg.getAssets().stream()
-            .map(key -> {
-              byte[] address = key.getAddress();
-              long balance = key.getBalance();
-              return TransactionUtil.newGenesisTransaction(address, balance);
-            })
+            .map(key -> TransactionUtil.newGenesisTransaction(key.getAddress(), key.getBalance()))
             .collect(Collectors.toList());
 
     long timestamp = Long.parseLong(genesisBlockArg.getTimestamp());

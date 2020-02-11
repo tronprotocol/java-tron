@@ -128,8 +128,8 @@ public class ExchangeCreateActuatorTest {
   }
 
   /**
-   * SameTokenName close,first createExchange,result is success.
-   *  1024000000 is calcFee, caculated by calcFee()
+   * SameTokenName close,first createExchange,result is success. 1024000000 is calcFee, caculated by
+   * calcFee()
    */
   @Test
   public void sameTokenNameCloseSuccessExchangeCreate() {

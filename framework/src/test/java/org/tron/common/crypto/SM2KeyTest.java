@@ -9,38 +9,31 @@ import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 import java.security.KeyPairGenerator;
-import java.security.Security;
 import java.security.SignatureException;
 import java.util.Arrays;
-
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.junit.Test;
 import org.spongycastle.crypto.digests.SM3Digest;
-import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2Signer;
-import org.tron.common.crypto.sm2.SM3;
 import org.tron.core.Wallet;
 
 @Slf4j
 public class SM2KeyTest {
 
+  //private String IDa = "ALICE123@YAHOO.COM";
+  private static BigInteger SM2_N = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6"
+      + "B21C6052B53BBF40939D54123", 16);
   private String privString = "128B2FA8BD433C6C068C8D803DFF79792A519A55171B1B650C23661D15897263";
   private BigInteger privateKey = new BigInteger(privString, 16);
-
   private String pubString = "04d5548c7825cbb56150a3506cd57464af8a1ae0519dfaf3c58221dc810caf28d"
-          + "d921073768fe3d59ce54e79a49445cf73fed23086537027264d168946d479533e";
+      + "d921073768fe3d59ce54e79a49445cf73fed23086537027264d168946d479533e";
   private String compressedPubString =
-          "02d5548c7825cbb56150a3506cd57464af8a1ae0519dfaf3c58221dc810caf28dd";
+      "02d5548c7825cbb56150a3506cd57464af8a1ae0519dfaf3c58221dc810caf28dd";
   private byte[] pubKey = Hex.decode(pubString);
   private byte[] compressedPubKey = Hex.decode(compressedPubString);
   private String address = "62e49e4c2f4e3c0653a02f8859c1e6991b759e87";
-  //private String IDa = "ALICE123@YAHOO.COM";
-  private static BigInteger SM2_N = new BigInteger("FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6"
-          + "B21C6052B53BBF40939D54123", 16);
 
   @Test
   public void testHashCode() {
@@ -75,8 +68,8 @@ public class SM2KeyTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidPrivateKey() throws Exception {
     new SM2(
-            KeyPairGenerator.getInstance("RSA").generateKeyPair().getPrivate(),
-            SM2.fromPublicOnly(pubKey).getPubKeyPoint());
+        KeyPairGenerator.getInstance("RSA").generateKeyPair().getPrivate(),
+        SM2.fromPublicOnly(pubKey).getPubKeyPoint());
     fail("Expecting an IllegalArgumentException for using an non EC private key");
   }
 
@@ -118,7 +111,7 @@ public class SM2KeyTest {
     String message = "message digest";
     byte[] hash = signer.generateSM3Hash(message.getBytes());
     assertEquals("299C7DDB0D8DD2A85381BACBB92F738F390210A493A144C78E18C67B430DA882",
-            Hex.toHexString(hash).toUpperCase());
+        Hex.toHexString(hash).toUpperCase());
   }
 
 
@@ -126,7 +119,7 @@ public class SM2KeyTest {
   public void testValidHashSignature() {
     SM2 key = SM2.fromPrivate(privateKey);
     byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E"
-            + "6FC682D48BB5D42E3D9B9EFFE76");
+        + "6FC682D48BB5D42E3D9B9EFFE76");
     SM2.SM2Signature sign = key.sign(hash);
     //byte[] signByte = sign.toByteArray();
     //System.out.println(Hex.toHexString(signByte));
@@ -138,7 +131,7 @@ public class SM2KeyTest {
   public void testValidHashSignature3() {
     SM2 key = SM2.fromPrivate(privateKey);
     byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC"
-            + "682D48BB5D42E3D9B9EFFE76");
+        + "682D48BB5D42E3D9B9EFFE76");
     SM2.SM2Signature sign = key.sign(hash);
     assertTrue(SM2.verify(hash, sign, pubKey));
     BigInteger sNeg = sign.s.negate().mod(SM2_N);
@@ -150,7 +143,7 @@ public class SM2KeyTest {
   public void testValidHashSignature2() {
     SM2 key = SM2.fromPrivate(privateKey);
     byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC"
-            + "682D48BB5D42E3D9B9EFFE76");
+        + "682D48BB5D42E3D9B9EFFE76");
     SM2.SM2Signature sign = key.sign(hash);
     byte[] signByte = sign.toByteArray();
     //System.out.println(Hex.toHexString(signByte));
@@ -162,7 +155,7 @@ public class SM2KeyTest {
   public void testSignatureToKeyBytes() throws SignatureException {
     SM2 key = SM2.fromPrivate(privateKey);
     byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB"
-            + "19A87E6FC682D48BB5D42E3D9B9EFFE76");
+        + "19A87E6FC682D48BB5D42E3D9B9EFFE76");
     SM2.SM2Signature sign = key.sign(hash);
     byte[] pubKeys = SM2.signatureToKeyBytes(hash, sign);
     //        System.out.println(Hex.toHexString(pubKeys));
@@ -174,7 +167,7 @@ public class SM2KeyTest {
   public void testSignatureToKeyBytes2() throws SignatureException {
     SM2 key = SM2.fromPrivate(privateKey);
     byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB"
-            + "19A87E6FC682D48BB5D42E3D9B9EFFE76");
+        + "19A87E6FC682D48BB5D42E3D9B9EFFE76");
     SM2.SM2Signature sign = key.sign(hash);
     byte[] pubKeys = SM2.signatureToKeyBytes(hash, sign);
     assertArrayEquals(pubKeys, key.getPubKey());
@@ -184,7 +177,7 @@ public class SM2KeyTest {
   public void testSignatureToAddress() throws SignatureException {
     SM2 key = SM2.fromPrivate(privateKey);
     byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB"
-            + "19A87E6FC682D48BB5D42E3D9B9EFFE76");
+        + "19A87E6FC682D48BB5D42E3D9B9EFFE76");
     SM2.SM2Signature sign = key.sign(hash);
     byte[] addr = SM2.signatureToAddress(hash, sign);
     addr = Arrays.copyOfRange(addr, 1, addr.length);
@@ -231,8 +224,8 @@ public class SM2KeyTest {
   public void testToString() {
     SM2 key = SM2.fromPrivate(BigInteger.TEN); // An example private key.
     assertEquals("pub:04d3f94862519621c121666061f65c3e32b2d0d065"
-            + "cd219e3284a04814db5227564b9030cf676f6a742ebd57d146dca"
-            + "428f6b743f64d1482d147d46fb2bab82a14", key.toString());
+        + "cd219e3284a04814db5227564b9030cf676f6a742ebd57d146dca"
+        + "428f6b743f64d1482d147d46fb2bab82a14", key.toString());
   }
 
   @Test
@@ -316,7 +309,7 @@ public class SM2KeyTest {
   @Test
   public void testSM3() {
     String message = "F4A38489E32B45B6F876E3AC2168CA392362DC8F23459C1D1146F"
-            + "C3DBFB7BC9A6D65737361676520646967657374";
+        + "C3DBFB7BC9A6D65737361676520646967657374";
     SM3Digest digest = new SM3Digest();
     byte[] msg = Hex.decode(message);
     digest.update(msg, 0, msg.length);
@@ -326,19 +319,7 @@ public class SM2KeyTest {
     digest.doFinal(eHash, 0);
 
     assertEquals("b524f552cd82b8b028476e005c377fb19a87e6fc682d48bb5d42e3d9b9effe76",
-            Hex.toHexString(eHash));
+        Hex.toHexString(eHash));
   }
 
-  @Test
-  public void testSM3_2() {
-    String message = "F4A38489E32B45B6F876E3AC2168CA392362DC8F23459C1D1146FC3DBFB7BC9A6D657"
-            + "37361676520646967657374";
-    byte[] hash = SM3.hash(message);
-
-    byte[] msg = Hex.decode(message);
-    byte[] hash2 = SM3.hash(msg);
-    System.out.println(Hex.toHexString(hash));
-    System.out.println(Hex.toHexString(hash2));
-    assertArrayEquals(hash, hash2);
-  }
 }

@@ -45,7 +45,7 @@ public class ConsensusService {
     byte[] privateKeyAddress = SignUtils.fromPrivate(privateKey,
         Args.getInstance().isECKeyCryptoEngine()).getAddress();
     byte[] witnessAddress = Args.getLocalWitnesses().getWitnessAccountAddress(Args
-            .getInstance().isECKeyCryptoEngine());
+        .getInstance().isECKeyCryptoEngine());
     WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
     if (null == witnessCapsule) {
       logger.warn("Witness {} is not in witnessStore.", Hex.encodeHexString(witnessAddress));

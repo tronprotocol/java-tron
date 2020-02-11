@@ -25,7 +25,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
@@ -126,11 +125,7 @@ public class TransactionUtil {
         // Just one transferBuilder for now.
         internalTrxBuilder.addCallValueInfo(callValueInfoBuilder);
         internalTransaction.getTokenInfo().forEach((tokenId, amount) -> {
-          Protocol.InternalTransaction.CallValueInfo.Builder tokenInfoBuilder =
-              Protocol.InternalTransaction.CallValueInfo.newBuilder();
-          tokenInfoBuilder.setTokenId(tokenId);
-          tokenInfoBuilder.setCallValue(amount);
-          internalTrxBuilder.addCallValueInfo(tokenInfoBuilder);
+          internalTrxBuilder.addCallValueInfo(Protocol.InternalTransaction.CallValueInfo.newBuilder().setTokenId(tokenId).setCallValue(amount));
         });
         // Token for loop end here
         internalTrxBuilder.setNote(ByteString.copyFrom(internalTransaction.getNote().getBytes()));

@@ -10,7 +10,6 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.security.Signature;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +74,6 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
@@ -294,7 +292,8 @@ public class RpcApiService implements Service {
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     trxExtBuilder.setTransaction(transaction);
-    trxExtBuilder.setTxid(Sha256Hash.of(transaction.getRawData().toByteArray()).getByteString());
+    trxExtBuilder.setTxid(Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getByteString());
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExtBuilder.setResult(retBuilder);
     return trxExtBuilder.build();
@@ -380,7 +379,7 @@ public class RpcApiService implements Service {
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       Block block = null;
       try {
-        block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
       } catch (StoreException e) {
         logger.error(e.getMessage());
       }
@@ -572,7 +571,7 @@ public class RpcApiService implements Service {
         StreamObserver<NumberMessage> responseObserver) {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       try {
-        Block block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        Block block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
         builder.setNum(block.getTransactionsCount());
       } catch (StoreException e) {
         logger.error(e.getMessage());
@@ -920,7 +919,7 @@ public class RpcApiService implements Service {
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
         SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, Args.getInstance()
-                .isECKeyCryptoEngine());
+            .isECKeyCryptoEngine());
         byte[] owner = cryptoEngine.getAddress();
         TransferContract.Builder builder = TransferContract.newBuilder();
         builder.setOwnerAddress(ByteString.copyFrom(owner));
@@ -1388,7 +1387,7 @@ public class RpcApiService implements Service {
         StreamObserver<NumberMessage> responseObserver) {
       NumberMessage.Builder builder = NumberMessage.newBuilder();
       try {
-        Block block = dbManager.getBlockByNum(request.getNum()).getInstance();
+        Block block = chainBaseManager.getBlockByNum(request.getNum()).getInstance();
         builder.setNum(block.getTransactionsCount());
       } catch (StoreException e) {
         logger.error(e.getMessage());

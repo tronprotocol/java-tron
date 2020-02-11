@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.spongycastle.util.Strings;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.logsfilter.EventPluginConfig;
@@ -472,6 +471,17 @@ public class CommonParameter {
   @Getter
   @Setter
   public String cryptoEngine = Constant.ECKey_ENGINE;
+
+  @Getter
+  @Setter
+  public boolean fullNodeHttpEnable = true;
+
+  @Getter
+  @Setter
+  public boolean solidityNodeHttpEnable = true;
+
+  @Setter
+  public static boolean ENERGY_LIMIT_HARD_FORK = false;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

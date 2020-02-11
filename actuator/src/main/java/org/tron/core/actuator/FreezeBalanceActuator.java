@@ -1,5 +1,8 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
@@ -7,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -37,7 +40,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
   public boolean execute(Object result) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -55,7 +58,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
         .get(freezeBalanceContract.getOwnerAddress().toByteArray());
 
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
-    long duration = freezeBalanceContract.getFrozenDuration() * 86_400_000;
+    long duration = freezeBalanceContract.getFrozenDuration() * FROZEN_PERIOD;
 
     long newBalance = accountCapsule.getBalance() - freezeBalanceContract.getFrozenBalance();
 
@@ -77,7 +80,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
           accountCapsule.setFrozenForBandwidth(newFrozenBalanceForBandwidth, expireTime);
         }
         dynamicStore
-            .addTotalNetWeight(frozenBalance / 1000_000L);
+            .addTotalNetWeight(frozenBalance / TRX_PRECISION);
         break;
       case ENERGY:
         if (!ArrayUtils.isEmpty(receiverAddress)
@@ -93,7 +96,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
           accountCapsule.setFrozenForEnergy(newFrozenBalanceForEnergy, expireTime);
         }
         dynamicStore
-            .addTotalEnergyWeight(frozenBalance / 1000_000L);
+            .addTotalEnergyWeight(frozenBalance / TRX_PRECISION);
         break;
       default:
         logger.debug("Resource Code Error.");
@@ -147,7 +150,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
     if (frozenBalance <= 0) {
       throw new ContractValidateException("frozenBalance must be positive");
     }
-    if (frozenBalance < 1_000_000L) {
+    if (frozenBalance < TRX_PRECISION) {
       throw new ContractValidateException("frozenBalance must be more than 1TRX");
     }
 
@@ -168,7 +171,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
     long minFrozenTime = dynamicStore.getMinFrozenTime();
     long maxFrozenTime = dynamicStore.getMaxFrozenTime();
 
-    boolean needCheckFrozeTime = VMConfig.getCheckFrozenTime() == 1;//for test
+    boolean needCheckFrozeTime = CommonParameter.getInstance()
+        .getCheckFrozenTime() == 1;//for test
     if (needCheckFrozeTime && !(frozenDuration >= minFrozenTime
         && frozenDuration <= maxFrozenTime)) {
       throw new ContractValidateException(

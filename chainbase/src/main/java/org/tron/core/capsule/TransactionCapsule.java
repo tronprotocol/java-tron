@@ -44,8 +44,8 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.TransactionFactory;
@@ -84,7 +84,8 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private static final ExecutorService executorService = Executors
-      .newFixedThreadPool(DBConfig.getValidContractProtoThreadNum());
+      .newFixedThreadPool(CommonParameter.getInstance()
+          .getValidContractProtoThreadNum());
   private static final String OWNER_ADDRESS = "ownerAddress_";
 
   private Transaction transaction;
@@ -206,7 +207,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             "Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
-      byte[] address = SignUtils.signatureToAddress(hash, base64, DBConfig.isECKeyCryptoEngine());
+      byte[] address = SignUtils.signatureToAddress(hash, base64, CommonParameter.getInstance().isECKeyCryptoEngine());
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
@@ -229,7 +230,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   //No exception will be thrown here
   public static byte[] getShieldTransactionHashIgnoreTypeException(Transaction tx) {
     try {
-      return hashShieldTransaction(tx, DBConfig.getZenTokenId());
+      return hashShieldTransaction(tx, CommonParameter.getInstance()
+          .getZenTokenId());
     } catch (ContractValidateException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }
@@ -270,9 +272,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction transaction = tx.toBuilder().clearRawData()
         .setRawData(rawBuilder).build();
 
-    byte[] mergedByte = Bytes.concat(Sha256Hash.of(tokenId.getBytes()).getBytes(),
+    byte[] mergedByte = Bytes.concat(Sha256Hash
+            .of(CommonParameter.getInstance().isECKeyCryptoEngine(), tokenId.getBytes()).getBytes(),
         transaction.getRawData().toByteArray());
-    return Sha256Hash.of(mergedByte).getBytes();
+    return Sha256Hash.of(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), mergedByte).getBytes();
   }
 
   // todo mv this static function to capsule util
@@ -509,15 +513,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public Sha256Hash getMerkleHash() {
     byte[] transBytes = this.transaction.toByteArray();
-    return Sha256Hash.of(transBytes);
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        transBytes);
   }
 
   private Sha256Hash getRawHash() {
-    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        this.transaction.getRawData().toByteArray());
   }
 
   public void sign(byte[] privateKey) {
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     //    String signature = cryptoEngine.signHash(getRawHash().getBytes());
     //    ByteString sig = ByteString.copyFrom(signature.getBytes());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
@@ -548,7 +554,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
     }
     List<ByteString> approveList = new ArrayList<>();
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
     byte[] address = cryptoEngine.getAddress();
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(), this.getRawHash().getBytes(),

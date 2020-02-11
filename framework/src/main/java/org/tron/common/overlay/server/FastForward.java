@@ -14,8 +14,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.Node;
@@ -29,7 +27,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;
-import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "net")
 @Component
@@ -52,7 +49,7 @@ public class FastForward {
   private List<Node> fastForwardNodes = parameter.getFastForwardNodes();
   private ByteString witnessAddress = ByteString
       .copyFrom(Args.getLocalWitnesses().getWitnessAccountAddress(CommonParameter.getInstance()
-              .isECKeyCryptoEngine()));
+          .isECKeyCryptoEngine()));
   private int keySize = Args.getLocalWitnesses().getPrivateKeys().size();
 
   public void init() {
@@ -91,9 +88,10 @@ public class FastForward {
               .fromPrivate(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()),
                   Args.getInstance().isECKeyCryptoEngine());
 
-          Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(message.getTimestamp()));
           ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-                  .signHash(hash.getBytes())));
+              .signHash(Sha256Hash.of(CommonParameter.getInstance()
+                  .isECKeyCryptoEngine(), ByteArray.fromLong(message
+                  .getTimestamp())).getBytes())));
           message.setHelloMessage(message.getHelloMessage().toBuilder()
               .setAddress(witnessAddress).setSignature(sig).build());
         }
@@ -103,7 +101,7 @@ public class FastForward {
 
   public boolean checkHelloMessage(HelloMessage message, Channel channel) {
     if (!parameter.isFastForward()
-            || channelManager.getTrustNodes().getIfPresent(channel.getInetAddress()) != null) {
+        || channelManager.getTrustNodes().getIfPresent(channel.getInetAddress()) != null) {
       return true;
     }
 
@@ -123,9 +121,10 @@ public class FastForward {
     }
 
     try {
-      Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(msg.getTimestamp()));
+      Sha256Hash hash = Sha256Hash.of(CommonParameter
+          .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(msg.getTimestamp()));
       String sig =
-              TransactionCapsule.getBase64FromByteString(msg.getSignature());
+          TransactionCapsule.getBase64FromByteString(msg.getSignature());
       byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig,
           Args.getInstance().isECKeyCryptoEngine());
       if (manager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
@@ -144,10 +143,10 @@ public class FastForward {
 
   private boolean isActiveWitness() {
     return parameter.isWitness()
-            && keySize > 0
-            && fastForwardNodes.size() > 0
-            && witnessScheduleStore.getActiveWitnesses().contains(witnessAddress)
-            && backupManager.getStatus().equals(BackupStatusEnum.MASTER);
+        && keySize > 0
+        && fastForwardNodes.size() > 0
+        && witnessScheduleStore.getActiveWitnesses().contains(witnessAddress)
+        && backupManager.getStatus().equals(BackupStatusEnum.MASTER);
   }
 
   private void connect() {

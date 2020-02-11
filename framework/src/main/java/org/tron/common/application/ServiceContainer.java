@@ -18,7 +18,6 @@ package org.tron.common.application;
 import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "app")
 public class ServiceContainer {

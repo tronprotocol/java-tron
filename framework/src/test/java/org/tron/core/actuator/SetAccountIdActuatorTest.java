@@ -1,10 +1,7 @@
 package org.tron.core.actuator;
 
-import static junit.framework.TestCase.fail;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
@@ -42,7 +39,7 @@ public class SetAccountIdActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ADDRESS_1 = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
