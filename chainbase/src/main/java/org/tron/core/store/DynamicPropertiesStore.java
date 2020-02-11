@@ -128,7 +128,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
-
+  private static final byte[] TOTAL_PROCESSINGTx_TIME = "TOTAL_PROCESSINGTx_TIME".getBytes();
+  private static final byte[] RECORD_REQUEST_TIME = "RECORD_REQUEST_TIME".getBytes();
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -1772,6 +1773,34 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(() -> new IllegalArgumentException("not found CHANGE_DELEGATION"));
   }
+  /**
+   * block total processing transaction time
+   */
+  public void saveTotalProcessingTxTime(String bigInteger) {
+    this.put(TOTAL_PROCESSINGTx_TIME, new BytesCapsule(ByteArray.fromHexString(bigInteger)));
+  }
+
+  public String getTotalProcessingTxTime() {
+    return Optional.ofNullable(getUnchecked(TOTAL_PROCESSINGTx_TIME))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toHexString)
+        .orElse("0");
+  }
+
+  /**
+   * http request precious time
+   */
+  public void saveRecordRequestTime(long time) {
+    this.put(RECORD_REQUEST_TIME, new BytesCapsule(ByteArray.fromLong(time)));
+  }
+
+  public long getRecordRequestTime() {
+    return Optional.ofNullable(getUnchecked(RECORD_REQUEST_TIME))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(System.currentTimeMillis());
+  }
+
 
   public boolean allowChangeDelegation() {
     return getChangeDelegation() == 1;

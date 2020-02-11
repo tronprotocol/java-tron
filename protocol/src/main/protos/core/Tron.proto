@@ -546,6 +546,7 @@ message NodeInfo {
   ConfigNodeInfo configNodeInfo = 9;
   MachineInfo machineInfo = 10;
   map<string, string> cheatWitnessInfoMap = 11;
+  string totalProcessingTxTime=12;
 
   message PeerInfo {
     string lastSyncBlock = 1;

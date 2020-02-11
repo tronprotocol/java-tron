@@ -3,6 +3,8 @@ package org.tron.core.db;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 
+import java.math.BigInteger;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -1066,6 +1068,14 @@ public class Manager {
         ownerAddressSet.addAll(result);
       }
     }
+
+    // calculate processing time and update new total new time
+    String Oldtime = chainBaseManager.getDynamicPropertiesStore().getTotalProcessingTxTime();
+    BigInteger preciousTime = new BigInteger(Oldtime);
+    BigInteger diff = new BigInteger(Long.toString(System.currentTimeMillis() - start));
+    chainBaseManager.getDynamicPropertiesStore()
+        .saveTotalProcessingTxTime(preciousTime.add(diff).toString());
+
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
         System.currentTimeMillis() - start,
