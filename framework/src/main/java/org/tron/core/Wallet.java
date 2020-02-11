@@ -2132,8 +2132,13 @@ public class Wallet {
     orderIdList.forEach(
         orderId -> {
           try {
+            MarketOrderCapsule orderCapsule = marketOrderStore.get(orderId.toByteArray());
+            // set prev and next, hide these messages in the print
+            orderCapsule.setPrev(new byte[0]);
+            orderCapsule.setNext(new byte[0]);
+
             marketOrderListBuilder
-                .addOrders(marketOrderStore.get(orderId.toByteArray()).getInstance());
+                .addOrders(orderCapsule.getInstance());
           } catch (ItemNotFoundException e) {
             logger.error("orderId = " + orderId.toString() + " not found");
             throw new IllegalStateException("order not found in store");
@@ -2162,7 +2167,16 @@ public class Wallet {
         .setSellTokenId(ByteString.copyFrom(priceListCapsule.getSellTokenId()))
         .setBuyTokenId(ByteString.copyFrom(priceListCapsule.getBuyTokenId()));
 
-    marketPrices.forEach(marketPriceListBuilder::addPrices);
+    marketPrices.forEach(
+        marketPrice -> {
+          // set prev and next, hide these messages in the print
+          MarketPriceCapsule priceCapsule = new MarketPriceCapsule(marketPrice);
+          priceCapsule.setPrev(new byte[0]);
+          priceCapsule.setNext(new byte[0]);
+
+          marketPriceListBuilder.addPrices(priceCapsule.getInstance());
+        }
+    );
 
     return marketPriceListBuilder.build();
   }
@@ -2214,7 +2228,14 @@ public class Wallet {
           .getUnchecked(pairPriceKey);
       if (orderIdListCapsule != null) {
         List<MarketOrderCapsule> orderList = orderIdListCapsule.getAllOrder(orderStore);
-        orderList.forEach(order -> builder.addOrders(order.getInstance()));
+
+        orderList.forEach(orderCapsule -> {
+          // set prev and next, hide these messages in the print
+          orderCapsule.setPrev(new byte[0]);
+          orderCapsule.setNext(new byte[0]);
+
+          builder.addOrders(orderCapsule.getInstance());
+        });
       }
     }
 
