@@ -632,3 +632,50 @@ message NodeInfo {
     }
   }
 }
+
+message MonitorInfo {
+  int32 status=1;
+  string message=2;
+  DataInfo data=3;
+
+  message DataInfo{
+    int32 interval=1;
+    string nodeType=2;
+    string nodeStatus=3;
+    int64 blockHeight=4;
+    int64 httpRequestCount=5;
+    int64 blockTxProcessingTime=6;
+    repeated EndpointRequestInfo endpointRequest=7;
+    int64 TPS=8;
+    int32 TxQueueSize=9;
+    int64 unConfirmedTx=10;
+    int64 p2pTxIn=11;
+    int64 p2pTxOut=12;
+    float blockBroadcastTime=13;
+    float blockGeneratingTime=14;
+    int64 TCPSuccessConnectionCount=15;
+    int32 TCPErrorConnectionCount=16;
+    int64 TCPInFlow=17;
+    int64 TCPOutFlow=18;
+    int64 UDPInFlow=19;
+    int64 UDPOutFlow=20;
+    int32 forkCount=21;
+    int32 discardBlockCount=22;
+    ErrorProtoData errorProtoData=23;
+    message EndpointRequestInfo{
+      string endpoint=1;
+      int64 count=2;
+      int64 failCount=3;
+    }
+    message ErrorProtoData{
+      int32 count=1;
+      repeated EndpointCount endpointCount=2;
+      message EndpointCount{
+        string endpoint=1;
+        int32 count=2;
+      }
+    }
+  }
+
+}
+
