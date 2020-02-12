@@ -1,43 +1,50 @@
 package org.tron.core.services.filter;
 
-import java.util.HashMap;
-import java.util.Map;
-import javax.servlet.*;
+import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
-import java.util.Date;
+import java.util.HashMap;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import com.alibaba.fastjson.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.tron.common.utils.ByteArray;
-import org.tron.core.ChainBaseManager;
-import org.tron.core.capsule.BytesCapsule;
-import java.util.concurrent.*;
 
 @Slf4j(topic = "httpIntercetpor")
 public class HttpInterceptor implements Filter {
 
   public static String TOTAL_REQUST = "TOTAL_REQUEST";
   public static String FAIL_REQUST = "FAIL_REQUEST";
+  private static int totalCount = 0;
+  private static int failCount = 0;
+  private static int interval = 1;      // 1 minute interval
   public String END_POINT = "END_POINT";
-  public int totalCount = 0;
-  public int failCount = 0;
-  public long gapMilliseconds = 1 * 1000;
+  public long gapMilliseconds = interval * 60 * 1000;
   public HashMap<String, JSONObject> EndpointCount = new HashMap<String, JSONObject>();
-
-  @Autowired
-  @Getter
-  private ChainBaseManager chainBaseManager;
   private long preciousTime = 0;
-  ExecutorService executor = Executors.newFixedThreadPool(2);
+
+  public static int getTotalCount() {
+    return totalCount;
+  }
+
+  public static int getInterval() {
+    return interval;
+  }
+
+  public static int getFailCount() {
+    return failCount;
+  }
+
+  public HttpInterceptor getInstance() {
+    return this;
+  }
+
   @Override public void init(FilterConfig filterConfig) throws ServletException {
     // code here
-    executor.submit(() -> {  // asyn  get time
-      preciousTime = chainBaseManager.getDynamicPropertiesStore().getRecordRequestTime();
-    });
-
+    preciousTime = System.currentTimeMillis();
   }
 
   @Override
@@ -45,18 +52,11 @@ public class HttpInterceptor implements Filter {
       throws IOException, ServletException {
 
     long currentTime = System.currentTimeMillis();
-    if (currentTime - preciousTime > gapMilliseconds) {   //reset every 24 hours
-      ExecutorService executor = Executors.newFixedThreadPool(1);
+    if (currentTime - preciousTime > gapMilliseconds) {   //reset every 1 minutes
       totalCount = 0;
       failCount = 0;
       preciousTime = currentTime;
       EndpointCount.clear();
-//        chainBaseManager.getCommonStore().put("preciousTime".getBytes(),
-//            new BytesCapsule(ByteArray.fromLong(preciousTime)));
-      executor.submit(() -> {    // asyn write data
-        chainBaseManager.getDynamicPropertiesStore().saveRecordRequestTime(preciousTime);
-      });
-
     }
 
     if (request instanceof HttpServletRequest) {
@@ -65,7 +65,6 @@ public class HttpInterceptor implements Filter {
       if (EndpointCount.containsKey(endpoint)) {
         obj = EndpointCount.get(endpoint);
       } else {
-//        obj = new JSONObject();
         obj.put(TOTAL_REQUST, 0);
         obj.put(FAIL_REQUST, 0);
         obj.put(END_POINT, endpoint);
@@ -82,7 +81,6 @@ public class HttpInterceptor implements Filter {
       EndpointCount.put(endpoint, obj);
 
     } else {
-//      logger.info("make rpc call  *********************" + request.getRemoteAddr());
       chain.doFilter(request, response);
     }
 
@@ -90,6 +88,6 @@ public class HttpInterceptor implements Filter {
   }
 
   @Override public void destroy() {
-        executor.shutdown();
+
   }
 }

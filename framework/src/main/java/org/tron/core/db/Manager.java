@@ -2,8 +2,6 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 
-import java.math.BigInteger;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -14,6 +12,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1054,6 +1053,7 @@ public class Manager {
       ownerAddressSet.clear();
       ownerAddressSet.addAll(result);
     }
+
 
     // calculate processing time and update new total new time
     String Oldtime = chainBaseManager.getDynamicPropertiesStore().getTotalProcessingTxTime();
