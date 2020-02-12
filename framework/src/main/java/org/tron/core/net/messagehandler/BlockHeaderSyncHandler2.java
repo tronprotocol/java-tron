@@ -192,7 +192,11 @@ public class BlockHeaderSyncHandler2 {
 
   private void printVar(long notice) {
     logger.info("unSends: {}, unRecieves:{}, unHandles:{}, latestHeight:{}, notice:{}",
-        unSends, unRecieves.keySet(), unHandles.keySet(), StringUtils.isNotEmpty(chainId) ? getLatestSyncBlockHeight(chainId) : 0, notice);
+        unSends,
+        unRecieves.keySet(),
+        unHandles.keySet(),
+        StringUtils.isNotEmpty(chainId) ? getLatestSyncBlockHeight(chainId) : 0,
+        notice);
   }
 
   public void handleRequest(PeerConnection peer, TronMessage msg) throws ItemNotFoundException, BadItemException {
@@ -225,7 +229,8 @@ public class BlockHeaderSyncHandler2 {
         blockHeaders.add(blockHeaderCapsule.getInstance());
       }
 
-      BlockHeaderInventoryMesasge inventoryMesasge = new BlockHeaderInventoryMesasge(chainIdString, currentBlockheight, blockHeaders);
+      BlockHeaderInventoryMesasge inventoryMesasge =
+          new BlockHeaderInventoryMesasge(chainIdString, currentBlockheight, blockHeaders);
       peer.sendMessage(inventoryMesasge);
     }
   }
@@ -234,7 +239,9 @@ public class BlockHeaderSyncHandler2 {
     BlockHeaderInventoryMesasge blockHeaderInventoryMesasge = (BlockHeaderInventoryMesasge) msg;
     List<BlockHeader> blockHeaders = blockHeaderInventoryMesasge.getBlockHeaders();
     logger.info("handleInventory, peer:{}, inventory num:{}, chainId:{}",
-        peer, blockHeaders.get(0).getRawData().getNumber(), ByteArray.toHexString(blockHeaders.get(0).getRawData().getChainId().toByteArray()));
+        peer,
+        blockHeaders.get(0).getRawData().getNumber(),
+        ByteArray.toHexString(blockHeaders.get(0).getRawData().getChainId().toByteArray()));
     for (BlockHeader blockHeader : blockHeaders) {
       unHandles.put(blockHeader.getRawData().getNumber(), new BlockHeaderCapsule(blockHeader));
       unRecieves.remove(blockHeader.getRawData().getNumber());
@@ -292,7 +299,8 @@ public class BlockHeaderSyncHandler2 {
     }
   }
 
-  public void verifyHeader(BlockHeader blockHeader) throws BadBlockException {
+  public void verifyHeader(BlockHeader blockHeader) throws BadBlockException, ItemNotFoundException {
+    simpleVerifyHeader(blockHeader);
     String chainId = ByteArray.toHexString(blockHeader.getRawData().getChainId().toByteArray());
     long blockHeight = blockHeader.getRawData().getNumber();
     long localBlockHeight = getLatestPBFTBlockHeight(chainId);
@@ -449,7 +457,10 @@ public class BlockHeaderSyncHandler2 {
         }
 
         long unSendHeight = unSends.first();
-        if (unRecieves.containsKey(unSendHeight) || unHandles.containsKey(unSendHeight)) {
+        if (unRecieves.containsKey(unSendHeight)
+            || unHandles.containsKey(unSendHeight)
+            || unSendHeight <= commonDataBase.getLatestSyncBlockNum(chainId)) {
+          unSends.remove(unSendHeight);
           continue;
         }
 
@@ -579,7 +590,8 @@ public class BlockHeaderSyncHandler2 {
 
         byte[] chainId = ByteArray.fromHexString(this.chainId);
         long nextEpoch = calculateNextEpoch();
-        thatPeerInfoMap.keySet().forEach(peerConnection -> peerConnection.sendMessage(new EpochMessage(chainId, nextEpoch)));
+        thatPeerInfoMap.keySet().forEach(peerConnection ->
+            peerConnection.sendMessage(new EpochMessage(chainId, nextEpoch)));
       } catch (Exception e) {
         logger.info("sendEpoch {}", e.getMessage());
       }
