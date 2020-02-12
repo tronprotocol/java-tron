@@ -1,5 +1,10 @@
 package org.tron.core.db;
 
+import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
+import static org.tron.common.utils.Commons.adjustBalance;
+import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
+import static org.tron.common.utils.Commons.getExchangeStoreFinal;
+
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -209,9 +214,13 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertTrue(chainManager.getExchangeV2Store() instanceof ExchangeV2Store);
     Assert.assertTrue(chainManager.getExchangeStore() instanceof ExchangeStore);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    Assert.assertTrue(dbManager.getExchangeStoreFinal() instanceof ExchangeStore);
+    Assert.assertTrue(getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
+        dbManager.getExchangeStore(),
+        dbManager.getExchangeV2Store()) instanceof ExchangeStore);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    Assert.assertTrue(dbManager.getExchangeStoreFinal() instanceof ExchangeV2Store);
+    Assert.assertTrue(getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
+        dbManager.getExchangeStore(),
+        dbManager.getExchangeV2Store()) instanceof ExchangeV2Store);
 
   }
 
@@ -264,7 +273,7 @@ public class ManagerTest extends BlockGenerate {
             .build());
     chainManager.getAccountStore().put(account.createDbKey(), account);
     try {
-      dbManager.adjustBalance(accountAddress.getBytes(), 0);
+      adjustBalance(dbManager.getAccountStore(), accountAddress.getBytes(), 0);
       AccountCapsule copyAccount = dbManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getBalance(), account.getBalance());
       Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
@@ -275,7 +284,7 @@ public class ManagerTest extends BlockGenerate {
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
-      dbManager.adjustBalance(accountAddress.getBytes(), -40);
+      adjustBalance(dbManager.getAccountStore(), accountAddress.getBytes(), -40);
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertEquals(
@@ -286,7 +295,7 @@ public class ManagerTest extends BlockGenerate {
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
-      dbManager.adjustBalance(accountAddress.getBytes(), -10);
+      adjustBalance(dbManager.getAccountStore(), accountAddress.getBytes(), -10);
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getBalance(), account.getBalance() - 10);
       Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
@@ -297,7 +306,7 @@ public class ManagerTest extends BlockGenerate {
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
-      dbManager.adjustBalance(accountAddress.getBytes(), 10);
+      adjustBalance(dbManager.getAccountStore(), accountAddress.getBytes(), 10);
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getBalance(), account.getBalance() + 10);
       Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
@@ -328,7 +337,9 @@ public class ManagerTest extends BlockGenerate {
             .build());
     chainManager.getAssetIssueStore().put(assetID.getBytes(), assetIssue);
     try {
-      dbManager.adjustAssetBalanceV2(accountAddress.getBytes(), assetID, -20);
+      adjustAssetBalanceV2(accountAddress.getBytes(), assetID, -20,
+          dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
+          dbManager.getDynamicPropertiesStore());
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
@@ -340,7 +351,9 @@ public class ManagerTest extends BlockGenerate {
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
 
     try {
-      dbManager.adjustAssetBalanceV2(accountAddress.getBytes(), assetID, 10);
+      adjustAssetBalanceV2(accountAddress.getBytes(), assetID, 10,
+          dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
+          dbManager.getDynamicPropertiesStore());
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getAssetMap().size(), 1);
       copyAccount.getAssetMap().forEach((k, v) -> {
@@ -376,7 +389,7 @@ public class ManagerTest extends BlockGenerate {
   public void adjustTotalShieldPoolValueTest() {
     long valueBalance = chainManager.getDynamicPropertiesStore().getTotalShieldedPoolValue() + 1;
     try {
-      dbManager.adjustTotalShieldedPoolValue(valueBalance);
+      adjustTotalShieldedPoolValue(valueBalance, dbManager.getDynamicPropertiesStore());
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
@@ -387,7 +400,7 @@ public class ManagerTest extends BlockGenerate {
         .getTotalShieldedPoolValue();
     valueBalance = beforeTotalShieldValue - 1;
     try {
-      dbManager.adjustTotalShieldedPoolValue(valueBalance);
+      adjustTotalShieldedPoolValue(valueBalance, dbManager.getDynamicPropertiesStore());
       long expectValue = beforeTotalShieldValue - valueBalance;
       Assert.assertEquals(chainManager.getDynamicPropertiesStore().getTotalShieldedPoolValue(),
           expectValue);
