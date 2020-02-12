@@ -91,6 +91,7 @@ public class PrecompiledContracts {
   private static final BatchValidateSign batchValidateSign = new BatchValidateSign();
   private static final ValidateMultiSign validateMultiSign = new ValidateMultiSign();
   private static final ValidateProof validateProof = new ValidateProof();
+  private static final CalHash calHash = new CalHash();
 
   private static final DataWord ecRecoverAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000001");
@@ -114,6 +115,8 @@ public class PrecompiledContracts {
       "000000000000000000000000000000000000000000000000000000000000000a");
   private static final DataWord validateProofAddr = new DataWord(
           "000000000000000000000000000000000000000000000000000000000000000F");
+  private static final DataWord calHashAddr = new DataWord(
+          "0000000000000000000000000000000000000000000000000000000000000010");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -153,6 +156,9 @@ public class PrecompiledContracts {
     }
     if (address.equals(validateProofAddr)) {
       return validateProof;
+    }
+    if (address.equals(calHashAddr)) {
+      return calHash;
     }
 
     return null;
@@ -882,11 +888,8 @@ public class PrecompiledContracts {
 
   public static class ValidateProof extends PrecompiledContract {
 
-    //cm,cv,epk,proof, bindingSignature, value, signHash, frontier, leafCount
     private static final int MINT_SIZE = 416 + 32 * 33 + 32;
-    //spendDescription, receiveDescriptionWithoutC0, receiveDescriptionWithoutC1, bindingSignature, signHash,
     private static final int TRANSFER_SIZE = 1056 + 32 * 33 + 32;
-    //spendDescription, bindingSignature, value, signHash
     private static final int BURN_SIZE = 512;
     private static final long TREE_WIDTH = 1L << 32;
 
@@ -934,11 +937,9 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
-
       if (data == null) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
-
       if (data.length == MINT_SIZE) {
         return checkMint(data);
       } else if (data.length == TRANSFER_SIZE) {
@@ -951,7 +952,7 @@ public class PrecompiledContracts {
     }
 
     //TODO: optimize read frontier
-    //return byte[65]
+    //mint: 1 transparent --> 1 shielded
     private Pair<Boolean, byte[]> checkMint(byte[] data) {
       byte[] cv = new byte[32];
       byte[] cm = new byte[32];
@@ -972,7 +973,9 @@ public class PrecompiledContracts {
         System.arraycopy(data, i * 32 + 416, frontier[i], 0, 32);
       }
       long leafCount = parseLong(data, 1472);
-
+      if (leafCount >= TREE_WIDTH) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
       boolean result;
 
       //verify receiveProof && bindingSignature
@@ -998,10 +1001,9 @@ public class PrecompiledContracts {
       return insertLeaf(frontier, cm, leafCount);
 
     }
-
-    //return byte[98]
+    //transfer: 1 shielded --> 2 shielded
     private Pair<Boolean, byte[]> checkTransfer(byte[] data) {
-      //spend
+
       byte[] spendCv = new byte[32];
       byte[] anchor = new byte[32];
       byte[] nullifier = new byte[32];
@@ -1013,7 +1015,7 @@ public class PrecompiledContracts {
       byte[] receiveCv0 = new byte[32];
       byte[] receiveEpk0 = new byte[32];
       byte[] receiveProof0 = new byte[192];
-      //receive1
+
       byte[] receiveCv1 = new byte[32];
       byte[] receiveEpk1 = new byte[32];
       byte[] receiveProof1 = new byte[192];
@@ -1048,7 +1050,9 @@ public class PrecompiledContracts {
         System.arraycopy(data, i * 32 + 1056, frontier[i], 0, 32);
       }
       long leafCount = parseLong(data, 2112);
-
+      if (leafCount >= TREE_WIDTH - 1) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
       boolean result;
 
       //verify spendProof, receiveProof && bindingSignature
@@ -1080,7 +1084,7 @@ public class PrecompiledContracts {
 
     }
 
-    //data: spendDescription, bindingSignature, value, signHash
+
     private Pair<Boolean, byte[]> checkBurn(byte[] data) {
       //spend
       byte[] cv = new byte[32];
@@ -1148,7 +1152,7 @@ public class PrecompiledContracts {
     }
 
     private Pair<Boolean, byte[]> insertLeaf(byte[][] frontier, byte[] leafValue, long leafCount) {
-      //nodeIndex, slot, frontier, cm
+
       byte[] leftInput;
       byte[] rightInput;
       byte[] hash = new byte[32];
@@ -1161,12 +1165,16 @@ public class PrecompiledContracts {
       logger.info("leafCount is " + leafCount + ", slot is " + slot);
 
       boolean success = true;
+      byte[] result = new byte[(slot+2)*32+1];
+      result[0] = (byte)slot;
+      System.arraycopy(leafValue, 0, result, 1, 32);
       //compute root of Merkle Tree
       //TODO: optimization
       try {
         for (int level = 0; level < 32; level++) {
           if (level == slot) {
             System.arraycopy(nodeValue, 0, frontier[slot], 0, 32);
+
           }
           if (nodeIndex % 2 == 0) {
             leftInput = frontier[level];
@@ -1181,6 +1189,9 @@ public class PrecompiledContracts {
           }
           JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level, leftInput, rightInput, hash));
           System.arraycopy(hash, 0, nodeValue, 0, 32);
+          if (level < slot) {
+            System.arraycopy(hash, 0, result, (level + 1) * 32 + 1, 32);
+          }
         }
 
       } catch (Throwable any) {
@@ -1189,12 +1200,9 @@ public class PrecompiledContracts {
       if (!success) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
-      //result={frontier[slot], newMerkleTreeRoot, slot}
-      byte[] result = new byte[65];
+
       logger.info("Merkle root is " + ByteArray.toHexString(nodeValue));
-      System.arraycopy(frontier[slot], 0, result, 0, 32);
-      System.arraycopy(nodeValue, 0, result, 32, 32);
-      result[64] = (byte) (slot & 0xFF);
+      System.arraycopy(nodeValue, 0, result, (slot+1)*32+1, 32);
       return Pair.of(true, result);
     }
 
@@ -1208,15 +1216,22 @@ public class PrecompiledContracts {
       byte[] hash = new byte[32];
       byte[] nodeValue = new byte[32];
 
+      slot[0] = getFrontierSlot(leafCount);
+      slot[1] = getFrontierSlot(leafCount + 1);
+
+      byte[] result = new byte[(slot[0] + slot[1] + 3) * 32 + 2];
+      result[0] = (byte) (slot[0] & 0xFF);
+      result[1] = (byte) (slot[1] & 0xFF);
       // consider each new leaf in turn, from left to right:
       try {
+        int resultIdx = 2;
         for (int i = 0; i < 2; i++) {
-          long leafIndex = leafCount + i;
-          System.arraycopy(leafValue[i], 0, nodeValue, 0, 32);
-          nodeIndex = leafIndex + TREE_WIDTH - 1; // convert the leafIndex to a nodeIndex
+          nodeIndex = i + leafCount + TREE_WIDTH - 1; // convert the leafIndex to a nodeIndex
+          logger.info("leaf index is " + (leafCount + i) + ", slot is " + slot[i]);
 
-          slot[i] = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
-          logger.info("leafcount is " + leafIndex + ", slot is " + slot[i]);
+          System.arraycopy(leafValue[i], 0, nodeValue, 0, 32);
+          System.arraycopy(leafValue[i], 0, result, resultIdx, 32);
+          resultIdx += 32;
           if (slot[i] == 0) {
             System.arraycopy(nodeValue, 0, frontier[0], 0, 32);
             continue;
@@ -1239,12 +1254,15 @@ public class PrecompiledContracts {
             }
             JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level - 1, leftInput, rightInput, hash));
             System.arraycopy(hash, 0, nodeValue, 0, 32);
+            System.arraycopy(hash, 0, result, resultIdx, 32);
+            resultIdx += 32;
           }
 
           System.arraycopy(nodeValue, 0, frontier[slot[i]], 0, 32);// store in frontier
         }
 
-        // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
+        // So far we've added all leaves, and hashed up to a particular level of the tree.
+        // We now need to continue hashing from that level until the root:
         for (int level = slot[1] + 1; level <= 32; level++) {
 
           if (nodeIndex % 2 == 0) {
@@ -1263,6 +1281,9 @@ public class PrecompiledContracts {
           JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level - 1, leftInput, rightInput, hash));
           System.arraycopy(hash, 0, nodeValue, 0, 32);
         }
+        System.arraycopy(nodeValue, 0, result, resultIdx, 32);
+
+        //logger.info("Result index is " + (resultIdx + 32));
       } catch (Throwable any) {
         success = false;
       }
@@ -1270,15 +1291,44 @@ public class PrecompiledContracts {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
 
-      //result={frontier[slot0], frontier[slot1], newMerkleTreeRoot, slot0, slot1}
-      byte[] result = new byte[98];
       logger.info("Merkle root is " + ByteArray.toHexString(nodeValue));
-      System.arraycopy(frontier[slot[0]], 0, result, 0, 32);
-      System.arraycopy(frontier[slot[1]], 0, result, 32, 32);
-      System.arraycopy(nodeValue, 0, result, 64, 32);
-      result[96] = (byte) (slot[0] & 0xFF);
-      result[97] = (byte) (slot[1] & 0xFF);
       return Pair.of(true, result);
+    }
+  }
+  // compute pedersen hash
+  public static class CalHash extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 0;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      byte[] left = new byte[32];
+      byte[] right = new byte[32];
+      byte[] hash = new byte[32];
+
+      boolean res = true;
+      try {
+        int level = parseInt(data, 0);
+        System.arraycopy(data, 32, left, 0, 32);
+        System.arraycopy(data, 64, right, 0, 32);
+        JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level, left, right, hash));
+        //System.arraycopy(hash, 0, preImage, 0, 32);
+      } catch (Throwable any) {
+        res = false;
+      }
+      if (!res){
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+      return Pair.of(true, hash);
+
+    }
+
+    private int parseInt(byte[] data, int idx) {
+      byte[] bytes = parseBytes(data, idx, 32);
+      return new DataWord(bytes).intValueSafe();
     }
   }
 
