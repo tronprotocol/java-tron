@@ -31,7 +31,6 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.ibc.spv.HeaderManager;
-import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.BlockHeaderInventoryMesasge;
 import org.tron.core.net.message.BlockHeaderRequestMessage;
 import org.tron.core.net.message.BlockHeaderUpdatedNoticeMessage;
@@ -101,6 +100,10 @@ public class BlockHeaderSyncHandler2 {
   @Getter
   private boolean syncDisabled = false;
 
+  @Setter
+  @Getter
+  private Pair<Boolean, Long> syncEpoch = Pair.of(Boolean.FALSE, 0L);
+
   private ConcurrentMap<Long, BlockHeaderCapsule> blockHeaderMap = new ConcurrentHashMap<>();
   private Queue<Pair<PeerConnection, BlockHeaderCapsule>> latestBlockHeaders = new ConcurrentLinkedQueue<>();
   private Set<BlockId> latestBlockIds = new HashSet<>();
@@ -118,9 +121,6 @@ public class BlockHeaderSyncHandler2 {
 
   private ExecutorService triggerNoticeExecutor;
 
-  private ExecutorService sendEpochExecutor = Executors.newSingleThreadExecutor(
-      new ThreadFactoryBuilder().setNameFormat("sendEpochExecutor").build());
-
   private ExecutorService handleLatestBlockHeaderExecutor = Executors.newSingleThreadExecutor(
       new ThreadFactoryBuilder().setNameFormat("handleLatestBlockHeaderExecutor").build());
   private long latestPBFTBlockHeight = 0;
@@ -134,7 +134,6 @@ public class BlockHeaderSyncHandler2 {
   private void init() {
     updateHeaderExecutor.execute(this::updateBlockHeader);
     sendRequestExecutor.execute(this::sendRequest);
-    sendEpochExecutor.execute(this::sendEpoch);
     if (Args.getInstance().isInterChainNode()) {
       triggerNoticeExecutor = Executors.newSingleThreadExecutor(
           new ThreadFactoryBuilder().setNameFormat("sendNoticeExecutor").build());
@@ -251,21 +250,25 @@ public class BlockHeaderSyncHandler2 {
   public void handleSrList(PeerConnection peer, TronMessage msg) throws Exception {
     SRLMessage srlMessage = (SRLMessage) msg;
     long epoch = srlMessage.getEpoch();
-    if (pbftSignDataStore.getSrSignData(epoch) != null) {
+    String chainId = srlMessage.getChainId();
+
+    if (commonDataBase.getSRL(chainId, epoch).getSrAddressCount() != 0) {
       return;
     }
 
-    if (!verifySrList(srlMessage.getDataSign())) {
-      throw new Exception("veryfy SRL error");
+    if (!verifySrList(srlMessage.getDataSign(),
+        commonDataBase.getNextEpoch(chainId),
+        commonDataBase.getSRL(chainId, commonDataBase.getCurrentEpoch(chainId)).getSrAddressList())) {
+      throw new Exception("verify SRL error");
     }
 
-    PbftSignCapsule pbftSignCapsule = new PbftSignCapsule(msg.getData());
-    pbftSignDataStore.putSrSignData(epoch, pbftSignCapsule);
+    commonDataBase.saveSRL(chainId, epoch, srlMessage.getSrl());
   }
 
-  private boolean verifySrList(Protocol.PBFTCommitResult srl) throws InvalidProtocolBufferException {
-    long nextEpoch = calculateNextEpoch();
-    return headerManager.validSrList(srl, nextEpoch);
+  private boolean verifySrList(Protocol.PBFTCommitResult srl,
+                               long epoch,
+                               List<ByteString> srAddressList) throws InvalidProtocolBufferException {
+    return headerManager.validSrList(srl, epoch, new HashSet<>(srAddressList));
   }
 
   public void handleEpoch(PeerConnection peer, TronMessage msg) throws InvalidProtocolBufferException {
@@ -310,6 +313,15 @@ public class BlockHeaderSyncHandler2 {
       return;
     }
 
+    if (syncEpoch.getLeft()) {
+      long now = System.currentTimeMillis();
+      if (now - syncEpoch.getRight() >= 1_1000L) {
+        sendEpoch(chainId, commonDataBase.getNextEpoch(chainId));
+        syncEpoch = Pair.of(true, now);
+      }
+      return;
+    }
+
     if (!verifyBlockPbftSign(blockHeader)) {
       handleMisbehaviour(blockHeader);
     }
@@ -320,22 +332,7 @@ public class BlockHeaderSyncHandler2 {
   }
 
   public boolean verifyBlockPbftSign(BlockHeader blockHeader) throws BadBlockException {
-    if (shouldBeUpdatedEpoch()) {
-      waitSRL();
-    }
-
     return headerManager.validBlockPbftSign(blockHeader);
-  }
-
-  private void waitSRL() {
-  }
-
-  private void notifySRL() {
-
-  }
-
-  public void verifyChainId() {
-
   }
 
   public void updateBlockHeader() {
@@ -366,7 +363,7 @@ public class BlockHeaderSyncHandler2 {
             && !unRecieves.containsKey(nextBlockHeight)) {
           unSends.add(nextBlockHeight);
           logger.info("updateBlockHeader, unrecieve:{}, unsends:{}", nextBlockHeight, unSends);
-          TimeUnit.MILLISECONDS.sleep(500);
+          TimeUnit.MILLISECONDS.sleep(1_000L);
           continue;
         }
 
@@ -376,6 +373,7 @@ public class BlockHeaderSyncHandler2 {
         }
 
 //        simpleVerifyHeader(headerCapsule.getInstance());
+        updatedEpoch(headerCapsule.getInstance());
         storeSyncBlockHeader(headerCapsule);
         unHandles.remove(nextBlockHeight);
         Long lower = unHandles.lowerKey(nextBlockHeight);
@@ -580,47 +578,25 @@ public class BlockHeaderSyncHandler2 {
     }
   }
 
-  public void sendEpoch() {
-    while (true) {
-      try {
-        if (!shouldBeUpdatedEpoch()) {
-          TimeUnit.SECONDS.sleep(1);
-          continue;
-        }
-
-        byte[] chainId = ByteArray.fromHexString(this.chainId);
-        long nextEpoch = calculateNextEpoch();
-        thatPeerInfoMap.keySet().forEach(peerConnection ->
-            peerConnection.sendMessage(new EpochMessage(chainId, nextEpoch)));
-      } catch (Exception e) {
-        logger.info("sendEpoch {}", e.getMessage());
-      }
+  public void sendEpoch(String chainId, long epoch) {
+    if (!syncEpoch.getLeft()) {
+      List<PeerConnection> connections = new ArrayList<>(thatPeerInfoMap.keySet());
+      connections.get(0).sendMessage(new EpochMessage(ByteArray.fromHexString(chainId), epoch));
     }
   }
 
-  public boolean shouldBeUpdatedEpoch() {
-    if (isAfterMaintenance()) {
-      long nextEpoch = calculateNextEpoch();
-      long  currentEpoch = getCurrentEpoch();
-      return nextEpoch != currentEpoch;
+  public void updatedEpoch(BlockHeader blockHeader) {
+    String chainId = ByteArray.toHexString(blockHeader.getRawData().getChainId().toByteArray());
+    long epoch = commonDataBase.getNextEpoch(chainId);
+    if (blockHeader.getRawData().getTimestamp() >= epoch) {
+      commonDataBase.updateNextEpoch(chainId, blockHeader.getRawData().getTimestamp());
     }
-     return false;
-  }
 
-  public boolean isAfterMaintenance() {
-    return false;
-  }
-
-  public long calculateNextEpoch() {
-    return 0;
-  }
-
-  public Long getCurrentEpoch() {
-    return 0L;
-  }
-
-  public void updateCurrentEpoch(long epoch, Protocol.SRL srl) {
-
+    Protocol.SRL srl = commonDataBase.getSRL(chainId, commonDataBase.getNextEpoch(chainId));
+    if (!syncEpoch.getLeft() && srl.getSrAddressCount() == 0) {
+      sendEpoch(chainId, epoch);
+      syncEpoch = Pair.of(true, System.currentTimeMillis());
+    }
   }
 
   private void handleLatestBlockHeader() {
