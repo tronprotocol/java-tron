@@ -36,12 +36,14 @@ public class HttpTestAccount002 {
       .get(1);
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
 
   /**
    * constructor.
    */
   @Test(enabled = true, description = "FreezeBalance for bandwidth by http")
-  public void test01FreezebalanceForBandwidth() {
+  public void test001FreezebalanceForBandwidth() {
     PublicMethed.printAddress(freezeBalanceKey);
     //Send trx to test account
     response = HttpMethed.sendCoin(httpnode, fromAddress, freezeBalanceAddress, amount, testKey002);
@@ -62,7 +64,7 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "UnFreezeBalance for bandwidth by http")
-  public void test02UnFreezebalanceForBandwidth() {
+  public void test002UnFreezebalanceForBandwidth() {
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
 
     //UnFreeze balance for bandwidth
@@ -77,7 +79,7 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "FreezeBalance for energy by http")
-  public void test03FreezebalanceForEnergy() {
+  public void test003FreezebalanceForEnergy() {
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
 
     //Freeze balance for energy
@@ -93,7 +95,7 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "UnFreezeBalance for energy by http")
-  public void test04UnFreezebalanceForEnergy() {
+  public void test004UnFreezebalanceForEnergy() {
 
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -109,7 +111,7 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "FreezeBalance with bandwidth for others by http")
-  public void test05FreezebalanceOfBandwidthForOthers() {
+  public void test005FreezebalanceOfBandwidthForOthers() {
     response = HttpMethed
         .sendCoin(httpnode, fromAddress, receiverResourceAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
@@ -129,7 +131,7 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "Get Delegated Resource by http")
-  public void test06GetDelegatedResource() {
+  public void test006GetDelegatedResource() {
     response = HttpMethed.getDelegatedResource(
         httpnode, freezeBalanceAddress, receiverResourceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -148,9 +150,9 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "Get Delegated Resource from solidity by http")
-  public void test07GetDelegatedResourceFromSolidity() {
+  public void test007GetDelegatedResourceFromSolidity() {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
-    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    HttpMethed.waitToProduceOneBlockFromPbft(httpnode, httpPbftNode);
     response = HttpMethed.getDelegatedResourceFromSolidity(
         httpSoliditynode, freezeBalanceAddress, receiverResourceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -168,8 +170,30 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "Get Delegated Resource from PBFT by http")
+  public void test008GetDelegatedResourceFromPbft() {
+    HttpMethed.waitToProduceOneBlockFromPbft(httpnode, httpPbftNode);
+    response = HttpMethed.getDelegatedResourceFromPbft(
+        httpPbftNode, freezeBalanceAddress, receiverResourceAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("delegatedResource").toString());
+    Assert.assertTrue(jsonArray.size() >= 1);
+    Assert.assertEquals(jsonArray.getJSONObject(0).getString("from"),
+        ByteArray.toHexString(freezeBalanceAddress));
+    Assert.assertEquals(jsonArray.getJSONObject(0).getString("to"),
+        ByteArray.toHexString(receiverResourceAddress));
+    Assert.assertEquals(jsonArray.getJSONObject(0).getLong("frozen_balance_for_bandwidth"),
+        frozenBalance);
+  }
+
+
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "Get Delegated Resource Account Index by http")
-  public void test08GetDelegatedResourceAccountIndex() {
+  public void test009GetDelegatedResourceAccountIndex() {
     response = HttpMethed.getDelegatedResourceAccountIndex(httpnode, freezeBalanceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -182,7 +206,7 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "Get Delegated Resource Account Index from solidity by http")
-  public void test09GetDelegatedResourceAccountIndexFromSolidity() {
+  public void test010GetDelegatedResourceAccountIndexFromSolidity() {
     response = HttpMethed.getDelegatedResourceAccountIndexFromSolidity(httpSoliditynode,
         freezeBalanceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -195,8 +219,24 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "Get Delegated Resource Account Index from PBFT by http")
+  public void test011GetDelegatedResourceAccountIndexFromPbft() {
+    response = HttpMethed.getDelegatedResourceAccountIndexFromPbft(httpPbftNode,
+        freezeBalanceAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertFalse(responseContent.get("toAccounts").toString().isEmpty());
+    String toAddress = responseContent.getJSONArray("toAccounts").get(0).toString();
+    Assert.assertEquals(toAddress, ByteArray.toHexString(receiverResourceAddress));
+  }
+
+
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "UnFreezeBalance with bandwidth for others by http")
-  public void test10UnFreezebalanceOfBandwidthForOthers() {
+  public void test012UnFreezebalanceOfBandwidthForOthers() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
 
@@ -213,7 +253,7 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "FreezeBalance with energy for others by http")
-  public void test11FreezebalanceOfEnergyForOthers() {
+  public void test013FreezebalanceOfEnergyForOthers() {
     response = HttpMethed
         .sendCoin(httpnode, fromAddress, receiverResourceAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
@@ -233,7 +273,7 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "UnFreezeBalance with energy for others by http")
-  public void test12UnFreezebalanceOfEnergyForOthers() {
+  public void test014UnFreezebalanceOfEnergyForOthers() {
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
 
     //UnFreeze balance with energy for others
