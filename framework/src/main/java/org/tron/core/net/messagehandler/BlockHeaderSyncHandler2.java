@@ -374,7 +374,7 @@ public class BlockHeaderSyncHandler2 {
         }
 
 //        simpleVerifyHeader(headerCapsule.getInstance());
-        updatedEpoch(headerCapsule.getInstance());
+        //updatedEpoch(headerCapsule.getInstance());
         storeSyncBlockHeader(headerCapsule);
         unHandles.remove(nextBlockHeight);
         Long lower = unHandles.lowerKey(nextBlockHeight);
