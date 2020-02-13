@@ -38,4 +38,8 @@ public class SRLMessage extends TronMessage {
   public Class<?> getAnswerMessage() {
     return null;
   }
+
+  public String getChainId() {
+    return null;
+  }
 }

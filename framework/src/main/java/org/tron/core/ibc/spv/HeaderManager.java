@@ -166,7 +166,7 @@ public class HeaderManager {
     }
   }
 
-  public boolean validSrList(PBFTCommitResult dataSign, long epoch)
+  public boolean validSrList(PBFTCommitResult dataSign, long epoch, Set<ByteString> preSRL)
       throws InvalidProtocolBufferException {
     //valid sr list
     PBFTMessage.Raw raw = Raw.parseFrom(dataSign.getData().toByteArray());
@@ -183,13 +183,10 @@ public class HeaderManager {
         return false;
       }
       byte[] dataHash = Sha256Hash.hash(srList.toByteArray());
-      //todo: get the before cycle sr list
-//      Set<ByteString> preCycleSrSet = Sets.newHashSet(maintenanceManager.getBeforeWitness());
-      Set<ByteString> preCycleSrSet = Sets.newHashSet();
       List<Future<Boolean>> futureList = new ArrayList<>();
       for (ByteString sign : preCycleSrSignList) {
         futureList.add(executorService.submit(
-            new ValidSrListTask(epoch, preCycleSrSignSet, dataHash, preCycleSrSet, sign)));
+            new ValidSrListTask(epoch, preCycleSrSignSet, dataHash, preSRL, sign)));
       }
       for (Future<Boolean> future : futureList) {
         try {
