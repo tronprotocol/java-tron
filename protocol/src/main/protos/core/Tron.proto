@@ -643,7 +643,7 @@ message MonitorInfo {
     int32 forkCount = 2;
     int32 errorProtoCount = 3;
     NodeInfo node = 4;
-    httpInfo http = 5;
+    HttpInfo http = 5;
     TransactionInfo transaction = 6;
     BlockInfo block = 7;
     P2PInfo p2p = 8;
@@ -656,7 +656,7 @@ message MonitorInfo {
       string version = 4;
       int32 outdatedSR = 5;
     }
-    message httpInfo {
+    message HttpInfo {
       int32 requestCount = 1;
       int32 errorCount = 2;
       repeated EndpointRequestInfo endpointRequest = 3;
@@ -676,8 +676,8 @@ message MonitorInfo {
       int64 TxProcessingTime = 2;
       int64 height = 3;
       int32 discardBlockCount = 4;
-      DelayInfo delayInfo = 5;
-      message DelayInfo {
+      DelayInfos delayInfo = 5;
+      message DelayInfos {
         int32 delay1s = 1;
         int32 delay2s = 2;
         int32 delay3s = 3;
