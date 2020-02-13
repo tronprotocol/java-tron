@@ -651,7 +651,7 @@ message MonitorInfo {
     UDPInfo UDP = 10;
     message NodeInfo {
       string ip = 1;
-      int32 type = 2;
+      int32 Type = 2;
       int32 status = 3;
       string version = 4;
       int32 outdatedSR = 5;
