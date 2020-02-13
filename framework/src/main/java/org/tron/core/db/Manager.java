@@ -12,6 +12,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1052,6 +1053,14 @@ public class Manager {
       ownerAddressSet.clear();
       ownerAddressSet.addAll(result);
     }
+
+
+    // calculate processing time and update new total new time
+    String Oldtime = chainBaseManager.getDynamicPropertiesStore().getTotalProcessingTxTime();
+    BigInteger preciousTime = new BigInteger(Oldtime);
+    BigInteger diff = new BigInteger(Long.toString(System.currentTimeMillis() - start));
+    chainBaseManager.getDynamicPropertiesStore()
+        .saveTotalProcessingTxTime(preciousTime.add(diff).toString());
 
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),

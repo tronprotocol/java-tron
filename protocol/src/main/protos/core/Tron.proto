@@ -546,6 +546,7 @@ message NodeInfo {
   ConfigNodeInfo configNodeInfo = 9;
   MachineInfo machineInfo = 10;
   map<string, string> cheatWitnessInfoMap = 11;
+  string totalProcessingTxTime=12;
 
   message PeerInfo {
     string lastSyncBlock = 1;
@@ -631,3 +632,76 @@ message NodeInfo {
     }
   }
 }
+
+message MonitorInfo {
+  int32 status = 1;
+  string msg = 2;
+  DataInfo data = 3;
+
+  message DataInfo {
+    int32 interval = 1;
+    int32 forkCount = 2;
+    int32 errorProtoCount = 3;
+    NodeInfo node = 4;
+    httpInfo http = 5;
+    TransactionInfo transaction = 6;
+    BlockInfo block = 7;
+    P2PInfo p2p = 8;
+    TCPInfo TCP = 9;
+    UDPInfo UDP = 10;
+    message NodeInfo {
+      string ip = 1;
+      int32 type = 2;
+      int32 status = 3;
+      string version = 4;
+      int32 outdatedSR = 5;
+    }
+    message httpInfo {
+      int32 requestCount = 1;
+      int32 errorCount = 2;
+      repeated EndpointRequestInfo endpointRequest = 3;
+      message EndpointRequestInfo {
+        string endpoint = 1;
+        int64 count = 2;
+        int64 failCount = 3;
+      }
+    }
+    message TransactionInfo {
+      int64 TPS = 1;
+      int32 TxQueueSize = 2;
+      int32 unconfirmedTx = 3;
+    }
+    message BlockInfo {
+      int64 generatingTime = 1;
+      int64 TxProcessingTime = 2;
+      int64 height = 3;
+      int32 discardBlockCount = 4;
+      DelayInfo delayInfo = 5;
+      message DelayInfo {
+        int32 delay1s = 1;
+        int32 delay2s = 2;
+        int32 delay3s = 3;
+      }
+    }
+    message P2PInfo {
+      int32 connectionCount = 1;
+      int32 validCount = 2;
+      int32 TxIn = 3;
+      int32 TxOut = 4;
+
+    }
+    message TCPInfo {
+      int64 successConnectionCount = 1;
+      int64 errorConnectionCount = 2;
+      int64 disconnectionCount = 3;
+      int64 inFlow = 4;
+      int64 outFlow = 5;
+    }
+    message UDPInfo {
+      int64 inFlow = 1;
+      int64 outFlow = 2;
+    }
+  }
+
+}
+
