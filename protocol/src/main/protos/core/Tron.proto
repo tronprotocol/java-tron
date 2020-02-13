@@ -642,14 +642,13 @@ message MonitorInfo {
     int32 interval = 1;
     int32 forkCount = 2;
     int32 errorProtoCount = 3;
-    string nodeStatus = 4;
-    NodeInfo node = 5;
-    httpInfo http = 6;
-    TransactionInfo transaction = 7;
-    BlockInfo block = 8;
-    P2PInfo p2p = 9;
-    TCPInfo TCP = 10;
-    UDPInfo UDP = 11;
+    NodeInfo node = 4;
+    httpInfo http = 5;
+    TransactionInfo transaction = 6;
+    BlockInfo block = 7;
+    P2PInfo p2p = 8;
+    TCPInfo TCP = 9;
+    UDPInfo UDP = 10;
     message NodeInfo {
       string ip = 1;
       int32 type = 2;
