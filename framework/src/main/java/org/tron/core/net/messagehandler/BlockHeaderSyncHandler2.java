@@ -168,6 +168,7 @@ public class BlockHeaderSyncHandler2 {
         needHandleHeight = unSends.last();
       } catch (NoSuchElementException e) {
         try {
+          removeWithTimeout();
           needHandleHeight = unRecieves.lastKey();
         } catch (NoSuchElementException e1) {
           try {
@@ -432,6 +433,17 @@ public class BlockHeaderSyncHandler2 {
     return Longs.min(arrays);
   }
 
+  public void removeWithTimeout() {
+    long now = System.currentTimeMillis();
+    for (Map.Entry<Long, Long> e : unRecieves.entrySet()) {
+      if (now - e.getValue() >= 1_000L) {
+        logger.info("sendRequest, unRecieves timeout:{}, {}", e.getKey(), e.getValue());
+        unSends.add(e.getKey());
+        unRecieves.remove(e.getKey());
+      }
+    }
+  }
+
   public void sendRequest() {
     while (true) {
       try {
@@ -449,6 +461,7 @@ public class BlockHeaderSyncHandler2 {
           continue;
         }
 
+        removeWithTimeout();
         if (unSends.isEmpty() || unRecieves.size() >= 20) {
           TimeUnit.MILLISECONDS.sleep(1);
           continue;
@@ -465,15 +478,8 @@ public class BlockHeaderSyncHandler2 {
         List<PeerConnection> connections = new ArrayList<>(thatPeerInfoMap.keySet());
         connections.get(0).sendMessage(new BlockHeaderRequestMessage(chainId, unSendHeight, BLOCK_HEADER_LENGTH));
         logger.info("sendRequest, localLatestHeight:{}, peer: {}, chainId:{}", unSendHeight, connections.get(0), chainId);
-        long now = System.currentTimeMillis();
-        for (Map.Entry<Long, Long> e : unRecieves.entrySet()) {
-          if (now - e.getValue() >= 1_000L) {
-            logger.info("sendRequest, unRecieves timeout:{}, {}", e.getKey(), e.getValue());
-            unSends.add(e.getKey());
-            unRecieves.remove(e.getKey());
-          }
-        }
-        unRecieves.put(unSendHeight, now);
+        removeWithTimeout();
+        unRecieves.put(unSendHeight, System.currentTimeMillis());
         unSends.remove(unSendHeight);
       } catch (Exception e) {
         logger.info("sendRequest " + e.getMessage(), e);
