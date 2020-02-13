@@ -205,7 +205,7 @@ public class BlockHeaderSyncHandler {
 
   private boolean verifySrList(Protocol.PBFTCommitResult srl) throws InvalidProtocolBufferException {
     long nextEpoch = calculateNextEpoch();
-    return headerManager.validSrList(srl, nextEpoch);
+    return headerManager.validSrList(srl, nextEpoch, null);
   }
 
   public void handleEpoch(PeerConnection peer, TronMessage msg) throws InvalidProtocolBufferException {

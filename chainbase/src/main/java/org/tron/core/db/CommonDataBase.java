@@ -4,11 +4,15 @@ import java.util.Optional;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.protos.Protocol;
 
 @Slf4j
 @Component
@@ -18,6 +22,8 @@ public class CommonDataBase extends TronDatabase<byte[]> {
   private static final byte[] LATEST_SYNC_BLOCK_NUM = "LATEST_SYNC_BLOCK_NUM".getBytes();
   private static final byte[] FIRST_PBFT_BLOCK_NUM = "FIRST_PBFT_BLOCK_NUM".getBytes();
   private static final byte[] LATEST_PBFT_BLOCK_HASH = "LATEST_PBFT_BLOCK_HASH".getBytes();
+  private static final byte[] NEXT_EPOCH = "NEXT_EPOCH".getBytes();
+  private static final byte[] CURRENT_EPOCH = "CURRENT_EPOCH".getBytes();
 
   public CommonDataBase() {
     super("common-database");
@@ -120,6 +126,69 @@ public class CommonDataBase extends TronDatabase<byte[]> {
       return null;
     }
     return Sha256Hash.wrap(date);
+  }
+
+  public Protocol.SRL getSRL(String chainId, long epoch) {
+    byte[] value = get(buildKey(ByteArray.fromLong(epoch), chainId));
+    if (value == null || value.length == 0) {
+      return Protocol.SRL.newBuilder().build();
+    } else {
+      try {
+        return Protocol.SRL.parseFrom(value);
+      } catch (InvalidProtocolBufferException e) {
+        return Protocol.SRL.newBuilder().build();
+      }
+    }
+  }
+
+  public void saveSRL(String chainId, long epoch, Protocol.SRL srl) {
+    Protocol.SRL value = getSRL(chainId, epoch);
+    if (value.getSrAddressCount() == 0) {
+      put(buildKey(ByteArray.fromLong(epoch), chainId), srl.toByteArray());
+    }
+  }
+
+  public long getNextEpoch(String chainId) {
+    byte[] value = get(buildKey(NEXT_EPOCH, chainId));
+    if (value == null || value.length == 0) {
+      return 1L;
+    } else {
+      return ByteArray.toLong(value);
+    }
+  }
+
+  public void saveNextEpoch(String chainId, long nextEpoch) {
+    this.put(buildKey(NEXT_EPOCH, chainId), ByteArray.fromLong(nextEpoch));
+  }
+
+  public void updateNextEpoch(String chainId, long blockTime) {
+    long maintenanceTimeInterval = DBConfig.getMaintenanceTimeInterval();
+
+    long currentEpoch = getNextEpoch(chainId);
+    long round = (blockTime - currentEpoch) / maintenanceTimeInterval;
+    long nextEpoch = currentEpoch + (round + 1) * maintenanceTimeInterval;
+    saveNextEpoch(chainId, nextEpoch);
+    saveCurrentEpoch(chainId, currentEpoch);
+
+    logger.info(
+        "do update nextEpoch, chainId:{}, currentEpoch:{}, blockTime:{}, nextEpoch:{}",
+        chainId,
+        new DateTime(currentEpoch), new DateTime(blockTime),
+        new DateTime(nextEpoch)
+    );
+  }
+
+  public long getCurrentEpoch(String chainId) {
+    byte[] value = get(buildKey(CURRENT_EPOCH, chainId));
+    if (value == null || value.length == 0) {
+      return 1L;
+    } else {
+      return ByteArray.toLong(value);
+    }
+  }
+
+  public void saveCurrentEpoch(String chainId, long currentEpoch) {
+    this.put(buildKey(NEXT_EPOCH, chainId), ByteArray.fromLong(currentEpoch));
   }
 
 }
