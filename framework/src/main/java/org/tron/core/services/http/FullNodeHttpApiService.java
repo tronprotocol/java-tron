@@ -3,16 +3,11 @@ package org.tron.core.services.http;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.EnumSet;
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,7 +17,6 @@ import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.services.filter.HttpInterceptor;
 
 @Component
 @Slf4j(topic = "API")
@@ -418,12 +412,6 @@ public class FullNodeHttpApiService implements Service {
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
       }
-      // filter
-      ServletHandler handler = new ServletHandler();
-      FilterHolder fh = handler
-          .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
-              EnumSet.of(DispatcherType.REQUEST));
-      context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
