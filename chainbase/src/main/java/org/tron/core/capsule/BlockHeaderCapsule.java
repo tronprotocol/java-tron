@@ -162,6 +162,10 @@ public class BlockHeaderCapsule implements ProtoCapsule<BlockHeader> {
     return Sha256Hash.wrap(blockHeader.getRawData().getTxTrieRoot());
   }
 
+  public Sha256Hash getCrossMerkleRoot() {
+    return Sha256Hash.wrap(blockHeader.getRawData().getCrossTxRoot());
+  }
+
   public Sha256Hash getAccountRoot() {
     if (blockHeader.getRawData().getAccountStateRoot() != null
         && !blockHeader.getRawData().getAccountStateRoot().isEmpty()) {

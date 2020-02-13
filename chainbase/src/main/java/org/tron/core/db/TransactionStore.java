@@ -13,6 +13,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.exception.BadItemException;
+import org.tron.protos.Protocol.CrossMessage;
 
 @Slf4j(topic = "DB")
 @Component
@@ -46,6 +47,12 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
           return e;
         }
       }
+      for (CrossMessage crossMessage : blocksList.get(0).getCrossMessageList()) {
+        TransactionCapsule tx = new TransactionCapsule(crossMessage.getTransaction());
+        if (tx.getTransactionId().equals(Sha256Hash.wrap(key))) {
+          return tx;
+        }
+      }
     }
     return null;
   }
@@ -56,6 +63,12 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
       for (TransactionCapsule e : bl.getBlk().getTransactions()) {
         if (e.getTransactionId().equals(Sha256Hash.wrap(key))) {
           return e;
+        }
+      }
+      for (CrossMessage crossMessage : bl.getBlk().getCrossMessageList()) {
+        TransactionCapsule tx = new TransactionCapsule(crossMessage.getTransaction());
+        if (tx.getTransactionId().equals(Sha256Hash.wrap(key))) {
+          return tx;
         }
       }
     }

@@ -166,9 +166,9 @@ public class CreateCommonTransactionTest {
 
   public static void main(String[] args) {
 //    testCreateUpdateBrokerageContract();
-//    testCrossTx();
+    testCrossTx();
 //    testCrossTxBack();
-    query();
+//    query();
 //    createAsset("testCross");
   }
 

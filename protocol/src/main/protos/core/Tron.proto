@@ -400,6 +400,7 @@ message BlockHeader {
     int32 version = 10;
     bytes accountStateRoot = 11;
     bytes chainId = 12;
+    bytes crossTxRoot = 13;
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
@@ -409,6 +410,7 @@ message BlockHeader {
 message Block {
   repeated Transaction transactions = 1;
   BlockHeader block_header = 2;
+  repeated CrossMessage cross_message = 3;
 }
 
 message ChainInventory {

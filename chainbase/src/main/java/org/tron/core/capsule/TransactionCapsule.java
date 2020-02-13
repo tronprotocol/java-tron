@@ -57,6 +57,7 @@ import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -99,6 +100,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   @Setter
   private boolean source = true;
+
+  @Setter
+  @Getter
+  private Type type;
 
   /**
    * constructor TransactionCapsule.

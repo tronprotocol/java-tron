@@ -114,6 +114,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.ibc.communicate.CommunicateService;
 import org.tron.core.ibc.communicate.PbftBlockListener;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
@@ -235,6 +236,8 @@ public class Manager {
   private BlockingQueue<Sha256Hash> crossTxQueue;
   @Setter
   private PbftBlockListener pbftBlockListener;
+  @Setter
+  private CommunicateService communicateService;
   /**
    * Cycle thread to repush Transactions
    */
@@ -421,7 +424,9 @@ public class Manager {
 
   private BlockCapsule findHighestBlockNum(Sha256Hash blockHash) {
     KhaosBlock block = khaosDb.getMiniStore().getByHash(blockHash);
-    if (block == null) return null;
+    if (block == null) {
+      return null;
+    }
     while (block.getChild() != null) {
       block = block.getChild();
     }
@@ -1122,6 +1127,15 @@ public class Manager {
           throw new BadBlockException("The merkle hash is not validated");
         }
 
+        if (!block.calcCrossMerkleRoot().equals(block.getCrossMerkleRoot())) {
+          logger.warn(
+              "The cross merkle root doesn't match, Calc result is "
+                  + block.calcCrossMerkleRoot()
+                  + " , the headers is "
+                  + block.getCrossMerkleRoot());
+          throw new BadBlockException("The cross merkle hash is not validated");
+        }
+
         consensus.receiveBlock(block);
       }
 
@@ -1424,8 +1438,10 @@ public class Manager {
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldeTransCounts = new AtomicInteger(0);
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
+    CrossMessage crossMessage;
     while (iterator.hasNext() || crossTxQueue.size() > 0 || repushTransactions.size() > 0) {
       boolean fromPending = false;
+      crossMessage = null;
       TransactionCapsule trx;
       if (iterator.hasNext()) {
         fromPending = true;
@@ -1433,7 +1449,7 @@ public class Manager {
       } else if (crossTxQueue.size() > 0) {
         //process cross tx
         Sha256Hash txHash = crossTxQueue.poll();
-        CrossMessage crossMessage = getCrossStore().getReceiveCrossMsgUnEx(txHash);
+        crossMessage = getCrossStore().getReceiveCrossMsgUnEx(txHash);
         //todo:a->o->b
         if (crossMessage != null && (crossMessage.getType() == Type.DATA
             || crossMessage.getType() == Type.ACK)
@@ -1485,7 +1501,10 @@ public class Manager {
         TransactionInfo result = processTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
         tmpSeesion.merge();
-        blockCapsule.addTransaction(trx);
+        if (trx.isSource()) {
+          blockCapsule.addTransaction(trx);
+        }
+        blockCapsule.addCrossMessage(crossMessage);
         if (Objects.nonNull(result)) {
           transationRetCapsule.addTransactionInfo(result);
         }
@@ -1493,7 +1512,7 @@ public class Manager {
           iterator.remove();
         }
       } catch (Exception e) {
-        logger.error("Process trx failed when generating block: {}", e.getMessage());
+        logger.error("Process trx failed when generating block!", e);
       }
     }
 
@@ -1507,6 +1526,7 @@ public class Manager {
         crossTxQueue.size());
 
     blockCapsule.setMerkleRoot();
+    blockCapsule.setCrossMerkleRoot();
     blockCapsule.sign(miner.getPrivateKey());
     return blockCapsule;
 
@@ -1583,21 +1603,18 @@ public class Manager {
     try {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
+      for (CrossMessage crossMessage : block.getCrossMessageList()) {
+        if (communicateService.isSyncFinish() && !communicateService.validProof(crossMessage)) {
+          throw new ValidateSignatureException("valid proof fail");
+        }
+        TransactionCapsule transactionCapsule = new TransactionCapsule(
+            crossMessage.getTransaction());
+        transactionCapsule.setSource(false);
+        transactionCapsule.setType(crossMessage.getType());
+        processTx(block, transationRetCapsule, transactionCapsule);
+      }
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-        transactionCapsule.setBlockNum(block.getNum());
-        if (block.generatedByMyself) {
-          transactionCapsule.setVerified(true);
-        }
-        if (getCrossStore().getReceiveCrossMsgUnEx(transactionCapsule.getTransactionId()) != null) {
-          transactionCapsule.setSource(false);
-        }
-        accountStateCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(transactionCapsule, block);
-        accountStateCallBack.exeTransFinish();
-        if (Objects.nonNull(result)) {
-          transationRetCapsule.addTransactionInfo(result);
-        }
-        pbftBlockListener.addCallBackTx(chainBaseManager, block.getNum(), transactionCapsule);
+        processTx(block, transationRetCapsule, transactionCapsule);
       }
       accountStateCallBack.executePushFinish();
     } finally {
@@ -1627,6 +1644,22 @@ public class Manager {
     updateTransHashCache(block);
     updateRecentBlock(block);
     updateDynamicProperties(block);
+  }
+
+  private void processTx(BlockCapsule block, TransactionRetCapsule transationRetCapsule,
+      TransactionCapsule transactionCapsule)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
+    transactionCapsule.setBlockNum(block.getNum());
+    if (block.generatedByMyself) {
+      transactionCapsule.setVerified(true);
+    }
+    accountStateCallBack.preExeTrans();
+    TransactionInfo result = processTransaction(transactionCapsule, block);
+    accountStateCallBack.exeTransFinish();
+    if (Objects.nonNull(result)) {
+      transationRetCapsule.addTransactionInfo(result);
+    }
+    pbftBlockListener.addCallBackTx(chainBaseManager, block.getNum(), transactionCapsule);
   }
 
   private void payReward(BlockCapsule block) {
@@ -1748,11 +1781,6 @@ public class Manager {
     List<Future<Boolean>> futures = new ArrayList<>(transSize);
 
     for (TransactionCapsule transaction : block.getTransactions()) {
-      if (getCrossStore().getReceiveCrossMsgUnEx(transaction.getTransactionId()) != null) {
-        transaction.setSource(false);
-        countDownLatch.countDown();
-        continue;
-      }
       Future<Boolean> future = validateSignService
           .submit(new ValidateSignTask(transaction, countDownLatch, chainBaseManager));
       futures.add(future);

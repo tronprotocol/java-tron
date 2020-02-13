@@ -19,7 +19,6 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -39,9 +38,7 @@ public class CrossChainActuator extends AbstractActuator {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     try {
       //ack don't execute，todo：a->o->b
-      CrossMessage crossMessage = chainBaseManager.getCrossStore()
-          .getReceiveCrossMsgUnEx(tx.getTransactionId());
-      if (crossMessage != null && crossMessage.getType() == Type.ACK) {
+      if (tx.getType() != null && tx.getType() == Type.ACK) {
         return true;
       }
       //
@@ -67,7 +64,8 @@ public class CrossChainActuator extends AbstractActuator {
             } else {//source token
               Long outTokenCount = crossRevokingStore.getOutTokenCount(tokenId);
               crossRevokingStore
-                  .saveOutTokenCount(tokenId, outTokenCount == null ? amount : outTokenCount + amount);
+                  .saveOutTokenCount(tokenId,
+                      outTokenCount == null ? amount : outTokenCount + amount);
             }
             AccountCapsule accountCapsule = accountStore.get(ownerAddress);
             accountCapsule.reduceAssetAmountV2(ByteArray.fromString(tokenId),
@@ -154,11 +152,10 @@ public class CrossChainActuator extends AbstractActuator {
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     //ack don't valid
-    CrossMessage crossMessage = chainBaseManager.getCrossStore()
-        .getReceiveCrossMsgUnEx(tx.getTransactionId());
-    if (crossMessage != null && crossMessage.getType() == Type.ACK) {
+    if (tx.getType() != null && tx.getType() == Type.ACK) {
       return true;
     }
+    //
     try {
       CrossContract crossContract = any.unpack(CrossContract.class);
       if (tx.isSource()) {

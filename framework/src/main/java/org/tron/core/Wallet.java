@@ -90,7 +90,6 @@ import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
@@ -1056,6 +1055,11 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowPBFT")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowPBFT())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowCrossChain")
+        .setValue(dbManager.getDynamicPropertiesStore().getCrossChain())
         .build());
 
     return builder.build();

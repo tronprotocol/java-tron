@@ -72,6 +72,7 @@ public class CommunicateService implements Communicate {
 
   public void setPbftBlockListener(PbftBlockListener pbftBlockListener) {
     manager.setPbftBlockListener(pbftBlockListener);
+    manager.setCommunicateService(this);
     executorService
         .scheduleWithFixedDelay(() -> receiveCrossMsgCache.asMap().forEach((hash, crossMessage) -> {
           try {
@@ -101,9 +102,16 @@ public class CommunicateService implements Communicate {
         TransactionStore transactionStore = chainBaseManager.getTransactionStore();
         long blockNum = transactionStore.get(txId.getBytes()).getBlockNum();
         BlockCapsule blockCapsule = blockStore.get(blockIndexStore.get(blockNum).getBytes());
-        List<Sha256Hash> hashList = blockCapsule.getInstance().getTransactionsList().stream()
-            .map(transaction -> Sha256Hash.of(transaction.toByteArray()))
-            .collect(Collectors.toList());
+        List<Sha256Hash> hashList;
+        if (blockCapsule.getInstance().getCrossMessageList().isEmpty()) {
+          hashList = blockCapsule.getInstance().getTransactionsList().stream()
+              .map(transaction -> Sha256Hash.of(transaction.toByteArray()))
+              .collect(Collectors.toList());
+        } else {
+          hashList = blockCapsule.getInstance().getCrossMessageList().stream()
+              .map(crossMsg -> Sha256Hash.of(crossMsg.getTransaction().toByteArray()))
+              .collect(Collectors.toList());
+        }
         List<ProofLeaf> proofLeafList = MerkleTree.getInstance()
             .generateProofPath(hashList, getTxMerkleHash(crossMessage));
         List<Proof> proofList = proofLeafList.stream().map(proofLeaf -> {
@@ -140,6 +148,7 @@ public class CommunicateService implements Communicate {
     Sha256Hash txHash = getTxMerkleHash(crossMessage);
     Sha256Hash root = getRoot(crossMessage);
     if (root == null) {
+      logger.error("get the root is null");
       return false;
     }
     MerkleTree merkleTree = MerkleTree.getInstance();
@@ -223,7 +232,8 @@ public class CommunicateService implements Communicate {
     }
     BlockHeaderCapsule blockHeaderCapsule = blockHeaderStore.getUnchecked(chainId, blockId);
     if (blockHeaderCapsule != null) {
-      return blockHeaderCapsule.getMerkleRoot();
+      return blockHeaderCapsule.getCrossMerkleRoot().equals(Sha256Hash.ZERO_HASH)
+          ? blockHeaderCapsule.getMerkleRoot() : blockHeaderCapsule.getCrossMerkleRoot();
     }
     return null;
   }

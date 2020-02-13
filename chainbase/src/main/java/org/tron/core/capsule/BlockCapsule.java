@@ -41,6 +41,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "capsule")
@@ -57,6 +58,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   private StringBuilder toStringBuff = new StringBuilder();
 
   private boolean isSwitch;
+
+  @Getter
+  private List<CrossMessage> crossMessageList = new ArrayList<>();
 
   public boolean isSwitch() {
     return isSwitch;
@@ -141,6 +145,14 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     getTransactions().add(pendingTrx);
   }
 
+  public void addCrossMessage(CrossMessage crossMessage) {
+    if (crossMessage == null) {
+      return;
+    }
+    this.block = this.block.toBuilder().addCrossMessage(crossMessage).build();
+    getCrossMessageList().add(crossMessage);
+  }
+
   public List<TransactionCapsule> getTransactions() {
     return transactions;
   }
@@ -149,6 +161,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     transactions = this.block.getTransactionsList().stream()
         .map(trx -> new TransactionCapsule(trx))
         .collect(Collectors.toList());
+    crossMessageList = this.block.getCrossMessageList().stream().collect(Collectors.toList());
   }
 
   public void sign(byte[] privateKey) {
@@ -210,10 +223,33 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
   }
 
+  public Sha256Hash calcCrossMerkleRoot() {
+    List<CrossMessage> crossMessageList = this.block.getCrossMessageList();
+
+    if (CollectionUtils.isEmpty(crossMessageList)) {
+      return Sha256Hash.ZERO_HASH;
+    }
+
+    ArrayList<Sha256Hash> ids = crossMessageList.stream()
+        .map(c -> Sha256Hash.of(c.getTransaction().toByteArray()))
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+  }
+
   public void setMerkleRoot() {
     BlockHeader.raw blockHeaderRaw =
         this.block.getBlockHeader().getRawData().toBuilder()
             .setTxTrieRoot(calcMerkleRoot().getByteString()).build();
+
+    this.block = this.block.toBuilder().setBlockHeader(
+        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
+  }
+
+  public void setCrossMerkleRoot() {
+    BlockHeader.raw blockHeaderRaw =
+        this.block.getBlockHeader().getRawData().toBuilder()
+            .setCrossTxRoot(calcCrossMerkleRoot().getByteString()).build();
 
     this.block = this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
@@ -240,6 +276,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public Sha256Hash getMerkleRoot() {
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
+  }
+
+  public Sha256Hash getCrossMerkleRoot() {
+    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getCrossTxRoot());
   }
 
   public Sha256Hash getAccountRoot() {
@@ -303,6 +343,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       toStringBuff.append("txs size=").append(getTransactions().size()).append("\n");
     } else {
       toStringBuff.append("txs are empty\n");
+    }
+    if (getCrossMessageList().isEmpty()) {
+      toStringBuff.append("cross tx are empty\n");
+    } else {
+      toStringBuff.append("cross tx size=").append(getCrossMessageList().size()).append("\n");
     }
 
     toStringBuff.append("]");
