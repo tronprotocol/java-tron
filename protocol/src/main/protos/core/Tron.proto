@@ -634,46 +634,73 @@ message NodeInfo {
 }
 
 message MonitorInfo {
-  int32 status=1;
-  string message=2;
-  DataInfo data=3;
+  int32 status = 1;
+  string msg = 2;
+  DataInfo data = 3;
 
-  message DataInfo{
-    int32 interval=1;
-    string nodeType=2;
-    string nodeStatus=3;
-    int64 blockHeight=4;
-    int64 httpRequestCount=5;
-    int64 blockTxProcessingTime=6;
-    repeated EndpointRequestInfo endpointRequest=7;
-    int64 TPS=8;
-    int32 TxQueueSize=9;
-    int64 unConfirmedTx=10;
-    int64 p2pTxIn=11;
-    int64 p2pTxOut=12;
-    float blockBroadcastTime=13;
-    float blockGeneratingTime=14;
-    int64 TCPSuccessConnectionCount=15;
-    int32 TCPErrorConnectionCount=16;
-    int64 TCPInFlow=17;
-    int64 TCPOutFlow=18;
-    int64 UDPInFlow=19;
-    int64 UDPOutFlow=20;
-    int32 forkCount=21;
-    int32 discardBlockCount=22;
-    ErrorProtoData errorProtoData=23;
-    message EndpointRequestInfo{
-      string endpoint=1;
-      int64 count=2;
-      int64 failCount=3;
+  message DataInfo {
+    int32 interval = 1;
+    int32 forkCount = 2;
+    int32 errorProtoCount = 3;
+    string nodeStatus = 4;
+    NodeInfo node = 5;
+    httpInfo http = 6;
+    TransactionInfo transaction = 7;
+    BlockInfo block = 8;
+    P2PInfo p2p = 9;
+    TCPInfo TCP = 10;
+    UDPInfo UDP = 11;
+    message NodeInfo {
+      string ip = 1;
+      int32 type = 2;
+      int32 status = 3;
+      string version = 4;
+      int32 outdatedSR = 5;
     }
-    message ErrorProtoData{
-      int32 count=1;
-      repeated EndpointCount endpointCount=2;
-      message EndpointCount{
-        string endpoint=1;
-        int32 count=2;
+    message httpInfo {
+      int32 requestCount = 1;
+      int32 errorCount = 2;
+      repeated EndpointRequestInfo endpointRequest = 3;
+      message EndpointRequestInfo {
+        string endpoint = 1;
+        int64 count = 2;
+        int64 failCount = 3;
       }
+    }
+    message TransactionInfo {
+      int64 TPS = 1;
+      int32 TxQueueSize = 2;
+      int32 unconfirmedTx = 3;
+    }
+    message BlockInfo {
+      int64 generatingTime = 1;
+      int64 TxProcessingTime = 2;
+      int64 height = 3;
+      int32 discardBlockCount = 4;
+      DelayInfo delayInfo = 5;
+      message DelayInfo {
+        int32 delay1s = 1;
+        int32 delay2s = 2;
+        int32 delay3s = 3;
+      }
+    }
+    message P2PInfo {
+      int32 connectionCount = 1;
+      int32 validCount = 2;
+      int32 TxIn = 3;
+      int32 TxOut = 4;
+
+    }
+    message TCPInfo {
+      int64 successConnectionCount = 1;
+      int64 errorConnectionCount = 2;
+      int64 disconnectionCount = 3;
+      int64 inFlow = 4;
+      int64 outFlow = 5;
+    }
+    message UDPInfo {
+      int64 inFlow = 1;
+      int64 outFlow = 2;
     }
   }
 
