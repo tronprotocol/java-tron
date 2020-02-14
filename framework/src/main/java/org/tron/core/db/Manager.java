@@ -147,6 +147,7 @@ public class Manager {
   private static final String SAVE_BLOCK = "save block: ";
   private final int shieldedTransInPendingMaxCounts =
       Args.getInstance().getShieldedTransInPendingMaxCounts();
+  private final long timeout = 60 * 1000;
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
@@ -839,7 +840,7 @@ public class Manager {
     } catch (NonCommonBlockException e) {
       logger.info(
           "this is not the most recent common ancestor, "
-                  + "need to remove all blocks in the fork chain.");
+              + "need to remove all blocks in the fork chain.");
       BlockCapsule tmp = newHead;
       while (tmp != null) {
         khaosDb.removeBlk(tmp.getBlockId());
@@ -1527,7 +1528,8 @@ public class Manager {
   }
 
   public void rePush(TransactionCapsule tx) {
-    if (containsTransaction(tx)) {
+    long time = System.currentTimeMillis() - tx.getTime();
+    if (containsTransaction(tx) || time > timeout) {
       return;
     }
 
