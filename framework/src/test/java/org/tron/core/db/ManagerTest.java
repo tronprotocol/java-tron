@@ -213,14 +213,14 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertTrue(chainManager.getBlockIndexStore() instanceof BlockIndexStore);
     Assert.assertTrue(chainManager.getExchangeV2Store() instanceof ExchangeV2Store);
     Assert.assertTrue(chainManager.getExchangeStore() instanceof ExchangeStore);
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    Assert.assertTrue(getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(),
-        dbManager.getExchangeV2Store()) instanceof ExchangeStore);
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    Assert.assertTrue(getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
-        dbManager.getExchangeStore(),
-        dbManager.getExchangeV2Store()) instanceof ExchangeV2Store);
+    chainManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    Assert.assertTrue(getExchangeStoreFinal(chainManager.getDynamicPropertiesStore(),
+        chainManager.getExchangeStore(),
+        chainManager.getExchangeV2Store()) instanceof ExchangeStore);
+    chainManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    Assert.assertTrue(getExchangeStoreFinal(chainManager.getDynamicPropertiesStore(),
+        chainManager.getExchangeStore(),
+        chainManager.getExchangeV2Store()) instanceof ExchangeV2Store);
 
   }
 
@@ -273,8 +273,8 @@ public class ManagerTest extends BlockGenerate {
             .build());
     chainManager.getAccountStore().put(account.createDbKey(), account);
     try {
-      adjustBalance(dbManager.getAccountStore(), accountAddress.getBytes(), 0);
-      AccountCapsule copyAccount = dbManager.getAccountStore().get(ownerAddress);
+      adjustBalance(chainManager.getAccountStore(), accountAddress.getBytes(), 0);
+      AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getBalance(), account.getBalance());
       Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
     } catch (BalanceInsufficientException e) {
@@ -284,7 +284,7 @@ public class ManagerTest extends BlockGenerate {
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
-      adjustBalance(dbManager.getAccountStore(), accountAddress.getBytes(), -40);
+      adjustBalance(chainManager.getAccountStore(), accountAddress.getBytes(), -40);
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertEquals(
@@ -295,7 +295,7 @@ public class ManagerTest extends BlockGenerate {
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
-      adjustBalance(dbManager.getAccountStore(), accountAddress.getBytes(), -10);
+      adjustBalance(chainManager.getAccountStore(), accountAddress.getBytes(), -10);
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getBalance(), account.getBalance() - 10);
       Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
@@ -306,7 +306,7 @@ public class ManagerTest extends BlockGenerate {
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
-      adjustBalance(dbManager.getAccountStore(), accountAddress.getBytes(), 10);
+      adjustBalance(chainManager.getAccountStore(), accountAddress.getBytes(), 10);
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getBalance(), account.getBalance() + 10);
       Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
@@ -338,8 +338,8 @@ public class ManagerTest extends BlockGenerate {
     chainManager.getAssetIssueStore().put(assetID.getBytes(), assetIssue);
     try {
       adjustAssetBalanceV2(accountAddress.getBytes(), assetID, -20,
-          dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-          dbManager.getDynamicPropertiesStore());
+          chainManager.getAccountStore(), chainManager.getAssetIssueStore(),
+          chainManager.getDynamicPropertiesStore());
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
@@ -352,8 +352,8 @@ public class ManagerTest extends BlockGenerate {
 
     try {
       adjustAssetBalanceV2(accountAddress.getBytes(), assetID, 10,
-          dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
-          dbManager.getDynamicPropertiesStore());
+          chainManager.getAccountStore(), chainManager.getAssetIssueStore(),
+          chainManager.getDynamicPropertiesStore());
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getAssetMap().size(), 1);
       copyAccount.getAssetMap().forEach((k, v) -> {
@@ -389,7 +389,7 @@ public class ManagerTest extends BlockGenerate {
   public void adjustTotalShieldPoolValueTest() {
     long valueBalance = chainManager.getDynamicPropertiesStore().getTotalShieldedPoolValue() + 1;
     try {
-      adjustTotalShieldedPoolValue(valueBalance, dbManager.getDynamicPropertiesStore());
+      adjustTotalShieldedPoolValue(valueBalance, chainManager.getDynamicPropertiesStore());
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
@@ -400,7 +400,7 @@ public class ManagerTest extends BlockGenerate {
         .getTotalShieldedPoolValue();
     valueBalance = beforeTotalShieldValue - 1;
     try {
-      adjustTotalShieldedPoolValue(valueBalance, dbManager.getDynamicPropertiesStore());
+      adjustTotalShieldedPoolValue(valueBalance, chainManager.getDynamicPropertiesStore());
       long expectValue = beforeTotalShieldValue - valueBalance;
       Assert.assertEquals(chainManager.getDynamicPropertiesStore().getTotalShieldedPoolValue(),
           expectValue);
