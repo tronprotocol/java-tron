@@ -27,13 +27,7 @@ public class GetAssetIssueByAccountServlet extends RateLimiterServlet {
       if (visible) {
         address = Util.getHexAddress(address);
       }
-      AssetIssueList reply = wallet
-          .getAssetIssueByAccount(ByteString.copyFrom(ByteArray.fromHexString(address)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(address)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -47,14 +41,19 @@ public class GetAssetIssueByAccountServlet extends RateLimiterServlet {
       boolean visible = Util.getVisiblePost(account);
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build, visible);
-      AssetIssueList reply = wallet.getAssetIssueByAccount(build.getAddress());
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, build.getAddress(), response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(boolean visible, ByteString address, HttpServletResponse response)
+      throws Exception {
+    AssetIssueList reply = wallet.getAssetIssueByAccount(address);
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }
