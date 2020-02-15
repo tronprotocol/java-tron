@@ -1,7 +1,6 @@
 package org.tron.common.utils;
 
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 
 public class Base58 {
 
