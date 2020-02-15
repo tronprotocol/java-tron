@@ -94,7 +94,7 @@ public class SpendingKey {
           break;
         } else if (blob[33] == (byte) 255) {
           throw new BadItemException(
-              "librustzcash_check_diversifier did not return valid diversifier");
+              "librustzcash_check_diversifier does not return valid diversifier");
         }
         blob[33] += 1;
       } finally {

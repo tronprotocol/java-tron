@@ -27,13 +27,7 @@ public class GetAccountResourceServlet extends RateLimiterServlet {
       if (visible) {
         address = Util.getHexAddress(address);
       }
-      AccountResourceMessage reply = wallet
-          .getAccountResource(ByteString.copyFrom(ByteArray.fromHexString(address)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(address)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -50,15 +44,19 @@ public class GetAccountResourceServlet extends RateLimiterServlet {
       if (visible) {
         address = Util.getHexAddress(address);
       }
-      AccountResourceMessage reply = wallet
-          .getAccountResource(ByteString.copyFrom(ByteArray.fromHexString(address)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(address)), response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(boolean visible, ByteString address, HttpServletResponse response)
+      throws Exception {
+    AccountResourceMessage reply = wallet.getAccountResource(address);
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }

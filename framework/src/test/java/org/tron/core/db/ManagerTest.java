@@ -26,7 +26,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -65,7 +64,6 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract;
-
 
 
 @Slf4j
@@ -131,7 +129,7 @@ public class ManagerTest extends BlockGenerate {
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Hash.wrap(chainManager.getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -153,7 +151,7 @@ public class ManagerTest extends BlockGenerate {
       dbManager.pushBlock(blockCapsule);
       Assert.assertEquals(1,
           chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-      dbManager.setBlockReference(trx);
+      chainManager.setBlockReference(trx);
       Assert.assertEquals(1,
           ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
     }
@@ -165,7 +163,7 @@ public class ManagerTest extends BlockGenerate {
     dbManager.pushBlock(blockCapsule);
     Assert.assertEquals(1,
         chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-    dbManager.setBlockReference(trx);
+    chainManager.setBlockReference(trx);
     Assert.assertEquals(1,
         ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
   }
@@ -183,25 +181,25 @@ public class ManagerTest extends BlockGenerate {
 
     if (isUnlinked) {
       Assert.assertEquals("getBlockIdByNum is error",
-              0, chainManager.getHeadBlockNum());
+          0, chainManager.getHeadBlockNum());
     } else {
       try {
         Assert.assertEquals(
             "getBlockIdByNum is error",
             blockCapsule2.getBlockId().toString(),
-            dbManager.getBlockIdByNum(1).toString());
+            chainManager.getBlockIdByNum(1).toString());
       } catch (ItemNotFoundException e) {
         e.printStackTrace();
       }
     }
 
-    Assert.assertTrue("hasBlocks is error", dbManager.hasBlocks());
+    Assert.assertTrue("hasBlocks is error", chainManager.hasBlocks());
   }
 
   @Test
   public void GetterInstanceTest() {
 
-    Assert.assertTrue(dbManager.getTransactionStore() instanceof TransactionStore);
+    Assert.assertTrue(chainManager.getTransactionStore() instanceof TransactionStore);
     Assert.assertTrue(chainManager.getDynamicPropertiesStore() instanceof DynamicPropertiesStore);
     Assert.assertTrue(chainManager.getMerkleTreeStore() instanceof IncrementalMerkleTreeStore);
     Assert.assertTrue(chainManager.getBlockIndexStore() instanceof BlockIndexStore);
@@ -274,7 +272,6 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertFalse(e instanceof BalanceInsufficientException);
     }
 
-
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
@@ -285,7 +282,6 @@ public class ManagerTest extends BlockGenerate {
           StringUtil.createReadableString(account.createDbKey()) + " insufficient balance",
           e.getMessage());
     }
-
 
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
@@ -464,7 +460,6 @@ public class ManagerTest extends BlockGenerate {
             latestHeadHash,
             addressToProvateKeys);
 
-
     dbManager.pushBlock(blockCapsule1);
 
     BlockCapsule blockCapsule2 =
@@ -547,7 +542,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
-    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -600,10 +595,10 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertEquals(chainManager.getBlockStore().size(), size + 3);
 
     Assert.assertEquals(
-        dbManager.getBlockIdByNum(chainManager.getHead().getNum() - 1),
+        chainManager.getBlockIdByNum(chainManager.getHead().getNum() - 1),
         blockCapsule1.getBlockId());
     Assert.assertEquals(
-        dbManager.getBlockIdByNum(chainManager.getHead().getNum() - 2),
+        chainManager.getBlockIdByNum(chainManager.getHead().getNum() - 2),
         blockCapsule1.getParentHash());
 
     Assert.assertEquals(
@@ -661,7 +656,7 @@ public class ManagerTest extends BlockGenerate {
 
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
-    context.getBean(KhaosDatabase.class).removeBlk(dbManager.getBlockIdByNum(num));
+    context.getBean(KhaosDatabase.class).removeBlk(chainManager.getBlockIdByNum(num));
     Exception exception = null;
 
     BlockCapsule blockCapsule2 =
@@ -727,7 +722,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
-    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";

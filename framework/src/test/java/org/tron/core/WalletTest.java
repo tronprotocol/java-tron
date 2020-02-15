@@ -50,7 +50,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
@@ -100,7 +99,7 @@ public class WalletTest {
   public static final long TRANSACTION_TIMESTAMP_FIVE = DateTime.now().getMillis();
   private static TronApplicationContext context;
   private static Wallet wallet;
-  private static Manager manager;
+  private static ChainBaseManager chainBaseManager;
   private static String dbPath = "output_wallet_test";
   private static Block block1;
   private static Block block2;
@@ -123,10 +122,10 @@ public class WalletTest {
   @BeforeClass
   public static void init() {
     wallet = context.getBean(Wallet.class);
-    manager = context.getBean(Manager.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
     initTransaction();
     initBlock();
-    manager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
   }
 
   /**
@@ -166,7 +165,7 @@ public class WalletTest {
 
   private static void addTransactionToStore(Transaction transaction) {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-    manager.getTransactionStore()
+    chainBaseManager.getTransactionStore()
         .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
   }
 
@@ -174,7 +173,7 @@ public class WalletTest {
     TransactionInfoCapsule transactionInfo = new TransactionInfoCapsule();
     byte[] trxId = transaction.getRawData().toByteArray();
     transactionInfo.setId(trxId);
-    manager.getTransactionHistoryStore().put(trxId, transactionInfo);
+    chainBaseManager.getTransactionHistoryStore().put(trxId, transactionInfo);
   }
 
 
@@ -228,7 +227,7 @@ public class WalletTest {
 
   private static void addBlockToStore(Block block) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
-    manager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);
+    chainBaseManager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);
   }
 
   private static Block getBuildBlock(long timestamp, long num, long witnessId,
@@ -245,32 +244,32 @@ public class WalletTest {
     AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
     builder.setName(ByteString.copyFromUtf8("Asset1"));
     Asset1 = new AssetIssueCapsule(builder.build());
-    manager.getAssetIssueStore().put(Asset1.createDbKey(), Asset1);
+    chainBaseManager.getAssetIssueStore().put(Asset1.createDbKey(), Asset1);
   }
 
   private static void buildProposal() {
     Proposal.Builder builder = Proposal.newBuilder();
     builder.setProposalId(1L).setProposerAddress(ByteString.copyFromUtf8("Address1"));
     ProposalCapsule proposalCapsule = new ProposalCapsule(builder.build());
-    manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+    chainBaseManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
 
     builder.setProposalId(2L).setProposerAddress(ByteString.copyFromUtf8("Address2"));
     proposalCapsule = new ProposalCapsule(builder.build());
-    manager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-    manager.getDynamicPropertiesStore().saveLatestProposalNum(2L);
+    chainBaseManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestProposalNum(2L);
   }
 
   private static void buildExchange() {
     Exchange.Builder builder = Exchange.newBuilder();
     builder.setExchangeId(1L).setCreatorAddress(ByteString.copyFromUtf8("Address1"));
     ExchangeCapsule ExchangeCapsule = new ExchangeCapsule(builder.build());
-    manager.getExchangeStore().put(ExchangeCapsule.createDbKey(), ExchangeCapsule);
+    chainBaseManager.getExchangeStore().put(ExchangeCapsule.createDbKey(), ExchangeCapsule);
 
     builder.setExchangeId(2L).setCreatorAddress(ByteString.copyFromUtf8("Address2"));
     ExchangeCapsule = new ExchangeCapsule(builder.build());
-    manager.getExchangeStore().put(ExchangeCapsule.createDbKey(), ExchangeCapsule);
+    chainBaseManager.getExchangeStore().put(ExchangeCapsule.createDbKey(), ExchangeCapsule);
 
-    manager.getDynamicPropertiesStore().saveLatestExchangeNum(2L);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestExchangeNum(2L);
 
   }
 
@@ -353,7 +352,7 @@ public class WalletTest {
     Assert.assertTrue("getBlocksByLimit2", blocksByLimit.getBlockList().contains(block4));
     blocksByLimit = wallet.getBlocksByLimitNext(0, 5);
     Assert.assertTrue("getBlocksByLimit3",
-        blocksByLimit.getBlockList().contains(manager.getGenesisBlock().getInstance()));
+        blocksByLimit.getBlockList().contains(chainBaseManager.getGenesisBlock().getInstance()));
     Assert.assertTrue("getBlocksByLimit4", blocksByLimit.getBlockList().contains(block1));
     Assert.assertTrue("getBlocksByLimit5", blocksByLimit.getBlockList().contains(block2));
     Assert.assertTrue("getBlocksByLimit6", blocksByLimit.getBlockList().contains(block3));
@@ -427,15 +426,18 @@ public class WalletTest {
   @Test
   public void getBlockByLatestNum() {
     BlockList blockByLatestNum = wallet.getBlockByLatestNum(2);
-    Assert.assertTrue("getBlockByLatestNum1", blockByLatestNum.getBlockList().contains(block5));
-    Assert.assertTrue("getBlockByLatestNum2", blockByLatestNum.getBlockList().contains(block4));
+    Assert.assertTrue("getBlockByLatestNum1",
+        blockByLatestNum.getBlockList().contains(block5));
+    Assert.assertTrue("getBlockByLatestNum2",
+        blockByLatestNum.getBlockList().contains(block4));
   }
 
   @Test
   public void getPaginatedAssetIssueList() {
     buildAssetIssue();
     AssetIssueList assetList1 = wallet.getAssetIssueList(0, 100);
-    Assert.assertTrue("get Asset1", assetList1.getAssetIssue(0).getName().equals(Asset1.getName()));
+    Assert.assertTrue("get Asset1",
+        assetList1.getAssetIssue(0).getName().equals(Asset1.getName()));
     try {
       assetList1.getAssetIssue(1);
     } catch (Exception e) {
@@ -504,7 +506,7 @@ public class WalletTest {
         builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey(methodName)
             .setValue((long) DynamicPropertiesStore.class.getDeclaredMethod(methodName)
-                .invoke(manager.getDynamicPropertiesStore()))
+                .invoke(chainBaseManager.getDynamicPropertiesStore()))
             .build());
       } catch (Exception ex) {
         Assert.fail("get chainParameter : " + methodName + ", error : " + ex.getMessage());

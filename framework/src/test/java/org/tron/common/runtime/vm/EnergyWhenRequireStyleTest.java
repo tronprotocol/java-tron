@@ -549,8 +549,6 @@ public class EnergyWhenRequireStyleTest {
   @After
   public void destroy() {
     Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

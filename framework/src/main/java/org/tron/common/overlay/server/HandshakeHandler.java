@@ -87,7 +87,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     buffer.readBytes(encoded);
     P2pMessage msg = messageFactory.create(encoded);
 
-    logger.info("Handshake Receive from {}, {}", ctx.channel().remoteAddress(), msg);
+    logger.info("Handshake receive from {}, {}", ctx.channel().remoteAddress(), msg);
 
     switch (msg.getType()) {
       case P2P_HELLO:
@@ -118,11 +118,12 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
   protected void sendHelloMsg(ChannelHandlerContext ctx, long time) {
     HelloMessage message = new HelloMessage(nodeManager.getPublicHomeNode(), time,
-        manager.getGenesisBlockId(), manager.getSolidBlockId(), chainBaseManager.getHeadBlockId());
+        chainBaseManager.getGenesisBlockId(), chainBaseManager.getSolidBlockId(),
+        chainBaseManager.getHeadBlockId());
     fastForward.fillHelloMessage(message, channel);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
-    logger.info("Handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
+    logger.info("Handshake send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 
   private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
@@ -151,18 +152,20 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     }
 
     if (!Arrays
-        .equals(manager.getGenesisBlockId().getBytes(), msg.getGenesisBlockId().getBytes())) {
+        .equals(chainBaseManager.getGenesisBlockId().getBytes(),
+            msg.getGenesisBlockId().getBytes())) {
       logger
           .info("Peer {} different genesis block, peer->{}, me->{}", ctx.channel().remoteAddress(),
-              msg.getGenesisBlockId().getString(), manager.getGenesisBlockId().getString());
+              msg.getGenesisBlockId().getString(),
+              chainBaseManager.getGenesisBlockId().getString());
       channel.disconnect(ReasonCode.INCOMPATIBLE_CHAIN);
       return;
     }
 
-    if (manager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum() && !manager
-        .containBlockInMainChain(msg.getSolidBlockId())) {
+    if (chainBaseManager.getSolidBlockId().getNum() >= msg.getSolidBlockId().getNum()
+        && !chainBaseManager.containBlockInMainChain(msg.getSolidBlockId())) {
       logger.info("Peer {} different solid block, peer->{}, me->{}", ctx.channel().remoteAddress(),
-          msg.getSolidBlockId().getString(), manager.getSolidBlockId().getString());
+          msg.getSolidBlockId().getString(), chainBaseManager.getSolidBlockId().getString());
       channel.disconnect(ReasonCode.FORKED);
       return;
     }

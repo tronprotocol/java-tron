@@ -1016,7 +1016,7 @@ public class SendCoinShieldTest {
           ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
           110_000_000L);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 110_000_000L).build());
 
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
@@ -1052,7 +1052,7 @@ public class SendCoinShieldTest {
           110_000_000L);
 
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 110_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
 
@@ -1239,7 +1239,7 @@ public class SendCoinShieldTest {
           220_000_000L);
 
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 220_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 220_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 210_000_000L);
 
@@ -1267,7 +1267,7 @@ public class SendCoinShieldTest {
           ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
           230_000_000L);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ShieldedTransferActuator.zenTokenId, 230_000_000L).build());
+          .putAssetV2(CommonParameter.getInstance().zenTokenId, 230_000_000L).build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 220_000_000L);
 

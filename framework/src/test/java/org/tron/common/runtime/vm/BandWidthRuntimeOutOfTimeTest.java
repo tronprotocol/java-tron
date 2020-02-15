@@ -133,7 +133,6 @@ public class BandWidthRuntimeOutOfTimeTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    ApplicationFactory.create(context).shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }

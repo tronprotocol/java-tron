@@ -2,8 +2,8 @@ package org.tron.core.config.args;
 
 import static java.lang.Math.max;
 import static java.lang.System.exit;
-import static org.tron.consensus.base.Constant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 
 import com.beust.jcommander.JCommander;
 import com.typesafe.config.Config;
@@ -45,7 +45,6 @@ import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -66,7 +65,7 @@ public class Args extends CommonParameter {
 
   @Getter
   @Setter
-  private   static LocalWitnesses localWitnesses = new LocalWitnesses();
+  private static LocalWitnesses localWitnesses = new LocalWitnesses();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
@@ -240,7 +239,7 @@ public class Args extends CommonParameter {
             privateKeys.add(prikey);
           } catch (IOException | CipherException e) {
             logger.error(e.getMessage());
-            logger.error("Witness node start faild!");
+            logger.error("Witness node start failed!");
             exit(-1);
           }
         }
@@ -263,7 +262,7 @@ public class Args extends CommonParameter {
 
     if (PARAMETER.isWitness()
         && CollectionUtils.isEmpty(localWitnesses.getPrivateKeys())) {
-      logger.warn("This is a witness node,but localWitnesses is null");
+      logger.warn("This is a witness node, but localWitnesses is null");
     }
 
     if (config.hasPath(Constant.VM_SUPPORT_CONSTANT)) {
@@ -538,8 +537,8 @@ public class Args extends CommonParameter {
 
     PARAMETER.validateSignThreadNum =
         config.hasPath(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) ? config
-        .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
-        : Runtime.getRuntime().availableProcessors() / 2;
+            .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
+            : Runtime.getRuntime().availableProcessors() / 2;
 
     PARAMETER.walletExtensionApi =
         config.hasPath(Constant.NODE_WALLET_EXTENSION_API)
@@ -651,7 +650,6 @@ public class Args extends CommonParameter {
             : Collections.emptySet();
 
     logConfig();
-    initConfig(PARAMETER);
   }
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
@@ -984,66 +982,8 @@ public class Args extends CommonParameter {
     logger.info("\n");
   }
 
-  public static void initConfig(CommonParameter parameter) {
-    initVMConfig(parameter);
-    initDBConfig(parameter);
-  }
-
-  public static void initVMConfig(CommonParameter parameter) {
-    VMConfig.setMaxTimeRatio(parameter.getMaxTimeRatio());
-    VMConfig.setMinTimeRatio(parameter.getMinTimeRatio());
-    VMConfig.setCheckFrozenTime(parameter.getCheckFrozenTime());
-  }
-
-
-  public static void initDBConfig(CommonParameter parameter) {
-    if (Objects.nonNull(parameter.getStorage())) {
-      DBConfig.setDbVersion(parameter.getStorage().getDbVersion());
-      DBConfig.setDbEngine(parameter.getStorage().getDbEngine());
-      DBConfig.setPropertyMap(parameter.getStorage().getPropertyMap());
-      DBConfig.setDbSync(parameter.getStorage().isDbSync());
-      DBConfig.setDbDirectory(parameter.getStorage().getDbDirectory());
-    }
-
-    if (Objects.nonNull(parameter.getGenesisBlock())) {
-      DBConfig.setBlocktimestamp(parameter.getGenesisBlock().getTimestamp());
-      DBConfig.setGenesisBlock(parameter.getGenesisBlock());
-    }
-
-    DBConfig.setOutputDirectoryConfig(parameter.getOutputDirectory());
-    DBConfig.setRocksDbSettings(parameter.getRocksDBCustomSettings());
-    DBConfig.setAllowMultiSign(parameter.getAllowMultiSign());
-    DBConfig.setMaintenanceTimeInterval(parameter.getMaintenanceTimeInterval());
-    DBConfig.setAllowAdaptiveEnergy(parameter.getAllowAdaptiveEnergy());
-    DBConfig.setAllowDelegateResource(parameter.getAllowDelegateResource());
-    DBConfig.setAllowTvmTransferTrc10(parameter.getAllowTvmTransferTrc10());
-    DBConfig.setAllowTvmConstantinople(parameter.getAllowTvmConstantinople());
-    DBConfig.setAllowTvmSolidity059(parameter.getAllowTvmSolidity059());
-    DBConfig.setAllowSameTokenName(parameter.getAllowSameTokenName());
-    DBConfig.setAllowCreationOfContracts(parameter.getAllowCreationOfContracts());
-    DBConfig.setAllowShieldedTransaction(parameter.getAllowShieldedTransaction());
-    DBConfig.setAllowAccountStateRoot(parameter.getAllowAccountStateRoot());
-    DBConfig.setAllowProtoFilterNum(parameter.getAllowProtoFilterNum());
-    DBConfig.setProposalExpireTime(parameter.getProposalExpireTime());
-    DBConfig.setBlockNumForEneryLimit(parameter.getBlockNumForEneryLimit());
-    DBConfig.setFullNodeAllowShieldedTransaction(parameter
-        .isFullNodeAllowShieldedTransactionArgs());
-    DBConfig.setZenTokenId(parameter.getZenTokenId());
-    DBConfig.setValidContractProtoThreadNum(parameter.getValidContractProtoThreadNum());
-    DBConfig.setVmTrace(parameter.isVmTrace());
-    DBConfig.setDebug(parameter.isDebug());
-    DBConfig.setSolidityNode(parameter.isSolidityNode());
-    DBConfig.setSupportConstant(parameter.isSupportConstant());
-    DBConfig.setLongRunningTime(parameter.getLongRunningTime());
-    DBConfig.setChangedDelegation(parameter.getChangedDelegation());
-    DBConfig.setActuatorSet(parameter.getActuatorSet());
-    DBConfig.setTransactionHistoreSwitch(parameter.getStorage().getTransactionHistoreSwitch());
-    DBConfig.setECKeyCryptoEngine(parameter.isECKeyCryptoEngine());
-  }
-
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
     PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
-    DBConfig.setFullNodeAllowShieldedTransaction(fullNodeAllowShieldedTransaction);
   }
 
   /**

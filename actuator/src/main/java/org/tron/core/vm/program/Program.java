@@ -41,12 +41,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.WalletUtil;
@@ -964,10 +964,10 @@ public class Program {
 
   public void checkCPUTimeLimit(String opName) {
 
-    if (DBConfig.isDebug()) {
+    if (CommonParameter.getInstance().isDebug()) {
       return;
     }
-    if (DBConfig.isSolidityNode()) {
+    if (CommonParameter.getInstance().isSolidityNode()) {
       return;
     }
     long vmNowInUs = System.nanoTime() / 1000;
@@ -975,7 +975,7 @@ public class Program {
       logger.info(
           "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
               + "vm now time in us: {}, vm start time in us: {}",
-          VMConfig.getMinTimeRatio(), VMConfig.getMaxTimeRatio(),
+          CommonParameter.getInstance().getMinTimeRatio(), CommonParameter.getInstance().getMaxTimeRatio(),
           getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }

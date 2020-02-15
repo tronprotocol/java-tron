@@ -3,7 +3,6 @@ package stest.tron.wallet.dailybuild.http;
 import com.alibaba.fastjson.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.testng.Assert;
@@ -15,12 +14,9 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
-import org.tron.core.zen.address.DiversifierT;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
-import stest.tron.wallet.common.client.utils.ShieldNoteInfo;
 
 @Slf4j
 public class HttpTestZenToken006 {
@@ -105,12 +101,11 @@ public class HttpTestZenToken006 {
     String askFromSk = responseContent.getString("ask");
     String nskFromSk = responseContent.getString("nsk");
     String ovkFromSk = responseContent.getString("ovk");
-    Assert.assertEquals(ask,askFromSk);
-    Assert.assertEquals(nsk,nskFromSk);
-    Assert.assertEquals(ovk,ovkFromSk);
+    Assert.assertEquals(ask, askFromSk);
+    Assert.assertEquals(nsk, nskFromSk);
+    Assert.assertEquals(ovk, ovkFromSk);
 
   }
-
 
 
   @Test(enabled = true, description = "Get rcm by http")

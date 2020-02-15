@@ -61,7 +61,6 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -182,9 +181,11 @@ public class PrecompiledContracts {
         v += 27;
       }
 
-      SignatureInterface signature = SignUtils.fromComponents(r, s, v, DBConfig.isECKeyCryptoEngine());
+      SignatureInterface signature = SignUtils.fromComponents(r, s, v,
+          CommonParameter.getInstance().isECKeyCryptoEngine());
       if (signature.validateComponents()) {
-        out = SignUtils.signatureToAddress(hash, signature, DBConfig.isECKeyCryptoEngine());
+        out = SignUtils.signatureToAddress(hash, signature,
+            CommonParameter.getInstance().isECKeyCryptoEngine());
       }
     } catch (Throwable any) {
       logger.info("ECRecover error", any.getMessage());
@@ -389,9 +390,11 @@ public class PrecompiledContracts {
         int sLength = data.length < 128 ? data.length - 96 : 32;
         System.arraycopy(data, 96, s, 0, sLength);
 
-        SignatureInterface signature = SignUtils.fromComponents(r, s, v[31], DBConfig.isECKeyCryptoEngine());
+        SignatureInterface signature = SignUtils.fromComponents(r, s, v[31]
+            , CommonParameter.getInstance().isECKeyCryptoEngine());
         if (validateV(v) && signature.validateComponents()) {
-          out = new DataWord(SignUtils.signatureToAddress(h, signature, DBConfig.isECKeyCryptoEngine()));
+          out = new DataWord(SignUtils.signatureToAddress(h, signature
+              , CommonParameter.getInstance().isECKeyCryptoEngine()));
         }
       } catch (Throwable any) {
       }

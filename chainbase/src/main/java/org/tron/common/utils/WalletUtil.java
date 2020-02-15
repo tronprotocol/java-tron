@@ -79,7 +79,8 @@ public class WalletUtil {
     try {
       boolean constant = isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
       if (constant) {
-        if (!DBConfig.isSupportConstant()) {
+        if (!CommonParameter.getInstance()
+            .isSupportConstant()) {
           throw new ContractValidateException("this node don't support constant");
         }
       }

@@ -9,7 +9,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.ProposalCapsule;
@@ -32,7 +32,7 @@ public class ProposalCreateActuator extends AbstractActuator {
   public boolean execute(Object result) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -53,7 +53,7 @@ public class ProposalCreateActuator extends AbstractActuator {
 
       long currentMaintenanceTime =
           chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
-      long now3 = now + DBConfig.getProposalExpireTime();
+      long now3 = now + CommonParameter.getInstance().getProposalExpireTime();
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
           currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;

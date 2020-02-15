@@ -5,9 +5,7 @@ import static stest.tron.wallet.common.client.utils.PublicMethed.jsonStr2Abi;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-
 import java.io.File;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -56,7 +54,7 @@ public class ClearABIContractActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
@@ -291,10 +289,8 @@ public class ClearABIContractActuatorTest {
         "contract type error,expected type [ClearABIContract],real type[");
     actuatorTest.invalidContractType();
 
-
     actuatorTest.setContract(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS));
     actuatorTest.nullTransationResult();
-
 
     actuatorTest.setNullDBManagerMsg("No account store or contract store!");
     actuatorTest.nullDBManger();

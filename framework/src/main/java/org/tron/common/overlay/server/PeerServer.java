@@ -60,7 +60,7 @@ public class PeerServer {
       // Wait until the connection is closed.
       channelFuture.channel().closeFuture().sync();
 
-      logger.info("TCP listener is closed");
+      logger.info("TCP listener closed");
 
     } catch (Exception e) {
       logger.error("Start TCP server failed.", e);

@@ -7,7 +7,8 @@ import java.net.URLStreamHandler;
 import java.util.HashMap;
 import java.util.Map;
 
-/**.
+/**
+ * .
  */
 public class HttpUrlStreamHandler extends URLStreamHandler {
 

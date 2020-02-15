@@ -9,12 +9,12 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.WalletUtil;
@@ -174,7 +174,8 @@ public class TransactionTrace {
           .equals(receipt.getResult())) {
         setTimeResultType(TimeResultType.OUT_OF_TIME);
       } else if (System.currentTimeMillis() - txStartTimeInMs
-          > DBConfig.getLongRunningTime()) {
+          > CommonParameter.getInstance()
+          .getLongRunningTime()) {
         setTimeResultType(TimeResultType.LONG_RUNNING);
       }
     }

@@ -1,7 +1,6 @@
 package org.tron.core.actuator.utils;
 
 import java.io.File;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -23,20 +22,21 @@ import org.tron.core.utils.ProposalUtil.ProposalType;
 
 @Slf4j(topic = "actuator")
 public class ProposalUtilTest {
+
   private static final String dbPath = "output_ProposalUtil_test";
   private static final long LONG_VALUE = 100_000_000_000_000_000L;
+  private static final String LONG_VALUE_ERROR =
+      "Bad chain parameter value, valid range is [0," + LONG_VALUE + "]";
   public static Application AppT;
   private static TronApplicationContext context;
   private static Manager dbManager;
-  private static final String LONG_VALUE_ERROR =
-      "Bad chain parameter value, valid range is [0," + LONG_VALUE + "]";
 
   /**
    * Init .
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     dbManager = context.getBean(Manager.class);
     AppT = ApplicationFactory.create(context);
@@ -48,9 +48,6 @@ public class ProposalUtilTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
-
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
@@ -65,7 +62,6 @@ public class ProposalUtilTest {
     Assert.assertEquals(false, ProposalType.contain(40));
     Assert.assertEquals(false, ProposalType.contain(-1));
     Assert.assertEquals(true, ProposalType.contain(2));
-
 
     Assert.assertEquals(null, ProposalType.getEnumOrNull(-2));
     Assert.assertEquals(ProposalType.ALLOW_TVM_SOLIDITY_059, ProposalType.getEnumOrNull(32));
@@ -111,7 +107,7 @@ public class ProposalUtilTest {
           ProposalType.CREATE_ACCOUNT_FEE.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
@@ -119,7 +115,7 @@ public class ProposalUtilTest {
           ProposalType.CREATE_ACCOUNT_FEE.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
@@ -127,7 +123,7 @@ public class ProposalUtilTest {
           ProposalType.ASSET_ISSUE_FEE.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
@@ -135,7 +131,7 @@ public class ProposalUtilTest {
           ProposalType.ASSET_ISSUE_FEE.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
@@ -143,7 +139,7 @@ public class ProposalUtilTest {
           ProposalType.WITNESS_PAY_PER_BLOCK.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
@@ -151,16 +147,15 @@ public class ProposalUtilTest {
           ProposalType.WITNESS_PAY_PER_BLOCK.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
-
 
     try {
       actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.WITNESS_STANDBY_ALLOWANCE.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
@@ -168,16 +163,15 @@ public class ProposalUtilTest {
           ProposalType.WITNESS_STANDBY_ALLOWANCE.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
-
 
     try {
       actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
@@ -185,7 +179,7 @@ public class ProposalUtilTest {
           ProposalType.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
@@ -193,7 +187,7 @@ public class ProposalUtilTest {
           ProposalType.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.getCode(), invalidValue);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
 
     try {
@@ -201,9 +195,8 @@ public class ProposalUtilTest {
           ProposalType.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.getCode(), LONG_VALUE + 1);
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR,e.getMessage());
+      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
     }
-
 
     long value = 32;
     try {
@@ -225,7 +218,6 @@ public class ProposalUtilTest {
           "Bad chain parameter value, valid range is [3 * 27 * 1000,24 * 3600 * 1000]",
           e.getMessage());
     }
-
 
     try {
       actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
@@ -260,8 +252,6 @@ public class ProposalUtilTest {
           e.getMessage());
     }
 
-
-
     try {
       actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.MAX_CPU_TIME_OF_ONE_TX.getCode(), 9);
@@ -270,7 +260,6 @@ public class ProposalUtilTest {
       Assert.assertEquals(
           "Bad chain parameter value, valid range is [10,100]", e.getMessage());
     }
-
 
     try {
       actuatorUtil.validator(dynamicPropertiesStore, forkUtils,
@@ -307,7 +296,7 @@ public class ProposalUtilTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertEquals("[ALLOW_SAME_TOKEN_NAME] proposal must be approved "
-              + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed",e.getMessage());
+          + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed", e.getMessage());
     }
 
   }

@@ -15,6 +15,8 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
@@ -52,7 +54,7 @@ public class AssetIssueActuator extends AbstractActuator {
   public boolean execute(Object result) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -95,7 +97,7 @@ public class AssetIssueActuator extends AbstractActuator {
 
       while (iterator.hasNext()) {
         FrozenSupply next = iterator.next();
-        long expireTime = startTime + next.getFrozenDays() * 86_400_000;
+        long expireTime = startTime + next.getFrozenDays() * FROZEN_PERIOD;
         Frozen newFrozen = Frozen.newBuilder()
             .setFrozenBalance(next.getFrozenAmount())
             .setExpireTime(expireTime)

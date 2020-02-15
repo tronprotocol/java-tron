@@ -233,7 +233,7 @@ public class DepositImpl implements Deposit {
       try {
         proposalCapsule = getProposalStore().get(id);
       } catch (ItemNotFoundException e) {
-        logger.warn("Not found proposal, id:" + Hex.toHexString(id));
+        logger.warn("proposal not found, id:" + Hex.toHexString(id));
         proposalCapsule = null;
       }
     }
@@ -630,7 +630,7 @@ public class DepositImpl implements Deposit {
       try {
         bytesCapsule = getDynamicPropertiesStore().get(word);
       } catch (BadItemException | ItemNotFoundException e) {
-        logger.warn("Not found dynamic property:" + Strings.fromUTF8ByteArray(word));
+        logger.warn("Dynamic property not found:" + Strings.fromUTF8ByteArray(word));
         bytesCapsule = null;
       }
     }
