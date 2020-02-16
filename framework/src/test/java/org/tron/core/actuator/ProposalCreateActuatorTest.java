@@ -444,7 +444,7 @@ public class ProposalCreateActuatorTest {
     actuatorTest.setContract(getContract(OWNER_ADDRESS_FIRST, paras));
     actuatorTest.nullTransationResult();
 
-    actuatorTest.setNullDBManagerMsg("No account store or dynamic store");
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
 
   }
