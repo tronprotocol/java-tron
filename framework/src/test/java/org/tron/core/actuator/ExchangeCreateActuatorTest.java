@@ -1431,7 +1431,7 @@ public class ExchangeCreateActuatorTest {
         OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance));
     actuatorTest.nullTransationResult();
 
-    actuatorTest.setNullDBManagerMsg("No account store or dynamic store");
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
 
   }
