@@ -315,7 +315,7 @@ public class UpdateSettingContractActuatorTest {
     actuatorTest.setContract(getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT));
     actuatorTest.nullTransationResult();
 
-    actuatorTest.setNullDBManagerMsg("No account store or contract store!");
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store");
     actuatorTest.nullDBManger();
   }
 
