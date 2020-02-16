@@ -306,7 +306,7 @@ public class WitnessUpdateActuatorTest {
     actuatorTest.setContract(getContract(OWNER_ADDRESS, NewURL));
     actuatorTest.nullTransationResult();
 
-    actuatorTest.setNullDBManagerMsg("No account store or witness store!");
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
 
   }
