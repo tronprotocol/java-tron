@@ -414,7 +414,7 @@ public class SetAccountIdActuatorTest {
     actuatorTest.setContract(getContract(ACCOUNT_NAME, OWNER_ADDRESS));
     actuatorTest.nullTransationResult();
 
-    actuatorTest.setNullDBManagerMsg("No account store or account id index store!");
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store");
     actuatorTest.nullDBManger();
 
   }
