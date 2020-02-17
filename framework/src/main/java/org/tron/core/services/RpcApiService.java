@@ -2002,7 +2002,7 @@ public class RpcApiService implements Service {
     public void getNewShieldedAddress(EmptyMessage request,
         StreamObserver<ShieldedAddressInfo> responseObserver) {
       try {
-        responseObserver.onNext(wallet.getNewShieldedAddressInfo());
+        responseObserver.onNext(wallet.getNewShieldedAddress());
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
       }

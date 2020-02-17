@@ -10,7 +10,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class GetShieldedAddressInfoServlet extends RateLimiterServlet {
+public class GetNewShieldedAddressServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -18,7 +18,7 @@ public class GetShieldedAddressInfoServlet extends RateLimiterServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
-      ShieldedAddressInfo reply = wallet.getNewShieldedAddressInfo();
+      ShieldedAddressInfo reply = wallet.getNewShieldedAddress();
 
       response.getWriter().println(JsonFormat.printToString(reply, visible));
     } catch (Exception e) {
@@ -29,7 +29,7 @@ public class GetShieldedAddressInfoServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
-      ShieldedAddressInfo reply = wallet.getNewShieldedAddressInfo();
+      ShieldedAddressInfo reply = wallet.getNewShieldedAddress();
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
