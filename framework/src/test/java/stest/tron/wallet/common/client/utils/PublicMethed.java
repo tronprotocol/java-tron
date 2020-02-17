@@ -416,20 +416,6 @@ public class PublicMethed {
   /**
    * constructor.
    */
-
-  public static Account queryAccount(byte[] address, WalletSolidityGrpc
-      .WalletSolidityBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ByteString addressBs = ByteString.copyFrom(address);
-    Account request = Account.newBuilder().setAddress(addressBs).build();
-    return blockingStubFull.getAccount(request);
-  }
-
-
-  /**
-   * constructor.
-   */
-
   public static Protocol.Account queryAccount(String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -455,10 +441,46 @@ public class PublicMethed {
     return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
   }
 
+
   /**
    * constructor.
    */
 
+  public static Account queryAccount(byte[] address, WalletSolidityGrpc
+      .WalletSolidityBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString addressBs = ByteString.copyFrom(address);
+    Account request = Account.newBuilder().setAddress(addressBs).build();
+    return blockingStubFull.getAccount(request);
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static Account getAccountById(String accountId, WalletGrpc
+      .WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString bsAccountId = ByteString.copyFromUtf8(accountId);
+    Account request = Account.newBuilder().setAccountId(bsAccountId).build();
+    return blockingStubFull.getAccountById(request);
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static Account getAccountByIdFromSolidity(String accountId, WalletSolidityGrpc
+      .WalletSolidityBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString bsAccountId = ByteString.copyFromUtf8(accountId);
+    Account request = Account.newBuilder().setAccountId(bsAccountId).build();
+    return blockingStubFull.getAccountById(request);
+  }
+
+  /**
+   * constructor.
+   */
   public static String loadPubKey() {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     char[] buf = new char[0x100];
@@ -2177,6 +2199,8 @@ public class PublicMethed {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccountResource(request);
   }
+
+
 
   /**
    * constructor.
@@ -5962,6 +5986,9 @@ public class PublicMethed {
         .toByteArray()));
   }
 
+  /**
+   * constructor.
+   */
   public static byte[] decode58Check(String input) {
     byte[] decodeCheck = org.tron.common.utils.Base58.decode(input);
     if (decodeCheck.length <= 4) {
@@ -5980,12 +6007,18 @@ public class PublicMethed {
     return null;
   }
 
+  /**
+   * constructor.
+   */
   public static void freedResource(byte[] fromAddress, String priKey, byte[] toAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     long balance = PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance();
     sendcoin(toAddress, balance - 500000, fromAddress, priKey, blockingStubFull);
   }
 
+  /**
+   * constructor.
+   */
   public static String parametersString(List<Object> parameters) {
     String[] inputArr = new String[parameters.size()];
     int i = 0;
@@ -6008,19 +6041,22 @@ public class PublicMethed {
     return input;
   }
 
+  /**
+   * constructor.
+   */
   public static String bytes32ToString(byte[] bytes) {
     if (bytes == null) {
       return "null";
     }
-    int iMax = bytes.length - 1;
-    if (iMax == -1) {
+    int max = bytes.length - 1;
+    if (max == -1) {
       return "";
     }
 
     StringBuilder b = new StringBuilder();
     for (int i = 0; ; i++) {
       b.append(bytes[i]);
-      if (i == iMax) {
+      if (i == max) {
         return b.toString();
       }
     }

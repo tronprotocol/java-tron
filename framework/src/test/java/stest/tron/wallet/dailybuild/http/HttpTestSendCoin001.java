@@ -92,7 +92,7 @@ public class HttpTestSendCoin001 {
     String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
         testKey002);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
-
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getTransactionInfoByIdFromSolidity(httpSoliditynode, txid);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -107,7 +107,7 @@ public class HttpTestSendCoin001 {
     String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
         testKey002);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
-
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getTransactionInfoByIdFromPbft(httpPbftNode, txid);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
