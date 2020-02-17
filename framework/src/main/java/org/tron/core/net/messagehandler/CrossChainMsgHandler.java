@@ -37,6 +37,7 @@ public class CrossChainMsgHandler implements TronMsgHandler {
     if (!communicateService.validProof(crossChainMessage.getCrossMessage())) {
       //todo: define a new reason code
       peer.disconnect(ReasonCode.BAD_TX);
+      return;
     }
     Sha256Hash txId = Sha256Hash
         .of(crossChainMessage.getCrossMessage().getTransaction().getRawData().toByteArray());

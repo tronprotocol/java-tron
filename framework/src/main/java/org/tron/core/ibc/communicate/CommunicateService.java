@@ -142,6 +142,7 @@ public class CommunicateService implements Communicate {
   public boolean validProof(CrossMessage crossMessage) {
     Contract contract = crossMessage.getTransaction().getRawData().getContract(0);
     if (contract.getType() != ContractType.CrossContract) {
+      logger.error("{} ContractType error!", contract.getType());
       return false;
     }
     List<Proof> proofList = crossMessage.getProofList();

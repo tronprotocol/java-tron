@@ -52,10 +52,10 @@ public class CrossChainConnectPool {
   }
 
   public synchronized void onDisconnect(Channel peer) {
-    logger.info("disconnect the cross chain peer:{}", peer);
     PeerConnection peerConnection = (PeerConnection) peer;
     for (ByteString key : crossChainConnectPool.keySet()) {
       if (crossChainConnectPool.get(key).contains(peerConnection)) {
+        logger.info("disconnect the cross chain peer:{}", peer);
         crossChainConnectPool.get(key).remove(peerConnection);
         peerConnection.onDisconnect();
       }
