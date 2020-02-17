@@ -13,11 +13,16 @@ public class PendingManager implements AutoCloseable {
   @Getter
   private List<TransactionCapsule> tmpTransactions = new ArrayList<>();
   private Manager dbManager;
+  private long timeout = 60 * 1000;
 
   public PendingManager(Manager db) {
-
     this.dbManager = db;
-    tmpTransactions.addAll(db.getPendingTransactions());
+    long now = System.currentTimeMillis();
+    db.getPendingTransactions().forEach(transactionCapsule -> {
+      if (now - transactionCapsule.getTime() < timeout) {
+        tmpTransactions.add(transactionCapsule);
+      }
+    });
     db.getPendingTransactions().clear();
     db.getSession().reset();
     db.getShieldedTransInPendingCounts().set(0);
