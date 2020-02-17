@@ -275,6 +275,16 @@ public class ProposalUtil {
         }
         break;
       }
+      case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
+        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          throw new ContractValidateException("Bad chain parameter id [SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE]");
+        }
+        if (value < 0 || value > 10_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value,valid range is [0,10_000_000_000L]");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -314,7 +324,8 @@ public class ProposalUtil {
     ALLOW_CHANGE_DELEGATION(30), //1, 30
     WITNESS_127_PAY_PER_BLOCK(31), //drop, 31
     ALLOW_TVM_SOLIDITY_059(32), // 1, 32
-    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33); // 10, 33
+    ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, 33
+    SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34); // 34
 
     private long code;
 
