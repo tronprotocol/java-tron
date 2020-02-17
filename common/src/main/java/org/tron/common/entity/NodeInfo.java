@@ -29,6 +29,8 @@ public class NodeInfo {
 
   private Map<String, String> cheatWitnessInfoMap = new HashMap<>();
 
+  private String totalProcessTxTime;
+
   public long getBeginSyncNum() {
     return beginSyncNum;
   }
@@ -129,6 +131,15 @@ public class NodeInfo {
     return this;
   }
 
+  public String getTotalProcessingTxTime() {
+    return this.totalProcessTxTime;
+  }
+
+  public NodeInfo setTotalProcessingTxTime(String totalProcessTxTime) {
+    this.totalProcessTxTime = totalProcessTxTime;
+    return this;
+  }
+
   public Protocol.NodeInfo transferToProtoEntity() {
     Protocol.NodeInfo.Builder builder = Protocol.NodeInfo.newBuilder();
     builder.setBeginSyncNum(getBeginSyncNum());
@@ -139,6 +150,7 @@ public class NodeInfo {
     builder.setPassiveConnectCount(getPassiveConnectCount());
     builder.setTotalFlow(getTotalFlow());
     builder.putAllCheatWitnessInfoMap(getCheatWitnessInfoMap());
+    builder.setTotalProcessingTxTime(getTotalProcessingTxTime());
     for (PeerInfo peerInfo : getPeerList()) {
       Protocol.NodeInfo.PeerInfo.Builder peerInfoBuilder = Protocol.NodeInfo.PeerInfo.newBuilder();
       peerInfoBuilder.setLastSyncBlock(peerInfo.getLastSyncBlock());
