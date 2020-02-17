@@ -954,6 +954,8 @@ public class PrecompiledContracts {
     //TODO: optimize read frontier
     //mint: 1 transparent --> 1 shielded
     private Pair<Boolean, byte[]> checkMint(byte[] data) {
+      long start_time = System.currentTimeMillis();
+
       byte[] cv = new byte[32];
       byte[] cm = new byte[32];
       byte[] epk = new byte[32];
@@ -996,9 +998,19 @@ public class PrecompiledContracts {
       if (!result) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
-      logger.info("Mint verify successfully");
 
-      return insertLeaf(frontier, cm, leafCount);
+      long costTime = System.currentTimeMillis() - start_time;
+      logger.info("Mint verify successfully, " + "check cost is: " + costTime + "ms");
+
+      long startTimeInsert = System.currentTimeMillis();
+      Pair<Boolean, byte[]> pair = insertLeaf(frontier, cm, leafCount);
+      costTime = System.currentTimeMillis() - startTimeInsert;
+      logger.info("insertLeaf cost is: " + costTime + "ms");
+
+      costTime = System.currentTimeMillis() - start_time;
+      logger.info("total cost is: " + costTime + "ms");
+
+      return pair;
 
     }
     //transfer: 1 shielded --> 2 shielded
