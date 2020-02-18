@@ -1476,20 +1476,17 @@ public class PublicMethed {
   /**
    * constructor.
    */
-
   public static Optional<Transaction> getTransactionById(String txId,
       WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubFull) {
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
     Transaction transaction = blockingStubFull.getTransactionById(request);
-
     return Optional.ofNullable(transaction);
   }
 
   /**
    * constructor.
    */
-
   public static Optional<Transaction> getTransactionById(String txId,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
@@ -3160,11 +3157,9 @@ public class PublicMethed {
     return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
   }
 
-
   /**
    * 61 constructor.
    */
-
   public static Optional<TransactionInfo> getTransactionInfoById(String txId, WalletGrpc
       .WalletBlockingStub blockingStubFull) {
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
@@ -3173,6 +3168,19 @@ public class PublicMethed {
     transactionInfo = blockingStubFull.getTransactionInfoById(request);
     return Optional.ofNullable(transactionInfo);
   }
+
+  /**
+   * 61 constructor.
+   */
+  public static Optional<TransactionInfo> getTransactionInfoByIdFromSolidity(String txId,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubFull) {
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
+    TransactionInfo transactionInfo;
+    transactionInfo = blockingStubFull.getTransactionInfoById(request);
+    return Optional.ofNullable(transactionInfo);
+  }
+
 
   /**
    * constructor.

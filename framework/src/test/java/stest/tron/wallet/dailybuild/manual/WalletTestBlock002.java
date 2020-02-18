@@ -23,18 +23,29 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestBlock002 {
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
+  private ManagedChannel channelSoliInFull = null;
+  private ManagedChannel channelPbft = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSoliInFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+  private String soliInFullnode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
+  private String soliInPbft = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(2);
 
   public static String loadPubKey() {
     char[] buf = new char[0x100];
@@ -62,13 +73,23 @@ public class WalletTestBlock002 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    channelSoliInFull = ManagedChannelBuilder.forTarget(soliInFullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSoliInFull = WalletSolidityGrpc.newBlockingStub(channelSoliInFull);
+
+    channelPbft = ManagedChannelBuilder.forTarget(soliInPbft)
+        .usePlaintext(true)
+        .build();
+    blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
   }
 
   /**
    * constructor.
    */
   @Test(enabled = true, description = "GetBlockByNum from fullnode")
-  public void testGetBlockByNum() {
+  public void test01GetBlockByNum() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     Assert.assertFalse(currentBlockNum < 0);
@@ -111,7 +132,7 @@ public class WalletTestBlock002 {
   }
 
   @Test(enabled = true, description = "GetBlockByNum from solidity")
-  public void testGetBlockByNumFromSolidity() {
+  public void test02GetBlockByNumFromSolidity() {
     Block currentBlock = blockingStubSolidity
         .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
@@ -157,7 +178,7 @@ public class WalletTestBlock002 {
   }
 
   @Test(enabled = true, description = "get block by id")
-  public void testGetBlockById() {
+  public void test03GetBlockById() {
 
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     ByteString currentHash = currentBlock.getBlockHeader().getRawData().getParentHash();
@@ -177,6 +198,39 @@ public class WalletTestBlock002 {
     logger.info("By ID test succesfully");
   }
 
+
+  @Test(enabled = true, description = "get transaction count by block num")
+  public void test04GetTransactionCountByBlockNum() {
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    builder.setNum(0);
+
+    Assert.assertTrue(blockingStubFull.getTransactionCountByBlockNum(builder.build())
+        .getNum() > 3);
+  }
+
+  @Test(enabled = true, description = "get transaction count by block num from solidity")
+  public void test05GetTransactionCountByBlockNumFromSolidity() {
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    builder.setNum(0);
+
+    Assert.assertTrue(blockingStubSolidity.getTransactionCountByBlockNum(builder.build())
+        .getNum() > 3);
+    Assert.assertTrue(blockingStubSoliInFull.getTransactionCountByBlockNum(builder.build())
+        .getNum() > 3);
+  }
+
+  @Test(enabled = true, description = "get transaction count by block num from PBFT")
+  public void test06GetTransactionCountByBlockNumFromPbft() {
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    builder.setNum(0);
+
+    Assert.assertTrue(blockingStubPbft.getTransactionCountByBlockNum(builder.build())
+        .getNum() > 3);
+  }
+
+
+
+
   /**
    * constructor.
    */
@@ -189,6 +243,13 @@ public class WalletTestBlock002 {
     if (channelSolidity != null) {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
+    if (channelPbft != null) {
+      channelPbft.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSoliInFull != null) {
+      channelSoliInFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+
   }
 
   /**
