@@ -368,6 +368,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long forbidTransferToContract; //committee parameter
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -563,6 +567,7 @@ public class Args {
     INSTANCE.allowDelegateResource = 0;
     INSTANCE.allowSameTokenName = 0;
     INSTANCE.allowTvmSolidity059 = 0;
+    INSTANCE.forbidTransferToContract = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -928,6 +933,10 @@ public class Args {
     INSTANCE.allowTvmSolidity059 =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY059) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY059) : 0;
+
+    INSTANCE.forbidTransferToContract =
+        config.hasPath("committee.forbidTransferToContract") ? config
+            .getInt("committee.forbidTransferToContract") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath(Constant.NODE_TCP_NETTY_WORK_THREAD_NUM) ? config
         .getInt(Constant.NODE_TCP_NETTY_WORK_THREAD_NUM) : 0;
@@ -1434,6 +1443,7 @@ public class Args {
     DBConfig.setAllowTvmTransferTrc10(cfgArgs.getAllowTvmTransferTrc10());
     DBConfig.setAllowTvmConstantinople(cfgArgs.getAllowTvmConstantinople());
     DBConfig.setAllowTvmSolidity059(cfgArgs.getAllowTvmSolidity059());
+    DBConfig.setForbidTransferToContract(cfgArgs.getForbidTransferToContract());
     DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
     DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
     DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
