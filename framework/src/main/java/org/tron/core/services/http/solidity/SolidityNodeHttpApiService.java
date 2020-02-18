@@ -160,16 +160,17 @@ public class SolidityNodeHttpApiService implements Service {
           "/walletsolidity/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet),
           "/walletsolidity/getblockbylatestnum");
-      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
-          "/walletsolidity/getmerkletreevoucherinfo");
-      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
-          "/walletsolidity/scanandmarknotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByIvkServlet),
-          "/walletsolidity/scannotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByOvkServlet),
-          "/walletsolidity/scannotebyovk");
-      context.addServlet(new ServletHolder(isSpendServlet),
-          "/walletsolidity/isspend");
+
+      // context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
+      //     "/walletsolidity/getmerkletreevoucherinfo");
+      // context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
+      //     "/walletsolidity/scanandmarknotebyivk");
+      // context.addServlet(new ServletHolder(scanNoteByIvkServlet),
+      //     "/walletsolidity/scannotebyivk");
+      // context.addServlet(new ServletHolder(scanNoteByOvkServlet),
+      //     "/walletsolidity/scannotebyovk");
+      // context.addServlet(new ServletHolder(isSpendServlet),
+      //     "/walletsolidity/isspend");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),
