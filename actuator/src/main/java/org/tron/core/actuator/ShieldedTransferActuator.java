@@ -22,7 +22,6 @@ import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -57,8 +56,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
   @Override
   public boolean execute(Object result)
       throws ContractExeException {
-    TransactionResultCapsule ret = (TransactionResultCapsule)result;
-    if (Objects.isNull(ret)){
+    TransactionResultCapsule ret = (TransactionResultCapsule) result;
+    if (Objects.isNull(ret)) {
       throw new RuntimeException("TransactionResultCapsule is null");
     }
 
@@ -88,7 +87,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
 
     executeShielded(shieldedTransferContract.getSpendDescriptionList(),
-        shieldedTransferContract.getReceiveDescriptionList(), ret,fee);
+        shieldedTransferContract.getReceiveDescriptionList(), ret, fee);
 
     if (shieldedTransferContract.getTransparentToAddress().toByteArray().length > 0) {
       executeTransparentTo(shieldedTransferContract.getTransparentToAddress().toByteArray(),
@@ -154,7 +153,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   //record shielded transaction data.
   private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives,
-      TransactionResultCapsule ret,long fee)
+      TransactionResultCapsule ret, long fee)
       throws ContractExeException {
 
     NullifierStore nullifierStore = chainBaseManager.getNullifierStore();
@@ -275,7 +274,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private void checkProof(List<SpendDescription> spendDescriptions,
-      List<ReceiveDescription> receiveDescriptions,long fee) throws ZkProofValidateException {
+      List<ReceiveDescription> receiveDescriptions, long fee) throws ZkProofValidateException {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     ZKProofStore proofStore = chainBaseManager.getProofStore();
     if (proofStore.has(tx.getTransactionId().getBytes())) {
@@ -391,7 +390,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
   }
 
-  private void validateTransparent(ShieldedTransferContract shieldedTransferContract,long fee)
+  private void validateTransparent(ShieldedTransferContract shieldedTransferContract, long fee)
       throws ContractValidateException {
     boolean hasTransparentFrom;
     boolean hasTransparentTo;
