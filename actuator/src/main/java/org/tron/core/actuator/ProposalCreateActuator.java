@@ -77,7 +77,7 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
+      throw new ContractValidateException("No dbManager!");
     }
     if (!this.any.is(ProposalCreateContract.class)) {
       throw new ContractValidateException(
