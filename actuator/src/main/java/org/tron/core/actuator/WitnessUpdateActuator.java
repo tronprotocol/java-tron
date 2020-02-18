@@ -58,7 +58,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
       throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
+      throw new ContractValidateException("No account store or witness store!");
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     WitnessStore witnessStore = chainBaseManager.getWitnessStore();
