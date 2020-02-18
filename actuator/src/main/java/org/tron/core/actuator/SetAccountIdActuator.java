@@ -59,7 +59,7 @@ public class SetAccountIdActuator extends AbstractActuator {
       throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
+      throw new ContractValidateException("No account store or account id index store!");
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     AccountIdIndexStore accountIdIndexStore = chainBaseManager.getAccountIdIndexStore();
