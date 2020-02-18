@@ -286,8 +286,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
     }
 
-    byte[] signHash = TransactionCapsule
-        .getShieldTransactionHashIgnoreTypeException(new TransactionCapsule(tx.getInstance()));
+    byte[] signHash = TransactionUtil
+        .getShieldTransactionHashIgnoreTypeException(tx.getInstance());
 
     if (CollectionUtils.isNotEmpty(spendDescriptions)
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
