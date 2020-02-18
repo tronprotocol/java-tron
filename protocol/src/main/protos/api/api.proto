@@ -706,6 +706,7 @@ service Wallet {
   rpc CreateShieldNullifier (NfParameters) returns (BytesMessage) {
   };
   // end for shiededTransaction
+
   rpc CreateCommonTransaction (Transaction) returns (TransactionExtention) {
 
   };
