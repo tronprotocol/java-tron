@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.manual;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -31,6 +32,7 @@ public class WalletTestAccount015 {
   byte[] account015Address = ecKey1.getAddress();
   String account015Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private static final long now = System.currentTimeMillis();
+  private static long amount = 100000000L;
   private static String accountId = "accountid_" + Long.toString(now);
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -82,6 +84,9 @@ public class WalletTestAccount015 {
         .usePlaintext(true)
         .build();
     blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
+
+    Random rand =new Random();
+    amount=amount + rand.nextInt(10000);
   }
 
   @Test(enabled = true, description = "Set account id")
@@ -92,7 +97,7 @@ public class WalletTestAccount015 {
     account015Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     PublicMethed.printAddress(account015Key);
-    Assert.assertTrue(PublicMethed.sendcoin(account015Address, 100000000L, fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(account015Address, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -104,26 +109,50 @@ public class WalletTestAccount015 {
 
   @Test(enabled = true, description = "Get account by id")
   public void test02GetAccountById() {
-    Assert.assertEquals(PublicMethed.queryAccount(account015Key,blockingStubFull).getAddress(),
-        PublicMethed.getAccountById(
-        accountId,blockingStubFull).getAddress());
+    Assert.assertEquals(amount, PublicMethed.getAccountById(
+            accountId,blockingStubFull).getBalance());
   }
 
 
   @Test(enabled = true, description = "Get account by id from solidity")
   public void test03GetAccountByIdFromSolidity() {
-    Assert.assertEquals(PublicMethed.queryAccount(account015Address,
-        blockingStubSoliInFull).getBalance(),PublicMethed.getAccountByIdFromSolidity(
+    Assert.assertEquals(amount,PublicMethed.getAccountByIdFromSolidity(
         accountId,blockingStubSoliInFull).getBalance());
   }
 
   @Test(enabled = true, description = "Get account by id from PBFT")
   public void test04GetAccountByIdFromPbft() {
-    Assert.assertEquals(PublicMethed.queryAccount(account015Address,
-        blockingStubSoliInFull).getAccountId(),PublicMethed.getAccountByIdFromSolidity(
-        accountId,blockingStubPbft).getAccountId());
+    Assert.assertEquals(amount,PublicMethed.getAccountByIdFromSolidity(
+        accountId,blockingStubPbft).getBalance());
   }
 
+
+  @Test(enabled = true, description = "Get account from PBFT")
+  public void test05GetAccountFromPbft() {
+    Assert.assertEquals(amount,PublicMethed.queryAccount(
+        account015Address,blockingStubPbft).getBalance());
+  }
+
+
+  @Test(enabled = true, description = "List witnesses")
+  public void test06ListWitness() {
+    Assert.assertTrue(PublicMethed.listWitnesses(blockingStubFull)
+        .get().getWitnessesCount() >= 2);
+  }
+
+  @Test(enabled = true, description = "List witnesses from solidity node")
+  public void test07ListWitnessFromSolidity() {
+    Assert.assertTrue(PublicMethed.listWitnessesFromSolidity(blockingStubSolidity)
+        .get().getWitnessesCount() >= 2);
+    Assert.assertTrue(PublicMethed.listWitnessesFromSolidity(blockingStubSoliInFull)
+        .get().getWitnessesCount() >= 2);
+  }
+
+  @Test(enabled = true, description = "List witnesses from PBFT node")
+  public void test08ListWitnessFromPbft() {
+    Assert.assertTrue(PublicMethed.listWitnessesFromSolidity(blockingStubPbft)
+        .get().getWitnessesCount() >= 2);
+  }
 
 
 

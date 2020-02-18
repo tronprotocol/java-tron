@@ -445,7 +445,6 @@ public class PublicMethed {
   /**
    * constructor.
    */
-
   public static Account queryAccount(byte[] address, WalletSolidityGrpc
       .WalletSolidityBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -3959,7 +3958,6 @@ public class PublicMethed {
   /**
    * constructor.
    */
-
   public static Optional<AssetIssueList> getAssetIssueListByName(String assetName,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -3972,7 +3970,28 @@ public class PublicMethed {
   /**
    * constructor.
    */
+  public static Optional<GrpcAPI.WitnessList> listWitnesses(WalletGrpc.WalletBlockingStub
+      blockingStubFull) {
+    GrpcAPI.WitnessList witnessList =
+        blockingStubFull.listWitnesses(EmptyMessage.newBuilder().build());
+        return Optional.ofNullable(witnessList);
+  }
 
+  /**
+   * constructor.
+   */
+  public static Optional<GrpcAPI.WitnessList> listWitnessesFromSolidity(WalletSolidityGrpc
+      .WalletSolidityBlockingStub blockingStubFull) {
+    GrpcAPI.WitnessList witnessList =
+        blockingStubFull.listWitnesses(EmptyMessage.newBuilder().build());
+    return Optional.ofNullable(witnessList);
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static AssetIssueContract getAssetIssueById(String assetId,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -3981,6 +4000,21 @@ public class PublicMethed {
     return blockingStubFull.getAssetIssueById(request);
   }
 
+  /**
+   * constructor.
+   */
+  public static AssetIssueContract getAssetIssueByIdFromSolidity(String assetId,
+      WalletSolidityGrpc
+          .WalletSolidityBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString assetIdBs = ByteString.copyFrom(assetId.getBytes());
+    BytesMessage request = BytesMessage.newBuilder().setValue(assetIdBs).build();
+    return blockingStubFull.getAssetIssueById(request);
+  }
+
+  /**
+   * constructor.
+   */
   private static Permission json2Permission(JSONObject json) {
     Permission.Builder permissionBuilder = Permission.newBuilder();
     if (json.containsKey("type")) {
