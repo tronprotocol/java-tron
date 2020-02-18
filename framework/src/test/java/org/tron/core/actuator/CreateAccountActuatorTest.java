@@ -251,7 +251,7 @@ public class CreateAccountActuatorTest {
     actuatorTest.setContract(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST));
     actuatorTest.nullTransationResult();
 
-    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
+    actuatorTest.setNullDBManagerMsg("No account store or contract store!");
     actuatorTest.nullDBManger();
 
   }
