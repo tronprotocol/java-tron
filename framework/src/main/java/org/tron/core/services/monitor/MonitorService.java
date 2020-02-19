@@ -20,7 +20,8 @@ public class MonitorService {
   @Autowired
   private MonitorMetric monitorMetric;
 
-  public Protocol.MonitorInfo getMonitorInfo() {
+  public MonitorInfo getMonitorInfo(){
+
     MonitorInfo monitorInfo = new MonitorInfo();
     monitorInfo.setStatus(1);
     monitorInfo.setMsg("success");
@@ -34,7 +35,11 @@ public class MonitorService {
 
     monitorInfo.setDataInfo(data);
 
-    return monitorInfo.ToProtoEntity();
+    return monitorInfo;
+  }
+
+  public Protocol.MonitorInfo getProtoMonitorInfo() {
+    return getMonitorInfo().ToProtoEntity();
   }
 
   public void setNodeInfo(MonitorInfo.DataInfo data) {
