@@ -25,10 +25,6 @@ public class GetNkFromNskServlet extends RateLimiterServlet {
       BytesMessage reply = wallet
           .getNkFromNsk(ByteString.copyFrom(ByteArray.fromHexString(input)));
 
-      String base58check = Wallet.encode58Check(reply.toByteArray());
-      String hexString = ByteArray.toHexString(reply.toByteArray());
-      System.out.println("b58 is: " + base58check + ", hex is: " + hexString);
-
       response.getWriter().println(JsonFormat.printToString(reply, visible));
     } catch (Exception e) {
       Util.processError(e, response);

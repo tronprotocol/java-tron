@@ -75,6 +75,7 @@ import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
@@ -504,6 +505,14 @@ public class Wallet {
     EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
         dbManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
+
+    long genesisTimeStamp = dbManager.getGenesisBlock().getTimeStamp();
+    accountCapsule.setLatestConsumeTime(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTime());
+    accountCapsule.setLatestConsumeFreeTime(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeFreeTime());
+    accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
 
     return accountCapsule.getInstance();
   }
@@ -1077,6 +1086,14 @@ public class Wallet {
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getShieldedTransactionFee")
             .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
+            .build());
+
+    // ShieldedTransactionCreateAccountFee
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getShieldedTransactionCreateAccountFee")
+            .setValue(
+                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -2016,6 +2033,41 @@ public class Wallet {
 
   }
 
+  public ShieldedAddressInfo getNewShieldedAddress() throws BadItemException, ZksnarkException {
+    if (!getFullNodeAllowShieldedTransaction()) {
+      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
+    }
+
+    ShieldedAddressInfo.Builder addressInfo = ShieldedAddressInfo.newBuilder();
+
+    BytesMessage sk = getSpendingKey();
+    DiversifierMessage d = getDiversifier();
+    ExpandedSpendingKeyMessage expandedSpendingKeyMessage = getExpandedSpendingKey(sk.getValue());
+
+    BytesMessage ak = getAkFromAsk(expandedSpendingKeyMessage.getAsk());
+    BytesMessage nk = getNkFromNsk(expandedSpendingKeyMessage.getNsk());
+    IncomingViewingKeyMessage ivk = getIncomingViewingKey(ak.getValue().toByteArray(),
+        nk.getValue().toByteArray());
+
+    PaymentAddressMessage addressMessage =
+        getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
+            new DiversifierT(d.getD().toByteArray()));
+
+    addressInfo.setSk(sk.getValue());
+    addressInfo.setAsk(expandedSpendingKeyMessage.getAsk());
+    addressInfo.setNsk(expandedSpendingKeyMessage.getNsk());
+    addressInfo.setOvk(expandedSpendingKeyMessage.getOvk());
+    addressInfo.setAk(ak.getValue());
+    addressInfo.setNk(nk.getValue());
+    addressInfo.setIvk(ivk.getIvk());
+    addressInfo.setD(d.getD());
+    addressInfo.setPkD(addressMessage.getPkD());
+    addressInfo.setPaymentAddress(addressMessage.getPaymentAddress());
+
+    return addressInfo.build();
+
+  }
+
   public BytesMessage getSpendingKey() throws ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
@@ -2033,7 +2085,7 @@ public class Wallet {
       throw new BadItemException("spendingKey is null");
     }
     if (ByteArray.toHexString(spendingKey.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of spendingKey's hexstring should be 64");
+      throw new BadItemException("the length of spendingKey's hex string should be 64");
     }
 
     ExpandedSpendingKey expandedSpendingKey = null;
@@ -2059,7 +2111,7 @@ public class Wallet {
       throw new BadItemException("ask is null");
     }
     if (ByteArray.toHexString(ask.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of ask's hexstring should be 64");
+      throw new BadItemException("the length of ask's hex string should be 64");
     }
 
     byte[] ak = ExpandedSpendingKey.getAkFromAsk(ask.toByteArray());
@@ -2075,7 +2127,7 @@ public class Wallet {
       throw new BadItemException("nsk is null");
     }
     if (ByteArray.toHexString(nsk.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of nsk's hexstring should be 64");
+      throw new BadItemException("the length of nsk's hex string should be 64");
     }
 
     byte[] nk = ExpandedSpendingKey.getNkFromNsk(nsk.toByteArray());
