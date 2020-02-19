@@ -665,12 +665,12 @@ message MonitorInfo {
       int32 blockProcessTime = 5;
       TPSInfo TPS = 6;
       int32 TxCacheSize = 7;
-      int32 missTxCount = 8;
+      int32 missedTxCount = 8;
       message TPSInfo {
-        int32 meanRate = 1;
-        int32 oneMinuteRate = 2;
-        int32 fiveMinuteRate = 3;
-        int32 fifteenMinuteRate = 4;
+        double meanRate = 1;
+        double oneMinuteRate = 2;
+        double fiveMinuteRate = 3;
+        double fifteenMinuteRate = 4;
       }
     }
 

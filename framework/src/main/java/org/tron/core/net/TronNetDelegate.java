@@ -48,6 +48,7 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.services.monitor.MonitorMetric;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
@@ -75,6 +76,9 @@ public class TronNetDelegate {
 
   @Autowired
   private BackupServer backupServer;
+
+  @Autowired
+  private MonitorMetric monitorMetric;
 
   private volatile boolean backupServerStartFlag;
 
@@ -191,6 +195,7 @@ public class TronNetDelegate {
     BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
       try {
+        long now = System.currentTimeMillis();
         if (!freshBlockId.contains(blockId)) {
           if (block.getNum() <= getHeadBlockId().getNum()) {
             logger.warn("Receive a fork block {} witness {}, head {}",
@@ -202,10 +207,12 @@ public class TronNetDelegate {
           freshBlockId.add(blockId);
           logger.info("Success process block {}.", blockId.getString());
           if (!backupServerStartFlag
-              && System.currentTimeMillis() - block.getTimeStamp() < BLOCK_PRODUCED_INTERVAL) {
+              && now - block.getTimeStamp() < BLOCK_PRODUCED_INTERVAL) {
             backupServerStartFlag = true;
             backupServer.initServer();
           }
+          monitorMetric.getHistogram(MonitorMetric.NET_BLOCK_LATENCY)
+                  .update(now - block.getTimeStamp());
         }
       } catch (ValidateSignatureException
           | ContractValidateException
