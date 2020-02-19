@@ -16,26 +16,30 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j(topic = "httpIntercetpor")
 public class HttpInterceptor implements Filter {
 
-  public static String TOTAL_REQUST = "TOTAL_REQUEST";
-  public static String FAIL_REQUST = "FAIL_REQUEST";
+  public  static String TOTAL_REQUST = "TOTAL_REQUEST";
+  public  static String FAIL_REQUST = "FAIL_REQUEST";
   private static int totalCount = 0;
   private static int failCount = 0;
   private static int interval = 1;      // 1 minute interval
+  private static HashMap<String, JSONObject> EndpointCount = new HashMap<String, JSONObject>();
   public String END_POINT = "END_POINT";
   public long gapMilliseconds = interval * 60 * 1000;
-  public HashMap<String, JSONObject> EndpointCount = new HashMap<String, JSONObject>();
   private long preciousTime = 0;
 
-  public static int getTotalCount() {
-    return totalCount;
+  public int getTotalCount() {
+    return this.totalCount;
   }
 
-  public static int getInterval() {
-    return interval;
+  public int getInterval() {
+    return this.interval;
   }
 
-  public static int getFailCount() {
-    return failCount;
+  public int getFailCount() {
+    return this.failCount;
+  }
+
+  public HashMap<String, JSONObject> getEndpointMap() {
+    return this.EndpointCount;
   }
 
   public HttpInterceptor getInstance() {
