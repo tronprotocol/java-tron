@@ -48,6 +48,7 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
+import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
@@ -1133,6 +1134,8 @@ public class Manager {
 
           applyBlock(newBlock);
           tmpSession.commit();
+          // if event subscribe is enabled, post solidity trigger to queue
+          postSolidityTrigger(getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
         } catch (Throwable throwable) {
@@ -1780,6 +1783,18 @@ public class Manager {
 
     } catch (Exception e) {
       logger.error("{}", e);
+    }
+  }
+
+  private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+      SolidityTriggerCapsule solidityTriggerCapsule
+          = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
+      boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
+      if (!result) {
+        logger.info("too many trigger, lost solidified trigger, "
+            + "block number: {}", latestSolidifiedBlockNumber);
+      }
     }
   }
 
