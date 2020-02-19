@@ -123,4 +123,33 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   public long getTotalTransactions() {
     return 0; //Streams.stream(iterator()).count();
   }
+
+  public CrossMessage getCrossMessage(byte[] key) {
+    byte[] value = revokingDB.getUnchecked(key);
+    if (ArrayUtils.isEmpty(value)) {
+      return null;
+    }
+    if (value.length == 8) {
+      long blockHigh = ByteArray.toLong(value);
+      List<BlockCapsule> blocksList = blockStore.getLimitNumber(blockHigh, 1);
+      if (blocksList.size() != 0) {
+        for (CrossMessage crossMessage : blocksList.get(0).getCrossMessageList()) {
+          TransactionCapsule tx = new TransactionCapsule(crossMessage.getTransaction());
+          if (tx.getTransactionId().equals(Sha256Hash.wrap(key))) {
+            return crossMessage;
+          }
+        }
+      }
+      List<KhaosBlock> khaosBlocks = khaosDatabase.getMiniStore().getBlockByNum(blockHigh);
+      for (KhaosBlock bl : khaosBlocks) {
+        for (CrossMessage crossMessage : bl.getBlk().getCrossMessageList()) {
+          TransactionCapsule tx = new TransactionCapsule(crossMessage.getTransaction());
+          if (tx.getTransactionId().equals(Sha256Hash.wrap(key))) {
+            return crossMessage;
+          }
+        }
+      }
+    }
+    return null;
+  }
 }

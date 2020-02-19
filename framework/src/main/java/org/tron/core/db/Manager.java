@@ -114,6 +114,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.ibc.common.CrossUtils;
 import org.tron.core.ibc.communicate.CommunicateService;
 import org.tron.core.ibc.communicate.PbftBlockListener;
 import org.tron.core.store.AccountIdIndexStore;
@@ -233,7 +234,7 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> repushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
-  private BlockingQueue<Sha256Hash> crossTxQueue;
+  private BlockingQueue<CrossMessage> crossTxQueue;
   @Setter
   private PbftBlockListener pbftBlockListener;
   @Setter
@@ -246,6 +247,11 @@ public class Manager {
         while (isRunRepushThread) {
           TransactionCapsule tx = null;
           try {
+            CrossMessage crossMessage = crossTxQueue.peek();
+            if (crossMessage != null && containsTransaction(
+                new TransactionCapsule(crossMessage.getTransaction()))) {
+              crossTxQueue.remove(crossMessage);
+            }
             tx = getRepushTransactions().peek();
             if (tx != null) {
               this.rePush(tx);
@@ -1448,17 +1454,16 @@ public class Manager {
         trx = iterator.next();
       } else if (crossTxQueue.size() > 0) {
         //process cross tx
-        Sha256Hash txHash = crossTxQueue.poll();
-        crossMessage = getCrossStore().getReceiveCrossMsgUnEx(txHash);
+        crossMessage = crossTxQueue.poll();
         //todo:a->o->b
-        if (crossMessage != null && (crossMessage.getType() == Type.DATA
-            || crossMessage.getType() == Type.ACK)
-            && crossMessage.getTimeOutBlockHeight() > getHeadBlockNum()) {
+        if (crossMessage.getType() == Type.TIME_OUT || crossMessage.getType() == Type.ACK
+            || crossMessage.getTimeOutBlockHeight() > getHeadBlockNum()) {
           trx = new TransactionCapsule(crossMessage.getTransaction());
           trx.setSource(false);
+          trx.setType(crossMessage.getType());
         } else {
-          logger.warn("cross tx time out, timeOutHeight:{}, now block height:{}",
-              crossMessage.getTimeOutBlockHeight(), getHeadBlockNum());
+          logger.warn("{} cross tx time out, timeOutHeight:{}, now block height:{}",
+              crossMessage.getType(), crossMessage.getTimeOutBlockHeight(), getHeadBlockNum());
           continue;
         }
       } else {
@@ -1604,8 +1609,23 @@ public class Manager {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
       for (CrossMessage crossMessage : block.getCrossMessageList()) {
-        if (communicateService.isSyncFinish() && !communicateService.validProof(crossMessage)) {
+        if (communicateService.isSyncFinish() && crossMessage.getType() != Type.TIME_OUT
+            && !communicateService.validProof(crossMessage)) {
           throw new ValidateSignatureException("valid proof fail");
+        }
+        if (crossMessage.getType() == Type.DATA
+            && crossMessage.getTimeOutBlockHeight() <= getHeadBlockNum()) {
+          throw new ValidateSignatureException("cross chain tx was time out");
+        }
+        if (communicateService.isSyncFinish() && crossMessage.getType() == Type.TIME_OUT) {
+          Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
+          CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
+          if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
+              source.getToChainId(), source.getTransaction())) {
+            //todo:if block head sync fail,then the time out will be valid fail!
+            throw new ValidateSignatureException(
+                "valid time out tx fail,sourceTxId: " + sourceTxId);
+          }
         }
         TransactionCapsule transactionCapsule = new TransactionCapsule(
             crossMessage.getTransaction());
@@ -1948,7 +1968,7 @@ public class Manager {
     }
   }
 
-  public boolean addCrossTx(Sha256Hash crossTx) {
-    return crossTxQueue.add(crossTx);
+  public boolean addCrossTx(CrossMessage crossMessage) {
+    return crossTxQueue.add(crossMessage);
   }
 }

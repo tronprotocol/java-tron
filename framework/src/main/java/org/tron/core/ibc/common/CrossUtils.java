@@ -13,6 +13,13 @@ public class CrossUtils {
         transaction.getRawData().toBuilder().setSourceTxId(txId.getByteString()).build()).build();
   }
 
+  public static Sha256Hash getAddSourceTxId(Transaction transaction) {
+    Sha256Hash txId = Sha256Hash.of(transaction.getRawData().toByteArray());
+    Transaction ts = transaction.toBuilder().setRawData(
+        transaction.getRawData().toBuilder().setSourceTxId(txId.getByteString()).build()).build();
+    return Sha256Hash.of(ts.getRawData().toByteArray());
+  }
+
   public static Sha256Hash getSourceTxId(Transaction transaction) {
     return Sha256Hash.of(transaction.toBuilder()
         .setRawData(transaction.getRawData().toBuilder().clearSourceTxId().build()).build()

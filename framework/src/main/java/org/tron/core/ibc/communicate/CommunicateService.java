@@ -179,11 +179,12 @@ public class CommunicateService implements Communicate {
 
   @Override
   public boolean broadcastCrossMessage(CrossMessage crossMessage) {
-    logger.info("ready broadcastCrossMessage");
+    logger.info("ready broadcast {} cross message", crossMessage.getType());
     syncPool.getActivePeers().stream().filter(peer -> !peer.isNeedSyncFromUs())
         .forEach(peer -> {
           peer.sendMessage(new CrossChainMessage(crossMessage));
-          logger.info("to {} broadcast cross msg, txid is {}", peer, getTxId(crossMessage));
+          logger.info("to {} broadcast cross msg, txid is {}, type {}", peer, getTxId(crossMessage),
+              crossMessage.getType());
         });
     return false;
   }

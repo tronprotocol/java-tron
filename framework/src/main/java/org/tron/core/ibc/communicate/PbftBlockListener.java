@@ -5,8 +5,13 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -17,11 +22,14 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.CrossStore;
+import org.tron.core.db.Manager;
+import org.tron.core.db.TransactionStore;
 import org.tron.core.event.EventListener;
 import org.tron.core.event.entity.PbftBlockCommitEvent;
 import org.tron.core.ibc.common.CrossUtils;
 import org.tron.protos.Protocol.CrossMessage;
 import org.tron.protos.Protocol.CrossMessage.Type;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.CrossContract;
@@ -30,7 +38,7 @@ import org.tron.protos.contract.BalanceContract.CrossContract;
 @Service
 public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
-  private long timeOut = 1000 * 60 * 2L;
+  private long timeOut = 1000 * 60 * 1L;
 
   private static final LoadingCache<Long, List<Sha256Hash>> callBackTx = CacheBuilder.newBuilder()
       .initialCapacity(100).expireAfterWrite(1, TimeUnit.HOURS)
@@ -50,11 +58,16 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
         }
       });
 
+  private static final Map<Sha256Hash, SendTxEntry> sendTxMap = new LinkedHashMap<>();
+
   @Autowired
   private CommunicateService communicateService;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
+
+  @Autowired
+  private Manager manager;
 
   @PostConstruct
   public void init() {
@@ -93,6 +106,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
               if (transactionCapsule != null) {
                 crossStore
                     .removeSendCrossMsg(CrossUtils.getSourceTxId(transactionCapsule.getInstance()));
+                sendTxMap.remove(CrossUtils.getSourceTxId(transactionCapsule.getInstance()));
               }
               logger.info("cross chain tx:{} finish.", hash);
             } else {
@@ -136,6 +150,8 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
         }
       });
       waitingSendTx.invalidate(event.getBlockNum());
+
+      checkTimeOut();
     } catch (Exception e) {
       logger.error("", e);
     }
@@ -154,6 +170,9 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
         return false;
       }
       if (transactionCapsule.isSource()) {
+        CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
+        sendTxMap.put(txHash, new SendTxEntry(txHash, System.currentTimeMillis(),
+            getTimeOutHeight(crossContract, (long) (timeOut * 1.5)), crossContract.getToChainId()));
         waitingSendTx.get(blockNum).add(txHash);
         return true;
       }
@@ -169,5 +188,52 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
       logger.error("", e);
     }
     return false;
+  }
+
+  private void checkTimeOut() {
+    Iterator<Entry<Sha256Hash, SendTxEntry>> iterator = sendTxMap.entrySet().iterator();
+    TransactionStore transactionStore = chainBaseManager.getTransactionStore();
+    while (iterator.hasNext()) {
+      SendTxEntry sendTxEntry = iterator.next().getValue();
+      TransactionCapsule tx = transactionStore.getUnchecked(sendTxEntry.getTxHash().getBytes());
+      if (tx != null && validTimeOut(sendTxEntry.getHeight(), sendTxEntry.getToChainId(),
+          tx.getInstance())) {
+        iterator.remove();
+        CrossMessage.Builder builder = CrossMessage.newBuilder();
+        builder.setType(Type.TIME_OUT).setFromChainId(communicateService.getLocalChainId())
+            .setTransaction(CrossUtils.addSourceTxId(tx.getInstance()))
+            .setRouteChainId(communicateService.getRouteChainId());
+        Contract contract = tx.getInstance().getRawData().getContract(0);
+        try {
+          CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
+          builder.setToChainId(crossContract.getToChainId())
+              .setTimeOutBlockHeight(sendTxEntry.getHeight());
+        } catch (Exception e) {
+          logger.error("", e);
+        }
+        manager.addCrossTx(builder.build());
+        logger.info("a cross chain tx:{} time out!", sendTxEntry.getTxHash().toString());
+
+      } else {
+        break;
+      }
+    }
+  }
+
+  public boolean validTimeOut(long timeOutHeight, ByteString toChainId, Transaction sourceTx) {
+    Sha256Hash sourceHash = Sha256Hash.of(sourceTx.getRawData().toByteArray());
+    TransactionStore transactionStore = chainBaseManager.getTransactionStore();
+    if (timeOutHeight < communicateService.getHeight(toChainId)
+        && communicateService.checkCommit(sourceHash)
+        && transactionStore.getUnchecked(CrossUtils.getAddSourceTxId(sourceTx).getBytes())
+        == null) {
+      return true;
+    }
+    return false;
+  }
+
+  private long getTimeOutHeight(CrossContract crossContract, long timeOut) {
+    return timeOut / BLOCK_PRODUCED_INTERVAL + communicateService
+        .getHeight(crossContract.getToChainId()) + 1;
   }
 }

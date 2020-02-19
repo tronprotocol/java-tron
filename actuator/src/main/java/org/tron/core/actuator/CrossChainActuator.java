@@ -20,6 +20,7 @@ import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.CrossMessage.Type;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -39,6 +40,13 @@ public class CrossChainActuator extends AbstractActuator {
     try {
       //ack don't execute，todo：a->o->b
       if (tx.getType() != null && tx.getType() == Type.ACK) {
+        ret.setStatus(calcFee(), code.SUCESS);
+        return true;
+      }
+      //timeout
+      if (tx.getType() != null && tx.getType() == Type.TIME_OUT) {
+        timeOutCallBack();
+        ret.setStatus(calcFee(), code.SUCESS);
         return true;
       }
       //
@@ -152,7 +160,7 @@ public class CrossChainActuator extends AbstractActuator {
     AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
     CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
     //ack don't valid
-    if (tx.getType() != null && tx.getType() == Type.ACK) {
+    if (tx.getType() != null && (tx.getType() == Type.ACK || tx.getType() == Type.TIME_OUT)) {
       return true;
     }
     //
@@ -283,5 +291,48 @@ public class CrossChainActuator extends AbstractActuator {
     accountCapsule.addAssetV2(assetIssueCapsuleV2.createDbV2Key(), remainSupply);
     accountStore.put(ownerAddress, accountCapsule);
     return tokenIdNum;
+  }
+
+  public void timeOutCallBack() {
+    try {
+      Contract contract = tx.getInstance().getRawData().getContract(0);
+      CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
+      DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+      AccountStore accountStore = chainBaseManager.getAccountStore();
+      AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
+      AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
+      byte[] ownerAddress = crossContract.getOwnerAddress().toByteArray();
+      switch (crossContract.getType()) {
+        case TOKEN: {
+          CrossToken crossToken = CrossToken.parseFrom(crossContract.getData());
+          CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
+          long amount = crossToken.getAmount();
+          String tokenId = ByteArray.toStr(crossToken.getTokenId().toByteArray());
+          Long inTokenCount = crossRevokingStore.getInTokenCount(tokenId);
+          if (inTokenCount != null) {//
+            crossRevokingStore.saveInTokenCount(tokenId, inTokenCount + amount);
+            tokenId = crossRevokingStore.getDestTokenFromMapping(tokenId);
+          } else {//source token
+            Long outTokenCount = crossRevokingStore.getOutTokenCount(tokenId);
+            crossRevokingStore
+                .saveOutTokenCount(tokenId,
+                    outTokenCount == null ? 0 : outTokenCount - amount);
+          }
+          AccountCapsule accountCapsule = accountStore.get(ownerAddress);
+          accountCapsule.addAssetAmountV2(ByteArray.fromString(tokenId),
+              amount, dynamicStore, assetIssueStore);
+          AssetIssueCapsule assetIssueCapsule = assetIssueV2Store
+              .getUnchecked(ByteArray.fromString(tokenId));
+          assetIssueCapsule.setTotalSupply(assetIssueCapsule.getTotalSupply() + amount);
+          accountStore.put(ownerAddress, accountCapsule);
+          assetIssueV2Store.put(ByteArray.fromString(tokenId), assetIssueCapsule);
+        }
+        break;
+        default:
+          break;
+      }
+    } catch (Exception e) {
+      logger.error("cross tx: {} execute timeout callback fail!", tx.toString(), e);
+    }
   }
 }

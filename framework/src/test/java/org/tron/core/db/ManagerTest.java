@@ -90,6 +90,7 @@ public class ManagerTest extends BlockGenerate {
                         Args.getInstance().getLocalWitnesses().getPrivateKey()))
                     .getAddress()), ByteString.EMPTY);
     blockCapsule2.setMerkleRoot();
+    blockCapsule2.setCrossMerkleRoot();
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
   }
@@ -121,6 +122,7 @@ public class ManagerTest extends BlockGenerate {
                         Args.getInstance().getLocalWitnesses().getPrivateKey()))
                     .getAddress()), ByteString.EMPTY);
     blockCapsule.setMerkleRoot();
+    blockCapsule.setCrossMerkleRoot();
     blockCapsule.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
 
@@ -538,6 +540,7 @@ public class ManagerTest extends BlockGenerate {
         witnessAddress, ByteString.EMPTY);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
+    blockCapsule.setCrossMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
   }
@@ -549,6 +552,7 @@ public class ManagerTest extends BlockGenerate {
         ByteString.copyFromUtf8("onlyTest"), ByteString.EMPTY);
     blockCapsule.generatedByMyself = true;
     blockCapsule.setMerkleRoot();
+    blockCapsule.setCrossMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
   }

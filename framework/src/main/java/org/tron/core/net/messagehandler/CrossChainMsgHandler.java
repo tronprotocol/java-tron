@@ -13,6 +13,7 @@ import org.tron.core.ibc.communicate.CommunicateService;
 import org.tron.core.net.message.CrossChainMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.protos.Protocol.CrossMessage.Type;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Component
@@ -34,7 +35,8 @@ public class CrossChainMsgHandler implements TronMsgHandler {
     if (!communicateService.isSyncFinish()) {
       return;
     }
-    if (!communicateService.validProof(crossChainMessage.getCrossMessage())) {
+    if (crossChainMessage.getCrossMessage().getType() != Type.TIME_OUT
+        && !communicateService.validProof(crossChainMessage.getCrossMessage())) {
       //todo: define a new reason code
       peer.disconnect(ReasonCode.BAD_TX);
       return;
@@ -48,8 +50,9 @@ public class CrossChainMsgHandler implements TronMsgHandler {
     } catch (InvalidProtocolBufferException e) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "not a cross message");
     }
+    //todo:timeout message how to do,save or not
     crossStore.saveReceiveCrossMsg(txId, crossChainMessage.getCrossMessage());
-    manager.addCrossTx(txId);
+    manager.addCrossTx(crossChainMessage.getCrossMessage());
     communicateService.broadcastCrossMessage(crossChainMessage.getCrossMessage());
   }
 }
