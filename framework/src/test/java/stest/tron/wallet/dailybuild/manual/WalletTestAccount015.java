@@ -85,8 +85,8 @@ public class WalletTestAccount015 {
         .build();
     blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
 
-    Random rand =new Random();
-    amount=amount + rand.nextInt(10000);
+    Random rand = new Random();
+    amount = amount + rand.nextInt(10000);
   }
 
   @Test(enabled = true, description = "Set account id")
@@ -153,6 +153,9 @@ public class WalletTestAccount015 {
     Assert.assertTrue(PublicMethed.listWitnessesFromSolidity(blockingStubPbft)
         .get().getWitnessesCount() >= 2);
   }
+
+
+
 
 
 

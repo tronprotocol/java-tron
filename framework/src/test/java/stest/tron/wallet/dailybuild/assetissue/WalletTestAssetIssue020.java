@@ -96,7 +96,7 @@ public class WalletTestAssetIssue020 {
     blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Asset issue support precision")
   public void test01AssetIssueSupportPrecision() {
     //get account
     ecKey1 = new ECKey(Utils.getRandom());
@@ -176,8 +176,8 @@ public class WalletTestAssetIssue020 {
 
   }
 
-  @Test(enabled = true)
-  public void test02GetAssetIssueFromSolidity() {
+  @Test(enabled = true, description = "Get asset issue by id from Solidity")
+  public void test02GetAssetIssueByidFromSolidity() {
     Assert.assertEquals(PublicMethed.getAssetIssueById(ByteArray.toStr(assetAccountId
         .toByteArray()), blockingStubFull),
         PublicMethed.getAssetIssueByIdFromSolidity(ByteArray.toStr(assetAccountId
@@ -188,12 +188,24 @@ public class WalletTestAssetIssue020 {
             .toByteArray()), blockingStubSoliInFull));
   }
 
-  @Test(enabled = true)
-  public void test03GetAssetIssueFromPbft() {
+  @Test(enabled = true, description = "Get asset issue by id from PBFT")
+  public void test03GetAssetIssueByIdFromPbft() {
     Assert.assertEquals(PublicMethed.getAssetIssueById(ByteArray.toStr(assetAccountId
             .toByteArray()), blockingStubFull),
         PublicMethed.getAssetIssueByIdFromSolidity(ByteArray.toStr(assetAccountId
             .toByteArray()), blockingStubPbft));
+  }
+
+  @Test(enabled = true, description = "Get asset issue list by name from Solidity")
+  public void test04GetAssetIssueListByNameFromSolidity() {
+    Assert.assertEquals(PublicMethed.getAssetIssueListByNameFromSolidity(name,
+        blockingStubSolidity).get().getAssetIssueList().get(0).getTotalSupply(),totalSupply);
+  }
+
+  @Test(enabled = true, description = "Get asset issue list by name from PBFT")
+  public void test05GetAssetIssueListByNameFromPbft() {
+    Assert.assertEquals(PublicMethed.getAssetIssueListByNameFromSolidity(name,
+        blockingStubPbft).get().getAssetIssue(0).getTotalSupply(),totalSupply);
   }
 
 

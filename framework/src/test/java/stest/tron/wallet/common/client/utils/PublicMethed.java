@@ -3919,7 +3919,6 @@ public class PublicMethed {
   /**
    * constructor.
    */
-
   public static Optional<DelegatedResourceList> getDelegatedResource(byte[] fromAddress,
       byte[] toAddress, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -3938,6 +3937,24 @@ public class PublicMethed {
    * constructor.
    */
 
+  public static Optional<DelegatedResourceList> getDelegatedResourceFromSolidity(byte[] fromAddress,
+      byte[] toAddress, WalletSolidityGrpc
+      .WalletSolidityBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString fromAddressBs = ByteString.copyFrom(fromAddress);
+    ByteString toAddressBs = ByteString.copyFrom(toAddress);
+
+    DelegatedResourceMessage request = DelegatedResourceMessage.newBuilder()
+        .setFromAddress(fromAddressBs)
+        .setToAddress(toAddressBs)
+        .build();
+    DelegatedResourceList delegatedResource = blockingStubFull.getDelegatedResource(request);
+    return Optional.ofNullable(delegatedResource);
+  }
+
+  /**
+   * constructor.
+   */
   public static Optional<DelegatedResourceAccountIndex> getDelegatedResourceAccountIndex(
       byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -3954,9 +3971,38 @@ public class PublicMethed {
   /**
    * constructor.
    */
+  public static Optional<DelegatedResourceAccountIndex>
+      getDelegatedResourceAccountIndexFromSolidity(
+      byte[] address, WalletSolidityGrpc
+      .WalletSolidityBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
 
+    ByteString addressBs = ByteString.copyFrom(address);
+
+    BytesMessage bytesMessage = BytesMessage.newBuilder().setValue(addressBs).build();
+
+    DelegatedResourceAccountIndex accountIndex = blockingStubFull
+        .getDelegatedResourceAccountIndex(bytesMessage);
+    return Optional.ofNullable(accountIndex);
+  }
+
+  /**
+   * constructor.
+   */
   public static AssetIssueContract getAssetIssueByName(String assetName,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
+    BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
+    return blockingStubFull.getAssetIssueByName(request);
+  }
+
+  /**
+   * constructor.
+   */
+  public static AssetIssueContract getAssetIssueByNameFromSolidity(String assetName,
+      WalletSolidityGrpc
+          .WalletSolidityBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
     BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
@@ -3978,11 +4024,25 @@ public class PublicMethed {
   /**
    * constructor.
    */
+  public static Optional<AssetIssueList> getAssetIssueListByNameFromSolidity(String assetName,
+      WalletSolidityGrpc
+          .WalletSolidityBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
+    BytesMessage request = BytesMessage.newBuilder().setValue(assetNameBs).build();
+    AssetIssueList assetIssueList = blockingStubFull.getAssetIssueListByName(request);
+    return Optional.ofNullable(assetIssueList);
+  }
+
+
+  /**
+   * constructor.
+   */
   public static Optional<GrpcAPI.WitnessList> listWitnesses(WalletGrpc.WalletBlockingStub
       blockingStubFull) {
-    GrpcAPI.WitnessList witnessList =
-        blockingStubFull.listWitnesses(EmptyMessage.newBuilder().build());
-        return Optional.ofNullable(witnessList);
+    GrpcAPI.WitnessList witnessList = blockingStubFull
+        .listWitnesses(EmptyMessage.newBuilder().build());
+    return Optional.ofNullable(witnessList);
   }
 
   /**
