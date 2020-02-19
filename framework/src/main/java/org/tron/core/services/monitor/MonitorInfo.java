@@ -75,7 +75,7 @@ public class MonitorInfo {
     blockChain.setForkCount(BlockChain.getForkCount());
     blockChain.setHeadBlockNum(BlockChain.getHeadBlockNum());
     blockChain.setTxCacheSize(BlockChain.getTxCacheSize());
-    blockChain.setMissTxCount(BlockChain.getMissTxCount());
+    blockChain.setMissedTxCount(BlockChain.getMissTxCount());
 
     Protocol.MonitorInfo.DataInfo.BlockChainInfo.TPSInfo.Builder tpsInfo =
         Protocol.MonitorInfo.DataInfo.BlockChainInfo.TPSInfo.newBuilder();
@@ -372,43 +372,43 @@ public class MonitorInfo {
       }
 
       public static class TPSInfo {
-        private int meanRate;
-        private int oneMinuteRate;
-        private int fiveMinuteRate;
-        private int fifteenMinuteRate;
+        private double meanRate;
+        private double oneMinuteRate;
+        private double fiveMinuteRate;
+        private double fifteenMinuteRate;
 
-        public int getMeanRate() {
+        public double getMeanRate() {
           return this.meanRate;
         }
 
-        public TPSInfo setMeanRate(int meanRate) {
+        public TPSInfo setMeanRate(double meanRate) {
           this.meanRate = meanRate;
           return this;
         }
 
-        public int getOneMinuteRate() {
+        public double getOneMinuteRate() {
           return this.oneMinuteRate;
         }
 
-        public TPSInfo setOneMinuteRate(int oneMinuteRate) {
+        public TPSInfo setOneMinuteRate(double oneMinuteRate) {
           this.oneMinuteRate = oneMinuteRate;
           return this;
         }
 
-        public int getFiveMinuteRate() {
+        public double getFiveMinuteRate() {
           return this.fiveMinuteRate;
         }
 
-        public TPSInfo setFiveMinuteRate(int fiveMinuteRate) {
+        public TPSInfo setFiveMinuteRate(double fiveMinuteRate) {
           this.fiveMinuteRate = fiveMinuteRate;
           return this;
         }
 
-        public int getFifteenMinuteRate() {
+        public double getFifteenMinuteRate() {
           return this.fifteenMinuteRate;
         }
 
-        public TPSInfo setFifteenMinuteRate(int fifteenMinuteRate) {
+        public TPSInfo setFifteenMinuteRate(double fifteenMinuteRate) {
           this.fifteenMinuteRate = fifteenMinuteRate;
           return this;
         }

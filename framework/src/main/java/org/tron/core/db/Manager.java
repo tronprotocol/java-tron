@@ -109,6 +109,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.monitor.MonitorMetric;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -211,6 +212,10 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+
+  @Autowired
+  private MonitorMetric monitorMetric;
+
   /**
    * Cycle thread to rePush Transactions
    */
@@ -1054,6 +1059,10 @@ public class Manager {
       ownerAddressSet.addAll(result);
     }
 
+    //record transaction rate metric
+    if (block.getTransactions().size() > 0) {
+      monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_TPS).mark(block.getTransactions().size());
+    }
 
     // calculate processing time and update new total new time
     String Oldtime = chainBaseManager.getDynamicPropertiesStore().getTotalProcessingTxTime();

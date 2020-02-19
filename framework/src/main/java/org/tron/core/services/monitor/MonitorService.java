@@ -3,6 +3,10 @@ package org.tron.core.services.monitor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.protos.Protocol;
 import org.tron.core.services.filter.HttpInterceptor;
@@ -12,6 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j(topic = "monitorService")
 @Component
 public class MonitorService {
+
+  @Autowired
+  private MonitorMetric monitorMetric;
 
   public Protocol.MonitorInfo getMonitorInfo() {
     MonitorInfo monitorInfo = new MonitorInfo();
@@ -57,12 +64,20 @@ public class MonitorService {
     blockChain.setHeadBlockNum(10000);
     blockChain.setTxCacheSize(1000);
     blockChain.setMissTxCount(100);
+
+//    MonitorInfo.DataInfo.BlochainInfo.TPSInfo tpsInfo =
+//        new MonitorInfo.DataInfo.BlochainInfo.TPSInfo();
+//    tpsInfo.setMeanRate(2);
+//    tpsInfo.setOneMinuteRate(3);
+//    tpsInfo.setFiveMinuteRate(2);
+//    tpsInfo.setFifteenMinuteRate(4);
+    Meter transactionRate = monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_TPS);
     MonitorInfo.DataInfo.BlochainInfo.TPSInfo tpsInfo =
-        new MonitorInfo.DataInfo.BlochainInfo.TPSInfo();
-    tpsInfo.setMeanRate(2);
-    tpsInfo.setOneMinuteRate(3);
-    tpsInfo.setFiveMinuteRate(2);
-    tpsInfo.setFifteenMinuteRate(4);
+            new MonitorInfo.DataInfo.BlochainInfo.TPSInfo();
+    tpsInfo.setMeanRate(transactionRate.getMeanRate());
+    tpsInfo.setOneMinuteRate(transactionRate.getOneMinuteRate());
+    tpsInfo.setFiveMinuteRate(transactionRate.getFiveMinuteRate());
+    tpsInfo.setFifteenMinuteRate(transactionRate.getFifteenMinuteRate());
 
     blockChain.setTPS(tpsInfo);
     data.setBlockInfo(blockChain);
@@ -107,15 +122,15 @@ public class MonitorService {
     disconnectionDetails.add(disconnectionDetail);
     netInfo.setDisconnectionDetail(disconnectionDetails);
 
-
     MonitorInfo.DataInfo.NetInfo.LatencyInfo latencyInfo =
         new MonitorInfo.DataInfo.NetInfo.LatencyInfo();
     latencyInfo.setDelay1S(12);
     latencyInfo.setDelay2S(5);
     latencyInfo.setDelay3S(1);
-    latencyInfo.setTop99(10);
-    latencyInfo.setTop95(6);
-    latencyInfo.setTotalCount(100);
+    Histogram blockLatency = monitorMetric.getHistogram(MonitorMetric.NET_BLOCK_LATENCY);
+    latencyInfo.setTop99((int)blockLatency.getSnapshot().get99thPercentile());
+    latencyInfo.setTop95((int)blockLatency.getSnapshot().get95thPercentile());
+    latencyInfo.setTotalCount((int)blockLatency.getCount());
 
     MonitorInfo.DataInfo.NetInfo.LatencyInfo.LatencyDetailInfo latencyDetail =
         new MonitorInfo.DataInfo.NetInfo.LatencyInfo.LatencyDetailInfo();
