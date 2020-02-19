@@ -658,14 +658,14 @@ message MonitorInfo {
     }
 
     message BlockChainInfo {
-      int64 headBlockTimestamp = 1;
-      string headBlockHash = 2;
-      int32 forkCount = 3;
-      int32 blockProcessTime = 4;
-      int32 headBlockNum = 5;
+      int32 headBlockNum = 1;
+      int64 headBlockTimestamp = 2;
+      string headBlockHash = 3;
+      int32 forkCount = 4;
+      int32 blockProcessTime = 5;
       TPSInfo TPS = 6;
-      int32 TxQueueSize = 7;
-      int32 missTx = 8;
+      int32 TxCacheSize = 7;
+      int32 missTxCount = 8;
       message TPSInfo {
         int32 meanRate = 1;
         int32 oneMinuteRate = 2;
