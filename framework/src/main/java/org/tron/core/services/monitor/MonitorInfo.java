@@ -337,7 +337,7 @@ public class MonitorInfo {
         return this;
       }
 
-      public String getHeadBlockHash() {
+      public String zgetHeadBlockHash() {
         return this.headBlockHash;
       }
 

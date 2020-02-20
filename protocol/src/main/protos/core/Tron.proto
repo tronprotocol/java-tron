@@ -658,7 +658,7 @@ message MonitorInfo {
     }
 
     message BlockChainInfo {
-      int32 headBlockNum = 1;
+      int64 headBlockNum = 1;
       int64 headBlockTimestamp = 2;
       string headBlockHash = 3;
       int32 forkCount = 4;

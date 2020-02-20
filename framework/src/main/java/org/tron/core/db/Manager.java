@@ -139,7 +139,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
-
+import org.tron.core.services.monitor.blockChainInfo;
 
 @Slf4j(topic = "DB")
 @Component
@@ -215,6 +215,7 @@ public class Manager {
 
   @Autowired
   private MonitorMetric monitorMetric;
+
 
   /**
    * Cycle thread to rePush Transactions
@@ -363,6 +364,7 @@ public class Manager {
   public void stopRePushTriggerThread() {
     isRunTriggerCapsuleProcessThread = false;
   }
+
 
   @PostConstruct
   public void init() {
@@ -837,6 +839,8 @@ public class Manager {
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException,
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
       VMIllegalException, ZksnarkException, BadBlockException {
+    // increase fork count
+    blockChainInfo.forkCount++;
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =

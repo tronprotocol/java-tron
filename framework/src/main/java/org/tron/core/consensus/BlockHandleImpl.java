@@ -13,7 +13,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
-
+import org.tron.core.services.monitor.blockChainInfo;
 @Slf4j(topic = "consensus")
 @Component
 public class BlockHandleImpl implements BlockHandle {
@@ -43,6 +43,8 @@ public class BlockHandleImpl implements BlockHandle {
   }
 
   public BlockCapsule produce(Miner miner, long blockTime, long timeout) {
+    blockChainInfo blockInfo=new blockChainInfo(false);
+
     BlockCapsule blockCapsule = manager.generateBlock(miner, blockTime, timeout);
     if (blockCapsule == null) {
       return null;
@@ -54,9 +56,11 @@ public class BlockHandleImpl implements BlockHandle {
       manager.pushBlock(blockCapsule);
       tronNetService.broadcast(blockMessage);
     } catch (Exception e) {
+      blockInfo.setProduceExpection(true);
       logger.error("Handle block {} failed.", blockCapsule.getBlockId().getString(), e);
       return null;
     }
+    blockInfo.setEndCurrentTime();
     return blockCapsule;
   }
 }
