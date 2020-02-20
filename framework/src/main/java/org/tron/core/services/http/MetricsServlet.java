@@ -6,26 +6,24 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.entity.NodeInfo;
-import org.tron.core.services.monitor.MonitorInfo;
-import org.tron.core.services.monitor.MonitorService;
-import org.tron.protos.Protocol;
+import org.tron.core.metrics.MetricsInfo;
+import org.tron.core.metrics.MetricsService;
 
 @Component
 @Slf4j(topic = "API")
-public class MonitorServlet extends RateLimiterServlet {
+public class MetricsServlet extends RateLimiterServlet {
 
   @Autowired
-  MonitorService monitorService;
+  MetricsService metricsService;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-        MonitorInfo monitorInfo = monitorService.getMonitorInfo();
+        MetricsInfo metricsInfo = metricsService.getMetricsInfo();
 
     //   Protocol.MonitorInfo monitorInfo = monitorService.getMonitorInfo();
 
-      if (monitorInfo != null) {
-         response.getWriter().println(JSON.toJSONString(monitorInfo,true));
+      if (metricsInfo != null) {
+         response.getWriter().println(JSON.toJSONString(metricsInfo,true));
       //   response.getWriter().println(JsonFormat.printToString(monitorInfo, true));
       } else {
         response.getWriter().println("{}");

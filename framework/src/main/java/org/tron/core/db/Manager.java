@@ -109,7 +109,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.services.monitor.MonitorMetric;
+import org.tron.core.metrics.MonitorMetric;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -139,7 +139,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.core.services.monitor.blockChainInfo;
+import org.tron.core.metrics.BlockChainInfo;
 
 @Slf4j(topic = "DB")
 @Component
@@ -840,7 +840,7 @@ public class Manager {
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
       VMIllegalException, ZksnarkException, BadBlockException {
     // increase fork count
-    blockChainInfo.forkCount++;
+    BlockChainInfo.forkCount++;
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =

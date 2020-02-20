@@ -232,7 +232,7 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private CreateCommonTransactionServlet createCommonTransactionServlet;
   @Autowired
-  private MonitorServlet monitorServlet;
+  private MetricsServlet metricsServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -412,7 +412,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/createCommonTransaction");
-      context.addServlet(new ServletHolder(monitorServlet), "/monitor");
+      context.addServlet(new ServletHolder(metricsServlet), "/metrics");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
