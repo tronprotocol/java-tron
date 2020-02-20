@@ -22,7 +22,9 @@ import com.google.protobuf.ByteString;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Hash;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.vm.repository.Repository;
@@ -87,7 +89,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   public DataWord getOriginAddress() {
 
     byte[] cowPrivKey = Hash.sha3("horse".getBytes());
-    byte[] addr = ECKey.fromPrivate(cowPrivKey).getAddress();
+    byte[] addr = SignUtils.fromPrivate(cowPrivKey, DBConfig.isECKeyCryptoEngine()).getAddress();
 
     return new DataWord(addr);
   }
@@ -96,7 +98,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   public DataWord getCallerAddress() {
 
     byte[] cowPrivKey = Hash.sha3("monkey".getBytes());
-    byte[] addr = ECKey.fromPrivate(cowPrivKey).getAddress();
+    byte[] addr = SignUtils.fromPrivate(cowPrivKey, DBConfig.isECKeyCryptoEngine()).getAddress();
 
     return new DataWord(addr);
   }

@@ -42,30 +42,11 @@ public class StringUtil {
     return ByteArray.toHexString(bytes);
   }
 
-  public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(input);
-    byte[] hash1 = Sha256Hash.hash(hash0);
-    byte[] inputCheck = new byte[input.length + 4];
-    System.arraycopy(input, 0, inputCheck, 0, input.length);
-    System.arraycopy(hash1, 0, inputCheck, input.length, 4);
-    return Base58.encode(inputCheck);
-  }
-
   public static String createReadableString(ByteString string) {
     return createReadableString(string.toByteArray());
   }
 
-  public static List<String> getAddressStringList(Collection<ByteString> collection) {
-    return collection.stream()
-        .map(bytes -> encode58Check(bytes.toByteArray()))
-        .collect(Collectors.toList());
-  }
 
-  public static List<String> getAddressStringListFromByteArray(Collection<byte[]> collection) {
-    return collection.stream()
-        .map(bytes -> createReadableString(bytes))
-        .collect(Collectors.toList());
-  }
 
   public static ByteString hexString2ByteString(String hexString) {
     return ByteString.copyFrom(ByteArray.fromHexString(hexString));

@@ -32,7 +32,8 @@ public class FastForward {
   private Args args = Args.getInstance();
   private List<Node> fastForwardNodes = args.getFastForwardNodes();
   private ByteString witnessAddress = ByteString
-      .copyFrom(args.getLocalWitnesses().getWitnessAccountAddress());
+      .copyFrom(Args.getInstance().getLocalWitnesses().getWitnessAccountAddress(Args.getInstance()
+          .isECKeyCryptoEngine()));
   private int keySize = args.getLocalWitnesses().getPrivateKeys().size();
 
   public void init() {

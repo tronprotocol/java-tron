@@ -132,6 +132,10 @@ public class DBConfig {
   @Setter
   private static Set<String> actuatorSet;
 
+  @Getter
+  @Setter
+  private static boolean isECKeyCryptoEngine;
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }

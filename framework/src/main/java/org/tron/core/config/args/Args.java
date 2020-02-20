@@ -40,6 +40,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
@@ -465,6 +466,10 @@ public class Args {
 
   @Getter
   @Setter
+  private String cryptoEngine = Constant.ECKey_ENGINE;
+
+  @Getter
+  @Setter
   private long trxExpirationTimeInMilliseconds; // (ms)
 
   @Getter
@@ -626,7 +631,7 @@ public class Args {
           logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
         }
       }
-      INSTANCE.localWitnesses.initWitnessAccountAddress();
+      INSTANCE.localWitnesses.initWitnessAccountAddress(DBConfig.isECKeyCryptoEngine());
       logger.debug("Got privateKey from cmd");
     } else if (config.hasPath(Constant.LOCAL_WITENSS)) {
       INSTANCE.localWitnesses = new LocalWitnesses();
@@ -647,7 +652,7 @@ public class Args {
           logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
         }
       }
-      INSTANCE.localWitnesses.initWitnessAccountAddress();
+      INSTANCE.localWitnesses.initWitnessAccountAddress(DBConfig.isECKeyCryptoEngine());
 
       logger.debug("Got privateKey from config.conf");
     } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
@@ -669,8 +674,8 @@ public class Args {
           try {
             Credentials credentials = WalletUtils
                 .loadCredentials(password, new File(fileName));
-            ECKey ecKeyPair = credentials.getEcKeyPair();
-            String prikey = ByteArray.toHexString(ecKeyPair.getPrivKeyBytes());
+            SignInterface sign = credentials.getSignInterface();
+            String prikey = ByteArray.toHexString(sign.getPrivateKey());
             privateKeys.add(prikey);
           } catch (IOException e) {
             logger.error(e.getMessage());
@@ -695,7 +700,7 @@ public class Args {
           logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
         }
       }
-      INSTANCE.localWitnesses.initWitnessAccountAddress();
+      INSTANCE.localWitnesses.initWitnessAccountAddress(DBConfig.isECKeyCryptoEngine());
       logger.debug("Got privateKey from keystore");
     }
 
@@ -1454,6 +1459,7 @@ public class Args {
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
+    DBConfig.setECKeyCryptoEngine(cfgArgs.isECKeyCryptoEngine());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
@@ -1491,5 +1497,9 @@ public class Args {
     }
 
     return ECKey.fromPrivate(Hex.decode(INSTANCE.p2pNodeId));
+  }
+
+  public boolean isECKeyCryptoEngine() {
+    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
 }

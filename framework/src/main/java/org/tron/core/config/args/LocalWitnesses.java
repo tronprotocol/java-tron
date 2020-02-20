@@ -1,4 +1,4 @@
-/*
+  /*
  * java-tron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.core.config.Parameter.ChainConstant;
 
 @Slf4j(topic = "app")
@@ -44,11 +47,12 @@ public class LocalWitnesses {
     setPrivateKeys(privateKeys);
   }
 
-  public byte[] getWitnessAccountAddress() {
+  public byte[] getWitnessAccountAddress(boolean isECKeyCryptoEngine) {
     if (witnessAccountAddress == null) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
-      final ECKey ecKey = ECKey.fromPrivate(privateKey);
-      this.witnessAccountAddress = ecKey.getAddress();
+      final SignInterface cryptoEngine = SignUtils
+          .fromPrivate(privateKey, isECKeyCryptoEngine);
+      this.witnessAccountAddress = cryptoEngine.getAddress();
     }
     return witnessAccountAddress;
   }
@@ -57,10 +61,11 @@ public class LocalWitnesses {
     this.witnessAccountAddress = localWitnessAccountAddress;
   }
 
-  public void initWitnessAccountAddress() {
+  public void initWitnessAccountAddress(boolean isECKeyCryptoEngine) {
     if (witnessAccountAddress == null) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
-      final ECKey ecKey = ECKey.fromPrivate(privateKey);
+      final SignInterface ecKey = SignUtils.fromPrivate(privateKey,
+          isECKeyCryptoEngine);
       this.witnessAccountAddress = ecKey.getAddress();
     }
   }

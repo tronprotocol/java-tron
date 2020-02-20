@@ -31,7 +31,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
@@ -141,10 +144,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public void sign(byte[] privateKey) {
     // TODO private_key == null
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
-    ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
-    ByteString sig = ByteString.copyFrom(signature.toByteArray());
-
+    SignInterface ecKeyEngine = SignUtils.fromPrivate(privateKey, DBConfig.isECKeyCryptoEngine());
+    ByteString sig = ByteString.copyFrom(ecKeyEngine.Base64toBytes(ecKeyEngine.signHash(getRawHash()
+        .getBytes())));
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
         .build();
 
@@ -152,14 +154,15 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   private Sha256Hash getRawHash() {
-    return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
+    return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(), this.block.getBlockHeader().getRawData().toByteArray());
   }
 
   public boolean validateSignature(DynamicPropertiesStore dynamicPropertiesStore,
       AccountStore accountStore) throws ValidateSignatureException {
     try {
-      byte[] sigAddress = ECKey.signatureToAddress(getRawHash().getBytes(),
-          TransactionCapsule.getBase64FromByteString(block.getBlockHeader().getWitnessSignature()));
+      byte[] sigAddress = SignUtils.signatureToAddress(getRawHash().getBytes(),
+          TransactionCapsule.getBase64FromByteString(block.getBlockHeader()
+              .getWitnessSignature()), DBConfig.isECKeyCryptoEngine());
       byte[] witnessAccountAddress = block.getBlockHeader().getRawData().getWitnessAddress()
           .toByteArray();
 
@@ -178,7 +181,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()),
+      blockId = new BlockId(Sha256Hash.of(DBConfig.isECKeyCryptoEngine(), this.block.getBlockHeader().getRawData().toByteArray()),
           getNum());
     }
     return blockId;

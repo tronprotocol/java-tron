@@ -3,6 +3,9 @@ package org.tron.common.utils;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -16,9 +19,9 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
-public class WalletUtil {
+  public class WalletUtil {
 
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+    public static boolean checkPermissionOprations(Permission permission, Contract contract)
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
@@ -29,7 +32,7 @@ public class WalletUtil {
     return b;
   }
 
-  public static byte[] generateContractAddress(Transaction trx) {
+    public static byte[] generateContractAddress(Transaction trx) {
 
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
@@ -63,8 +66,8 @@ public class WalletUtil {
 
 
   public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(input);
-    byte[] hash1 = Sha256Hash.hash(hash0);
+    byte[] hash0 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), input);
+    byte[] hash1 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), hash0);
     byte[] inputCheck = new byte[input.length + 4];
     System.arraycopy(input, 0, inputCheck, 0, input.length);
     System.arraycopy(hash1, 0, inputCheck, input.length, 4);
@@ -131,6 +134,11 @@ public class WalletUtil {
     return false;
   }
 
+  public static List<String> getAddressStringList(Collection<ByteString> collection) {
+    return collection.stream()
+      .map(bytes -> encode58Check(bytes.toByteArray()))
+      .collect(Collectors.toList());
+  }
 
   private static byte[] getSelector(byte[] data) {
     if (data == null ||

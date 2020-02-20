@@ -20,6 +20,7 @@ package org.tron.core;
 
 import static org.tron.common.utils.Commons.ADDRESS_SIZE;
 import static org.tron.common.utils.Commons.addressPreFixByte;
+import static org.tron.common.utils.Commons.decodeFromBase58Check;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
@@ -86,6 +87,8 @@ import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
@@ -95,6 +98,7 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
@@ -202,7 +206,7 @@ public class Wallet {
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   @Getter
-  private final ECKey ecKey;
+  private final SignInterface cryptoEngine;
   @Autowired
   private TronNetService tronNetService;
   @Autowired
@@ -217,15 +221,16 @@ public class Wallet {
    * Creates a new Wallet with a random ECKey.
    */
   public Wallet() {
-    this.ecKey = new ECKey(Utils.getRandom());
+    this.cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+        Args.getInstance().isECKeyCryptoEngine());
   }
 
   /**
    * Creates a Wallet with an existing ECKey.
    */
-  public Wallet(final ECKey ecKey) {
-    this.ecKey = ecKey;
-    logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
+  public Wallet(final SignInterface cryptoEngine) {
+    this.cryptoEngine = cryptoEngine;
+    logger.info("wallet address: {}", ByteArray.toHexString(this.cryptoEngine.getAddress()));
   }
 
   public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract)
@@ -280,30 +285,12 @@ public class Wallet {
   }
 
   public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(input);
-    byte[] hash1 = Sha256Hash.hash(hash0);
+    byte[] hash0 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), input);
+    byte[] hash1 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), hash0);
     byte[] inputCheck = new byte[input.length + 4];
     System.arraycopy(input, 0, inputCheck, 0, input.length);
     System.arraycopy(hash1, 0, inputCheck, input.length, 4);
     return Base58.encode(inputCheck);
-  }
-
-  private static byte[] decode58Check(String input) {
-    byte[] decodeCheck = Base58.decode(input);
-    if (decodeCheck.length <= 4) {
-      return null;
-    }
-    byte[] decodeData = new byte[decodeCheck.length - 4];
-    System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
-    byte[] hash0 = Sha256Hash.hash(decodeData);
-    byte[] hash1 = Sha256Hash.hash(hash0);
-    if (hash1[0] == decodeCheck[decodeData.length] &&
-        hash1[1] == decodeCheck[decodeData.length + 1] &&
-        hash1[2] == decodeCheck[decodeData.length + 2] &&
-        hash1[3] == decodeCheck[decodeData.length + 3]) {
-      return decodeData;
-    }
-    return null;
   }
 
   public static byte[] generateContractAddress(Transaction trx) {
@@ -349,27 +336,10 @@ public class Wallet {
 
   public static byte[] tryDecodeFromBase58Check(String address) {
     try {
-      return Wallet.decodeFromBase58Check(address);
+      return decodeFromBase58Check(address);
     } catch (Exception ex) {
       return null;
     }
-  }
-
-  public static byte[] decodeFromBase58Check(String addressBase58) {
-    if (StringUtils.isEmpty(addressBase58)) {
-      logger.warn("Warning: Address is empty !!");
-      return null;
-    }
-    byte[] address = decode58Check(addressBase58);
-    if (address == null) {
-      return null;
-    }
-
-    if (!addressValid(address)) {
-      return null;
-    }
-
-    return address;
   }
 
   public static boolean checkPermissionOprations(Permission permission, Contract contract)
@@ -461,7 +431,7 @@ public class Wallet {
   }
 
   public byte[] getAddress() {
-    return ecKey.getAddress();
+    return cryptoEngine.getAddress();
   }
 
   public Account getAccount(Account account) {
@@ -703,7 +673,8 @@ public class Wallet {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),
+        trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
@@ -734,7 +705,8 @@ public class Wallet {
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();
         long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
-            Sha256Hash.hash(trx.getRawData().toByteArray()), approveList);
+            Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),
+                trx.getRawData().toByteArray()), approveList);
         tswBuilder.addAllApprovedList(approveList);
         tswBuilder.setCurrentWeight(currentWeight);
       }
@@ -764,7 +736,8 @@ public class Wallet {
     TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),
+        trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
@@ -781,14 +754,15 @@ public class Wallet {
 
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();
-        byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
+        byte[] hash = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), trx.getRawData().toByteArray());
         for (ByteString sig : trx.getSignatureList()) {
           if (sig.size() < 65) {
             throw new SignatureFormatException(
                 "Signature size is " + sig.size());
           }
           String base64 = TransactionCapsule.getBase64FromByteString(sig);
-          byte[] address = ECKey.signatureToAddress(hash, base64);
+          byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
+              .isECKeyCryptoEngine());
           approveList.add(ByteString.copyFrom(address)); //out put approve list.
         }
         tswBuilder.addAllApprovedList(approveList);
@@ -809,12 +783,14 @@ public class Wallet {
   }
 
   public byte[] pass2Key(byte[] passPhrase) {
-    return Sha256Hash.hash(passPhrase);
+    return Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),
+        passPhrase);
   }
 
   public byte[] createAdresss(byte[] passPhrase) {
     byte[] privateKey = pass2Key(passPhrase);
-    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    SignInterface ecKey = SignUtils.fromPrivate(privateKey,
+        Args.getInstance().isECKeyCryptoEngine());
     return ecKey.getAddress();
   }
 

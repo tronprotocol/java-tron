@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.Param.Miner;
@@ -110,7 +111,8 @@ public class DposTask {
           raw.getNumber(),
           new DateTime(raw.getTimestamp()),
           ByteArray.toHexString(raw.getWitnessAddress().toByteArray()),
-          new Sha256Hash(raw.getNumber(), Sha256Hash.of(raw.toByteArray())),
+          new Sha256Hash(raw.getNumber(), Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),
+              raw.toByteArray())),
           ByteArray.toHexString(raw.getParentHash().toByteArray()));
     }
 
