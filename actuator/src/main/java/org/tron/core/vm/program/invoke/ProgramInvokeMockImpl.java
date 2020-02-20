@@ -44,6 +44,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   private Repository deposit;
   private byte[] ownerAddress = Hex.decode("cd2a3d9f938e13cd947ec05abc7fe734df8dd826");
   private boolean isConstantCall;
+  private boolean isStaticCall;
   private long energyLimit = 50;
 
   public ProgramInvokeMockImpl(byte[] msgDataRaw) {
@@ -215,6 +216,11 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   public void setOwnerAddress(byte[] ownerAddress) {
     this.ownerAddress = Arrays.clone(ownerAddress);
+  }
+
+  @Override
+  public boolean isStaticCall() {
+    return isStaticCall;
   }
 
   @Override
