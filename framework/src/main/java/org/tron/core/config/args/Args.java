@@ -509,6 +509,14 @@ public class Args {
   @Setter
   private Set<String> actuatorSet;
 
+  @Getter
+  @Setter
+  public boolean fullNodeHttpEnable = true;
+
+  @Getter
+  @Setter
+  public boolean solidityNodeHttpEnable = true;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -591,6 +599,8 @@ public class Args {
     INSTANCE.validContractProtoThreadNum = 1;
     INSTANCE.shieldedTransInPendingMaxCounts = 10;
     INSTANCE.changedDelegation = 0;
+    INSTANCE.fullNodeHttpEnable = true;
+    INSTANCE.solidityNodeHttpEnable = true;
   }
 
   /**
@@ -705,6 +715,14 @@ public class Args {
 
     if (config.hasPath(Constant.VM_SUPPORT_CONSTANT)) {
       INSTANCE.supportConstant = config.getBoolean(Constant.VM_SUPPORT_CONSTANT);
+    }
+
+    if (config.hasPath(Constant.NODE_HTTP_FULLNODE_ENABLE)) {
+      INSTANCE.fullNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_FULLNODE_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_HTTP_SOLIDITY_ENABLE)) {
+      INSTANCE.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
     }
 
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {
