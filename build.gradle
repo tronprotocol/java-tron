@@ -51,8 +51,7 @@ task sourceJar(type: Jar, dependsOn: classes) {
 repositories {
     mavenLocal()
     mavenCentral()
-    maven { url 'http://repo.spring.io/plugins-release' }
-    // maven { url 'https://maven.aliyun.com/nexus/content/repositories/central/' }
+    maven { url 'https://repo.spring.io/plugins-release' }
     maven { url 'https://jitpack.io' }
 }
 def versions = [
