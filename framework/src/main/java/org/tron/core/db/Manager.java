@@ -1133,7 +1133,8 @@ public class Manager {
           throw new BadBlockException("The merkle hash is not validated");
         }
 
-        if (!block.calcCrossMerkleRoot().equals(block.getCrossMerkleRoot())) {
+        if (getDynamicPropertiesStore().allowCrossChain() && !block.calcCrossMerkleRoot()
+            .equals(block.getCrossMerkleRoot())) {
           logger.warn(
               "The cross merkle root doesn't match, Calc result is "
                   + block.calcCrossMerkleRoot()
