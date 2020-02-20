@@ -1,5 +1,6 @@
 package org.tron.core.services.monitor;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -8,11 +9,15 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.ChainBaseManager;
+import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
 import org.tron.core.services.filter.HttpInterceptor;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-
+import org.tron.program.Version;
+import java.net.InetAddress;
+import org.tron.core.services.monitor.blockChainInfo;
 @Slf4j(topic = "monitorService")
 @Component
 public class MonitorService {
@@ -20,7 +25,16 @@ public class MonitorService {
   @Autowired
   private MonitorMetric monitorMetric;
 
-  public Protocol.MonitorInfo getMonitorInfo() {
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
+  @Autowired
+  private Manager dbManager;
+
+  private int interval =60;
+
+  public MonitorInfo getMonitorInfo(){
+
     MonitorInfo monitorInfo = new MonitorInfo();
     monitorInfo.setStatus(1);
     monitorInfo.setMsg("success");
@@ -34,15 +48,24 @@ public class MonitorService {
 
     monitorInfo.setDataInfo(data);
 
-    return monitorInfo.ToProtoEntity();
+    return monitorInfo;
   }
 
-  public void setNodeInfo(MonitorInfo.DataInfo data) {
+  public Protocol.MonitorInfo getProtoMonitorInfo() {
+    return getMonitorInfo().ToProtoEntity();
+  }
+
+  public void setNodeInfo(MonitorInfo.DataInfo data)  {
     MonitorInfo.DataInfo.NodeInfo nodeInfo = new MonitorInfo.DataInfo.NodeInfo();
-    nodeInfo.setIp("127.0.0.1");
+
+    try {
+      nodeInfo.setIp(InetAddress.getLocalHost().getHostAddress());
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
+    }
     nodeInfo.setType(1);
     nodeInfo.setStatus(1);
-    nodeInfo.setVersion("3.6.5");
+    nodeInfo.setVersion(Version.getVersion());
     nodeInfo.setNoUpgradedSRCount(2);
 
     List<MonitorInfo.DataInfo.NodeInfo.NoUpgradedSR> noUpgradeSRs = new ArrayList<>();
@@ -57,16 +80,17 @@ public class MonitorService {
 
   public void setBlockchainInfo(MonitorInfo.DataInfo data) {
     MonitorInfo.DataInfo.BlochainInfo blockChain = new MonitorInfo.DataInfo.BlochainInfo();
-    blockChain.setHeadBlockTimestamp(1581957662);
-    blockChain.setHeadBlockHash("000000000105c43e397da4a5c73cf39be735520875cf04c9d91f371103d05ec0");
-    blockChain.setBlockProcessTime(1000);
-    blockChain.setForkCount(1);
-    blockChain.setHeadBlockNum(10000);
-    blockChain.setTxCacheSize(1000);
+    blockChainInfo  blockChainInfo =new blockChainInfo(interval);
+    blockChain.setHeadBlockTimestamp(chainBaseManager.getHeadBlockTimeStamp());
+    blockChain.setHeadBlockHash(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().toString());
+    blockChain.setBlockProcessTime((int)blockChainInfo.getBlockProduceTime());
+    blockChain.setForkCount(blockChain.getForkCount());
+    blockChain.setHeadBlockNum((int)chainBaseManager.getHeadBlockNum());
+    blockChain.setTxCacheSize(dbManager.getPendingTransactions().size());
     blockChain.setMissTxCount(100);
 
 //    MonitorInfo.DataInfo.BlochainInfo.TPSInfo tpsInfo =
-//        new MonitorInfo.DataInfo.BlochainInfo.TPSInfo();
+//    new MonitorInfo.DataInfo.BlochainInfo.TPSInfo();
 //    tpsInfo.setMeanRate(2);
 //    tpsInfo.setOneMinuteRate(3);
 //    tpsInfo.setFiveMinuteRate(2);
@@ -98,6 +122,7 @@ public class MonitorService {
     // set api request info
     MonitorInfo.DataInfo.NetInfo.ApiInfo apiInfo = new MonitorInfo.DataInfo.NetInfo.ApiInfo();
     HttpInterceptor httpCount=new HttpInterceptor();
+
     apiInfo.setTotalCount(httpCount.getInstance().getTotalCount());
     apiInfo.setTotalFailCount(httpCount.getInstance().getFailCount());
     List<MonitorInfo.DataInfo.NetInfo.ApiInfo.ApiDetailInfo> apiDetails = new ArrayList<>();

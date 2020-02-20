@@ -1,6 +1,7 @@
 package org.tron.core.services.monitor;
 
 
+import com.alibaba.fastjson.annotation.JSONField;
 import java.util.ArrayList;
 import java.util.List;
 import org.tron.protos.Protocol;
@@ -29,10 +30,11 @@ public class MonitorInfo {
     this.msg = msg;
     return this;
   }
-
+  @JSONField(name = "data")
   public DataInfo getDataInfo() {
     return this.data;
   }
+
 
   public MonitorInfo setDataInfo(DataInfo data) {
     this.data = data;
@@ -159,23 +161,34 @@ public class MonitorInfo {
 
 
   public static class DataInfo {
+
     private int interval;
+
+    @JSONField(name = "node")
     private NodeInfo node;
+
+    @JSONField(name = "blockchain")
     private BlochainInfo blockchain;
+
+    @JSONField(name = "net")
     private NetInfo net;
 
     public int getInterval() {
       return this.interval;
     }
 
+
     public DataInfo setInterval(int interval) {
       this.interval = interval;
       return this;
     }
 
+    @JSONField(name = "node")
     public NodeInfo getNodeInfo() {
       return this.node;
     }
+
+
 
     public DataInfo setNodeInfo(NodeInfo node) {
       this.node = node;
@@ -186,14 +199,16 @@ public class MonitorInfo {
       this.blockchain = blockchain;
       return this;
     }
-
+    @JSONField(name = "blockchain")
     public BlochainInfo getBlockchainInfo() {
       return this.blockchain;
     }
 
+    @JSONField(name = "net")
     public NetInfo getNetInfo() {
       return this.net;
     }
+
 
     public DataInfo setNetInfo(NetInfo net) {
       this.net = net;
@@ -203,6 +218,7 @@ public class MonitorInfo {
     // node monitor information
     public static class NodeInfo {
       private String ip;
+      @JSONField(name = "Type")
       private int Type;
       private int status;
       private String version;
@@ -218,9 +234,11 @@ public class MonitorInfo {
         return this;
       }
 
+      @JSONField(name = "Type")
       public int getType() {
         return this.Type;
       }
+
 
       public NodeInfo setType(int Type) {
         this.Type = Type;
@@ -295,7 +313,9 @@ public class MonitorInfo {
       private String headBlockHash;
       private int forkCount;
       private int blockProcessTime;
+      @JSONField(name = "TPS")
       private TPSInfo TPS;
+      @JSONField(name = "TxCacheSize")
       private int TxCacheSize;
       private int missTxCount;
 
@@ -317,7 +337,7 @@ public class MonitorInfo {
         return this;
       }
 
-      public String getHeadBlockHash() {
+      public String zgetHeadBlockHash() {
         return this.headBlockHash;
       }
 
@@ -343,7 +363,7 @@ public class MonitorInfo {
         this.blockProcessTime = blockProcessTime;
         return this;
       }
-
+      @JSONField(name = "TPS")
       public TPSInfo getTPS() {
         return this.TPS;
       }
@@ -353,9 +373,11 @@ public class MonitorInfo {
         return this;
       }
 
+      @JSONField(name = "TxCacheSize")
       public int getTxCacheSize() {
         return this.TxCacheSize;
       }
+
 
       public BlochainInfo setTxCacheSize(int TxCacheSize) {
         this.TxCacheSize = TxCacheSize;
@@ -422,11 +444,15 @@ public class MonitorInfo {
       private ApiInfo api;
       private int connectionCount;
       private int validConnectionCount;
+      @JSONField(name = "TCPInTraffic")
       private long TCPInTraffic;
+      @JSONField(name = "TCPOutTraffic")
       private long TCPOutTraffic;
       private int disconnectionCount;
       private List<DisconnectionDetailInfo> disconnectionDetail = new ArrayList<>();
+      @JSONField(name = "UDPInTraffic")
       private long UDPInTraffic;
+      @JSONField(name = "UDPOutTraffic")
       private long UDPOutTraffic;
       private LatencyInfo latency;
 
@@ -470,6 +496,7 @@ public class MonitorInfo {
         return this.TCPInTraffic;
       }
 
+      @JSONField(name = "TCPInTraffic")
       public NetInfo setTCPInTraffic(long TCPInTraffic) {
         this.TCPInTraffic = TCPInTraffic;
         return this;
@@ -479,6 +506,7 @@ public class MonitorInfo {
         return this.TCPOutTraffic;
       }
 
+      @JSONField(name = "TCPOutTraffic")
       public NetInfo setTCPOutTraffic(long TCPOutTraffic) {
         this.TCPOutTraffic = TCPOutTraffic;
         return this;
@@ -506,6 +534,7 @@ public class MonitorInfo {
         return this.UDPInTraffic;
       }
 
+      @JSONField(name = "UDPInTraffic")
       public NetInfo setUDPInTraffic(long UDPInTraffic) {
         this.UDPInTraffic = UDPInTraffic;
         return this;
@@ -515,6 +544,7 @@ public class MonitorInfo {
         return this.UDPOutTraffic;
       }
 
+      @JSONField(name = "UDPOutTraffic")
       public NetInfo setUDPOutTraffic(long UDPOutTraffic) {
         this.UDPOutTraffic = UDPOutTraffic;
         return this;
@@ -533,6 +563,7 @@ public class MonitorInfo {
       public static class ApiInfo {
         private int totalCount;
         private int totalFailCount;
+        @JSONField(name = "detail")
         private List<ApiDetailInfo> detail = new ArrayList<>();
 
         public int getTotalCount() {
@@ -553,6 +584,7 @@ public class MonitorInfo {
           return this;
         }
 
+        @JSONField(name = "detail")
         public List<ApiDetailInfo> getApiDetailInfo() {
           return this.detail;
         }
@@ -629,6 +661,7 @@ public class MonitorInfo {
         private int delay1S;
         private int delay2S;
         private int delay3S;
+        @JSONField(name = "detail")
         private List<LatencyDetailInfo> detail = new ArrayList<>();
 
         public int getTop99() {
@@ -685,6 +718,7 @@ public class MonitorInfo {
           return this;
         }
 
+        @JSONField(name = "detail")
         public List<LatencyDetailInfo> getLatencyDetailInfo() {
           return this.detail;
         }

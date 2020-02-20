@@ -20,13 +20,13 @@ public class MonitorServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-    // Protocol.MonitorInfo monitorInfo = monitorService.getDefaultInfo();
+        MonitorInfo monitorInfo = monitorService.getMonitorInfo();
 
-      Protocol.MonitorInfo monitorInfo = monitorService.getMonitorInfo();
+    //   Protocol.MonitorInfo monitorInfo = monitorService.getMonitorInfo();
 
       if (monitorInfo != null) {
-     //   response.getWriter().println(JSON.toJSONString(monitorInfo,true));
-         response.getWriter().println(JsonFormat.printToString(monitorInfo, true));
+         response.getWriter().println(JSON.toJSONString(monitorInfo,true));
+      //   response.getWriter().println(JsonFormat.printToString(monitorInfo, true));
       } else {
         response.getWriter().println("{}");
       }
