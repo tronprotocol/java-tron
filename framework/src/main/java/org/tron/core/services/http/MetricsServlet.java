@@ -11,7 +11,7 @@ import org.tron.core.metrics.MetricsService;
 
 @Component
 @Slf4j(topic = "API")
-public class MonitorServlet extends RateLimiterServlet {
+public class MetricsServlet extends RateLimiterServlet {
 
   @Autowired
   MetricsService metricsService;
