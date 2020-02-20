@@ -18,6 +18,7 @@ import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
@@ -133,8 +134,8 @@ public class DepositTest {
         .processTransactionAndReturnRuntime(bTrx, DepositImpl.createRoot(manager), null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    byte[] aAddress = Wallet.generateContractAddress(aTrx);
-    byte[] bAddress = Wallet.generateContractAddress(bTrx);
+    byte[] aAddress = WalletUtil.generateContractAddress(aTrx);
+    byte[] bAddress = WalletUtil.generateContractAddress(bTrx);
 
     // tigger contractA
     // callBcallA(address,uint256,uint256)
@@ -230,8 +231,8 @@ public class DepositTest {
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(bTrx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    byte[] aAddress = Wallet.generateContractAddress(aTrx);
-    byte[] bAddress = Wallet.generateContractAddress(bTrx);
+    byte[] aAddress = WalletUtil.generateContractAddress(aTrx);
+    byte[] bAddress = WalletUtil.generateContractAddress(bTrx);
 
     // tigger contractA
     // callBcallA(address,uint256,uint256)

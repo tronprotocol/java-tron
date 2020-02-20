@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 
 
@@ -22,7 +23,7 @@ public class GenerateAddressServlet extends RateLimiterServlet {
       byte[] priKey = ecKey.getPrivKeyBytes();
       byte[] address = ecKey.getAddress();
       String priKeyStr = Hex.encodeHexString(priKey);
-      String base58check = Wallet.encode58Check(address);
+      String base58check = WalletUtil.encode58Check(address);
       String hexString = ByteArray.toHexString(address);
       JSONObject jsonAddress = new JSONObject();
       jsonAddress.put("address", base58check);

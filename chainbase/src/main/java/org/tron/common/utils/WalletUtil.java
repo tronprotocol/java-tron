@@ -22,7 +22,7 @@ public class WalletUtil {
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
-      throw new PermissionException("operations size must 32");
+      throw new PermissionException("operations size must be 32");
     }
     int contractType = contract.getTypeValue();
     boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
@@ -88,7 +88,7 @@ public class WalletUtil {
     }
   }
 
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
+  public static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
     if (selector == null || selector.length != 4
         || abi.getEntrysList().size() == 0) {

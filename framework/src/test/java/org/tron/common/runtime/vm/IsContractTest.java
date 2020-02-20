@@ -7,6 +7,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -89,15 +90,15 @@ contract isTestCtr {
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
-    byte[] factoryAddress = Wallet.generateContractAddress(trx);
-    String factoryAddressStr = Wallet.encode58Check(factoryAddress);
+    byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
+    String factoryAddressStr = WalletUtil.encode58Check(factoryAddress);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
-    byte[] factoryAddressOther = Wallet.generateContractAddress(trx);
-    String factoryAddressStrOther = Wallet.encode58Check(factoryAddressOther);
+    byte[] factoryAddressOther = WalletUtil.generateContractAddress(trx);
+    String factoryAddressStrOther = WalletUtil.encode58Check(factoryAddressOther);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
@@ -116,7 +117,7 @@ contract isTestCtr {
         "0000000000000000000000000000000000000000000000000000000000000000");
 
     // trigger deployed contract
-    String existentAccount = Wallet.encode58Check(address);
+    String existentAccount = WalletUtil.encode58Check(address);
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(existentAccount));
     result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
