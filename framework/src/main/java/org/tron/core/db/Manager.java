@@ -500,6 +500,7 @@ public class Manager {
     }
     long start = System.currentTimeMillis();
     long headNum = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    logger.info("headNum is:", headNum);
     long recentBlockCount = chainBaseManager.getRecentBlockStore().size();
     ListeningExecutorService service = MoreExecutors
         .listeningDecorator(Executors.newFixedThreadPool(50));
@@ -512,6 +513,8 @@ public class Manager {
             blockCount.incrementAndGet();
             if (chainBaseManager.getBlockByNum(blockNum).getTransactions().isEmpty()) {
               emptyBlockCount.incrementAndGet();
+              // transactions is null, return
+              return;
             }
             chainBaseManager.getBlockByNum(blockNum).getTransactions().stream()
                 .map(tc -> tc.getTransactionId().getBytes())
@@ -519,7 +522,7 @@ public class Manager {
                 .forEach(e -> transactionCache
                     .put(e.getKey(), new BytesCapsule(e.getValue())));
           } catch (ItemNotFoundException | BadItemException e) {
-            logger.info("init txs cache error.");
+            logger.info("init txs cache error.", e);
             throw new IllegalStateException("init txs cache error.");
           }
         })));

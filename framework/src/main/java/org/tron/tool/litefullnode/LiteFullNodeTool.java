@@ -15,6 +15,8 @@ import org.rocksdb.RocksDBException;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.Configuration;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.tool.litefullnode.db.DBInterface;
@@ -41,32 +43,39 @@ public class LiteFullNodeTool {
           "asset-issue-v2",
           "block_KDB",
           "code",
-          "common",
+        //  "common",
           "contract",
           "delegation",
           "exchange",
           "exchange-v2",
-          "nullifier",
+      //    "nullifier",
           "properties",
           "proposal",
           "recent-block",
           "storage-row",
-          "tree-block-index",
+          "trans-cache",
+     //     "tree-block-index",
           "votes",
           "witness",
-          "witness_schedule",
-          "zkProof"
+          "witness_schedule"
+      //    "zkProof"
   );
   private static final String checkpointDb = "tmp";
 
-  private static final String sourceDir = "/Users/quan/tron/java-tron/build/distributions/java-tron-1.0.0/bin/output-directory/database";
-  private static final String destDir = "/Users/quan/tron/java-tron/build/distributions/java-tron-1.0.0/bin/output-directory/";
+  //private static final String sourceDir = "/Users/quan/tron/java-tron/build/distributions/java-tron-1.0.0/bin/output-directory/database";
+  private static final String sourceDir = "/Users/quan/tron/java-tron/output-directory/database";
+//  private static final String destDir = "/Users/quan/tron/java-tron/build/distributions/java-tron-1.0.0/bin/output-directory/";
+  private static final String destDir = "/Users/quan/tron/java-tron/output-directory";
 
   public static void generateSnapshot(String sourceDir, String destDir) throws IOException, RocksDBException {
     destDir = Paths.get(destDir, SNAPSHOT_DIR_NAME).toString();
     split(sourceDir, destDir, snapshotDbs);
     mergeCheckpoint2Snapshot();
     generateInfoProperties(Paths.get(destDir, INFO_FILE_NAME).toString());
+    // write genesisBlock and latestBlock
+    if (!generateSnapshotBlockDb()) {
+      throw new RuntimeException("create snapshot block db failed, exit...");
+    }
   }
 
   public static void generateHistory(String sourceDir, String destDir) throws IOException, RocksDBException {
@@ -109,8 +118,8 @@ public class LiteFullNodeTool {
         String db = SnapshotManager.simpleDecode(key);
         byte[] realKey = Arrays.copyOfRange(key, db.getBytes().length + 4, key.length);
         byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
-        System.out.println("db: " + db);
-        System.out.println("realKey: " + new String(realKey));
+        //System.out.println("db: " + db);
+        //System.out.println("realKey: " + new String(realKey));
         //System.out.println("realValue: " + new String(realValue));
         //break;
         if (destDbs != null && destDbs.contains(db)) {
@@ -152,9 +161,38 @@ public class LiteFullNodeTool {
             .map(ByteArray::toLong)
             .orElseThrow(
                     () -> new IllegalArgumentException("not found latest block header number"));
-    propertiesDb.close();
     System.out.println(latestBlockNum);
     return latestBlockNum;
+  }
+
+  /**
+   * syncing block from peer needs latest block and genesis block,
+   * so put them into snapshot.
+   */
+  private static boolean generateSnapshotBlockDb() {
+    try {
+      DBInterface sourceBlockIndexDb = DbTool.openDB(sourceDir, "block-index");
+      DBInterface sourceBlockDb = DbTool.openDB(sourceDir, "block");
+      DBInterface destBlockDb = DbTool.openDB(
+              String.format("%s%s%s", destDir, File.separator, SNAPSHOT_DIR_NAME), "block");
+      DBInterface destBlockIndexDb = DbTool.openDB(
+              String.format("%s%s%s", destDir, File.separator, SNAPSHOT_DIR_NAME), "block-index");
+      // put genesis block into snapshot
+      long genesisBlockNum = 0L;
+      byte[] genesisBlockID = sourceBlockIndexDb.get(ByteArray.fromLong(genesisBlockNum));
+      destBlockDb.put(genesisBlockID, sourceBlockDb.get(genesisBlockID));
+
+      long latestBlockNum = getLatestBlockHeaderNum();
+      byte[] latestBlockId = sourceBlockIndexDb.get(ByteArray.fromLong(latestBlockNum));
+      // put latest block index into snapshot
+      destBlockIndexDb.put(ByteArray.fromLong(latestBlockNum), latestBlockId);
+      // put latest block into snapshot
+      destBlockDb.put(latestBlockId, sourceBlockDb.get(latestBlockId));
+      return true;
+    } catch (IOException | RocksDBException e) {
+      e.printStackTrace();
+      return false;
+    }
   }
 
   private static byte[] simpleEncode(String s) {
@@ -175,7 +213,6 @@ public class LiteFullNodeTool {
 
     generateSnapshot(sourceDir, destDir);
     //generateHistory(sourceDir, destDir);
-
   }
 
   public static void initArgs(String[] args) {

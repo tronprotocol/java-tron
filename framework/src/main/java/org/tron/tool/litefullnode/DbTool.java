@@ -39,7 +39,7 @@ public class DbTool {
     if (dbMap.containsKey(path.toString())) {
       return dbMap.get(path.toString());
     }
-    type = getDbType(sourceDir);
+    type = getDbType(sourceDir, dbName);
     DBInterface db;
     switch (type) {
       case LevelDB:
@@ -56,9 +56,13 @@ public class DbTool {
     return db;
   }
 
-  private static DbType getDbType(String sourceDir) {
-    String engine = PropUtil.readProperty(String.format("%s%s%s%s%s", sourceDir, File.separator,
-            "block", File.separator, ENGINE_FILE), KEY_ENGINE);
+  private static DbType getDbType(String sourceDir, String dbName) {
+    String engineFile = String.format("%s%s%s%s%s", sourceDir, File.separator,
+            dbName, File.separator, ENGINE_FILE);
+    if (!new File(engineFile).exists()) {
+      return DbType.LevelDB;
+    }
+    String engine = PropUtil.readProperty(engineFile, KEY_ENGINE);
     if (engine.equalsIgnoreCase("ROCKSDB")) {
       return DbType.RocksDB;
     } else {
