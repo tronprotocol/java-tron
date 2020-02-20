@@ -8,6 +8,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -50,7 +51,7 @@ contract TestExtCodeHash {
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
-    byte[] factoryAddress = Wallet.generateContractAddress(trx);
+    byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 

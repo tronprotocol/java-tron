@@ -20,6 +20,7 @@ package org.tron.core;
 
 import static org.tron.common.utils.Commons.ADDRESS_SIZE;
 import static org.tron.common.utils.Commons.addressPreFixByte;
+import static org.tron.common.utils.WalletUtil.checkPermissionOprations;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
@@ -91,13 +92,7 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.Base58;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.Hash;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.Utils;
+import org.tron.common.utils.*;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -228,20 +223,6 @@ public class Wallet {
     logger.info("wallet address: {}", ByteArray.toHexString(this.ecKey.getAddress()));
   }
 
-  public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract)
-      throws ContractValidateException {
-    try {
-      boolean constant = isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
-      if (constant && !Args.getInstance().isSupportConstant()) {
-        throw new ContractValidateException("This node does not support constant");
-      }
-      return constant;
-    } catch (ContractValidateException e) {
-      throw e;
-    } catch (Exception e) {
-      return false;
-    }
-  }
 
   public static String getAddressPreFixString() {
     return addressPreFixString;
@@ -279,14 +260,6 @@ public class Wallet {
     return true;
   }
 
-  public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(input);
-    byte[] hash1 = Sha256Hash.hash(hash0);
-    byte[] inputCheck = new byte[input.length + 4];
-    System.arraycopy(input, 0, inputCheck, 0, input.length);
-    System.arraycopy(hash1, 0, inputCheck, input.length, 4);
-    return Base58.encode(inputCheck);
-  }
 
   private static byte[] decode58Check(String input) {
     byte[] decodeCheck = Base58.decode(input);
@@ -306,54 +279,6 @@ public class Wallet {
     return null;
   }
 
-  public static byte[] generateContractAddress(Transaction trx) {
-
-    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-    TransactionCapsule trxCap = new TransactionCapsule(trx);
-    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
-
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return Hash.sha3omit12(combined);
-
-  }
-
-  public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
-
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return Hash.sha3omit12(combined);
-
-  }
-
-  // for `CREATE2`
-  public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
-    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return Hash.sha3omit12(mergedData);
-  }
-
-  // for `CREATE`
-  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
-    byte[] nonceBytes = Longs.toByteArray(nonce);
-    byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
-    System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
-    System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
-
-    return Hash.sha3omit12(combined);
-  }
-
-  public static byte[] tryDecodeFromBase58Check(String address) {
-    try {
-      return Wallet.decodeFromBase58Check(address);
-    } catch (Exception ex) {
-      return null;
-    }
-  }
 
   public static byte[] decodeFromBase58Check(String addressBase58) {
     if (StringUtils.isEmpty(addressBase58)) {
@@ -370,17 +295,6 @@ public class Wallet {
     }
 
     return address;
-  }
-
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
-      throws PermissionException {
-    ByteString operations = permission.getOperations();
-    if (operations.size() != 32) {
-      throw new PermissionException("operations size must be 32");
-    }
-    int contractType = contract.getTypeValue();
-    boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
-    return b;
   }
 
 //  public ShieldAddress generateShieldAddress() {
@@ -424,41 +338,6 @@ public class Wallet {
     long balance = getBalance(address);
     return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
   } */
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
-
-    if (selector == null || selector.length != 4
-        || abi.getEntrysList().size() == 0) {
-      return false;
-    }
-
-    for (int i = 0; i < abi.getEntrysCount(); i++) {
-      ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != ABI.Entry.EntryType.Function) {
-        continue;
-      }
-
-      int inputCount = entry.getInputsCount();
-      StringBuilder sb = new StringBuilder();
-      sb.append(entry.getName());
-      sb.append("(");
-      for (int k = 0; k < inputCount; k++) {
-        ABI.Entry.Param param = entry.getInputs(k);
-        sb.append(param.getType());
-        if (k + 1 < inputCount) {
-          sb.append(",");
-        }
-      }
-      sb.append(")");
-
-      byte[] funcSelector = new byte[4];
-      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
-      if (Arrays.equals(funcSelector, selector)) {
-        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
-      }
-    }
-
-    return false;
-  }
 
   public byte[] getAddress() {
     return ecKey.getAddress();
@@ -2380,7 +2259,7 @@ public class Wallet {
     byte[] selector = getSelector(
         triggerSmartContract.getData().toByteArray());
 
-    if (isConstant(abi, selector)) {
+    if (WalletUtil.isConstant(abi, selector)) {
       return callConstantContract(trxCap, builder, retBuilder);
     } else {
       return trxCap.getInstance();

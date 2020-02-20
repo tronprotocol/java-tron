@@ -11,6 +11,7 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.exception.ContractExeException;
@@ -99,7 +100,7 @@ public class StorageTest extends VMTestBase {
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, code, value, fee, consumeUserResourcePercent, null);
-    byte[] contractAddress = Wallet.generateContractAddress(trx);
+    byte[] contractAddress = WalletUtil.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
