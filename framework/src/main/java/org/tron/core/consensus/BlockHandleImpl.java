@@ -13,7 +13,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
-import org.tron.core.services.monitor.blockChainInfo;
+import org.tron.core.metrics.BlockChainInfo;
 @Slf4j(topic = "consensus")
 @Component
 public class BlockHandleImpl implements BlockHandle {
@@ -43,7 +43,7 @@ public class BlockHandleImpl implements BlockHandle {
   }
 
   public BlockCapsule produce(Miner miner, long blockTime, long timeout) {
-    blockChainInfo blockInfo=new blockChainInfo(false);
+    BlockChainInfo blockInfo=new BlockChainInfo(false);
 
     BlockCapsule blockCapsule = manager.generateBlock(miner, blockTime, timeout);
     if (blockCapsule == null) {

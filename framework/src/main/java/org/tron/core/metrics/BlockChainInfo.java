@@ -1,6 +1,6 @@
-package org.tron.core.services.monitor;
+package org.tron.core.metrics;
 
-public class blockChainInfo {
+public class BlockChainInfo {
   public static int interval;
   private static long startTime;
   private static long endTime;
@@ -8,7 +8,7 @@ public class blockChainInfo {
   public static int forkCount = 0;
   private long startRecordTime;
 
-  public blockChainInfo(int interval) {
+  public BlockChainInfo(int interval) {
     startTime = System.currentTimeMillis();
     startRecordTime = System.currentTimeMillis();
     produceExpection = false;
@@ -17,7 +17,7 @@ public class blockChainInfo {
   }
 
 
-  public blockChainInfo(boolean produceExpection) {
+  public BlockChainInfo(boolean produceExpection) {
     startTime = System.currentTimeMillis();
     this.produceExpection = produceExpection;
   }

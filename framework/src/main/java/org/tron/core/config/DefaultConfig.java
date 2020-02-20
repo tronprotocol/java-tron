@@ -18,11 +18,11 @@ import org.tron.core.db.backup.NeedBeanCondition;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
-import org.tron.core.services.monitor.MonitorConfig;
+import org.tron.core.metrics.MetricsConfig;
 
 @Slf4j(topic = "app")
 @Configuration
-@Import({CommonConfig.class,MonitorConfig.class})
+@Import({CommonConfig.class, MetricsConfig.class})
 public class DefaultConfig {
 
   static {
