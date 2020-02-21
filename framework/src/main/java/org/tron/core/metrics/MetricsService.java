@@ -80,7 +80,7 @@ public class MetricsService {
 
     nodeInfo.setIp(getMyIp());
     nodeInfo.setType(1);
-    nodeInfo.setStatus(BlockChainInfo.produceBlockexpectionCount>=1?0:1);
+    nodeInfo.setStatus(BlockChainInfo.produceBlockexpectionCount >= 1 ? 0 : 1);
     nodeInfo.setVersion(Version.getVersion());
 
     data.setNodeInfo(nodeInfo);
@@ -100,18 +100,18 @@ public class MetricsService {
     MetricsInfo.BlockchainInfo.TPSInfo blockProcessTime =
             new MetricsInfo.BlockchainInfo.TPSInfo();
     Meter meterBlockProcessTime =
-        monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME);
+            monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME);
     blockProcessTime.setMeanRate(meterBlockProcessTime.getMeanRate());
     blockProcessTime.setOneMinuteRate(meterBlockProcessTime.getOneMinuteRate());
     blockProcessTime.setFiveMinuteRate(meterBlockProcessTime.getFiveMinuteRate());
     blockProcessTime.setFifteenMinuteRate(meterBlockProcessTime.getFifteenMinuteRate());
     blockChain.setBlockProcessTime(blockProcessTime);
-    blockChain.setForkCount((int)monitorMetric.
-        getMeter(MonitorMetric.BLOCKCHAIN_SUCCESS_FORK_COUNT).getCount());
+    blockChain.setForkCount((int) monitorMetric.
+            getMeter(MonitorMetric.BLOCKCHAIN_SUCCESS_FORK_COUNT).getCount());
     blockChain.setHeadBlockNum((int) chainBaseManager.getHeadBlockNum());
     blockChain.setTxCacheSize(dbManager.getPendingTransactions().size());
-    blockChain.setMissTxCount(dbManager.getPendingTransactions().size()+
-        dbManager.getRePushTransactions().size());
+    blockChain.setMissTxCount(dbManager.getPendingTransactions().size() +
+            dbManager.getRePushTransactions().size());
 
     //MonitorInfo.DataInfo.BlochainInfo.TPSInfo tpsInfo =
     //new MonitorInfo.DataInfo.BlochainInfo.TPSInfo();
@@ -203,29 +203,7 @@ public class MetricsService {
     disconnectionDetails.add(disconnectionDetail);
     netInfo.setDisconnectionDetail(disconnectionDetails);
 
-    MetricsInfo.NetInfo.LatencyInfo latencyInfo =
-            new MetricsInfo.NetInfo.LatencyInfo();
-    latencyInfo.setDelay1S(12);
-    latencyInfo.setDelay2S(5);
-    latencyInfo.setDelay3S(1);
-    Histogram blockLatency = monitorMetric.getHistogram(MonitorMetric.NET_BLOCK_LATENCY);
-    latencyInfo.setTop99((int) blockLatency.getSnapshot().get99thPercentile());
-    latencyInfo.setTop95((int) blockLatency.getSnapshot().get95thPercentile());
-    latencyInfo.setTotalCount((int) blockLatency.getCount());
-
-    MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo latencyDetail =
-            new MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo();
-    latencyDetail.setCount(10);
-    latencyDetail.setWitness("41d376d829440505ea13c9d1c455317d51b62e4ab6");
-    latencyDetail.setTop99(11);
-    latencyDetail.setTop95(8);
-    latencyDetail.setDelay1S(3);
-    latencyDetail.setDelay2S(1);
-    latencyDetail.setDelay3S(0);
-    List<MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo> latencyDetailInfos =
-            new ArrayList<>();
-    latencyDetailInfos.add(latencyDetail);
-    latencyInfo.setLatencyDetailInfo(latencyDetailInfos);
+    MetricsInfo.NetInfo.LatencyInfo latencyInfo = getBlockLatencyInfo();
     netInfo.setLatency(latencyInfo);
     data.setNetInfo(netInfo);
 
@@ -235,7 +213,7 @@ public class MetricsService {
    * get host ip address
    *
    * @param @data none
-   *  return string
+   *              return string
    */
   public String getMyIp() {
     try {
@@ -259,4 +237,58 @@ public class MetricsService {
     }
   }
 
+  private MetricsInfo.NetInfo.LatencyInfo getBlockLatencyInfo() {
+    MetricsInfo.NetInfo.LatencyInfo latencyInfo =
+            new MetricsInfo.NetInfo.LatencyInfo();
+    long delay1SCount = monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".1S")
+            .getCount();
+    latencyInfo.setDelay1S((int) delay1SCount);
+    long delay2SCount = monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".2S")
+            .getCount();
+    latencyInfo.setDelay2S((int) delay2SCount);
+    long delay3SCount = monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".3S")
+            .getCount();
+    latencyInfo.setDelay3S((int) delay3SCount);
+    Histogram blockLatency = monitorMetric.getHistogram(MonitorMetric.NET_BLOCK_LATENCY);
+    latencyInfo.setTop99((int) blockLatency.getSnapshot().get99thPercentile());
+    latencyInfo.setTop95((int) blockLatency.getSnapshot().get95thPercentile());
+    latencyInfo.setTotalCount((int) blockLatency.getCount());
+
+    List<MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo> latencyDetailInfos =
+            new ArrayList<>();
+    SortedMap<String, Histogram> witnessLatencyMap
+            = monitorMetric.getHistograms(MonitorMetric.NET_BLOCK_LATENCY_WITNESS);
+    for (Map.Entry<String, Histogram> entry : witnessLatencyMap.entrySet()) {
+      MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo latencyDetailTemp =
+              new MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo();
+      String address = entry.getKey().substring(MonitorMetric.NET_BLOCK_LATENCY_WITNESS.length());
+      latencyDetailTemp.setCount((int) entry.getValue().getCount());
+      latencyDetailTemp.setWitness(address);
+      latencyDetailTemp.setTop99((int) entry.getValue().getSnapshot().get99thPercentile());
+      latencyDetailTemp.setTop95((int) entry.getValue().getSnapshot().get95thPercentile());
+      long witnessDelay1S = monitorMetric.getCounter(
+              MonitorMetric.NET_BLOCK_LATENCY_WITNESS + address + ".1S").getCount();
+      latencyDetailTemp.setDelay1S((int) witnessDelay1S);
+      long witnessDelay2S = monitorMetric.getCounter(
+              MonitorMetric.NET_BLOCK_LATENCY_WITNESS + address + ".2S").getCount();
+      latencyDetailTemp.setDelay2S((int) witnessDelay2S);
+      long witnessDelay3S = monitorMetric.getCounter(
+              MonitorMetric.NET_BLOCK_LATENCY_WITNESS + address + ".3S").getCount();
+      latencyDetailTemp.setDelay3S((int) witnessDelay3S);
+      latencyDetailInfos.add(latencyDetailTemp);
+    }
+//    MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo latencyDetail =
+//            new MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo();
+//    latencyDetail.setCount(10);
+//    latencyDetail.setWitness("41d376d829440505ea13c9d1c455317d51b62e4ab6");
+//    latencyDetail.setTop99(11);
+//    latencyDetail.setTop95(8);
+//    latencyDetail.setDelay1S(3);
+//    latencyDetail.setDelay2S(1);
+//    latencyDetail.setDelay3S(0);
+//    latencyDetailInfos.add(latencyDetail);
+    latencyInfo.setLatencyDetailInfo(latencyDetailInfos);
+
+    return latencyInfo;
+  }
 }

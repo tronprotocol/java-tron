@@ -211,8 +211,7 @@ public class TronNetDelegate {
             backupServerStartFlag = true;
             backupServer.initServer();
           }
-          monitorMetric.getHistogram(MonitorMetric.NET_BLOCK_LATENCY)
-                  .update(now - block.getTimeStamp());
+          recordBlockLatency(block, now);
         }
       } catch (ValidateSignatureException
           | ContractValidateException
@@ -264,6 +263,31 @@ public class TronNetDelegate {
           .validateSignature(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
+    }
+  }
+
+  private void recordBlockLatency(BlockCapsule block, long nowTime) {
+    long netTime = nowTime - block.getTimeStamp();
+    String witnessAddress = Hex.toHexString(block.getWitnessAddress().toByteArray());
+    monitorMetric.getHistogram(MonitorMetric.NET_BLOCK_LATENCY)
+            .update(netTime);
+    monitorMetric.getHistogram(
+            MonitorMetric.NET_BLOCK_LATENCY_WITNESS + witnessAddress)
+            .update(netTime);
+    if (netTime >= 1000) {
+      monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".1S").inc();
+      monitorMetric.getCounter(
+              MonitorMetric.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S").inc();
+      if (netTime >= 2000) {
+        monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".2S").inc();
+        monitorMetric.getCounter(
+                MonitorMetric.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S").inc();
+        if (netTime >= 3000) {
+          monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".3S").inc();
+          monitorMetric.getCounter(
+                  MonitorMetric.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S").inc();
+        }
+      }
     }
   }
 }
