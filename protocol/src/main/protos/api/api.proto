@@ -708,10 +708,8 @@ service Wallet {
   // end for shiededTransaction
 
   rpc CreateCommonTransaction (Transaction) returns (TransactionExtention) {
-  };
 
-  rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
-  }
+  };
 };
 
 service WalletSolidity {
@@ -866,9 +864,6 @@ service WalletSolidity {
   };
 
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
-  }
-
-  rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
   }
 
 };
@@ -1307,8 +1302,4 @@ message NoteParameters {
 message SpendResult {
   bool result = 1;
   string message = 2;
-}
-
-message TransactionInfoList {
-  repeated TransactionInfo transactionInfo = 1;
 }

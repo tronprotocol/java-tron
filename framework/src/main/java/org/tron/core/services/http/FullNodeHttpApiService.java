@@ -221,8 +221,6 @@ public class FullNodeHttpApiService implements Service {
   private UpdateBrokerageServlet updateBrokerageServlet;
   @Autowired
   private CreateCommonTransactionServlet createCommonTransactionServlet;
-  @Autowired
-  private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -397,8 +395,6 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/createCommonTransaction");
-      context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
-          "/gettransactioninfobyblocknum");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
