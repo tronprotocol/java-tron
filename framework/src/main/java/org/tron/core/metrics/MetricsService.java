@@ -80,7 +80,7 @@ public class MetricsService {
 
     nodeInfo.setIp(getMyIp());
     nodeInfo.setType(1);
-    nodeInfo.setStatus(BlockChainInfo.produceBlockexpectionCount>=1?1:0);
+    nodeInfo.setStatus(BlockChainInfo.produceBlockexpectionCount>=1?0:1);
     nodeInfo.setVersion(Version.getVersion());
 
     data.setNodeInfo(nodeInfo);
@@ -239,7 +239,7 @@ public class MetricsService {
    */
   public String getMyIp() {
     try {
-      URL url = new URL("http://checkip.amazonaws.com"));
+      URL url = new URL("http://checkip.amazonaws.com");
       BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
       String ipAddress = new String();
       ipAddress = in.readLine().trim();

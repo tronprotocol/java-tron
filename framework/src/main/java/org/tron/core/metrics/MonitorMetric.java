@@ -16,6 +16,7 @@ public class MonitorMetric {
   public static final String BLOCKCHAIN_BLOCKPROCESS_TIME="blockchain.blockProcessTime";
   public static final String BLOCKCHAIN_SUCCESS_FORK_COUNT="blockchain.successForkCount";
   public static final String BLOCKCHAIN_FAIL_FORK_COUNR ="blockchain.failForkCount";
+  public static final String NET_API="net.api";
 
   @Autowired
   private MetricRegistry metricRegistry;
