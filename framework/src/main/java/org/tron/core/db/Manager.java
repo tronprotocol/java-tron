@@ -1620,6 +1620,7 @@ public class Manager {
         }
         if (communicateService.isSyncFinish() && crossMessage.getType() == Type.TIME_OUT) {
           Sha256Hash sourceTxId = CrossUtils.getSourceTxId(crossMessage.getTransaction());
+          //todo:getSendCrossMsgUnEx not safe
           CrossMessage source = getCrossStore().getSendCrossMsgUnEx(sourceTxId);
           if (source == null || !pbftBlockListener.validTimeOut(source.getTimeOutBlockHeight(),
               source.getToChainId(), source.getTransaction())) {

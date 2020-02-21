@@ -40,6 +40,8 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
   private long timeOut = 1000 * 60 * 1L;
 
+  private static volatile long currentBlockNum = 0;
+
   private static final LoadingCache<Long, List<Sha256Hash>> callBackTx = CacheBuilder.newBuilder()
       .initialCapacity(100).expireAfterWrite(1, TimeUnit.HOURS)
       .build(new CacheLoader<Long, List<Sha256Hash>>() {
@@ -76,8 +78,20 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
 
   @Override
   public void listener(PbftBlockCommitEvent event) {
+    if (currentBlockNum == 0) {
+      listenerBlockCommitEvent(event.getBlockNum());
+    } else {
+      for (long num = currentBlockNum + 1; num <= event.getBlockNum(); num++) {
+        listenerBlockCommitEvent(num);
+      }
+    }
+    currentBlockNum = event.getBlockNum();
+    checkTimeOut();
+  }
+
+  private void listenerBlockCommitEvent(long blockNum) {
     try {
-      List<Sha256Hash> txList = callBackTx.get(event.getBlockNum());
+      List<Sha256Hash> txList = callBackTx.get(blockNum);
       txList.forEach(hash -> {
         if (communicateService.checkCommit(hash)) {
           CrossStore crossStore = chainBaseManager.getCrossStore();
@@ -122,9 +136,9 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
           }
         }
       });
-      callBackTx.invalidate(event.getBlockNum());
+      callBackTx.invalidate(blockNum);
 
-      waitingSendTx.get(event.getBlockNum()).forEach(hash -> {
+      waitingSendTx.get(blockNum).forEach(hash -> {
         if (communicateService.checkCommit(hash)) {
           //send cross tx
           TransactionCapsule tx = chainBaseManager.getTransactionStore()
@@ -149,9 +163,7 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
           }
         }
       });
-      waitingSendTx.invalidate(event.getBlockNum());
-
-      checkTimeOut();
+      waitingSendTx.invalidate(blockNum);
     } catch (Exception e) {
       logger.error("", e);
     }
@@ -191,32 +203,38 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
   }
 
   private void checkTimeOut() {
-    Iterator<Entry<Sha256Hash, SendTxEntry>> iterator = sendTxMap.entrySet().iterator();
-    TransactionStore transactionStore = chainBaseManager.getTransactionStore();
-    while (iterator.hasNext()) {
-      SendTxEntry sendTxEntry = iterator.next().getValue();
-      TransactionCapsule tx = transactionStore.getUnchecked(sendTxEntry.getTxHash().getBytes());
-      if (tx != null && validTimeOut(sendTxEntry.getHeight(), sendTxEntry.getToChainId(),
-          tx.getInstance())) {
-        iterator.remove();
-        CrossMessage.Builder builder = CrossMessage.newBuilder();
-        builder.setType(Type.TIME_OUT).setFromChainId(communicateService.getLocalChainId())
-            .setTransaction(CrossUtils.addSourceTxId(tx.getInstance()))
-            .setRouteChainId(communicateService.getRouteChainId());
-        Contract contract = tx.getInstance().getRawData().getContract(0);
-        try {
-          CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
-          builder.setToChainId(crossContract.getToChainId())
-              .setTimeOutBlockHeight(sendTxEntry.getHeight());
-        } catch (Exception e) {
-          logger.error("", e);
-        }
-        manager.addCrossTx(builder.build());
-        logger.info("a cross chain tx:{} time out!", sendTxEntry.getTxHash().toString());
+    try {
+      Iterator<Entry<Sha256Hash, SendTxEntry>> iterator = sendTxMap.entrySet().iterator();
+      TransactionStore transactionStore = chainBaseManager.getTransactionStore();
+      while (iterator.hasNext()) {
+        SendTxEntry sendTxEntry = iterator.next().getValue();
+        TransactionCapsule tx = transactionStore.getUnchecked(sendTxEntry.getTxHash().getBytes());
+        if (tx == null) {
+          iterator.remove();
+        } else if (validTimeOut(sendTxEntry.getHeight(), sendTxEntry.getToChainId(),
+            tx.getInstance())) {
+          iterator.remove();
+          CrossMessage.Builder builder = CrossMessage.newBuilder();
+          builder.setType(Type.TIME_OUT).setFromChainId(communicateService.getLocalChainId())
+              .setTransaction(CrossUtils.addSourceTxId(tx.getInstance()))
+              .setRouteChainId(communicateService.getRouteChainId());
+          Contract contract = tx.getInstance().getRawData().getContract(0);
+          try {
+            CrossContract crossContract = contract.getParameter().unpack(CrossContract.class);
+            builder.setToChainId(crossContract.getToChainId())
+                .setTimeOutBlockHeight(sendTxEntry.getHeight());
+          } catch (Exception e) {
+            logger.error("", e);
+          }
+          manager.addCrossTx(builder.build());
+          logger.info("a cross chain tx:{} time out!", sendTxEntry.getTxHash().toString());
 
-      } else {
-        break;
+        } else {
+          break;
+        }
       }
+    } catch (Exception e) {
+      logger.error("", e);
     }
   }
 
