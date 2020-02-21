@@ -1066,11 +1066,6 @@ public class Manager {
       ownerAddressSet.addAll(result);
     }
 
-    //record transaction rate metric
-    if (block.getTransactions().size() > 0) {
-      monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_TPS).mark(block.getTransactions().size());
-    }
-
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
         System.currentTimeMillis() - start,

@@ -212,6 +212,11 @@ public class TronNetDelegate {
             backupServer.initServer();
           }
           recordBlockLatency(block, now);
+          //record transaction rate metric
+          if (block.getTransactions().size() > 0) {
+            monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_TPS)
+                    .mark(block.getTransactions().size());
+          }
         }
       } catch (ValidateSignatureException
           | ContractValidateException

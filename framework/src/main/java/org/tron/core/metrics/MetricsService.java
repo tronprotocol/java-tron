@@ -153,7 +153,9 @@ public class MetricsService {
       }
     }
     netInfo.setValidConnectionCount(validConnectionCount);
-    netInfo.setErrorProtoCount(10);
+
+    long errorProtoCount = monitorMetric.getCounter(MonitorMetric.NET_ERROR_PROTO_COUNT).getCount();
+    netInfo.setErrorProtoCount((int)errorProtoCount);
 
     MetricsInfo.NetInfo.RateInfo tcpInTraffic = new MetricsInfo.NetInfo.RateInfo();
     netInfo.setTCPInTraffic(tcpInTraffic);
