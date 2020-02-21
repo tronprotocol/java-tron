@@ -14,6 +14,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.metrics.BlockChainInfo;
+import org.tron.core.metrics.MonitorMetric;
 @Slf4j(topic = "consensus")
 @Component
 public class BlockHandleImpl implements BlockHandle {
@@ -30,6 +31,9 @@ public class BlockHandleImpl implements BlockHandle {
   @Autowired
   private Consensus consensus;
 
+  @Autowired
+  private MonitorMetric monitorMetric;
+
   @Override
   public State getState() {
     if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
@@ -43,6 +47,7 @@ public class BlockHandleImpl implements BlockHandle {
   }
 
   public BlockCapsule produce(Miner miner, long blockTime, long timeout) {
+    long now = System.currentTimeMillis();
     BlockChainInfo blockInfo=new BlockChainInfo(false);
 
     BlockCapsule blockCapsule = manager.generateBlock(miner, blockTime, timeout);
@@ -60,7 +65,9 @@ public class BlockHandleImpl implements BlockHandle {
       logger.error("Handle block {} failed.", blockCapsule.getBlockId().getString(), e);
       return null;
     }
-    blockInfo.setEndCurrentTime();
+    monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME)
+        .mark();
+
     return blockCapsule;
   }
 }

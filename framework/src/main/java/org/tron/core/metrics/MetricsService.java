@@ -5,7 +5,11 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +44,9 @@ public class MetricsService {
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
+//  @Autowired
+//  private BlockChainInfo blockChainInfo;
+
   /**
    * get metrics info.
    *
@@ -71,13 +78,9 @@ public class MetricsService {
   public void setNodeInfo(MetricsInfo data) {
     MetricsInfo.NodeInfo nodeInfo = new MetricsInfo.NodeInfo();
 
-    try {
-      nodeInfo.setIp(InetAddress.getLocalHost().getHostAddress());
-    } catch (UnknownHostException e) {
-      e.printStackTrace();
-    }
+    nodeInfo.setIp(getMyIp());
     nodeInfo.setType(1);
-    nodeInfo.setStatus(1);
+    nodeInfo.setStatus(BlockChainInfo.produceBlockexpectionCount>=1?1:0);
     nodeInfo.setVersion(Version.getVersion());
 
     data.setNodeInfo(nodeInfo);
@@ -90,29 +93,29 @@ public class MetricsService {
    */
   public void setBlockchainInfo(MetricsInfo data) {
     MetricsInfo.BlockchainInfo blockChain = new MetricsInfo.BlockchainInfo();
-    //BlockChainInfo blockChainInfo = new BlockChainInfo(interval);
     blockChain.setHeadBlockTimestamp(chainBaseManager.getHeadBlockTimeStamp());
     blockChain.setHeadBlockHash(dbManager.getDynamicPropertiesStore()
             .getLatestBlockHeaderHash().toString());
 
     MetricsInfo.BlockchainInfo.TPSInfo blockProcessTime =
             new MetricsInfo.BlockchainInfo.TPSInfo();
-    blockProcessTime.setMeanRate(2);
-    blockProcessTime.setOneMinuteRate(3);
-    blockProcessTime.setFiveMinuteRate(2);
-    blockProcessTime.setFifteenMinuteRate(4);
+    Meter meterBlockProcessTime =
+        monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME);
+    blockProcessTime.setMeanRate(meterBlockProcessTime.getMeanRate());
+    blockProcessTime.setOneMinuteRate(meterBlockProcessTime.getOneMinuteRate());
+    blockProcessTime.setFiveMinuteRate(meterBlockProcessTime.getFiveMinuteRate());
+    blockProcessTime.setFifteenMinuteRate(meterBlockProcessTime.getFifteenMinuteRate());
     blockChain.setBlockProcessTime(blockProcessTime);
-    blockChain.setForkCount(blockChain.getForkCount());
+    blockChain.setForkCount((int)monitorMetric.
+        getMeter(MonitorMetric.BLOCKCHAIN_SUCCESS_FORK_COUNT).getCount());
     blockChain.setHeadBlockNum((int) chainBaseManager.getHeadBlockNum());
     blockChain.setTxCacheSize(dbManager.getPendingTransactions().size());
-    blockChain.setMissTxCount(100);
+    blockChain.setMissTxCount(dbManager.getPendingTransactions().size()+
+        dbManager.getRePushTransactions().size());
 
     //MonitorInfo.DataInfo.BlochainInfo.TPSInfo tpsInfo =
     //new MonitorInfo.DataInfo.BlochainInfo.TPSInfo();
-    //tpsInfo.setMeanRate(2);
-    //tpsInfo.setOneMinuteRate(3);
-    //tpsInfo.setFiveMinuteRate(2);
-    //tpsInfo.setFifteenMinuteRate(4);
+
     Meter transactionRate = monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_TPS);
     MetricsInfo.BlockchainInfo.TPSInfo tpsInfo =
             new MetricsInfo.BlockchainInfo.TPSInfo();
@@ -226,6 +229,34 @@ public class MetricsService {
     netInfo.setLatency(latencyInfo);
     data.setNetInfo(netInfo);
 
+  }
+
+  /**
+   * get host ip address
+   *
+   * @param @data none
+   *  return string
+   */
+  public String getMyIp() {
+    try {
+      URL url = new URL("http://checkip.amazonaws.com"));
+      BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+      String ipAddress = new String();
+      ipAddress = in.readLine().trim();
+      if (ipAddress.length() == 0) {
+        return InetAddress.getLocalHost().getHostAddress();
+      } else {
+        return ipAddress;
+      }
+    } catch (Exception e) {
+      // This try will give the Private IP of the Host.
+      try {
+        InetAddress ip = InetAddress.getLocalHost();
+        return ip.getHostAddress().trim();
+      } catch (Exception ex) {
+        return "GET IP ERROR";
+      }
+    }
   }
 
 }

@@ -13,6 +13,9 @@ public class MonitorMetric {
   public static final String BLOCKCHAIN_TPS = "blockchain.TPS";
   public static final String NET_DISCONNECTION_COUNT = "net.disconnection.count";
   public static final String NET_DISCONNECTION_REASON = "net.disconnection.reason";
+  public static final String BLOCKCHAIN_BLOCKPROCESS_TIME="blockchain.blockProcessTime";
+  public static final String BLOCKCHAIN_SUCCESS_FORK_COUNT="blockchain.successForkCount";
+  public static final String BLOCKCHAIN_FAIL_FORK_COUNR ="blockchain.failForkCount";
 
   @Autowired
   private MetricRegistry metricRegistry;

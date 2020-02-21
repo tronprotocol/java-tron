@@ -839,8 +839,7 @@ public class Manager {
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException,
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
       VMIllegalException, ZksnarkException, BadBlockException {
-    // increase fork count
-    BlockChainInfo.forkCount++;
+
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -896,6 +895,8 @@ public class Manager {
           throw e;
         } finally {
           if (exception != null) {
+            monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_FAIL_FORK_COUNR)
+                .mark();
             logger.warn("switch back because exception thrown while switching forks. " + exception
                     .getMessage(),
                 exception);
@@ -932,6 +933,8 @@ public class Manager {
         }
       }
     }
+    monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_SUCCESS_FORK_COUNT)
+        .mark();
   }
 
   /**
@@ -1067,13 +1070,6 @@ public class Manager {
     if (block.getTransactions().size() > 0) {
       monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_TPS).mark(block.getTransactions().size());
     }
-
-    // calculate processing time and update new total new time
-    String Oldtime = chainBaseManager.getDynamicPropertiesStore().getTotalProcessingTxTime();
-    BigInteger preciousTime = new BigInteger(Oldtime);
-    BigInteger diff = new BigInteger(Long.toString(System.currentTimeMillis() - start));
-    chainBaseManager.getDynamicPropertiesStore()
-        .saveTotalProcessingTxTime(preciousTime.add(diff).toString());
 
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
