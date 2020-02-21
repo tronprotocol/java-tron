@@ -2,61 +2,60 @@ package org.tron.core.metrics;
 
 public class BlockChainInfo {
   public static int interval;
+  public static int totalSuccessForkCount = 0;
+  public static int totalFailForkCount = 0;
+  public static long startRecordTime;
   private static long startTime;
-  private static long endTime;
-  private static boolean produceExpection;
-  public static int forkCount = 0;
-  private long startRecordTime;
+  private static int totalProduceExpectionCount = 0;
+  public static int produceBlockexpectionCount = 0;
+  private int successForkCount = 0;
+  private int failForkCount = 0;
+  private boolean produceBlockExpection;
 
   public BlockChainInfo(int interval) {
-    startTime = System.currentTimeMillis();
-    startRecordTime = System.currentTimeMillis();
-    produceExpection = false;
-    forkCount = 0;
+    this.produceBlockExpection = false;
     this.interval = interval;
   }
 
-
   public BlockChainInfo(boolean produceExpection) {
-    startTime = System.currentTimeMillis();
-    this.produceExpection = produceExpection;
-  }
-
-  public long getBlockProduceTime() {
-    if (produceExpection) {
-      return 0;
-    } else {
-      return endTime - startTime;
-    }
-  }
-
-  public void incrementForkCount() {
+    this.produceBlockExpection = produceExpection;
     long nowTime = System.currentTimeMillis();
-    if (nowTime - startRecordTime > interval * 60 * 60) {  //reset every Period
-      this.forkCount = 0;
-      startRecordTime = nowTime;
-      produceExpection = false;
+    if (nowTime - startTime > this.interval * 60 * 60) {
+      this.successForkCount = 0;
+      this.failForkCount = 0;
     }
   }
+//
+//  public void incrementForkCount() {
+//    long nowTime = System.currentTimeMillis();
+//    if (nowTime - startRecordTime > interval * 60 * 60) {  //reset every Period
+//      this.successForkCount = 0;
+//      produceBlockExpection = false;
+//    }
+//  }
 
   public void setProduceExpection(boolean produceExpection) {
-    this.produceExpection = produceExpection;
+
+    if (produceExpection == true) {
+      long nowTime = System.currentTimeMillis();
+      this.totalProduceExpectionCount++;
+      if (nowTime - startTime > this.interval * 60 * 60) {
+        startTime = nowTime;
+        this.produceBlockexpectionCount = 0;
+      } else {
+        this.produceBlockexpectionCount++;
+      }
+    }
+    this.produceBlockExpection = produceExpection;
   }
 
-  public int getForkCount() {
-    return this.forkCount;
+  public int getSuccessForkCount() {
+    return this.successForkCount;
   }
 
-  public void setStartTime(long time) {
-    this.startTime = time;
+  public int getBlockProduceExpectionCount(){
+     return this.produceBlockexpectionCount;
   }
 
-  public void setEndTime(long time) {
-    this.endTime = time;
-  }
-
-  public void setEndCurrentTime() {
-    this.endTime = System.currentTimeMillis();
-  }
 
 }
