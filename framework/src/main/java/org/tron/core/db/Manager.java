@@ -1129,6 +1129,8 @@ public class Manager {
       return null;
     }
 
+    long startTime=System.currentTimeMillis();
+
     validateTapos(trxCap);
     validateCommon(trxCap);
 
@@ -1191,6 +1193,11 @@ public class Manager {
     if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
+
+    monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME)
+        .mark(System.currentTimeMillis()-startTime);
+    monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCK_TX_COUNT)
+        .mark();
 
     return transactionInfo.getInstance();
   }
