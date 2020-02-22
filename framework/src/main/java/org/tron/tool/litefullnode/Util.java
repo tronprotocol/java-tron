@@ -9,9 +9,9 @@ import java.util.List;
 public class Util {
 
   /**
-   * copy src to dest, if dest is a directory and already exists, throw Exception.
+   * Copy src to dest, if dest is a directory and already exists, throw Exception.
    *
-   * <p>note: this method is not rigorous, because all the dirs that its FileName
+   * <p>Note: This method is not rigorous, because all the dirs that its FileName
    * is contained in List(subDirs) will be filtered, this may result in unpredictable result.
    *
    * @param src
