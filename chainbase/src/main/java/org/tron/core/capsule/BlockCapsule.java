@@ -276,6 +276,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block.getBlockHeader().getRawData().getTimestamp();
   }
 
+  public boolean hasWitnessSignature() {
+    return !getInstance().getBlockHeader().getWitnessSignature().isEmpty();
+  }
+
   @Override
   public String toString() {
     toStringBuff.setLength(0);

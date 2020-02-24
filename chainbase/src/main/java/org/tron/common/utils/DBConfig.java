@@ -66,6 +66,9 @@ public class DBConfig {
   private static long allowTvmSolidity059; //committee parameter
   @Getter
   @Setter
+  private static long forbidTransferToContract; //committee parameter
+  @Getter
+  @Setter
   private static long allowSameTokenName; //committee parameter
   @Getter
   @Setter

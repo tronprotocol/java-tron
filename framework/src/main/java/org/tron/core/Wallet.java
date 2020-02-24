@@ -21,6 +21,7 @@ package org.tron.core;
 import static org.tron.common.utils.Commons.ADDRESS_SIZE;
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
+import static org.tron.common.utils.WalletUtil.checkPermissionOprations;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
@@ -32,12 +33,10 @@ import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
-import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +82,7 @@ import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
@@ -94,15 +94,7 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.Base58;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
-import org.tron.common.utils.DecodeUtil;
-import org.tron.common.utils.Hash;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.Utils;
+import org.tron.common.utils.*;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -129,6 +121,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
@@ -195,8 +188,6 @@ import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j
@@ -234,20 +225,6 @@ public class Wallet {
     logger.info("wallet address: {}", ByteArray.toHexString(this.cryptoEngine.getAddress()));
   }
 
-  public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract)
-      throws ContractValidateException {
-    try {
-      boolean constant = isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
-      if (constant && !Args.getInstance().isSupportConstant()) {
-        throw new ContractValidateException("This node does not support constant");
-      }
-      return constant;
-    } catch (ContractValidateException e) {
-      throw e;
-    } catch (Exception e) {
-      return false;
-    }
-  }
 
   public static String getAddressPreFixString() {
     return addressPreFixString;
@@ -285,73 +262,40 @@ public class Wallet {
     return true;
   }
 
-  public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), input);
-    byte[] hash1 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), hash0);
-    byte[] inputCheck = new byte[input.length + 4];
-    System.arraycopy(input, 0, inputCheck, 0, input.length);
-    System.arraycopy(hash1, 0, inputCheck, input.length, 4);
-    return Base58.encode(inputCheck);
-  }
-
-  public static byte[] generateContractAddress(Transaction trx) {
-
-    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-    TransactionCapsule trxCap = new TransactionCapsule(trx);
-    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
-
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return Hash.sha3omit12(combined);
-
-  }
-
-  public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
-
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return Hash.sha3omit12(combined);
-
-  }
-
-  // for `CREATE2`
-  public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
-    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return Hash.sha3omit12(mergedData);
-  }
-
-  // for `CREATE`
-  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
-    byte[] nonceBytes = Longs.toByteArray(nonce);
-    byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
-    System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
-    System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
-
-    return Hash.sha3omit12(combined);
-  }
-
-  public static byte[] tryDecodeFromBase58Check(String address) {
-    try {
-      return decodeFromBase58Check(address);
-    } catch (Exception ex) {
+  private static byte[] decode58Check(String input) {
+    byte[] decodeCheck = Base58.decode(input);
+    if (decodeCheck.length <= 4) {
       return null;
     }
+    byte[] decodeData = new byte[decodeCheck.length - 4];
+    System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
+    byte[] hash0 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), decodeData);
+    byte[] hash1 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), hash0);
+    if (hash1[0] == decodeCheck[decodeData.length] &&
+        hash1[1] == decodeCheck[decodeData.length + 1] &&
+        hash1[2] == decodeCheck[decodeData.length + 2] &&
+        hash1[3] == decodeCheck[decodeData.length + 3]) {
+      return decodeData;
+    }
+    return null;
   }
 
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
-      throws PermissionException {
-    ByteString operations = permission.getOperations();
-    if (operations.size() != 32) {
-      throw new PermissionException("operations size must be 32");
+
+  public static byte[] decodeFromBase58Check(String addressBase58) {
+    if (StringUtils.isEmpty(addressBase58)) {
+      logger.warn("Warning: Address is empty !!");
+      return null;
     }
-    int contractType = contract.getTypeValue();
-    boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
-    return b;
+    byte[] address = decode58Check(addressBase58);
+    if (address == null) {
+      return null;
+    }
+
+    if (!addressValid(address)) {
+      return null;
+    }
+
+    return address;
   }
 
 //  public ShieldAddress generateShieldAddress() {
@@ -395,41 +339,6 @@ public class Wallet {
     long balance = getBalance(address);
     return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
   } */
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
-
-    if (selector == null || selector.length != 4
-        || abi.getEntrysList().size() == 0) {
-      return false;
-    }
-
-    for (int i = 0; i < abi.getEntrysCount(); i++) {
-      ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != ABI.Entry.EntryType.Function) {
-        continue;
-      }
-
-      int inputCount = entry.getInputsCount();
-      StringBuilder sb = new StringBuilder();
-      sb.append(entry.getName());
-      sb.append("(");
-      for (int k = 0; k < inputCount; k++) {
-        ABI.Entry.Param param = entry.getInputs(k);
-        sb.append(param.getType());
-        if (k + 1 < inputCount) {
-          sb.append(",");
-        }
-      }
-      sb.append(")");
-
-      byte[] funcSelector = new byte[4];
-      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
-      if (Arrays.equals(funcSelector, selector)) {
-        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
-      }
-    }
-
-    return false;
-  }
 
   public byte[] getAddress() {
     return cryptoEngine.getAddress();
@@ -1072,6 +981,11 @@ public class Wallet {
             .setValue(
                 dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
             .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getForbidTransferToContract")
+        .setValue(dbManager.getDynamicPropertiesStore().getForbidTransferToContract())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAdaptiveResourceLimitTargetRatio")
@@ -2302,6 +2216,37 @@ public class Wallet {
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(transactionHash)).build();
   }
 
+  public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) {
+    TransactionInfoList.Builder transactionInfoList = TransactionInfoList.newBuilder();
+
+    try {
+      TransactionRetCapsule result = dbManager.getTransactionRetStore()
+          .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
+
+      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+        result.getInstance().getTransactioninfoList().forEach(
+            transactionInfo -> transactionInfoList.addTransactionInfo(transactionInfo)
+        );
+      } else {
+        Block block = dbManager.getBlockByNum(blockNum).getInstance();
+
+        if (block != null) {
+          List<Transaction> listTransaction = block.getTransactionsList();
+          for (Transaction transaction : listTransaction) {
+            TransactionInfoCapsule transactionInfoCapsule = dbManager.getTransactionHistoryStore()
+                .get(Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),
+                    transaction.getRawData().toByteArray()));
+            transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
+          }
+        }
+      }
+    } catch (BadItemException | ItemNotFoundException e) {
+      logger.error(e.getMessage());
+    }
+
+    return transactionInfoList.build();
+  }
+
   public NodeList listNodes() {
     List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
 
@@ -2352,7 +2297,7 @@ public class Wallet {
     byte[] selector = getSelector(
         triggerSmartContract.getData().toByteArray());
 
-    if (isConstant(abi, selector)) {
+    if (WalletUtil.isConstant(abi, selector)) {
       return callConstantContract(trxCap, builder, retBuilder);
     } else {
       return trxCap.getInstance();

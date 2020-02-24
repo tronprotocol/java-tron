@@ -91,7 +91,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
     }
   }
 
-  private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
+  public static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
     if (selector == null || selector.length != 4
         || abi.getEntrysList().size() == 0) {

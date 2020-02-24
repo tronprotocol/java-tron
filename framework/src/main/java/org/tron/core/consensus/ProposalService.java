@@ -189,6 +189,10 @@ public class ProposalService extends ProposalUtil {
 //              .saveShieldedTransactionCreateAccountFee(entry.getValue());
 //          break;
 //        }
+        case FORBID_TRANSFER_TO_CONTRACT: {
+          manager.getDynamicPropertiesStore().saveForbidTransferToContract(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

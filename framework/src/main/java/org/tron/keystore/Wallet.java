@@ -24,6 +24,7 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Hash;
 import org.tron.core.config.args.Args;
+import org.tron.common.utils.WalletUtil;
 
 /**
  * <p>Ethereum wallet file management. For reference, refer to <a href="https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition">
@@ -92,7 +93,7 @@ public class Wallet {
       int n, int p) {
 
     WalletFile walletFile = new WalletFile();
-    walletFile.setAddress(org.tron.core.Wallet.encode58Check(ecKeyPair.getAddress()));
+    walletFile.setAddress(WalletUtil.encode58Check(ecKeyPair.getAddress()));
 
     WalletFile.Crypto crypto = new WalletFile.Crypto();
     crypto.setCipher(CIPHER);

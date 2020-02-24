@@ -8,6 +8,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -87,7 +88,7 @@ public class Create2Test extends VMTestBase {
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
-    byte[] factoryAddress = Wallet.generateContractAddress(trx);
+    byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
@@ -101,7 +102,7 @@ public class Create2Test extends VMTestBase {
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     byte[] actualContract = MUtil.convertToTronAddress(Arrays.copyOfRange(returnValue, 12, 32));
-    byte[] expectedContract = Wallet
+    byte[] expectedContract = WalletUtil
         .generateContractAddress2(address, new DataWord(salt).getData(), Hex.decode(testCode));
     // check deployed contract
     Assert.assertEquals(actualContract, expectedContract);

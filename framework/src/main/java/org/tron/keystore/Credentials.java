@@ -1,11 +1,8 @@
 package org.tron.keystore;
 
-import static org.tron.core.Wallet.encode58Check;
-
-import org.tron.common.crypto.ECKey;
+import static org.tron.common.utils.WalletUtil.encode58Check;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.sm2.SM2;
-import org.tron.common.utils.ByteArray;
 
 /**
  * Credentials wrapper.

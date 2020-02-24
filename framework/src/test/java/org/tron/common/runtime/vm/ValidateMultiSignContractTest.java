@@ -61,7 +61,7 @@ public class ValidateMultiSignContractTest {
 
     //Address non exist
     Assert.assertEquals(
-        validateMultiSign(Wallet.encode58Check(key.getAddress()), 1, hash, signs)
+        validateMultiSign(WalletUtil.encode58Check(key.getAddress()), 1, hash, signs)
             .getValue()
         , DataWord.ZERO().getData());
 
@@ -121,7 +121,7 @@ public class ValidateMultiSignContractTest {
     signs.add(Hex.toHexString(key2.sign(toSign).toByteArray()));
 
     Assert.assertEquals(
-        validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
+        validateMultiSign(WalletUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue()
         , DataWord.ONE().getData());
 
@@ -129,7 +129,7 @@ public class ValidateMultiSignContractTest {
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     Assert.assertEquals(
-        validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
+        validateMultiSign(WalletUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue()
         , DataWord.ZERO().getData());
 
@@ -137,7 +137,7 @@ public class ValidateMultiSignContractTest {
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     Assert.assertEquals(
-        validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
+        validateMultiSign(WalletUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue()
         , DataWord.ZERO().getData());
     signs = new ArrayList<>();
@@ -145,7 +145,7 @@ public class ValidateMultiSignContractTest {
     signs.add(Hex.toHexString(new ECKey().sign(toSign).toByteArray()));
 
     Assert.assertEquals(
-        validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
+        validateMultiSign(WalletUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue()
         , DataWord.ZERO().getData());
 

@@ -28,6 +28,7 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
@@ -37,6 +38,7 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
@@ -371,7 +373,7 @@ public class RpcApiServiceOnSolidity implements Service {
           Args.getInstance().isECKeyCryptoEngine());
       byte[] priKey = cryptoEngine.getPrivateKey();
       byte[] address = cryptoEngine.getAddress();
-      String addressStr = Wallet.encode58Check(address);
+      String addressStr = WalletUtil.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
       builder.setAddress(addressStr);
@@ -433,6 +435,15 @@ public class RpcApiServiceOnSolidity implements Service {
     public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
       walletOnSolidity.futureGet(
           () -> rpcApiService.getWalletSolidityApi().isSpend(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getTransactionInfoByBlockNum(NumberMessage request,
+        StreamObserver<TransactionInfoList> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getTransactionInfoByBlockNum(request, responseObserver)
       );
     }
 

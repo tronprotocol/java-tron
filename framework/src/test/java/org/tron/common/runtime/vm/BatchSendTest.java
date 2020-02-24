@@ -19,6 +19,7 @@ import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -124,9 +125,9 @@ public class BatchSendTest {
     ECKey ecKey3 = new ECKey(Utils.getRandom());
 
     List<Object> params = new ArrayList<>();
-    params.add(Wallet.encode58Check(ecKey1.getAddress()));
-    params.add(Wallet.encode58Check(ecKey2.getAddress()));
-    params.add(Wallet.encode58Check(ecKey3.getAddress()));
+    params.add(WalletUtil.encode58Check(ecKey1.getAddress()));
+    params.add(WalletUtil.encode58Check(ecKey2.getAddress()));
+    params.add(WalletUtil.encode58Check(ecKey3.getAddress()));
     params.add(100);
     params.add(1100);
     params.add(200);

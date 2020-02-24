@@ -65,6 +65,7 @@ import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
@@ -79,11 +80,7 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.Utils;
+import org.tron.common.utils.*;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -613,7 +610,7 @@ public class RpcApiService implements Service {
           Args.getInstance().isECKeyCryptoEngine());
       byte[] priKey = cryptoEngine.getPrivateKey();
       byte[] address = cryptoEngine.getAddress();
-      String addressStr = Wallet.encode58Check(address);
+      String addressStr = WalletUtil.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
       builder.setAddress(addressStr);
@@ -741,6 +738,18 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionExtention> responseObserver) {
 
       callContract(request, responseObserver, true);
+    }
+
+    @Override
+    public void getTransactionInfoByBlockNum(NumberMessage request,
+        StreamObserver<TransactionInfoList> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getTransactionInfoByBlockNum(request.getNum()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+
+      responseObserver.onCompleted();
     }
 
   }
@@ -1837,10 +1846,10 @@ public class RpcApiService implements Service {
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
       SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-        DBConfig.isECKeyCryptoEngine());
+          DBConfig.isECKeyCryptoEngine());
       byte[] priKey = cryptoEngine.getPrivateKey();
       byte[] address = cryptoEngine.getAddress();
-      String addressStr = Wallet.encode58Check(address);
+      String addressStr = WalletUtil.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
       builder.setAddress(addressStr);
@@ -2327,6 +2336,18 @@ public class RpcApiService implements Service {
       Transaction.Contract contract = request.getRawData().getContract(0);
       createTransactionExtention(contract.getParameter(), contract.getType(),
           responseObserver);
+    }
+
+    @Override
+    public void getTransactionInfoByBlockNum(NumberMessage request,
+        StreamObserver<TransactionInfoList> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getTransactionInfoByBlockNum(request.getNum()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+
+      responseObserver.onCompleted();
     }
   }
 }
