@@ -8,6 +8,7 @@ import com.codahale.metrics.Meter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -341,9 +342,9 @@ public class MetricsService {
     return (int) monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_FAIL_FORK_COUNR).getCount();
   }
 
-  public void getBlocks() {
+  public void getBlocks()  {
 
-    List<BlockCapsule> blocks = chainBaseManager.getBlockStore().getBlockByLatestNum(totalSR);
+    List<BlockCapsule> blocks = chainBaseManager.getBlockStore().getBlockByLatestNum(27);
 
     // get max version number
     int maxVersion = 0;
@@ -351,17 +352,12 @@ public class MetricsService {
       maxVersion = Math.max(maxVersion,
           it.getInstance().getBlockHeader().getRawData().getVersion());
     }
-    logger.info("block store size ="+chainBaseManager.getBlockStore().size()+"  block size "+blocks.size()+
-        " max version ="+maxVersion);
     // find no Upgrade SR
     for (BlockCapsule it : blocks) {
-      logger.info("witness address" + it.getWitnessAddress().toString()+ " version" +
-          it.getInstance().getBlockHeader().getRawData().getVersion()+"  info "+it.toString());
-
       if (it.getInstance().getBlockHeader().getRawData().getVersion() != maxVersion) {
         this.noUpgradedSRCount++;
         BlockChainInfo.Witness witness = new BlockChainInfo.Witness(
-            it.getWitnessAddress().toString(),
+            it.getWitnessAddress().toStringUtf8(),
             it.getInstance().getBlockHeader().getRawData().getVersion());
         this.noUpgradedSRList.add(witness);
       }
