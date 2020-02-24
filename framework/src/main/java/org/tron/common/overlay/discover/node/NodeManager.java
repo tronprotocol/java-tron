@@ -34,6 +34,7 @@ import org.tron.common.utils.JsonUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.metrics.MonitorMetric;
 
 @Slf4j(topic = "discover")
 @Component
@@ -60,6 +61,9 @@ public class NodeManager implements EventHandler {
   private Timer nodeManagerTasksTimer = new Timer("NodeManagerTasks");
 
   private ScheduledExecutorService pongTimer;
+
+  @Autowired
+  MonitorMetric monitorMetric;
 
   @Autowired
   public NodeManager(ChainBaseManager chainBaseManager) {
@@ -231,6 +235,8 @@ public class NodeManager implements EventHandler {
 
     NodeHandler nodeHandler = getNodeHandler(n);
     nodeHandler.getNodeStatistics().messageStatistics.addUdpInMessage(m.getType());
+    monitorMetric.getMeter(MonitorMetric.NET_UDP_IN_TRAFFIC)
+            .mark(udpEvent.getMessage().getData().length + 1);
 
     switch (m.getType()) {
       case DISCOVER_PING:
@@ -253,6 +259,8 @@ public class NodeManager implements EventHandler {
   public void sendOutbound(UdpEvent udpEvent) {
     if (discoveryEnabled && messageSender != null) {
       messageSender.accept(udpEvent);
+      monitorMetric.getMeter(MonitorMetric.NET_UDP_OUT_TRAFFIC)
+              .mark(udpEvent.getMessage().getSendData().length);
     }
   }
 

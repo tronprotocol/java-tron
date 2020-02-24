@@ -109,7 +109,7 @@ public class ChannelManager {
         break;
     }
     monitorMetric.getCounter(MonitorMetric.NET_DISCONNECTION_COUNT).inc();
-    monitorMetric.getCounter(MonitorMetric.NET_DISCONNECTION_REASON + "." + reason).inc();
+    monitorMetric.getCounter(MonitorMetric.NET_DISCONNECTION_REASON + reason).inc();
   }
 
   public void notifyDisconnect(Channel channel) {
