@@ -116,7 +116,8 @@ public class MetricsInfo {
     private int headBlockNum;
     private long headBlockTimestamp;
     private String headBlockHash;
-    private int forkCount;
+    private int successForkCount;
+    private int failForkCount;
     private TPSInfo blockProcessTime;
     @JSONField(name = "TPS")
     private TPSInfo TPS;
@@ -153,12 +154,20 @@ public class MetricsInfo {
       return this;
     }
 
-    public int getForkCount() {
-      return this.forkCount;
+    public BlockchainInfo setSuccessForkCount(int forkCount){
+      this.successForkCount=forkCount;
+      return this;
+    }
+    public int getSuccessForkCount(){
+      return this.successForkCount;
     }
 
-    public BlockchainInfo setForkCount(int forkCount) {
-      this.forkCount = forkCount;
+    public int getFailForkCount() {
+      return this.failForkCount;
+    }
+
+    public BlockchainInfo setFailForkCount(int forkCount) {
+      this.failForkCount = forkCount;
       return this;
     }
 
@@ -690,7 +699,7 @@ public class MetricsInfo {
 
   public Protocol.MetricsInfo ToProtoEntity() {
     Protocol.MetricsInfo.Builder builder = Protocol.MetricsInfo.newBuilder();
-    builder.setInterval(interval);
+    builder.setStartTime(interval);
 
     Protocol.MetricsInfo.NodeInfo.Builder nodeInfo =
             Protocol.MetricsInfo.NodeInfo.newBuilder();
@@ -716,7 +725,8 @@ public class MetricsInfo {
     blockProcessTime.setFiveMinuteRate(blockChainInfo.getBlockProcessTime().getFiveMinuteRate());
     blockProcessTime.setFifteenMinuteRate(blockChainInfo.getBlockProcessTime().getFifteenMinuteRate());
     blockChain.setBlockProcessTime(blockProcessTime.build());
-    blockChain.setForkCount(blockChainInfo.getForkCount());
+    blockChain.setSuccessForkCount(blockChainInfo.getSuccessForkCount());
+    blockChain.setFailForkCount(blockChain.getFailForkCount());
     blockChain.setHeadBlockNum(blockChainInfo.getHeadBlockNum());
     blockChain.setTxCacheSize(blockChainInfo.getTxCacheSize());
     blockChain.setMissedTxCount(blockChainInfo.getMissTxCount());

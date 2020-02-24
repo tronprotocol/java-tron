@@ -1,61 +1,39 @@
 package org.tron.core.metrics;
 
+import com.codahale.metrics.Meter;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.BlockCapsule;
+
+@Slf4j(topic = "blockChainInfo")
 public class BlockChainInfo {
-  public static int interval;
-  public static int totalSuccessForkCount = 0;
-  public static int totalFailForkCount = 0;
   public static long startRecordTime;
-  private static long startTime;
-  private static int totalProduceExpectionCount = 0;
-  public static int produceBlockexpectionCount = 0;
-  private int successForkCount = 0;
-  private int failForkCount = 0;
-  private boolean produceBlockExpection;
 
-  public BlockChainInfo(int interval) {
-    this.produceBlockExpection = false;
-    this.interval = interval;
-  }
+  public static class Witness {
+    private String address;
+    private String url;
+    private int version;
 
-  public BlockChainInfo(boolean produceExpection) {
-    this.produceBlockExpection = produceExpection;
-    long nowTime = System.currentTimeMillis();
-    if (nowTime - startTime > this.interval * 60 * 60) {
-      this.successForkCount = 0;
-      this.failForkCount = 0;
+    public Witness(String address, int version) {
+      this.address = address;
+      this.version = version;
     }
-  }
-//
-//  public void incrementForkCount() {
-//    long nowTime = System.currentTimeMillis();
-//    if (nowTime - startRecordTime > interval * 60 * 60) {  //reset every Period
-//      this.successForkCount = 0;
-//      produceBlockExpection = false;
-//    }
-//  }
 
-  public void setProduceExpection(boolean produceExpection) {
-
-    if (produceExpection == true) {
-      long nowTime = System.currentTimeMillis();
-      this.totalProduceExpectionCount++;
-      if (nowTime - startTime > this.interval * 60 * 60) {
-        startTime = nowTime;
-        this.produceBlockexpectionCount = 0;
-      } else {
-        this.produceBlockexpectionCount++;
-      }
+    public void witness(String address, String url, int version) {
+      this.address = address;
+      this.url = url;
+      this.version = version;
     }
-    this.produceBlockExpection = produceExpection;
-  }
-
-  public int getSuccessForkCount() {
-    return this.successForkCount;
-  }
-
-  public int getBlockProduceExpectionCount(){
-     return this.produceBlockexpectionCount;
+    public String getAddress(){
+      return this.address;
+    }
+    public int getVersion(){
+      return this.version;
+    }
   }
 
 
 }
+

@@ -634,7 +634,7 @@ message NodeInfo {
 }
 
 message MetricsInfo {
-  int32 interval = 1;
+  int64 startTime = 1;
   NodeInfo node = 2;
   BlockChainInfo blockchain = 3;
   NetInfo net = 4;
@@ -650,12 +650,13 @@ message MetricsInfo {
     int64 headBlockNum = 1;
     int64 headBlockTimestamp = 2;
     string headBlockHash = 3;
-    int32 forkCount = 4;
-    TPSInfo blockProcessTime = 5;
-    TPSInfo TPS = 6;
-    int32 TxCacheSize = 7;
-    int32 missedTxCount = 8;
-    repeated Witness witnesses = 9;
+    int32 successForkCount = 4;
+    int32 failForkCount = 5;
+    TPSInfo blockProcessTime = 6;
+    TPSInfo TPS = 7;
+    int32 TxCacheSize = 8;
+    int32 missedTxCount = 9;
+    repeated Witness witnesses = 10;
     message Witness {
       string address = 1;
       int32 version = 2;

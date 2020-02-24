@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.peer.PeerConnection;
@@ -31,6 +32,10 @@ import org.tron.protos.Protocol;
 @Slf4j(topic = "metrics")
 @Component
 public class MetricsService {
+
+  public List<BlockChainInfo.Witness> noUpgradedSRList = new ArrayList<>();
+  private int totalSR = 27;
+  private int noUpgradedSRCount;
 
   @Autowired
   private MonitorMetric monitorMetric;
@@ -44,9 +49,6 @@ public class MetricsService {
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
-//  @Autowired
-//  private BlockChainInfo blockChainInfo;
-
   /**
    * get metrics info.
    *
@@ -55,8 +57,8 @@ public class MetricsService {
   public MetricsInfo getMetricsInfo() {
 
     MetricsInfo metricsInfo = new MetricsInfo();
-    int interval = 60;
-    metricsInfo.setInterval(interval);
+
+    metricsInfo.setInterval((int) BlockChainInfo.startRecordTime);
     setNodeInfo(metricsInfo);
 
     setBlockchainInfo(metricsInfo);
@@ -77,10 +79,9 @@ public class MetricsService {
    */
   public void setNodeInfo(MetricsInfo data) {
     MetricsInfo.NodeInfo nodeInfo = new MetricsInfo.NodeInfo();
-
     nodeInfo.setIp(getMyIp());
     nodeInfo.setType(1);
-    nodeInfo.setStatus(BlockChainInfo.produceBlockexpectionCount >= 1 ? 0 : 1);
+    nodeInfo.setStatus(getNodeStatusByTime(0));
     nodeInfo.setVersion(Version.getVersion());
 
     data.setNodeInfo(nodeInfo);
@@ -95,45 +96,45 @@ public class MetricsService {
     MetricsInfo.BlockchainInfo blockChain = new MetricsInfo.BlockchainInfo();
     blockChain.setHeadBlockTimestamp(chainBaseManager.getHeadBlockTimeStamp());
     blockChain.setHeadBlockHash(dbManager.getDynamicPropertiesStore()
-            .getLatestBlockHeaderHash().toString());
+        .getLatestBlockHeaderHash().toString());
 
     MetricsInfo.BlockchainInfo.TPSInfo blockProcessTime =
-            new MetricsInfo.BlockchainInfo.TPSInfo();
-    Meter meterBlockProcessTime =
-            monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME);
-    blockProcessTime.setMeanRate(meterBlockProcessTime.getMeanRate());
-    blockProcessTime.setOneMinuteRate(meterBlockProcessTime.getOneMinuteRate());
-    blockProcessTime.setFiveMinuteRate(meterBlockProcessTime.getFiveMinuteRate());
-    blockProcessTime.setFifteenMinuteRate(meterBlockProcessTime.getFifteenMinuteRate());
+        new MetricsInfo.BlockchainInfo.TPSInfo();
+
+    blockProcessTime.setMeanRate(getAvgBlockProcessTimeByGap(0));
+    blockProcessTime.setOneMinuteRate(getAvgBlockProcessTimeByGap(1));
+    blockProcessTime.setFiveMinuteRate(getAvgBlockProcessTimeByGap(5));
+    blockProcessTime.setFifteenMinuteRate(getAvgBlockProcessTimeByGap(15));
     blockChain.setBlockProcessTime(blockProcessTime);
-    blockChain.setForkCount((int) monitorMetric.
-            getMeter(MonitorMetric.BLOCKCHAIN_SUCCESS_FORK_COUNT).getCount());
+    blockChain.setSuccessForkCount(getSuccessForkCount());
+    blockChain.setFailForkCount(getFailForkCount());
     blockChain.setHeadBlockNum((int) chainBaseManager.getHeadBlockNum());
     blockChain.setTxCacheSize(dbManager.getPendingTransactions().size());
     blockChain.setMissTxCount(dbManager.getPendingTransactions().size() +
-            dbManager.getRePushTransactions().size());
+        dbManager.getRePushTransactions().size());
 
-    //MonitorInfo.DataInfo.BlochainInfo.TPSInfo tpsInfo =
-    //new MonitorInfo.DataInfo.BlochainInfo.TPSInfo();
 
     Meter transactionRate = monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_TPS);
     MetricsInfo.BlockchainInfo.TPSInfo tpsInfo =
-            new MetricsInfo.BlockchainInfo.TPSInfo();
+        new MetricsInfo.BlockchainInfo.TPSInfo();
     tpsInfo.setMeanRate(transactionRate.getMeanRate());
     tpsInfo.setOneMinuteRate(transactionRate.getOneMinuteRate());
     tpsInfo.setFiveMinuteRate(transactionRate.getFiveMinuteRate());
     tpsInfo.setFifteenMinuteRate(transactionRate.getFifteenMinuteRate());
     blockChain.setTPS(tpsInfo);
 
+    getBlocks();
     List<MetricsInfo.BlockchainInfo.Witness> witnesses = new ArrayList<>();
-    MetricsInfo.BlockchainInfo.Witness noUpgradeSR =
-            new MetricsInfo.BlockchainInfo.Witness();
-    noUpgradeSR.setAddress("41d376d829440505ea13c9d1c455317d51b62e4ab6");
-    noUpgradeSR.setVersion(15);
-    witnesses.add(noUpgradeSR);
+    for (BlockChainInfo.Witness it : this.noUpgradedSRList) {
+      MetricsInfo.BlockchainInfo.Witness noUpgradeSR =
+          new MetricsInfo.BlockchainInfo.Witness();
+      noUpgradeSR.setAddress(it.getAddress());
+      noUpgradeSR.setVersion(it.getVersion());
+      witnesses.add(noUpgradeSR);
+    }
+
     blockChain.setWitnesses(witnesses);
     data.setBlockInfo(blockChain);
-
   }
 
   /**
@@ -155,7 +156,7 @@ public class MetricsService {
     netInfo.setValidConnectionCount(validConnectionCount);
 
     long errorProtoCount = monitorMetric.getCounter(MonitorMetric.NET_ERROR_PROTO_COUNT).getCount();
-    netInfo.setErrorProtoCount((int)errorProtoCount);
+    netInfo.setErrorProtoCount((int) errorProtoCount);
 
     MetricsInfo.NetInfo.RateInfo tcpInTraffic = new MetricsInfo.NetInfo.RateInfo();
     netInfo.setTCPInTraffic(tcpInTraffic);
@@ -175,7 +176,7 @@ public class MetricsService {
     List<MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo> apiDetails = new ArrayList<>();
     for (Map.Entry<String, JSONObject> entry : httpCount.getEndpointMap().entrySet()) {
       MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo apiDetail =
-              new MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo();
+          new MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo();
       apiDetail.setName(entry.getKey());
       apiDetail.setCount((int) entry.getValue().get(HttpInterceptor.TOTAL_REQUST));
       apiDetail.setFailCount((int) entry.getValue().get(HttpInterceptor.FAIL_REQUST));
@@ -185,21 +186,21 @@ public class MetricsService {
     netInfo.setApi(apiInfo);
 
     long disconnectionCount
-            = monitorMetric.getCounter(MonitorMetric.NET_DISCONNECTION_COUNT).getCount();
+        = monitorMetric.getCounter(MonitorMetric.NET_DISCONNECTION_COUNT).getCount();
     netInfo.setDisconnectionCount((int) disconnectionCount);
     List<MetricsInfo.NetInfo.DisconnectionDetailInfo> disconnectionDetails =
-            new ArrayList<>();
+        new ArrayList<>();
     SortedMap<String, Counter> disconnectionReason
-            = monitorMetric.getCounters(MonitorMetric.NET_DISCONNECTION_REASON);
+        = monitorMetric.getCounters(MonitorMetric.NET_DISCONNECTION_REASON);
     for (Map.Entry<String, Counter> entry : disconnectionReason.entrySet()) {
       MetricsInfo.NetInfo.DisconnectionDetailInfo detail =
-              new MetricsInfo.NetInfo.DisconnectionDetailInfo();
+          new MetricsInfo.NetInfo.DisconnectionDetailInfo();
       detail.setReason(entry.getKey());
       detail.setCount((int) entry.getValue().getCount());
       disconnectionDetails.add(detail);
     }
     MetricsInfo.NetInfo.DisconnectionDetailInfo disconnectionDetail =
-            new MetricsInfo.NetInfo.DisconnectionDetailInfo();
+        new MetricsInfo.NetInfo.DisconnectionDetailInfo();
     disconnectionDetail.setReason("TOO_MANY_PEERS");
     disconnectionDetail.setCount(12);
     disconnectionDetails.add(disconnectionDetail);
@@ -241,15 +242,15 @@ public class MetricsService {
 
   private MetricsInfo.NetInfo.LatencyInfo getBlockLatencyInfo() {
     MetricsInfo.NetInfo.LatencyInfo latencyInfo =
-            new MetricsInfo.NetInfo.LatencyInfo();
+        new MetricsInfo.NetInfo.LatencyInfo();
     long delay1SCount = monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".1S")
-            .getCount();
+        .getCount();
     latencyInfo.setDelay1S((int) delay1SCount);
     long delay2SCount = monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".2S")
-            .getCount();
+        .getCount();
     latencyInfo.setDelay2S((int) delay2SCount);
     long delay3SCount = monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".3S")
-            .getCount();
+        .getCount();
     latencyInfo.setDelay3S((int) delay3SCount);
     Histogram blockLatency = monitorMetric.getHistogram(MonitorMetric.NET_BLOCK_LATENCY);
     latencyInfo.setTop99((int) blockLatency.getSnapshot().get99thPercentile());
@@ -257,25 +258,25 @@ public class MetricsService {
     latencyInfo.setTotalCount((int) blockLatency.getCount());
 
     List<MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo> latencyDetailInfos =
-            new ArrayList<>();
+        new ArrayList<>();
     SortedMap<String, Histogram> witnessLatencyMap
-            = monitorMetric.getHistograms(MonitorMetric.NET_BLOCK_LATENCY_WITNESS);
+        = monitorMetric.getHistograms(MonitorMetric.NET_BLOCK_LATENCY_WITNESS);
     for (Map.Entry<String, Histogram> entry : witnessLatencyMap.entrySet()) {
       MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo latencyDetailTemp =
-              new MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo();
+          new MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo();
       String address = entry.getKey().substring(MonitorMetric.NET_BLOCK_LATENCY_WITNESS.length());
       latencyDetailTemp.setCount((int) entry.getValue().getCount());
       latencyDetailTemp.setWitness(address);
       latencyDetailTemp.setTop99((int) entry.getValue().getSnapshot().get99thPercentile());
       latencyDetailTemp.setTop95((int) entry.getValue().getSnapshot().get95thPercentile());
       long witnessDelay1S = monitorMetric.getCounter(
-              MonitorMetric.NET_BLOCK_LATENCY_WITNESS + address + ".1S").getCount();
+          MonitorMetric.NET_BLOCK_LATENCY_WITNESS + address + ".1S").getCount();
       latencyDetailTemp.setDelay1S((int) witnessDelay1S);
       long witnessDelay2S = monitorMetric.getCounter(
-              MonitorMetric.NET_BLOCK_LATENCY_WITNESS + address + ".2S").getCount();
+          MonitorMetric.NET_BLOCK_LATENCY_WITNESS + address + ".2S").getCount();
       latencyDetailTemp.setDelay2S((int) witnessDelay2S);
       long witnessDelay3S = monitorMetric.getCounter(
-              MonitorMetric.NET_BLOCK_LATENCY_WITNESS + address + ".3S").getCount();
+          MonitorMetric.NET_BLOCK_LATENCY_WITNESS + address + ".3S").getCount();
       latencyDetailTemp.setDelay3S((int) witnessDelay3S);
       latencyDetailInfos.add(latencyDetailTemp);
     }
@@ -293,4 +294,79 @@ public class MetricsService {
 
     return latencyInfo;
   }
+
+  // active 1, inactive 0- there is a exception during producing a block
+  public int getNodeStatusByTime(int time) {
+    switch (time) {
+      case 0:
+        return monitorMetric.getMeter(MonitorMetric.NODE_STATUS).getMeanRate() > 0 ? 0 : 1;
+      case 1:
+        return monitorMetric.getMeter(MonitorMetric.NODE_STATUS).getOneMinuteRate() > 0 ? 0 : 1;
+      case 5:
+        return monitorMetric.getMeter(MonitorMetric.NODE_STATUS).getFiveMinuteRate() > 0 ? 0 : 1;
+      case 15:
+        return monitorMetric.getMeter(MonitorMetric.NODE_STATUS).getFifteenMinuteRate() > 0 ? 0 : 1;
+      default:
+        return -1;
+    }
+  }
+
+  // gap: 1 minute, 5 minute, 15 minute, 0: avg for total block and time
+  public int getAvgBlockProcessTimeByGap(int gap) {
+    Meter meterBlockProcessTime =
+        monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME);
+    Meter meterBlockTxCount = monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCK_TX_COUNT);
+    double gapMinuteTimeBlock = meterBlockProcessTime.getOneMinuteRate() * gap * 60;
+    double gapMinuteCount = meterBlockTxCount.getOneMinuteRate() * gap * 60;
+    if (gapMinuteCount == 0) {
+      return 0;
+    }
+    switch (gap) {
+      case 0:
+        return (int) (meterBlockProcessTime.getCount() / meterBlockTxCount.getCount());
+      case 1:
+      case 5:
+      case 15:
+        return (int) Math.round(gapMinuteTimeBlock / gapMinuteCount);
+      default:
+        return -1;
+    }
+  }
+
+  public int getSuccessForkCount() {
+    return (int) monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_SUCCESS_FORK_COUNT).getCount();
+  }
+
+  public int getFailForkCount() {
+    return (int) monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_FAIL_FORK_COUNR).getCount();
+  }
+
+  public void getBlocks() {
+
+    List<BlockCapsule> blocks = chainBaseManager.getBlockStore().getBlockByLatestNum(totalSR);
+
+    // get max version number
+    int maxVersion = 0;
+    for (BlockCapsule it : blocks) {
+      maxVersion = Math.max(maxVersion,
+          it.getInstance().getBlockHeader().getRawData().getVersion());
+    }
+    logger.info("block store size ="+chainBaseManager.getBlockStore().size()+"  block size "+blocks.size()+
+        " max version ="+maxVersion);
+    // find no Upgrade SR
+    for (BlockCapsule it : blocks) {
+      logger.info("witness address" + it.getWitnessAddress().toString()+ " version" +
+          it.getInstance().getBlockHeader().getRawData().getVersion()+"  info "+it.toString());
+
+      if (it.getInstance().getBlockHeader().getRawData().getVersion() != maxVersion) {
+        this.noUpgradedSRCount++;
+        BlockChainInfo.Witness witness = new BlockChainInfo.Witness(
+            it.getWitnessAddress().toString(),
+            it.getInstance().getBlockHeader().getRawData().getVersion());
+        this.noUpgradedSRList.add(witness);
+      }
+    }
+  }
+
+
 }

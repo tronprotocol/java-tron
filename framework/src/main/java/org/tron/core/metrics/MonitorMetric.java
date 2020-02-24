@@ -15,8 +15,11 @@ public class MonitorMetric {
   public static final String NET_DISCONNECTION_COUNT = "net.disconnection.count";
   public static final String NET_DISCONNECTION_REASON = "net.disconnection.reason";
   public static final String BLOCKCHAIN_BLOCKPROCESS_TIME = "blockchain.blockProcessTime";
+  public static final String BLOCKCHAIN_BLOCK_COUNT="blockchain.blockCount";
+  public static final String BLOCKCHAIN_BLOCK_TX_COUNT="blockchain.blockTxCount";
   public static final String BLOCKCHAIN_SUCCESS_FORK_COUNT = "blockchain.successForkCount";
   public static final String BLOCKCHAIN_FAIL_FORK_COUNR = "blockchain.failForkCount";
+  public static final String NODE_STATUS ="node.status";
   public static final String NET_API = "net.api";
   public static final String NET_ERROR_PROTO_COUNT = "net.errorProtoCount";
 
