@@ -28,7 +28,8 @@ import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 @Slf4j
 public class SupportTronlinkAutoTest {
 
-  private final String testKey002 = "7400E3D0727F8A61041A8E8BF86599FE5597CE19DE451E59AED07D60967A5E25";
+  private final String testKey002
+      = "7400E3D0727F8A61041A8E8BF86599FE5597CE19DE451E59AED07D60967A5E25";
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   ByteString assetAccountId1;
   String[] permissionKeyString = new String[2];
@@ -96,12 +97,15 @@ public class SupportTronlinkAutoTest {
       ownerKeyString[0] = ownerKey;
       //ownerKeyString[1] = manager1Key;
       accountPermissionJson =
-          "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
+          "{\"owner_permission\":{\"type\":0,"
+              + "\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
               + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
               + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
               + "\",\"weight\":1}]},"
-              + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active\",\"threshold\":2,"
-              + "\"operations\":\"7fff1fc0033e0b00000000000000000000000000000000000000000000000000\","
+              + "\"active_permissions\":[{\"type\":2,"
+              + "\"permission_name\":\"active\",\"threshold\":2,"
+              + "\"operations\":\""
+              + "7fff1fc0033e0b00000000000000000000000000000000000000000000000000\","
               + "\"keys\":["
               + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
               + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1}"
@@ -110,11 +114,13 @@ public class SupportTronlinkAutoTest {
       //logger.info(accountPermissionJson);
       PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson, ownerAddress, ownerKey,
           blockingStubFull, ownerKeyString);
-      System.out.println("owner " + i + " --------------------------------------------------------");
+      System.out.println("owner" + i + " --------------------------------------------------------");
       PublicMethed.printAddress(ownerKey);
-      System.out.println("mutli sig address for owner " + i  +" ----------------------------------");
+      System.out.println("mutli sig address for owner "
+          + i  + " ----------------------------------");
       PublicMethed.printAddress(manager1Key);
-      System.out.println("------------------------------------------------------------------------");
+      System.out.println("-------------------------------"
+          + "-----------------------------------------");
 
     }
 
@@ -142,10 +148,12 @@ public class SupportTronlinkAutoTest {
       byte[] createUrl = createWitnessUrl.getBytes();
       createWitness(ownerAddress,createUrl,ownerKey);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      System.out.println("witness " + i + " --------------------------------------------------------");
+      System.out.println("witness " + i + " -----------------------------"
+          + "---------------------------");
       PublicMethed.printAddress(ownerKey);
       System.out.println("witness url is : " + createWitnessUrl);
-      System.out.println("------------------------------------------------------------------------");
+      System.out.println("-------------------------------------------"
+          + "-----------------------------");
 
     }
 
@@ -160,23 +168,40 @@ public class SupportTronlinkAutoTest {
         "cefba96470224724bde255f3402fca3d67b6c7c5d34deb7a8524c9482c58fe8b");
     muti.put("36f5430b4003f41ee8969421d9366ab1414e62111aec07a73d06eefcda8aad14",
         "3adcd73ad1fa03ce2fd4d29e29a7c96ef2f78bece85cba6e58997826682c4c1e");
-    muti.put("4b47cf37528724dc8bc99188063f5aec9a7bc32aadfad5a96a9e9cccba7cede1","948d856ebeb787aabd495fc13627f7442e7c1f21e9ed784f795e14f13cbebb94");
-    muti.put("75d0856799cf2b2c807ed0eb5bb091bb943f2caed830add4b8df14c537f86e9a","7fb13ad0b62d4ff116ebd3d901d458697902ce81a8fc30c20c60aba1ca6964ec");
-    muti.put("327bf1b4a3193c2bebf239c1c5bda09a8d375251361ea9c7418aa2adf2d17b7e","a8236968966db785ffe63d613174ee25e1baff03817b64db905c5940ed3dcc4b");
-    muti.put("cf83d9494a9268fd3a75bd76bcfabaa7ec766e9084129a20e1823f81fbdca933","1e53c948e949e39f60a3be2382382f9a50f88b658ea79c418ece1c5f9b169441");
-    muti.put("19ff919e92462f07c7eced256d4cb588a66ac900d544d0d4d16ae49732de79cb","166ddc2cd6379e7971e2c65d224594b709ebb59b3c6051c156214c299129f420");
-    muti.put("7901db57a410a26d333b6d7fe4e054ddffbdc646f94ca03577bfd5e87120b9af","89d9a47b37f5625e14082b575d5e657b21f6dae125125bee51fafd1e8cdf0804");
-    muti.put("e3c7204d652a6fdcda05cbce061904d441dece7bf0a1778c1ddf0906aa36a279","7d308998f829c0581447831003d994216a3a003ba00eef6a4e48e28b3178fbb3");
-    muti.put("826fc86d572ba9de06f20963fcbfb44f4c397875bd4d7b36fdcb83476df33f05","25aa122142a52ea8ba7bdf832c39a194d498774d4f675b8bcb17280c33990a08");
-    muti.put("9705dd852465d04be349e94865142fc636d038138a4bfe8f94abc9b49f1dc14a","0b675f14c1e06a6473c517dded162472ce2bb5c8934f198df1a791b75c30f983");
-    muti.put("075f86d3d4053929714ddedb3e458467e6d494c3d4b0c71dafb63279de1beb89","4880695a6e31f4f69d6f261eedfa5dcb5fc1b9194483658f77625ec4e6b2e493");
-    muti.put("91ae6c8a1bff0b71f6f2b9de54d3b39502bcab906f980569109ab8425cb0bdc5","90ef4adb0772ee49089784ccad234867a10395064749788b461cbe91265424fb");
-    muti.put("9acb90c4d15c87dd2a1f322eddaabdde22cd78fe5eab371bfcf0c8be80bef8a8","951f03193e1d7d4bff016da100b74f8ac220aabfd9c2841438ee758702c8e3f4");
-    muti.put("f8eae7be0fac4e9fab40139e58b405f7e5d5b13a83220a6e4955ffaacbbe2a7d","66692c0aaad6cfd349bdffbf3fdd688558a6c7a95ff67f249e0e80847167013a");
-    muti.put("2e20c1a4b9a3a79696cbf0d03dedc39d8021657028fbf3dbc5da85ea61ad5dff","ae7ecb7fba0d77d116a23f96a4dfecdef09741e363f0be12f99c86b3815d8fff");
-    muti.put("e5e60c52f3b11ce0cfbc4e86d078ab53435ebc2422fd851614a25b5063ae7040","42c575d8848809082c6872b2dcdb0e81d5f06ca120c636b90d0b062965ea0871");
-    muti.put("fd4ee3a678a749c2049d5b1cba757648386c84ac2481be8de02069d41e4fb312","ef2095532f572be8d021886780f7e508665ef40c1499273b91813ddc27d1354b");
-    muti.put("297f6e034e9366691922ff5394810f724094bd0a07b4ca60f0f281ec71562094","4ab67f1c42db0b63bafc0f33cf59575998c3259e96f5f89ea379dac4298d2bd7");
+    muti.put("4b47cf37528724dc8bc99188063f5aec9a7bc32aadfad5a96a9e9cccba7cede1",
+        "948d856ebeb787aabd495fc13627f7442e7c1f21e9ed784f795e14f13cbebb94");
+    muti.put("75d0856799cf2b2c807ed0eb5bb091bb943f2caed830add4b8df14c537f86e9a",
+        "7fb13ad0b62d4ff116ebd3d901d458697902ce81a8fc30c20c60aba1ca6964ec");
+    muti.put("327bf1b4a3193c2bebf239c1c5bda09a8d375251361ea9c7418aa2adf2d17b7e",
+        "a8236968966db785ffe63d613174ee25e1baff03817b64db905c5940ed3dcc4b");
+    muti.put("cf83d9494a9268fd3a75bd76bcfabaa7ec766e9084129a20e1823f81fbdca933",
+        "1e53c948e949e39f60a3be2382382f9a50f88b658ea79c418ece1c5f9b169441");
+    muti.put("19ff919e92462f07c7eced256d4cb588a66ac900d544d0d4d16ae49732de79cb",
+        "166ddc2cd6379e7971e2c65d224594b709ebb59b3c6051c156214c299129f420");
+    muti.put("7901db57a410a26d333b6d7fe4e054ddffbdc646f94ca03577bfd5e87120b9af",
+        "89d9a47b37f5625e14082b575d5e657b21f6dae125125bee51fafd1e8cdf0804");
+    muti.put("e3c7204d652a6fdcda05cbce061904d441dece7bf0a1778c1ddf0906aa36a279",
+        "7d308998f829c0581447831003d994216a3a003ba00eef6a4e48e28b3178fbb3");
+    muti.put("826fc86d572ba9de06f20963fcbfb44f4c397875bd4d7b36fdcb83476df33f05",
+        "25aa122142a52ea8ba7bdf832c39a194d498774d4f675b8bcb17280c33990a08");
+    muti.put("9705dd852465d04be349e94865142fc636d038138a4bfe8f94abc9b49f1dc14a",
+        "0b675f14c1e06a6473c517dded162472ce2bb5c8934f198df1a791b75c30f983");
+    muti.put("075f86d3d4053929714ddedb3e458467e6d494c3d4b0c71dafb63279de1beb89",
+        "4880695a6e31f4f69d6f261eedfa5dcb5fc1b9194483658f77625ec4e6b2e493");
+    muti.put("91ae6c8a1bff0b71f6f2b9de54d3b39502bcab906f980569109ab8425cb0bdc5",
+        "90ef4adb0772ee49089784ccad234867a10395064749788b461cbe91265424fb");
+    muti.put("9acb90c4d15c87dd2a1f322eddaabdde22cd78fe5eab371bfcf0c8be80bef8a8",
+        "951f03193e1d7d4bff016da100b74f8ac220aabfd9c2841438ee758702c8e3f4");
+    muti.put("f8eae7be0fac4e9fab40139e58b405f7e5d5b13a83220a6e4955ffaacbbe2a7d",
+        "66692c0aaad6cfd349bdffbf3fdd688558a6c7a95ff67f249e0e80847167013a");
+    muti.put("2e20c1a4b9a3a79696cbf0d03dedc39d8021657028fbf3dbc5da85ea61ad5dff",
+        "ae7ecb7fba0d77d116a23f96a4dfecdef09741e363f0be12f99c86b3815d8fff");
+    muti.put("e5e60c52f3b11ce0cfbc4e86d078ab53435ebc2422fd851614a25b5063ae7040",
+        "42c575d8848809082c6872b2dcdb0e81d5f06ca120c636b90d0b062965ea0871");
+    muti.put("fd4ee3a678a749c2049d5b1cba757648386c84ac2481be8de02069d41e4fb312",
+        "ef2095532f572be8d021886780f7e508665ef40c1499273b91813ddc27d1354b");
+    muti.put("297f6e034e9366691922ff5394810f724094bd0a07b4ca60f0f281ec71562094",
+        "4ab67f1c42db0b63bafc0f33cf59575998c3259e96f5f89ea379dac4298d2bd7");
     int i = 1;
     for (HashMap.Entry entry : muti.entrySet()) {
       //entry.getKey().toString();
@@ -202,12 +227,15 @@ public class SupportTronlinkAutoTest {
       ownerKeyString[0] = ownerKey;
       //ownerKeyString[1] = manager1Key;
       accountPermissionJson =
-          "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
+          "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\""
+              + "threshold\":2,\"keys\":["
               + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
               + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
               + "\",\"weight\":1}]},"
-              + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active\",\"threshold\":2,"
-              + "\"operations\":\"7fff1fc0033e0b00000000000000000000000000000000000000000000000000\","
+              + "\"active_permissions\":[{\"type\":2,\"permission_name\":\""
+              + "active\",\"threshold\":2,"
+              + "\"operations\":\""
+              + "7fff1fc0033e0b00000000000000000000000000000000000000000000000000\","
               + "\"keys\":["
               + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
               + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1}"
@@ -216,11 +244,14 @@ public class SupportTronlinkAutoTest {
       //logger.info(accountPermissionJson);
       PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson, ownerAddress, ownerKey,
           blockingStubFull, ownerKeyString);
-      System.out.println("owner " + i++ + " --------------------------------------------------------");
+      System.out.println("owner " + i++ + " -----------------"
+          + "---------------------------------------");
       PublicMethed.printAddress(ownerKey);
-      System.out.println("mutli sig address for owner " + i++  +" ----------------------------------");
+      System.out.println("mutli sig address for owner " + i++  + " ------------"
+          + "----------------------");
       PublicMethed.printAddress(manager1Key);
-      System.out.println("------------------------------------------------------------------------");
+      System.out.println("-----------------------------------"
+          + "-------------------------------------");
 
     }
 
@@ -256,10 +287,9 @@ public class SupportTronlinkAutoTest {
       byte[] createUrl = createWitnessUrl.getBytes();
       createWitness(ownerAddress,createUrl,ownerKey);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      //System.out.println("witness " + i + " --------------------------------------------------------");
       PublicMethed.printAddress(ownerKey);
       System.out.println("witness url is : " + createWitnessUrl);
-      System.out.println("------------------------------------------------------------------------");
+      System.out.println("---------------------------------------------------------------------");
 
     }
 
@@ -332,7 +362,9 @@ public class SupportTronlinkAutoTest {
     }
   }
 
-
+  /**
+   * constructor.
+   */
   public Boolean createWitness(byte[] owner, byte[] url, String priKey) {
     ECKey temKey = null;
     try {

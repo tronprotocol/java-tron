@@ -66,6 +66,7 @@ public class WalletTestAssetIssue016 {
       .getStringList("solidityNode.ip.list").get(1);
   private String soliInPbft = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(2);
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -186,6 +187,40 @@ public class WalletTestAssetIssue016 {
     Assert.assertEquals(PublicMethed.getAssetIssueByNameFromSolidity(name,
         blockingStubPbft).getTotalSupply(),totalSupply);
   }
+
+  @Test(enabled = true, description = "Get asset issue list from PBFT")
+  public void test04GetAssetIssueListFromPbft() {
+    Assert.assertTrue(PublicMethed.listAssetIssueFromSolidity(
+        blockingStubPbft).get().getAssetIssueCount() >= 1);
+  }
+
+
+  @Test(enabled = true, description = "Get asset issue list from Solidity")
+  public void test05GetAssetIssueListFromSolidity() {
+    Assert.assertTrue(PublicMethed.listAssetIssueFromSolidity(
+        blockingStubSoliInFull).get().getAssetIssueCount() >= 1);
+    Assert.assertTrue(PublicMethed.listAssetIssueFromSolidity(
+        blockingStubSolidity).get().getAssetIssueCount() >= 1);
+  }
+
+  @Test(enabled = true, description = "Get asset issue list paginated from PBFT")
+  public void test06GetAssetIssetListPaginatedFromPbft() {
+    Assert.assertTrue(PublicMethed.listAssetIssuepaginatedFromSolidity(
+        blockingStubPbft,0L,1L).get().getAssetIssueCount() == 1);
+  }
+
+
+  @Test(enabled = true, description = "Get asset issue list paginated from Solidity")
+  public void test05GetAssetIssueListPaginatedFromSolidity() {
+    Assert.assertTrue(PublicMethed.listAssetIssuepaginatedFromSolidity(
+        blockingStubSolidity,0L,1L).get().getAssetIssueCount() == 1);
+    Assert.assertTrue(PublicMethed.listAssetIssuepaginatedFromSolidity(
+        blockingStubSoliInFull,0L,1L).get().getAssetIssueCount() == 1);
+  }
+
+
+
+
 
 
   /**
