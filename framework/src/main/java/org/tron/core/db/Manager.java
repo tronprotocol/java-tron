@@ -895,7 +895,7 @@ public class Manager {
           throw e;
         } finally {
           if (exception != null) {
-            monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_FAIL_FORK_COUNR)
+            monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_FAIL_FORK_COUNT)
                 .mark();
             logger.warn("switch back because exception thrown while switching forks. " + exception
                     .getMessage(),

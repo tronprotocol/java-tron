@@ -216,7 +216,8 @@ public class MetricsService {
     for (Map.Entry<String, Counter> entry : disconnectionReason.entrySet()) {
       MetricsInfo.NetInfo.DisconnectionDetailInfo detail =
               new MetricsInfo.NetInfo.DisconnectionDetailInfo();
-      detail.setReason(entry.getKey());
+      String reason = entry.getKey().substring(MonitorMetric.NET_DISCONNECTION_REASON.length());
+      detail.setReason(reason);
       detail.setCount((int) entry.getValue().getCount());
       disconnectionDetails.add(detail);
     }
@@ -359,7 +360,7 @@ public class MetricsService {
   }
 
   public int getFailForkCount() {
-    return (int) monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_FAIL_FORK_COUNR).getCount();
+    return (int) monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_FAIL_FORK_COUNT).getCount();
   }
 
   private void getBlocks() {
