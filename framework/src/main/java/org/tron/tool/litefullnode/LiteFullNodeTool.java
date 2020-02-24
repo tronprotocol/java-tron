@@ -2,6 +2,7 @@ package org.tron.tool.litefullnode;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import com.typesafe.config.Config;
@@ -10,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -70,9 +72,9 @@ public class LiteFullNodeTool {
   private static final String checkpointDb = "tmp";
 
   //private static final String sourceDir = "/Users/quan/tron/java-tron/build/distributions/java-tron-1.0.0/bin/output-directory/database";
-  private static final String sourceDir = "/Users/quan/tron/java-tron/output-directory/database_bak";
+  //private static final String sourceDir = "/Users/quan/tron/java-tron/output-directory/database_bak";
   //  private static final String destDir = "/Users/quan/tron/java-tron/build/distributions/java-tron-1.0.0/bin/output-directory/";
-  private static final String destDir = "/Users/quan/tron/java-tron/output-directory";
+  //private static final String destDir = "/Users/quan/tron/java-tron/output-directory";
 
   public static void generateSnapshot(String sourceDir, String snapshotDir) throws IOException, RocksDBException {
     snapshotDir = Paths.get(snapshotDir, SNAPSHOT_DIR_NAME).toString();
@@ -316,21 +318,72 @@ public class LiteFullNodeTool {
     Files.delete(Paths.get(databaseDir, INFO_FILE_NAME));
   }
 
-  public static void main(String[] args) throws IOException, RocksDBException, BadItemException {
-    //generateSnapshot(sourceDir, destDir);
-    //generateHistory(sourceDir, destDir);
-    completeHistoryData(String.format("%s%s%s", destDir, File.separator, "history"),
-            String.format("%s%s%s", destDir, File.separator, "database"));
+
+  public static void main(String[] args) {
+    Args argv = new Args();
+    JCommander jct = JCommander.newBuilder()
+            .addObject(argv)
+            .build();
+    jct.setProgramName("lite fullnode tool");
+    try {
+      jct.parse(args);
+      if (argv.help) {
+        jct.usage();
+      } else {
+        run(argv);
+      }
+    } catch (ParameterException parameterException) {
+      System.out.print(parameterException.toString() + "\r\n");
+      jct.usage();
+    }
   }
 
-  public static void initArgs(String[] args) {
-    JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
-    Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, null);
+  private static void run(Args argv) {
+    try {
+      switch (argv.operate) {
+        case "split":
+          if (argv.type.equals("snapshot")) {
+            System.out.println(argv.fnDataPath);
+            System.out.println(argv.datasetPath);
+            generateSnapshot(argv.fnDataPath, argv.datasetPath);
+            break;
+          } else if (argv.type.equals("history")) {
+            System.out.println(argv.fnDataPath);
+            System.out.println(argv.datasetPath);
+            generateHistory(argv.fnDataPath, argv.datasetPath);
+            break;
+          } else {
+            throw new ParameterException("type can't be null when operate=split or not support type:" + argv.type);
+          }
+        case "merge":
+          System.out.println(argv.fnDataPath);
+          System.out.println(argv.datasetPath);
+          completeHistoryData(argv.datasetPath, argv.fnDataPath);
+          break;
+        default:
+          throw new ParameterException("not supportted operate:" + argv.operate);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (RocksDBException e) {
+      e.printStackTrace();
+    } catch (BadItemException e) {
+      e.printStackTrace();
+    }
   }
 
   static class Args {
-    @Parameter(names = {"-c", "--config"}, description = "Config File")
-    String shellConfFileName = "";
+    @Parameter(names = {"--operate", "-o"}, help = true, required = true, description = "operate: [split | merge]", order = 1)
+    String operate;
+    @Parameter(names = {"--type", "-t"}, help = true, description = "only used with operate=split: [snapshot | history]", order = 2)
+    String type;
+    @Parameter(names = {"--fn-data-path"}, help = true, required = true, description = "the fullnode database path, defined as ${storage.db.directory} in config.conf", order = 3)
+    String fnDataPath;
+    @Parameter(names = {"--dataset-path"}, help = true, required = true, description = "dataset directory, when operation is `split`, `dataset-path` is the path that store the `Snapshot Dataset` or `History Dataset`," +
+            " otherwise `dataset-path` should be the `History Dataset` path", order = 4)
+    String datasetPath;
+    @Parameter(names = "--help", help = true, order = 5)
+    private boolean help;
   }
 
   static class BlockNumInfo {
