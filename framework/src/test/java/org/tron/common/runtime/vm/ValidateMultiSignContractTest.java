@@ -13,10 +13,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Hash;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.*;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -108,12 +105,12 @@ public class ValidateMultiSignContractTest {
 
     byte[] address = key.getAddress();
     int permissionId = 2;
-    byte[] data = Sha256Hash.hash(longData);
+    byte[] data = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),longData);
 
     //combine data
     byte[] merged = ByteUtil.merge(address, ByteArray.fromInt(permissionId), data);
     //sha256 of it
-    byte[] toSign = Sha256Hash.hash(merged);
+    byte[] toSign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
 
     //sign data
 
