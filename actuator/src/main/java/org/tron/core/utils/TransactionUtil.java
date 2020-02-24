@@ -152,7 +152,8 @@ public class TransactionUtil {
   }
 
   public static Sha256Hash getTransactionId(Transaction transaction) {
-    return Sha256Hash.of(transaction.getRawData().toByteArray());
+    return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),
+        transaction.getRawData().toByteArray());
   }
 
 

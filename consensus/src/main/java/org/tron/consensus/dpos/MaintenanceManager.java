@@ -1,6 +1,7 @@
 package org.tron.consensus.dpos;
 
 
+import static org.tron.common.utils.WalletUtil.getAddressStringList;
 import static org.tron.core.config.args.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.google.common.collect.Maps;
@@ -102,8 +103,8 @@ public class MaintenanceManager {
       }
 
       logger.info("Update witness success. \nbefore: {} \nafter: {}",
-          StringUtil.getAddressStringList(currentWits),
-          StringUtil.getAddressStringList(newWits));
+          getAddressStringList(currentWits),
+          getAddressStringList(newWits));
     }
 
     DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();

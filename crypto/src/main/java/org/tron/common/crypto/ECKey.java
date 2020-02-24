@@ -17,10 +17,6 @@ package org.tron.common.crypto;
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import static org.tron.common.utils.BIUtil.isLessThan;
-import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
-import static org.tron.common.utils.DecodeUtil.computeAddress;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -76,8 +72,11 @@ import org.tron.common.crypto.jce.ECSignatureFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.ByteUtil;
 
+import static org.tron.common.utils.BIUtil.isLessThan;
+import static org.tron.common.utils.Hash.computeAddress;
+
 @Slf4j(topic = "crypto")
-public class ECKey implements Serializable {
+public class ECKey implements Serializable, SignInterface {
 
   /**
    * The parameters of the secp256k1 curve.
@@ -179,6 +178,18 @@ public class ECKey implements Serializable {
    *
    * <p>All private key operations will use the provider.
    */
+
+  public ECKey(byte[] key, boolean isPrivateKey) {
+    if (isPrivateKey) {
+      BigInteger pk = new BigInteger(1, key);
+      this.privKey = privateKeyFromBigInteger(pk);
+      this.pub = CURVE.getG().multiply(pk);
+    } else {
+      this.privKey = null;
+      this.pub = CURVE.getCurve().decodePoint(key);
+    }
+    this.provider = TronCastleProvider.getInstance();
+  }
 
   public ECKey(Provider provider, @Nullable PrivateKey privKey, ECPoint pub) {
     this.provider = provider;
@@ -294,7 +305,6 @@ public class ECKey implements Serializable {
   public static ECKey fromPrivate(byte[] privKeyBytes) {
     return fromPrivate(new BigInteger(1, privKeyBytes));
   }
-
   /**
    * Creates an ECKey that simply trusts the caller to ensure that point is really the result of
    * multiplying the generator point by the private key. This is used to speed things up when you
@@ -412,8 +422,7 @@ public class ECKey implements Serializable {
   }
 
   public static byte[] signatureToKeyBytes(byte[] messageHash,
-      ECDSASignature sig) throws
-      SignatureException {
+      ECDSASignature sig) throws SignatureException {
     check(messageHash.length == 32, "messageHash argument has length " +
         messageHash.length);
     int header = sig.v;
@@ -458,8 +467,7 @@ public class ECKey implements Serializable {
    * @return 20-byte address
    */
   public static byte[] signatureToAddress(byte[] messageHash,
-      ECDSASignature sig) throws
-      SignatureException {
+      ECDSASignature sig) throws SignatureException {
     return computeAddress(signatureToKeyBytes(messageHash, sig));
   }
 
@@ -572,8 +580,7 @@ public class ECKey implements Serializable {
    */
   @Nullable
   public static byte[] recoverPubBytesFromSignature(int recId,
-      ECDSASignature sig,
-      byte[] messageHash) {
+      ECDSASignature sig, byte[] messageHash) {
     check(recId >= 0, "recId must be positive");
     check(sig.r.signum() >= 0, "r must be positive");
     check(sig.s.signum() >= 0, "s must be positive");
@@ -650,8 +657,7 @@ public class ECKey implements Serializable {
    */
   @Nullable
   public static byte[] recoverAddressFromSignature(int recId,
-      ECDSASignature sig,
-      byte[] messageHash) {
+      ECDSASignature sig, byte[] messageHash) {
     final byte[] pubBytes = recoverPubBytesFromSignature(recId, sig,
         messageHash);
     if (pubBytes == null) {
@@ -760,6 +766,24 @@ public class ECKey implements Serializable {
     return pubKeyHash;
   }
 
+  @Override
+  public String signHash(byte[] hash) {
+    return sign(hash).toBase64();
+  }
+
+  public byte[] Base64toBytes (String signature) {
+    byte[] signData = Base64.decode(signature);
+    byte first = (byte)(signData[0] - 27);
+    byte[] temp = Arrays.copyOfRange(signData,1,65);
+    return ByteUtil.appendByte(temp,first);
+  }
+
+  @Override
+  public byte[] signToAddress(byte[] messageHash, String signatureBase64) throws SignatureException {
+    return computeAddress(signatureToKeyBytes(messageHash,
+        signatureBase64));
+  }
+
   /**
    * Generates the NodeID based on this key, that is the public key without first format byte
    */
@@ -768,6 +792,12 @@ public class ECKey implements Serializable {
       nodeId = pubBytesWithoutFormat(this.pub);
     }
     return nodeId;
+  }
+
+
+  @Override
+  public byte[] getPrivateKey() {
+    return getPrivKeyBytes();
   }
 
   /**
@@ -1022,7 +1052,7 @@ public class ECKey implements Serializable {
     if (privKey == null) {
       return null;
     } else if (privKey instanceof BCECPrivateKey) {
-      return bigIntegerToBytes(((BCECPrivateKey) privKey).getD(), 32);
+      return ByteUtil.bigIntegerToBytes(((BCECPrivateKey) privKey).getD(), 32);
     } else {
       return null;
     }
@@ -1051,7 +1081,7 @@ public class ECKey implements Serializable {
     return Arrays.hashCode(getPubKey());
   }
 
-  public static class ECDSASignature {
+  public static class ECDSASignature implements SignatureInterface {
 
     /**
      * The two components of the signature.
@@ -1069,6 +1099,12 @@ public class ECKey implements Serializable {
     public ECDSASignature(BigInteger r, BigInteger s) {
       this.r = r;
       this.s = s;
+    }
+
+    public ECDSASignature(byte[] r, byte[] s, byte v) {
+      this.r = new BigInteger(1, r);
+      this.s = new BigInteger(1, s);
+      this.v = v;
     }
 
     /**
@@ -1177,10 +1213,12 @@ public class ECKey implements Serializable {
       byte[] sigData = new byte[65];  // 1 header + 32 bytes for R + 32
       // bytes for S
       sigData[0] = v;
-      System.arraycopy(bigIntegerToBytes(this.r, 32), 0, sigData, 1, 32);
-      System.arraycopy(bigIntegerToBytes(this.s, 32), 0, sigData, 33, 32);
+      System.arraycopy(ByteUtil.bigIntegerToBytes(this.r, 32), 0, sigData, 1, 32);
+      System.arraycopy(ByteUtil.bigIntegerToBytes(this.s, 32), 0, sigData, 33, 32);
       return new String(Base64.encode(sigData), Charset.forName("UTF-8"));
     }
+
+
 
     public byte[] toByteArray() {
       final byte fixedV = this.v >= 27

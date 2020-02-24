@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.utils.MerkleTree.Leaf;
 
@@ -20,13 +21,14 @@ public class MerkleTreeTest {
       bytes[2] = (byte) ((i >> 8) & 0xFF);
       bytes[1] = (byte) ((i >> 16) & 0xFF);
       bytes[0] = (byte) ((i >> 24) & 0xFF);
-      hashList.add(Sha256Hash.of(bytes));
+      hashList.add(Sha256Hash.of(DBConfig.isECKeyCryptoEngine(), bytes));
     }
     return hashList;
   }
 
   private static Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
-    return Sha256Hash.of(leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
+    return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),
+        leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
   }
 
   //number: the number of hash

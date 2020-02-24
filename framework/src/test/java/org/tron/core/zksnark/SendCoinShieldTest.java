@@ -18,10 +18,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.testng.collections.Lists;
 import org.tron.api.GrpcAPI;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.*;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
@@ -626,7 +623,7 @@ public class SendCoinShieldTest {
   }
 
   private byte[] getHash() {
-    return Sha256Hash.of("this is a test".getBytes()).getBytes();
+    return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),"this is a test".getBytes()).getBytes();
   }
 
   public void checkZksnark() throws BadItemException, ZksnarkException {

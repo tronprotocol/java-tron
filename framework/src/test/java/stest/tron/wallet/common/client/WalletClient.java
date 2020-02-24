@@ -24,10 +24,7 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.Utils;
+import org.tron.common.utils.*;
 import org.tron.core.exception.CancelException;
 import org.tron.keystore.CipherException;
 import org.tron.protos.Protocol.Account;
@@ -539,8 +536,8 @@ public class WalletClient {
       return null;
     }
     byte[] pwd;
-    pwd = Sha256Hash.hash(password.getBytes());
-    pwd = Sha256Hash.hash(pwd);
+    pwd = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),password.getBytes());
+    pwd = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),pwd);
     pwd = Arrays.copyOfRange(pwd, 0, 16);
     return pwd;
   }
@@ -554,7 +551,7 @@ public class WalletClient {
       return null;
     }
     byte[] encKey;
-    encKey = Sha256Hash.hash(password.getBytes());
+    encKey = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),password.getBytes());
     encKey = Arrays.copyOfRange(encKey, 0, 16);
     return encKey;
   }
@@ -620,8 +617,8 @@ public class WalletClient {
    */
 
   public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(input);
-    byte[] hash1 = Sha256Hash.hash(hash0);
+    byte[] hash0 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),input);
+    byte[] hash1 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),hash0);
     byte[] inputCheck = new byte[input.length + 4];
     System.arraycopy(input, 0, inputCheck, 0, input.length);
     System.arraycopy(hash1, 0, inputCheck, input.length, 4);
@@ -635,8 +632,8 @@ public class WalletClient {
     }
     byte[] decodeData = new byte[decodeCheck.length - 4];
     System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
-    byte[] hash0 = Sha256Hash.hash(decodeData);
-    byte[] hash1 = Sha256Hash.hash(hash0);
+    byte[] hash0 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),decodeData);
+    byte[] hash1 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),hash0);
     if (hash1[0] == decodeCheck[decodeData.length]
         && hash1[1] == decodeCheck[decodeData.length + 1]
         && hash1[2] == decodeCheck[decodeData.length + 2]

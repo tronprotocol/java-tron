@@ -1,6 +1,7 @@
 package org.tron.core.services;
 
 import static stest.tron.wallet.common.client.Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
+import static stest.tron.wallet.common.client.utils.Base58.decodeFromBase58Check;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;

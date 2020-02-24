@@ -17,6 +17,7 @@ package org.tron.core.capsule;
 
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 
 @Slf4j(topic = "capsule")
@@ -29,7 +30,7 @@ public class CodeCapsule implements ProtoCapsule<byte[]> {
   }
 
   public Sha256Hash getCodeHash() {
-    return Sha256Hash.of(this.code);
+    return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(), this.code);
   }
 
   @Override

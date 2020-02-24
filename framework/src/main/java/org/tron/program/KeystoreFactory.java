@@ -7,6 +7,8 @@ import java.util.Scanner;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
@@ -48,8 +50,8 @@ public class KeystoreFactory {
   private void genKeystore() throws CipherException, IOException {
     String password = WalletUtils.inputPassword2Twice();
 
-    ECKey eCkey = new ECKey(Utils.random);
-    File file = new File(FilePath);
+    SignInterface eCkey = SignUtils.getGeneratedRandomSign(Utils.random,
+        Args.getInstance().isECKeyCryptoEngine());    File file = new File(FilePath);
     if (!file.exists()) {
       if (!file.mkdir()) {
         throw new IOException("Make directory faild!");
@@ -86,7 +88,8 @@ public class KeystoreFactory {
 
     String password = WalletUtils.inputPassword2Twice();
 
-    ECKey eCkey = ECKey.fromPrivate(ByteArray.fromHexString(privateKey));
+    SignInterface eCkey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey),
+        Args.getInstance().isECKeyCryptoEngine());
     File file = new File(FilePath);
     if (!file.exists()) {
       if (!file.mkdir()) {

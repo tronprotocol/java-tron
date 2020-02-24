@@ -1,8 +1,11 @@
 package org.tron.core.vm.utils;
 
 
+import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
+
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -53,7 +56,7 @@ public class MUtil {
   public static byte[] convertToTronAddress(byte[] address) {
     if (address.length == 20) {
       byte[] newAddress = new byte[21];
-      byte[] temp = new byte[]{Commons.addressPreFixByte};
+      byte[] temp = new byte[]{addressPreFixByte};
       System.arraycopy(temp, 0, newAddress, 0, temp.length);
       System.arraycopy(address, 0, newAddress, temp.length, address.length);
       address = newAddress;
@@ -62,8 +65,8 @@ public class MUtil {
   }
 
   public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(input);
-    byte[] hash1 = Sha256Hash.hash(hash0);
+    byte[] hash0 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), input);
+    byte[] hash1 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), hash0);
     byte[] inputCheck = new byte[input.length + 4];
     System.arraycopy(input, 0, inputCheck, 0, input.length);
     System.arraycopy(hash1, 0, inputCheck, input.length, 4);
@@ -81,7 +84,7 @@ public class MUtil {
 
   public static byte[] allZero32TronAddress() {
     byte[] newAddress = new byte[32];
-    byte[] temp = new byte[]{Commons.addressPreFixByte};
+    byte[] temp = new byte[]{addressPreFixByte};
     System.arraycopy(temp, 0, newAddress, 11, temp.length);
 
     return newAddress;

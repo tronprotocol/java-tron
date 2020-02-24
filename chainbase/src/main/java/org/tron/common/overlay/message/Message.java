@@ -12,6 +12,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
@@ -67,7 +68,7 @@ public abstract class Message {
   }
 
   public Sha256Hash getMessageId() {
-    return Sha256Hash.of(getData());
+    return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(), getData());
   }
 
   public byte[] getData() {

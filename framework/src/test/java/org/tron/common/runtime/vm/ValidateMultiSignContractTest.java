@@ -105,12 +105,12 @@ public class ValidateMultiSignContractTest {
 
     byte[] address = key.getAddress();
     int permissionId = 2;
-    byte[] data = Sha256Hash.hash(longData);
+    byte[] data = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),longData);
 
     //combine data
     byte[] merged = ByteUtil.merge(address, ByteArray.fromInt(permissionId), data);
     //sha256 of it
-    byte[] toSign = Sha256Hash.hash(merged);
+    byte[] toSign = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),merged);
 
     //sign data
 
