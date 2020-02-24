@@ -19,8 +19,8 @@
 package org.tron.core;
 
 import static org.tron.common.utils.Commons.ADDRESS_SIZE;
-import static org.tron.common.utils.Commons.addressPreFixByte;
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
+import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
@@ -99,6 +99,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
@@ -261,7 +262,7 @@ public class Wallet {
   }
 
   public static void setAddressPreFixByte(byte addressPreFixByte) {
-    Commons.addressPreFixByte = addressPreFixByte;
+    DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
 
   public static boolean addressValid(byte[] address) {

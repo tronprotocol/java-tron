@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
+import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
 
 import java.util.Objects;
 import lombok.Getter;
@@ -290,7 +291,7 @@ public class TransactionTrace {
   private byte[] convertToTronAddress(byte[] address) {
     if (address.length == 20) {
       byte[] newAddress = new byte[21];
-      byte[] temp = new byte[]{Commons.addressPreFixByte};
+      byte[] temp = new byte[]{addressPreFixByte};
       System.arraycopy(temp, 0, newAddress, 0, temp.length);
       System.arraycopy(address, 0, newAddress, temp.length, address.length);
       address = newAddress;

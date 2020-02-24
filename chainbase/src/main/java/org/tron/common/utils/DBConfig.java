@@ -134,7 +134,7 @@ public class DBConfig {
 
   @Getter
   @Setter
-  private static boolean isECKeyCryptoEngine;
+  private static boolean isECKeyCryptoEngine = true;
 
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
