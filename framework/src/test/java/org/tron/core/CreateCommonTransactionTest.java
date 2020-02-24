@@ -28,7 +28,7 @@ public class CreateCommonTransactionTest {
             .build());
     UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
     updateBrokerageContract.setOwnerAddress(
-        ByteString.copyFrom(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
+        ByteString.copyFrom(Wallet.decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))
         .setBrokerage(10);
     Transaction.Builder transaction = Transaction.newBuilder();
     raw.Builder raw = Transaction.raw.newBuilder();
