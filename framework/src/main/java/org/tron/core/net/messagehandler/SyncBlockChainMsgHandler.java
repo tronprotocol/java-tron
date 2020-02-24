@@ -7,7 +7,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
@@ -88,7 +88,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
     }
 
     long len = Math.min(tronNetDelegate.getHeadBlockId().getNum(),
-        unForkId.getNum() + NodeConstant.SYNC_FETCH_BATCH_NUM);
+        unForkId.getNum() + NetConstants.SYNC_FETCH_BATCH_NUM);
 
     LinkedList<BlockId> ids = new LinkedList<>();
     for (long i = unForkId.getNum(); i <= len; i++) {

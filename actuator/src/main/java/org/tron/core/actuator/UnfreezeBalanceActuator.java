@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -44,7 +46,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
   public boolean execute(Object result) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -205,11 +207,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     switch (unfreezeBalanceContract.getResource()) {
       case BANDWIDTH:
         dynamicStore
-            .addTotalNetWeight(-unfreezeBalance / 1_000_000L);
+            .addTotalNetWeight(-unfreezeBalance / TRX_PRECISION);
         break;
       case ENERGY:
         dynamicStore
-            .addTotalEnergyWeight(-unfreezeBalance / 1_000_000L);
+            .addTotalEnergyWeight(-unfreezeBalance / TRX_PRECISION);
         break;
       default:
         //this should never happen
@@ -239,10 +241,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();

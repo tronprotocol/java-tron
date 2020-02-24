@@ -21,7 +21,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.service.AdvService;
 import org.tron.core.net.service.SyncService;
@@ -75,7 +75,7 @@ public class PeerConnection extends Channel {
   private volatile long remainNum;
   @Getter
   private Cache<Sha256Hash, Long> syncBlockIdCache = CacheBuilder.newBuilder()
-      .maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).recordStats().build();
+      .maximumSize(2 * NetConstants.SYNC_FETCH_BATCH_NUM).recordStats().build();
   @Setter
   @Getter
   private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();

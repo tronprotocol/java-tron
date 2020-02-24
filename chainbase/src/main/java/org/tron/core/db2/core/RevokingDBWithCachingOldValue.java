@@ -7,8 +7,8 @@ import java.util.Set;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.iq80.leveldb.WriteOptions;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingStore;
@@ -30,7 +30,7 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
     dbSource = new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName),
         dbName,
         StorageUtils.getOptionsByDbName(dbName),
-        new WriteOptions().sync(DBConfig.isDbSync()));
+        new WriteOptions().sync(CommonParameter.getInstance().getStorage().isDbSync()));
     dbSource.initDB();
     this.revokingDatabase = revokingDatabase;
   }

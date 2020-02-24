@@ -31,7 +31,6 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-
 import org.spongycastle.crypto.digests.SM3Digest;
 import org.tron.common.utils.ByteArray;
 
@@ -165,8 +164,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   }
 
   /**
-   * Returns a new SM3 MessageDigest instance. This is a convenience method which wraps the
-   * checked exception that can never occur with a RuntimeException.
+   * Returns a new SM3 MessageDigest instance. This is a convenience method which wraps the checked
+   * exception that can never occur with a RuntimeException.
    *
    * @return a new SM3 MessageDigest instance
    */
@@ -235,8 +234,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
       byte[] eHash = new byte[digest.getDigestSize()];
       digest.doFinal(eHash, 0);
       digest.reset();
-      digest.update(eHash,0,eHash.length);
-      digest.doFinal(eHash,0);
+      digest.update(eHash, 0, eHash.length);
+      digest.doFinal(eHash, 0);
       return eHash;
     }
   }
@@ -257,7 +256,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
       digest.update(input1, offset1, length1);
       digest.update(input2, offset2, length2);
       byte[] eHash = new byte[digest.getDigestSize()];
-      digest.doFinal(eHash,0);
+      digest.doFinal(eHash, 0);
       return eHash;
     }
   }

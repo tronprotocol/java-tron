@@ -15,7 +15,6 @@ import org.tron.common.net.udp.handler.MessageHandler;
 import org.tron.common.net.udp.handler.PacketDecoder;
 import org.tron.common.overlay.server.WireTrafficStats;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "backup")
 @Component

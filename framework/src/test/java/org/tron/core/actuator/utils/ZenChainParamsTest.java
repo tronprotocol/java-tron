@@ -1,7 +1,6 @@
 package org.tron.core.actuator.utils;
 
 import java.io.File;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -19,6 +18,7 @@ import org.tron.core.utils.ZenChainParams;
 
 @Slf4j(topic = "capsule")
 public class ZenChainParamsTest {
+
   private static final String dbPath = "output_zenchainparams_test";
   public static Application AppT;
   private static TronApplicationContext context;
@@ -28,7 +28,7 @@ public class ZenChainParamsTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
   }
@@ -39,9 +39,6 @@ public class ZenChainParamsTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
-
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

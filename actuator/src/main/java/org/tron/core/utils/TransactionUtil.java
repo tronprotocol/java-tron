@@ -248,21 +248,6 @@ public class TransactionUtil {
     return false;
   }
 
-  public static byte[] generateContractAddress(Transaction trx) {
-
-    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-    TransactionCapsule trxCap = new TransactionCapsule(trx);
-    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
-
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return sha3omit12(combined);
-
-  }
-
   public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
 
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];

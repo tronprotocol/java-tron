@@ -25,6 +25,7 @@ import org.tron.core.db.Manager;
 
 
 public class NodeManagerTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
   private Manager manager;
   private NodeManager nodeManager;
@@ -55,8 +56,6 @@ public class NodeManagerTest {
   @After
   public void destroy() {
     Args.clearParam();
-    appTest.shutdownServices();
-    appTest.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File("output-directory"))) {
       logger.info("Release resources successful.");
@@ -109,6 +108,7 @@ public class NodeManagerTest {
 
   /**
    * calculate nodes number after table trim.
+   *
    * @param totalNodes total nodes inserted
    * @param wrongNodes isConnectable = false
    * @return nodes count after trimTable()
@@ -127,6 +127,7 @@ public class NodeManagerTest {
 
   /**
    * insert valid nodes in map.
+   *
    * @param totalNodes total nodes to be inserted.
    * @return total nodes inserted.
    */
@@ -180,12 +181,13 @@ public class NodeManagerTest {
 
   /**
    * get the size of nodeHandlerMap.
+   *
    * @return NodeManager.nodeHandlerMap
    */
   public int getHandlerMapSize() throws Exception {
     Field mapField = nodeManagerClazz.getDeclaredField("nodeHandlerMap");
     mapField.setAccessible(true);
-    Map<String,NodeHandler> nodeHandlerMap = (ConcurrentHashMap)mapField.get(nodeManager);
+    Map<String, NodeHandler> nodeHandlerMap = (ConcurrentHashMap) mapField.get(nodeManager);
     return nodeHandlerMap.size();
   }
 

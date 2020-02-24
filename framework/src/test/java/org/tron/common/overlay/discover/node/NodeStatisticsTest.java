@@ -3,7 +3,6 @@ package org.tron.common.overlay.discover.node;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.LinkedList;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,6 +24,7 @@ import org.tron.core.net.message.TransactionsMessage;
 import org.tron.protos.Protocol;
 
 public class NodeStatisticsTest {
+
   private NodeStatistics nodeStatistics;
 
   @Before
@@ -110,13 +110,13 @@ public class NodeStatisticsTest {
     Assert.assertEquals(1, statistics.tronOutBlockChainInventory.getTotalCount());
 
     InventoryMessage invMsgTrx =
-            new InventoryMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.TRX);
+        new InventoryMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.TRX);
     String inventoryMessageStr = invMsgTrx.toString();
     Assert.assertNotNull(inventoryMessageStr);
     statistics.addTcpInMessage(invMsgTrx);
     statistics.addTcpOutMessage(invMsgTrx);
     InventoryMessage invMsgBlock =
-            new InventoryMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.BLOCK);
+        new InventoryMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.BLOCK);
     MessageTypes invType = invMsgBlock.getInvMessageType();
     Assert.assertEquals(MessageTypes.BLOCK, invType);
     statistics.addTcpInMessage(invMsgBlock);
@@ -124,23 +124,23 @@ public class NodeStatisticsTest {
     Assert.assertEquals(1, statistics.tronInBlockInventory.getTotalCount());
 
     FetchInvDataMessage fetchInvDataTrx =
-            new FetchInvDataMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.TRX);
+        new FetchInvDataMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.TRX);
     statistics.addTcpInMessage(fetchInvDataTrx);
     statistics.addTcpOutMessage(fetchInvDataTrx);
     FetchInvDataMessage fetchInvDataBlock =
-            new FetchInvDataMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.BLOCK);
+        new FetchInvDataMessage(new ArrayList<>(), Protocol.Inventory.InventoryType.BLOCK);
     statistics.addTcpInMessage(fetchInvDataBlock);
     statistics.addTcpOutMessage(fetchInvDataBlock);
     Assert.assertEquals(1, statistics.tronInTrxFetchInvData.getTotalCount());
 
     TransactionsMessage transactionsMessage =
-            new TransactionsMessage(new LinkedList<>());
+        new TransactionsMessage(new LinkedList<>());
     statistics.addTcpInMessage(transactionsMessage);
     statistics.addTcpOutMessage(transactionsMessage);
     Assert.assertEquals(1, statistics.tronInTrxs.getTotalCount());
 
     BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-            System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+        System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
     BlockMessage blockMessage = new BlockMessage(blockCapsule);
     statistics.addTcpInMessage(blockMessage);
     statistics.addTcpOutMessage(blockMessage);

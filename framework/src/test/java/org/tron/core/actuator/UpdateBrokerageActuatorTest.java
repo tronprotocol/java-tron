@@ -4,9 +4,7 @@ import static junit.framework.TestCase.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-
 import java.io.File;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -45,7 +43,7 @@ public class UpdateBrokerageActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
@@ -106,9 +104,9 @@ public class UpdateBrokerageActuatorTest {
   }
 
   private void processAndCheckInvalid(UpdateBrokerageActuator actuator,
-                                      TransactionResultCapsule ret,
-                                      String failMsg,
-                                      String expectedMsg) {
+      TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
     try {
       actuator.validate();
       actuator.execute(ret);

@@ -18,11 +18,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -616,9 +616,9 @@ public class VMActuator implements Actuator2 {
       } else {
         // self witness or other witness or fullnode verifies block
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-          cpuLimitRatio = VMConfig.getMinTimeRatio();
+          cpuLimitRatio = CommonParameter.getInstance().getMinTimeRatio();
         } else {
-          cpuLimitRatio = VMConfig.getMaxTimeRatio();
+          cpuLimitRatio = CommonParameter.getInstance().getMaxTimeRatio();
         }
       }
     } else {

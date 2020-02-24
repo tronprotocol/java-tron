@@ -34,7 +34,14 @@ public class WalletTestZenToken004 {
   List<Note> shieldOutList = new ArrayList<>();
   DecryptNotes notes;
   Note note;
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] receiverPublicAddress = ecKey2.getAddress();
+  String receiverPublicKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  Optional<ShieldAddressInfo> sendShieldAddressInfo;
+  String sendshieldAddress;
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -50,17 +57,6 @@ public class WalletTestZenToken004 {
   private Long costTokenAmount = 20 * zenTokenFee;
   private Long zenTokenWhenCreateNewAddress = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenWhenCreateNewAddress");
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] receiverPublicAddress = ecKey2.getAddress();
-  String receiverPublicKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-  Optional<ShieldAddressInfo> sendShieldAddressInfo;
-  String sendshieldAddress;
 
   /**
    * constructor.
@@ -243,7 +239,6 @@ public class WalletTestZenToken004 {
     ECKey ecKey3 = new ECKey(Utils.getRandom());
     byte[] notActivePublicAddress = ecKey3.getAddress();
 
-
     Assert.assertTrue(PublicMethed.sendShieldCoin(
         null, 0,
         sendShieldAddressInfo.get(), notes.getNoteTxs(0),
@@ -274,7 +269,7 @@ public class WalletTestZenToken004 {
             blockingStubFull);
     logger.info("afterNotActivePublicAssetBalance:" + afterNotActivePublicAssetBalance);
     logger.info("sendToPublicAddressAmount:" + sendToPublicAddressAmount);
-    Assert.assertEquals(afterNotActivePublicAssetBalance,sendToPublicAddressAmount);
+    Assert.assertEquals(afterNotActivePublicAssetBalance, sendToPublicAddressAmount);
 
   }
 

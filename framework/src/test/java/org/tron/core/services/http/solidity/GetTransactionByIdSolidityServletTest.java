@@ -10,7 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
@@ -21,7 +20,6 @@ import java.net.URLStreamHandlerFactory;
 import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -34,15 +32,14 @@ import org.tron.core.services.http.solidity.mockito.HttpUrlStreamHandler;
 
 @Slf4j
 public class GetTransactionByIdSolidityServletTest {
+
+  private static HttpUrlStreamHandler httpUrlStreamHandler;
   private GetTransactionByIdSolidityServlet getTransactionByIdSolidityServlet;
   private HttpServletRequest request;
   private HttpServletResponse response;
   private HttpURLConnection httpUrlConnection;
   private OutputStreamWriter outputStreamWriter;
   private URL url;
-
-
-  private static HttpUrlStreamHandler httpUrlStreamHandler;
 
   /**
    * .
@@ -98,12 +95,12 @@ public class GetTransactionByIdSolidityServletTest {
     httpUrlConnection.setUseCaches(false);
     httpUrlConnection.setDoOutput(true);
     String postData = "{\"value\": \"309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef21"
-            + "3f2c55225a8bd2\"}";
+        + "3f2c55225a8bd2\"}";
     httpUrlConnection.setRequestProperty("Content-Length", "" + postData.length());
 
     when(httpUrlConnection.getOutputStream()).thenReturn(outContent);
     OutputStreamWriter out = new OutputStreamWriter(httpUrlConnection.getOutputStream(),
-            StandardCharsets.UTF_8);
+        StandardCharsets.UTF_8);
     out.write(postData);
     out.flush();
     out.close();
@@ -119,7 +116,7 @@ public class GetTransactionByIdSolidityServletTest {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer);
     when(httpUrlConnection.getInputStream()).thenReturn(byteArrayInputStream);
     BufferedReader in = new BufferedReader(new InputStreamReader(httpUrlConnection.getInputStream(),
-            StandardCharsets.UTF_8));
+        StandardCharsets.UTF_8));
 
     while ((line = in.readLine()) != null) {
       result.append(line).append("\n");
@@ -152,12 +149,12 @@ public class GetTransactionByIdSolidityServletTest {
     httpUrlConnection.setUseCaches(false);
     httpUrlConnection.setDoOutput(true);
     String postData = "{\"value\": \"309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef21"
-            + "3f2c55225a8bd2\"}";
+        + "3f2c55225a8bd2\"}";
     httpUrlConnection.setRequestProperty("Content-Length", "" + postData.length());
 
     when(httpUrlConnection.getOutputStream()).thenReturn(outContent);
     OutputStreamWriter out = new OutputStreamWriter(httpUrlConnection.getOutputStream(),
-            StandardCharsets.UTF_8);
+        StandardCharsets.UTF_8);
     out.write(postData);
     out.flush();
     out.close();
@@ -173,7 +170,7 @@ public class GetTransactionByIdSolidityServletTest {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer);
     when(httpUrlConnection.getInputStream()).thenReturn(byteArrayInputStream);
     BufferedReader in = new BufferedReader(new InputStreamReader(httpUrlConnection.getInputStream(),
-            StandardCharsets.UTF_8));
+        StandardCharsets.UTF_8));
 
     while ((line = in.readLine()) != null) {
       result.append(line).append("\n");

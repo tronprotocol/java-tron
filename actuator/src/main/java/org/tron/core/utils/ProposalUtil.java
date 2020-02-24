@@ -12,6 +12,8 @@ public class ProposalUtil {
   protected static final String BAD_PARAM_ID = "Bad chain parameter id";
   private static final String LONG_VALUE_ERROR =
       "Bad chain parameter value, valid range is [0," + LONG_VALUE + "]";
+  private static final String PRE_VALUE_NOT_ONE_ERROR = "This value[";
+  private static final String VALUE_NOT_ONE_ERROR = "] is only allowed to be 1";
 
   public static void validator(DynamicPropertiesStore dynamicPropertiesStore, ForkController forkController,
       long code, long value)
@@ -41,7 +43,7 @@ public class ProposalUtil {
       case ALLOW_CREATION_OF_CONTRACTS: {
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_CREATION_OF_CONTRACTS] is only allowed to be 1");
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_CREATION_OF_CONTRACTS" + VALUE_NOT_ONE_ERROR);
         }
         break;
       }
@@ -53,7 +55,7 @@ public class ProposalUtil {
 
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1");
+                  PRE_VALUE_NOT_ONE_ERROR + "REMOVE_THE_POWER_OF_THE_GR" + VALUE_NOT_ONE_ERROR);
         }
         break;
       }
@@ -69,21 +71,21 @@ public class ProposalUtil {
       case ALLOW_UPDATE_ACCOUNT_NAME: {
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_UPDATE_ACCOUNT_NAME] is only allowed to be 1");
+          PRE_VALUE_NOT_ONE_ERROR + "ALLOW_UPDATE_ACCOUNT_NAME" + VALUE_NOT_ONE_ERROR);
         }
         break;
       }
       case ALLOW_SAME_TOKEN_NAME: {
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_SAME_TOKEN_NAME] is only allowed to be 1");
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_SAME_TOKEN_NAME" + VALUE_NOT_ONE_ERROR);
         }
         break;
       }
       case ALLOW_DELEGATE_RESOURCE: {
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1");
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_DELEGATE_RESOURCE" + VALUE_NOT_ONE_ERROR);
         }
         break;
       }
@@ -102,7 +104,7 @@ public class ProposalUtil {
       case ALLOW_TVM_TRANSFER_TRC10: {
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1");
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_TVM_TRANSFER_TRC10" + VALUE_NOT_ONE_ERROR);
         }
         if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
           throw new ContractValidateException("[ALLOW_SAME_TOKEN_NAME] proposal must be approved "
@@ -125,7 +127,7 @@ public class ProposalUtil {
         }
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_MULTI_SIGN] is only allowed to be 1");
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_MULTI_SIGN" + VALUE_NOT_ONE_ERROR);
         }
         break;
       }
@@ -135,7 +137,7 @@ public class ProposalUtil {
         }
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_ADAPTIVE_ENERGY] is only allowed to be 1");
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_ADAPTIVE_ENERGY" + VALUE_NOT_ONE_ERROR);
         }
         break;
       }
@@ -186,7 +188,7 @@ public class ProposalUtil {
         }
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_TVM_CONSTANTINOPLE] is only allowed to be 1");
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_TVM_CONSTANTINOPLE" + VALUE_NOT_ONE_ERROR);
         }
         if (dynamicPropertiesStore.getAllowTvmTransferTrc10() == 0) {
           throw new ContractValidateException(
@@ -202,7 +204,7 @@ public class ProposalUtil {
         }
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_TVM_SOLIDITY_059] is only allowed to be 1");
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_TVM_SOLIDITY_059" + VALUE_NOT_ONE_ERROR);
         }
         if (dynamicPropertiesStore.getAllowCreationOfContracts() == 0) {
           throw new ContractValidateException(
@@ -257,7 +259,7 @@ public class ProposalUtil {
         }
         if (value != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_SHIELDED_TRANSACTION] is only allowed to be 1");
+                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_SHIELDED_TRANSACTION" + VALUE_NOT_ONE_ERROR);
         }
         break;
       }

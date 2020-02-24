@@ -9,9 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.overlay.discover.table.KademliaOptions;
-import org.tron.common.overlay.discover.table.NodeEntry;
-import org.tron.common.overlay.discover.table.NodeTable;
 
 
 public class NodeTableTest {
@@ -62,10 +59,10 @@ public class NodeTableTest {
       id[0] = 17;
       id[1] = 16;
       if (i < 10) {
-        id[63] = (byte)i;
+        id[63] = (byte) i;
       } else {
         id[62] = 1;
-        id[63] = (byte)(i - 10);
+        id[63] = (byte) (i - 10);
       }
       ids.add(id);
     }
@@ -118,11 +115,11 @@ public class NodeTableTest {
   public void addNode_bucketFullTest() throws Exception {
     for (int i = 0; i < KademliaOptions.BUCKET_SIZE; i++) {
       TimeUnit.MILLISECONDS.sleep(10);
-      addNode(new Node(ids.get(i),ips[i],18888,18888));
+      addNode(new Node(ids.get(i), ips[i], 18888, 18888));
     }
-    Node lastSeen = nodeTable.addNode(new Node(ids.get(16),ips[16],18888,18888));
+    Node lastSeen = nodeTable.addNode(new Node(ids.get(16), ips[16], 18888, 18888));
     Assert.assertTrue(null != lastSeen);
-    Assert.assertEquals(ips[15],lastSeen.getHost());
+    Assert.assertEquals(ips[15], lastSeen.getHost());
   }
 
   public void addNode(Node n) {
@@ -140,10 +137,10 @@ public class NodeTableTest {
 
   @Test
   public void getBucketsCountTest() {
-    Assert.assertEquals(0,nodeTable.getBucketsCount());
+    Assert.assertEquals(0, nodeTable.getBucketsCount());
     Node node = new Node(ids.get(0), ips[0], 18888, 18888);
     nodeTable.addNode(node);
-    Assert.assertEquals(1,nodeTable.getBucketsCount());
+    Assert.assertEquals(1, nodeTable.getBucketsCount());
   }
 
   @Test
@@ -169,7 +166,7 @@ public class NodeTableTest {
   public void getBuckIdTest() {
     Node node = new Node(ids.get(0), ips[0], 18888, 18888);  //id: 11100...000
     nodeTable.addNode(node);
-    NodeEntry nodeEntry = new NodeEntry(homeNode.getId(),node);
+    NodeEntry nodeEntry = new NodeEntry(homeNode.getId(), node);
     Assert.assertEquals(252, nodeTable.getBucketId(nodeEntry));
   }
 
@@ -177,9 +174,9 @@ public class NodeTableTest {
   public void getClosestNodes_nodesMoreThanBucketCapacity() throws Exception {
     byte[] bytes = new byte[64];
     bytes[0] = 15;
-    Node nearNode = new Node(bytes, "127.0.0.19", 18888,18888);
+    Node nearNode = new Node(bytes, "127.0.0.19", 18888, 18888);
     bytes[0] = 70;
-    Node farNode = new Node(bytes, "127.0.0.20", 18888,18888);
+    Node farNode = new Node(bytes, "127.0.0.20", 18888, 18888);
     nodeTable.addNode(nearNode);
     nodeTable.addNode(farNode);
     for (int i = 0; i < KademliaOptions.BUCKET_SIZE - 1; i++) {

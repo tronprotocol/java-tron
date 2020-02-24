@@ -9,8 +9,8 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
@@ -144,7 +144,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowMultiSign();
     } catch (IllegalArgumentException e) {
-      this.saveAllowMultiSign(DBConfig.getAllowMultiSign());
+      this.saveAllowMultiSign(CommonParameter.getInstance()
+          .getAllowMultiSign());
     }
 
     try {
@@ -258,7 +259,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMaintenanceTimeInterval();
     } catch (IllegalArgumentException e) {
-      this.saveMaintenanceTimeInterval(DBConfig.getMaintenanceTimeInterval()); // 6 hours
+      this.saveMaintenanceTimeInterval(CommonParameter.getInstance()
+          .getMaintenanceTimeInterval()); // 6 hours
     }
 
     try {
@@ -318,7 +320,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowAdaptiveEnergy();
     } catch (IllegalArgumentException e) {
-      this.saveAllowAdaptiveEnergy(DBConfig.getAllowAdaptiveEnergy());
+      this.saveAllowAdaptiveEnergy(CommonParameter.getInstance()
+          .getAllowAdaptiveEnergy());
     }
 
     try {
@@ -468,25 +471,29 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowDelegateResource();
     } catch (IllegalArgumentException e) {
-      this.saveAllowDelegateResource(DBConfig.getAllowDelegateResource());
+      this.saveAllowDelegateResource(CommonParameter.getInstance()
+          .getAllowDelegateResource());
     }
 
     try {
       this.getAllowTvmTransferTrc10();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTvmTransferTrc10(DBConfig.getAllowTvmTransferTrc10());
+      this.saveAllowTvmTransferTrc10(CommonParameter.getInstance()
+          .getAllowTvmTransferTrc10());
     }
 
     try {
       this.getAllowTvmConstantinople();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTvmConstantinople(DBConfig.getAllowTvmConstantinople());
+      this.saveAllowTvmConstantinople(CommonParameter.getInstance()
+          .getAllowTvmConstantinople());
     }
 
     try {
       this.getAllowTvmSolidity059();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTvmSolidity059(DBConfig.getAllowTvmSolidity059());
+      this.saveAllowTvmSolidity059(CommonParameter.getInstance()
+          .getAllowTvmSolidity059());
     }
 
     try {
@@ -508,7 +515,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowSameTokenName();
     } catch (IllegalArgumentException e) {
-      this.saveAllowSameTokenName(DBConfig.getAllowSameTokenName());
+      this.saveAllowSameTokenName(CommonParameter.getInstance()
+          .getAllowSameTokenName());
     }
 
     try {
@@ -520,13 +528,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowCreationOfContracts();
     } catch (IllegalArgumentException e) {
-      this.saveAllowCreationOfContracts(DBConfig.getAllowCreationOfContracts());
+      this.saveAllowCreationOfContracts(CommonParameter.getInstance()
+          .getAllowCreationOfContracts());
     }
 
     try {
       this.getAllowShieldedTransaction();
     } catch (IllegalArgumentException e) {
-      this.saveAllowShieldedTransaction(DBConfig.getAllowShieldedTransaction());
+      this.saveAllowShieldedTransaction(CommonParameter.getInstance()
+          .getAllowShieldedTransaction());
     }
 
     try {
@@ -541,7 +551,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getNextMaintenanceTime();
     } catch (IllegalArgumentException e) {
       this.saveNextMaintenanceTime(
-          Long.parseLong(DBConfig.getGenesisBlock().getTimestamp()));
+          Long.parseLong(CommonParameter.getInstance()
+              .getGenesisBlock().getTimestamp()));
     }
 
     try {
@@ -583,19 +594,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowAccountStateRoot();
     } catch (IllegalArgumentException e) {
-      this.saveAllowAccountStateRoot(DBConfig.getAllowAccountStateRoot());
+      this.saveAllowAccountStateRoot(CommonParameter.getInstance()
+          .getAllowAccountStateRoot());
     }
 
     try {
       this.getAllowProtoFilterNum();
     } catch (IllegalArgumentException e) {
-      this.saveAllowProtoFilterNum(DBConfig.getAllowProtoFilterNum());
+      this.saveAllowProtoFilterNum(CommonParameter.getInstance()
+          .getAllowProtoFilterNum());
     }
 
     try {
       this.getChangeDelegation();
     } catch (IllegalArgumentException e) {
-      this.saveChangeDelegation(DBConfig.getChangedDelegation());
+      this.saveChangeDelegation(CommonParameter.getInstance()
+          .getChangedDelegation());
     }
 
   }
@@ -1410,8 +1424,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void updateDynamicStoreByConfig() {
-    if (DBConfig.getAllowTvmConstantinople() != 0) {
-      saveAllowTvmConstantinople(DBConfig.getAllowTvmConstantinople());
+    if (CommonParameter.getInstance()
+        .getAllowTvmConstantinople() != 0) {
+      saveAllowTvmConstantinople(CommonParameter.getInstance()
+          .getAllowTvmConstantinople());
       addSystemContractAndSetPermission(48);
     }
   }

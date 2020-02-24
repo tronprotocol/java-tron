@@ -42,8 +42,6 @@ public class SnapshotManagerTest {
   @After
   public void removeDb() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     tronDatabase.close();
     FileUtil.deleteDir(new File("output_SnapshotManager_test"));

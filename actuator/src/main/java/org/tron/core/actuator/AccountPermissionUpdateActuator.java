@@ -36,7 +36,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
   public boolean execute(Object object) throws ContractExeException {
     TransactionResultCapsule result = (TransactionResultCapsule) object;
     if (Objects.isNull(result)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     AccountStore accountStore = chainBaseManager.getAccountStore();
@@ -146,11 +146,11 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
   public boolean validate() throws ContractValidateException {
 
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
 
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
 
     AccountStore accountStore = chainBaseManager.getAccountStore();

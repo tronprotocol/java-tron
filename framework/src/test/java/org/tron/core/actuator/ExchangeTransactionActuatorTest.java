@@ -1,12 +1,11 @@
 package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-
 import java.io.File;
-
 import java.util.Arrays;
 import java.util.Map;
 import junit.framework.TestCase;
@@ -54,7 +53,7 @@ public class ExchangeTransactionActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -117,7 +116,7 @@ public class ExchangeTransactionActuatorTest {
   }
 
   private Any getContract(String address, long exchangeId, String tokenId,
-                          long quant, long expected) {
+      long quant, long expected) {
     return Any.pack(
         ExchangeTransactionContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
@@ -150,7 +149,7 @@ public class ExchangeTransactionActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             1,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "abc".getBytes());
     exchangeCapsule.setBalance(1_000_000_000_000L, 10_000_000L); // 1M TRX == 10M abc
     ExchangeCapsule exchangeCapsule2 =
@@ -169,7 +168,7 @@ public class ExchangeTransactionActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             1,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "1".getBytes());
     exchangeCapsule3.setBalance(1_000_000_000_000L, 10_000_000L); // 1M TRX == 10M abc
     ExchangeCapsule exchangeCapsule4 =
@@ -206,7 +205,7 @@ public class ExchangeTransactionActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             1,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "123".getBytes());
     exchangeCapsule.setBalance(1_000_000_000_000L, 10_000_000L); // 1M TRX == 10M abc
     ExchangeCapsule exchangeCapsule2 =
@@ -702,8 +701,8 @@ public class ExchangeTransactionActuatorTest {
 
 
   /**
-   * SameTokenName close,use No enough balance, result is failed, exception is
-   * "No enough balance for exchange transaction fee!".
+   * SameTokenName close,use No enough balance, result is failed, exception is "No enough balance
+   * for exchange transaction fee!".
    */
   @Test
   public void SameTokenNameCloseNoEnoughBalance() {
@@ -720,7 +719,6 @@ public class ExchangeTransactionActuatorTest {
     Map<String, Long> assetMap = accountCapsule.getAssetMap();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
-
 
     ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
 
@@ -753,8 +751,8 @@ public class ExchangeTransactionActuatorTest {
 
 
   /**
-   * SameTokenName open,use No enough balance, result is failed, exception is
-   * "No enough balance for exchange transaction fee!".
+   * SameTokenName open,use No enough balance, result is failed, exception is "No enough balance for
+   * exchange transaction fee!".
    */
   @Test
   public void SameTokenNameOpenNoEnoughBalance() {
@@ -765,14 +763,12 @@ public class ExchangeTransactionActuatorTest {
     long quant = 1_000L;
     String buyTokenId = "456";
 
-
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
     Map<String, Long> assetMap = accountCapsule.getAssetMap();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
-
 
     ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
 
@@ -1745,9 +1741,9 @@ public class ExchangeTransactionActuatorTest {
   }
 
   private void processAndCheckInvalid(ExchangeTransactionActuator actuator,
-                                      TransactionResultCapsule ret,
-                                      String failMsg,
-                                      String expectedMsg) {
+      TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
     try {
       actuator.validate();
       actuator.execute(ret);
