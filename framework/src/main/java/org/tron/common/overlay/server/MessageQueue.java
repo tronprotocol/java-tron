@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.PingMessage;
 import org.tron.common.overlay.message.PongMessage;
-import org.tron.core.metrics.MonitorMetric;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -29,7 +29,7 @@ import org.tron.protos.Protocol.ReasonCode;
 public class MessageQueue {
 
   @Autowired
-  MonitorMetric monitorMetric;
+  MetricsService metricsService;
 
   private static ScheduledExecutorService sendTimer =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));
@@ -108,8 +108,7 @@ public class MessageQueue {
       logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
     }
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(msg);
-    monitorMetric.getMeter(MonitorMetric.NET_TCP_OUT_TRAFFIC)
-            .mark(msg.getSendData().writableBytes());
+    metricsService.meterMark(MetricsService.NET_TCP_OUT_TRAFFIC, msg.getSendData().writableBytes());
     sendTime = System.currentTimeMillis();
     if (msg.getAnswerMessage() != null) {
       requestQueue.add(new MessageRoundTrip(msg));

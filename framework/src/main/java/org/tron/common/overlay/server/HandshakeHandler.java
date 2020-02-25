@@ -38,7 +38,7 @@ import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.metrics.MonitorMetric;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -72,7 +72,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private SyncPool syncPool;
 
   @Autowired
-  MonitorMetric monitorMetric;
+  MetricsService metricsService;
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -127,8 +127,8 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     fastForward.fillHelloMessage(message, channel);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
-    monitorMetric.getMeter(MonitorMetric.NET_TCP_OUT_TRAFFIC)
-            .mark(message.getSendData().writableBytes());
+    metricsService.meterMark(MetricsService.NET_TCP_OUT_TRAFFIC,
+            message.getSendData().writableBytes());
     logger.info("Handshake send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 

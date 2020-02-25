@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
 import org.tron.core.exception.P2pException;
-import org.tron.core.metrics.MonitorMetric;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessageFactory;
 
@@ -19,7 +19,7 @@ import org.tron.core.net.message.TronMessageFactory;
 public class MessageCodec extends ByteToMessageDecoder {
 
   @Autowired
-  MonitorMetric monitorMetric;
+  MetricsService metricsService;
 
   private Channel channel;
   private P2pMessageFactory p2pMessageFactory = new P2pMessageFactory();
@@ -34,7 +34,7 @@ public class MessageCodec extends ByteToMessageDecoder {
     try {
       Message msg = createMessage(encoded);
       channel.getNodeStatistics().tcpFlow.add(length);
-      monitorMetric.getMeter(MonitorMetric.NET_TCP_IN_TRAFFIC).mark(length);
+      metricsService.meterMark(MetricsService.NET_TCP_IN_TRAFFIC, length);
       out.add(msg);
     } catch (Exception e) {
       channel.processException(e);

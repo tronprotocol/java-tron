@@ -44,7 +44,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.metrics.MonitorMetric;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
@@ -78,7 +78,7 @@ public class TronNetDelegate {
   private BackupServer backupServer;
 
   @Autowired
-  private MonitorMetric monitorMetric;
+  private MetricsService metricsService;
 
   private volatile boolean backupServerStartFlag;
 
@@ -214,8 +214,7 @@ public class TronNetDelegate {
           recordBlockLatency(block, now);
           //record transaction rate metric
           if (block.getTransactions().size() > 0) {
-            monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_TPS)
-                    .mark(block.getTransactions().size());
+            metricsService.meterMark(MetricsService.BLOCKCHAIN_TPS, block.getTransactions().size());
           }
         }
       } catch (ValidateSignatureException
@@ -274,23 +273,21 @@ public class TronNetDelegate {
   private void recordBlockLatency(BlockCapsule block, long nowTime) {
     long netTime = nowTime - block.getTimeStamp();
     String witnessAddress = Hex.toHexString(block.getWitnessAddress().toByteArray());
-    monitorMetric.getHistogram(MonitorMetric.NET_BLOCK_LATENCY)
-            .update(netTime);
-    monitorMetric.getHistogram(
-            MonitorMetric.NET_BLOCK_LATENCY_WITNESS + witnessAddress)
-            .update(netTime);
+    metricsService.histogramUpdate(MetricsService.NET_BLOCK_LATENCY, netTime);
+    metricsService.histogramUpdate(
+            MetricsService.NET_BLOCK_LATENCY_WITNESS + witnessAddress, netTime);
     if (netTime >= 1000) {
-      monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".1S").inc();
-      monitorMetric.getCounter(
-              MonitorMetric.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S").inc();
+      metricsService.counterInc(MetricsService.NET_BLOCK_LATENCY + ".1S", 1L);
+      metricsService.counterInc(
+              MetricsService.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
       if (netTime >= 2000) {
-        monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".2S").inc();
-        monitorMetric.getCounter(
-                MonitorMetric.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S").inc();
+        metricsService.counterInc(MetricsService.NET_BLOCK_LATENCY + ".2S", 1L);
+        metricsService.counterInc(
+                MetricsService.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S", 1L);
         if (netTime >= 3000) {
-          monitorMetric.getCounter(MonitorMetric.NET_BLOCK_LATENCY + ".3S").inc();
-          monitorMetric.getCounter(
-                  MonitorMetric.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S").inc();
+          metricsService.counterInc(MetricsService.NET_BLOCK_LATENCY + ".3S", 1L);
+          metricsService.counterInc(
+                  MetricsService.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S", 1L);
         }
       }
     }

@@ -12,7 +12,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
-import java.math.BigInteger;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -109,7 +109,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.metrics.MonitorMetric;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -213,7 +213,7 @@ public class Manager {
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
   @Autowired
-  private MonitorMetric monitorMetric;
+  private MetricsService metricsService;
 
 
   /**
@@ -894,8 +894,7 @@ public class Manager {
           throw e;
         } finally {
           if (exception != null) {
-            monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_FAIL_FORK_COUNT)
-                .mark();
+            metricsService.meterMark(MetricsService.BLOCKCHAIN_FAIL_FORK_COUNT, 1);
             logger.warn("switch back because exception thrown while switching forks. " + exception
                     .getMessage(),
                 exception);
@@ -932,8 +931,7 @@ public class Manager {
         }
       }
     }
-    monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_SUCCESS_FORK_COUNT)
-        .mark();
+    metricsService.meterMark(MetricsService.BLOCKCHAIN_SUCCESS_FORK_COUNT, 1);
   }
 
   /**
@@ -1193,10 +1191,9 @@ public class Manager {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
 
-    monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME)
-        .mark(System.currentTimeMillis() - startTime);
-    monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCK_TX_COUNT)
-        .mark();
+    metricsService.meterMark(MetricsService.BLOCKCHAIN_BLOCKPROCESS_TIME,
+        System.currentTimeMillis() - startTime);
+    metricsService.meterMark(MetricsService.BLOCKCHAIN_BLOCK_COUNT, 1);
 
     return transactionInfo.getInstance();
   }

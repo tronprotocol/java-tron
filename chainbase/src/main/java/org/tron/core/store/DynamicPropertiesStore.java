@@ -1809,7 +1809,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(() -> new IllegalArgumentException("not found CHANGE_DELEGATION"));
   }
-  
 
   public boolean allowChangeDelegation() {
     return getChangeDelegation() == 1;
