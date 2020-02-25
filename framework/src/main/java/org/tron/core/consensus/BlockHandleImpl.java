@@ -48,7 +48,6 @@ public class BlockHandleImpl implements BlockHandle {
 
   public BlockCapsule produce(Miner miner, long blockTime, long timeout) {
 
-    long startTime = System.currentTimeMillis();
     BlockCapsule blockCapsule = manager.generateBlock(miner, blockTime, timeout);
     if (blockCapsule == null) {
       return null;
@@ -66,8 +65,6 @@ public class BlockHandleImpl implements BlockHandle {
       return null;
     }
 
-    monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCK_COUNT)
-        .mark();
 
     return blockCapsule;
   }
