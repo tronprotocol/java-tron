@@ -526,6 +526,10 @@ public class Args {
   @Setter
   public boolean solidityNodeHttpEnable = true;
 
+  @Getter
+  @Setter
+  public boolean isEckey=true;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -611,6 +615,7 @@ public class Args {
     INSTANCE.changedDelegation = 0;
     INSTANCE.fullNodeHttpEnable = true;
     INSTANCE.solidityNodeHttpEnable = true;
+    INSTANCE.isEckey = true;
   }
 
   /**
@@ -625,6 +630,14 @@ public class Args {
     }
 
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
+
+    if (config.hasPath(Constant.CRYPTO_ENGINE)) {
+      INSTANCE.isEckey = config.getString(Constant.CRYPTO_ENGINE).equalsIgnoreCase("eckey");
+    }
+    if (config.hasPath(Constant.CRYPTO_ENGINE)) {
+      INSTANCE.cryptoEngine =config.getString(Constant.CRYPTO_ENGINE);
+    }
+    initEncryptoEngine(INSTANCE);
 
     if (config.hasPath(Constant.NET_TYPE) && Constant.TESTNET.equalsIgnoreCase(config.getString(Constant.NET_TYPE))) {
       Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
@@ -795,7 +808,6 @@ public class Args {
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
         .orElse(config.getStringList("seed.node.ip.list")));
-
     if (config.hasPath(Constant.GENESIS_BLOCK)) {
       INSTANCE.genesisBlock = new GenesisBlock();
 
@@ -1079,6 +1091,7 @@ public class Args {
             config.hasPath(Constant.ACTUATOR_WHITELIST) ?
                     new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
                     : Collections.emptySet();
+
 
     logConfig();
     initDBConfig(INSTANCE);
@@ -1443,6 +1456,9 @@ public class Args {
     logger.info("\n");
   }
 
+  public static void initEncryptoEngine(Args cfgArgs) {
+    DBConfig.setECKeyCryptoEngine(cfgArgs.isEckey());
+  }
   public static void initDBConfig(Args cfgArgs) {
     if (Objects.nonNull(cfgArgs.getStorage())) {
       DBConfig.setDbVersion(cfgArgs.getStorage().getDbVersion());
@@ -1487,7 +1503,8 @@ public class Args {
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
-    DBConfig.setECKeyCryptoEngine(cfgArgs.isECKeyCryptoEngine());
+//    DBConfig.setECKeyCryptoEngine(cfgArgs.isECKeyCryptoEngine());
+    DBConfig.setECKeyCryptoEngine(cfgArgs.isEckey());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
@@ -1528,6 +1545,7 @@ public class Args {
   }
 
   public boolean isECKeyCryptoEngine() {
-    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
+//    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
+    return isEckey;
   }
 }
