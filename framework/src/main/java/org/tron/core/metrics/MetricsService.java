@@ -335,22 +335,34 @@ public class MetricsService {
   }
 
   // gap: 1 minute, 5 minute, 15 minute, 0: avg for total block and time
-  private int getAvgBlockProcessTimeByGap(int gap) {
+  private double getAvgBlockProcessTimeByGap(int gap) {
     Meter meterBlockProcessTime =
-            monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME);
+        monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME);
     Meter meterBlockTxCount = monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCK_TX_COUNT);
-    double gapMinuteTimeBlock = meterBlockProcessTime.getOneMinuteRate() * gap * 60;
-    double gapMinuteCount = meterBlockTxCount.getOneMinuteRate() * gap * 60;
-    if (gapMinuteCount == 0) {
+    if (meterBlockTxCount.getCount() == 0) {
       return 0;
     }
     switch (gap) {
       case 0:
-        return (int) (meterBlockProcessTime.getCount() / meterBlockTxCount.getCount());
+        return (meterBlockProcessTime.getCount() / (double)meterBlockTxCount.getCount());
       case 1:
+        int gapMinuteTimeBlock =
+            Math.round(Math.round(meterBlockProcessTime.getOneMinuteRate() * 60));
+        int gapMinuteCount = Math.round(Math.round(meterBlockTxCount.getOneMinuteRate() * 60));
+        return   gapMinuteTimeBlock / (double)gapMinuteCount;
       case 5:
+        int gapFiveTimeBlock =
+            Math.round(Math.round(meterBlockProcessTime.getFiveMinuteRate() * gap * 60));
+        int gapFiveTimeCount =
+            Math.round(Math.round(meterBlockTxCount.getFiveMinuteRate() * gap * 60));
+        return gapFiveTimeBlock /(double) gapFiveTimeCount;
       case 15:
-        return (int) Math.round(gapMinuteTimeBlock / gapMinuteCount);
+        int gapFifteenTimeBlock =
+            Math.round(Math.round(meterBlockProcessTime.getFifteenMinuteRate() * gap * 60));
+        int gapFifteenTimeCount =
+            Math.round(Math.round(meterBlockTxCount.getFifteenMinuteRate() * gap * 60));
+        return gapFifteenTimeBlock / (double)gapFifteenTimeCount;
+
       default:
         return -1;
     }
