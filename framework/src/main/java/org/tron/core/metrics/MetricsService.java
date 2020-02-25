@@ -7,7 +7,6 @@ import com.codahale.metrics.Meter;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
@@ -34,7 +33,6 @@ public class MetricsService {
 
   public List<BlockChainInfo.Witness> noUpgradedSRList = new ArrayList<>();
   private int totalSR = 27;
-  private int noUpgradedSRCount;
 
   @Autowired
   private MonitorMetric monitorMetric;
@@ -200,8 +198,8 @@ public class MetricsService {
       MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo apiDetail =
               new MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo();
       apiDetail.setName(entry.getKey());
-      apiDetail.setCount((int) entry.getValue().get(HttpInterceptor.TOTAL_REQUST));
-      apiDetail.setFailCount((int) entry.getValue().get(HttpInterceptor.FAIL_REQUST));
+      apiDetail.setCount((int) entry.getValue().get(monitorMetric.TOTAL_REQUST));
+      apiDetail.setFailCount((int) entry.getValue().get(monitorMetric.FAIL_REQUST));
       apiDetails.add(apiDetail);
     }
     apiInfo.setApiDetailInfo(apiDetails);
@@ -363,7 +361,7 @@ public class MetricsService {
 
   public void getBlocks()  {
 
-    List<BlockCapsule> blocks = chainBaseManager.getBlockStore().getBlockByLatestNum(27);
+    List<BlockCapsule> blocks = chainBaseManager.getBlockStore().getBlockByLatestNum(totalSR);
 
     // get max version number
     int maxVersion = 0;
@@ -374,7 +372,6 @@ public class MetricsService {
     // find no Upgrade SR
     for (BlockCapsule it : blocks) {
       if (it.getInstance().getBlockHeader().getRawData().getVersion() != maxVersion) {
-        this.noUpgradedSRCount++;
         BlockChainInfo.Witness witness = new BlockChainInfo.Witness(
             it.getWitnessAddress().toStringUtf8(),
             it.getInstance().getBlockHeader().getRawData().getVersion());

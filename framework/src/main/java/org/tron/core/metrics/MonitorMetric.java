@@ -28,6 +28,9 @@ public class MonitorMetric {
   public static final String NET_TCP_OUT_TRAFFIC = "net.TCPOutTraffic";
   public static final String NET_UDP_IN_TRAFFIC = "net.UDPInTraffic";
   public static final String NET_UDP_OUT_TRAFFIC = "net.UDPOutTraffic";
+  public final static String TOTAL_REQUST = "TOTAL_REQUEST";
+  public final static String FAIL_REQUST = "FAIL_REQUEST";
+  public final static String OUT_TRAFFIC = "OUT_TRAFFIC";
 
   @Autowired
   private MetricRegistry metricRegistry;
