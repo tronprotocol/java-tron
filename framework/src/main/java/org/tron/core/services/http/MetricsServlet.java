@@ -7,18 +7,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.metrics.MetricsInfo;
-import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.MetricsApiService;
 
 @Component
 @Slf4j(topic = "API")
 public class MetricsServlet extends RateLimiterServlet {
 
   @Autowired
-  MetricsService metricsService;
+  MetricsApiService metricsApiService;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      MetricsInfo metricsInfo = metricsService.getMetricsInfo();
+      MetricsInfo metricsInfo = metricsApiService.getMetricsInfo();
 
       if (metricsInfo != null) {
         response.getWriter().println(JSON.toJSONString(metricsInfo, true));

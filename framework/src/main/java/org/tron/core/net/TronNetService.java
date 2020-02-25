@@ -7,7 +7,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.metrics.MonitorMetric;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.messagehandler.BlockMsgHandler;
@@ -58,7 +58,7 @@ public class TronNetService {
   private TransactionsMsgHandler transactionsMsgHandler;
 
   @Autowired
-  private MonitorMetric monitorMetric;
+  private MetricsService metricsService;
 
   public void start() {
     channelManager.init();
@@ -111,7 +111,7 @@ public class TronNetService {
           throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }
     } catch (Exception e) {
-      monitorMetric.getCounter(MonitorMetric.NET_ERROR_PROTO_COUNT).inc();
+      metricsService.getCounter(MetricsService.NET_ERROR_PROTO_COUNT).inc();
       processException(peer, msg, e);
     }
   }

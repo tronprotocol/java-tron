@@ -11,7 +11,7 @@ import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.base.State;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.metrics.MonitorMetric;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 
@@ -32,7 +32,7 @@ public class BlockHandleImpl implements BlockHandle {
   private Consensus consensus;
 
   @Autowired
-  private MonitorMetric monitorMetric;
+  private MetricsService metricsService;
 
   @Override
   public State getState() {
@@ -59,8 +59,7 @@ public class BlockHandleImpl implements BlockHandle {
       manager.pushBlock(blockCapsule);
       tronNetService.broadcast(blockMessage);
     } catch (Exception e) {
-      monitorMetric.getMeter(MonitorMetric.NODE_STATUS)
-          .mark();
+      metricsService.meterMark(MetricsService.NODE_STATUS, 1);
       logger.error("Handle block {} failed.", blockCapsule.getBlockId().getString(), e);
       return null;
     }

@@ -151,6 +151,7 @@ public class Args extends CommonParameter {
     PARAMETER.changedDelegation = 0;
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
+    PARAMETER.nodeMetricsEnable = false;
   }
 
   /**
@@ -649,6 +650,9 @@ public class Args extends CommonParameter {
             ? new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
             : Collections.emptySet();
 
+    if (config.hasPath(Constant.NODE_METRICS_ENABLE)) {
+      PARAMETER.nodeMetricsEnable = config.getBoolean(Constant.NODE_METRICS_ENABLE);
+    }
     logConfig();
   }
 

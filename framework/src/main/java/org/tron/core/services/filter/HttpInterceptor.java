@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.tron.core.metrics.MonitorMetric;
+import org.tron.core.metrics.MetricsService;
 
 @Slf4j(topic = "httpIntercetpor")
 public class HttpInterceptor implements Filter {
@@ -25,16 +25,16 @@ public class HttpInterceptor implements Filter {
   private static long outAPITraffic = 0;
 
   @Autowired
-  private MonitorMetric monitorMetric;
+  private MetricsService metricsService;
 
 
   public int getTotalCount() {
-    return (int) monitorMetric.getMeter(MonitorMetric.TOTAL_REQUST).getCount();
+    return (int) metricsService.getMeter(MetricsService.TOTAL_REQUST).getCount();
   }
 
 
   public int getFailCount() {
-    return (int) monitorMetric.getMeter(MonitorMetric.FAIL_REQUST).getCount();
+    return (int) metricsService.getMeter(MetricsService.FAIL_REQUST).getCount();
   }
 
   public HashMap<String, JSONObject> getEndpointMap() {
@@ -42,7 +42,7 @@ public class HttpInterceptor implements Filter {
   }
 
   public String getOutAPITraffic() {
-    return Long.toString(monitorMetric.getMeter(MonitorMetric.OUT_TRAFFIC).getCount());
+    return Long.toString(metricsService.getMeter(MetricsService.OUT_TRAFFIC).getCount());
   }
 
 
@@ -66,13 +66,13 @@ public class HttpInterceptor implements Filter {
       if (EndpointCount.containsKey(endpoint)) {
         obj = EndpointCount.get(endpoint);
       } else {
-        obj.put(monitorMetric.TOTAL_REQUST, 0);
-        obj.put(monitorMetric.FAIL_REQUST, 0);
+        obj.put(metricsService.TOTAL_REQUST, 0);
+        obj.put(metricsService.FAIL_REQUST, 0);
         obj.put(OUT_TRAFFIC, 0L);
         obj.put(END_POINT, endpoint);
       }
-      obj.put(monitorMetric.TOTAL_REQUST, (int) obj.get(monitorMetric.TOTAL_REQUST) + 1);
-      monitorMetric.getMeter(MonitorMetric.TOTAL_REQUST)
+      obj.put(metricsService.TOTAL_REQUST, (int) obj.get(metricsService.TOTAL_REQUST) + 1);
+      metricsService.getMeter(MetricsService.TOTAL_REQUST)
           .mark();
 
       CharResponseWrapper responseWrapper = new CharResponseWrapper((HttpServletResponse) response);
@@ -80,14 +80,14 @@ public class HttpInterceptor implements Filter {
 
       obj.put(OUT_TRAFFIC, (long) obj.get(OUT_TRAFFIC) + responseWrapper.getByteSize());
 
-      monitorMetric.getMeter(MonitorMetric.OUT_TRAFFIC)
+      metricsService.getMeter(MetricsService.OUT_TRAFFIC)
           .mark(responseWrapper.getByteSize());
 
       HttpServletResponse resp = (HttpServletResponse) response;
       if (resp.getStatus() != 200) {
-        monitorMetric.getMeter(MonitorMetric.FAIL_REQUST)
+        metricsService.getMeter(MetricsService.FAIL_REQUST)
             .mark();
-        obj.put(monitorMetric.FAIL_REQUST, (int) obj.get(monitorMetric.FAIL_REQUST) + 1);
+        obj.put(metricsService.FAIL_REQUST, (int) obj.get(metricsService.FAIL_REQUST) + 1);
       }
 
       // update map

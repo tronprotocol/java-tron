@@ -29,7 +29,6 @@ public class NodeInfo {
 
   private Map<String, String> cheatWitnessInfoMap = new HashMap<>();
 
-
   public long getBeginSyncNum() {
     return beginSyncNum;
   }
@@ -129,7 +128,6 @@ public class NodeInfo {
     this.cheatWitnessInfoMap = cheatWitnessInfoMap;
     return this;
   }
-
 
   public Protocol.NodeInfo transferToProtoEntity() {
     Protocol.NodeInfo.Builder builder = Protocol.NodeInfo.newBuilder();
