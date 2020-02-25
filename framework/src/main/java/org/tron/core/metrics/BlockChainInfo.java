@@ -26,10 +26,12 @@ public class BlockChainInfo {
       this.url = url;
       this.version = version;
     }
-    public String getAddress(){
+
+    public String getAddress() {
       return this.address;
     }
-    public int getVersion(){
+
+    public int getVersion() {
       return this.version;
     }
   }

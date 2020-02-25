@@ -139,7 +139,6 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.core.metrics.BlockChainInfo;
 
 @Slf4j(topic = "DB")
 @Component
@@ -1129,7 +1128,7 @@ public class Manager {
       return null;
     }
 
-    long startTime=System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
 
     validateTapos(trxCap);
     validateCommon(trxCap);
@@ -1195,7 +1194,7 @@ public class Manager {
     }
 
     monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME)
-        .mark(System.currentTimeMillis()-startTime);
+        .mark(System.currentTimeMillis() - startTime);
     monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCK_TX_COUNT)
         .mark();
 

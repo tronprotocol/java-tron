@@ -7,6 +7,7 @@ import com.codahale.metrics.Meter;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
@@ -234,12 +235,7 @@ public class MetricsService {
 
   }
 
-  /**
-   * get host ip address
-   *
-   * @param @data none
-   *              return string
-   */
+  // get public  ip address
   public String getMyIp() {
     try {
       URL url = new URL("http://checkip.amazonaws.com");
@@ -302,16 +298,6 @@ public class MetricsService {
       latencyDetailTemp.setDelay3S((int) witnessDelay3S);
       latencyDetailInfos.add(latencyDetailTemp);
     }
-//    MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo latencyDetail =
-//            new MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo();
-//    latencyDetail.setCount(10);
-//    latencyDetail.setWitness("41d376d829440505ea13c9d1c455317d51b62e4ab6");
-//    latencyDetail.setTop99(11);
-//    latencyDetail.setTop95(8);
-//    latencyDetail.setDelay1S(3);
-//    latencyDetail.setDelay2S(1);
-//    latencyDetail.setDelay3S(0);
-//    latencyDetailInfos.add(latencyDetail);
     latencyInfo.setLatencyDetailInfo(latencyDetailInfos);
 
     return latencyInfo;
@@ -334,22 +320,34 @@ public class MetricsService {
   }
 
   // gap: 1 minute, 5 minute, 15 minute, 0: avg for total block and time
-  private int getAvgBlockProcessTimeByGap(int gap) {
+  private double getAvgBlockProcessTimeByGap(int gap) {
     Meter meterBlockProcessTime =
-            monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME);
+        monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCKPROCESS_TIME);
     Meter meterBlockTxCount = monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_BLOCK_TX_COUNT);
-    double gapMinuteTimeBlock = meterBlockProcessTime.getOneMinuteRate() * gap * 60;
-    double gapMinuteCount = meterBlockTxCount.getOneMinuteRate() * gap * 60;
-    if (gapMinuteCount == 0) {
+    if (meterBlockTxCount.getCount() == 0) {
       return 0;
     }
     switch (gap) {
       case 0:
-        return (int) (meterBlockProcessTime.getCount() / meterBlockTxCount.getCount());
+        return (meterBlockProcessTime.getCount() / (double)meterBlockTxCount.getCount());
       case 1:
+        int gapMinuteTimeBlock =
+            Math.round(Math.round(meterBlockProcessTime.getOneMinuteRate() * 60));
+        int gapMinuteCount = Math.round(Math.round(meterBlockTxCount.getOneMinuteRate() * 60));
+        return   gapMinuteTimeBlock / (double)gapMinuteCount;
       case 5:
+        int gapFiveTimeBlock =
+            Math.round(Math.round(meterBlockProcessTime.getFiveMinuteRate() * gap * 60));
+        int gapFiveTimeCount =
+            Math.round(Math.round(meterBlockTxCount.getFiveMinuteRate() * gap * 60));
+        return gapFiveTimeBlock / (double) gapFiveTimeCount;
       case 15:
-        return (int) Math.round(gapMinuteTimeBlock / gapMinuteCount);
+        int gapFifteenTimeBlock =
+            Math.round(Math.round(meterBlockProcessTime.getFifteenMinuteRate() * gap * 60));
+        int gapFifteenTimeCount =
+            Math.round(Math.round(meterBlockTxCount.getFifteenMinuteRate() * gap * 60));
+        return gapFifteenTimeBlock / (double)gapFifteenTimeCount;
+
       default:
         return -1;
     }
@@ -363,9 +361,9 @@ public class MetricsService {
     return (int) monitorMetric.getMeter(MonitorMetric.BLOCKCHAIN_FAIL_FORK_COUNT).getCount();
   }
 
-  private void getBlocks() {
+  public void getBlocks()  {
 
-    List<BlockCapsule> blocks = chainBaseManager.getBlockStore().getBlockByLatestNum(totalSR);
+    List<BlockCapsule> blocks = chainBaseManager.getBlockStore().getBlockByLatestNum(27);
 
     // get max version number
     int maxVersion = 0;
@@ -373,19 +371,13 @@ public class MetricsService {
       maxVersion = Math.max(maxVersion,
               it.getInstance().getBlockHeader().getRawData().getVersion());
     }
-    logger.info("block store size =" + chainBaseManager.getBlockStore().size() + "  block size "
-            + blocks.size() + " max version =" + maxVersion);
     // find no Upgrade SR
     for (BlockCapsule it : blocks) {
-      logger.info("witness address" + it.getWitnessAddress().toString() + " version"
-              + it.getInstance().getBlockHeader().getRawData().getVersion()
-              + "  info " + it.toString());
-
       if (it.getInstance().getBlockHeader().getRawData().getVersion() != maxVersion) {
         this.noUpgradedSRCount++;
         BlockChainInfo.Witness witness = new BlockChainInfo.Witness(
-                it.getWitnessAddress().toString(),
-                it.getInstance().getBlockHeader().getRawData().getVersion());
+            it.getWitnessAddress().toStringUtf8(),
+            it.getInstance().getBlockHeader().getRawData().getVersion());
         this.noUpgradedSRList.add(witness);
       }
     }
