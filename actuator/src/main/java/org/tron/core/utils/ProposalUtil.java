@@ -283,7 +283,7 @@ public class ProposalUtil {
         }
         if (value < 0 || value > 10_000_000_000L) {
           throw new ContractValidateException(
-              "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value,valid range is [0,10_000_000_000L]");
+              "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value, valid range is [0,10_000_000_000L]");
         }
         break;
       }
