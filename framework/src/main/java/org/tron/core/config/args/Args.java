@@ -632,7 +632,7 @@ public class Args {
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
 
     if (config.hasPath(Constant.CRYPTO_ENGINE)) {
-      INSTANCE.isEckey = config.getString(Constant.CRYPTO_ENGINE).equalsIgnoreCase("eckey");
+      INSTANCE.isEckey = "eckey".equalsIgnoreCase(config.getString(Constant.CRYPTO_ENGINE));
     }
     if (config.hasPath(Constant.CRYPTO_ENGINE)) {
       INSTANCE.cryptoEngine =config.getString(Constant.CRYPTO_ENGINE);
