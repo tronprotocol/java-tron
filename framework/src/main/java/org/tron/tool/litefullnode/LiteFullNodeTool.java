@@ -5,13 +5,11 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
-import com.typesafe.config.Config;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +19,6 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Configuration;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.BadItemException;
 import org.tron.tool.litefullnode.db.DBInterface;
@@ -77,6 +74,7 @@ public class LiteFullNodeTool {
   //private static final String destDir = "/Users/quan/tron/java-tron/output-directory";
 
   public static void generateSnapshot(String sourceDir, String snapshotDir) throws IOException, RocksDBException {
+    long start = System.currentTimeMillis();
     snapshotDir = Paths.get(snapshotDir, SNAPSHOT_DIR_NAME).toString();
     split(sourceDir, snapshotDir, snapshotDbs);
     mergeCheckpoint2Snapshot(sourceDir, snapshotDir);
@@ -85,16 +83,22 @@ public class LiteFullNodeTool {
     if (!fillSnapshotBlockDb(sourceDir, snapshotDir)) {
       throw new RuntimeException("create snapshot block db failed, exit...");
     }
+    long end = System.currentTimeMillis();
+    System.out.printf("create snapshot finished, take %ds", (end - start)/1000);
   }
 
   public static void generateHistory(String sourceDir, String historyDir) throws IOException, RocksDBException {
+    long start = System.currentTimeMillis();
     historyDir = Paths.get(historyDir, HISTORY_DIR_NAME).toString();
     split(sourceDir, historyDir, archiveDbs);
     mergeCheckpoint2History(sourceDir, historyDir);
     generateInfoProperties(Paths.get(historyDir, INFO_FILE_NAME).toString(), sourceDir);
+    long end = System.currentTimeMillis();
+    System.out.printf("create history finished, take %ds", (end - start)/1000);
   }
 
   public static void completeHistoryData(String historyDir, String databaseDir) throws IOException, RocksDBException, BadItemException {
+    long start = System.currentTimeMillis();
     // 1. check block number and genesis block are compatible,
     //    and return the block numbers of snapshot and history
     BlockNumInfo blockNumInfo = checkAndGetBlockNumInfo(historyDir, databaseDir);
@@ -108,6 +112,8 @@ public class LiteFullNodeTool {
     mergeBak2Database(databaseDir);
     // 6. delete snapshot flag
     deleteSnapshotFlag(databaseDir);
+    long end = System.currentTimeMillis();
+    System.out.printf("merge history finished, take %ds", (end - start)/1000);
   }
 
   private static void mergeCheckpoint2Snapshot(String sourceDir, String historyDir) {
@@ -342,18 +348,21 @@ public class LiteFullNodeTool {
     try {
       switch (argv.operate) {
         case "split":
-          if (argv.type.equals("snapshot")) {
+          if (argv.type.isEmpty()) {
+            throw new ParameterException("type can't be null when operate=split");
+          }
+          if ("snapshot".equals(argv.type)) {
             System.out.println(argv.fnDataPath);
             System.out.println(argv.datasetPath);
             generateSnapshot(argv.fnDataPath, argv.datasetPath);
             break;
-          } else if (argv.type.equals("history")) {
+          } else if ("history".equals(argv.type)) {
             System.out.println(argv.fnDataPath);
             System.out.println(argv.datasetPath);
             generateHistory(argv.fnDataPath, argv.datasetPath);
             break;
           } else {
-            throw new ParameterException("type can't be null when operate=split or not support type:" + argv.type);
+            throw new ParameterException("not support type:" + argv.type);
           }
         case "merge":
           System.out.println(argv.fnDataPath);

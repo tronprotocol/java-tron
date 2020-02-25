@@ -3,6 +3,7 @@ package org.tron.tool.litefullnode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
@@ -27,11 +28,14 @@ public class Util {
   public static void copyFolder(Path src, Path dest, List<String> subDirs)
           throws IOException {
     // todo: rename method
+    // create subdirs, as using parallel() to run, so should create dirs first.
+    subDirs.forEach(dir -> copy(Paths.get(src.toString(), dir), Paths.get(dest.toString(), dir)));
+    // copy files
     Files.walk(src)
             .parallel()
             .filter(path ->
+              // only copy the files, exclude the dirs
               subDirs.contains(path.getParent().getFileName().toString())
-                      | subDirs.contains(path.getFileName().toString())
             )
             .forEach(source -> copy(source, dest.resolve(src.relativize(source))));
   }
