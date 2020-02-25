@@ -18,13 +18,10 @@ public class MetricsServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-        MetricsInfo metricsInfo = metricsService.getMetricsInfo();
-
-    //   Protocol.MonitorInfo monitorInfo = monitorService.getMonitorInfo();
+      MetricsInfo metricsInfo = metricsService.getMetricsInfo();
 
       if (metricsInfo != null) {
-         response.getWriter().println(JSON.toJSONString(metricsInfo,true));
-      //   response.getWriter().println(JsonFormat.printToString(monitorInfo, true));
+        response.getWriter().println(JSON.toJSONString(metricsInfo, true));
       } else {
         response.getWriter().println("{}");
       }

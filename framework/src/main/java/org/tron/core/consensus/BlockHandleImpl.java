@@ -11,9 +11,10 @@ import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.base.State;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.metrics.MonitorMetric;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
-import org.tron.core.metrics.MonitorMetric;
+
 @Slf4j(topic = "consensus")
 @Component
 public class BlockHandleImpl implements BlockHandle {
@@ -47,7 +48,7 @@ public class BlockHandleImpl implements BlockHandle {
 
   public BlockCapsule produce(Miner miner, long blockTime, long timeout) {
 
-    long startTime=System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
     BlockCapsule blockCapsule = manager.generateBlock(miner, blockTime, timeout);
     if (blockCapsule == null) {
       return null;

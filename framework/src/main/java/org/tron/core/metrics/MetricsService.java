@@ -235,12 +235,7 @@ public class MetricsService {
 
   }
 
-  /**
-   * get host ip address
-   *
-   * @param @data none
-   *              return string
-   */
+  // get public  ip address
   public String getMyIp() {
     try {
       URL url = new URL("http://checkip.amazonaws.com");
@@ -303,16 +298,6 @@ public class MetricsService {
       latencyDetailTemp.setDelay3S((int) witnessDelay3S);
       latencyDetailInfos.add(latencyDetailTemp);
     }
-//    MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo latencyDetail =
-//            new MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo();
-//    latencyDetail.setCount(10);
-//    latencyDetail.setWitness("41d376d829440505ea13c9d1c455317d51b62e4ab6");
-//    latencyDetail.setTop99(11);
-//    latencyDetail.setTop95(8);
-//    latencyDetail.setDelay1S(3);
-//    latencyDetail.setDelay2S(1);
-//    latencyDetail.setDelay3S(0);
-//    latencyDetailInfos.add(latencyDetail);
     latencyInfo.setLatencyDetailInfo(latencyDetailInfos);
 
     return latencyInfo;
@@ -355,7 +340,7 @@ public class MetricsService {
             Math.round(Math.round(meterBlockProcessTime.getFiveMinuteRate() * gap * 60));
         int gapFiveTimeCount =
             Math.round(Math.round(meterBlockTxCount.getFiveMinuteRate() * gap * 60));
-        return gapFiveTimeBlock /(double) gapFiveTimeCount;
+        return gapFiveTimeBlock / (double) gapFiveTimeCount;
       case 15:
         int gapFifteenTimeBlock =
             Math.round(Math.round(meterBlockProcessTime.getFifteenMinuteRate() * gap * 60));

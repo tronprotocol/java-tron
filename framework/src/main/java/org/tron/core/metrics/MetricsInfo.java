@@ -154,12 +154,13 @@ public class MetricsInfo {
       return this;
     }
 
-    public BlockchainInfo setSuccessForkCount(int forkCount){
-      this.successForkCount=forkCount;
-      return this;
-    }
-    public int getSuccessForkCount(){
+    public int getSuccessForkCount() {
       return this.successForkCount;
+    }
+
+    public BlockchainInfo setSuccessForkCount(int forkCount) {
+      this.successForkCount = forkCount;
+      return this;
     }
 
     public int getFailForkCount() {
@@ -723,7 +724,8 @@ public class MetricsInfo {
     blockProcessTime.setMeanRate(blockChainInfo.getBlockProcessTime().getMeanRate());
     blockProcessTime.setOneMinuteRate(blockChainInfo.getBlockProcessTime().getOneMinuteRate());
     blockProcessTime.setFiveMinuteRate(blockChainInfo.getBlockProcessTime().getFiveMinuteRate());
-    blockProcessTime.setFifteenMinuteRate(blockChainInfo.getBlockProcessTime().getFifteenMinuteRate());
+    blockProcessTime
+        .setFifteenMinuteRate(blockChainInfo.getBlockProcessTime().getFifteenMinuteRate());
     blockChain.setBlockProcessTime(blockProcessTime.build());
     blockChain.setSuccessForkCount(blockChainInfo.getSuccessForkCount());
     blockChain.setFailForkCount(blockChain.getFailForkCount());
