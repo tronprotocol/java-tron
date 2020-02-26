@@ -61,7 +61,7 @@ public class MetricsInfo {
     return this;
   }
 
-  public Protocol.MetricsInfo ToProtoEntity() {
+  public Protocol.MetricsInfo toProtoEntity() {
     Protocol.MetricsInfo.Builder builder = Protocol.MetricsInfo.newBuilder();
     builder.setStartTime(interval);
 
@@ -69,8 +69,8 @@ public class MetricsInfo {
         Protocol.MetricsInfo.NodeInfo.newBuilder();
     MetricsInfo.NodeInfo node = this.node;
     nodeInfo.setIp(node.getIp());
-    nodeInfo.setNodeType(node.getType());
-    nodeInfo.setStatus(node.getType());
+    nodeInfo.setNodeType(node.getNodeType());
+    nodeInfo.setStatus(node.getNodeType());
     nodeInfo.setVersion(node.getVersion());
 
     // set node info
@@ -82,8 +82,8 @@ public class MetricsInfo {
     blockChain.setHeadBlockTimestamp(blockChainInfo.getHeadBlockTimestamp());
     blockChain.setHeadBlockHash(blockChainInfo.getHeadBlockHash());
 
-    Protocol.MetricsInfo.BlockChainInfo.TPSInfo.Builder blockProcessTime =
-        Protocol.MetricsInfo.BlockChainInfo.TPSInfo.newBuilder();
+    Protocol.MetricsInfo.BlockChainInfo.TpsInfo.Builder blockProcessTime =
+        Protocol.MetricsInfo.BlockChainInfo.TpsInfo.newBuilder();
     blockProcessTime.setMeanRate(blockChainInfo.getBlockProcessTime().getMeanRate());
     blockProcessTime.setOneMinuteRate(blockChainInfo.getBlockProcessTime().getOneMinuteRate());
     blockProcessTime.setFiveMinuteRate(blockChainInfo.getBlockProcessTime().getFiveMinuteRate());
@@ -93,17 +93,17 @@ public class MetricsInfo {
     blockChain.setSuccessForkCount(blockChainInfo.getSuccessForkCount());
     blockChain.setFailForkCount(blockChain.getFailForkCount());
     blockChain.setHeadBlockNum(blockChainInfo.getHeadBlockNum());
-    blockChain.setTxCacheSize(blockChainInfo.getTxCacheSize());
-    blockChain.setMissedTxCount(blockChainInfo.getMissTxCount());
+    blockChain.setTransactionCacheSize(blockChainInfo.getTransactionCacheSize());
+    blockChain.setMissedTransactionCount(blockChainInfo.getMissedTransactionCount());
 
-    Protocol.MetricsInfo.BlockChainInfo.TPSInfo.Builder tpsInfo =
-        Protocol.MetricsInfo.BlockChainInfo.TPSInfo.newBuilder();
-    BlockchainInfo.TPSInfo TpsInfo = blockChainInfo.getTPS();
-    tpsInfo.setMeanRate(TpsInfo.getMeanRate());
-    tpsInfo.setOneMinuteRate(TpsInfo.getOneMinuteRate());
-    tpsInfo.setFiveMinuteRate(TpsInfo.getFiveMinuteRate());
-    tpsInfo.setFifteenMinuteRate(TpsInfo.getFifteenMinuteRate());
-    blockChain.setTPS(tpsInfo.build());
+    Protocol.MetricsInfo.BlockChainInfo.TpsInfo.Builder tpsInfo =
+        Protocol.MetricsInfo.BlockChainInfo.TpsInfo.newBuilder();
+    BlockchainInfo.TpsInfo tpsInfoTemp = blockChainInfo.getTps();
+    tpsInfo.setMeanRate(tpsInfoTemp.getMeanRate());
+    tpsInfo.setOneMinuteRate(tpsInfoTemp.getOneMinuteRate());
+    tpsInfo.setFiveMinuteRate(tpsInfoTemp.getFiveMinuteRate());
+    tpsInfo.setFifteenMinuteRate(tpsInfoTemp.getFifteenMinuteRate());
+    blockChain.setTps(tpsInfo.build());
     for (BlockchainInfo.Witness witness : blockChainInfo.getWitnesses()) {
       Protocol.MetricsInfo.BlockChainInfo.Witness.Builder witnessInfo =
           Protocol.MetricsInfo.BlockChainInfo.Witness.newBuilder();
@@ -124,44 +124,44 @@ public class MetricsInfo {
 
     Protocol.MetricsInfo.NetInfo.RateInfo.Builder tcpInTraffic =
         Protocol.MetricsInfo.NetInfo.RateInfo.newBuilder();
-    tcpInTraffic.setMeanRate(netInfoTemp.getTCPInTraffic().getMeanRate());
-    tcpInTraffic.setOneMinuteRate(netInfoTemp.getTCPInTraffic().getOneMinuteRate());
-    tcpInTraffic.setFiveMinuteRate(netInfoTemp.getTCPInTraffic().getFiveMinuteRate());
-    tcpInTraffic.setFifteenMinuteRate(netInfoTemp.getTCPInTraffic().getFifteenMinuteRate());
-    netInfo.setTCPInTraffic(tcpInTraffic.build());
+    tcpInTraffic.setMeanRate(netInfoTemp.getTcpInTraffic().getMeanRate());
+    tcpInTraffic.setOneMinuteRate(netInfoTemp.getTcpInTraffic().getOneMinuteRate());
+    tcpInTraffic.setFiveMinuteRate(netInfoTemp.getTcpInTraffic().getFiveMinuteRate());
+    tcpInTraffic.setFifteenMinuteRate(netInfoTemp.getTcpInTraffic().getFifteenMinuteRate());
+    netInfo.setTcpInTraffic(tcpInTraffic.build());
 
     Protocol.MetricsInfo.NetInfo.RateInfo.Builder tcpOutTraffic =
         Protocol.MetricsInfo.NetInfo.RateInfo.newBuilder();
-    tcpOutTraffic.setMeanRate(netInfoTemp.getTCPOutTraffic().getMeanRate());
-    tcpOutTraffic.setOneMinuteRate(netInfoTemp.getTCPOutTraffic().getOneMinuteRate());
-    tcpOutTraffic.setFiveMinuteRate(netInfoTemp.getTCPOutTraffic().getFiveMinuteRate());
-    tcpOutTraffic.setFifteenMinuteRate(netInfoTemp.getTCPOutTraffic().getFifteenMinuteRate());
-    netInfo.setTCPOutTraffic(tcpOutTraffic.build());
+    tcpOutTraffic.setMeanRate(netInfoTemp.getTcpOutTraffic().getMeanRate());
+    tcpOutTraffic.setOneMinuteRate(netInfoTemp.getTcpOutTraffic().getOneMinuteRate());
+    tcpOutTraffic.setFiveMinuteRate(netInfoTemp.getTcpOutTraffic().getFiveMinuteRate());
+    tcpOutTraffic.setFifteenMinuteRate(netInfoTemp.getTcpOutTraffic().getFifteenMinuteRate());
+    netInfo.setTcpOutTraffic(tcpOutTraffic.build());
 
     Protocol.MetricsInfo.NetInfo.RateInfo.Builder udpInTraffic =
         Protocol.MetricsInfo.NetInfo.RateInfo.newBuilder();
-    udpInTraffic.setMeanRate(netInfoTemp.getUDPInTraffic().getMeanRate());
-    udpInTraffic.setOneMinuteRate(netInfoTemp.getUDPInTraffic().getOneMinuteRate());
-    udpInTraffic.setFiveMinuteRate(netInfoTemp.getUDPInTraffic().getFiveMinuteRate());
-    udpInTraffic.setFifteenMinuteRate(netInfoTemp.getUDPInTraffic().getFifteenMinuteRate());
-    netInfo.setUDPInTraffic(udpInTraffic.build());
+    udpInTraffic.setMeanRate(netInfoTemp.getUdpInTraffic().getMeanRate());
+    udpInTraffic.setOneMinuteRate(netInfoTemp.getUdpInTraffic().getOneMinuteRate());
+    udpInTraffic.setFiveMinuteRate(netInfoTemp.getUdpInTraffic().getFiveMinuteRate());
+    udpInTraffic.setFifteenMinuteRate(netInfoTemp.getUdpInTraffic().getFifteenMinuteRate());
+    netInfo.setUdpInTraffic(udpInTraffic.build());
 
     Protocol.MetricsInfo.NetInfo.RateInfo.Builder udpOutTraffic =
         Protocol.MetricsInfo.NetInfo.RateInfo.newBuilder();
-    udpOutTraffic.setMeanRate(netInfoTemp.getUDPOutTraffic().getMeanRate());
-    udpOutTraffic.setOneMinuteRate(netInfoTemp.getUDPOutTraffic().getOneMinuteRate());
-    udpOutTraffic.setFiveMinuteRate(netInfoTemp.getUDPOutTraffic().getFiveMinuteRate());
-    udpOutTraffic.setFifteenMinuteRate(netInfoTemp.getUDPOutTraffic().getFifteenMinuteRate());
-    netInfo.setUDPOutTraffic(udpOutTraffic.build());
+    udpOutTraffic.setMeanRate(netInfoTemp.getUdpOutTraffic().getMeanRate());
+    udpOutTraffic.setOneMinuteRate(netInfoTemp.getUdpOutTraffic().getOneMinuteRate());
+    udpOutTraffic.setFiveMinuteRate(netInfoTemp.getUdpOutTraffic().getFiveMinuteRate());
+    udpOutTraffic.setFifteenMinuteRate(netInfoTemp.getUdpOutTraffic().getFifteenMinuteRate());
+    netInfo.setUdpOutTraffic(udpOutTraffic.build());
 
-    Protocol.MetricsInfo.NetInfo.ApiInfo.Builder apiInfo =
-        Protocol.MetricsInfo.NetInfo.ApiInfo.newBuilder();
     Protocol.MetricsInfo.NetInfo.ApiInfo.common.Builder common =
         Protocol.MetricsInfo.NetInfo.ApiInfo.common.newBuilder();
     common.setMeanRate(netInfoTemp.getApi().getTotalCount().getMeanRate());
     common.setOneMinute(netInfoTemp.getApi().getTotalCount().getOneMinute());
     common.setFiveMinute(netInfoTemp.getApi().getTotalCount().getFiveMinute());
     common.setFifteenMinute(netInfoTemp.getApi().getTotalCount().getFifteenMinute());
+    Protocol.MetricsInfo.NetInfo.ApiInfo.Builder apiInfo =
+            Protocol.MetricsInfo.NetInfo.ApiInfo.newBuilder();
     apiInfo.setTotalCount(common.build());
 
     common.setMeanRate(netInfoTemp.getApi().getTotalFailCount().getMeanRate());
@@ -179,28 +179,28 @@ public class MetricsInfo {
     apiInfo.setTotalOutTraffic(common.build());
 
 
-    for (NetInfo.ApiInfo.ApiDetailInfo ApiDetail : netInfoTemp.getApi().getApiDetailInfo()) {
+    for (NetInfo.ApiInfo.ApiDetailInfo apiDetailInfo : netInfoTemp.getApi().getApiDetailInfo()) {
       Protocol.MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo.Builder apiDetail =
           Protocol.MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo.newBuilder();
 
-      apiDetail.setName(ApiDetail.getName());
-      common.setMeanRate(ApiDetail.getCount().getMeanRate());
-      common.setOneMinute(ApiDetail.getCount().getOneMinute());
-      common.setFiveMinute(ApiDetail.getCount().getFiveMinute());
-      common.setFifteenMinute(ApiDetail.getCount().getFifteenMinute());
+      apiDetail.setName(apiDetailInfo.getName());
+      common.setMeanRate(apiDetailInfo.getCount().getMeanRate());
+      common.setOneMinute(apiDetailInfo.getCount().getOneMinute());
+      common.setFiveMinute(apiDetailInfo.getCount().getFiveMinute());
+      common.setFifteenMinute(apiDetailInfo.getCount().getFifteenMinute());
 
       apiDetail.setCount(common.build());
-      common.setMeanRate(ApiDetail.getFailCount().getMeanRate());
-      common.setOneMinute(ApiDetail.getFailCount().getOneMinute());
-      common.setFiveMinute(ApiDetail.getFailCount().getFiveMinute());
-      common.setFifteenMinute(ApiDetail.getFailCount().getFifteenMinute());
+      common.setMeanRate(apiDetailInfo.getFailCount().getMeanRate());
+      common.setOneMinute(apiDetailInfo.getFailCount().getOneMinute());
+      common.setFiveMinute(apiDetailInfo.getFailCount().getFiveMinute());
+      common.setFifteenMinute(apiDetailInfo.getFailCount().getFifteenMinute());
 
       apiDetail.setFailCount(common.build());
 
-      common.setMeanRate(ApiDetail.getOutTraffic().getMeanRate());
-      common.setOneMinute(ApiDetail.getOutTraffic().getOneMinute());
-      common.setFiveMinute(ApiDetail.getOutTraffic().getFiveMinute());
-      common.setFifteenMinute(ApiDetail.getOutTraffic().getFifteenMinute());
+      common.setMeanRate(apiDetailInfo.getOutTraffic().getMeanRate());
+      common.setOneMinute(apiDetailInfo.getOutTraffic().getOneMinute());
+      common.setFiveMinute(apiDetailInfo.getOutTraffic().getFiveMinute());
+      common.setFifteenMinute(apiDetailInfo.getOutTraffic().getFifteenMinute());
       apiDetail.setOutTraffic(common.build());
 
       apiInfo.addDetail(apiDetail.build());
@@ -208,12 +208,12 @@ public class MetricsInfo {
     netInfo.setApi(apiInfo.build());
 
     netInfo.setDisconnectionCount(netInfoTemp.getDisconnectionCount());
-    for (NetInfo.DisconnectionDetailInfo DisconnectionDetail : netInfoTemp
+    for (NetInfo.DisconnectionDetailInfo disconnectionDetailInfo : netInfoTemp
         .getDisconnectionDetail()) {
       Protocol.MetricsInfo.NetInfo.DisconnectionDetailInfo.Builder disconnectionDetail =
           Protocol.MetricsInfo.NetInfo.DisconnectionDetailInfo.newBuilder();
-      disconnectionDetail.setReason(DisconnectionDetail.getReason());
-      disconnectionDetail.setCount(DisconnectionDetail.getCount());
+      disconnectionDetail.setReason(disconnectionDetailInfo.getReason());
+      disconnectionDetail.setCount(disconnectionDetailInfo.getCount());
       netInfo.addDisconnectionDetail(disconnectionDetail.build());
     }
 
@@ -226,17 +226,17 @@ public class MetricsInfo {
     latencyInfo.setTop95(netInfoTemp.getLatency().getTop95());
     latencyInfo.setTotalCount(netInfoTemp.getLatency().getTotalCount());
 
-    for (NetInfo.LatencyInfo.LatencyDetailInfo LatencyDetailInfo : netInfoTemp.getLatency()
+    for (NetInfo.LatencyInfo.LatencyDetailInfo latencyDetailInfo : netInfoTemp.getLatency()
         .getLatencyDetailInfo()) {
       Protocol.MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo.Builder latencyDetail =
           Protocol.MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo.newBuilder();
-      latencyDetail.setCount(LatencyDetailInfo.getCount());
-      latencyDetail.setWitness(LatencyDetailInfo.getWitness());
-      latencyDetail.setTop99(LatencyDetailInfo.getTop99());
-      latencyDetail.setTop95(LatencyDetailInfo.getTop95());
-      latencyDetail.setDelay1S(LatencyDetailInfo.getDelay1S());
-      latencyDetail.setDelay2S(LatencyDetailInfo.getDelay2S());
-      latencyDetail.setDelay3S(LatencyDetailInfo.getDelay3S());
+      latencyDetail.setCount(latencyDetailInfo.getCount());
+      latencyDetail.setWitness(latencyDetailInfo.getWitness());
+      latencyDetail.setTop99(latencyDetailInfo.getTop99());
+      latencyDetail.setTop95(latencyDetailInfo.getTop95());
+      latencyDetail.setDelay1S(latencyDetailInfo.getDelay1S());
+      latencyDetail.setDelay2S(latencyDetailInfo.getDelay2S());
+      latencyDetail.setDelay3S(latencyDetailInfo.getDelay3S());
       latencyInfo.addDetail(latencyDetail.build());
     }
 
@@ -250,10 +250,18 @@ public class MetricsInfo {
   // node monitor information
   public static class NodeInfo {
     private String ip;
-    @JSONField(name = "nodeType")
     private int nodeType;
     private int status;
     private String version;
+    private int backupStatus;
+
+    public int getBackupStatus() {
+      return backupStatus;
+    }
+
+    public void setBackupStatus(int backupStatus) {
+      this.backupStatus = backupStatus;
+    }
 
     public String getIp() {
       return this.ip;
@@ -264,13 +272,12 @@ public class MetricsInfo {
       return this;
     }
 
-    @JSONField(name = "Type")
-    public int getType() {
+    public int getNodeType() {
       return this.nodeType;
     }
 
 
-    public NodeInfo setType(int nodeType) {
+    public NodeInfo setNodeType(int nodeType) {
       this.nodeType = nodeType;
       return this;
     }
@@ -302,14 +309,14 @@ public class MetricsInfo {
     private String headBlockHash;
     private int successForkCount;
     private int failForkCount;
-    private TPSInfo blockProcessTime;
-    @JSONField(name = "TPS")
-    private TPSInfo TPS;
-    @JSONField(name = "TxCacheSize")
-    private int TxCacheSize;
-    private int missTxCount;
-    @JSONField(name = "witnesses")
+    private TpsInfo blockProcessTime;
+    private TpsInfo tps;
+    private int transactionCacheSize;
+    private int missedTransactionCount;
     private List<Witness> witnesses;
+    private long failProcessBlockNum;
+    private String failProcessBlockReason;
+    private DupWitness dupWitness;
 
     public int getHeadBlockNum() {
       return this.headBlockNum;
@@ -356,42 +363,40 @@ public class MetricsInfo {
       return this;
     }
 
-    public TPSInfo getBlockProcessTime() {
+    public TpsInfo getBlockProcessTime() {
       return this.blockProcessTime;
     }
 
-    public BlockchainInfo setBlockProcessTime(TPSInfo blockProcessTime) {
+    public BlockchainInfo setBlockProcessTime(TpsInfo blockProcessTime) {
       this.blockProcessTime = blockProcessTime;
       return this;
     }
 
-    @JSONField(name = "TPS")
-    public TPSInfo getTPS() {
-      return this.TPS;
+    public TpsInfo getTps() {
+      return this.tps;
     }
 
-    public BlockchainInfo setTPS(TPSInfo TPS) {
-      this.TPS = TPS;
+    public BlockchainInfo setTps(TpsInfo tps) {
+      this.tps = tps;
       return this;
     }
 
-    @JSONField(name = "TxCacheSize")
-    public int getTxCacheSize() {
-      return this.TxCacheSize;
+    public int getTransactionCacheSize() {
+      return this.transactionCacheSize;
     }
 
 
-    public BlockchainInfo setTxCacheSize(int TxCacheSize) {
-      this.TxCacheSize = TxCacheSize;
+    public BlockchainInfo setTransactionCacheSize(int transactionCacheSize) {
+      this.transactionCacheSize = transactionCacheSize;
       return this;
     }
 
-    public int getMissTxCount() {
-      return this.missTxCount;
+    public int getMissedTransactionCount() {
+      return this.missedTransactionCount;
     }
 
-    public BlockchainInfo setMissTxCount(int missTxCount) {
-      this.missTxCount = missTxCount;
+    public BlockchainInfo setMissedTransactionCount(int missedTransactionCount) {
+      this.missedTransactionCount = missedTransactionCount;
       return this;
     }
 
@@ -404,7 +409,31 @@ public class MetricsInfo {
       return this;
     }
 
-    public static class TPSInfo {
+    public long getFailProcessBlockNum() {
+      return failProcessBlockNum;
+    }
+
+    public void setFailProcessBlockNum(long failProcessBlockNum) {
+      this.failProcessBlockNum = failProcessBlockNum;
+    }
+
+    public String getFailProcessBlockReason() {
+      return failProcessBlockReason;
+    }
+
+    public void setFailProcessBlockReason(String failProcessBlockReason) {
+      this.failProcessBlockReason = failProcessBlockReason;
+    }
+
+    public DupWitness getDupWitness() {
+      return dupWitness;
+    }
+
+    public void setDupWitness(DupWitness dupWitness) {
+      this.dupWitness = dupWitness;
+    }
+
+    public static class TpsInfo {
       private double meanRate;
       private double oneMinuteRate;
       private double fiveMinuteRate;
@@ -414,7 +443,7 @@ public class MetricsInfo {
         return this.meanRate;
       }
 
-      public TPSInfo setMeanRate(double meanRate) {
+      public TpsInfo setMeanRate(double meanRate) {
         this.meanRate = meanRate;
         return this;
       }
@@ -423,7 +452,7 @@ public class MetricsInfo {
         return this.oneMinuteRate;
       }
 
-      public TPSInfo setOneMinuteRate(double oneMinuteRate) {
+      public TpsInfo setOneMinuteRate(double oneMinuteRate) {
         this.oneMinuteRate = oneMinuteRate;
         return this;
       }
@@ -432,7 +461,7 @@ public class MetricsInfo {
         return this.fiveMinuteRate;
       }
 
-      public TPSInfo setFiveMinuteRate(double fiveMinuteRate) {
+      public TpsInfo setFiveMinuteRate(double fiveMinuteRate) {
         this.fiveMinuteRate = fiveMinuteRate;
         return this;
       }
@@ -441,7 +470,7 @@ public class MetricsInfo {
         return this.fifteenMinuteRate;
       }
 
-      public TPSInfo setFifteenMinuteRate(double fifteenMinuteRate) {
+      public TpsInfo setFifteenMinuteRate(double fifteenMinuteRate) {
         this.fifteenMinuteRate = fifteenMinuteRate;
         return this;
       }
@@ -470,6 +499,36 @@ public class MetricsInfo {
         return this;
       }
     }
+
+    public static class DupWitness {
+      private String address;
+      private long blockNum;
+      private int count;
+
+      public String getAddress() {
+        return address;
+      }
+
+      public void setAddress(String address) {
+        this.address = address;
+      }
+
+      public long getBlockNum() {
+        return blockNum;
+      }
+
+      public void setBlockNum(long blockNum) {
+        this.blockNum = blockNum;
+      }
+
+      public int getCount() {
+        return count;
+      }
+
+      public void setCount(int count) {
+        this.count = count;
+      }
+    }
   }
 
   // network monitor information
@@ -478,16 +537,12 @@ public class MetricsInfo {
     private ApiInfo api;
     private int connectionCount;
     private int validConnectionCount;
-    @JSONField(name = "TCPInTraffic")
-    private RateInfo TCPInTraffic;
-    @JSONField(name = "TCPOutTraffic")
-    private RateInfo TCPOutTraffic;
+    private RateInfo tcpInTraffic;
+    private RateInfo tcpOutTraffic;
     private int disconnectionCount;
     private List<DisconnectionDetailInfo> disconnectionDetail = new ArrayList<>();
-    @JSONField(name = "UDPInTraffic")
-    private RateInfo UDPInTraffic;
-    @JSONField(name = "UDPOutTraffic")
-    private RateInfo UDPOutTraffic;
+    private RateInfo udpInTraffic;
+    private RateInfo udpOutTraffic;
     private LatencyInfo latency;
 
     public int getErrorProtoCount() {
@@ -526,23 +581,23 @@ public class MetricsInfo {
       return this;
     }
 
-    public RateInfo getTCPInTraffic() {
-      return this.TCPInTraffic;
+    public RateInfo getTcpInTraffic() {
+      return this.tcpInTraffic;
     }
 
     @JSONField(name = "TCPInTraffic")
-    public NetInfo setTCPInTraffic(RateInfo TCPInTraffic) {
-      this.TCPInTraffic = TCPInTraffic;
+    public NetInfo setTcpInTraffic(RateInfo tcpInTraffic) {
+      this.tcpInTraffic = tcpInTraffic;
       return this;
     }
 
-    public RateInfo getTCPOutTraffic() {
-      return this.TCPOutTraffic;
+    public RateInfo getTcpOutTraffic() {
+      return this.tcpOutTraffic;
     }
 
     @JSONField(name = "TCPOutTraffic")
-    public NetInfo setTCPOutTraffic(RateInfo TCPOutTraffic) {
-      this.TCPOutTraffic = TCPOutTraffic;
+    public NetInfo setTcpOutTraffic(RateInfo tcpOutTraffic) {
+      this.tcpOutTraffic = tcpOutTraffic;
       return this;
     }
 
@@ -564,23 +619,23 @@ public class MetricsInfo {
       return this;
     }
 
-    public RateInfo getUDPInTraffic() {
-      return this.UDPInTraffic;
+    public RateInfo getUdpInTraffic() {
+      return this.udpInTraffic;
     }
 
     @JSONField(name = "UDPInTraffic")
-    public NetInfo setUDPInTraffic(RateInfo UDPInTraffic) {
-      this.UDPInTraffic = UDPInTraffic;
+    public NetInfo setUdpInTraffic(RateInfo udpInTraffic) {
+      this.udpInTraffic = udpInTraffic;
       return this;
     }
 
-    public RateInfo getUDPOutTraffic() {
-      return this.UDPOutTraffic;
+    public RateInfo getUdpOutTraffic() {
+      return this.udpOutTraffic;
     }
 
     @JSONField(name = "UDPOutTraffic")
-    public NetInfo setUDPOutTraffic(RateInfo UDPOutTraffic) {
-      this.UDPOutTraffic = UDPOutTraffic;
+    public NetInfo setUdpOutTraffic(RateInfo udpOutTraffic) {
+      this.udpOutTraffic = udpOutTraffic;
       return this;
     }
 
@@ -595,35 +650,35 @@ public class MetricsInfo {
 
     // API monitor information
     public static class ApiInfo {
-      private common totalCount;
-      private common totalFailCount;
-      private common totalOutTraffic;
+      private Common totalCount;
+      private Common totalFailCount;
+      private Common totalOutTraffic;
       @JSONField(name = "detail")
       private List<ApiDetailInfo> detail = new ArrayList<>();
 
-      public common getTotalCount() {
+      public Common getTotalCount() {
         return this.totalCount;
       }
 
-      public ApiInfo setTotalCount(common totalCount) {
+      public ApiInfo setTotalCount(Common totalCount) {
         this.totalCount = totalCount;
         return this;
       }
 
-      public common getTotalFailCount() {
+      public Common getTotalFailCount() {
         return this.totalFailCount;
       }
 
-      public ApiInfo setTotalFailCount(common totalFailCount) {
+      public ApiInfo setTotalFailCount(Common totalFailCount) {
         this.totalFailCount = totalFailCount;
         return this;
       }
 
-      public common getTotalOutTraffic() {
+      public Common getTotalOutTraffic() {
         return this.totalOutTraffic;
       }
 
-      public ApiInfo setTotalOutTraffic(common totaloutTraffic) {
+      public ApiInfo setTotalOutTraffic(Common totaloutTraffic) {
         this.totalOutTraffic = totaloutTraffic;
         return this;
       }
@@ -638,7 +693,7 @@ public class MetricsInfo {
         return this;
       }
 
-      public static class common {
+      public static class Common {
         private double meanRate;
         private int oneMinute;
         private int fiveMinute;
@@ -648,7 +703,7 @@ public class MetricsInfo {
           return this.meanRate;
         }
 
-        public common setMeanRate(double meanRate) {
+        public Common setMeanRate(double meanRate) {
           this.meanRate = meanRate;
           return this;
         }
@@ -657,7 +712,7 @@ public class MetricsInfo {
           return this.oneMinute;
         }
 
-        public common setOneMinute(int oneMinuteCount) {
+        public Common setOneMinute(int oneMinuteCount) {
           this.oneMinute = oneMinuteCount;
           return this;
         }
@@ -666,7 +721,7 @@ public class MetricsInfo {
           return this.fiveMinute;
         }
 
-        public common setFiveMinute(int fiveMinuteCount) {
+        public Common setFiveMinute(int fiveMinuteCount) {
           this.fiveMinute = fiveMinuteCount;
           return this;
         }
@@ -675,7 +730,7 @@ public class MetricsInfo {
           return this.fifteenMinute;
         }
 
-        public common setFifteenMinute(int fifteenMinuteCount) {
+        public Common setFifteenMinute(int fifteenMinuteCount) {
           this.fifteenMinute = fifteenMinuteCount;
           return this;
         }
@@ -684,9 +739,9 @@ public class MetricsInfo {
 
       public static class ApiDetailInfo {
         private String name;
-        private common count;
-        private common failCount;
-        private common outTraffic;
+        private Common count;
+        private Common failCount;
+        private Common outTraffic;
 
         public String getName() {
           return this.name;
@@ -697,29 +752,29 @@ public class MetricsInfo {
           return this;
         }
 
-        public common getCount() {
+        public Common getCount() {
           return this.count;
         }
 
-        public ApiDetailInfo setCount(common count) {
+        public ApiDetailInfo setCount(Common count) {
           this.count = count;
           return this;
         }
 
-        public common getFailCount() {
+        public Common getFailCount() {
           return this.failCount;
         }
 
-        public ApiDetailInfo setFailCount(common failCount) {
+        public ApiDetailInfo setFailCount(Common failCount) {
           this.failCount = failCount;
           return this;
         }
 
-        public common getOutTraffic() {
+        public Common getOutTraffic() {
           return this.outTraffic;
         }
 
-        public ApiDetailInfo setOutTraffic(common outTraffic) {
+        public ApiDetailInfo setOutTraffic(Common outTraffic) {
           this.outTraffic = outTraffic;
           return this;
         }

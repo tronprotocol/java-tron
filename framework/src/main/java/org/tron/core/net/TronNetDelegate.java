@@ -84,6 +84,10 @@ public class TronNetDelegate {
 
   private int blockIdCacheSize = 100;
 
+  private long failProcessBlockNum = 0;
+
+  private String failProcessBlockReason = "";
+
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
     @Override
     public boolean offer(BlockId blockId) {
@@ -234,6 +238,8 @@ public class TronNetDelegate {
           | ReceiptCheckErrException
           | VMIllegalException
           | ZksnarkException e) {
+        failProcessBlockNum = block.getNum();
+        failProcessBlockReason = e.getMessage();
         logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
       }
@@ -268,6 +274,14 @@ public class TronNetDelegate {
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
+  }
+
+  public long getFailProcessBlockNum() {
+    return failProcessBlockNum;
+  }
+
+  public String getFailProcessBlockReason() {
+    return failProcessBlockReason;
   }
 
   private void recordBlockLatency(BlockCapsule block, long nowTime) {

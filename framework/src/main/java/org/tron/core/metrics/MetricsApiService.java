@@ -17,6 +17,7 @@ import java.util.SortedMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.backup.BackupManager;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
@@ -47,6 +48,9 @@ public class MetricsApiService {
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
+  @Autowired
+  private BackupManager backupManager;
+
   /**
    * get metrics info.
    *
@@ -67,15 +71,20 @@ public class MetricsApiService {
   }
 
   public Protocol.MetricsInfo getProtoMonitorInfo() {
-    return getMetricsInfo().ToProtoEntity();
+    return getMetricsInfo().toProtoEntity();
   }
 
   private void setNodeInfo(MetricsInfo data) {
     MetricsInfo.NodeInfo nodeInfo = new MetricsInfo.NodeInfo();
     nodeInfo.setIp(getMyIp());
-    nodeInfo.setType(1);
+    nodeInfo.setNodeType(1);
     nodeInfo.setStatus(getNodeStatusByTime(0));
     nodeInfo.setVersion(Version.getVersion());
+    if (backupManager.getStatus() == BackupManager.BackupStatusEnum.MASTER) {
+      nodeInfo.setBackupStatus(1);
+    } else {
+      nodeInfo.setBackupStatus(0);
+    }
 
     data.setNodeInfo(nodeInfo);
   }
@@ -86,8 +95,8 @@ public class MetricsApiService {
     blockChain.setHeadBlockHash(dbManager.getDynamicPropertiesStore()
             .getLatestBlockHeaderHash().toString());
 
-    MetricsInfo.BlockchainInfo.TPSInfo blockProcessTime =
-            new MetricsInfo.BlockchainInfo.TPSInfo();
+    MetricsInfo.BlockchainInfo.TpsInfo blockProcessTime =
+            new MetricsInfo.BlockchainInfo.TpsInfo();
 
     blockProcessTime.setMeanRate(getAvgBlockProcessTimeByGap(0));
     blockProcessTime.setOneMinuteRate(getAvgBlockProcessTimeByGap(1));
@@ -97,19 +106,19 @@ public class MetricsApiService {
     blockChain.setSuccessForkCount(getSuccessForkCount());
     blockChain.setFailForkCount(getFailForkCount());
     blockChain.setHeadBlockNum((int) chainBaseManager.getHeadBlockNum());
-    blockChain.setTxCacheSize(dbManager.getPendingTransactions().size());
-    blockChain.setMissTxCount(dbManager.getPendingTransactions().size()
+    blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size());
+    blockChain.setMissedTransactionCount(dbManager.getPendingTransactions().size()
             + dbManager.getRePushTransactions().size());
 
 
     Meter transactionRate = metricsService.getMeter(MetricsService.BLOCKCHAIN_TPS);
-    MetricsInfo.BlockchainInfo.TPSInfo tpsInfo =
-            new MetricsInfo.BlockchainInfo.TPSInfo();
+    MetricsInfo.BlockchainInfo.TpsInfo tpsInfo =
+            new MetricsInfo.BlockchainInfo.TpsInfo();
     tpsInfo.setMeanRate(transactionRate.getMeanRate());
     tpsInfo.setOneMinuteRate(transactionRate.getOneMinuteRate());
     tpsInfo.setFiveMinuteRate(transactionRate.getFiveMinuteRate());
     tpsInfo.setFifteenMinuteRate(transactionRate.getFifteenMinuteRate());
-    blockChain.setTPS(tpsInfo);
+    blockChain.setTps(tpsInfo);
 
     getBlocks();
     List<MetricsInfo.BlockchainInfo.Witness> witnesses = new ArrayList<>();
@@ -120,8 +129,13 @@ public class MetricsApiService {
       noUpgradeSR.setVersion(it.getVersion());
       witnesses.add(noUpgradeSR);
     }
-
     blockChain.setWitnesses(witnesses);
+
+    blockChain.setFailProcessBlockNum(tronNetDelegate.getFailProcessBlockNum());
+    blockChain.setFailProcessBlockReason(tronNetDelegate.getFailProcessBlockReason());
+    MetricsInfo.BlockchainInfo.DupWitness dupWitness = new MetricsInfo.BlockchainInfo.DupWitness();
+    blockChain.setDupWitness(dupWitness);
+
     data.setBlockInfo(blockChain);
   }
 
@@ -148,7 +162,7 @@ public class MetricsApiService {
     tcpInTraffic.setOneMinuteRate(tcpInTrafficMeter.getOneMinuteRate());
     tcpInTraffic.setFiveMinuteRate(tcpInTrafficMeter.getFiveMinuteRate());
     tcpInTraffic.setFifteenMinuteRate(tcpInTrafficMeter.getFifteenMinuteRate());
-    netInfo.setTCPInTraffic(tcpInTraffic);
+    netInfo.setTcpInTraffic(tcpInTraffic);
 
     MetricsInfo.NetInfo.RateInfo tcpOutTraffic = new MetricsInfo.NetInfo.RateInfo();
     Meter tcpOutTrafficMeter = metricsService.getMeter(MetricsService.NET_TCP_OUT_TRAFFIC);
@@ -156,7 +170,7 @@ public class MetricsApiService {
     tcpOutTraffic.setOneMinuteRate(tcpOutTrafficMeter.getOneMinuteRate());
     tcpOutTraffic.setFiveMinuteRate(tcpOutTrafficMeter.getFiveMinuteRate());
     tcpOutTraffic.setFifteenMinuteRate(tcpOutTrafficMeter.getFifteenMinuteRate());
-    netInfo.setTCPOutTraffic(tcpOutTraffic);
+    netInfo.setTcpOutTraffic(tcpOutTraffic);
 
     MetricsInfo.NetInfo.RateInfo udpInTraffic = new MetricsInfo.NetInfo.RateInfo();
     Meter udpInTrafficMeter = metricsService.getMeter(MetricsService.NET_UDP_IN_TRAFFIC);
@@ -164,7 +178,7 @@ public class MetricsApiService {
     udpInTraffic.setOneMinuteRate(udpInTrafficMeter.getOneMinuteRate());
     udpInTraffic.setFiveMinuteRate(udpInTrafficMeter.getFiveMinuteRate());
     udpInTraffic.setFifteenMinuteRate(udpInTrafficMeter.getFifteenMinuteRate());
-    netInfo.setUDPInTraffic(udpInTraffic);
+    netInfo.setUdpInTraffic(udpInTraffic);
 
     MetricsInfo.NetInfo.RateInfo udpOutTraffic = new MetricsInfo.NetInfo.RateInfo();
     Meter udpOutTrafficMeter = metricsService.getMeter(MetricsService.NET_UDP_OUT_TRAFFIC);
@@ -172,12 +186,12 @@ public class MetricsApiService {
     udpOutTraffic.setOneMinuteRate(udpOutTrafficMeter.getOneMinuteRate());
     udpOutTraffic.setFiveMinuteRate(udpOutTrafficMeter.getFiveMinuteRate());
     udpOutTraffic.setFifteenMinuteRate(udpOutTrafficMeter.getFifteenMinuteRate());
-    netInfo.setUDPOutTraffic(udpOutTraffic);
+    netInfo.setUdpOutTraffic(udpOutTraffic);
 
     // set api request info
     MetricsInfo.NetInfo.ApiInfo apiInfo = new MetricsInfo.NetInfo.ApiInfo();
 
-    MetricsInfo.NetInfo.ApiInfo.common common=new  MetricsInfo.NetInfo.ApiInfo.common();
+    MetricsInfo.NetInfo.ApiInfo.Common common=new MetricsInfo.NetInfo.ApiInfo.Common();
 
     common.setMeanRate(HttpInterceptor.totalrequestCount.getMeanRate());
     common.setOneMinute(HttpInterceptor.totalrequestCount.getOneMinuteCount());
@@ -186,7 +200,7 @@ public class MetricsApiService {
 
     apiInfo.setTotalCount(common);
 
-    MetricsInfo.NetInfo.ApiInfo.common commonfail=new  MetricsInfo.NetInfo.ApiInfo.common();
+    MetricsInfo.NetInfo.ApiInfo.Common commonfail=new MetricsInfo.NetInfo.ApiInfo.Common();
     commonfail.setMeanRate(HttpInterceptor.totalFailRequestCount.getMeanRate());
     commonfail.setOneMinute(HttpInterceptor.totalFailRequestCount.getOneMinuteCount());
     commonfail.setFiveMinute(HttpInterceptor.totalFailRequestCount.getFiveMinuteCount());
@@ -194,7 +208,7 @@ public class MetricsApiService {
 
     apiInfo.setTotalFailCount(commonfail);
 
-    MetricsInfo.NetInfo.ApiInfo.common commonOutTraffic=new  MetricsInfo.NetInfo.ApiInfo.common();
+    MetricsInfo.NetInfo.ApiInfo.Common commonOutTraffic=new MetricsInfo.NetInfo.ApiInfo.Common();
     commonOutTraffic.setMeanRate(HttpInterceptor.outTraffic.getMeanRate());
     commonOutTraffic.setOneMinute(HttpInterceptor.outTraffic.getFiveMinuteCount());
     commonOutTraffic.setFiveMinute(HttpInterceptor.outTraffic.getFiveMinuteCount());
@@ -209,14 +223,14 @@ public class MetricsApiService {
               new MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo();
       apiDetail.setName(entry.getKey());
       JSONObject obj=entry.getValue();
-      MetricsInfo.NetInfo.ApiInfo.common commomCount=new  MetricsInfo.NetInfo.ApiInfo.common();
+      MetricsInfo.NetInfo.ApiInfo.Common commomCount=new MetricsInfo.NetInfo.ApiInfo.Common();
       commomCount.setMeanRate((double)obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_RPS));
       commomCount.setOneMinute((int)obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_ONE_MINUTE));
       commomCount.setFiveMinute((int)obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_FIVE_MINUTE));
       commomCount.setFifteenMinute((int)obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_FIFTEEN_MINUTE));
 
       apiDetail.setCount(commomCount);
-      MetricsInfo.NetInfo.ApiInfo.common commonFail=new  MetricsInfo.NetInfo.ApiInfo.common();
+      MetricsInfo.NetInfo.ApiInfo.Common commonFail=new MetricsInfo.NetInfo.ApiInfo.Common();
       commonFail.setMeanRate((double)obj.get(HttpInterceptor.END_POINT_FAIL_REQUEST_RPS));
       commonFail.setOneMinute((int)obj.get(HttpInterceptor.END_POINT_FAIL_REQUEST_ONE_MINUTE));
       commonFail.setFiveMinute((int)obj.get(HttpInterceptor.END_POINT_FAIL_REQUEST_FIVE_MINUTE));
@@ -225,7 +239,7 @@ public class MetricsApiService {
 
       apiDetail.setFailCount(commonFail);
 
-      MetricsInfo.NetInfo.ApiInfo.common commonTraffic=new  MetricsInfo.NetInfo.ApiInfo.common();
+      MetricsInfo.NetInfo.ApiInfo.Common commonTraffic=new MetricsInfo.NetInfo.ApiInfo.Common();
       commonTraffic.setMeanRate((double)obj.get(HttpInterceptor.END_POINT_OUT_TRAFFIC_BPS));
       commonTraffic.setOneMinute((int)obj.get(HttpInterceptor.END_POINT_OUT_TRAFFIC_ONE_MINUTE));
       commonTraffic.setFiveMinute((int)obj.get(HttpInterceptor.END_POINT_OUT_TRAFFIC_FIVE_MINUTE));

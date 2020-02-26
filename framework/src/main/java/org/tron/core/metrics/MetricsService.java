@@ -4,7 +4,9 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+
 import java.util.SortedMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
@@ -17,6 +19,7 @@ public class MetricsService {
   public static final String BLOCKCHAIN_BLOCK_COUNT = "blockchain.blockCount";
   public static final String BLOCKCHAIN_SUCCESS_FORK_COUNT = "blockchain.successForkCount";
   public static final String BLOCKCHAIN_FAIL_FORK_COUNT = "blockchain.failForkCount";
+  public static final String BLOCKCHAIN_DUP_WITNESS_COUNT = "blockchain.dupWitness.count.";
   public static final String NET_BLOCK_LATENCY = "net.block.latency";
   public static final String NET_BLOCK_LATENCY_WITNESS = "net.block.latency.witness.";
   public static final String NET_DISCONNECTION_COUNT = "net.disconnection.count";
@@ -27,12 +30,6 @@ public class MetricsService {
   public static final String NET_TCP_OUT_TRAFFIC = "net.TCPOutTraffic";
   public static final String NET_UDP_IN_TRAFFIC = "net.UDPInTraffic";
   public static final String NET_UDP_OUT_TRAFFIC = "net.UDPOutTraffic";
-  public static final String TOTAL_REQUEST = "net.api.count";
-  public static final String FAIL_REQUEST = "FAIL_REQUEST";
-  public static final String OUT_TRAFFIC = "OUT_TRAFFIC";
-  public final static String END_POINT_OUT_TRAFFIC = "END_POINT_OUT_TRAFFIC";
-  public final static String END_POINT_ALL_REQUESTS = "END_POINT_ALL_REQUESTS";
-  public final static String END_POINT_FAIL_REQUESTS= "END_POINT_FAIL_REQUESTS";
 
   @Autowired
   private MetricRegistry metricRegistry;
@@ -47,7 +44,8 @@ public class MetricsService {
 
   /**
    * Histogram update.
-   * @param key String
+   *
+   * @param key   String
    * @param value long
    */
   public void histogramUpdate(String key, long value) {
@@ -63,7 +61,8 @@ public class MetricsService {
 
   /**
    * Meter mark.
-   * @param key String
+   *
+   * @param key   String
    * @param value long
    */
   public void meterMark(String key, long value) {
@@ -82,7 +81,8 @@ public class MetricsService {
 
   /**
    * Counter inc.
-   * @param key String
+   *
+   * @param key   String
    * @param value long
    */
   public void counterInc(String key, long value) {

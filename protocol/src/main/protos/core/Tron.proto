@@ -643,6 +643,7 @@ message MetricsInfo {
     int32 nodeType = 2;
     int32 status = 3;
     string version = 4;
+    int32 backupStatus = 5;
   }
 
   message BlockChainInfo {
@@ -651,20 +652,31 @@ message MetricsInfo {
     string headBlockHash = 3;
     int32 successForkCount = 4;
     int32 failForkCount = 5;
-    TPSInfo blockProcessTime = 6;
-    TPSInfo TPS = 7;
-    int32 TxCacheSize = 8;
-    int32 missedTxCount = 9;
+    TpsInfo blockProcessTime = 6;
+    TpsInfo tps = 7;
+    int32 transactionCacheSize = 8;
+    int32 missedTransactionCount = 9;
     repeated Witness witnesses = 10;
+    int64 failProcessBlockNum = 11;
+    string failProcessBlockReason = 12;
+    repeated DupWitness dupWitness = 13;
+
     message Witness {
       string address = 1;
       int32 version = 2;
     }
-    message TPSInfo {
+
+    message TpsInfo {
       double meanRate = 1;
       double oneMinuteRate = 2;
       double fiveMinuteRate = 3;
       double fifteenMinuteRate = 4;
+    }
+
+    message DupWitness {
+      string address = 1;
+      int64 blockNum = 2;
+      int32 count = 3;
     }
   }
 
@@ -673,25 +685,27 @@ message MetricsInfo {
     ApiInfo api = 2;
     int32 connectionCount = 3;
     int32 validConnectionCount = 4;
-    RateInfo TCPInTraffic = 5;
-    RateInfo TCPOutTraffic = 6;
+    RateInfo tcpInTraffic = 5;
+    RateInfo tcpOutTraffic = 6;
     int32 disconnectionCount = 7;
     repeated DisconnectionDetailInfo disconnectionDetail = 8;
-    RateInfo UDPInTraffic = 9;
-    RateInfo UDPOutTraffic = 10;
+    RateInfo udpInTraffic = 9;
+    RateInfo udpOutTraffic = 10;
     LatencyInfo latency = 11;
 
     message ApiInfo {
       common totalCount = 1;
       common totalFailCount = 2;
-      common totalOutTraffic = 4;
-      repeated ApiDetailInfo detail = 5;
+      common totalOutTraffic = 3;
+      repeated ApiDetailInfo detail = 4;
+
       message ApiDetailInfo {
         string name = 1;
         common count = 2;
         common failCount = 3;
         common outTraffic = 4;
       }
+
       message common {
         double meanRate = 1;
         int64 oneMinute = 2;
@@ -724,7 +738,6 @@ message MetricsInfo {
         int32 delay3S = 7;
       }
     }
-
 
     message RateInfo {
       double meanRate = 1;

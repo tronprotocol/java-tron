@@ -6,7 +6,7 @@ package org.tron.core.metrics.blockchainmetric;
 public class BlockChainMrtricManager {
 
   public BlockchainInfo getBlockchainInfo() {
-
+    return new BlockchainInfo();
   }
 
   public void applyBlcok(Block block) {
