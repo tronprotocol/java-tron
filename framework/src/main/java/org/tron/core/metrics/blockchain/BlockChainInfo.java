@@ -1,4 +1,4 @@
-package org.tron.core.metrics.blockchainmetric;
+package org.tron.core.metrics.blockchain;
 
 import com.codahale.metrics.Meter;
 import java.util.List;
