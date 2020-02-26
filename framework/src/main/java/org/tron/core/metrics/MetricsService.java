@@ -13,8 +13,7 @@ import org.tron.protos.Protocol.Block;
 @Component
 public class MetricsService {
 
-  @Autowired
-  private MetricRegistry metricRegistry;
+  private MetricRegistry metricRegistry = new MetricRegistry();
 
   public Histogram getHistogram(String key) {
     return metricRegistry.histogram(key);
