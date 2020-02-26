@@ -38,6 +38,7 @@ import org.tron.common.overlay.message.P2pMessageFactory;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
@@ -127,7 +128,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
     fastForward.fillHelloMessage(message, channel);
     ctx.writeAndFlush(message.getSendData());
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(message);
-    metricsService.meterMark(MetricsService.NET_TCP_OUT_TRAFFIC,
+    metricsService.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC,
             message.getSendData().writableBytes());
     logger.info("Handshake send to {}, {} ", ctx.channel().remoteAddress(), message);
   }

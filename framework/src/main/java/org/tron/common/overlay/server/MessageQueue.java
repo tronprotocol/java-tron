@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.PingMessage;
 import org.tron.common.overlay.message.PongMessage;
+import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TransactionsMessage;
@@ -108,7 +109,7 @@ public class MessageQueue {
       logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
     }
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(msg);
-    metricsService.meterMark(MetricsService.NET_TCP_OUT_TRAFFIC, msg.getSendData().writableBytes());
+    metricsService.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC, msg.getSendData().writableBytes());
     sendTime = System.currentTimeMillis();
     if (msg.getAnswerMessage() != null) {
       requestQueue.add(new MessageRoundTrip(msg));

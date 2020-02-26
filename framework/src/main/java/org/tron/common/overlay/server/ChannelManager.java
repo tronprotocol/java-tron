@@ -22,6 +22,7 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -108,8 +109,8 @@ public class ChannelManager {
         recentlyDisconnected.put(channel.getInetAddress(), reason);
         break;
     }
-    metricsService.counterInc(MetricsService.NET_DISCONNECTION_COUNT, 1L);
-    metricsService.counterInc(MetricsService.NET_DISCONNECTION_REASON + reason, 1L);
+    metricsService.counterInc(MetricsKey.NET_DISCONNECTION_COUNT, 1L);
+    metricsService.counterInc(MetricsKey.NET_DISCONNECTION_REASON + reason, 1L);
   }
 
   public void notifyDisconnect(Channel channel) {

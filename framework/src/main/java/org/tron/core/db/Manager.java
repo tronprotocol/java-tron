@@ -109,6 +109,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -894,7 +895,7 @@ public class Manager {
           throw e;
         } finally {
           if (exception != null) {
-            metricsService.meterMark(MetricsService.BLOCKCHAIN_FAIL_FORK_COUNT, 1);
+            metricsService.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT, 1);
             logger.warn("switch back because exception thrown while switching forks. " + exception
                     .getMessage(),
                 exception);
@@ -931,7 +932,7 @@ public class Manager {
         }
       }
     }
-    metricsService.meterMark(MetricsService.BLOCKCHAIN_SUCCESS_FORK_COUNT, 1);
+    metricsService.meterMark(MetricsKey.BLOCKCHAIN_SUCCESS_FORK_COUNT, 1);
   }
 
   /**
@@ -1191,9 +1192,9 @@ public class Manager {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
 
-    metricsService.meterMark(MetricsService.BLOCKCHAIN_BLOCKPROCESS_TIME,
+    metricsService.meterMark(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME,
         System.currentTimeMillis() - startTime);
-    metricsService.meterMark(MetricsService.BLOCKCHAIN_BLOCK_COUNT, 1);
+    metricsService.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_COUNT, 1);
 
     return transactionInfo.getInstance();
   }

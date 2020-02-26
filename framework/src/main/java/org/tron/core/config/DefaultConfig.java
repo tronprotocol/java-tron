@@ -16,13 +16,12 @@ import org.tron.core.db.TransactionCache;
 import org.tron.core.db.backup.BackupRocksDBAspect;
 import org.tron.core.db.backup.NeedBeanCondition;
 import org.tron.core.db2.core.SnapshotManager;
-import org.tron.core.metrics.MetricsConfig;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
 @Slf4j(topic = "app")
 @Configuration
-@Import({CommonConfig.class, MetricsConfig.class})
+@Import(CommonConfig.class)
 public class DefaultConfig {
 
   static {
