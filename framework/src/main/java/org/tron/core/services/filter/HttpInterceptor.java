@@ -2,15 +2,10 @@ package org.tron.core.services.filter;
 
 import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -63,7 +58,7 @@ public class HttpInterceptor implements Filter {
   private int minuteCount = 0;
   private long startTime;
 
-//  ExecutorService executor = Executors.newFixedThreadPool(5);
+  //  ExecutorService executor = Executors.newFixedThreadPool(5);
   @Autowired
   private MetricsService metricsService;
 
@@ -151,83 +146,9 @@ public class HttpInterceptor implements Filter {
       outTraffic.allIncrement(reponseContentSize);
       outTraffic.caculteMeanRate(seconds);
 
-//      executor.execute(() -> {    // async execute
-//
-//        logger.info("execute update concurrency map");
-//       metricsService.getMeter(MetricsService.BLOCKCHAIN_FAIL_FORK_COUNT)
-//          .mark();
-//       metricsService.getMeter(MetricsService.OUT_TRAFFIC)
-//          .mark(reponseContentSize);
-//        logger.info("execute update concurrency map  3");
-//       metricsService.getMeter(MetricsService.END_POINT_ALL_REQUESTS)
-//            .mark();
-//        logger.info("execute update concurrency map  4");
-//        JSONObject objCopy = EndpointCount.get(endpoint);
-//        objCopy.put(END_POINT_ALL_REQUESTS_ONE_MINUTE,
-//            (int)  Math.round(metricsService.getMeter(MetricsService.END_POINT_ALL_REQUESTS).
-//                getOneMinuteRate()*60));;
-//        objCopy.put(END_POINT_ALL_REQUESTS_FIVE_MINUTE,
-//            (int)  Math.round(metricsService.getMeter(MetricsService.END_POINT_ALL_REQUESTS).
-//                getFiveMinuteRate()*5*60));;
-//        objCopy.put(END_POINT_ALL_REQUESTS_FIFTEEN_MINUTE,
-//            (int) Math.round(metricsService.getMeter(MetricsService.END_POINT_ALL_REQUESTS).
-//                getFifteenMinuteRate()*15*60));;
-//        objCopy.put(END_POINT_ALL_REQUESTS_FIFTEEN_MINUTE,
-//            (int) Math.round(metricsService.getMeter(MetricsService.END_POINT_ALL_REQUESTS).
-//                getFifteenMinuteRate()*15*60));;
-//        objCopy.put(END_POINT_ALL_REQUESTS_RPS,
-//            (double)metricsService.getMeter(MetricsService.END_POINT_ALL_REQUESTS).
-//                getMeanRate());;
-//        logger.info("execute update concurrency map  5");
-//
-//       metricsService.getMeter(MetricsService.END_POINT_OUT_TRAFFIC)
-//            .mark(reponseContentSize);
-//
-//        objCopy.put(END_POINT_OUT_TRAFFIC_ONE_MINUTE,
-//            (int)  Math.round(metricsService.getMeter(MetricsService.END_POINT_OUT_TRAFFIC).
-//                getOneMinuteRate()*60));;
-//        objCopy.put(END_POINT_OUT_TRAFFIC_FIVE_MINUTE,
-//            (int)  Math.round(metricsService.getMeter(MetricsService.END_POINT_OUT_TRAFFIC).
-//                getFiveMinuteRate()*5*60));;
-//        objCopy.put(END_POINT_OUT_TRAFFIC_FIFTEEN_MINUTE,
-//            (int) Math.round(metricsService.getMeter(MetricsService.END_POINT_OUT_TRAFFIC).
-//                getFifteenMinuteRate()*15*60));;
-//        objCopy.put(END_POINT_OUT_TRAFFIC_BPS,
-//            (double)metricsService.getMeter(MetricsService.END_POINT_OUT_TRAFFIC).
-//                getMeanRate());;
-//        logger.info("update concurrency map");
-//        EndpointCount.put(endpoint, objCopy);
-//        logger.info("execute update concurrency map  6");
-//
-//
-//      });
-
 
       HttpServletResponse resp = (HttpServletResponse) response;
       if (resp.getStatus() != 200) {
-//        executor.submit(() -> {    // async execute
-//          metricsService.getMeter(MetricsService.FAIL_REQUEST)
-//              .mark();
-//
-//          metricsService.getMeter(MetricsService.END_POINT_FAIL_REQUESTS)
-//              .mark();
-//          JSONObject objCopy = EndpointCount.get(endpoint);
-//          objCopy.put(END_POINT_FAIL_REQUEST_ONE_MINUTE,
-//              (int)  Math.round(metricsService.getMeter(MetricsService.END_POINT_FAIL_REQUESTS).
-//                  getOneMinuteRate()*60));;
-//          objCopy.put(END_POINT_FAIL_REQUEST_FIVE_MINUTE,
-//              (int)  Math.round(metricsService.getMeter(MetricsService.END_POINT_FAIL_REQUESTS).
-//                  getFiveMinuteRate()*5*60));;
-//          objCopy.put(END_POINT_FAIL_REQUEST_FIFTEEN_MINUTE,
-//              (int) Math.round(metricsService.getMeter(MetricsService.END_POINT_FAIL_REQUESTS).
-//                  getFifteenMinuteRate()*15*60));;
-//          objCopy.put(END_POINT_FAIL_REQUEST_RPS,
-//              (double)metricsService.getMeter(MetricsService.END_POINT_FAIL_REQUESTS).
-//                  getMeanRate());;
-//
-//          EndpointCount.put(endpoint, objCopy);
-//
-//        });
         totalFailRequestCount.allIncrement();
         totalFailRequestCount.caculteMeanRate(seconds);
 
@@ -255,8 +176,6 @@ public class HttpInterceptor implements Filter {
   }
 
 
-  // need a thread to run it every minute, but it consume so much time ,
-// which downgrade performance
   public void resetCount() {
     // reset every one, five, fifteen minute
     minuteCount++;
