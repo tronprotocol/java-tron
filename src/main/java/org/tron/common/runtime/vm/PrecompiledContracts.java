@@ -1013,8 +1013,10 @@ public class PrecompiledContracts {
       return pair;
 
     }
+
     //transfer: 1 shielded --> 2 shielded
     private Pair<Boolean, byte[]> checkTransfer(byte[] data) {
+      long start_time = System.currentTimeMillis();
 
       byte[] spendCv = new byte[32];
       byte[] anchor = new byte[32];
@@ -1068,19 +1070,28 @@ public class PrecompiledContracts {
       boolean result;
 
       //verify spendProof, receiveProof && bindingSignature
+      long verifyStartTime = System.currentTimeMillis();
       long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
       try {
         result = JLibrustzcash.librustzcashSaplingCheckSpend(
                 new LibrustzcashParam.CheckSpendParams(ctx, spendCv, anchor, nullifier, rk, spendProof, spendAuthSig, signHash));
+        long checkSpendEndTime = System.currentTimeMillis();
+        logger.info("Transfer checkSpend cost is: " + (checkSpendEndTime - verifyStartTime) + "ms");
 
         result &= JLibrustzcash.librustzcashSaplingCheckOutput(
                 new LibrustzcashParam.CheckOutputParams(ctx, receiveCv0, cm[0], receiveEpk0, receiveProof0));
+        long checkOutput1EndTime = System.currentTimeMillis();
+        logger.info("Transfer checkOutput cost is: " + (checkOutput1EndTime - checkSpendEndTime) + "ms");
 
         result &= JLibrustzcash.librustzcashSaplingCheckOutput(
                 new LibrustzcashParam.CheckOutputParams(ctx, receiveCv1, cm[1], receiveEpk1, receiveProof1));
+        long checkOutput2EndTime = System.currentTimeMillis();
+        logger.info("Transfer checkOutput cost is: " + (checkOutput2EndTime - checkOutput1EndTime) + "ms");
 
         result &= JLibrustzcash.librustzcashSaplingFinalCheck(
                 new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
+        long checkFinalCheckEndTime = System.currentTimeMillis();
+        logger.info("Transfer finalCheck cost is: " + (checkFinalCheckEndTime - checkOutput2EndTime) + "ms");
 
       } catch (Throwable any) {
         result = false;
@@ -1090,9 +1101,19 @@ public class PrecompiledContracts {
       if (!result) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
-      logger.info("Transfer verify successfully");
 
-      return insertTwoleaves(frontier, cm, leafCount);
+      long costTime = System.currentTimeMillis() - start_time;
+      logger.info("Transfer verify successfully, " + "check cost is: " + costTime + "ms");
+
+      long startTimeInsert = System.currentTimeMillis();
+      Pair<Boolean, byte[]> pair = insertTwoleaves(frontier, cm, leafCount);
+      costTime = System.currentTimeMillis() - startTimeInsert;
+      logger.info("insertLeaf cost is: " + costTime + "ms");
+
+      costTime = System.currentTimeMillis() - start_time;
+      logger.info("Transfer pre-compile total cost is: " + costTime + "ms");
+
+      return pair;
 
     }
 
@@ -1234,6 +1255,8 @@ public class PrecompiledContracts {
       byte[] result = new byte[(slot[0] + slot[1] + 3) * 32 + 2];
       result[0] = (byte) (slot[0] & 0xFF);
       result[1] = (byte) (slot[1] & 0xFF);
+      logger.info("slot count is " + (slot[0] + slot[1] + 2));
+
       // consider each new leaf in turn, from left to right:
       try {
         int resultIdx = 2;
@@ -1307,6 +1330,7 @@ public class PrecompiledContracts {
       return Pair.of(true, result);
     }
   }
+
   // compute pedersen hash
   public static class CalHash extends PrecompiledContract {
 
