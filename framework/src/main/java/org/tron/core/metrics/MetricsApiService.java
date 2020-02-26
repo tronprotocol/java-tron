@@ -111,7 +111,7 @@ public class MetricsApiService {
             + dbManager.getRePushTransactions().size());
 
 
-    Meter transactionRate = metricsService.getMeter(MetricsService.BLOCKCHAIN_TPS);
+    Meter transactionRate = metricsService.getMeter(MetricsKey.BLOCKCHAIN_TPS);
     MetricsInfo.BlockchainInfo.TpsInfo tpsInfo =
             new MetricsInfo.BlockchainInfo.TpsInfo();
     tpsInfo.setMeanRate(transactionRate.getMeanRate());
@@ -152,12 +152,12 @@ public class MetricsApiService {
     }
     netInfo.setValidConnectionCount(validConnectionCount);
 
-    long errorProtoCount = metricsService.getCounter(MetricsService.NET_ERROR_PROTO_COUNT)
+    long errorProtoCount = metricsService.getCounter(MetricsKey.NET_ERROR_PROTO_COUNT)
             .getCount();
     netInfo.setErrorProtoCount((int) errorProtoCount);
 
     MetricsInfo.NetInfo.RateInfo tcpInTraffic = new MetricsInfo.NetInfo.RateInfo();
-    Meter tcpInTrafficMeter = metricsService.getMeter(MetricsService.NET_TCP_IN_TRAFFIC);
+    Meter tcpInTrafficMeter = metricsService.getMeter(MetricsKey.NET_TCP_IN_TRAFFIC);
     tcpInTraffic.setMeanRate(tcpInTrafficMeter.getMeanRate());
     tcpInTraffic.setOneMinuteRate(tcpInTrafficMeter.getOneMinuteRate());
     tcpInTraffic.setFiveMinuteRate(tcpInTrafficMeter.getFiveMinuteRate());
@@ -165,7 +165,7 @@ public class MetricsApiService {
     netInfo.setTcpInTraffic(tcpInTraffic);
 
     MetricsInfo.NetInfo.RateInfo tcpOutTraffic = new MetricsInfo.NetInfo.RateInfo();
-    Meter tcpOutTrafficMeter = metricsService.getMeter(MetricsService.NET_TCP_OUT_TRAFFIC);
+    Meter tcpOutTrafficMeter = metricsService.getMeter(MetricsKey.NET_TCP_OUT_TRAFFIC);
     tcpOutTraffic.setMeanRate(tcpOutTrafficMeter.getMeanRate());
     tcpOutTraffic.setOneMinuteRate(tcpOutTrafficMeter.getOneMinuteRate());
     tcpOutTraffic.setFiveMinuteRate(tcpOutTrafficMeter.getFiveMinuteRate());
@@ -173,7 +173,7 @@ public class MetricsApiService {
     netInfo.setTcpOutTraffic(tcpOutTraffic);
 
     MetricsInfo.NetInfo.RateInfo udpInTraffic = new MetricsInfo.NetInfo.RateInfo();
-    Meter udpInTrafficMeter = metricsService.getMeter(MetricsService.NET_UDP_IN_TRAFFIC);
+    Meter udpInTrafficMeter = metricsService.getMeter(MetricsKey.NET_UDP_IN_TRAFFIC);
     udpInTraffic.setMeanRate(udpInTrafficMeter.getMeanRate());
     udpInTraffic.setOneMinuteRate(udpInTrafficMeter.getOneMinuteRate());
     udpInTraffic.setFiveMinuteRate(udpInTrafficMeter.getFiveMinuteRate());
@@ -181,7 +181,7 @@ public class MetricsApiService {
     netInfo.setUdpInTraffic(udpInTraffic);
 
     MetricsInfo.NetInfo.RateInfo udpOutTraffic = new MetricsInfo.NetInfo.RateInfo();
-    Meter udpOutTrafficMeter = metricsService.getMeter(MetricsService.NET_UDP_OUT_TRAFFIC);
+    Meter udpOutTrafficMeter = metricsService.getMeter(MetricsKey.NET_UDP_OUT_TRAFFIC);
     udpOutTraffic.setMeanRate(udpOutTrafficMeter.getMeanRate());
     udpOutTraffic.setOneMinuteRate(udpOutTrafficMeter.getOneMinuteRate());
     udpOutTraffic.setFiveMinuteRate(udpOutTrafficMeter.getFiveMinuteRate());
@@ -253,16 +253,16 @@ public class MetricsApiService {
     netInfo.setApi(apiInfo);
 
     long disconnectionCount
-            = metricsService.getCounter(MetricsService.NET_DISCONNECTION_COUNT).getCount();
+            = metricsService.getCounter(MetricsKey.NET_DISCONNECTION_COUNT).getCount();
     netInfo.setDisconnectionCount((int) disconnectionCount);
     List<MetricsInfo.NetInfo.DisconnectionDetailInfo> disconnectionDetails =
             new ArrayList<>();
     SortedMap<String, Counter> disconnectionReason
-            = metricsService.getCounters(MetricsService.NET_DISCONNECTION_REASON);
+            = metricsService.getCounters(MetricsKey.NET_DISCONNECTION_REASON);
     for (Map.Entry<String, Counter> entry : disconnectionReason.entrySet()) {
       MetricsInfo.NetInfo.DisconnectionDetailInfo detail =
               new MetricsInfo.NetInfo.DisconnectionDetailInfo();
-      String reason = entry.getKey().substring(MetricsService.NET_DISCONNECTION_REASON.length());
+      String reason = entry.getKey().substring(MetricsKey.NET_DISCONNECTION_REASON.length());
       detail.setReason(reason);
       detail.setCount((int) entry.getValue().getCount());
       disconnectionDetails.add(detail);
@@ -305,16 +305,16 @@ public class MetricsApiService {
   private MetricsInfo.NetInfo.LatencyInfo getBlockLatencyInfo() {
     MetricsInfo.NetInfo.LatencyInfo latencyInfo =
             new MetricsInfo.NetInfo.LatencyInfo();
-    long delay1SCount = metricsService.getCounter(MetricsService.NET_BLOCK_LATENCY + ".1S")
+    long delay1SCount = metricsService.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".1S")
             .getCount();
     latencyInfo.setDelay1S((int) delay1SCount);
-    long delay2SCount = metricsService.getCounter(MetricsService.NET_BLOCK_LATENCY + ".2S")
+    long delay2SCount = metricsService.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".2S")
             .getCount();
     latencyInfo.setDelay2S((int) delay2SCount);
-    long delay3SCount = metricsService.getCounter(MetricsService.NET_BLOCK_LATENCY + ".3S")
+    long delay3SCount = metricsService.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".3S")
             .getCount();
     latencyInfo.setDelay3S((int) delay3SCount);
-    Histogram blockLatency = metricsService.getHistogram(MetricsService.NET_BLOCK_LATENCY);
+    Histogram blockLatency = metricsService.getHistogram(MetricsKey.NET_BLOCK_LATENCY);
     latencyInfo.setTop99((int) blockLatency.getSnapshot().get99thPercentile());
     latencyInfo.setTop95((int) blockLatency.getSnapshot().get95thPercentile());
     latencyInfo.setTotalCount((int) blockLatency.getCount());
@@ -322,23 +322,23 @@ public class MetricsApiService {
     List<MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo> latencyDetailInfos =
             new ArrayList<>();
     SortedMap<String, Histogram> witnessLatencyMap
-            = metricsService.getHistograms(MetricsService.NET_BLOCK_LATENCY_WITNESS);
+            = metricsService.getHistograms(MetricsKey.NET_BLOCK_LATENCY_WITNESS);
     for (Map.Entry<String, Histogram> entry : witnessLatencyMap.entrySet()) {
       MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo latencyDetailTemp =
               new MetricsInfo.NetInfo.LatencyInfo.LatencyDetailInfo();
-      String address = entry.getKey().substring(MetricsService.NET_BLOCK_LATENCY_WITNESS.length());
+      String address = entry.getKey().substring(MetricsKey.NET_BLOCK_LATENCY_WITNESS.length());
       latencyDetailTemp.setCount((int) entry.getValue().getCount());
       latencyDetailTemp.setWitness(address);
       latencyDetailTemp.setTop99((int) entry.getValue().getSnapshot().get99thPercentile());
       latencyDetailTemp.setTop95((int) entry.getValue().getSnapshot().get95thPercentile());
       long witnessDelay1S = metricsService.getCounter(
-              MetricsService.NET_BLOCK_LATENCY_WITNESS + address + ".1S").getCount();
+              MetricsKey.NET_BLOCK_LATENCY_WITNESS + address + ".1S").getCount();
       latencyDetailTemp.setDelay1S((int) witnessDelay1S);
       long witnessDelay2S = metricsService.getCounter(
-              MetricsService.NET_BLOCK_LATENCY_WITNESS + address + ".2S").getCount();
+              MetricsKey.NET_BLOCK_LATENCY_WITNESS + address + ".2S").getCount();
       latencyDetailTemp.setDelay2S((int) witnessDelay2S);
       long witnessDelay3S = metricsService.getCounter(
-              MetricsService.NET_BLOCK_LATENCY_WITNESS + address + ".3S").getCount();
+              MetricsKey.NET_BLOCK_LATENCY_WITNESS + address + ".3S").getCount();
       latencyDetailTemp.setDelay3S((int) witnessDelay3S);
       latencyDetailInfos.add(latencyDetailTemp);
     }
@@ -351,13 +351,13 @@ public class MetricsApiService {
   private int getNodeStatusByTime(int time) {
     switch (time) {
       case 0:
-        return metricsService.getMeter(MetricsService.NODE_STATUS).getMeanRate() > 0 ? 0 : 1;
+        return metricsService.getMeter(MetricsKey.NODE_STATUS).getMeanRate() > 0 ? 0 : 1;
       case 1:
-        return metricsService.getMeter(MetricsService.NODE_STATUS).getOneMinuteRate() > 0 ? 0 : 1;
+        return metricsService.getMeter(MetricsKey.NODE_STATUS).getOneMinuteRate() > 0 ? 0 : 1;
       case 5:
-        return metricsService.getMeter(MetricsService.NODE_STATUS).getFiveMinuteRate() > 0 ? 0 : 1;
+        return metricsService.getMeter(MetricsKey.NODE_STATUS).getFiveMinuteRate() > 0 ? 0 : 1;
       case 15:
-        return metricsService.getMeter(MetricsService.NODE_STATUS)
+        return metricsService.getMeter(MetricsKey.NODE_STATUS)
                 .getFifteenMinuteRate() > 0 ? 0 : 1;
       default:
         return -1;
@@ -367,8 +367,8 @@ public class MetricsApiService {
   // gap: 1 minute, 5 minute, 15 minute, 0: avg for total block and time
   private double getAvgBlockProcessTimeByGap(int gap) {
     Meter meterBlockProcessTime =
-        metricsService.getMeter(MetricsService.BLOCKCHAIN_BLOCKPROCESS_TIME);
-    Meter meterBlockTxCount = metricsService.getMeter(MetricsService.BLOCKCHAIN_BLOCK_COUNT);
+        metricsService.getMeter(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME);
+    Meter meterBlockTxCount = metricsService.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_COUNT);
     if (meterBlockTxCount.getCount() == 0) {
       return 0;
     }
@@ -399,11 +399,11 @@ public class MetricsApiService {
   }
 
   public int getSuccessForkCount() {
-    return (int) metricsService.getMeter(MetricsService.BLOCKCHAIN_SUCCESS_FORK_COUNT).getCount();
+    return (int) metricsService.getMeter(MetricsKey.BLOCKCHAIN_SUCCESS_FORK_COUNT).getCount();
   }
 
   public int getFailForkCount() {
-    return (int) metricsService.getMeter(MetricsService.BLOCKCHAIN_FAIL_FORK_COUNT).getCount();
+    return (int) metricsService.getMeter(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT).getCount();
   }
 
   private void getBlocks()  {
