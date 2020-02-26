@@ -682,15 +682,21 @@ message MetricsInfo {
     LatencyInfo latency = 11;
 
     message ApiInfo {
-      int32 totalCount = 1;
-      int32 totalFailCount = 2;
-      repeated ApiDetailInfo detail = 3;
-      string totalOutTraffic = 4;
+      common totalCount = 1;
+      common totalFailCount = 2;
+      common totalOutTraffic = 4;
+      repeated ApiDetailInfo detail = 5;
       message ApiDetailInfo {
         string name = 1;
-        int32 count = 2;
-        int32 failCount = 3;
-        string outTraffic = 4;
+        common count = 2;
+        common failCount = 3;
+        common outTraffic = 4;
+      }
+      message common {
+        double meanRate = 1;
+        int64 oneMinute = 2;
+        int64 fiveMinute = 3;
+        int64 fifteenMinute = 4;
       }
     }
 

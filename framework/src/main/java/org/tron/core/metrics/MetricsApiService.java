@@ -176,17 +176,63 @@ public class MetricsApiService {
 
     // set api request info
     MetricsInfo.NetInfo.ApiInfo apiInfo = new MetricsInfo.NetInfo.ApiInfo();
-    HttpInterceptor httpCount = new HttpInterceptor();
 
-    apiInfo.setTotalCount(httpCount.getTotalCount());
-    apiInfo.setTotalFailCount(httpCount.getFailCount());
+    MetricsInfo.NetInfo.ApiInfo.common common=new  MetricsInfo.NetInfo.ApiInfo.common();
+
+    common.setMeanRate(HttpInterceptor.totalrequestCount.getMeanRate());
+    common.setOneMinute(HttpInterceptor.totalrequestCount.getOneMinuteCount());
+    common.setFiveMinute(HttpInterceptor.totalrequestCount.getFiveMinuteCount());
+    common.setFifteenMinute(HttpInterceptor.totalrequestCount.getFifteenMinuteCount());
+
+    apiInfo.setTotalCount(common);
+
+    MetricsInfo.NetInfo.ApiInfo.common commonfail=new  MetricsInfo.NetInfo.ApiInfo.common();
+    commonfail.setMeanRate(HttpInterceptor.totalFailRequestCount.getMeanRate());
+    commonfail.setOneMinute(HttpInterceptor.totalFailRequestCount.getOneMinuteCount());
+    commonfail.setFiveMinute(HttpInterceptor.totalFailRequestCount.getFiveMinuteCount());
+    commonfail.setFifteenMinute(HttpInterceptor.totalFailRequestCount.getFifteenMinuteCount());
+
+    apiInfo.setTotalFailCount(commonfail);
+
+    MetricsInfo.NetInfo.ApiInfo.common commonOutTraffic=new  MetricsInfo.NetInfo.ApiInfo.common();
+    commonOutTraffic.setMeanRate(HttpInterceptor.outTraffic.getMeanRate());
+    commonOutTraffic.setOneMinute(HttpInterceptor.outTraffic.getFiveMinuteCount());
+    commonOutTraffic.setFiveMinute(HttpInterceptor.outTraffic.getFiveMinuteCount());
+    commonOutTraffic.setFifteenMinute(HttpInterceptor.outTraffic.getFifteenMinuteCount());
+
+    apiInfo.setTotalOutTraffic(commonOutTraffic);
+
+
     List<MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo> apiDetails = new ArrayList<>();
-    for (Map.Entry<String, JSONObject> entry : httpCount.getEndpointMap().entrySet()) {
+    for (Map.Entry<String, JSONObject> entry : HttpInterceptor.getEndpointMap().entrySet()) {
       MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo apiDetail =
               new MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo();
       apiDetail.setName(entry.getKey());
-      apiDetail.setCount((int) entry.getValue().get(MetricsService.TOTAL_REQUST));
-      apiDetail.setFailCount((int) entry.getValue().get(MetricsService.FAIL_REQUST));
+      JSONObject obj=entry.getValue();
+      MetricsInfo.NetInfo.ApiInfo.common commomCount=new  MetricsInfo.NetInfo.ApiInfo.common();
+      commomCount.setMeanRate((double)obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_RPS));
+      commomCount.setOneMinute((int)obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_ONE_MINUTE));
+      commomCount.setFiveMinute((int)obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_FIVE_MINUTE));
+      commomCount.setFifteenMinute((int)obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_FIFTEEN_MINUTE));
+
+      apiDetail.setCount(commomCount);
+      MetricsInfo.NetInfo.ApiInfo.common commonFail=new  MetricsInfo.NetInfo.ApiInfo.common();
+      commonFail.setMeanRate((double)obj.get(HttpInterceptor.END_POINT_FAIL_REQUEST_RPS));
+      commonFail.setOneMinute((int)obj.get(HttpInterceptor.END_POINT_FAIL_REQUEST_ONE_MINUTE));
+      commonFail.setFiveMinute((int)obj.get(HttpInterceptor.END_POINT_FAIL_REQUEST_FIVE_MINUTE));
+      commonFail.setFifteenMinute((int)obj.get(
+          HttpInterceptor.END_POINT_FAIL_REQUEST_FIFTEEN_MINUTE));
+
+      apiDetail.setFailCount(commonFail);
+
+      MetricsInfo.NetInfo.ApiInfo.common commonTraffic=new  MetricsInfo.NetInfo.ApiInfo.common();
+      commonTraffic.setMeanRate((double)obj.get(HttpInterceptor.END_POINT_OUT_TRAFFIC_BPS));
+      commonTraffic.setOneMinute((int)obj.get(HttpInterceptor.END_POINT_OUT_TRAFFIC_ONE_MINUTE));
+      commonTraffic.setFiveMinute((int)obj.get(HttpInterceptor.END_POINT_OUT_TRAFFIC_FIVE_MINUTE));
+      commonTraffic.setFifteenMinute((int)obj.get(
+          HttpInterceptor.END_POINT_OUT_TRAFFIC_FIFTEEN_MINUTE));
+      apiDetail.setOutTraffic(commonTraffic);
+
       apiDetails.add(apiDetail);
     }
     apiInfo.setApiDetailInfo(apiDetails);
