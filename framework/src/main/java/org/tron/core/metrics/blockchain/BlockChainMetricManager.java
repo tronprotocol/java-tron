@@ -1,9 +1,9 @@
-package org.tron.core.metrics.blockchainmetric;
+package org.tron.core.metrics.blockchain;
 
     import org.tron.core.metrics.MetricsInfo.BlockchainInfo;
     import org.tron.protos.Protocol.Block;
 
-public class BlockChainMrtricManager {
+public class BlockChainMetricManager {
 
   public BlockchainInfo getBlockchainInfo() {
 

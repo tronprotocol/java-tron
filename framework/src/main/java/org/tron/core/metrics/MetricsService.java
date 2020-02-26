@@ -8,6 +8,7 @@ import java.util.SortedMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.protos.Protocol.Block;
 
 @Component
 public class MetricsService {
@@ -90,4 +91,17 @@ public class MetricsService {
       metricRegistry.counter(key).inc(value);
     }
   }
+
+  public void applyBlcok(Block block) {
+    // witness version, lantency,
+  }
+
+  public void failProcessBlcok(Block block, String errorInfo) {
+    // witness version, lantency,
+  }
+
+  public MetricsInfo getMetricsInfo() {
+    
+  }
+
 }
