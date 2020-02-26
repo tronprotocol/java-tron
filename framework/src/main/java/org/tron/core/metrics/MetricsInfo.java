@@ -1,10 +1,8 @@
 package org.tron.core.metrics;
 
 import com.alibaba.fastjson.annotation.JSONField;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Protocol;
 
@@ -411,27 +409,36 @@ public class MetricsInfo {
 
     // API monitor information
     public static class ApiInfo {
-      private int totalCount;
-      private int totalFailCount;
+      private common totalCount;
+      private common totalFailCount;
+      private common totalOutTraffic;
       @JSONField(name = "detail")
       private List<ApiDetailInfo> detail = new ArrayList<>();
 
-      public int getTotalCount() {
+      public common getTotalCount() {
         return this.totalCount;
       }
 
-      public ApiInfo setTotalCount(int totalCount) {
+      public ApiInfo setTotalCount(common totalCount) {
         this.totalCount = totalCount;
         return this;
       }
 
-      public int getTotalFailCount() {
+      public common getTotalFailCount() {
         return this.totalFailCount;
       }
 
-      public ApiInfo setTotalFailCount(int totalFailCount) {
+      public ApiInfo setTotalFailCount(common totalFailCount) {
         this.totalFailCount = totalFailCount;
         return this;
+      }
+
+      public ApiInfo setTotalOutTraffic(common totaloutTraffic){
+        this.totalOutTraffic=totaloutTraffic;
+        return this;
+      }
+      public common getTotalOutTraffic(){
+        return  this.totalOutTraffic;
       }
 
       @JSONField(name = "detail")
@@ -444,10 +451,49 @@ public class MetricsInfo {
         return this;
       }
 
+      public static class common{
+        private double meanRate;
+        private int oneMinute;
+        private int fiveMinute;
+        private int fifteenMinute;
+
+        public common setMeanRate(double meanRate){
+           this.meanRate=meanRate;
+           return  this;
+        }
+        public double getMeanRate(){
+          return this.meanRate;
+        }
+
+        public common setOneMinute(int oneMinuteCount){
+           this.oneMinute=oneMinuteCount;
+           return this;
+        }
+        public int getOneMinute(){
+          return  this.oneMinute;
+        }
+        public common setFiveMinute(int fiveMinuteCount){
+           this.fiveMinute=fiveMinuteCount;
+           return this;
+        }
+        public int getFiveMinute(){
+           return  this.fiveMinute;
+        }
+        public common setFifteenMinute(int fifteenMinuteCount){
+            this.fifteenMinute=fifteenMinuteCount;
+            return  this;
+        }
+        public int getFifteenMinute(){
+          return  this.fifteenMinute;
+        }
+
+      }
+
       public static class ApiDetailInfo {
         private String name;
-        private int count;
-        private int failCount;
+        private common count;
+        private common failCount;
+        private common outTraffic;
 
         public String getName() {
           return this.name;
@@ -458,22 +504,30 @@ public class MetricsInfo {
           return this;
         }
 
-        public int getCount() {
+        public common getCount() {
           return this.count;
         }
 
-        public ApiDetailInfo setCount(int count) {
+        public ApiDetailInfo setCount(common count) {
           this.count = count;
           return this;
         }
 
-        public int getFailCount() {
+        public common getFailCount() {
           return this.failCount;
         }
 
-        public ApiDetailInfo setFailCount(int failCount) {
+        public ApiDetailInfo setFailCount(common failCount) {
           this.failCount = failCount;
           return this;
+        }
+
+        public ApiDetailInfo setOutTraffic(common outTraffic){
+           this.outTraffic=outTraffic;
+           return this;
+        }
+        public  common getOutTraffic(){
+           return this.outTraffic;
         }
       }
     }
@@ -765,7 +819,7 @@ public class MetricsInfo {
     tcpInTraffic.setOneMinuteRate(netInfoTemp.getTCPInTraffic().getOneMinuteRate());
     tcpInTraffic.setFiveMinuteRate(netInfoTemp.getTCPInTraffic().getFiveMinuteRate());
     tcpInTraffic.setFifteenMinuteRate(netInfoTemp.getTCPInTraffic().getFifteenMinuteRate());
-    netInfo.setTCPInTraffic(tcpInTraffic);
+    netInfo.setTCPInTraffic(tcpInTraffic.build());
 
     Protocol.MetricsInfo.NetInfo.RateInfo.Builder tcpOutTraffic =
             Protocol.MetricsInfo.NetInfo.RateInfo.newBuilder();
@@ -773,7 +827,7 @@ public class MetricsInfo {
     tcpOutTraffic.setOneMinuteRate(netInfoTemp.getTCPOutTraffic().getOneMinuteRate());
     tcpOutTraffic.setFiveMinuteRate(netInfoTemp.getTCPOutTraffic().getFiveMinuteRate());
     tcpOutTraffic.setFifteenMinuteRate(netInfoTemp.getTCPOutTraffic().getFifteenMinuteRate());
-    netInfo.setTCPOutTraffic(tcpOutTraffic);
+    netInfo.setTCPOutTraffic(tcpOutTraffic.build());
 
     Protocol.MetricsInfo.NetInfo.RateInfo.Builder udpInTraffic =
             Protocol.MetricsInfo.NetInfo.RateInfo.newBuilder();
@@ -781,7 +835,7 @@ public class MetricsInfo {
     udpInTraffic.setOneMinuteRate(netInfoTemp.getUDPInTraffic().getOneMinuteRate());
     udpInTraffic.setFiveMinuteRate(netInfoTemp.getUDPInTraffic().getFiveMinuteRate());
     udpInTraffic.setFifteenMinuteRate(netInfoTemp.getUDPInTraffic().getFifteenMinuteRate());
-    netInfo.setUDPInTraffic(udpInTraffic);
+    netInfo.setUDPInTraffic(udpInTraffic.build());
 
     Protocol.MetricsInfo.NetInfo.RateInfo.Builder udpOutTraffic =
             Protocol.MetricsInfo.NetInfo.RateInfo.newBuilder();
@@ -789,18 +843,57 @@ public class MetricsInfo {
     udpOutTraffic.setOneMinuteRate(netInfoTemp.getUDPOutTraffic().getOneMinuteRate());
     udpOutTraffic.setFiveMinuteRate(netInfoTemp.getUDPOutTraffic().getFiveMinuteRate());
     udpOutTraffic.setFifteenMinuteRate(netInfoTemp.getUDPOutTraffic().getFifteenMinuteRate());
-    netInfo.setUDPOutTraffic(udpOutTraffic);
+    netInfo.setUDPOutTraffic(udpOutTraffic.build());
 
     Protocol.MetricsInfo.NetInfo.ApiInfo.Builder apiInfo =
             Protocol.MetricsInfo.NetInfo.ApiInfo.newBuilder();
-    apiInfo.setTotalCount(netInfoTemp.getApi().getTotalCount());
-    apiInfo.setTotalFailCount(netInfoTemp.getApi().getTotalFailCount());
+    Protocol.MetricsInfo.NetInfo.ApiInfo.common.Builder common =
+        Protocol.MetricsInfo.NetInfo.ApiInfo.common.newBuilder();
+    common.setMeanRate(netInfoTemp.getApi().getTotalCount().getMeanRate());
+    common.setOneMinute(netInfoTemp.getApi().getTotalCount().getOneMinute());
+    common.setFiveMinute(netInfoTemp.getApi().getTotalCount().getFiveMinute());
+    common.setFifteenMinute(netInfoTemp.getApi().getTotalCount().getFifteenMinute());
+    apiInfo.setTotalCount(common.build());
+
+    common.setMeanRate(netInfoTemp.getApi().getTotalFailCount().getMeanRate());
+    common.setOneMinute(netInfoTemp.getApi().getTotalFailCount().getOneMinute());
+    common.setFiveMinute(netInfoTemp.getApi().getTotalFailCount().getFiveMinute());
+    common.setFifteenMinute(netInfoTemp.getApi().getTotalFailCount().getFifteenMinute());
+
+    apiInfo.setTotalFailCount(common.build());
+
+    common.setMeanRate(netInfoTemp.getApi().getTotalOutTraffic().getMeanRate());
+    common.setOneMinute(netInfoTemp.getApi().getTotalOutTraffic().getOneMinute());
+    common.setFiveMinute(netInfoTemp.getApi().getTotalOutTraffic().getFiveMinute());
+    common.setFifteenMinute(netInfoTemp.getApi().getTotalOutTraffic().getFifteenMinute());
+
+    apiInfo.setTotalOutTraffic(common.build());
+
+
     for (NetInfo.ApiInfo.ApiDetailInfo ApiDetail : netInfoTemp.getApi().getApiDetailInfo()) {
       Protocol.MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo.Builder apiDetail =
               Protocol.MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo.newBuilder();
+
       apiDetail.setName(ApiDetail.getName());
-      apiDetail.setCount(ApiDetail.getCount());
-      apiDetail.setFailCount(ApiDetail.getFailCount());
+      common.setMeanRate(ApiDetail.getCount().getMeanRate());
+      common.setOneMinute(ApiDetail.getCount().getOneMinute());
+      common.setFiveMinute(ApiDetail.getCount().getFiveMinute());
+      common.setFifteenMinute(ApiDetail.getCount().getFifteenMinute());
+
+      apiDetail.setCount(common.build());
+      common.setMeanRate(ApiDetail.getFailCount().getMeanRate());
+      common.setOneMinute(ApiDetail.getFailCount().getOneMinute());
+      common.setFiveMinute(ApiDetail.getFailCount().getFiveMinute());
+      common.setFifteenMinute(ApiDetail.getFailCount().getFifteenMinute());
+
+      apiDetail.setFailCount(common.build());
+
+      common.setMeanRate(ApiDetail.getOutTraffic().getMeanRate());
+      common.setOneMinute(ApiDetail.getOutTraffic().getOneMinute());
+      common.setFiveMinute(ApiDetail.getOutTraffic().getFiveMinute());
+      common.setFifteenMinute(ApiDetail.getOutTraffic().getFifteenMinute());
+      apiDetail.setOutTraffic(common.build());
+
       apiInfo.addDetail(apiDetail.build());
     }
     netInfo.setApi(apiInfo.build());
