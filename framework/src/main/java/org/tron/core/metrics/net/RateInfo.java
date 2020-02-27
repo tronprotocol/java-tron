@@ -5,40 +5,45 @@ public class RateInfo {
   private double oneMinuteRate;
   private double fiveMinuteRate;
   private double fifteenMinuteRate;
+  private int count;
 
   public double getMeanRate() {
-    return this.meanRate;
+    return meanRate;
   }
 
-  public RateInfo setMeanRate(double meanRate) {
+  public void setMeanRate(double meanRate) {
     this.meanRate = meanRate;
-    return this;
   }
 
   public double getOneMinuteRate() {
-    return this.oneMinuteRate;
+    return oneMinuteRate;
   }
 
-  public RateInfo setOneMinuteRate(double oneMinuteRate) {
+  public void setOneMinuteRate(double oneMinuteRate) {
     this.oneMinuteRate = oneMinuteRate;
-    return this;
   }
 
   public double getFiveMinuteRate() {
-    return this.fiveMinuteRate;
+    return fiveMinuteRate;
   }
 
-  public RateInfo setFiveMinuteRate(double fiveMinuteRate) {
+  public void setFiveMinuteRate(double fiveMinuteRate) {
     this.fiveMinuteRate = fiveMinuteRate;
-    return this;
   }
 
   public double getFifteenMinuteRate() {
-    return this.fifteenMinuteRate;
+    return fifteenMinuteRate;
   }
 
-  public RateInfo setFifteenMinuteRate(double fifteenMinuteRate) {
+  public void setFifteenMinuteRate(double fifteenMinuteRate) {
     this.fifteenMinuteRate = fifteenMinuteRate;
-    return this;
+  }
+
+  public int getCount() {
+    return count;
+  }
+
+  public void setCount(int count) {
+    this.count = count;
   }
 }

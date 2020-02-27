@@ -1,6 +1,8 @@
 package org.tron.core.metrics.blockchain;
 
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.tron.core.metrics.net.RateInfo;
 
 import java.util.List;
 
@@ -12,104 +14,93 @@ public class BlockChainInfo {
   private String headBlockHash;
   private int successForkCount;
   private int failForkCount;
-  private TpsInfo blockProcessTime;
-  private TpsInfo tps;
+  private RateInfo blockProcessTime;
+  private RateInfo tps;
   private int transactionCacheSize;
   private int missedTransactionCount;
-  private List<Witness> witnesses;
+  private List<WitnessInfo> witnesses;
   private long failProcessBlockNum;
   private String failProcessBlockReason;
-  private List<DupWitness> dupWitness;
+  private List<DupWitnessInfo> dupWitnessInfos;
 
   public int getHeadBlockNum() {
-    return this.headBlockNum;
+    return headBlockNum;
   }
 
-  public BlockChainInfo setHeadBlockNum(int headBlockNum) {
+  public void setHeadBlockNum(int headBlockNum) {
     this.headBlockNum = headBlockNum;
-    return this;
   }
 
   public long getHeadBlockTimestamp() {
-    return this.headBlockTimestamp;
+    return headBlockTimestamp;
   }
 
-  public BlockChainInfo setHeadBlockTimestamp(long headBlockTimestamp) {
+  public void setHeadBlockTimestamp(long headBlockTimestamp) {
     this.headBlockTimestamp = headBlockTimestamp;
-    return this;
   }
 
   public String getHeadBlockHash() {
-    return this.headBlockHash;
+    return headBlockHash;
   }
 
-  public BlockChainInfo setHeadBlockHash(String headBlockHash) {
+  public void setHeadBlockHash(String headBlockHash) {
     this.headBlockHash = headBlockHash;
-    return this;
   }
 
   public int getSuccessForkCount() {
-    return this.successForkCount;
+    return successForkCount;
   }
 
-  public BlockChainInfo setSuccessForkCount(int forkCount) {
-    this.successForkCount = forkCount;
-    return this;
+  public void setSuccessForkCount(int successForkCount) {
+    this.successForkCount = successForkCount;
   }
 
   public int getFailForkCount() {
-    return this.failForkCount;
+    return failForkCount;
   }
 
-  public BlockChainInfo setFailForkCount(int forkCount) {
-    this.failForkCount = forkCount;
-    return this;
+  public void setFailForkCount(int failForkCount) {
+    this.failForkCount = failForkCount;
   }
 
-  public TpsInfo getBlockProcessTime() {
-    return this.blockProcessTime;
+  public RateInfo getBlockProcessTime() {
+    return blockProcessTime;
   }
 
-  public BlockChainInfo setBlockProcessTime(TpsInfo blockProcessTime) {
+  public void setBlockProcessTime(RateInfo blockProcessTime) {
     this.blockProcessTime = blockProcessTime;
-    return this;
   }
 
-  public TpsInfo getTps() {
-    return this.tps;
+  public RateInfo getTps() {
+    return tps;
   }
 
-  public BlockChainInfo setTps(TpsInfo tps) {
+  public void setTps(RateInfo tps) {
     this.tps = tps;
-    return this;
   }
 
   public int getTransactionCacheSize() {
-    return this.transactionCacheSize;
+    return transactionCacheSize;
   }
 
-
-  public BlockChainInfo setTransactionCacheSize(int transactionCacheSize) {
+  public void setTransactionCacheSize(int transactionCacheSize) {
     this.transactionCacheSize = transactionCacheSize;
-    return this;
   }
 
   public int getMissedTransactionCount() {
-    return this.missedTransactionCount;
+    return missedTransactionCount;
   }
 
-  public BlockChainInfo setMissedTransactionCount(int missedTransactionCount) {
+  public void setMissedTransactionCount(int missedTransactionCount) {
     this.missedTransactionCount = missedTransactionCount;
-    return this;
   }
 
-  public List<Witness> getWitnesses() {
-    return this.witnesses;
+  public List<WitnessInfo> getWitnesses() {
+    return witnesses;
   }
 
-  public BlockChainInfo setWitnesses(List<Witness> witnesses) {
+  public void setWitnesses(List<WitnessInfo> witnesses) {
     this.witnesses = witnesses;
-    return this;
   }
 
   public long getFailProcessBlockNum() {
@@ -128,13 +119,16 @@ public class BlockChainInfo {
     this.failProcessBlockReason = failProcessBlockReason;
   }
 
-  public List<DupWitness> getDupWitness() {
-    return dupWitness;
+  public List<DupWitnessInfo> getDupWitnessInfos() {
+    return dupWitnessInfos;
   }
 
-  public void setDupWitness(List<DupWitness> dupWitness) {
-    this.dupWitness = dupWitness;
+  public void setDupWitnessInfos(List<DupWitnessInfo> dupWitnessInfos) {
+    this.dupWitnessInfos = dupWitnessInfos;
   }
 
+  public static Logger getLogger() {
+    return logger;
+  }
 }
 
