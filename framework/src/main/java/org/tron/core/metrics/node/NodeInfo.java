@@ -7,6 +7,38 @@ public class NodeInfo {
   private String version;
   private int backupStatus;
 
+  public String getIp() {
+    return ip;
+  }
+
+  public void setIp(String ip) {
+    this.ip = ip;
+  }
+
+  public int getNodeType() {
+    return nodeType;
+  }
+
+  public void setNodeType(int nodeType) {
+    this.nodeType = nodeType;
+  }
+
+  public int getStatus() {
+    return status;
+  }
+
+  public void setStatus(int status) {
+    this.status = status;
+  }
+
+  public String getVersion() {
+    return version;
+  }
+
+  public void setVersion(String version) {
+    this.version = version;
+  }
+
   public int getBackupStatus() {
     return backupStatus;
   }
@@ -14,42 +46,4 @@ public class NodeInfo {
   public void setBackupStatus(int backupStatus) {
     this.backupStatus = backupStatus;
   }
-
-  public String getIp() {
-    return this.ip;
-  }
-
-  public NodeInfo setIp(String ip) {
-    this.ip = ip;
-    return this;
-  }
-
-  public int getNodeType() {
-    return this.nodeType;
-  }
-
-
-  public NodeInfo setNodeType(int nodeType) {
-    this.nodeType = nodeType;
-    return this;
-  }
-
-  public int getStatus() {
-    return this.status;
-  }
-
-  public NodeInfo setStatus(int status) {
-    this.status = status;
-    return this;
-  }
-
-  public String getVersion() {
-    return this.version;
-  }
-
-  public NodeInfo setVersion(String version) {
-    this.version = version;
-    return this;
-  }
-
 }

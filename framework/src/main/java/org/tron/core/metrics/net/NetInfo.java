@@ -1,7 +1,5 @@
 package org.tron.core.metrics.net;
 
-import com.alibaba.fastjson.annotation.JSONField;
-
 import java.util.ArrayList;
 import java.util.List;
 

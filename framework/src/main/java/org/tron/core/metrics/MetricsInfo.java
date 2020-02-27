@@ -16,13 +16,11 @@ public class MetricsInfo {
   private NetInfo net;
 
   public int getInterval() {
-    return this.interval;
+    return interval;
   }
 
-
-  public MetricsInfo setInterval(int interval) {
+  public void setInterval(int interval) {
     this.interval = interval;
-    return this;
   }
 
   public NodeInfo getNodeInfo() {
