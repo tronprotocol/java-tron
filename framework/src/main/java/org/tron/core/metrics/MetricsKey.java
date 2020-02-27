@@ -17,10 +17,4 @@ public class MetricsKey {
   public static final String NET_TCP_OUT_TRAFFIC = "net.TCPOutTraffic";
   public static final String NET_UDP_IN_TRAFFIC = "net.UDPInTraffic";
   public static final String NET_UDP_OUT_TRAFFIC = "net.UDPOutTraffic";
-  public static final String TOTAL_REQUEST = "net.api.count";
-  public static final String FAIL_REQUEST = "FAIL_REQUEST";
-  public static final String OUT_TRAFFIC = "OUT_TRAFFIC";
-  public final static String END_POINT_OUT_TRAFFIC = "END_POINT_OUT_TRAFFIC";
-  public final static String END_POINT_ALL_REQUESTS = "END_POINT_ALL_REQUESTS";
-  public final static String END_POINT_FAIL_REQUESTS= "END_POINT_FAIL_REQUESTS";
 }
