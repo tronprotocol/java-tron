@@ -1,27 +1,36 @@
 package org.tron.core.metrics.blockchain;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
-import com.google.protobuf.ByteString;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.concurrent.ConcurrentHashMap;
+
+import lombok.Getter;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.metrics.MetricsInfo;
-import org.tron.core.metrics.MetricsInfo.BlockchainInfo;
+import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.net.RateInfo;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.BlockHeader;
 
 @Component
 public class BlockChainMetricManager {
 
   private static Map<String, WitnessInfo> witnessVersion = new HashMap<>();
 
-  private static int currentVersion;
+  @Autowired
+  private Manager dbManager;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -29,50 +38,113 @@ public class BlockChainMetricManager {
   @Autowired
   private MetricsService metricsService;
 
+  private Map<String, BlockHeader> witnessInfo = new ConcurrentHashMap<String, BlockHeader>();
 
-  public BlockchainInfo getBlockchainInfo() {
-    return new BlockchainInfo();
+  @Getter
+  private Map<String, Long> dupWitnessBlockNum = new ConcurrentHashMap<String, Long>();
+
+  public void init() {
+    metricsService.setBlockChainMetricManager(this);
   }
 
-  public void applyBlcok(BlockCapsule block) {
-    String witnessAddress = block.getWitnessAddress().toStringUtf8();
-    int version = block.getInstance().getBlockHeader().getRawData().getVersion();
-    currentVersion = Math.max(currentVersion, version);
-    if (witnessVersion.containsKey(witnessAddress)
-        && witnessVersion.get(witnessAddress).getVersion() != version) {
-      // just update version
-      WitnessInfo witness = witnessVersion.get(witnessAddress);
-      witness.setVersion(version);
-      witnessVersion.put(witnessAddress, witness);
-    } else {
-      List<WitnessCapsule> allWitness = chainBaseManager.getWitnessStore().getAllWitnesses();
-      for (WitnessCapsule it : allWitness) {  // add new witness
-        if (it.getAddress().toStringUtf8().equals(witnessAddress)) {
-          WitnessInfo witness = new WitnessInfo(witnessAddress, version);
-          witnessVersion.put(it.getAddress().toStringUtf8(), witness);
+  public BlockChainInfo getBlockChainInfo() {
+    BlockChainInfo blockChainInfo = new BlockChainInfo();
+    setBlockChainInfo(blockChainInfo);
+    return blockChainInfo;
+  }
+
+  private void setBlockChainInfo(BlockChainInfo blockChain) {
+    blockChain.setHeadBlockTimestamp(chainBaseManager.getHeadBlockTimeStamp());
+    blockChain.setHeadBlockHash(dbManager.getDynamicPropertiesStore()
+            .getLatestBlockHeaderHash().toString());
+
+    RateInfo blockProcessTime = getBlockProcessTime();
+    blockChain.setBlockProcessTime(blockProcessTime);
+    blockChain.setSuccessForkCount(getSuccessForkCount());
+    blockChain.setFailForkCount(getFailForkCount());
+    blockChain.setHeadBlockNum((int) chainBaseManager.getHeadBlockNum());
+    blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size());
+    blockChain.setMissedTransactionCount(dbManager.getPendingTransactions().size()
+            + dbManager.getRePushTransactions().size());
+
+    RateInfo tpsInfo = getTransactionRate();
+    blockChain.setTps(tpsInfo);
+
+    List<WitnessInfo> witnesses = getNoUpgradedSR();
+
+    blockChain.setWitnesses(witnesses);
+
+    blockChain.setFailProcessBlockNum(metricsService.getFailProcessBlockNum());
+    blockChain.setFailProcessBlockReason(metricsService.getFailProcessBlockReason());
+    List<DupWitnessInfo> dupWitness = getDupWitness();
+    blockChain.setDupWitnessInfos(dupWitness);
+  }
+
+  /**
+   * apply block.
+   * @param block BlockCapsule
+   */
+  public void applyBlock(BlockCapsule block) {
+    long nowTime = System.currentTimeMillis();
+    String witnessAddress = Hex.toHexString(block.getWitnessAddress().toByteArray());
+
+    //witness info
+    if (witnessInfo.containsKey(witnessAddress)) {
+      BlockHeader old = witnessInfo.get(witnessAddress);
+      if (old.getRawData().getNumber() == block.getNum() &&
+              Math.abs(old.getRawData().getTimestamp() - block.getTimeStamp()) < 3000) {
+        metricsService.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT + witnessAddress, 1);
+        dupWitnessBlockNum.put(witnessAddress, block.getNum());
+      }
+    }
+    witnessInfo.put(witnessAddress, block.getInstance().getBlockHeader());
+
+    //latency
+    long netTime = nowTime - block.getTimeStamp();
+    metricsService.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY, netTime);
+    metricsService.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress, netTime);
+    if (netTime >= 1000) {
+      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".1S", 1L);
+      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
+      if (netTime >= 2000) {
+        metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".2S", 1L);
+        metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S",
+                1L);
+        if (netTime >= 3000) {
+          metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".3S", 1L);
+          metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S",
+                  1L);
         }
       }
     }
+
+    //TPS
+    if (block.getTransactions().size() > 0) {
+      metricsService.meterMark(MetricsKey.BLOCKCHAIN_TPS, block.getTransactions().size());
+    }
   }
 
-  public List<WitnessInfo> getNoUpgradedSRList() {
-    List<WitnessInfo> noUpgradedWitness = new ArrayList<>();
+  private List<WitnessInfo> getSrList() {
+    List<WitnessInfo> witnessInfos = new ArrayList<>();
 
-    List<ByteString> address = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses();
-    for (ByteString it : address) {
-      if (witnessVersion.containsKey(it.toStringUtf8())
-          && witnessVersion.get(it.toStringUtf8()).getVersion() != currentVersion) {
-        WitnessInfo witness = witnessVersion.get(it.toStringUtf8());
-        noUpgradedWitness.add(witness);
+    List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
+    for (WitnessCapsule witnessCapsule : witnessCapsuleList) {
+      if (witnessCapsule.getIsJobs()) {
+        String address = Hex.toHexString(witnessCapsule.getAddress().toByteArray());
+        if (witnessInfo.containsKey(address)) {
+          BlockHeader blockHeader = witnessInfo.get(address);
+          WitnessInfo witness = new WitnessInfo(address, blockHeader.getRawData().getVersion());
+          witnessInfos.add(witness);
+        }
       }
     }
-    return noUpgradedWitness;
+    return witnessInfos;
   }
 
-  public MetricsInfo.BlockchainInfo.TpsInfo getBlockProcessTime() {
-    MetricsInfo.BlockchainInfo.TpsInfo blockProcessTime =
-        new MetricsInfo.BlockchainInfo.TpsInfo();
-
+  private RateInfo getBlockProcessTime() {
+    RateInfo blockProcessTime = new RateInfo();
+    blockProcessTime.setCount(metricsService.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_COUNT)
+            .getCount());
     blockProcessTime.setMeanRate(getAvgBlockProcessTimeByGap(0));
     blockProcessTime.setOneMinuteRate(getAvgBlockProcessTimeByGap(1));
     blockProcessTime.setFiveMinuteRate(getAvgBlockProcessTimeByGap(5));
@@ -80,10 +152,10 @@ public class BlockChainMetricManager {
     return blockProcessTime;
   }
 
-  public MetricsInfo.BlockchainInfo.TpsInfo getTransactionRate() {
+  private RateInfo getTransactionRate() {
     Meter transactionRate = metricsService.getMeter(MetricsKey.BLOCKCHAIN_TPS);
-    MetricsInfo.BlockchainInfo.TpsInfo tpsInfo =
-        new MetricsInfo.BlockchainInfo.TpsInfo();
+    RateInfo tpsInfo = new RateInfo();
+    tpsInfo.setCount(transactionRate.getCount());
     tpsInfo.setMeanRate(transactionRate.getMeanRate());
     tpsInfo.setOneMinuteRate(transactionRate.getOneMinuteRate());
     tpsInfo.setFiveMinuteRate(transactionRate.getFiveMinuteRate());
@@ -91,13 +163,10 @@ public class BlockChainMetricManager {
     return tpsInfo;
   }
 
-  public List<MetricsInfo.BlockchainInfo.Witness> getNoUpgradedSR() {
-    List<MetricsInfo.BlockchainInfo.Witness> witnesses = new ArrayList<>();
-    for (WitnessInfo it : getNoUpgradedSRList()) {
-      MetricsInfo.BlockchainInfo.Witness noUpgradeSR =
-          new MetricsInfo.BlockchainInfo.Witness();
-      noUpgradeSR.setAddress(it.getAddress());
-      noUpgradeSR.setVersion(it.getVersion());
+  private List<WitnessInfo> getNoUpgradedSR() {
+    List<WitnessInfo> witnesses = new ArrayList<>();
+    for (WitnessInfo it : getSrList()) {
+      WitnessInfo noUpgradeSR = new WitnessInfo(it.getAddress(), it.getVersion());
       witnesses.add(noUpgradeSR);
     }
     return witnesses;
@@ -138,5 +207,27 @@ public class BlockChainMetricManager {
     }
   }
 
+  private int getSuccessForkCount() {
+    return (int) metricsService.getMeter(MetricsKey.BLOCKCHAIN_SUCCESS_FORK_COUNT).getCount();
+  }
 
+  private int getFailForkCount() {
+    return (int) metricsService.getMeter(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT).getCount();
+  }
+
+  private List<DupWitnessInfo> getDupWitness() {
+    List<DupWitnessInfo> dupWitnesses = new ArrayList<>();
+    SortedMap<String, Counter> dupWitnessMap =
+            metricsService.getCounters(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT);
+    for (Map.Entry<String, Counter> entry : dupWitnessMap.entrySet()) {
+      DupWitnessInfo dupWitness = new DupWitnessInfo();
+      String witness = entry.getKey().substring(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT.length());
+      long blockNum = dupWitnessBlockNum.get(witness);
+      dupWitness.setAddress(witness);
+      dupWitness.setBlockNum(blockNum);
+      dupWitness.setCount((int)entry.getValue().getCount());
+      dupWitnesses.add(dupWitness);
+    }
+    return dupWitnesses;
+  }
 }

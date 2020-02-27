@@ -8,6 +8,7 @@ import java.util.List;
 public class LatencyInfo {
   private int top99;
   private int top95;
+  private int top75;
   private int totalCount;
   private int delay1S;
   private int delay2S;
@@ -28,6 +29,14 @@ public class LatencyInfo {
 
   public void setTop95(int top95) {
     this.top95 = top95;
+  }
+
+  public int getTop75() {
+    return top75;
+  }
+
+  public void setTop75(int top75) {
+    this.top75 = top75;
   }
 
   public int getTotalCount() {

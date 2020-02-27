@@ -5,36 +5,31 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
-import java.util.Map;
 import java.util.SortedMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.BlockHeader;
+import org.tron.core.metrics.blockchain.BlockChainMetricManager;
 
 @Slf4j(topic = "metrics")
 @Component
 public class MetricsService {
 
+  @Setter
+  private BlockChainMetricManager blockChainMetricManager;
+
   private MetricRegistry metricRegistry = new MetricRegistry();
-
-  private Map<String, BlockHeader> witnessInfo = new ConcurrentHashMap<String, BlockHeader>();
-
-  @Getter
-  private Map<String, Long> dupWitnessBlockNum = new ConcurrentHashMap<String, Long>();
 
   @Getter
   private long failProcessBlockNum = 0;
 
   @Getter
   private String failProcessBlockReason = "";
+
 
   public Histogram getHistogram(String key) {
     return metricRegistry.histogram(key);
@@ -101,42 +96,14 @@ public class MetricsService {
     }
   }
 
-  public void applyBlock(BlockCapsule block, long nowTime) {
+  /**
+   * apply block.
+   *
+   * @param block BlockCapsule
+   */
+  public void applyBlock(BlockCapsule block) {
     try {
-      String witnessAddress = Hex.toHexString(block.getWitnessAddress().toByteArray());
-
-      //witness info
-      if (witnessInfo.containsKey(witnessAddress)) {
-        BlockHeader old = witnessInfo.get(witnessAddress);
-        if (old.getRawData().getNumber() == block.getNum() &&
-                Math.abs(old.getRawData().getTimestamp() - block.getTimeStamp()) < 3000) {
-          counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT + witnessAddress, 1);
-          dupWitnessBlockNum.put(witnessAddress, block.getNum());
-        }
-      }
-      witnessInfo.put(witnessAddress, block.getInstance().getBlockHeader());
-
-      //latency
-      long netTime = nowTime - block.getTimeStamp();
-      histogramUpdate(MetricsKey.NET_BLOCK_LATENCY, netTime);
-      histogramUpdate(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress, netTime);
-      if (netTime >= 1000) {
-        counterInc(MetricsKey.NET_BLOCK_LATENCY + ".1S", 1L);
-        counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
-        if (netTime >= 2000) {
-          counterInc(MetricsKey.NET_BLOCK_LATENCY + ".2S", 1L);
-          counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S", 1L);
-          if (netTime >= 3000) {
-            counterInc(MetricsKey.NET_BLOCK_LATENCY + ".3S", 1L);
-            counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S", 1L);
-          }
-        }
-      }
-
-      //TPS
-      if (block.getTransactions().size() > 0) {
-        meterMark(MetricsKey.BLOCKCHAIN_TPS, block.getTransactions().size());
-      }
+      blockChainMetricManager.applyBlock(block);
     } catch (Exception e) {
       logger.warn("record block failed, {}, reason: {}.",
               block.getBlockId().toString(), e.getMessage());
