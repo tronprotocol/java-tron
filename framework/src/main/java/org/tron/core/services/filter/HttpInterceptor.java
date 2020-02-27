@@ -21,7 +21,7 @@ import org.tron.core.metrics.MetricsService;
 @Slf4j(topic = "httpIntercetpor")
 public class HttpInterceptor implements Filter {
 
-  public static Map<String, Set<String>> EndpointMeterNameList = new HashMap<>();
+  private static final Map<String, Set<String>> EndpointMeterNameList = new HashMap<>();
   private String endpoint;
   @Autowired
   private MetricsService metricsService;
@@ -31,9 +31,6 @@ public class HttpInterceptor implements Filter {
     return EndpointMeterNameList;
   }
 
-  public HttpInterceptor getInstance() {
-    return this;
-  }
 
   @Override public void init(FilterConfig filterConfig) throws ServletException {
 
