@@ -1,6 +1,7 @@
 package org.tron.core.metrics.blockchain;
 
 import lombok.extern.slf4j.Slf4j;
+
 @Slf4j(topic = "blockChainInfo")
 public class BlockChainInfo {
   public static long startRecordTime;
@@ -15,7 +16,7 @@ public class BlockChainInfo {
       this.version = version;
     }
 
-    public  Witness(String address, String url, int version) {
+    public Witness(String address, String url, int version) {
       this.address = address;
       this.url = url;
       this.version = version;
@@ -29,9 +30,9 @@ public class BlockChainInfo {
       return this.version;
     }
 
-    public Witness setVersion(int version){
-        this.version=version;
-        return this;
+    public Witness setVersion(int version) {
+      this.version = version;
+      return this;
     }
   }
 

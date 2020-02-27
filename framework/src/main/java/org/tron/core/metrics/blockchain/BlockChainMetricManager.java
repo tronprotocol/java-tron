@@ -38,8 +38,8 @@ public class BlockChainMetricManager {
     String witnessAddress = block.getWitnessAddress().toStringUtf8();
     int version = block.getInstance().getBlockHeader().getRawData().getVersion();
     currentVersion = Math.max(currentVersion, version);
-    if (witnessVersion.containsKey(witnessAddress) &&
-        witnessVersion.get(witnessAddress).getVersion() != version) {
+    if (witnessVersion.containsKey(witnessAddress)
+        && witnessVersion.get(witnessAddress).getVersion() != version) {
       // just update version
       BlockChainInfo.Witness witness = witnessVersion.get(witnessAddress);
       witness.setVersion(version);
@@ -61,8 +61,8 @@ public class BlockChainMetricManager {
 
     List<ByteString> address = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses();
     for (ByteString it : address) {
-      if (witnessVersion.containsKey(it.toStringUtf8()) &&
-          witnessVersion.get(it.toStringUtf8()).getVersion() != currentVersion) {
+      if (witnessVersion.containsKey(it.toStringUtf8())
+          && witnessVersion.get(it.toStringUtf8()).getVersion() != currentVersion) {
         BlockChainInfo.Witness witness = witnessVersion.get(it.toStringUtf8());
         noUpgradedWitness.add(witness);
       }

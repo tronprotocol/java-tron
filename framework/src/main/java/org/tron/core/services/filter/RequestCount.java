@@ -1,7 +1,8 @@
 package org.tron.core.services.filter;
+
 import java.math.BigInteger;
 
-public  class RequestCount {
+public class RequestCount {
   private int oneMinuteCount;
   private int fiveMinuteCount;
   private int fifteenMinuteCount;
@@ -16,6 +17,16 @@ public  class RequestCount {
     total = new BigInteger("1");
   }
 
+  public void bigIntegerIncrement(BigInteger total) {
+    BigInteger one = new BigInteger("1");
+    total.add(one);
+  }
+
+  public void bigIntegerIncrement(BigInteger total, int value) {
+    BigInteger values = new BigInteger(String.valueOf(value));
+    total.add(values);
+  }
+
   public void allIncrement() {
     oneMinuteCount++;
     fiveMinuteCount++;
@@ -23,21 +34,11 @@ public  class RequestCount {
     bigIntegerIncrement(total);
   }
 
-  public void bigIntegerIncrement(BigInteger total){
-    BigInteger one=new BigInteger("1");
-    total.add(one);
-  }
-
-  public void bigIntegerIncrement(BigInteger total,int value){
-    BigInteger values=new BigInteger(String.valueOf(value));
-    total.add(values);
-  }
-
   public void allIncrement(int size) {
     oneMinuteCount = oneMinuteCount + size;
     fiveMinuteCount = fiveMinuteCount + size;
     fifteenMinuteCount = fifteenMinuteCount + size;
-    bigIntegerIncrement(total,size);
+    bigIntegerIncrement(total, size);
   }
 
   public void allReset() {
@@ -50,7 +51,7 @@ public  class RequestCount {
     oneMinuteCount = 0;
   }
 
-  public void resetFiveMinte() {
+  public void resetFiveMinute() {
     fiveMinuteCount = 0;
   }
 
@@ -59,8 +60,8 @@ public  class RequestCount {
   }
 
   public void caculteMeanRate(long seconds) {
-    BigInteger Seconds= new BigInteger(String.valueOf(seconds));
-    meanRate=total.divide(Seconds).doubleValue();
+    BigInteger Seconds = new BigInteger(String.valueOf(seconds));
+    meanRate = total.divide(Seconds).doubleValue();
   }
 
   public int getOneMinuteCount() {
@@ -79,14 +80,16 @@ public  class RequestCount {
     return meanRate;
   }
 
-  public double getOneMinuteRate(){
-    return  oneMinuteCount/(double) 60;
+  public double getOneMinuteRate() {
+    return oneMinuteCount / (double) 60;
   }
-  public double getFiveMinuteRate(){
-    return  fiveMinuteCount/(double) 5*60;
+
+  public double getFiveMinuteRate() {
+    return fiveMinuteCount / (double) 5 * 60;
   }
-  public double getFifteenMinuteRate(){
-    return fifteenMinuteCount/(double)  15*60;
+
+  public double getFifteenMinuteRate() {
+    return fifteenMinuteCount / (double) 15 * 60;
   }
 
 }

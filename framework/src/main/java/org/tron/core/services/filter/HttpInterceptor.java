@@ -19,28 +19,29 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j(topic = "httpIntercetpor")
 public class HttpInterceptor implements Filter {
 
-  public final static String END_POINT = "END_POINT";
-  public final static String END_POINT_ALL_REQUESTS_ONE_MINUTE = "END_POINT_ALL_REQUEST_ONE_MINUTE";
-  public final static String END_POINT_ALL_REQUESTS_FIVE_MINUTE =
+  public static final String END_POINT = "END_POINT";
+  public static final String END_POINT_ALL_REQUESTS_ONE_MINUTE =
+      "END_POINT_ALL_REQUEST_ONE_MINUTE";
+  public static final String END_POINT_ALL_REQUESTS_FIVE_MINUTE =
       "END_POINT_ALL_REQUEST_FIVE_MINUTE";
-  public final static String END_POINT_ALL_REQUESTS_FIFTEEN_MINUTE =
+  public static final String END_POINT_ALL_REQUESTS_FIFTEEN_MINUTE =
       "END_POINT_ALL_REQUEST_FIFTEEN_MINUTE";
-  public final static String END_POINT_ALL_REQUESTS_RPS =
+  public static final String END_POINT_ALL_REQUESTS_RPS =
       "END_POINT_ALL_REQUEST_FIFTEEN_RPS";
-  public final static String END_POINT_FAIL_REQUEST_ONE_MINUTE =
+  public static final String END_POINT_FAIL_REQUEST_ONE_MINUTE =
       "END_POINT_FAIL_REQUEST_ONE_MINUTE";
-  public final static String END_POINT_FAIL_REQUEST_FIVE_MINUTE =
+  public static final String END_POINT_FAIL_REQUEST_FIVE_MINUTE =
       "END_POINT_FAIL_REQUEST_FIVE_MINUTE";
-  public final static String END_POINT_FAIL_REQUEST_FIFTEEN_MINUTE =
+  public static final String END_POINT_FAIL_REQUEST_FIFTEEN_MINUTE =
       "END_POINT_FAIL_REQUEST_FIFTEEN_MINUTE";
-  public final static String END_POINT_FAIL_REQUEST_RPS =
+  public static final String END_POINT_FAIL_REQUEST_RPS =
       "END_POINT_FAIL_REQUEST_FIFTEEN_RPS";
-  public final static String END_POINT_OUT_TRAFFIC_ONE_MINUTE = "END_POINT_OUT_TRAFFIC_ONE_MINUTE";
-  public final static String END_POINT_OUT_TRAFFIC_FIVE_MINUTE =
+  public static final String END_POINT_OUT_TRAFFIC_ONE_MINUTE = "END_POINT_OUT_TRAFFIC_ONE_MINUTE";
+  public static final String END_POINT_OUT_TRAFFIC_FIVE_MINUTE =
       "END_POINT_OUT_TRAFFIC_FIVE_MINUTE";
-  public final static String END_POINT_OUT_TRAFFIC_FIFTEEN_MINUTE =
+  public static final String END_POINT_OUT_TRAFFIC_FIFTEEN_MINUTE =
       "END_POINT_OUT_TRAFFIC_FIFTEEN_MINUTE";
-  public final static String END_POINT_OUT_TRAFFIC_BPS =
+  public static final String END_POINT_OUT_TRAFFIC_BPS =
       "END_POINT_OUT_TRAFFIC_FIFTEEN_BPS";
 
   public static Map<String, JSONObject> EndpointCount = new ConcurrentHashMap<String, JSONObject>();
@@ -188,9 +189,9 @@ public class HttpInterceptor implements Filter {
       totalFailRequestCount.resetFifteenMinute();
       outTraffic.resetFifteenMinute();
       // since 15=5*3
-      totalRequestCount.resetFiveMinte();
-      totalFailRequestCount.resetFiveMinte();
-      outTraffic.resetFiveMinte();
+      totalRequestCount.resetFiveMinute();
+      totalFailRequestCount.resetFiveMinute();
+      outTraffic.resetFiveMinute();
       EndpointCount.forEach((key, obj) -> {
         obj.put(END_POINT_ALL_REQUESTS_FIFTEEN_MINUTE, 0);
         obj.put(END_POINT_FAIL_REQUEST_FIFTEEN_MINUTE, 0);
@@ -200,9 +201,9 @@ public class HttpInterceptor implements Filter {
         minuteCount = 0;  // reset after reaching max
       });
     } else if (minuteCount % 5 == 0) {
-      totalRequestCount.resetFiveMinte();
-      totalFailRequestCount.resetFiveMinte();
-      outTraffic.resetFiveMinte();
+      totalRequestCount.resetFiveMinute();
+      totalFailRequestCount.resetFiveMinute();
+      outTraffic.resetFiveMinute();
       for (Map.Entry<String, JSONObject> entry : EndpointCount.entrySet()) {
         JSONObject obj = entry.getValue();
         obj.put(END_POINT_ALL_REQUESTS_FIVE_MINUTE, 0);
