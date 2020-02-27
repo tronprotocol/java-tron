@@ -196,7 +196,6 @@ public class TronNetDelegate {
     BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
       try {
-        long now = System.currentTimeMillis();
         if (!freshBlockId.contains(blockId)) {
           if (block.getNum() <= getHeadBlockId().getNum()) {
             logger.warn("Receive a fork block {} witness {}, head {}",
@@ -208,13 +207,13 @@ public class TronNetDelegate {
           freshBlockId.add(blockId);
           logger.info("Success process block {}.", blockId.getString());
           if (!backupServerStartFlag
-              && now - block.getTimeStamp() < BLOCK_PRODUCED_INTERVAL) {
+              && System.currentTimeMillis() - block.getTimeStamp() < BLOCK_PRODUCED_INTERVAL) {
             backupServerStartFlag = true;
             backupServer.initServer();
           }
 
           //record metrics
-          metricsService.applyBlock(block, now);
+          metricsService.applyBlock(block);
         }
       } catch (ValidateSignatureException
           | ContractValidateException

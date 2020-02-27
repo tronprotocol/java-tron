@@ -112,7 +112,7 @@ public class TronNetService {
           throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }
     } catch (Exception e) {
-      metricsService.getCounter(MetricsKey.NET_ERROR_PROTO_COUNT).inc();
+      metricsService.counterInc(MetricsKey.NET_ERROR_PROTO_COUNT, 1);
       processException(peer, msg, e);
     }
   }

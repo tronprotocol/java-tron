@@ -4,25 +4,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ApiInfo {
-  private RateInfo totalCount;
-  private RateInfo totalFailCount;
+  private RateInfo qps;
+  private RateInfo failQps;
   private RateInfo totalOutTraffic;
   private List<ApiDetailInfo> detail = new ArrayList<>();
 
-  public RateInfo getTotalCount() {
-    return totalCount;
+  public RateInfo getQps() {
+    return qps;
   }
 
-  public void setTotalCount(RateInfo totalCount) {
-    this.totalCount = totalCount;
+  public void setQps(RateInfo qps) {
+    this.qps = qps;
   }
 
-  public RateInfo getTotalFailCount() {
-    return totalFailCount;
+  public RateInfo getFailQps() {
+    return failQps;
   }
 
-  public void setTotalFailCount(RateInfo totalFailCount) {
-    this.totalFailCount = totalFailCount;
+  public void setFailQps(RateInfo failQps) {
+    this.failQps = failQps;
   }
 
   public RateInfo getTotalOutTraffic() {

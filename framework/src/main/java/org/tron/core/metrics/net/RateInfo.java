@@ -5,7 +5,7 @@ public class RateInfo {
   private double oneMinuteRate;
   private double fiveMinuteRate;
   private double fifteenMinuteRate;
-  private int count;
+  private long count;
 
   public double getMeanRate() {
     return meanRate;
@@ -39,11 +39,11 @@ public class RateInfo {
     this.fifteenMinuteRate = fifteenMinuteRate;
   }
 
-  public int getCount() {
+  public long getCount() {
     return count;
   }
 
-  public void setCount(int count) {
+  public void setCount(long count) {
     this.count = count;
   }
 }

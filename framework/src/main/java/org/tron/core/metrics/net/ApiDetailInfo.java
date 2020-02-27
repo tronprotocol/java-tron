@@ -2,8 +2,8 @@ package org.tron.core.metrics.net;
 
 public class ApiDetailInfo {
   private String name;
-  private RateInfo count;
-  private RateInfo failCount;
+  private RateInfo qps;
+  private RateInfo failQps;
   private RateInfo outTraffic;
 
   public String getName() {
@@ -14,20 +14,20 @@ public class ApiDetailInfo {
     this.name = name;
   }
 
-  public RateInfo getCount() {
-    return count;
+  public RateInfo getQps() {
+    return qps;
   }
 
-  public void setCount(RateInfo count) {
-    this.count = count;
+  public void setQps(RateInfo qps) {
+    this.qps = qps;
   }
 
-  public RateInfo getFailCount() {
-    return failCount;
+  public RateInfo getFailQps() {
+    return failQps;
   }
 
-  public void setFailCount(RateInfo failCount) {
-    this.failCount = failCount;
+  public void setFailQps(RateInfo failQps) {
+    this.failQps = failQps;
   }
 
   public RateInfo getOutTraffic() {
