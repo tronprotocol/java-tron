@@ -11,10 +11,9 @@ import org.springframework.stereotype.Component;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.metrics.MetricsInfo;
-import org.tron.core.metrics.MetricsInfo.BlockchainInfo;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.net.RateInfo;
 
 @Component
 public class BlockChainMetricManager {
@@ -30,8 +29,8 @@ public class BlockChainMetricManager {
   private MetricsService metricsService;
 
 
-  public BlockchainInfo getBlockchainInfo() {
-    return new BlockchainInfo();
+  public BlockChainInfo getBlockchainInfo() {
+    return new BlockChainInfo();
   }
 
   public void applyBlcok(BlockCapsule block) {
@@ -69,9 +68,8 @@ public class BlockChainMetricManager {
     return noUpgradedWitness;
   }
 
-  public MetricsInfo.BlockchainInfo.TpsInfo getBlockProcessTime() {
-    MetricsInfo.BlockchainInfo.TpsInfo blockProcessTime =
-        new MetricsInfo.BlockchainInfo.TpsInfo();
+  public RateInfo getBlockProcessTime() {
+    RateInfo blockProcessTime = new RateInfo();
 
     blockProcessTime.setMeanRate(getAvgBlockProcessTimeByGap(0));
     blockProcessTime.setOneMinuteRate(getAvgBlockProcessTimeByGap(1));
@@ -80,10 +78,9 @@ public class BlockChainMetricManager {
     return blockProcessTime;
   }
 
-  public MetricsInfo.BlockchainInfo.TpsInfo getTransactionRate() {
+  public RateInfo getTransactionRate() {
     Meter transactionRate = metricsService.getMeter(MetricsKey.BLOCKCHAIN_TPS);
-    MetricsInfo.BlockchainInfo.TpsInfo tpsInfo =
-        new MetricsInfo.BlockchainInfo.TpsInfo();
+    RateInfo tpsInfo = new RateInfo();
     tpsInfo.setMeanRate(transactionRate.getMeanRate());
     tpsInfo.setOneMinuteRate(transactionRate.getOneMinuteRate());
     tpsInfo.setFiveMinuteRate(transactionRate.getFiveMinuteRate());
@@ -91,11 +88,10 @@ public class BlockChainMetricManager {
     return tpsInfo;
   }
 
-  public List<MetricsInfo.BlockchainInfo.Witness> getNoUpgradedSR() {
-    List<MetricsInfo.BlockchainInfo.Witness> witnesses = new ArrayList<>();
+  public List<WitnessInfo> getNoUpgradedSR() {
+    List<WitnessInfo> witnesses = new ArrayList<>();
     for (WitnessInfo it : getNoUpgradedSRList()) {
-      MetricsInfo.BlockchainInfo.Witness noUpgradeSR =
-          new MetricsInfo.BlockchainInfo.Witness();
+      WitnessInfo noUpgradeSR = new WitnessInfo();
       noUpgradeSR.setAddress(it.getAddress());
       noUpgradeSR.setVersion(it.getVersion());
       witnesses.add(noUpgradeSR);

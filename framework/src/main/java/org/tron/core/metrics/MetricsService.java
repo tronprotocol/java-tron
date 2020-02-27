@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.BlockCapsule;
@@ -24,15 +23,11 @@ import org.tron.protos.Protocol.BlockHeader;
 public class MetricsService {
 
   private MetricRegistry metricRegistry = new MetricRegistry();
-
   private Map<String, BlockHeader> witnessInfo = new ConcurrentHashMap<String, BlockHeader>();
-
   @Getter
   private Map<String, Long> dupWitnessBlockNum = new ConcurrentHashMap<String, Long>();
-
   @Getter
   private long failProcessBlockNum = 0;
-
   @Getter
   private String failProcessBlockReason = "";
 

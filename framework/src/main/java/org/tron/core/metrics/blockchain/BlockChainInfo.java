@@ -21,7 +21,7 @@ public class BlockChainInfo {
   private List<WitnessInfo> witnesses;
   private long failProcessBlockNum;
   private String failProcessBlockReason;
-  private List<DupWitnessInfo> dupWitnessInfos;
+  private List<DupWitnessInfo> dupWitness;
 
   public int getHeadBlockNum() {
     return headBlockNum;
@@ -119,12 +119,12 @@ public class BlockChainInfo {
     this.failProcessBlockReason = failProcessBlockReason;
   }
 
-  public List<DupWitnessInfo> getDupWitnessInfos() {
-    return dupWitnessInfos;
+  public List<DupWitnessInfo> getDupWitness() {
+    return dupWitness;
   }
 
-  public void setDupWitnessInfos(List<DupWitnessInfo> dupWitnessInfos) {
-    this.dupWitnessInfos = dupWitnessInfos;
+  public void setDupWitness(List<DupWitnessInfo> dupWitness) {
+    this.dupWitness = dupWitness;
   }
 
   public static Logger getLogger() {
