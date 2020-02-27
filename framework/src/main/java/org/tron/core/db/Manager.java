@@ -109,6 +109,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.metrics.blockchain.BlockChainMetricManager;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
 import org.tron.core.store.AccountIdIndexStore;
@@ -216,6 +217,8 @@ public class Manager {
   @Autowired
   private MetricsService metricsService;
 
+  @Autowired
+  private BlockChainMetricManager blockChainMetricManager;
 
   /**
    * Cycle thread to rePush Transactions
@@ -831,6 +834,8 @@ public class Manager {
     } else {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
     }
+
+    blockChainMetricManager.applyBlcok(block);
   }
 
   private void switchFork(BlockCapsule newHead)

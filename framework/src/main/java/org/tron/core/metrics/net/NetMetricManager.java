@@ -4,8 +4,8 @@ import org.tron.core.metrics.MetricsInfo.NetInfo;
 
 public class NetMetricManager {
 
-  public NetInfo getNetInfo() {
-
-  }
+//  public NetInfo getNetInfo() {
+//
+//  }
 
 }

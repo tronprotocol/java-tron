@@ -1,12 +1,6 @@
 package org.tron.core.metrics.blockchain;
 
-import com.codahale.metrics.Meter;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.tron.core.ChainBaseManager;
-import org.tron.core.capsule.BlockCapsule;
-
 @Slf4j(topic = "blockChainInfo")
 public class BlockChainInfo {
   public static long startRecordTime;
@@ -21,7 +15,7 @@ public class BlockChainInfo {
       this.version = version;
     }
 
-    public void witness(String address, String url, int version) {
+    public  Witness(String address, String url, int version) {
       this.address = address;
       this.url = url;
       this.version = version;
@@ -34,8 +28,12 @@ public class BlockChainInfo {
     public int getVersion() {
       return this.version;
     }
-  }
 
+    public Witness setVersion(int version){
+        this.version=version;
+        return this;
+    }
+  }
 
 }
 

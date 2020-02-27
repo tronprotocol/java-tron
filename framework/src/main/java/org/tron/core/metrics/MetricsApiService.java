@@ -22,6 +22,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.blockchain.BlockChainInfo;
+import org.tron.core.metrics.blockchain.BlockChainMetricManager;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.filter.HttpInterceptor;
@@ -50,6 +51,9 @@ public class MetricsApiService {
 
   @Autowired
   private BackupManager backupManager;
+
+  @Autowired
+  private BlockChainMetricManager blockChainMetricManager;
 
   /**
    * get metrics info.
@@ -96,12 +100,7 @@ public class MetricsApiService {
             .getLatestBlockHeaderHash().toString());
 
     MetricsInfo.BlockchainInfo.TpsInfo blockProcessTime =
-            new MetricsInfo.BlockchainInfo.TpsInfo();
-
-    blockProcessTime.setMeanRate(getAvgBlockProcessTimeByGap(0));
-    blockProcessTime.setOneMinuteRate(getAvgBlockProcessTimeByGap(1));
-    blockProcessTime.setFiveMinuteRate(getAvgBlockProcessTimeByGap(5));
-    blockProcessTime.setFifteenMinuteRate(getAvgBlockProcessTimeByGap(15));
+        blockChainMetricManager.getBlockProcessTime();
     blockChain.setBlockProcessTime(blockProcessTime);
     blockChain.setSuccessForkCount(getSuccessForkCount());
     blockChain.setFailForkCount(getFailForkCount());
@@ -110,25 +109,13 @@ public class MetricsApiService {
     blockChain.setMissedTransactionCount(dbManager.getPendingTransactions().size()
             + dbManager.getRePushTransactions().size());
 
-
     Meter transactionRate = metricsService.getMeter(MetricsKey.BLOCKCHAIN_TPS);
-    MetricsInfo.BlockchainInfo.TpsInfo tpsInfo =
-            new MetricsInfo.BlockchainInfo.TpsInfo();
-    tpsInfo.setMeanRate(transactionRate.getMeanRate());
-    tpsInfo.setOneMinuteRate(transactionRate.getOneMinuteRate());
-    tpsInfo.setFiveMinuteRate(transactionRate.getFiveMinuteRate());
-    tpsInfo.setFifteenMinuteRate(transactionRate.getFifteenMinuteRate());
+
+    MetricsInfo.BlockchainInfo.TpsInfo tpsInfo =blockChainMetricManager.getTransactionRate();
     blockChain.setTps(tpsInfo);
 
-    getBlocks();
-    List<MetricsInfo.BlockchainInfo.Witness> witnesses = new ArrayList<>();
-    for (BlockChainInfo.Witness it : this.noUpgradedSRList) {
-      MetricsInfo.BlockchainInfo.Witness noUpgradeSR =
-              new MetricsInfo.BlockchainInfo.Witness();
-      noUpgradeSR.setAddress(it.getAddress());
-      noUpgradeSR.setVersion(it.getVersion());
-      witnesses.add(noUpgradeSR);
-    }
+    List<MetricsInfo.BlockchainInfo.Witness> witnesses =blockChainMetricManager.getNoUpgradedSR();
+
     blockChain.setWitnesses(witnesses);
 
     blockChain.setFailProcessBlockNum(tronNetDelegate.getFailProcessBlockNum());
@@ -193,10 +180,10 @@ public class MetricsApiService {
 
     MetricsInfo.NetInfo.ApiInfo.Common common=new MetricsInfo.NetInfo.ApiInfo.Common();
 
-    common.setMeanRate(HttpInterceptor.totalrequestCount.getMeanRate());
-    common.setOneMinute(HttpInterceptor.totalrequestCount.getOneMinuteCount());
-    common.setFiveMinute(HttpInterceptor.totalrequestCount.getFiveMinuteCount());
-    common.setFifteenMinute(HttpInterceptor.totalrequestCount.getFifteenMinuteCount());
+    common.setMeanRate(HttpInterceptor.totalRequestCount.getMeanRate());
+    common.setOneMinute(HttpInterceptor.totalRequestCount.getOneMinuteCount());
+    common.setFiveMinute(HttpInterceptor.totalRequestCount.getFiveMinuteCount());
+    common.setFifteenMinute(HttpInterceptor.totalRequestCount.getFifteenMinuteCount());
 
     apiInfo.setTotalCount(common);
 
@@ -269,8 +256,8 @@ public class MetricsApiService {
     }
     MetricsInfo.NetInfo.DisconnectionDetailInfo disconnectionDetail =
             new MetricsInfo.NetInfo.DisconnectionDetailInfo();
-    disconnectionDetail.setReason("TOO_MANY_PEERS");
-    disconnectionDetail.setCount(12);
+//    disconnectionDetail.setReason("TOO_MANY_PEERS");
+//    disconnectionDetail.setCount(12);
     disconnectionDetails.add(disconnectionDetail);
     netInfo.setDisconnectionDetail(disconnectionDetails);
 
