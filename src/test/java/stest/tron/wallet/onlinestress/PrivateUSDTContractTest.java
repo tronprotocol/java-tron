@@ -49,7 +49,7 @@ public class PrivateUSDTContractTest {
   public void testTriggerPrivateMint() {
 
     byte[] contractAddress = WalletClient
-        .decodeFromBase58Check("TTguX62yeP5yqvrJEvBM8cTqu4pyE8spKL");
+        .decodeFromBase58Check("TMQucZnP65VVaBojEmu1wTFHnzo74ofeKi");
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TJCnKsPa7y5okkXvQAidZBzqx3QyQ6sxMW");
@@ -71,6 +71,7 @@ public class PrivateUSDTContractTest {
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       Optional<TransactionInfo> infoById = PublicMethed
           .getTransactionInfoById(txid, blockingStubFull);
+      logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
       Assert.assertEquals(contractResult.SUCCESS, infoById.get().getReceipt().getResult());
 
     }
@@ -84,7 +85,7 @@ public class PrivateUSDTContractTest {
   public void testTriggerPrivateTransfer() {
 
     byte[] contractAddress = WalletClient
-        .decodeFromBase58Check("TTguX62yeP5yqvrJEvBM8cTqu4pyE8spKL");
+        .decodeFromBase58Check("TMQucZnP65VVaBojEmu1wTFHnzo74ofeKi");
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TJCnKsPa7y5okkXvQAidZBzqx3QyQ6sxMW");

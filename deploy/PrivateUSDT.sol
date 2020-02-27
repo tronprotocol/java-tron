@@ -19,8 +19,11 @@ contract PrivateUSDT {
 
     address verifyProofContract = address(0x000F);
     address hashor = address(0x0010);
+    address calTimeContract = address(0x0011);
 
     event returnPath(uint256 index, bytes32[33] path);
+
+    event returnCurrentTime(bytes time);
 
     constructor () public {
         _owner = msg.sender;
@@ -103,6 +106,26 @@ contract PrivateUSDT {
         emit returnPath(position, path);
     }
 
+    // get current time
+    function getCurrentTime() private returns (bytes memory) {
+        (bool result, bytes memory msg) = calTimeContract.call("");
+        require(result, "getCurrentTime failed");
+
+//        uint64 time = bytesToUint64(msg);
+
+        return msg;
+    }
+
+    // print delta and get new current time
+    function calDeltaTime(bytes memory param) private returns (bytes memory) {
+        (bool result, bytes memory msg) = calTimeContract.call(abi.encode(param));
+        require(result, "calDeltaTime failed");
+
+//        uint64 time = bytesToUint64(msg);
+
+        return msg;
+    }
+
     // input: cv, epk, proof, bindingSig
     function mint(uint64 value, bytes32 note_commitment, bytes32[10] calldata input, bytes32 signHash) external {
         require(value > 0, "Mint negative value.");
@@ -111,6 +134,11 @@ contract PrivateUSDT {
         //1504 = 288 + 64 + "32" + 32 + 32*33 + 32
         (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(note_commitment, input, value, signHash, frontier, leafCount));
         require(result, "The proof and signature have not been verified by the contract");
+
+        // get time
+        (bool r1, bytes memory t1) = calTimeContract.call("");
+        require(r1, "getCurrentTime failed");
+        bytes8 startTime = bytesToBytes8(t1, 0);
 
         uint256 slot = uint8(msg[0]);
         uint256 nodeIndex = leafCount + 2 ** 32 - 1;
@@ -128,6 +156,11 @@ contract PrivateUSDT {
         leafCount ++;
         // Finally, transfer the fTokens from the sender to this contract
         //usdtToken.transferFrom(msg.sender, address(this), value);
+
+        // cal delta time, slot process
+        (bool r2, bytes memory t2) = calTimeContract.call(abi.encode(startTime));
+        require(r2, "getCurrentTime failed");
+//        bytes8 startTimeSlot = bytesToBytes8(t2, 0);
     }
 
 
@@ -136,13 +169,18 @@ contract PrivateUSDT {
     //output2_bytes32*9: cv, cm, epk, proof
     function transfer(bytes32[10] calldata input, bytes32 anchor, bytes32 nf, bytes32[9] calldata output1, bytes32[9] calldata output2, bytes32[2] calldata bindingSignature, bytes32 signHash) external {
 
-        require(nullifiers[nf] == 0, "The notecommitment being spent has already been nullified!");
+        // require(nullifiers[nf] == 0, "The notecommitment being spent has already been nullified!");
         require(roots[anchor] != 0, "The anchor must exist");
         //bytes32 signHash = keccak256(abi.encode(address(this), msg.sender, spendDescription, outputDescription));
 
         //2144 = 384 + 288 + 288 + 64 + 32 + 32*33 + 32
         (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(input, anchor, nf, output1, output2, bindingSignature, signHash, frontier, leafCount));
         require(result, "The proof and signature has not been verified by the contract");
+
+        // get time
+        (bool r1, bytes memory t1) = calTimeContract.call("");
+        require(r1, "getCurrentTime failed");
+        bytes8 startTime = bytesToBytes8(t1, 0);
 
         uint slot1 = uint8(msg[0]);
         uint slot2 = uint8(msg[1]);
@@ -171,6 +209,11 @@ contract PrivateUSDT {
         leafCount = leafCount + 2;
 
         nullifiers[nf] = nf;
+
+        // cal delta time and get time, delta time is slot process
+        (bool r2, bytes memory t2) = calTimeContract.call(abi.encode(startTime));
+        require(r2, "getCurrentTime failed");
+//        bytes8 startTimeSlot = bytesToBytes8(t2, 0);
     }
 
     //input_bytes32*10: cv, rk, spend_auth_sig, proof
@@ -196,6 +239,25 @@ contract PrivateUSDT {
         for (uint i = 0; i < 32; i++) {
             out |= bytes32(b[i+offset] & 0xFF) >> (i * 8);
         }
+        return out;
+    }
+
+    function bytesToBytes8(bytes memory b, uint offset) private returns (bytes8) {
+        bytes8 out;
+        for (uint i = 0; i < 8; i++) {
+            out |= bytes8(b[i+offset] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
+
+    function bytesToUint64(bytes memory b) public returns (uint64) {
+        require(b.length >= 8, "array too small");
+        uint64 out;
+
+        for (uint i = 0; i < 8; i++) {
+            out |= uint8(b[i] & 0xFF) << (7-i);
+        }
+
         return out;
     }
 

@@ -30,6 +30,7 @@ import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 
+import com.google.common.primitives.Longs;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +48,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.joda.time.DateTime;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
@@ -92,6 +94,7 @@ public class PrecompiledContracts {
   private static final ValidateMultiSign validateMultiSign = new ValidateMultiSign();
   private static final ValidateProof validateProof = new ValidateProof();
   private static final CalHash calHash = new CalHash();
+  private static final CalTimeContract calTimeContract = new CalTimeContract();
 
   private static final DataWord ecRecoverAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000001");
@@ -117,6 +120,8 @@ public class PrecompiledContracts {
           "000000000000000000000000000000000000000000000000000000000000000F");
   private static final DataWord calHashAddr = new DataWord(
           "0000000000000000000000000000000000000000000000000000000000000010");
+  private static final DataWord calTimeAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000000000011");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -159,6 +164,9 @@ public class PrecompiledContracts {
     }
     if (address.equals(calHashAddr)) {
       return calHash;
+    }
+    if (address.equals(calTimeAddr)) {
+      return calTimeContract;
     }
 
     return null;
@@ -1328,6 +1336,59 @@ public class PrecompiledContracts {
 
       logger.info("Merkle root is " + ByteArray.toHexString(nodeValue));
       return Pair.of(true, result);
+    }
+  }
+
+  public static class CalTimeContract extends PrecompiledContract {
+
+    private static final int CAL_SIZE = 32;
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 0;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+       if (data.length == 0) {
+        return getCurrentTime();
+      } else {
+        return calDeltaTime(data);
+      }
+    }
+
+    private Pair<Boolean, byte[]> getCurrentTime() {
+      long time = System.currentTimeMillis();
+      logger.info("==== getCurrentTime get current is " + new DateTime(time) + ", " +  time);
+
+      byte[] res = new byte[8];
+      for(int i = 0; i < 8; i++) {
+        res[i] = (byte)((time >> (i*8)) & 0xFF);
+      }
+
+      return Pair.of(true, res);
+    }
+
+    // print delta and return current
+    private Pair<Boolean, byte[]> calDeltaTime(byte[] data) {
+      long current = System.currentTimeMillis();
+
+      long old = 0;
+      for(int i = 7; i >= 0; i--){
+        old = old << 8 | (data[i] & 0xFF);
+      }
+
+      long delta = current - old;
+
+      logger.info("==== calDeltaTime old is " + new DateTime(old) + ", " + old);
+      logger.info("==== calDeltaTime current is " + new DateTime(current) + ", " + current);
+      logger.info("==== calDeltaTime delta is " + delta + "ms");
+
+      byte[] res = new byte[8];
+      for(int i = 0; i < 8; i++) {
+        res[i] = (byte)((current >> (i*8)) & 0xFF);
+      }
+      return Pair.of(true, res);
     }
   }
 
