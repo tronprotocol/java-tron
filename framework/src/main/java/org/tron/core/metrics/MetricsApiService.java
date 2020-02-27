@@ -74,9 +74,9 @@ public class MetricsApiService {
     return metricsInfo;
   }
 
-  public Protocol.MetricsInfo getProtoMonitorInfo() {
-    return getMetricsInfo().toProtoEntity();
-  }
+  //public Protocol.MetricsInfo getProtoMonitorInfo() {
+    //return getMetricsInfo().toProtoEntity();
+  //}
 
   private void setNodeInfo(MetricsInfo data) {
     MetricsInfo.NodeInfo nodeInfo = new MetricsInfo.NodeInfo();
