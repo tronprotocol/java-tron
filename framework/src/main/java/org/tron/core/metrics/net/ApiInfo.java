@@ -1,51 +1,43 @@
 package org.tron.core.metrics.net;
 
-import com.alibaba.fastjson.annotation.JSONField;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class ApiInfo {
-  private Common totalCount;
-  private Common totalFailCount;
-  private Common totalOutTraffic;
-  @JSONField(name = "detail")
+  private RateInfo qps;
+  private RateInfo failQps;
+  private RateInfo totalOutTraffic;
   private List<ApiDetailInfo> detail = new ArrayList<>();
 
-  public Common getTotalCount() {
-    return this.totalCount;
+  public RateInfo getQps() {
+    return qps;
   }
 
-  public ApiInfo setTotalCount(Common totalCount) {
-    this.totalCount = totalCount;
-    return this;
+  public void setQps(RateInfo qps) {
+    this.qps = qps;
   }
 
-  public Common getTotalFailCount() {
-    return this.totalFailCount;
+  public RateInfo getFailQps() {
+    return failQps;
   }
 
-  public ApiInfo setTotalFailCount(Common totalFailCount) {
-    this.totalFailCount = totalFailCount;
-    return this;
+  public void setFailQps(RateInfo failQps) {
+    this.failQps = failQps;
   }
 
-  public Common getTotalOutTraffic() {
-    return this.totalOutTraffic;
+  public RateInfo getTotalOutTraffic() {
+    return totalOutTraffic;
   }
 
-  public ApiInfo setTotalOutTraffic(Common totaloutTraffic) {
-    this.totalOutTraffic = totaloutTraffic;
-    return this;
+  public void setTotalOutTraffic(RateInfo totalOutTraffic) {
+    this.totalOutTraffic = totalOutTraffic;
   }
 
-  @JSONField(name = "detail")
-  public List<ApiDetailInfo> getApiDetailInfo() {
-    return this.detail;
+  public List<ApiDetailInfo> getDetail() {
+    return detail;
   }
 
-  public ApiInfo setApiDetailInfo(List<ApiDetailInfo> detail) {
+  public void setDetail(List<ApiDetailInfo> detail) {
     this.detail = detail;
-    return this;
   }
 }

@@ -4,25 +4,31 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+
 import java.util.SortedMap;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.protos.Protocol.Block;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.metrics.blockchain.BlockChainMetricManager;
 
+@Slf4j(topic = "metrics")
 @Component
 public class MetricsService {
 
+  @Setter
+  private BlockChainMetricManager blockChainMetricManager;
+
   private MetricRegistry metricRegistry = new MetricRegistry();
 
-  private static MetricsService metricsService;
-  public void init() {
-    metricsService = this;
-  }
-  public static MetricsService getInstance() {
-    return metricsService;
-  }
+  @Getter
+  private long failProcessBlockNum = 0;
 
+  @Getter
+  private String failProcessBlockReason = "";
 
   public Histogram getHistogram(String key) {
     return metricRegistry.histogram(key);
@@ -38,10 +44,13 @@ public class MetricsService {
    * @param value long
    */
   public void histogramUpdate(String key, long value) {
-    if (CommonParameter.getInstance().isNodeMetricsEnable()) {
-      metricRegistry.histogram(key).update(value);
+    try {
+      if (CommonParameter.getInstance().isNodeMetricsEnable()) {
+        metricRegistry.histogram(key).update(value);
+      }
+    } catch (Exception e) {
+      logger.warn("update histogram failed, key:{}, value:{}", key, value);
     }
-
   }
 
   public Meter getMeter(String name) {
@@ -54,8 +63,12 @@ public class MetricsService {
    * @param value long
    */
   public void meterMark(String key, long value) {
-    if (CommonParameter.getInstance().isNodeMetricsEnable()) {
-      metricRegistry.meter(key).mark(value);
+    try {
+      if (CommonParameter.getInstance().isNodeMetricsEnable()) {
+        metricRegistry.meter(key).mark(value);
+      }
+    } catch (Exception e) {
+      logger.warn("mark meter failed, key:{}, value:{}", key, value);
     }
   }
 
@@ -73,17 +86,32 @@ public class MetricsService {
    * @param value long
    */
   public void counterInc(String key, long value) {
-    if (CommonParameter.getInstance().isNodeMetricsEnable()) {
-      metricRegistry.counter(key).inc(value);
+    try {
+      if (CommonParameter.getInstance().isNodeMetricsEnable()) {
+        metricRegistry.counter(key).inc(value);
+      }
+    } catch (Exception e) {
+      logger.warn("inc counter failed, key:{}, value:{}", key, value);
     }
   }
 
-  public void applyBlcok(Block block) {
-    // witness version, lantency,
+  /**
+   * apply block.
+   *
+   * @param block BlockCapsule
+   */
+  public void applyBlock(BlockCapsule block) {
+    try {
+      blockChainMetricManager.applyBlock(block);
+    } catch (Exception e) {
+      logger.warn("record block failed, {}, reason: {}.",
+              block.getBlockId().toString(), e.getMessage());
+    }
   }
 
-  public void failProcessBlcok(Block block, String errorInfo) {
-    // witness version, lantency,
+  public void failProcessBlock(long blockNum, String errorInfo) {
+    failProcessBlockNum = blockNum;
+    failProcessBlockReason = errorInfo;
   }
 
   public MetricsInfo getMetricsInfo() {

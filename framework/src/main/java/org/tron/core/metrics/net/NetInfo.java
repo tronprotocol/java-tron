@@ -1,7 +1,5 @@
 package org.tron.core.metrics.net;
 
-import com.alibaba.fastjson.annotation.JSONField;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,107 +17,90 @@ public class NetInfo {
   private LatencyInfo latency;
 
   public int getErrorProtoCount() {
-    return this.errorProtoCount;
+    return errorProtoCount;
   }
 
-  public NetInfo setErrorProtoCount(int errorProtoCount) {
+  public void setErrorProtoCount(int errorProtoCount) {
     this.errorProtoCount = errorProtoCount;
-    return this;
   }
 
   public ApiInfo getApi() {
-    return this.api;
+    return api;
   }
 
-  public NetInfo setApi(ApiInfo api) {
+  public void setApi(ApiInfo api) {
     this.api = api;
-    return this;
   }
 
   public int getConnectionCount() {
-    return this.connectionCount;
+    return connectionCount;
   }
 
-  public NetInfo setConnectionCount(int connectionCount) {
+  public void setConnectionCount(int connectionCount) {
     this.connectionCount = connectionCount;
-    return this;
   }
 
   public int getValidConnectionCount() {
-    return this.validConnectionCount;
+    return validConnectionCount;
   }
 
-  public NetInfo setValidConnectionCount(int validConnectionCount) {
+  public void setValidConnectionCount(int validConnectionCount) {
     this.validConnectionCount = validConnectionCount;
-    return this;
   }
 
   public RateInfo getTcpInTraffic() {
-    return this.tcpInTraffic;
+    return tcpInTraffic;
   }
 
-  @JSONField(name = "TCPInTraffic")
-  public NetInfo setTcpInTraffic(RateInfo tcpInTraffic) {
+  public void setTcpInTraffic(RateInfo tcpInTraffic) {
     this.tcpInTraffic = tcpInTraffic;
-    return this;
   }
 
   public RateInfo getTcpOutTraffic() {
-    return this.tcpOutTraffic;
+    return tcpOutTraffic;
   }
 
-  @JSONField(name = "TCPOutTraffic")
-  public NetInfo setTcpOutTraffic(RateInfo tcpOutTraffic) {
+  public void setTcpOutTraffic(RateInfo tcpOutTraffic) {
     this.tcpOutTraffic = tcpOutTraffic;
-    return this;
   }
 
   public int getDisconnectionCount() {
-    return this.disconnectionCount;
+    return disconnectionCount;
   }
 
-  public NetInfo setDisconnectionCount(int disconnectionCount) {
+  public void setDisconnectionCount(int disconnectionCount) {
     this.disconnectionCount = disconnectionCount;
-    return this;
   }
 
   public List<DisconnectionDetailInfo> getDisconnectionDetail() {
-    return this.disconnectionDetail;
+    return disconnectionDetail;
   }
 
-  public NetInfo setDisconnectionDetail(List<DisconnectionDetailInfo> disconnectionDetail) {
+  public void setDisconnectionDetail(List<DisconnectionDetailInfo> disconnectionDetail) {
     this.disconnectionDetail = disconnectionDetail;
-    return this;
   }
 
   public RateInfo getUdpInTraffic() {
-    return this.udpInTraffic;
+    return udpInTraffic;
   }
 
-  @JSONField(name = "UDPInTraffic")
-  public NetInfo setUdpInTraffic(RateInfo udpInTraffic) {
+  public void setUdpInTraffic(RateInfo udpInTraffic) {
     this.udpInTraffic = udpInTraffic;
-    return this;
   }
 
   public RateInfo getUdpOutTraffic() {
-    return this.udpOutTraffic;
+    return udpOutTraffic;
   }
 
-  @JSONField(name = "UDPOutTraffic")
-  public NetInfo setUdpOutTraffic(RateInfo udpOutTraffic) {
+  public void setUdpOutTraffic(RateInfo udpOutTraffic) {
     this.udpOutTraffic = udpOutTraffic;
-    return this;
   }
 
   public LatencyInfo getLatency() {
-    return this.latency;
+    return latency;
   }
 
-  public NetInfo setLatency(LatencyInfo latency) {
+  public void setLatency(LatencyInfo latency) {
     this.latency = latency;
-    return this;
   }
-
-
 }

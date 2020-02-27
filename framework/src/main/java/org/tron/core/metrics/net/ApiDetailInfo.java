@@ -2,43 +2,39 @@ package org.tron.core.metrics.net;
 
 public class ApiDetailInfo {
   private String name;
-  private Common count;
-  private Common failCount;
-  private Common outTraffic;
+  private RateInfo qps;
+  private RateInfo failQps;
+  private RateInfo outTraffic;
 
   public String getName() {
-    return this.name;
+    return name;
   }
 
-  public ApiDetailInfo setName(String name) {
+  public void setName(String name) {
     this.name = name;
-    return this;
   }
 
-  public Common getCount() {
-    return this.count;
+  public RateInfo getQps() {
+    return qps;
   }
 
-  public ApiDetailInfo setCount(Common count) {
-    this.count = count;
-    return this;
+  public void setQps(RateInfo qps) {
+    this.qps = qps;
   }
 
-  public Common getFailCount() {
-    return this.failCount;
+  public RateInfo getFailQps() {
+    return failQps;
   }
 
-  public ApiDetailInfo setFailCount(Common failCount) {
-    this.failCount = failCount;
-    return this;
+  public void setFailQps(RateInfo failQps) {
+    this.failQps = failQps;
   }
 
-  public Common getOutTraffic() {
-    return this.outTraffic;
+  public RateInfo getOutTraffic() {
+    return outTraffic;
   }
 
-  public ApiDetailInfo setOutTraffic(Common outTraffic) {
+  public void setOutTraffic(RateInfo outTraffic) {
     this.outTraffic = outTraffic;
-    return this;
   }
 }

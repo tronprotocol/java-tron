@@ -5,20 +5,18 @@ public class DisconnectionDetailInfo {
   private int count;
 
   public String getReason() {
-    return this.reason;
+    return reason;
   }
 
-  public DisconnectionDetailInfo setReason(String reason) {
+  public void setReason(String reason) {
     this.reason = reason;
-    return this;
   }
 
   public int getCount() {
-    return this.count;
+    return count;
   }
 
-  public DisconnectionDetailInfo setCount(int count) {
+  public void setCount(int count) {
     this.count = count;
-    return this;
   }
 }
