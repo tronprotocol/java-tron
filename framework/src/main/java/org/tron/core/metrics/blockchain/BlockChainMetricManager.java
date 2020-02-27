@@ -77,7 +77,7 @@ public class BlockChainMetricManager {
     blockChain.setFailProcessBlockNum(metricsService.getFailProcessBlockNum());
     blockChain.setFailProcessBlockReason(metricsService.getFailProcessBlockReason());
     List<DupWitnessInfo> dupWitness = getDupWitness();
-    blockChain.setDupWitnessInfos(dupWitness);
+    blockChain.setDupWitness(dupWitness);
   }
 
   /**
