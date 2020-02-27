@@ -1,5 +1,6 @@
 package org.tron.core.metrics;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.metrics.blockchain.BlockChainInfo;
 import org.tron.core.metrics.net.NetInfo;
@@ -23,6 +24,7 @@ public class MetricsInfo {
     this.startTime = startTime;
   }
 
+  @JSONField(name = "node")
   public NodeInfo getNodeInfo() {
     return this.node;
   }
@@ -32,12 +34,13 @@ public class MetricsInfo {
     this.node = node;
   }
 
-  public void setBlockChainInfo(BlockChainInfo blockChain) {
-    this.blockchain = blockChain;
-  }
-
+  @JSONField(name = "blockchain")
   public BlockChainInfo getBlockChainInfo() {
     return this.blockchain;
+  }
+
+  public void setBlockChainInfo(BlockChainInfo blockChain) {
+    this.blockchain = blockChain;
   }
 
 

@@ -11,6 +11,7 @@ import org.tron.common.backup.BackupManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
+import org.tron.core.metrics.MetricsService;
 import org.tron.program.Version;
 
 
@@ -22,6 +23,9 @@ public class NodeMetricManager {
 
   @Autowired
   private BackupManager backupManager;
+
+  @Autowired
+  MetricsService metricsService;
 
   /**
    * get node info.

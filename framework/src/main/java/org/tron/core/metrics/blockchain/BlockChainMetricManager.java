@@ -4,7 +4,6 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -21,7 +20,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
 import org.tron.core.metrics.net.RateInfo;
-import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 
 @Component
@@ -41,9 +39,6 @@ public class BlockChainMetricManager {
 
   @Getter
   private Map<String, Long> dupWitnessBlockNum = new ConcurrentHashMap<String, Long>();
-
-  @Getter
-  private int maxVersion;
 
   public void init() {
     metricsService.setBlockChainMetricManager(this);
@@ -93,8 +88,8 @@ public class BlockChainMetricManager {
     //witness info
     if (witnessInfo.containsKey(witnessAddress)) {
       BlockHeader old = witnessInfo.get(witnessAddress);
-      if (old.getRawData().getNumber() == block.getNum() &&
-              Math.abs(old.getRawData().getTimestamp() - block.getTimeStamp()) < 3000) {
+      if (old.getRawData().getNumber() == block.getNum()
+          && Math.abs(old.getRawData().getTimestamp() - block.getTimeStamp()) < 3000) {
         metricsService.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT + witnessAddress, 1);
         dupWitnessBlockNum.put(witnessAddress, block.getNum());
       }
@@ -135,11 +130,8 @@ public class BlockChainMetricManager {
         String address = Hex.toHexString(witnessCapsule.getAddress().toByteArray());
         if (witnessInfo.containsKey(address)) {
           BlockHeader blockHeader = witnessInfo.get(address);
-          maxVersion=Math.max(blockHeader.getRawData().getVersion(),maxVersion);
-          if(blockHeader.getRawData().getVersion()<maxVersion) {
-            WitnessInfo witness = new WitnessInfo(address, blockHeader.getRawData().getVersion());
-            witnessInfos.add(witness);
-          }
+          WitnessInfo witness = new WitnessInfo(address, blockHeader.getRawData().getVersion());
+          witnessInfos.add(witness);
         }
       }
     }

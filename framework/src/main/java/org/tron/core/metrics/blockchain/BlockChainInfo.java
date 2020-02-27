@@ -1,10 +1,9 @@
 package org.tron.core.metrics.blockchain;
 
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.tron.core.metrics.net.RateInfo;
-
-import java.util.List;
 
 @Slf4j(topic = "blockChainInfo")
 

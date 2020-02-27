@@ -3,7 +3,6 @@ package org.tron.core.metrics.node;
 public class NodeInfo {
   private String ip;
   private int nodeType;
-  private int status;
   private String version;
   private int backupStatus;
 
@@ -22,14 +21,6 @@ public class NodeInfo {
 
   public void setNodeType(int nodeType) {
     this.nodeType = nodeType;
-  }
-
-  public int getStatus() {
-    return status;
-  }
-
-  public void setStatus(int status) {
-    this.status = status;
   }
 
   public String getVersion() {

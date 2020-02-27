@@ -1,6 +1,5 @@
 package org.tron.core.metrics.net;
 
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;

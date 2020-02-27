@@ -18,7 +18,7 @@ public class MetricsKey {
   public static final String NET_TCP_OUT_TRAFFIC = "net.TCPOutTraffic";
   public static final String NET_UDP_IN_TRAFFIC = "net.UDPInTraffic";
   public static final String NET_UDP_OUT_TRAFFIC = "net.UDPOutTraffic";
-  public static final String NET_API_TOTAL_OUT_TRAFFIC ="net.APITotalOutTraffic";
+  public static final String NET_API_TOTAL_OUT_TRAFFIC = "net.APITotalOutTraffic";
   public static final String NET_API_QPS = "net.APIQPS";
   public static final String NET_API_FAIL_QPS = "net.APIFailQPS";
   public static final String NET_API_DETAIL_ENDPOINT_QPS = "net.APIDetailQPS";

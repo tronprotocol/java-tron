@@ -42,6 +42,7 @@ public class HttpInterceptor implements Filter {
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
+
     try {
       if (request instanceof HttpServletRequest) {
         endpoint = ((HttpServletRequest) request).getRequestURI();
@@ -85,8 +86,8 @@ public class HttpInterceptor implements Filter {
 
     } catch (Exception e) {
       if (EndpointMeterNameList.containsKey(endpoint)) {
-        metricsService.getInstance().getMeter(MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS +
-            "." + endpoint).mark();
+        metricsService.getInstance().getMeter(MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS
+            + "." + endpoint).mark();
         metricsService.getInstance().getMeter(MetricsKey.NET_API_DETAIL_ENDPOINT_QPS
             + "." + endpoint).mark();
       }
