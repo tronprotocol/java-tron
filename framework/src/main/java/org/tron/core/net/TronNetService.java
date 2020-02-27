@@ -67,6 +67,7 @@ public class TronNetService {
     syncService.init();
     peerStatusCheck.init();
     transactionsMsgHandler.init();
+    metricsService.init();
     logger.info("TronNetService start successfully.");
   }
 

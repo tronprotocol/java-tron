@@ -15,6 +15,15 @@ public class MetricsService {
 
   private MetricRegistry metricRegistry = new MetricRegistry();
 
+  private static MetricsService metricsService;
+  public void init() {
+    metricsService = this;
+  }
+  public static MetricsService getInstance() {
+    return metricsService;
+  }
+
+
   public Histogram getHistogram(String key) {
     return metricRegistry.histogram(key);
   }

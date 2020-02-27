@@ -15,6 +15,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.core.metrics.MetricsService;
 
 @Slf4j(topic = "httpIntercetpor")
 public class HttpInterceptor implements Filter {
@@ -52,6 +54,9 @@ public class HttpInterceptor implements Filter {
   private String endpoint;
   private int minuteCount = 0;
   private long startTime;
+  @Autowired
+  private MetricsService metricsService;
+
 
   public static Map<String, JSONObject> getEndpointMap() {
     return EndpointCount;
@@ -139,6 +144,7 @@ public class HttpInterceptor implements Filter {
         outTraffic.allIncrement(reposeContentSize);
         outTraffic.caculteMeanRate(seconds);
 
+        metricsService.getInstance().getMeter("test").mark();
 
         HttpServletResponse resp = (HttpServletResponse) response;
         if (resp.getStatus() != 200) {
@@ -218,6 +224,7 @@ public class HttpInterceptor implements Filter {
     totalFailRequestCount.resetOneMinute();
     outTraffic.resetOneMinute();
     for (Map.Entry<String, JSONObject> entry : EndpointCount.entrySet()) {
+
       JSONObject obj = entry.getValue();
       obj.put(END_POINT_ALL_REQUESTS_ONE_MINUTE, 0);
       obj.put(END_POINT_FAIL_REQUEST_ONE_MINUTE, 0);
