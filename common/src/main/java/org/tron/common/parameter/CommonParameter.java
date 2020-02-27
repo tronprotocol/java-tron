@@ -296,6 +296,10 @@ public class CommonParameter {
 
   @Getter
   @Setter
+  public long forbidTransferToContract; //committee parameter
+
+  @Getter
+  @Setter
   public int tcpNettyWorkThreadNum;
 
   @Getter

@@ -59,7 +59,7 @@ public class VM {
    * + size, unless size is 0, in which case the result is also 0.
    *
    * @param offset starting position of the memory
-   * @param size number of bytes needed
+   * @param size  number of bytes needed
    * @return offset + size, unless size is 0. In that case memNeeded is also 0.
    */
   private static BigInteger memNeeded(DataWord offset, DataWord size) {
@@ -1089,7 +1089,7 @@ public class VM {
         case LOG3:
         case LOG4: {
 
-          if (program.isConstantCall()) {
+          if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
           DataWord address = program.getContractAddress();
@@ -1167,7 +1167,7 @@ public class VM {
         }
         break;
         case SSTORE: {
-          if (program.isConstantCall()) {
+          if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
 
@@ -1298,7 +1298,7 @@ public class VM {
         }
         break;
         case CREATE: {
-          if (program.isConstantCall()) {
+          if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
           DataWord value = program.stackPop();
@@ -1310,7 +1310,7 @@ public class VM {
         }
         break;
         case CREATE2: {
-          if (program.isConstantCall()) {
+          if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
           DataWord value = program.stackPop();
@@ -1345,7 +1345,7 @@ public class VM {
             value = DataWord.ZERO;
           }
 
-          if (program.isConstantCall() && (op == CALL || op == CALLTOKEN) && !value.isZero()) {
+          if (program.isStaticCall() && (op == CALL || op == CALLTOKEN) && !value.isZero()) {
             throw new Program.StaticCallModificationException();
           }
 
@@ -1424,7 +1424,7 @@ public class VM {
           break;
         }
         case SUICIDE: {
-          if (program.isConstantCall()) {
+          if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
           }
 

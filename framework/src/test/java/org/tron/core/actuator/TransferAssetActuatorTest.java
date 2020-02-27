@@ -16,6 +16,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
+import static org.tron.common.utils.Commons.adjustBalance;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -26,9 +27,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.runtime.TvmTestUtils;
+import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -37,8 +42,12 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.VMIllegalException;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
@@ -1355,5 +1364,88 @@ public class TransferAssetActuatorTest {
     actuatorTest.nullDBManger();
   }
 
+  /**
+   * transfer assert to smartcontract addresss after TvmSolidity059
+   */
+  @Test
+  public void transferToContractAddress()
+      throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException, BalanceInsufficientException {
+    dbManager.getDynamicPropertiesStore().saveForbidTransferToContract(1);
+    createAssertSameTokenNameActive();
+    VMConfig.initAllowMultiSign(1);
+    VMConfig.initAllowTvmTransferTrc10(1);
+    VMConfig.initAllowTvmConstantinople(1);
+    VMConfig.initAllowTvmSolidity059(1);
+    String contractName = "testContract";
+    byte[] address = Hex.decode(OWNER_ADDRESS);
+    adjustBalance(dbManager.getChainBaseManager().getAccountStore(), address, 1000000000L);
+
+    String ABI =
+        "[]";
+    String codes = "608060405261019c806100136000396000f3fe608060405260043610610045577c0100000000000"
+        + "00000000000000000000000000000000000000000000060003504632a205edf811461004a5780634cd2270c"
+        + "146100c8575b600080fd5b34801561005657600080fd5b50d3801561006357600080fd5b50d2801561007057"
+        + "600080fd5b506100c6600480360360c081101561008757600080fd5b5073ffffffffffffffffffffffffffff"
+        + "ffffffffffff813581169160208101358216916040820135169060608101359060808101359060a001356100"
+        + "d0565b005b6100c661016e565b60405173ffffffffffffffffffffffffffffffffffffffff87169084156108"
+        + "fc029085906000818181858888f1505060405173ffffffffffffffffffffffffffffffffffffffff89169350"
+        + "85156108fc0292508591506000818181858888f1505060405173ffffffffffffffffffffffffffffffffffff"
+        + "ffff8816935084156108fc0292508491506000818181858888f15050505050505050505050565b56fea165627"
+        + "a7a72305820cc2d598d1b3f968bbdc7825ce83d22dad48192f4bf95bda7f9e4ddf61669ba830029";
+
+    long value = 1;
+    long feeLimit = 1000000000L;
+    long consumeUserResourcePercent = 0;
+    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    byte[] contractAddress = TvmTestUtils
+        .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, codes, value,
+            feeLimit, consumeUserResourcePercent, null, 0, 0,
+            deposit, null);
+
+    TransferAssetActuator actuator = new TransferAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).
+        setAny(getContract(100L, contractAddress));
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      AccountCapsule owner =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
+      AccountCapsule toAccount =
+          dbManager.getAccountStore().get(contractAddress);
+      // V1, data is not exist
+      Assert.assertNull(owner.getAssetMap().get(ASSET_NAME));
+      Assert.assertNull(toAccount.getAssetMap().get(ASSET_NAME));
+      // check V2
+      long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
+      Assert.assertEquals(
+          owner.getInstance().getAssetV2Map().get(String.valueOf(tokenIdNum)).longValue(),
+          OWNER_ASSET_BALANCE - 100);
+      Assert.assertEquals(
+          toAccount.getInstance().getAssetV2Map().get(String.valueOf(tokenIdNum)).longValue(),
+          100L);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e.getMessage().contains("Cannot transfer"));
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
+  private Any getContract(long sendCoin, byte[] toAddress) {
+    String assertName = ASSET_NAME;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 1) {
+      long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
+      assertName = String.valueOf(tokenIdNum);
+    }
+
+    return Any.pack(
+        TransferAssetContract.newBuilder()
+            .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName)))
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(toAddress))
+            .setAmount(sendCoin)
+            .build());
+  }
 
 }

@@ -803,6 +803,11 @@ public class Wallet {
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getForbidTransferToContract")
+        .setValue(dbManager.getDynamicPropertiesStore().getForbidTransferToContract())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAdaptiveResourceLimitTargetRatio")
         .setValue(
             chainBaseManager.getDynamicPropertiesStore()

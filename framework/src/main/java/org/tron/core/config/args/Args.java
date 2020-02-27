@@ -121,6 +121,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowDelegateResource = 0;
     PARAMETER.allowSameTokenName = 0;
     PARAMETER.allowTvmSolidity059 = 0;
+    PARAMETER.forbidTransferToContract = 0;
     PARAMETER.tcpNettyWorkThreadNum = 0;
     PARAMETER.udpNettyWorkThreadNum = 0;
     PARAMETER.p2pNodeId = "";
@@ -522,6 +523,10 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmSolidity059 =
         config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY059) ? config
             .getInt(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY059) : 0;
+
+    PARAMETER.forbidTransferToContract =
+        config.hasPath(Constant.COMMITTEE_FORBID_TRANSFER_TO_CONTRACT) ? config
+            .getInt(Constant.COMMITTEE_FORBID_TRANSFER_TO_CONTRACT) : 0;
 
     PARAMETER.tcpNettyWorkThreadNum = config.hasPath(Constant.NODE_TCP_NETTY_WORK_THREAD_NUM)
         ? config.getInt(Constant.NODE_TCP_NETTY_WORK_THREAD_NUM) : 0;
