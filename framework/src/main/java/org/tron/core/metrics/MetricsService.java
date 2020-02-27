@@ -30,6 +30,17 @@ public class MetricsService {
   @Getter
   private String failProcessBlockReason = "";
 
+  private static MetricsService metricsService;
+
+  public static MetricsService getInstance() {
+    return metricsService;
+  }
+
+  public void init() {
+    metricsService = this;
+  }
+
+
   public Histogram getHistogram(String key) {
     return metricRegistry.histogram(key);
   }

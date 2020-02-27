@@ -27,7 +27,6 @@ import org.tron.protos.Protocol.BlockHeader;
 @Component
 public class BlockChainMetricManager {
 
-  private static Map<String, WitnessInfo> witnessVersion = new HashMap<>();
 
   @Autowired
   private Manager dbManager;
@@ -42,6 +41,9 @@ public class BlockChainMetricManager {
 
   @Getter
   private Map<String, Long> dupWitnessBlockNum = new ConcurrentHashMap<String, Long>();
+
+  @Getter
+  private int maxVersion;
 
   public void init() {
     metricsService.setBlockChainMetricManager(this);
@@ -133,8 +135,11 @@ public class BlockChainMetricManager {
         String address = Hex.toHexString(witnessCapsule.getAddress().toByteArray());
         if (witnessInfo.containsKey(address)) {
           BlockHeader blockHeader = witnessInfo.get(address);
-          WitnessInfo witness = new WitnessInfo(address, blockHeader.getRawData().getVersion());
-          witnessInfos.add(witness);
+          maxVersion=Math.max(blockHeader.getRawData().getVersion(),maxVersion);
+          if(blockHeader.getRawData().getVersion()<maxVersion) {
+            WitnessInfo witness = new WitnessInfo(address, blockHeader.getRawData().getVersion());
+            witnessInfos.add(witness);
+          }
         }
       }
     }
