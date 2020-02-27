@@ -240,5 +240,5 @@ public class Constant {
 
   public static final String SEED_NODE_IP_LIST = "seed.node.ip.list";
 
-  public static final String NODE_METRICS_ENABLE = "metrics.nodeMetricsEnable";
+  public static final String NODE_METRICS_ENABLE = "node.metricsEnable";
 }

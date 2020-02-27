@@ -85,10 +85,6 @@ public class TronNetDelegate {
 
   private int blockIdCacheSize = 100;
 
-  private long failProcessBlockNum = 0;
-
-  private String failProcessBlockReason = "";
-
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
     @Override
     public boolean offer(BlockId blockId) {
@@ -216,11 +212,9 @@ public class TronNetDelegate {
             backupServerStartFlag = true;
             backupServer.initServer();
           }
-          recordBlockLatency(block, now);
-          //record transaction rate metric
-          if (block.getTransactions().size() > 0) {
-            metricsService.meterMark(MetricsKey.BLOCKCHAIN_TPS, block.getTransactions().size());
-          }
+
+          //record metrics
+          metricsService.applyBlock(block, now);
         }
       } catch (ValidateSignatureException
           | ContractValidateException
@@ -239,8 +233,7 @@ public class TronNetDelegate {
           | ReceiptCheckErrException
           | VMIllegalException
           | ZksnarkException e) {
-        failProcessBlockNum = block.getNum();
-        failProcessBlockReason = e.getMessage();
+        metricsService.failProcessBlock(block.getNum(), e.getMessage());
         logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
       }
@@ -274,37 +267,6 @@ public class TronNetDelegate {
           .validateSignature(dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
-    }
-  }
-
-  public long getFailProcessBlockNum() {
-    return failProcessBlockNum;
-  }
-
-  public String getFailProcessBlockReason() {
-    return failProcessBlockReason;
-  }
-
-  private void recordBlockLatency(BlockCapsule block, long nowTime) {
-    long netTime = nowTime - block.getTimeStamp();
-    String witnessAddress = Hex.toHexString(block.getWitnessAddress().toByteArray());
-    metricsService.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY, netTime);
-    metricsService.histogramUpdate(
-            MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress, netTime);
-    if (netTime >= 1000) {
-      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".1S", 1L);
-      metricsService.counterInc(
-              MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
-      if (netTime >= 2000) {
-        metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".2S", 1L);
-        metricsService.counterInc(
-                MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S", 1L);
-        if (netTime >= 3000) {
-          metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".3S", 1L);
-          metricsService.counterInc(
-                  MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S", 1L);
-        }
-      }
     }
   }
 }

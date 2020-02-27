@@ -9,10 +9,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,9 +128,9 @@ public class MetricsApiService {
     }
     blockChain.setWitnesses(witnesses);
 
-    blockChain.setFailProcessBlockNum(tronNetDelegate.getFailProcessBlockNum());
-    blockChain.setFailProcessBlockReason(tronNetDelegate.getFailProcessBlockReason());
-    MetricsInfo.BlockchainInfo.DupWitness dupWitness = new MetricsInfo.BlockchainInfo.DupWitness();
+    blockChain.setFailProcessBlockNum(metricsService.getFailProcessBlockNum());
+    blockChain.setFailProcessBlockReason(metricsService.getFailProcessBlockReason());
+    List<MetricsInfo.BlockchainInfo.DupWitness> dupWitness = getDupWitness();
     blockChain.setDupWitness(dupWitness);
 
     data.setBlockInfo(blockChain);
@@ -425,5 +422,20 @@ public class MetricsApiService {
         this.noUpgradedSRList.add(witness);
       }
     }
+  }
+
+  private List<MetricsInfo.BlockchainInfo.DupWitness> getDupWitness() {
+    List<MetricsInfo.BlockchainInfo.DupWitness> dupWitnesses = new ArrayList<>();
+    SortedMap<String, Counter> dupWitnessMap =
+            metricsService.getCounters(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT);
+    for (Map.Entry<String, Counter> entry : dupWitnessMap.entrySet()) {
+      MetricsInfo.BlockchainInfo.DupWitness dupWitness =
+              new MetricsInfo.BlockchainInfo.DupWitness();
+      String witness = entry.getKey().substring(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT.length());
+      dupWitness.setAddress(witness);
+      dupWitness.setCount((int)entry.getValue().getCount());
+      dupWitnesses.add(dupWitness);
+    }
+    return dupWitnesses;
   }
 }

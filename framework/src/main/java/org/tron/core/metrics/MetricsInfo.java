@@ -316,7 +316,7 @@ public class MetricsInfo {
     private List<Witness> witnesses;
     private long failProcessBlockNum;
     private String failProcessBlockReason;
-    private DupWitness dupWitness;
+    private List<DupWitness> dupWitness;
 
     public int getHeadBlockNum() {
       return this.headBlockNum;
@@ -425,11 +425,11 @@ public class MetricsInfo {
       this.failProcessBlockReason = failProcessBlockReason;
     }
 
-    public DupWitness getDupWitness() {
+    public List<DupWitness> getDupWitness() {
       return dupWitness;
     }
 
-    public void setDupWitness(DupWitness dupWitness) {
+    public void setDupWitness(List<DupWitness> dupWitness) {
       this.dupWitness = dupWitness;
     }
 
