@@ -19,7 +19,7 @@ import org.tron.core.metrics.MetricsService;
 @Component
 public class BlockChainMetricManager {
 
-  private static Map<String, BlockChainInfo.Witness> witnessVersion = new HashMap<>();
+  private static Map<String, WitnessInfo> witnessVersion = new HashMap<>();
 
   private static int currentVersion;
 
@@ -41,29 +41,28 @@ public class BlockChainMetricManager {
     if (witnessVersion.containsKey(witnessAddress)
         && witnessVersion.get(witnessAddress).getVersion() != version) {
       // just update version
-      BlockChainInfo.Witness witness = witnessVersion.get(witnessAddress);
+      WitnessInfo witness = witnessVersion.get(witnessAddress);
       witness.setVersion(version);
       witnessVersion.put(witnessAddress, witness);
     } else {
       List<WitnessCapsule> allWitness = chainBaseManager.getWitnessStore().getAllWitnesses();
       for (WitnessCapsule it : allWitness) {  // add new witness
         if (it.getAddress().toStringUtf8().equals(witnessAddress)) {
-          BlockChainInfo.Witness witness = new BlockChainInfo.Witness(witnessAddress,
-              it.getUrl(), version);
+          WitnessInfo witness = new WitnessInfo(witnessAddress, version);
           witnessVersion.put(it.getAddress().toStringUtf8(), witness);
         }
       }
     }
   }
 
-  public List<BlockChainInfo.Witness> getNoUpgradedSRList() {
-    List<BlockChainInfo.Witness> noUpgradedWitness = new ArrayList<>();
+  public List<WitnessInfo> getNoUpgradedSRList() {
+    List<WitnessInfo> noUpgradedWitness = new ArrayList<>();
 
     List<ByteString> address = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses();
     for (ByteString it : address) {
       if (witnessVersion.containsKey(it.toStringUtf8())
           && witnessVersion.get(it.toStringUtf8()).getVersion() != currentVersion) {
-        BlockChainInfo.Witness witness = witnessVersion.get(it.toStringUtf8());
+        WitnessInfo witness = witnessVersion.get(it.toStringUtf8());
         noUpgradedWitness.add(witness);
       }
     }
@@ -94,7 +93,7 @@ public class BlockChainMetricManager {
 
   public List<MetricsInfo.BlockchainInfo.Witness> getNoUpgradedSR() {
     List<MetricsInfo.BlockchainInfo.Witness> witnesses = new ArrayList<>();
-    for (BlockChainInfo.Witness it : getNoUpgradedSRList()) {
+    for (WitnessInfo it : getNoUpgradedSRList()) {
       MetricsInfo.BlockchainInfo.Witness noUpgradeSR =
           new MetricsInfo.BlockchainInfo.Witness();
       noUpgradeSR.setAddress(it.getAddress());

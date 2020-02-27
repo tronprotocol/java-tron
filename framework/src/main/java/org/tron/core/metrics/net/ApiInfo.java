@@ -6,46 +6,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ApiInfo {
-  private Common totalCount;
-  private Common totalFailCount;
-  private Common totalOutTraffic;
-  @JSONField(name = "detail")
+  private RateInfo totalCount;
+  private RateInfo totalFailCount;
+  private RateInfo totalOutTraffic;
   private List<ApiDetailInfo> detail = new ArrayList<>();
 
-  public Common getTotalCount() {
-    return this.totalCount;
+  public RateInfo getTotalCount() {
+    return totalCount;
   }
 
-  public ApiInfo setTotalCount(Common totalCount) {
+  public void setTotalCount(RateInfo totalCount) {
     this.totalCount = totalCount;
-    return this;
   }
 
-  public Common getTotalFailCount() {
-    return this.totalFailCount;
+  public RateInfo getTotalFailCount() {
+    return totalFailCount;
   }
 
-  public ApiInfo setTotalFailCount(Common totalFailCount) {
+  public void setTotalFailCount(RateInfo totalFailCount) {
     this.totalFailCount = totalFailCount;
-    return this;
   }
 
-  public Common getTotalOutTraffic() {
-    return this.totalOutTraffic;
+  public RateInfo getTotalOutTraffic() {
+    return totalOutTraffic;
   }
 
-  public ApiInfo setTotalOutTraffic(Common totaloutTraffic) {
-    this.totalOutTraffic = totaloutTraffic;
-    return this;
+  public void setTotalOutTraffic(RateInfo totalOutTraffic) {
+    this.totalOutTraffic = totalOutTraffic;
   }
 
-  @JSONField(name = "detail")
-  public List<ApiDetailInfo> getApiDetailInfo() {
-    return this.detail;
+  public List<ApiDetailInfo> getDetail() {
+    return detail;
   }
 
-  public ApiInfo setApiDetailInfo(List<ApiDetailInfo> detail) {
+  public void setDetail(List<ApiDetailInfo> detail) {
     this.detail = detail;
-    return this;
   }
 }
