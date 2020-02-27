@@ -2,38 +2,138 @@ package org.tron.core.metrics.blockchain;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 @Slf4j(topic = "blockChainInfo")
+
 public class BlockChainInfo {
-  public static long startRecordTime;
+  private int headBlockNum;
+  private long headBlockTimestamp;
+  private String headBlockHash;
+  private int successForkCount;
+  private int failForkCount;
+  private TpsInfo blockProcessTime;
+  private TpsInfo tps;
+  private int transactionCacheSize;
+  private int missedTransactionCount;
+  private List<Witness> witnesses;
+  private long failProcessBlockNum;
+  private String failProcessBlockReason;
+  private List<DupWitness> dupWitness;
 
-  public static class Witness {
-    private String address;
-    private String url;
-    private int version;
+  public int getHeadBlockNum() {
+    return this.headBlockNum;
+  }
 
-    public Witness(String address, int version) {
-      this.address = address;
-      this.version = version;
-    }
+  public BlockChainInfo setHeadBlockNum(int headBlockNum) {
+    this.headBlockNum = headBlockNum;
+    return this;
+  }
 
-    public Witness(String address, String url, int version) {
-      this.address = address;
-      this.url = url;
-      this.version = version;
-    }
+  public long getHeadBlockTimestamp() {
+    return this.headBlockTimestamp;
+  }
 
-    public String getAddress() {
-      return this.address;
-    }
+  public BlockChainInfo setHeadBlockTimestamp(long headBlockTimestamp) {
+    this.headBlockTimestamp = headBlockTimestamp;
+    return this;
+  }
 
-    public int getVersion() {
-      return this.version;
-    }
+  public String getHeadBlockHash() {
+    return this.headBlockHash;
+  }
 
-    public Witness setVersion(int version) {
-      this.version = version;
-      return this;
-    }
+  public BlockChainInfo setHeadBlockHash(String headBlockHash) {
+    this.headBlockHash = headBlockHash;
+    return this;
+  }
+
+  public int getSuccessForkCount() {
+    return this.successForkCount;
+  }
+
+  public BlockChainInfo setSuccessForkCount(int forkCount) {
+    this.successForkCount = forkCount;
+    return this;
+  }
+
+  public int getFailForkCount() {
+    return this.failForkCount;
+  }
+
+  public BlockChainInfo setFailForkCount(int forkCount) {
+    this.failForkCount = forkCount;
+    return this;
+  }
+
+  public TpsInfo getBlockProcessTime() {
+    return this.blockProcessTime;
+  }
+
+  public BlockChainInfo setBlockProcessTime(TpsInfo blockProcessTime) {
+    this.blockProcessTime = blockProcessTime;
+    return this;
+  }
+
+  public TpsInfo getTps() {
+    return this.tps;
+  }
+
+  public BlockChainInfo setTps(TpsInfo tps) {
+    this.tps = tps;
+    return this;
+  }
+
+  public int getTransactionCacheSize() {
+    return this.transactionCacheSize;
+  }
+
+
+  public BlockChainInfo setTransactionCacheSize(int transactionCacheSize) {
+    this.transactionCacheSize = transactionCacheSize;
+    return this;
+  }
+
+  public int getMissedTransactionCount() {
+    return this.missedTransactionCount;
+  }
+
+  public BlockChainInfo setMissedTransactionCount(int missedTransactionCount) {
+    this.missedTransactionCount = missedTransactionCount;
+    return this;
+  }
+
+  public List<Witness> getWitnesses() {
+    return this.witnesses;
+  }
+
+  public BlockChainInfo setWitnesses(List<Witness> witnesses) {
+    this.witnesses = witnesses;
+    return this;
+  }
+
+  public long getFailProcessBlockNum() {
+    return failProcessBlockNum;
+  }
+
+  public void setFailProcessBlockNum(long failProcessBlockNum) {
+    this.failProcessBlockNum = failProcessBlockNum;
+  }
+
+  public String getFailProcessBlockReason() {
+    return failProcessBlockReason;
+  }
+
+  public void setFailProcessBlockReason(String failProcessBlockReason) {
+    this.failProcessBlockReason = failProcessBlockReason;
+  }
+
+  public List<DupWitness> getDupWitness() {
+    return dupWitness;
+  }
+
+  public void setDupWitness(List<DupWitness> dupWitness) {
+    this.dupWitness = dupWitness;
   }
 
 }

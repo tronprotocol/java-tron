@@ -23,6 +23,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.blockchain.BlockChainInfo;
 import org.tron.core.metrics.blockchain.BlockChainMetricManager;
+import org.tron.core.metrics.blockchain.StartTimeRecorder;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.filter.HttpInterceptor;
@@ -61,7 +62,7 @@ public class MetricsApiService {
 
     MetricsInfo metricsInfo = new MetricsInfo();
 
-    metricsInfo.setInterval((int) BlockChainInfo.startRecordTime);
+    metricsInfo.setInterval((int) StartTimeRecorder.getInstance().getStartRecordTime());
     setNodeInfo(metricsInfo);
 
     setBlockchainInfo(metricsInfo);

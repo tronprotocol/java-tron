@@ -6,26 +6,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ApiInfo {
-  private Common totalCount;
-  private Common totalFailCount;
+  private int totalCount;
+  private int totalFailCount;
   private Common totalOutTraffic;
   @JSONField(name = "detail")
   private List<ApiDetailInfo> detail = new ArrayList<>();
 
-  public Common getTotalCount() {
+  public int getTotalCount() {
     return this.totalCount;
   }
 
-  public ApiInfo setTotalCount(Common totalCount) {
+  public ApiInfo setTotalCount(int totalCount) {
     this.totalCount = totalCount;
     return this;
   }
 
-  public Common getTotalFailCount() {
+  public int getTotalFailCount() {
     return this.totalFailCount;
   }
 
-  public ApiInfo setTotalFailCount(Common totalFailCount) {
+  public ApiInfo setTotalFailCount(int totalFailCount) {
     this.totalFailCount = totalFailCount;
     return this;
   }

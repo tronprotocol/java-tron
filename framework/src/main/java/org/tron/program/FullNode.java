@@ -14,6 +14,7 @@ import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.metrics.blockchain.BlockChainInfo;
+import org.tron.core.metrics.blockchain.StartTimeRecorder;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
@@ -43,7 +44,7 @@ public class FullNode {
    */
   public static void main(String[] args) {
     logger.info("Full node running.");
-    BlockChainInfo.startRecordTime = System.currentTimeMillis();
+    StartTimeRecorder.getInstance().setStartRecordTime(System.currentTimeMillis());
     Args.setParam(args, Constant.TESTNET_CONF);
     CommonParameter parameter = Args.getInstance();
 
