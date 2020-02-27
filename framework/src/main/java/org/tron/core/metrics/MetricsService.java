@@ -28,6 +28,9 @@ public class MetricsService {
   private Map<String, BlockHeader> witnessInfo = new ConcurrentHashMap<String, BlockHeader>();
 
   @Getter
+  private Map<String, Long> dupWitnessBlockNum = new ConcurrentHashMap<String, Long>();
+
+  @Getter
   private long failProcessBlockNum = 0;
 
   @Getter
@@ -108,6 +111,7 @@ public class MetricsService {
         if (old.getRawData().getNumber() == block.getNum() &&
                 Math.abs(old.getRawData().getTimestamp() - block.getTimeStamp()) < 3000) {
           counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT + witnessAddress, 1);
+          dupWitnessBlockNum.put(witnessAddress, block.getNum());
         }
       }
       witnessInfo.put(witnessAddress, block.getInstance().getBlockHeader());

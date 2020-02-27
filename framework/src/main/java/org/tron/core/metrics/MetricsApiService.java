@@ -14,12 +14,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupManager;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.blockchain.BlockChainInfo;
 import org.tron.core.metrics.blockchain.BlockChainMetricManager;
@@ -79,7 +81,14 @@ public class MetricsApiService {
     MetricsInfo.NodeInfo nodeInfo = new MetricsInfo.NodeInfo();
     nodeInfo.setIp(getMyIp());
 
-    nodeInfo.setNodeType(1);
+    ByteString witnessAddress = ByteString.copyFrom(Args.getLocalWitnesses()
+            .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine()));
+    if (chainBaseManager.getWitnessScheduleStore().getActiveWitnesses().contains(witnessAddress)) {
+      nodeInfo.setNodeType(1);
+    } else {
+      nodeInfo.setNodeType(0);
+    }
+
     nodeInfo.setStatus(getNodeStatusByTime(0));
     nodeInfo.setVersion(Version.getVersion());
     if (backupManager.getStatus() == BackupManager.BackupStatusEnum.MASTER) {
@@ -172,15 +181,13 @@ public class MetricsApiService {
     netInfo.setUdpOutTraffic(udpOutTraffic);
 
     // set api request info
-    MetricsInfo.NetInfo.ApiInfo apiInfo = new MetricsInfo.NetInfo.ApiInfo();
-
     MetricsInfo.NetInfo.ApiInfo.Common common = new MetricsInfo.NetInfo.ApiInfo.Common();
-
     common.setMeanRate(HttpInterceptor.totalRequestCount.getMeanRate());
     common.setOneMinute(HttpInterceptor.totalRequestCount.getOneMinuteCount());
     common.setFiveMinute(HttpInterceptor.totalRequestCount.getFiveMinuteCount());
     common.setFifteenMinute(HttpInterceptor.totalRequestCount.getFifteenMinuteCount());
 
+    MetricsInfo.NetInfo.ApiInfo apiInfo = new MetricsInfo.NetInfo.ApiInfo();
     apiInfo.setTotalCount(common);
 
     MetricsInfo.NetInfo.ApiInfo.Common commonfail = new MetricsInfo.NetInfo.ApiInfo.Common();
@@ -360,7 +367,9 @@ public class MetricsApiService {
       MetricsInfo.BlockchainInfo.DupWitness dupWitness =
               new MetricsInfo.BlockchainInfo.DupWitness();
       String witness = entry.getKey().substring(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT.length());
+      long blockNum = metricsService.getDupWitnessBlockNum().get(witness);
       dupWitness.setAddress(witness);
+      dupWitness.setBlockNum(blockNum);
       dupWitness.setCount((int)entry.getValue().getCount());
       dupWitnesses.add(dupWitness);
     }
