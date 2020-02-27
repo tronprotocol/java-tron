@@ -1063,6 +1063,11 @@ public class Manager {
       ownerAddressSet.addAll(result);
     }
 
+
+    metricsService.meterMark(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME,
+        System.currentTimeMillis() - start);
+    metricsService.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_COUNT, 1);
+
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
         System.currentTimeMillis() - start,
@@ -1126,7 +1131,6 @@ public class Manager {
       return null;
     }
 
-    long startTime = System.currentTimeMillis();
 
     validateTapos(trxCap);
     validateCommon(trxCap);
@@ -1190,10 +1194,6 @@ public class Manager {
     if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
-
-    metricsService.meterMark(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME,
-        System.currentTimeMillis() - startTime);
-    metricsService.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_COUNT, 1);
 
     return transactionInfo.getInstance();
   }

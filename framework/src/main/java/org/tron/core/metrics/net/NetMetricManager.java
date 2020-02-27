@@ -1,12 +1,13 @@
 package org.tron.core.metrics.net;
 
-import com.alibaba.fastjson.JSONObject;
+
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -49,7 +50,7 @@ public class NetMetricManager {
     netInfo.setValidConnectionCount(validConnectionCount);
 
     long errorProtoCount = metricsService.getCounter(MetricsKey.NET_ERROR_PROTO_COUNT)
-            .getCount();
+        .getCount();
     netInfo.setErrorProtoCount((int) errorProtoCount);
 
     RateInfo tcpInTraffic = new RateInfo();
@@ -89,76 +90,83 @@ public class NetMetricManager {
     netInfo.setUdpOutTraffic(udpOutTraffic);
 
     // set api request info
-    RateInfo common = new RateInfo();
-    common.setMeanRate(HttpInterceptor.totalRequestCount.getMeanRate());
-    common.setOneMinuteRate(HttpInterceptor.totalRequestCount.getOneMinuteCount());
-    common.setFiveMinuteRate(HttpInterceptor.totalRequestCount.getFiveMinuteCount());
-    common.setFifteenMinuteRate(HttpInterceptor.totalRequestCount.getFifteenMinuteCount());
     ApiInfo apiInfo = new ApiInfo();
-    apiInfo.setQps(common);
+    RateInfo APIQPS = new RateInfo();
+    Meter apiMeterQPS = metricsService.getMeter(MetricsKey.NET_API_QPS);
+    APIQPS.setCount(apiMeterQPS.getCount());
+    APIQPS.setMeanRate(apiMeterQPS.getMeanRate());
+    APIQPS.setOneMinuteRate(apiMeterQPS.getOneMinuteRate());
+    APIQPS.setFiveMinuteRate(apiMeterQPS.getFiveMinuteRate());
+    APIQPS.setFifteenMinuteRate(apiMeterQPS.getFifteenMinuteRate());
+    apiInfo.setQps(APIQPS);
 
-    RateInfo commonFail = new RateInfo();
-    commonFail.setMeanRate(HttpInterceptor.totalFailRequestCount.getMeanRate());
-    commonFail.setOneMinuteRate(HttpInterceptor.totalFailRequestCount.getOneMinuteCount());
-    commonFail.setFiveMinuteRate(HttpInterceptor.totalFailRequestCount.getFiveMinuteCount());
-    commonFail.setFifteenMinuteRate(HttpInterceptor.totalFailRequestCount.getFifteenMinuteCount());
-    apiInfo.setFailQps(commonFail);
+    RateInfo FailQPS = new RateInfo();
+    Meter apiMeterFailQPS = metricsService.getMeter(MetricsKey.NET_API_FAIL_QPS);
+    FailQPS.setCount(apiMeterFailQPS.getCount());
+    FailQPS.setMeanRate(apiMeterFailQPS.getMeanRate());
+    FailQPS.setOneMinuteRate(apiMeterFailQPS.getOneMinuteRate());
+    FailQPS.setFiveMinuteRate(apiMeterFailQPS.getFiveMinuteRate());
+    FailQPS.setFifteenMinuteRate(apiMeterFailQPS.getFifteenMinuteRate());
+    apiInfo.setFailQps(FailQPS);
 
-    RateInfo commonOutTraffic = new RateInfo();
-    commonOutTraffic.setMeanRate(HttpInterceptor.outTraffic.getMeanRate());
-    commonOutTraffic.setOneMinuteRate(HttpInterceptor.outTraffic.getFiveMinuteCount());
-    commonOutTraffic.setFiveMinuteRate(HttpInterceptor.outTraffic.getFiveMinuteCount());
-    commonOutTraffic.setFifteenMinuteRate(HttpInterceptor.outTraffic.getFifteenMinuteCount());
-    apiInfo.setTotalOutTraffic(commonOutTraffic);
+    RateInfo totalOutTraffic = new RateInfo();
+    Meter apiMeterTotalOutTraffic = metricsService.getMeter(MetricsKey.NET_API_TOTAL_OUT_TRAFFIC);
+    totalOutTraffic.setCount(apiMeterTotalOutTraffic.getCount());
+    totalOutTraffic.setMeanRate(apiMeterTotalOutTraffic.getMeanRate());
+    totalOutTraffic.setOneMinuteRate(apiMeterTotalOutTraffic.getOneMinuteRate());
+    totalOutTraffic.setFiveMinuteRate(apiMeterTotalOutTraffic.getFiveMinuteRate());
+    totalOutTraffic.setFifteenMinuteRate(apiMeterTotalOutTraffic.getFifteenMinuteRate());
+    apiInfo.setTotalOutTraffic(totalOutTraffic);
 
 
     List<ApiDetailInfo> apiDetails = new ArrayList<>();
-    for (Map.Entry<String, JSONObject> entry : HttpInterceptor.getEndpointMap().entrySet()) {
+    for (Map.Entry<String, Set<String>> entry : HttpInterceptor.getEndpointList().entrySet()) {
       ApiDetailInfo apiDetail = new ApiDetailInfo();
       apiDetail.setName(entry.getKey());
-      JSONObject obj = entry.getValue();
-      RateInfo commomCount = new RateInfo();
-      commomCount.setMeanRate((double) obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_RPS));
-      commomCount.setOneMinuteRate(
-              (int) obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_ONE_MINUTE));
-      commomCount.setFiveMinuteRate(
-              (int) obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_FIVE_MINUTE));
-      commomCount.setFifteenMinuteRate(
-              (int) obj.get(HttpInterceptor.END_POINT_ALL_REQUESTS_FIFTEEN_MINUTE));
-
-      apiDetail.setQps(commomCount);
-      RateInfo commonFailTemp = new RateInfo();
-      commonFailTemp.setMeanRate((double) obj.get(HttpInterceptor.END_POINT_FAIL_REQUEST_RPS));
-      commonFailTemp.setOneMinuteRate(
-              (int) obj.get(HttpInterceptor.END_POINT_FAIL_REQUEST_ONE_MINUTE));
-      commonFailTemp.setFiveMinuteRate(
-              (int) obj.get(HttpInterceptor.END_POINT_FAIL_REQUEST_FIVE_MINUTE));
-      commonFailTemp.setFifteenMinuteRate((int) obj.get(
-              HttpInterceptor.END_POINT_FAIL_REQUEST_FIFTEEN_MINUTE));
-      apiDetail.setFailQps(commonFailTemp);
-
-      RateInfo commonTraffic = new RateInfo();
-      commonTraffic.setMeanRate((double) obj.get(HttpInterceptor.END_POINT_OUT_TRAFFIC_BPS));
-      commonTraffic.setOneMinuteRate(
-              (int) obj.get(HttpInterceptor.END_POINT_OUT_TRAFFIC_ONE_MINUTE));
-      commonTraffic.setFiveMinuteRate(
-              (int) obj.get(HttpInterceptor.END_POINT_OUT_TRAFFIC_FIVE_MINUTE));
-      commonTraffic.setFifteenMinuteRate((int) obj.get(
-              HttpInterceptor.END_POINT_OUT_TRAFFIC_FIFTEEN_MINUTE));
-      apiDetail.setOutTraffic(commonTraffic);
-
+      for (String meterName : entry.getValue()) {
+        if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_QPS)) {
+          Meter detailAPIMeterQPS = metricsService.getMeter(meterName);
+          RateInfo APIDetailQPS = new RateInfo();
+          APIDetailQPS.setCount(detailAPIMeterQPS.getCount());
+          APIDetailQPS.setMeanRate(detailAPIMeterQPS.getMeanRate());
+          APIDetailQPS.setOneMinuteRate(detailAPIMeterQPS.getOneMinuteRate());
+          APIDetailQPS.setFiveMinuteRate(detailAPIMeterQPS.getFiveMinuteRate());
+          APIDetailQPS.setFifteenMinuteRate(detailAPIMeterQPS.getFifteenMinuteRate());
+          apiDetail.setQps(APIDetailQPS);
+        }
+        if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_OutTraffic)) {
+          RateInfo APIDetailOutTraffic = new RateInfo();
+          Meter APIDetailMeterOutTraffic = metricsService.getMeter(meterName);
+          APIDetailOutTraffic.setCount(APIDetailMeterOutTraffic.getCount());
+          APIDetailOutTraffic.setMeanRate(APIDetailMeterOutTraffic.getMeanRate());
+          APIDetailOutTraffic.setOneMinuteRate(APIDetailMeterOutTraffic.getOneMinuteRate());
+          APIDetailOutTraffic.setFiveMinuteRate(APIDetailMeterOutTraffic.getFiveMinuteRate());
+          APIDetailOutTraffic.setFifteenMinuteRate(APIDetailMeterOutTraffic.getFifteenMinuteRate());
+          apiDetail.setOutTraffic(APIDetailOutTraffic);
+        }
+        if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS)) {
+          RateInfo APIDetailFailQPS = new RateInfo();
+          Meter APIDetailMeterFailQPS = metricsService.getMeter(meterName);
+          APIDetailFailQPS.setCount(APIDetailMeterFailQPS.getCount());
+          APIDetailFailQPS.setMeanRate(APIDetailMeterFailQPS.getMeanRate());
+          APIDetailFailQPS.setOneMinuteRate(APIDetailMeterFailQPS.getOneMinuteRate());
+          APIDetailFailQPS.setFiveMinuteRate(APIDetailMeterFailQPS.getFiveMinuteRate());
+          APIDetailFailQPS.setFifteenMinuteRate(APIDetailMeterFailQPS.getFifteenMinuteRate());
+          apiDetail.setFailQps(APIDetailFailQPS);
+        }
+      }
       apiDetails.add(apiDetail);
     }
     apiInfo.setDetail(apiDetails);
     netInfo.setApi(apiInfo);
 
     long disconnectionCount
-            = metricsService.getCounter(MetricsKey.NET_DISCONNECTION_COUNT).getCount();
+        = metricsService.getCounter(MetricsKey.NET_DISCONNECTION_COUNT).getCount();
     netInfo.setDisconnectionCount((int) disconnectionCount);
     List<DisconnectionDetailInfo> disconnectionDetails =
-            new ArrayList<>();
+        new ArrayList<>();
     SortedMap<String, Counter> disconnectionReason
-            = metricsService.getCounters(MetricsKey.NET_DISCONNECTION_REASON);
+        = metricsService.getCounters(MetricsKey.NET_DISCONNECTION_REASON);
     for (Map.Entry<String, Counter> entry : disconnectionReason.entrySet()) {
       DisconnectionDetailInfo detail = new DisconnectionDetailInfo();
       String reason = entry.getKey().substring(MetricsKey.NET_DISCONNECTION_REASON.length());

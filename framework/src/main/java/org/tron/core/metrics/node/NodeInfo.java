@@ -7,6 +7,7 @@ public class NodeInfo {
   private String version;
   private int backupStatus;
 
+
   public String getIp() {
     return ip;
   }

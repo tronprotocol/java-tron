@@ -7,7 +7,7 @@ import org.tron.core.metrics.node.NodeInfo;
 
 @Slf4j
 public class MetricsInfo {
-  private int interval;
+  private long startTime;
 
   private NodeInfo node;
 
@@ -15,12 +15,12 @@ public class MetricsInfo {
 
   private NetInfo net;
 
-  public int getInterval() {
-    return interval;
+  public long getStartTime() {
+    return startTime;
   }
 
-  public void setInterval(int interval) {
-    this.interval = interval;
+  public void setStartTime(long startTime) {
+    this.startTime = startTime;
   }
 
   public NodeInfo getNodeInfo() {
