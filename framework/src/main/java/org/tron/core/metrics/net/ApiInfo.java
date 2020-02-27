@@ -6,24 +6,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ApiInfo {
-  private int totalCount;
-  private int totalFailCount;
+  private RateInfo totalCount;
+  private RateInfo totalFailCount;
   private RateInfo totalOutTraffic;
   private List<ApiDetailInfo> detail = new ArrayList<>();
 
-  public int getTotalCount() {
+  public RateInfo getTotalCount() {
     return totalCount;
   }
 
-  public void setTotalCount(int totalCount) {
+  public void setTotalCount(RateInfo totalCount) {
     this.totalCount = totalCount;
   }
 
-  public int getTotalFailCount() {
+  public RateInfo getTotalFailCount() {
     return totalFailCount;
   }
 
-  public void setTotalFailCount(int totalFailCount) {
+  public void setTotalFailCount(RateInfo totalFailCount) {
     this.totalFailCount = totalFailCount;
   }
 
