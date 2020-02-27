@@ -6,8 +6,8 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.metrics.MetricsInfo;
 import org.tron.core.metrics.MetricsApiService;
+import org.tron.core.metrics.MetricsInfo;
 
 @Component
 @Slf4j(topic = "API")
