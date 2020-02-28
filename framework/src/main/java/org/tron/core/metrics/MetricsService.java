@@ -19,16 +19,19 @@ import org.tron.core.metrics.blockchain.BlockChainMetricManager;
 @Component
 public class MetricsService {
 
+  private static MetricRegistry metricRegistry = new MetricRegistry();
+  private static MetricsService metricsService = new MetricsService();
   @Setter
   private BlockChainMetricManager blockChainMetricManager;
-
-  private MetricRegistry metricRegistry = new MetricRegistry();
-
   @Getter
   private long failProcessBlockNum = 0;
-
   @Getter
   private String failProcessBlockReason = "";
+
+  public static MetricsService getInstance() {
+    return metricsService;
+  }
+
 
   public Histogram getHistogram(String key) {
     return metricRegistry.histogram(key);

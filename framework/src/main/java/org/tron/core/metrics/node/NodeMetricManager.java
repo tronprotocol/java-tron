@@ -1,10 +1,6 @@
 package org.tron.core.metrics.node;
 
 import com.google.protobuf.ByteString;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.URL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupManager;
@@ -23,6 +19,7 @@ public class NodeMetricManager {
   @Autowired
   private BackupManager backupManager;
 
+
   /**
    * get node info.
    *
@@ -35,10 +32,11 @@ public class NodeMetricManager {
   }
 
   private void setNodeInfo(NodeInfo nodeInfo) {
-    nodeInfo.setIp(getMyIp());
+
+    nodeInfo.setIp(Args.getInstance().getNodeExternalIp());
 
     ByteString witnessAddress = ByteString.copyFrom(Args.getLocalWitnesses()
-            .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine()));
+        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine()));
     if (chainBaseManager.getWitnessScheduleStore().getActiveWitnesses().contains(witnessAddress)) {
       nodeInfo.setNodeType(1);
     } else {
@@ -53,25 +51,5 @@ public class NodeMetricManager {
     }
   }
 
-  // get public  ip address
-  private String getMyIp() {
-    try {
-      URL url = new URL("http://checkip.amazonaws.com");
-      BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-      String ipAddress = in.readLine().trim();
-      if (ipAddress.length() == 0) {
-        return InetAddress.getLocalHost().getHostAddress();
-      } else {
-        return ipAddress;
-      }
-    } catch (Exception e) {
-      // This try will give the Private IP of the Host.
-      try {
-        InetAddress ip = InetAddress.getLocalHost();
-        return ip.getHostAddress().trim();
-      } catch (Exception ex) {
-        return "GET IP ERROR";
-      }
-    }
-  }
+
 }
