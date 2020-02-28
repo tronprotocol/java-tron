@@ -30,7 +30,6 @@ import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 
-import com.google.common.primitives.Longs;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,6 +69,7 @@ import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Protocol.Permission;
 
 
@@ -1022,9 +1022,98 @@ public class PrecompiledContracts {
 
     }
 
-    //transfer: 1 shielded --> 2 shielded
+    private static class SaplingCheckSpendTask implements Callable<Boolean> {
+
+      private long ctx;
+      private byte[] cv;
+      private byte[] anchor;
+      private byte[] nullifier;
+      private byte[] rk;
+      private byte[] zkproof;
+      private byte[] spendAuthSig;
+      private byte[] sighashValue;
+
+      private CountDownLatch countDownLatch;
+
+      SaplingCheckSpendTask(CountDownLatch countDownLatch, long ctx, byte[] cv, byte[] anchor,
+          byte[] nullifier, byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue) {
+        this.ctx = ctx;
+        this.cv = cv;
+        this.anchor = anchor;
+        this.nullifier = nullifier;
+        this.rk = rk;
+        this.zkproof = zkproof;
+        this.spendAuthSig = spendAuthSig;
+        this.sighashValue = sighashValue;
+
+        this.countDownLatch = countDownLatch;
+      }
+
+      @Override
+      public Boolean call() throws ZksnarkException {
+        boolean result;
+        try {
+          long verifyStartTime = System.currentTimeMillis();
+          result = JLibrustzcash.librustzcashSaplingCheckSpend(
+              new LibrustzcashParam.CheckSpendParams(this.ctx, this.cv, this.anchor, this.nullifier,
+                  this.rk, this.zkproof, this.spendAuthSig, this.sighashValue));
+          long checkSpendEndTime = System.currentTimeMillis();
+          logger.info("parallel Transfer checkSpend cost is: " + (checkSpendEndTime - verifyStartTime) + "ms" +
+              ", result is " + result);
+
+        } catch (ZksnarkException e) {
+          throw e;
+        } finally {
+          countDownLatch.countDown();
+        }
+        return result;
+      }
+    }
+
+    private static class SaplingCheckOutput implements Callable<Boolean> {
+
+      private long ctx;
+      private byte[] cv;
+      private byte[] cm;
+      private byte[] ephemeralKey;
+      private byte[] zkproof;
+
+      private CountDownLatch countDownLatch;
+
+      SaplingCheckOutput(CountDownLatch countDownLatch, long ctx, byte[] cv, byte[] cm, byte[] ephemeralKey,
+          byte[] zkproof) {
+        this.ctx = ctx;
+        this.cv = cv;
+        this.cm = cm;
+        this.ephemeralKey = ephemeralKey;
+        this.zkproof = zkproof;
+
+        this.countDownLatch = countDownLatch;
+      }
+
+      @Override
+      public Boolean call() throws ZksnarkException {
+        boolean result;
+        try {
+          long verifyStartTime = System.currentTimeMillis();
+          result = JLibrustzcash.librustzcashSaplingCheckOutput(
+              new LibrustzcashParam.CheckOutputParams(this.ctx, this.cv, this.cm, this.ephemeralKey, this.zkproof));
+          long checkOutputEndTime = System.currentTimeMillis();
+          logger.info("parallel Transfer checkOutput cost is: " + (checkOutputEndTime - verifyStartTime) + "ms" +
+              ", result is " + result);
+
+        } catch (ZksnarkException e) {
+          throw e;
+        } finally {
+          countDownLatch.countDown();
+        }
+        return result;
+      }
+    }
+
+      //transfer: 1 shielded --> 2 shielded
     private Pair<Boolean, byte[]> checkTransfer(byte[] data) {
-      long start_time = System.currentTimeMillis();
+      long startTime = System.currentTimeMillis();
 
       byte[] spendCv = new byte[32];
       byte[] anchor = new byte[32];
@@ -1075,42 +1164,91 @@ public class PrecompiledContracts {
       if (leafCount >= TREE_WIDTH - 1) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
+
+      boolean parallel = true;
       boolean result;
 
       //verify spendProof, receiveProof && bindingSignature
       long verifyStartTime = System.currentTimeMillis();
       long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
-      try {
-        result = JLibrustzcash.librustzcashSaplingCheckSpend(
-                new LibrustzcashParam.CheckSpendParams(ctx, spendCv, anchor, nullifier, rk, spendProof, spendAuthSig, signHash));
-        long checkSpendEndTime = System.currentTimeMillis();
-        logger.info("Transfer checkSpend cost is: " + (checkSpendEndTime - verifyStartTime) + "ms");
 
-        result &= JLibrustzcash.librustzcashSaplingCheckOutput(
-                new LibrustzcashParam.CheckOutputParams(ctx, receiveCv0, cm[0], receiveEpk0, receiveProof0));
-        long checkOutput1EndTime = System.currentTimeMillis();
-        logger.info("Transfer checkOutput cost is: " + (checkOutput1EndTime - checkSpendEndTime) + "ms");
+      if (parallel) {
+        // thread poll
+        int threadCount = 3;
+        CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+        List<Future<Boolean>> futures = new ArrayList<>(threadCount);
+        ExecutorService validateSignService = Executors.newFixedThreadPool(3);
 
-        result &= JLibrustzcash.librustzcashSaplingCheckOutput(
-                new LibrustzcashParam.CheckOutputParams(ctx, receiveCv1, cm[1], receiveEpk1, receiveProof1));
-        long checkOutput2EndTime = System.currentTimeMillis();
-        logger.info("Transfer checkOutput cost is: " + (checkOutput2EndTime - checkOutput1EndTime) + "ms");
+        // submit 3 check task
+        Future<Boolean> future1 = validateSignService
+            .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv, anchor, nullifier, rk, spendProof, spendAuthSig, signHash));
+        futures.add(future1);
+        Future<Boolean> future2 = validateSignService
+            .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv0, cm[0], receiveEpk0, receiveProof0));
+        futures.add(future2);
+        Future<Boolean> future3 = validateSignService
+            .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv1, cm[1], receiveEpk1, receiveProof1));
+        futures.add(future3);
 
-        result &= JLibrustzcash.librustzcashSaplingFinalCheck(
-                new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
-        long checkFinalCheckEndTime = System.currentTimeMillis();
-        logger.info("Transfer finalCheck cost is: " + (checkFinalCheckEndTime - checkOutput2EndTime) + "ms");
+        result = true;
+        try {
+          countDownLatch.await();
+          for (Future<Boolean> future : futures) {
+            boolean fResult = future.get();
+            // logger.info("future.get() is " + fResult);
+            result &= fResult;
+          }
 
-      } catch (Throwable any) {
-        result = false;
-      } finally {
-        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+          long checkFinalCheckStartTime = System.currentTimeMillis();
+          boolean checkResult = JLibrustzcash.librustzcashSaplingFinalCheck(
+              new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
+          long checkFinalCheckEndTime = System.currentTimeMillis();
+          logger.info("parallel Transfer finalCheck cost is: " +
+              (checkFinalCheckEndTime - checkFinalCheckStartTime) + "ms" +
+              ", result is " + checkResult);
+          result &= checkResult;
+        } catch (Exception e) {
+          result = false;
+          logger.error("parallel check sign interrupted exception! ", e);
+          Thread.currentThread().interrupt();
+        } finally {
+          JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+        }
+
+      } else {
+        try {
+          result = JLibrustzcash.librustzcashSaplingCheckSpend(
+              new LibrustzcashParam.CheckSpendParams(ctx, spendCv, anchor, nullifier, rk, spendProof, spendAuthSig, signHash));
+          long checkSpendEndTime = System.currentTimeMillis();
+          logger.info("Transfer checkSpend cost is: " + (checkSpendEndTime - verifyStartTime) + "ms");
+
+          result &= JLibrustzcash.librustzcashSaplingCheckOutput(
+              new LibrustzcashParam.CheckOutputParams(ctx, receiveCv0, cm[0], receiveEpk0, receiveProof0));
+          long checkOutput1EndTime = System.currentTimeMillis();
+          logger.info("Transfer checkOutput cost is: " + (checkOutput1EndTime - checkSpendEndTime) + "ms");
+
+          result &= JLibrustzcash.librustzcashSaplingCheckOutput(
+              new LibrustzcashParam.CheckOutputParams(ctx, receiveCv1, cm[1], receiveEpk1, receiveProof1));
+          long checkOutput2EndTime = System.currentTimeMillis();
+          logger.info("Transfer checkOutput cost is: " + (checkOutput2EndTime - checkOutput1EndTime) + "ms");
+
+          result &= JLibrustzcash.librustzcashSaplingFinalCheck(
+              new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
+          long checkFinalCheckEndTime = System.currentTimeMillis();
+          logger.info("Transfer finalCheck cost is: " + (checkFinalCheckEndTime - checkOutput2EndTime) + "ms");
+
+        } catch (Throwable any) {
+          result = false;
+        } finally {
+          JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+        }
       }
+
       if (!result) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
 
-      long costTime = System.currentTimeMillis() - start_time;
+      long costTime = System.currentTimeMillis() - startTime;
       logger.info("Transfer verify successfully, " + "check cost is: " + costTime + "ms");
 
       long startTimeInsert = System.currentTimeMillis();
@@ -1118,7 +1256,7 @@ public class PrecompiledContracts {
       costTime = System.currentTimeMillis() - startTimeInsert;
       logger.info("insertLeaf cost is: " + costTime + "ms");
 
-      costTime = System.currentTimeMillis() - start_time;
+      costTime = System.currentTimeMillis() - startTime;
       logger.info("Transfer pre-compile total cost is: " + costTime + "ms");
 
       return pair;
