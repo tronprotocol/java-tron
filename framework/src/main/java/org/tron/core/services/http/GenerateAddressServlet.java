@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
@@ -25,7 +26,7 @@ public class GenerateAddressServlet extends RateLimiterServlet {
       byte[] priKey = sign.getPrivateKey();
       byte[] address = sign.getAddress();
       String priKeyStr = Hex.encodeHexString(priKey);
-      String base58check = Wallet.encode58Check(address);
+      String base58check = StringUtil.encode58Check(address);
       String hexString = ByteArray.toHexString(address);
       JSONObject jsonAddress = new JSONObject();
       jsonAddress.put("address", base58check);

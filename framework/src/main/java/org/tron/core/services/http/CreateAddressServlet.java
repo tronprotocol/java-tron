@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 
 
@@ -31,7 +32,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
       byte[] address = wallet.createAddress(build.getValue().toByteArray());
-      String base58check = Wallet.encode58Check(address);
+      String base58check = StringUtil.encode58Check(address);
       String hexString = ByteArray.toHexString(address);
       JSONObject jsonAddress = new JSONObject();
       jsonAddress.put("base58checkAddress", base58check);
@@ -61,7 +62,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
       byte[] address = wallet.createAddress(build.getValue().toByteArray());
-      String base58check = Wallet.encode58Check(address);
+      String base58check = StringUtil.encode58Check(address);
       String hexString = ByteArray.toHexString(address);
       JSONObject jsonAddress = new JSONObject();
       jsonAddress.put("base58checkAddress", base58check);

@@ -24,6 +24,7 @@ import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.StorageUtils;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -312,7 +313,7 @@ public class VMActuator implements Actuator2 {
     // insure the new contract address haven't exist
     if (repository.getAccount(contractAddress) != null) {
       throw new ContractValidateException(
-          "Trying to create a contract with existing contract address: " + MUtil
+          "Trying to create a contract with existing contract address: " + StringUtil
               .encode58Check(contractAddress));
     }
 

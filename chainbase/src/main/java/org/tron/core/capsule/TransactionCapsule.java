@@ -15,8 +15,8 @@
 
 package org.tron.core.capsule;
 
+import static org.tron.common.utils.StringUtil.encode58Check;
 import static org.tron.common.utils.WalletUtil.checkPermissionOperations;
-import static org.tron.common.utils.WalletUtil.encode58Check;
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 
 import com.google.common.primitives.Bytes;
