@@ -286,6 +286,7 @@ public class ProposalUtil {
           throw new ContractValidateException(
               "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value, valid range is [0,10_000_000_000L]");
         }
+        break;
       }
       case FORBID_TRANSFER_TO_CONTRACT: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6_6)) {
