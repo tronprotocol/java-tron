@@ -233,6 +233,10 @@ public class CommonParameter {
   public long allowTvmSolidity059; //committee parameter
   @Getter
   @Setter
+  public long forbidTransferToContract; //committee parameter
+
+  @Getter
+  @Setter
   public int tcpNettyWorkThreadNum;
   @Getter
   @Setter

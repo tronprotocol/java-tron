@@ -279,11 +279,28 @@ public class ProposalUtil {
       }
       case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
-          throw new ContractValidateException("Bad chain parameter id [SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE]");
+          throw new ContractValidateException(
+              "Bad chain parameter id [SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE]");
         }
         if (value < 0 || value > 10_000_000_000L) {
           throw new ContractValidateException(
               "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value, valid range is [0,10_000_000_000L]");
+        }
+        break;
+      }
+      case FORBID_TRANSFER_TO_CONTRACT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6_6)) {
+
+          throw new ContractValidateException(BAD_PARAM_ID);
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[FORBID_TRANSFER_TO_CONTRACT] is only allowed to be 1");
+        }
+        if (dynamicPropertiesStore.getAllowCreationOfContracts() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
+                  + "before [FORBID_TRANSFER_TO_CONTRACT] can be proposed");
         }
         break;
       }
@@ -328,7 +345,8 @@ public class ProposalUtil {
     WITNESS_127_PAY_PER_BLOCK(31), // 160 TRX, [0, 100000000000] TRX
     ALLOW_TVM_SOLIDITY_059(32), // 1, {0, 1}
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, [1, 1000]
-    SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34); // 1 TRX, [0, 10000] TRX
+    SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34), // 1 TRX, [0, 10000] TRX
+    FORBID_TRANSFER_TO_CONTRACT(35); // 1, {0, 1}
 
     private long code;
 

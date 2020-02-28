@@ -133,6 +133,8 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TVM_SOLIDITY059 = "committee.allowTvmSolidity059";
 
+  public static final String COMMITTEE_FORBID_TRANSFER_TO_CONTRACT = "committee.forbidTransferToContract";
+
   public static final String NODE_TCP_NETTY_WORK_THREAD_NUM = "node.tcpNettyWorkThreadNum";
 
   public static final String NODE_UDP_NETTY_WORK_THREAD_NUM = "node.udpNettyWorkThreadNum";
