@@ -45,7 +45,8 @@ public class AccountStateEntity {
 
   @Override
   public String toString() {
-    return "address:" + StringUtil.encode58Check(account.getAddress().toByteArray()) + "; " + account
+    return "address:" + StringUtil.encode58Check(account
+        .getAddress().toByteArray()) + "; " + account
         .toString();
   }
 }
