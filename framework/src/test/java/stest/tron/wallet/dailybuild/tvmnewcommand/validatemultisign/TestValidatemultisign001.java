@@ -20,6 +20,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
@@ -187,7 +188,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
     // Trigger with correct Permission address
-    List<Object> parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
+    List<Object> parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
     String input = PublicMethed.parametersString(parameters);
 
@@ -212,7 +213,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(Wallet.encode58Check(dev001Address),
+    parameters = Arrays.asList(StringUtil.encode58Check(dev001Address),
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -234,7 +235,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(Wallet.encode58Check(fromAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(fromAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -256,7 +257,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(Wallet.encode58Check(manager1Address),
+    parameters = Arrays.asList(StringUtil.encode58Check(manager1Address),
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -315,7 +316,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    List<Object> parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
+    List<Object> parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     String input = PublicMethed.parametersString(parameters);
 
@@ -341,7 +342,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -364,7 +365,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -387,7 +388,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         permissionId, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -423,7 +424,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
     // Trigger with no sign hash
-    List<Object> parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
+    List<Object> parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
     String input = PublicMethed.parametersString(parameters);
 
@@ -460,7 +461,7 @@ public class TestValidatemultisign001 {
     hash = Sha256Hash.of(CommonParameter.getInstance()
         .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()).getBytes();
 
-    parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 
@@ -491,7 +492,7 @@ public class TestValidatemultisign001 {
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));
 
-    parameters = Arrays.asList(Wallet.encode58Check(ownerAddress),
+    parameters = Arrays.asList(StringUtil.encode58Check(ownerAddress),
         0, "0x" + Hex.toHexString(hash), signatures);
     input = PublicMethed.parametersString(parameters);
 

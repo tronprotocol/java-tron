@@ -7,6 +7,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
@@ -170,7 +171,7 @@ contract isTestCtr {
         contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
-    String factoryAddressStr = Wallet.encode58Check(factoryAddress);
+    String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
@@ -178,7 +179,7 @@ contract isTestCtr {
         "", address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
         null);
     byte[] factoryAddressOther = WalletUtil.generateContractAddress(trx);
-    String factoryAddressStrOther = Wallet.encode58Check(factoryAddressOther);
+    String factoryAddressStrOther = StringUtil.encode58Check(factoryAddressOther);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
@@ -197,7 +198,7 @@ contract isTestCtr {
         "0000000000000000000000000000000000000000000000000000000000000000");
 
     // trigger deployed contract
-    String existentAccount = Wallet.encode58Check(address);
+    String existentAccount = StringUtil.encode58Check(address);
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(existentAccount));
     result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
