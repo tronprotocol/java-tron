@@ -444,10 +444,6 @@ public class Args {
   @Setter
   private int minEffectiveConnection;
 
-  @Getter
-  @Setter
-  private long allowShieldedTransaction; //committee parameter
-
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
@@ -602,7 +598,6 @@ public class Args {
     INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
-    INSTANCE.allowShieldedTransaction = 0;
     INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
@@ -1029,9 +1024,6 @@ public class Args {
     INSTANCE.saveInternalTx =
         config.hasPath(Constant.VM_SAVE_INTERNAL_TX) && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
 
-    INSTANCE.allowShieldedTransaction =
-        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
 
     INSTANCE.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE) ?
@@ -1485,7 +1477,6 @@ public class Args {
     DBConfig.setForbidTransferToContract(cfgArgs.getForbidTransferToContract());
     DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
     DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
-    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
     DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
     DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
