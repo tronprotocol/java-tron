@@ -1,9 +1,11 @@
 package org.tron.common.utils;
+
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 
 
 public class DbOptionalsUtils {
+
   public static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   public static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
   public static final int DEFAULT_WRITE_BUFFER_SIZE = 10 * 1024 * 1024;
