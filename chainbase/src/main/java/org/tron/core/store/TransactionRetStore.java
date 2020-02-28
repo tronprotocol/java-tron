@@ -47,7 +47,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
     }
 
     TransactionRetCapsule result = new TransactionRetCapsule(value);
-    if (Objects.isNull(result) || Objects.isNull(result.getInstance())) {
+    if (Objects.isNull(result.getInstance())) {
       return null;
     }
 

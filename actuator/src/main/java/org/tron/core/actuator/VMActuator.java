@@ -397,11 +397,9 @@ public class VMActuator implements Actuator2 {
     if (callValue > 0) {
       transfer(this.repository, callerAddress, contractAddress, callValue);
     }
-    if (VMConfig.allowTvmTransferTrc10()) {
-      if (tokenValue > 0) {
-        transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
-            tokenValue);
-      }
+    if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
+      transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
+          tokenValue);
     }
 
   }
@@ -505,11 +503,9 @@ public class VMActuator implements Actuator2 {
     if (callValue > 0) {
       transfer(this.repository, callerAddress, contractAddress, callValue);
     }
-    if (VMConfig.allowTvmTransferTrc10()) {
-      if (tokenValue > 0) {
-        transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
-            tokenValue);
-      }
+    if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
+      transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
+          tokenValue);
     }
 
   }
@@ -587,19 +583,17 @@ public class VMActuator implements Actuator2 {
 
 
   public void checkTokenValueAndId(long tokenValue, long tokenId) throws ContractValidateException {
-    if (VMConfig.allowTvmTransferTrc10()) {
-      if (VMConfig.allowMultiSign()) { //allowMultiSigns
-        // tokenid can only be 0
-        // or (MIN_TOKEN_ID, Long.Max]
-        if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
-          throw new ContractValidateException("tokenId must be > " + VMConstant.MIN_TOKEN_ID);
-        }
-        // tokenid can only be 0 when tokenvalue = 0,
-        // or (MIN_TOKEN_ID, Long.Max]
-        if (tokenValue > 0 && tokenId == 0) {
-          throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
-              ", tokenId = " + tokenId);
-        }
+    if (VMConfig.allowTvmTransferTrc10() && VMConfig.allowMultiSign()) {
+      // tokenid can only be 0
+      // or (MIN_TOKEN_ID, Long.Max]
+      if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
+        throw new ContractValidateException("tokenId must be > " + VMConstant.MIN_TOKEN_ID);
+      }
+      // tokenid can only be 0 when tokenvalue = 0,
+      // or (MIN_TOKEN_ID, Long.Max]
+      if (tokenValue > 0 && tokenId == 0) {
+        throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
+            ", tokenId = " + tokenId);
       }
     }
   }
