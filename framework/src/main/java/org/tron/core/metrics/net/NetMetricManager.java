@@ -21,10 +21,10 @@ import org.tron.core.services.filter.HttpInterceptor;
 public class NetMetricManager {
 
   @Autowired
-  TronNetDelegate tronNetDelegate;
+  private TronNetDelegate tronNetDelegate;
 
   @Autowired
-  MetricsService metricsService;
+  private MetricsService metricsService;
 
   /**
    * get net info.

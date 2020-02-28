@@ -64,7 +64,7 @@ public class NodeManager implements EventHandler {
   private ScheduledExecutorService pongTimer;
 
   @Autowired
-  MetricsService metricsService;
+  private MetricsService metricsService;
 
   @Autowired
   public NodeManager(ChainBaseManager chainBaseManager) {

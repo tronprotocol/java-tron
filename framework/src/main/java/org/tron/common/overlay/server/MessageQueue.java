@@ -30,7 +30,7 @@ import org.tron.protos.Protocol.ReasonCode;
 public class MessageQueue {
 
   @Autowired
-  MetricsService metricsService;
+  private MetricsService metricsService;
 
   private static ScheduledExecutorService sendTimer =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "sendTimer"));

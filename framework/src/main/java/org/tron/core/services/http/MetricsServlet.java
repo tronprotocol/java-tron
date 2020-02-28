@@ -14,7 +14,7 @@ import org.tron.core.metrics.MetricsInfo;
 public class MetricsServlet extends RateLimiterServlet {
 
   @Autowired
-  MetricsApiService metricsApiService;
+  private MetricsApiService metricsApiService;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {

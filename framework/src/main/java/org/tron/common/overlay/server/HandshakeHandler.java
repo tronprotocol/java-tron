@@ -73,7 +73,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
   private SyncPool syncPool;
 
   @Autowired
-  MetricsService metricsService;
+  private MetricsService metricsService;
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {

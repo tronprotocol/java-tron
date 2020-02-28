@@ -20,7 +20,7 @@ import org.tron.core.net.message.TronMessageFactory;
 public class MessageCodec extends ByteToMessageDecoder {
 
   @Autowired
-  MetricsService metricsService;
+  private MetricsService metricsService;
 
   private Channel channel;
   private P2pMessageFactory p2pMessageFactory = new P2pMessageFactory();

@@ -14,7 +14,7 @@ import org.tron.program.Version;
 public class NodeMetricManager {
 
   @Autowired
-  ChainBaseManager chainBaseManager;
+  private ChainBaseManager chainBaseManager;
 
   @Autowired
   private BackupManager backupManager;
