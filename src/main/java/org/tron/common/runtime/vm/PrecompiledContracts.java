@@ -901,6 +901,8 @@ public class PrecompiledContracts {
     private static final int BURN_SIZE = 512;
     private static final long TREE_WIDTH = 1L << 32;
 
+    private ExecutorService validateSignService = Executors.newFixedThreadPool(3);
+
     private static final byte[][] UNCOMMITTED = {
             {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00},
             {(byte) 0x81, (byte) 0x7d, (byte) 0xe3, (byte) 0x6a, (byte) 0xb2, (byte) 0xd5, (byte) 0x7f, (byte) 0xeb, (byte) 0x07, (byte) 0x76, (byte) 0x34, (byte) 0xbc, (byte) 0xa7, (byte) 0x78, (byte) 0x19, (byte) 0xc8, (byte) 0xe0, (byte) 0xbd, (byte) 0x29, (byte) 0x8c, (byte) 0x04, (byte) 0xf6, (byte) 0xfe, (byte) 0xd0, (byte) 0xe6, (byte) 0xa8, (byte) 0x3c, (byte) 0xc1, (byte) 0x35, (byte) 0x6c, (byte) 0xa1, (byte) 0x55},
@@ -1177,7 +1179,6 @@ public class PrecompiledContracts {
         int threadCount = 3;
         CountDownLatch countDownLatch = new CountDownLatch(threadCount);
         List<Future<Boolean>> futures = new ArrayList<>(threadCount);
-        ExecutorService validateSignService = Executors.newFixedThreadPool(3);
 
         // submit 3 check task
         Future<Boolean> future1 = validateSignService
@@ -1199,14 +1200,17 @@ public class PrecompiledContracts {
             result &= fResult;
           }
 
-          long checkFinalCheckStartTime = System.currentTimeMillis();
-          boolean checkResult = JLibrustzcash.librustzcashSaplingFinalCheck(
-              new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
-          long checkFinalCheckEndTime = System.currentTimeMillis();
-          logger.info("parallel Transfer finalCheck cost is: " +
-              (checkFinalCheckEndTime - checkFinalCheckStartTime) + "ms" +
-              ", result is " + checkResult);
-          result &= checkResult;
+          if(result){
+            long checkFinalCheckStartTime = System.currentTimeMillis();
+            boolean checkResult = JLibrustzcash.librustzcashSaplingFinalCheck(
+                new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
+            long checkFinalCheckEndTime = System.currentTimeMillis();
+            logger.info("parallel Transfer finalCheck cost is: " +
+                (checkFinalCheckEndTime - checkFinalCheckStartTime) + "ms" +
+                ", result is " + checkResult);
+            result &= checkResult;
+          }
+
         } catch (Exception e) {
           result = false;
           logger.error("parallel check sign interrupted exception! ", e);
