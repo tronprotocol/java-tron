@@ -11,13 +11,19 @@ import io.grpc.ServerMethodDefinition;
 import io.grpc.ServerServiceDefinition;
 import io.grpc.Status;
 import io.grpc.Status.Code;
+import io.grpc.stub.StreamObserver;
 import java.lang.reflect.Constructor;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.RateLimiterInitialization.RpcRateLimiterItem;
 import org.tron.core.config.args.Args;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsService;
+import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
 import org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPQPSRateLimiterAdapter;
@@ -35,6 +41,9 @@ public class RateLimiterInterceptor implements ServerInterceptor {
 
   @Autowired
   private RateLimiterContainer container;
+
+  @Autowired
+  private MetricsService metricsService;
 
 
   public void init(Server server) {
@@ -90,6 +99,17 @@ public class RateLimiterInterceptor implements ServerInterceptor {
   public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
       ServerCallHandler<ReqT, RespT> next) {
 
+
+    String methodMeterName = MetricsKey.NET_API_DETAIL_ENDPOINT_QPS
+        + "." + call.getMethodDescriptor().getFullMethodName();
+    metricsService.getInstance().getMeter(MetricsKey.NET_API_QPS).mark();
+    metricsService.getInstance().getMeter(methodMeterName).mark();
+    if (!HttpInterceptor.getEndpointList().containsKey(methodMeterName)) {
+      Set<String> st = new HashSet<>();
+      st.add(methodMeterName);
+      HttpInterceptor.getEndpointList().put(call.getMethodDescriptor().getFullMethodName(), st);
+    }
+
     IRateLimiter rateLimiter = container
         .get(KEY_PREFIX_RPC, call.getMethodDescriptor().getFullMethodName());
 
@@ -114,6 +134,9 @@ public class RateLimiterInterceptor implements ServerInterceptor {
             if (rateLimiter instanceof IPreemptibleRateLimiter) {
               ((IPreemptibleRateLimiter) rateLimiter).release();
             }
+
+            StreamObserver response;
+
           }
 
           @Override
@@ -128,6 +151,15 @@ public class RateLimiterInterceptor implements ServerInterceptor {
         call.close(Status.fromCode(Code.RESOURCE_EXHAUSTED), new Metadata());
       }
     } catch (Exception e) {
+      String grpcFailMeterName = MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS + "."
+          + call.getMethodDescriptor().getFullMethodName();
+      metricsService.getInstance().getMeter(MetricsKey.NET_API_FAIL_QPS).mark();
+      metricsService.getInstance().getMeter(grpcFailMeterName).mark();
+      Set<String> st = HttpInterceptor.getEndpointList().get(grpcFailMeterName);
+      if (!st.contains(call.getMethodDescriptor().getFullMethodName())) {
+        st.add(grpcFailMeterName);
+        HttpInterceptor.getEndpointList().put(call.getMethodDescriptor().getFullMethodName(), st);
+      }
       logger.error("Rpc Api Error: {}", e.getMessage());
     }
 
