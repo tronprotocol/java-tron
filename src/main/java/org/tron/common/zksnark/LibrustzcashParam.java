@@ -802,6 +802,52 @@ public class LibrustzcashParam {
     }
   }
 
+
+  /**
+   * bindingSig: 64 bytes sighashValue: sha256 of transaction,32 bytes,
+   */
+  public static class FinalCheckNewParams implements ValidParam {
+
+    @Setter
+    @Getter
+    private long valueBalance;
+    @Setter
+    @Getter
+    private byte[] bindingSig;
+    @Setter
+    @Getter
+    private byte[] sighashValue;
+    @Setter
+    @Getter
+    private byte[] spendCv;
+    @Setter
+    @Getter
+    private byte[] outputCv1;
+    @Setter
+    @Getter
+    private byte[] outputCv2;
+
+    public FinalCheckNewParams(long valueBalance, byte[] bindingSig, byte[] sighashValue,
+                               byte[] spendCv, byte[] outputCv1, byte[] outputCv2) throws ZksnarkException {
+      this.valueBalance = valueBalance;
+      this.bindingSig = bindingSig;
+      this.sighashValue = sighashValue;
+      this.spendCv = spendCv;
+      this.outputCv1 = outputCv1;
+      this.outputCv2 = outputCv2;
+      valid();
+    }
+
+    @Override
+    public void valid() throws ZksnarkException {
+      validParamLength(bindingSig, 64);
+      valid32Params(sighashValue);
+      valid32Params(spendCv);
+      valid32Params(outputCv1);
+      valid32Params(outputCv2);
+    }
+  }
+
   /**
    * ivk: incoming viewing key, 32 bytes, should be 251bits , not checked; d: 11 bytes pkD: 32
    * bytes

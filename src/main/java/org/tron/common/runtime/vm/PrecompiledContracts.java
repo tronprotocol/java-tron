@@ -1202,8 +1202,8 @@ public class PrecompiledContracts {
 
           if(result){
             long checkFinalCheckStartTime = System.currentTimeMillis();
-            boolean checkResult = JLibrustzcash.librustzcashSaplingFinalCheck(
-                new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
+            boolean checkResult = JLibrustzcash.librustzcashSaplingFinalCheckNew(
+                new LibrustzcashParam.FinalCheckNewParams(0, bindingSig, signHash, spendCv, receiveCv0, receiveCv1));
             long checkFinalCheckEndTime = System.currentTimeMillis();
             logger.info("parallel Transfer finalCheck cost is: " +
                 (checkFinalCheckEndTime - checkFinalCheckStartTime) + "ms" +
