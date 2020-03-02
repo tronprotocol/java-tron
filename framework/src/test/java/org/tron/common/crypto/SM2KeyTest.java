@@ -116,42 +116,6 @@ public class SM2KeyTest {
 
 
   @Test
-  public void testValidHashSignature() {
-    SM2 key = SM2.fromPrivate(privateKey);
-    byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E"
-        + "6FC682D48BB5D42E3D9B9EFFE76");
-    SM2.SM2Signature sign = key.sign(hash);
-    //byte[] signByte = sign.toByteArray();
-    //System.out.println(Hex.toHexString(signByte));
-    assertTrue(SM2.verify(hash, sign, pubKey));
-
-  }
-
-  @Test
-  public void testValidHashSignature3() {
-    SM2 key = SM2.fromPrivate(privateKey);
-    byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC"
-        + "682D48BB5D42E3D9B9EFFE76");
-    SM2.SM2Signature sign = key.sign(hash);
-    assertTrue(SM2.verify(hash, sign, pubKey));
-    BigInteger sNeg = sign.s.negate().mod(SM2_N);
-    SM2.SM2Signature sign2 = new SM2.SM2Signature(sign.r, sNeg);
-    assertFalse(SM2.verify(hash, sign2, pubKey));
-  }
-
-  @Test
-  public void testValidHashSignature2() {
-    SM2 key = SM2.fromPrivate(privateKey);
-    byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB19A87E6FC"
-        + "682D48BB5D42E3D9B9EFFE76");
-    SM2.SM2Signature sign = key.sign(hash);
-    byte[] signByte = sign.toByteArray();
-    //System.out.println(Hex.toHexString(signByte));
-    assertTrue(SM2.verify(hash, sign, pubKey));
-
-  }
-
-  @Test
   public void testSignatureToKeyBytes() throws SignatureException {
     SM2 key = SM2.fromPrivate(privateKey);
     byte[] hash = Hex.decode("B524F552CD82B8B028476E005C377FB"
