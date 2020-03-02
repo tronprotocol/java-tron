@@ -528,17 +528,6 @@ public class ECKey implements Serializable, SignInterface {
     }
   }
 
-  /**
-   * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
-   *
-   * @param data Hash of the data to verify.
-   * @param signature signature.
-   * @param pub The public key bytes to use.
-   * @return -
-   */
-  public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
-    return verify(data, ECDSASignature.decodeFromDER(signature), pub);
-  }
 
   /**
    * Returns true if the given pubkey is canonical, i.e. the correct length taking into account
@@ -976,16 +965,6 @@ public class ECKey implements Serializable, SignInterface {
     return out;
   }
 
-  /**
-   * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
-   *
-   * @param data Hash of the data to verify.
-   * @param signature signature.
-   * @return -
-   */
-  public boolean verify(byte[] data, byte[] signature) {
-    return ECKey.verify(data, signature, getPubKey());
-  }
 
   /**
    * Verifies the given R/S pair (signature) against a hash using the public key.
@@ -1117,40 +1096,6 @@ public class ECKey implements Serializable, SignInterface {
       return BIUtil.isLessThan(s, SECP256K1N);
     }
 
-    public static ECDSASignature decodeFromDER(byte[] bytes) {
-      ASN1InputStream decoder = null;
-      try {
-        decoder = new ASN1InputStream(bytes);
-        DLSequence seq = (DLSequence) decoder.readObject();
-        if (seq == null) {
-          throw new RuntimeException("Reached past end of ASN.1 " +
-              "stream.");
-        }
-        ASN1Integer r, s;
-        try {
-          r = (ASN1Integer) seq.getObjectAt(0);
-          s = (ASN1Integer) seq.getObjectAt(1);
-        } catch (ClassCastException e) {
-          throw new IllegalArgumentException(e);
-        }
-        // OpenSSL deviates from the DER spec by interpreting these
-        // values as unsigned, though they should not be
-        // Thus, we always use the positive versions. See:
-        // http://r6.ca/blog/20111119T211504Z.html
-        return new ECDSASignature(r.getPositiveValue(), s
-            .getPositiveValue());
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      } finally {
-        if (decoder != null) {
-          try {
-            decoder.close();
-          } catch (IOException x) {
-
-          }
-        }
-      }
-    }
 
     public boolean validateComponents() {
       return validateComponents(r, s, v);
