@@ -1,5 +1,6 @@
 package org.tron.core.zen.address;
 
+import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.Random;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,7 @@ public class SpendingKey {
   @Setter
   @Getter
   public byte[] value;
+  static SecureRandom random = new SecureRandom();
 
   public static SpendingKey random() throws ZksnarkException {
     while (true) {
@@ -37,16 +39,9 @@ public class SpendingKey {
   }
 
   private static byte[] randomUint256() {
-    return generatePrivateKey(0L);
-  }
-
-  public static byte[] generatePrivateKey(long seed) {
     byte[] result = new byte[32];
-    if (seed != 0L) {
-      new Random(seed).nextBytes(result);
-    } else {
-      new Random().nextBytes(result);
-    }
+    random.nextBytes(result);
+
     Integer i = result[0] & 0x0F;
     result[0] = i.byteValue();
     return result;

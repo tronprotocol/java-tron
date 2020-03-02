@@ -897,17 +897,7 @@ public class ECKey implements Serializable, SignInterface {
       return new ECDSASignature(components[0], components[1])
           .toCanonicalised();
     } else {
-      try {
-        final Signature ecSig = ECSignatureFactory.getRawInstance
-            (provider);
-        ecSig.initSign(privKey);
-        ecSig.update(input);
-        final byte[] derSignature = ecSig.sign();
-        return ECDSASignature.decodeFromDER(derSignature)
-            .toCanonicalised();
-      } catch (SignatureException | InvalidKeyException ex) {
-        throw new RuntimeException("ECKey signing error", ex);
-      }
+      throw new RuntimeException("ECKey signing error" );
     }
   }
 
@@ -937,33 +927,6 @@ public class ECKey implements Serializable, SignInterface {
     }
     sig.v = (byte) (recId + 27);
     return sig;
-  }
-
-  public BigInteger keyAgreement(ECPoint otherParty) {
-    if (privKey == null) {
-      throw new MissingPrivateKeyException();
-    } else if (privKey instanceof BCECPrivateKey) {
-      final ECDHBasicAgreement agreement = new ECDHBasicAgreement();
-      agreement.init(new ECPrivateKeyParameters(((BCECPrivateKey)
-          privKey).getD(), CURVE));
-      return agreement.calculateAgreement(new ECPublicKeyParameters
-          (otherParty, CURVE));
-    } else {
-      try {
-        final KeyAgreement agreement = ECKeyAgreement.getInstance
-            (this.provider);
-        agreement.init(this.privKey);
-        agreement.doPhase(
-            ECKeyFactory.getInstance(this.provider)
-                .generatePublic(new ECPublicKeySpec
-                    (otherParty, CURVE_SPEC)),
-            /* lastPhase */ true);
-        return new BigInteger(1, agreement.generateSecret());
-      } catch (IllegalStateException | InvalidKeyException |
-          InvalidKeySpecException ex) {
-        throw new RuntimeException("ECDH key agreement failure", ex);
-      }
-    }
   }
 
   /**
