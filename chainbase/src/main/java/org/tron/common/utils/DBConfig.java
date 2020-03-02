@@ -73,9 +73,9 @@ public class DBConfig {
   @Getter
   @Setter
   private static long allowCreationOfContracts; //committee parameter
-  @Getter
-  @Setter
-  private static long allowShieldedTransaction; //committee parameter
+//  @Getter
+//  @Setter
+//  private static long allowShieldedTransaction; //committee parameter
   @Getter
   @Setter
   private static String Blocktimestamp;
