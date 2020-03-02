@@ -12,7 +12,6 @@ public class MetricsKey {
   public static final String NET_BLOCK_LATENCY_WITNESS = "net.block.latency.witness.";
   public static final String NET_DISCONNECTION_COUNT = "net.disconnection.count";
   public static final String NET_DISCONNECTION_REASON = "net.disconnection.reason.";
-  public static final String NODE_STATUS = "node.status";
   public static final String NET_ERROR_PROTO_COUNT = "net.errorProtoCount";
   public static final String NET_TCP_IN_TRAFFIC = "net.TCPInTraffic";
   public static final String NET_TCP_OUT_TRAFFIC = "net.TCPOutTraffic";

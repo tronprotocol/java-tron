@@ -12,7 +12,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -140,6 +139,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.TransactionInfo;
+
 
 @Slf4j(topic = "DB")
 @Component
@@ -363,7 +363,6 @@ public class Manager {
   public void stopRePushTriggerThread() {
     isRunTriggerCapsuleProcessThread = false;
   }
-
 
   @PostConstruct
   public void init() {
@@ -838,7 +837,6 @@ public class Manager {
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException,
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
       VMIllegalException, ZksnarkException, BadBlockException {
-
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -1130,7 +1128,6 @@ public class Manager {
     if (trxCap == null) {
       return null;
     }
-
 
     validateTapos(trxCap);
     validateCommon(trxCap);
