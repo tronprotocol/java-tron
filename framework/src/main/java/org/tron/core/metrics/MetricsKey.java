@@ -23,6 +23,6 @@ public class MetricsKey {
   public static final String NET_API_FAIL_QPS = "net.APIFailQPS";
   public static final String NET_API_DETAIL_ENDPOINT_QPS = "net.APIDetailQPS";
   public static final String NET_API_DETAIL_ENDPOINT_FAIL_QPS = "net.APIDetailFailQPS";
-  public static final String NET_API_DETAIL_ENDPOINT_OutTraffic = "net.APIDetailOutTraffic";
+  public static final String NET_API_DETAIL_ENDPOINT_OUT_TRAFFIC = "net.APIDetailOutTraffic";
 
 }

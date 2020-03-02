@@ -67,7 +67,7 @@ public class BlockChainMetricManager {
     RateInfo tpsInfo = getTransactionRate();
     blockChain.setTps(tpsInfo);
 
-    List<WitnessInfo> witnesses = getNoUpgradedSR();
+    List<WitnessInfo> witnesses = getSrList();
 
     blockChain.setWitnesses(witnesses);
 
@@ -158,15 +158,6 @@ public class BlockChainMetricManager {
     tpsInfo.setFiveMinuteRate(transactionRate.getFiveMinuteRate());
     tpsInfo.setFifteenMinuteRate(transactionRate.getFifteenMinuteRate());
     return tpsInfo;
-  }
-
-  private List<WitnessInfo> getNoUpgradedSR() {
-    List<WitnessInfo> witnesses = new ArrayList<>();
-    for (WitnessInfo it : getSrList()) {
-      WitnessInfo noUpgradeSR = new WitnessInfo(it.getAddress(), it.getVersion());
-      witnesses.add(noUpgradeSR);
-    }
-    return witnesses;
   }
 
 

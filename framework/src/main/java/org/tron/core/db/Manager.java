@@ -839,12 +839,15 @@ public class Manager {
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
       VMIllegalException, ZksnarkException, BadBlockException {
 
+    metricsService.meterMark(MetricsKey.BLOCKCHAIN_SUCCESS_FORK_COUNT, 1);
+
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
           khaosDb.getBranch(
               newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (NonCommonBlockException e) {
+      metricsService.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT, 1);
       logger.info(
           "this is not the most recent common ancestor, "
                   + "need to remove all blocks in the fork chain.");
@@ -931,7 +934,7 @@ public class Manager {
         }
       }
     }
-    metricsService.meterMark(MetricsKey.BLOCKCHAIN_SUCCESS_FORK_COUNT, 1);
+
   }
 
   /**
