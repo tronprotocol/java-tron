@@ -44,8 +44,8 @@ public class HttpInterceptor implements Filter {
       if (request instanceof HttpServletRequest) {
         endpoint = ((HttpServletRequest) request).getRequestURI();
         String endpointQPS = MetricsKey.NET_API_DETAIL_ENDPOINT_QPS + "." + endpoint;
-        metricsService.getInstance().meterMark(MetricsKey.NET_API_QPS, 1L);
-        metricsService.getInstance().meterMark(endpointQPS, 1L);
+        metricsService.getInstance().meterMark(MetricsKey.NET_API_QPS, 1);
+        metricsService.getInstance().meterMark(endpointQPS, 1);
 
         CharResponseWrapper responseWrapper = new CharResponseWrapper(
             (HttpServletResponse) response);
