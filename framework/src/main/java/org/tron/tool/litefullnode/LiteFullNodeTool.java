@@ -240,7 +240,6 @@ public class LiteFullNodeTool {
   private void fillSnapshotBlockDb(String sourceDir, String snapshotDir)
           throws IOException, RocksDBException {
     logger.info("begin to fill latest block and genesis block to snapshot");
-    DBInterface checkpointDb = DbTool.getDB(sourceDir, "tmp");
     DBInterface sourceBlockIndexDb = DbTool.getDB(sourceDir, "block-index");
     DBInterface sourceBlockDb = DbTool.getDB(sourceDir, "block");
     DBInterface destBlockDb = DbTool.getDB(snapshotDir, "block");
@@ -279,9 +278,6 @@ public class LiteFullNodeTool {
       return;
     }
     // fullnode is old version, create trans-cache database
-    DBInterface blockDb = DbTool.getDB(sourceDir, "block");
-    DBInterface blockIndexDb = DbTool.getDB(sourceDir, "block-index");
-    DBInterface checkpointDb = DbTool.getDB(sourceDir, "tmp");
     DBInterface recentBlockDb = DbTool.getDB(snapshotDir, "recent-block");
     DBInterface transCacheDb = DbTool.getDB(snapshotDir, "trans-cache");
     long headNum = getLatestBlockHeaderNum(sourceDir);

@@ -35,7 +35,6 @@ public class Util {
         copy(Paths.get(src.toString(), dir), Paths.get(dest.toString(), dir));
       }
     });
-    System.out.println(src);
     // copy files
     Files.walk(src)
             .parallel()
