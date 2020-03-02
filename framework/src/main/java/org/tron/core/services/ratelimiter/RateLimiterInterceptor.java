@@ -11,7 +11,6 @@ import io.grpc.ServerMethodDefinition;
 import io.grpc.ServerServiceDefinition;
 import io.grpc.Status;
 import io.grpc.Status.Code;
-import io.grpc.stub.StreamObserver;
 import java.lang.reflect.Constructor;
 import java.util.HashSet;
 import java.util.Map;
@@ -134,9 +133,6 @@ public class RateLimiterInterceptor implements ServerInterceptor {
             if (rateLimiter instanceof IPreemptibleRateLimiter) {
               ((IPreemptibleRateLimiter) rateLimiter).release();
             }
-
-            StreamObserver response;
-
           }
 
           @Override

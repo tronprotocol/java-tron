@@ -6,7 +6,7 @@ import java.util.List;
 public class ApiInfo {
   private RateInfo qps;
   private RateInfo failQps;
-  private RateInfo totalOutTraffic;
+  private RateInfo outTraffic;
   private List<ApiDetailInfo> detail = new ArrayList<>();
 
   public RateInfo getQps() {
@@ -25,12 +25,12 @@ public class ApiInfo {
     this.failQps = failQps;
   }
 
-  public RateInfo getTotalOutTraffic() {
-    return totalOutTraffic;
+  public RateInfo getOutTraffic() {
+    return outTraffic;
   }
 
-  public void setTotalOutTraffic(RateInfo totalOutTraffic) {
-    this.totalOutTraffic = totalOutTraffic;
+  public void setOutTraffic(RateInfo outTraffic) {
+    this.outTraffic = outTraffic;
   }
 
   public List<ApiDetailInfo> getDetail() {
