@@ -22,7 +22,7 @@ public class SpendingKey {
   @Setter
   @Getter
   public byte[] value;
-  static SecureRandom random = new SecureRandom();
+  private static SecureRandom random = new SecureRandom();
 
   public static SpendingKey random() throws ZksnarkException {
     while (true) {
