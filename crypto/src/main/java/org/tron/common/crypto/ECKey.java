@@ -488,48 +488,6 @@ public class ECKey implements Serializable, SignInterface {
   }
 
   /**
-   * Compute the key that signed the given signature.
-   *
-   * @param messageHash 32-byte hash of message
-   * @param sig -
-   * @return ECKey
-   */
-  public static ECKey signatureToKey(byte[] messageHash, ECDSASignature
-      sig) throws SignatureException {
-    final byte[] keyBytes = signatureToKeyBytes(messageHash, sig);
-    return ECKey.fromPublicOnly(keyBytes);
-  }
-
-  /**
-   * <p>Verifies the given ECDSA signature against the message bytes using the public key bytes.</p>
-   * <p> <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
-   * larger than 520 bytes.</p>
-   *
-   * @param data Hash of the data to verify.
-   * @param signature signature.
-   * @param pub The public key bytes to use.
-   * @return -
-   */
-  public static boolean verify(byte[] data, ECDSASignature signature,
-      byte[] pub) {
-    ECDSASigner signer = new ECDSASigner();
-    ECPublicKeyParameters params = new ECPublicKeyParameters(CURVE
-        .getCurve().decodePoint(pub), CURVE);
-    signer.init(false, params);
-    try {
-      return signer.verifySignature(data, signature.r, signature.s);
-    } catch (NullPointerException npe) {
-      // Bouncy Castle contains a bug that can cause NPEs given
-      // specially crafted signatures.
-      // Those signatures are inherently invalid/attack sigs so we just
-      // fail them here rather than crash the thread.
-      logger.error("Caught NPE inside bouncy castle", npe);
-      return false;
-    }
-  }
-
-
-  /**
    * Returns true if the given pubkey is canonical, i.e. the correct length taking into account
    * compression.
    *
@@ -918,64 +876,6 @@ public class ECKey implements Serializable, SignInterface {
     return sig;
   }
 
-  /**
-   * Decrypt cipher by AES in SIC(also know as CTR) mode
-   *
-   * @param cipher -proper cipher
-   * @return decrypted cipher, equal length to the cipher.
-   * @deprecated should not use EC private scalar value as an AES key
-   */
-  public byte[] decryptAES(byte[] cipher) {
-
-    if (privKey == null) {
-      throw new MissingPrivateKeyException();
-    }
-    if (!(privKey instanceof BCECPrivateKey)) {
-      throw new UnsupportedOperationException("Cannot use the private " +
-          "key as an AES key");
-    }
-
-    AESEngine engine = new AESEngine();
-    SICBlockCipher ctrEngine = new SICBlockCipher(engine);
-
-    KeyParameter key = new KeyParameter(BigIntegers.asUnsignedByteArray((
-        (BCECPrivateKey) privKey).getD()));
-    ParametersWithIV params = new ParametersWithIV(key, new byte[16]);
-
-    ctrEngine.init(false, params);
-
-    int i = 0;
-    byte[] out = new byte[cipher.length];
-    while (i < cipher.length) {
-      ctrEngine.processBlock(cipher, i, out, i);
-      i += engine.getBlockSize();
-      if (cipher.length - i < engine.getBlockSize()) {
-        break;
-      }
-    }
-
-    // process left bytes
-    if (cipher.length - i > 0) {
-      byte[] tmpBlock = new byte[16];
-      System.arraycopy(cipher, i, tmpBlock, 0, cipher.length - i);
-      ctrEngine.processBlock(tmpBlock, 0, tmpBlock, 0);
-      System.arraycopy(tmpBlock, 0, out, i, cipher.length - i);
-    }
-
-    return out;
-  }
-
-
-  /**
-   * Verifies the given R/S pair (signature) against a hash using the public key.
-   *
-   * @param sigHash -
-   * @param signature -
-   * @return -
-   */
-  public boolean verify(byte[] sigHash, ECDSASignature signature) {
-    return ECKey.verify(sigHash, signature, getPubKey());
-  }
 
   /**
    * Returns true if this pubkey is canonical, i.e. the correct length taking into account
