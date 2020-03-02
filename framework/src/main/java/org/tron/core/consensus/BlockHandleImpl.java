@@ -11,8 +11,6 @@ import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.base.State;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 
@@ -32,9 +30,6 @@ public class BlockHandleImpl implements BlockHandle {
   @Autowired
   private Consensus consensus;
 
-  @Autowired
-  private MetricsService metricsService;
-
   @Override
   public State getState() {
     if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
@@ -48,7 +43,6 @@ public class BlockHandleImpl implements BlockHandle {
   }
 
   public BlockCapsule produce(Miner miner, long blockTime, long timeout) {
-
     BlockCapsule blockCapsule = manager.generateBlock(miner, blockTime, timeout);
     if (blockCapsule == null) {
       return null;
@@ -60,12 +54,9 @@ public class BlockHandleImpl implements BlockHandle {
       manager.pushBlock(blockCapsule);
       tronNetService.broadcast(blockMessage);
     } catch (Exception e) {
-      metricsService.meterMark(MetricsKey.NODE_STATUS, 1);
       logger.error("Handle block {} failed.", blockCapsule.getBlockId().getString(), e);
       return null;
     }
-
-
     return blockCapsule;
   }
 }
