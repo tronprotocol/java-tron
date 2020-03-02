@@ -1,5 +1,6 @@
 package org.tron.tool.litefullnode.db;
 
+import com.google.common.collect.Streams;
 import java.io.IOException;
 import org.iq80.leveldb.DB;
 import org.tron.tool.litefullnode.iterator.DBIterator;
@@ -31,6 +32,11 @@ public class LevelDBImpl implements DBInterface {
   @Override
   public DBIterator iterator() {
     return new LevelDBIterator(leveldb.iterator());
+  }
+
+  @Override
+  public long size() {
+    return Streams.stream(leveldb.iterator()).count();
   }
 
   @Override

@@ -71,7 +71,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
    * does not check the map.size()
    */
   private void init() {
-    System.out.println("start init cache");
     DBIterator iterator = (DBIterator) persistentStore.iterator();
     while (iterator.hasNext()) {
       Entry<byte[], byte[]> entry = iterator.next();
@@ -84,13 +83,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
       Long v = Longs.fromByteArray(value);
       blockNumMap.put(v, k);
       db.put(k, v);
-    }
-    System.out.println(blockNumMap.keySet().size());
-    System.out.println(db.size());
-    System.out.println(blockNumMap.keySet().stream().min(Long::compareTo));
-    System.out.println(blockNumMap.keySet().stream().max(Long::compareTo));
-    for (Key key : blockNumMap.get(1016967L)) {
-      System.out.println(key);
     }
   }
 
@@ -122,7 +114,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
           .min(Long::compareTo)
           .ifPresent(k -> {
             Collection<Key> trxHashs = blockNumMap.get(k);
-            System.out.println("delete blocknumkey:" + k);
             // remove transaction from persistentStore,
             // if foreach is inefficient, change remove-foreach to remove-batch
             trxHashs.forEach(key -> persistentStore.remove(key.getBytes()));

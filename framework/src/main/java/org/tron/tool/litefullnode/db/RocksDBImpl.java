@@ -1,7 +1,9 @@
 package org.tron.tool.litefullnode.db;
 
+import com.google.common.collect.Streams;
 import java.io.IOException;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.RocksIterator;
 import org.tron.tool.litefullnode.iterator.DBIterator;
 import org.tron.tool.litefullnode.iterator.RockDBIterator;
 
@@ -44,6 +46,17 @@ public class RocksDBImpl implements DBInterface {
   @Override
   public DBIterator iterator() {
     return new RockDBIterator(rocksDB.newIterator());
+  }
+
+  @Override
+  public long size() {
+    RocksIterator iterator = rocksDB.newIterator();
+    long size = 0;
+    for (iterator.seekToFirst(); iterator.isValid(); iterator.next()) {
+      size++;
+    }
+    iterator.close();
+    return size;
   }
 
   @Override

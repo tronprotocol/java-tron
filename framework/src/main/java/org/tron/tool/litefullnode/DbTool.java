@@ -33,7 +33,19 @@ public class DbTool {
     RocksDB
   }
 
-  public static DBInterface openDB(String sourceDir, String dbName)
+  /**
+   * Get the DB object according to the specified path,
+   * create db object when not exists, otherwise get it from the dbMap.
+   *
+   * @param sourceDir the parent path of db
+   * @param dbName db dir name
+   *
+   * @return db object
+   *
+   * @throws IOException IOException
+   * @throws RocksDBException RocksDBException
+   */
+  public static DBInterface getDB(String sourceDir, String dbName)
           throws IOException, RocksDBException {
     Path path = Paths.get(sourceDir, dbName);
     if (dbMap.containsKey(path.toString())) {
@@ -54,6 +66,19 @@ public class DbTool {
         throw new IllegalStateException("Unexpected value: " + type);
     }
     return db;
+  }
+
+  /**
+   * Close the dbs.
+   */
+  public static void close() {
+    dbMap.forEach((key, value) -> {
+      try {
+        value.close();
+      } catch (IOException ex) {
+        ex.printStackTrace();
+      }
+    });
   }
 
   private static DbType getDbType(String sourceDir, String dbName) {
@@ -141,9 +166,5 @@ public class DbTool {
     dbOptions.maxOpenFiles(defaultMaxOpenFiles);
 
     return dbOptions;
-  }
-
-  private static WriteOptions getLevelBbWriteOptions() {
-    return new WriteOptions().sync(true);
   }
 }
