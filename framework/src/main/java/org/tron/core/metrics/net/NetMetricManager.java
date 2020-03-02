@@ -115,7 +115,7 @@ public class NetMetricManager {
     totalOutTraffic.setOneMinuteRate(apiMeterTotalOutTraffic.getOneMinuteRate());
     totalOutTraffic.setFiveMinuteRate(apiMeterTotalOutTraffic.getFiveMinuteRate());
     totalOutTraffic.setFifteenMinuteRate(apiMeterTotalOutTraffic.getFifteenMinuteRate());
-    apiInfo.setTotalOutTraffic(totalOutTraffic);
+    apiInfo.setOutTraffic(totalOutTraffic);
 
 
     List<ApiDetailInfo> apiDetails = new ArrayList<>();

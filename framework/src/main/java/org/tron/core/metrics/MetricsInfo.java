@@ -8,7 +8,7 @@ import org.tron.core.metrics.node.NodeInfo;
 
 @Slf4j
 public class MetricsInfo {
-  private long startTime;
+  private long internal;
 
   private NodeInfo node;
 
@@ -16,12 +16,12 @@ public class MetricsInfo {
 
   private NetInfo net;
 
-  public long getStartTime() {
-    return startTime;
+  public long getInternal() {
+    return internal;
   }
 
-  public void setStartTime(long startTime) {
-    this.startTime = startTime;
+  public void setInternal(long internal) {
+    this.internal = internal;
   }
 
   @JSONField(name = "node")
