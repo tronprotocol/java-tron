@@ -974,7 +974,7 @@ public class Wallet {
 //            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
 //            .build());
 //
-//    // ShieldedTransactionCreateAccountFee
+//    // ShieldedTransactionCreateAccountFeeSaplingNoteTest
 //    builder.addChainParameter(
 //        Protocol.ChainParameters.ChainParameter.newBuilder()
 //            .setKey("getShieldedTransactionCreateAccountFee")
