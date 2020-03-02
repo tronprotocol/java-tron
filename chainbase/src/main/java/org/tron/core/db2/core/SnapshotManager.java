@@ -330,7 +330,8 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
 
-    checkTmpStore.getDbSource().updateByBatch(hmap);
+    checkTmpStore.getDbSource().updateByBatch(hmap, WriteOptionsWrapper.getInstance()
+        .sync(DBConfig.isDbSync()));
   }
 
   // ensure run this method first after process start.
