@@ -101,8 +101,8 @@ public class RateLimiterInterceptor implements ServerInterceptor {
 
     String methodMeterName = MetricsKey.NET_API_DETAIL_ENDPOINT_QPS
         + "." + call.getMethodDescriptor().getFullMethodName();
-    metricsService.getInstance().getMeter(MetricsKey.NET_API_QPS).mark();
-    metricsService.getInstance().getMeter(methodMeterName).mark();
+    metricsService.getInstance().meterMark(MetricsKey.NET_API_QPS, 1);
+    metricsService.getInstance().meterMark(methodMeterName, 1);
     if (!HttpInterceptor.getEndpointList().containsKey(methodMeterName)) {
       Set<String> st = new HashSet<>();
       st.add(methodMeterName);
@@ -149,8 +149,8 @@ public class RateLimiterInterceptor implements ServerInterceptor {
     } catch (Exception e) {
       String grpcFailMeterName = MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS + "."
           + call.getMethodDescriptor().getFullMethodName();
-      metricsService.getInstance().getMeter(MetricsKey.NET_API_FAIL_QPS).mark();
-      metricsService.getInstance().getMeter(grpcFailMeterName).mark();
+      metricsService.getInstance().meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
+      metricsService.getInstance().meterMark(grpcFailMeterName, 1);
       Set<String> st = HttpInterceptor.getEndpointList().get(grpcFailMeterName);
       if (!st.contains(call.getMethodDescriptor().getFullMethodName())) {
         st.add(grpcFailMeterName);
