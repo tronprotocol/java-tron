@@ -97,6 +97,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private TransactionTrace trxTrace;
   private StringBuffer toStringBuff = new StringBuffer();
+  @Getter
+  @Setter
+  private long time;
 
   /**
    * constructor TransactionCapsule.
