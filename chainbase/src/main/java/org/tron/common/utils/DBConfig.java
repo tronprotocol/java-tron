@@ -12,6 +12,7 @@ import org.iq80.leveldb.Options;
 import org.tron.common.storage.rocksdb.RocksDbSettings;
 import org.tron.core.config.args.GenesisBlock;
 
+
 public class DBConfig {
 
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
