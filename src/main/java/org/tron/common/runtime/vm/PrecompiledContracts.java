@@ -988,6 +988,9 @@ public class PrecompiledContracts {
       if (leafCount >= TREE_WIDTH) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
+
+      // only if you want to insert cm without check
+      // /**
       boolean result;
 
       //verify receiveProof && bindingSignature
@@ -1008,6 +1011,7 @@ public class PrecompiledContracts {
       if (!result) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
+      // **/
 
       long costTime = System.currentTimeMillis() - start_time;
       logger.info("Mint verify successfully, " + "check cost is: " + costTime + "ms");
@@ -1200,7 +1204,7 @@ public class PrecompiledContracts {
             result &= fResult;
           }
 
-          if(result){
+          if (result) {
             long checkFinalCheckStartTime = System.currentTimeMillis();
             boolean checkResult = JLibrustzcash.librustzcashSaplingFinalCheckNew(
                 new LibrustzcashParam.FinalCheckNewParams(0, bindingSig, signHash, spendCv, receiveCv0, receiveCv1));
