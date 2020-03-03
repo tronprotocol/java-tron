@@ -87,7 +87,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -122,7 +122,7 @@ public class WalletTestZenToken002 {
     sendNote = notes.getNoteTxs(0).getNote();
   }
 
-  @Test(enabled = true, description = "Get merkle tree voucher info")
+  @Test(enabled = false, description = "Get merkle tree voucher info")
   public void test1GetMerkleTreeVoucherInfo() {
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     sendNote = notes.getNoteTxs(0).getNote();
@@ -138,7 +138,7 @@ public class WalletTestZenToken002 {
   }
 
 
-  @Test(enabled = true, description = "Shield to shield transaction")
+  @Test(enabled = false, description = "Shield to shield transaction")
   public void test2Shield2ShieldTransaction() {
     receiverShieldAddressInfo = PublicMethed.generateShieldAddress();
     receiverShieldAddress = receiverShieldAddressInfo.get().getAddress();
@@ -166,7 +166,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on FullNode")
+  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on FullNode")
   public void test3ScanNoteByIvkAndOvk() {
     //Scan sender note by ovk equals scan receiver note by ivk on FullNode
     Note scanNoteByIvk = PublicMethed
@@ -182,7 +182,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on solidity")
+  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on solidity")
   public void test4ScanNoteByIvkAndOvkOnSolidityServer() {
 
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
@@ -202,7 +202,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on solidity")
+  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on solidity")
   public void test5ScanNoteByIvkAndOvkOnSolidityServer() {
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity1);
@@ -222,7 +222,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Query whether note is spend on solidity")
+  @Test(enabled = false, description = "Query whether note is spend on solidity")
   public void test6QueryNoteIsSpendOnSolidity() {
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
@@ -237,7 +237,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Query note and spend status on fullnode and solidity")
+  @Test(enabled = false, description = "Query note and spend status on fullnode and solidity")
   public void test7QueryNoteAndSpendStatusOnFullnode() {
     Assert.assertFalse(
         PublicMethed.getShieldNotesAndMarkByIvk(receiverShieldAddressInfo, blockingStubFull)
@@ -282,7 +282,7 @@ public class WalletTestZenToken002 {
         .getNoteTxs(0).getIsSpend());
   }
 
-  @Test(enabled = true, description = "Get merkle tree voucher info")
+  @Test(enabled = false, description = "Get merkle tree voucher info")
   public void test8GetMerkleTreeVoucherInfo() {
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     sendNote = notes.getNoteTxs(0).getNote();
@@ -304,7 +304,7 @@ public class WalletTestZenToken002 {
    * constructor.
    */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,

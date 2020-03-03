@@ -533,7 +533,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowShieldedTransaction();
     } catch (IllegalArgumentException e) {
-      this.saveAllowShieldedTransaction(DBConfig.getAllowShieldedTransaction());
+//      this.saveAllowShieldedTransaction(DBConfig.getAllowShieldedTransaction());
+      this.saveAllowShieldedTransaction(0L);
     }
 
     try {

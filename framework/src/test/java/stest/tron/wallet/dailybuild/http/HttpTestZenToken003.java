@@ -70,7 +70,7 @@ public class HttpTestZenToken003 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -78,7 +78,7 @@ public class HttpTestZenToken003 {
 
   }
 
-  @Test(enabled = true, description = "Public to two shield transaction by http")
+  @Test(enabled = false, description = "Public to two shield transaction by http")
   public void test01PublicToTwoShieldTransaction() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, zenTokenId,
@@ -136,7 +136,7 @@ public class HttpTestZenToken003 {
     Assert.assertEquals(memo2.getBytes(), receiverNote2.getMemo());
   }
 
-  @Test(enabled = true, description = "Public to one public and one shield transaction by http")
+  @Test(enabled = false, description = "Public to one public and one shield transaction by http")
   public void test02ShieldToOneShieldAndOnePublicTransaction() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, zenTokenId,
@@ -209,7 +209,7 @@ public class HttpTestZenToken003 {
     Assert.assertEquals(memo3.getBytes(), receiverNote3.getMemo());
   }
 
-  @Test(enabled = true, description = "Public to one public and two shield transaction by http")
+  @Test(enabled = false, description = "Public to one public and two shield transaction by http")
   public void test03ShieldToOneShieldAndTwoPublicTransaction() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, zenTokenId,
@@ -295,7 +295,7 @@ public class HttpTestZenToken003 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     final Long assetBalance1 = HttpMethed
         .getAssetIssueValue(httpnode, zenTokenOwnerAddress, assetIssueId);

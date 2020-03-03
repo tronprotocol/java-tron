@@ -169,7 +169,7 @@ public class Constant {
 
   public static final String VM_SAVE_INTERNAL_TX = "vm.saveInternalTx";
 
-  public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
+//  public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
 
   public static final String EVENT_SUBSCRIBE = "event.subscribe";
 

@@ -147,7 +147,7 @@ public class ShieldedReceiveTest extends BlockGenerate {
     consensusService.start();
     //give a big value for pool, avoid for
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
-    Args.getInstance().setAllowShieldedTransaction(1);
+//    Args.getInstance().setAllowShieldedTransaction(1);
   }
 
   /**

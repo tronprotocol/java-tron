@@ -12,6 +12,7 @@ import org.iq80.leveldb.Options;
 import org.tron.common.storage.rocksdb.RocksDbSettings;
 import org.tron.core.config.args.GenesisBlock;
 
+
 public class DBConfig {
 
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
@@ -73,9 +74,9 @@ public class DBConfig {
   @Getter
   @Setter
   private static long allowCreationOfContracts; //committee parameter
-  @Getter
-  @Setter
-  private static long allowShieldedTransaction; //committee parameter
+//  @Getter
+//  @Setter
+//  private static long allowShieldedTransaction; //committee parameter
   @Getter
   @Setter
   private static String Blocktimestamp;
