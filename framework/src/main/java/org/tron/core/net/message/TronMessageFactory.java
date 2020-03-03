@@ -1,8 +1,11 @@
 package org.tron.core.net.message;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.overlay.message.MessageFactory;
 import org.tron.core.exception.P2pException;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsService;
 
 /**
  * msg factory.
@@ -11,17 +14,27 @@ public class TronMessageFactory extends MessageFactory {
 
   private static final String DATA_LEN = ", len=";
 
+  @Autowired
+  MetricsService metricsService;
+
   @Override
   public TronMessage create(byte[] data) throws Exception {
+    boolean isException = false;
     try {
       byte type = data[0];
       byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
       return create(type, rawData);
     } catch (final P2pException e) {
+      isException = true;
       throw e;
     } catch (final Exception e) {
+      isException = true;
       throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED,
           "type=" + data[0] + DATA_LEN + data.length + ", error msg: " + e.getMessage());
+    } finally {
+      if (isException) {
+        metricsService.counterInc(MetricsKey.NET_ERROR_PROTO_COUNT, 1);
+      }
     }
   }
 
