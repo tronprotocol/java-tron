@@ -18,7 +18,6 @@ subprojects {
         repositories {
             mavenCentral()
             jcenter()
-            maven {url 'https://repo.spring.io/plugins-release'}
             maven { url 'https://jitpack.io' }
         }
         dependencies {
@@ -30,7 +29,7 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven {url 'https://repo.spring.io/plugins-release'}
+        maven { url 'https://repo.spring.io/plugins-release' }
         maven { url 'https://jitpack.io' }
     }
 
