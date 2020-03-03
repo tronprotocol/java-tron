@@ -543,7 +543,7 @@ public class Args extends CommonParameter {
     PARAMETER.validateSignThreadNum =
         config.hasPath(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) ? config
             .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
-            : Runtime.getRuntime().availableProcessors() / 2;
+            : (Runtime.getRuntime().availableProcessors() / 2 == 0 ? 1 : Runtime.getRuntime().availableProcessors() / 2);
 
     PARAMETER.walletExtensionApi =
         config.hasPath(Constant.NODE_WALLET_EXTENSION_API)
