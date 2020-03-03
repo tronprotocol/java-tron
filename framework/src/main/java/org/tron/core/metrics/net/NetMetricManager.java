@@ -52,69 +52,27 @@ public class NetMetricManager {
         .getCount();
     netInfo.setErrorProtoCount((int) errorProtoCount);
 
-    RateInfo tcpInTraffic = new RateInfo();
-    Meter tcpInTrafficMeter = metricsService.getMeter(MetricsKey.NET_TCP_IN_TRAFFIC);
-    tcpInTraffic.setCount(tcpInTrafficMeter.getCount());
-    tcpInTraffic.setMeanRate(tcpInTrafficMeter.getMeanRate());
-    tcpInTraffic.setOneMinuteRate(tcpInTrafficMeter.getOneMinuteRate());
-    tcpInTraffic.setFiveMinuteRate(tcpInTrafficMeter.getFiveMinuteRate());
-    tcpInTraffic.setFifteenMinuteRate(tcpInTrafficMeter.getFifteenMinuteRate());
+    RateInfo tcpInTraffic = getRateInfo(MetricsKey.NET_TCP_IN_TRAFFIC);
     netInfo.setTcpInTraffic(tcpInTraffic);
 
-    RateInfo tcpOutTraffic = new RateInfo();
-    Meter tcpOutTrafficMeter = metricsService.getMeter(MetricsKey.NET_TCP_OUT_TRAFFIC);
-    tcpOutTraffic.setCount(tcpOutTrafficMeter.getCount());
-    tcpOutTraffic.setMeanRate(tcpOutTrafficMeter.getMeanRate());
-    tcpOutTraffic.setOneMinuteRate(tcpOutTrafficMeter.getOneMinuteRate());
-    tcpOutTraffic.setFiveMinuteRate(tcpOutTrafficMeter.getFiveMinuteRate());
-    tcpOutTraffic.setFifteenMinuteRate(tcpOutTrafficMeter.getFifteenMinuteRate());
+    RateInfo tcpOutTraffic = getRateInfo(MetricsKey.NET_TCP_OUT_TRAFFIC);
     netInfo.setTcpOutTraffic(tcpOutTraffic);
 
-    RateInfo udpInTraffic = new RateInfo();
-    Meter udpInTrafficMeter = metricsService.getMeter(MetricsKey.NET_UDP_IN_TRAFFIC);
-    udpInTraffic.setCount(udpInTrafficMeter.getCount());
-    udpInTraffic.setMeanRate(udpInTrafficMeter.getMeanRate());
-    udpInTraffic.setOneMinuteRate(udpInTrafficMeter.getOneMinuteRate());
-    udpInTraffic.setFiveMinuteRate(udpInTrafficMeter.getFiveMinuteRate());
-    udpInTraffic.setFifteenMinuteRate(udpInTrafficMeter.getFifteenMinuteRate());
+    RateInfo udpInTraffic = getRateInfo(MetricsKey.NET_UDP_IN_TRAFFIC);
     netInfo.setUdpInTraffic(udpInTraffic);
 
-    RateInfo udpOutTraffic = new RateInfo();
-    Meter udpOutTrafficMeter = metricsService.getMeter(MetricsKey.NET_UDP_OUT_TRAFFIC);
-    udpOutTraffic.setCount(udpOutTrafficMeter.getCount());
-    udpOutTraffic.setMeanRate(udpOutTrafficMeter.getMeanRate());
-    udpOutTraffic.setOneMinuteRate(udpOutTrafficMeter.getOneMinuteRate());
-    udpOutTraffic.setFiveMinuteRate(udpOutTrafficMeter.getFiveMinuteRate());
-    udpOutTraffic.setFifteenMinuteRate(udpOutTrafficMeter.getFifteenMinuteRate());
+    RateInfo udpOutTraffic = getRateInfo(MetricsKey.NET_UDP_OUT_TRAFFIC);
     netInfo.setUdpOutTraffic(udpOutTraffic);
 
     // set api request info
     ApiInfo apiInfo = new ApiInfo();
-    RateInfo APIQPS = new RateInfo();
-    Meter apiMeterQPS = metricsService.getMeter(MetricsKey.NET_API_QPS);
-    APIQPS.setCount(apiMeterQPS.getCount());
-    APIQPS.setMeanRate(apiMeterQPS.getMeanRate());
-    APIQPS.setOneMinuteRate(apiMeterQPS.getOneMinuteRate());
-    APIQPS.setFiveMinuteRate(apiMeterQPS.getFiveMinuteRate());
-    APIQPS.setFifteenMinuteRate(apiMeterQPS.getFifteenMinuteRate());
+    RateInfo APIQPS = getRateInfo(MetricsKey.NET_API_QPS);
     apiInfo.setQps(APIQPS);
 
-    RateInfo FailQPS = new RateInfo();
-    Meter apiMeterFailQPS = metricsService.getMeter(MetricsKey.NET_API_FAIL_QPS);
-    FailQPS.setCount(apiMeterFailQPS.getCount());
-    FailQPS.setMeanRate(apiMeterFailQPS.getMeanRate());
-    FailQPS.setOneMinuteRate(apiMeterFailQPS.getOneMinuteRate());
-    FailQPS.setFiveMinuteRate(apiMeterFailQPS.getFiveMinuteRate());
-    FailQPS.setFifteenMinuteRate(apiMeterFailQPS.getFifteenMinuteRate());
+    RateInfo FailQPS = getRateInfo(MetricsKey.NET_API_FAIL_QPS);
     apiInfo.setFailQps(FailQPS);
 
-    RateInfo totalOutTraffic = new RateInfo();
-    Meter apiMeterTotalOutTraffic = metricsService.getMeter(MetricsKey.NET_API_TOTAL_OUT_TRAFFIC);
-    totalOutTraffic.setCount(apiMeterTotalOutTraffic.getCount());
-    totalOutTraffic.setMeanRate(apiMeterTotalOutTraffic.getMeanRate());
-    totalOutTraffic.setOneMinuteRate(apiMeterTotalOutTraffic.getOneMinuteRate());
-    totalOutTraffic.setFiveMinuteRate(apiMeterTotalOutTraffic.getFiveMinuteRate());
-    totalOutTraffic.setFifteenMinuteRate(apiMeterTotalOutTraffic.getFifteenMinuteRate());
+    RateInfo totalOutTraffic = getRateInfo(MetricsKey.NET_API_TOTAL_OUT_TRAFFIC);
     apiInfo.setOutTraffic(totalOutTraffic);
 
 
@@ -124,33 +82,15 @@ public class NetMetricManager {
       apiDetail.setName(entry.getKey());
       for (String meterName : entry.getValue()) {
         if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_QPS)) {
-          Meter detailAPIMeterQPS = metricsService.getMeter(meterName);
-          RateInfo APIDetailQPS = new RateInfo();
-          APIDetailQPS.setCount(detailAPIMeterQPS.getCount());
-          APIDetailQPS.setMeanRate(detailAPIMeterQPS.getMeanRate());
-          APIDetailQPS.setOneMinuteRate(detailAPIMeterQPS.getOneMinuteRate());
-          APIDetailQPS.setFiveMinuteRate(detailAPIMeterQPS.getFiveMinuteRate());
-          APIDetailQPS.setFifteenMinuteRate(detailAPIMeterQPS.getFifteenMinuteRate());
+          RateInfo APIDetailQPS = getRateInfo(meterName);
           apiDetail.setQps(APIDetailQPS);
         }
         if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_OUT_TRAFFIC)) {
-          RateInfo APIDetailOutTraffic = new RateInfo();
-          Meter APIDetailMeterOutTraffic = metricsService.getMeter(meterName);
-          APIDetailOutTraffic.setCount(APIDetailMeterOutTraffic.getCount());
-          APIDetailOutTraffic.setMeanRate(APIDetailMeterOutTraffic.getMeanRate());
-          APIDetailOutTraffic.setOneMinuteRate(APIDetailMeterOutTraffic.getOneMinuteRate());
-          APIDetailOutTraffic.setFiveMinuteRate(APIDetailMeterOutTraffic.getFiveMinuteRate());
-          APIDetailOutTraffic.setFifteenMinuteRate(APIDetailMeterOutTraffic.getFifteenMinuteRate());
+          RateInfo APIDetailOutTraffic = getRateInfo(meterName);
           apiDetail.setOutTraffic(APIDetailOutTraffic);
         }
         if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS)) {
-          RateInfo APIDetailFailQPS = new RateInfo();
-          Meter APIDetailMeterFailQPS = metricsService.getMeter(meterName);
-          APIDetailFailQPS.setCount(APIDetailMeterFailQPS.getCount());
-          APIDetailFailQPS.setMeanRate(APIDetailMeterFailQPS.getMeanRate());
-          APIDetailFailQPS.setOneMinuteRate(APIDetailMeterFailQPS.getOneMinuteRate());
-          APIDetailFailQPS.setFiveMinuteRate(APIDetailMeterFailQPS.getFiveMinuteRate());
-          APIDetailFailQPS.setFifteenMinuteRate(APIDetailMeterFailQPS.getFifteenMinuteRate());
+          RateInfo APIDetailFailQPS = getRateInfo(meterName);
           apiDetail.setFailQps(APIDetailFailQPS);
         }
       }
@@ -221,5 +161,16 @@ public class NetMetricManager {
     latencyInfo.setDetail(latencyDetailInfos);
 
     return latencyInfo;
+  }
+
+  private RateInfo getRateInfo(String key) {
+    RateInfo rateInfo = new RateInfo();
+    Meter meter = metricsService.getMeter(key);
+    rateInfo.setCount(meter.getCount());
+    rateInfo.setMeanRate(meter.getMeanRate());
+    rateInfo.setOneMinuteRate(meter.getOneMinuteRate());
+    rateInfo.setFiveMinuteRate(meter.getFiveMinuteRate());
+    rateInfo.setFifteenMinuteRate(meter.getFifteenMinuteRate());
+    return rateInfo;
   }
 }

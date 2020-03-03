@@ -2,25 +2,22 @@ package org.tron.core.metrics.blockchain;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
-
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
-
 import lombok.Getter;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
 import org.tron.core.metrics.net.RateInfo;
-import org.tron.protos.Protocol.BlockHeader;
 
 @Component
 public class BlockChainMetricManager {
@@ -35,7 +32,7 @@ public class BlockChainMetricManager {
   @Autowired
   private MetricsService metricsService;
 
-  private Map<String, BlockHeader> witnessInfo = new ConcurrentHashMap<String, BlockHeader>();
+  private Map<String, BlockCapsule> witnessInfo = new ConcurrentHashMap<String, BlockCapsule>();
 
   @Getter
   private Map<String, Long> dupWitnessBlockNum = new ConcurrentHashMap<String, Long>();
@@ -87,14 +84,14 @@ public class BlockChainMetricManager {
 
     //witness info
     if (witnessInfo.containsKey(witnessAddress)) {
-      BlockHeader old = witnessInfo.get(witnessAddress);
-      if (old.getRawData().getNumber() == block.getNum()
-          && Math.abs(old.getRawData().getTimestamp() - block.getTimeStamp()) < 3000) {
+      BlockCapsule oldBlock = witnessInfo.get(witnessAddress);
+      if ((!oldBlock.getBlockId().equals(block.getBlockId()))
+              && oldBlock.getTimeStamp() == block.getTimeStamp()) {
         metricsService.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT + witnessAddress, 1);
         dupWitnessBlockNum.put(witnessAddress, block.getNum());
       }
     }
-    witnessInfo.put(witnessAddress, block.getInstance().getBlockHeader());
+    witnessInfo.put(witnessAddress, block);
 
     //latency
     long netTime = nowTime - block.getTimeStamp();
@@ -124,15 +121,14 @@ public class BlockChainMetricManager {
   private List<WitnessInfo> getSrList() {
     List<WitnessInfo> witnessInfos = new ArrayList<>();
 
-    List<WitnessCapsule> witnessCapsuleList = chainBaseManager.getWitnessStore().getAllWitnesses();
-    for (WitnessCapsule witnessCapsule : witnessCapsuleList) {
-      if (witnessCapsule.getIsJobs()) {
-        String address = Hex.toHexString(witnessCapsule.getAddress().toByteArray());
-        if (witnessInfo.containsKey(address)) {
-          BlockHeader blockHeader = witnessInfo.get(address);
-          WitnessInfo witness = new WitnessInfo(address, blockHeader.getRawData().getVersion());
-          witnessInfos.add(witness);
-        }
+    List<ByteString> witnessList = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses();
+    for (ByteString witnessAddress : witnessList) {
+      String address = Hex.toHexString(witnessAddress.toByteArray());
+      if (witnessInfo.containsKey(address)) {
+        BlockCapsule block = witnessInfo.get(address);
+        WitnessInfo witness = new WitnessInfo(address,
+                block.getInstance().getBlockHeader().getRawData().getVersion());
+        witnessInfos.add(witness);
       }
     }
     return witnessInfos;
