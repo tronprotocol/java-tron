@@ -133,7 +133,7 @@ public class NetMetricManager {
           APIDetailQPS.setFifteenMinuteRate(detailAPIMeterQPS.getFifteenMinuteRate());
           apiDetail.setQps(APIDetailQPS);
         }
-        if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_OutTraffic)) {
+        if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_OUT_TRAFFIC)) {
           RateInfo APIDetailOutTraffic = new RateInfo();
           Meter APIDetailMeterOutTraffic = metricsService.getMeter(meterName);
           APIDetailOutTraffic.setCount(APIDetailMeterOutTraffic.getCount());

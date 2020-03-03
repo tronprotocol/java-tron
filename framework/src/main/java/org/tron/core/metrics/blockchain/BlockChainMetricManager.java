@@ -57,7 +57,7 @@ public class BlockChainMetricManager {
 
     RateInfo blockProcessTime = getBlockProcessTime();
     blockChain.setBlockProcessTime(blockProcessTime);
-    blockChain.setSuccessForkCount(getSuccessForkCount());
+    blockChain.setForkCount(getSuccessForkCount());
     blockChain.setFailForkCount(getFailForkCount());
     blockChain.setHeadBlockNum((int) chainBaseManager.getHeadBlockNum());
     blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size());
@@ -67,7 +67,7 @@ public class BlockChainMetricManager {
     RateInfo tpsInfo = getTransactionRate();
     blockChain.setTps(tpsInfo);
 
-    List<WitnessInfo> witnesses = getNoUpgradedSR();
+    List<WitnessInfo> witnesses = getSrList();
 
     blockChain.setWitnesses(witnesses);
 
@@ -160,15 +160,6 @@ public class BlockChainMetricManager {
     return tpsInfo;
   }
 
-  private List<WitnessInfo> getNoUpgradedSR() {
-    List<WitnessInfo> witnesses = new ArrayList<>();
-    for (WitnessInfo it : getSrList()) {
-      WitnessInfo noUpgradeSR = new WitnessInfo(it.getAddress(), it.getVersion());
-      witnesses.add(noUpgradeSR);
-    }
-    return witnesses;
-  }
-
 
   // gap: 1 minute, 5 minute, 15 minute, 0: avg for total block and time
   private double getAvgBlockProcessTimeByGap(int gap) {
@@ -205,7 +196,7 @@ public class BlockChainMetricManager {
   }
 
   private int getSuccessForkCount() {
-    return (int) metricsService.getMeter(MetricsKey.BLOCKCHAIN_SUCCESS_FORK_COUNT).getCount();
+    return (int) metricsService.getMeter(MetricsKey.BLOCKCHAIN__FORK_COUNT).getCount();
   }
 
   private int getFailForkCount() {

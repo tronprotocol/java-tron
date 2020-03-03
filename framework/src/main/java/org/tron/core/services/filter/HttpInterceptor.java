@@ -52,7 +52,7 @@ public class HttpInterceptor implements Filter {
         chain.doFilter(request, responseWrapper);
 
         int reposeContentSize = responseWrapper.getByteSize();
-        String endpointOutTraffic = MetricsKey.NET_API_DETAIL_ENDPOINT_OutTraffic + "." + endpoint;
+        String endpointOutTraffic = MetricsKey.NET_API_DETAIL_ENDPOINT_OUT_TRAFFIC + "." + endpoint;
         metricsService.getInstance().meterMark(MetricsKey.NET_API_TOTAL_OUT_TRAFFIC,
             reposeContentSize);
 

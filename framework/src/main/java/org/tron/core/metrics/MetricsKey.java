@@ -5,7 +5,7 @@ public class MetricsKey {
   public static final String BLOCKCHAIN_TPS = "blockchain.TPS";
   public static final String BLOCKCHAIN_BLOCKPROCESS_TIME = "blockchain.blockProcessTime";
   public static final String BLOCKCHAIN_BLOCK_COUNT = "blockchain.blockCount";
-  public static final String BLOCKCHAIN_SUCCESS_FORK_COUNT = "blockchain.successForkCount";
+  public static final String BLOCKCHAIN__FORK_COUNT = "blockchain.successForkCount";
   public static final String BLOCKCHAIN_FAIL_FORK_COUNT = "blockchain.failForkCount";
   public static final String BLOCKCHAIN_DUP_WITNESS_COUNT = "blockchain.dupWitnessCount.";
   public static final String NET_BLOCK_LATENCY = "net.block.latency";
@@ -22,6 +22,6 @@ public class MetricsKey {
   public static final String NET_API_FAIL_QPS = "net.APIFailQPS";
   public static final String NET_API_DETAIL_ENDPOINT_QPS = "net.APIDetailQPS";
   public static final String NET_API_DETAIL_ENDPOINT_FAIL_QPS = "net.APIDetailFailQPS";
-  public static final String NET_API_DETAIL_ENDPOINT_OutTraffic = "net.APIDetailOutTraffic";
+  public static final String NET_API_DETAIL_ENDPOINT_OUT_TRAFFIC = "net.APIDetailOutTraffic";
 
 }
