@@ -8,7 +8,7 @@ import org.tron.core.metrics.node.NodeInfo;
 
 @Slf4j
 public class MetricsInfo {
-  private long internal;
+  private long interval;
 
   private NodeInfo node;
 
@@ -16,12 +16,12 @@ public class MetricsInfo {
 
   private NetInfo net;
 
-  public long getInternal() {
-    return internal;
+  public long getInterval() {
+    return interval;
   }
 
-  public void setInternal(long internal) {
-    this.internal = internal;
+  public void setInterval(long interval) {
+    this.interval = interval;
   }
 
   @JSONField(name = "node")

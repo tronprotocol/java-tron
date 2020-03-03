@@ -33,7 +33,7 @@ public class MetricsApiService {
 
     MetricsInfo metricsInfo = new MetricsInfo();
 
-    metricsInfo.setInternal(StartTimeRecorder.getInstance().getStartRecordTime());
+    metricsInfo.setInterval(StartTimeRecorder.getInstance().getStartRecordTime());
 
     NodeInfo nodeInfo = nodeMetricManager.getNodeInfo();
     metricsInfo.setNodeInfo(nodeInfo);
