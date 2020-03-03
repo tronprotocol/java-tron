@@ -96,4 +96,4 @@ If you'd like to contribute to java-tron, please follow below.
 * [White Paper](https://tron.network/resources?lng=&name=1) White paper of TRON network. 
 
 # License
-[MIT](https://github.com/tronprotocol/java-tron/blob/master/LICENSE)
+java-tron is released under the [LGPL-V3 license](https://github.com/tronprotocol/java-tron/blob/master/LICENSE).
