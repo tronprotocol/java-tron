@@ -838,7 +838,7 @@ public class Manager {
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
       VMIllegalException, ZksnarkException, BadBlockException {
 
-    metricsService.meterMark(MetricsKey.BLOCKCHAIN_SUCCESS_FORK_COUNT, 1);
+    metricsService.meterMark(MetricsKey.BLOCKCHAIN__FORK_COUNT, 1);
 
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
