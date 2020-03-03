@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.SignUtils;
@@ -47,6 +48,8 @@ public class ConsensusService {
       Miner miner = param.new Miner(privateKey, ByteString.copyFrom(privateKeyAddress),
           ByteString.copyFrom(privateKeyAddress));
       miners.add(miner);
+      logger.info("Add witness: {}, size: {}",
+          Hex.toHexString(privateKeyAddress), miners.size());
     }
 
 //    byte[] privateKey =
