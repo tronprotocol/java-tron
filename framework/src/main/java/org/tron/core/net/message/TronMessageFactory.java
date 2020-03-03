@@ -15,7 +15,7 @@ public class TronMessageFactory extends MessageFactory {
   private static final String DATA_LEN = ", len=";
 
   @Autowired
-  MetricsService metricsService;
+  private MetricsService metricsService;
 
   @Override
   public TronMessage create(byte[] data) throws Exception {
