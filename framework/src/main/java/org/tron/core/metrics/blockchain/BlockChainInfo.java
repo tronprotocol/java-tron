@@ -11,7 +11,7 @@ public class BlockChainInfo {
   private int headBlockNum;
   private long headBlockTimestamp;
   private String headBlockHash;
-  private int successForkCount;
+  private int forkCount;
   private int failForkCount;
   private RateInfo blockProcessTime;
   private RateInfo tps;
@@ -46,12 +46,12 @@ public class BlockChainInfo {
     this.headBlockHash = headBlockHash;
   }
 
-  public int getSuccessForkCount() {
-    return successForkCount;
+  public int getForkCount() {
+    return forkCount;
   }
 
-  public void setSuccessForkCount(int successForkCount) {
-    this.successForkCount = successForkCount;
+  public void setForkCount(int forkCount) {
+    this.forkCount = forkCount;
   }
 
   public int getFailForkCount() {

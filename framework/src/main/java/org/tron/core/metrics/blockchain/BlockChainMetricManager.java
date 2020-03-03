@@ -57,7 +57,7 @@ public class BlockChainMetricManager {
 
     RateInfo blockProcessTime = getBlockProcessTime();
     blockChain.setBlockProcessTime(blockProcessTime);
-    blockChain.setSuccessForkCount(getSuccessForkCount());
+    blockChain.setForkCount(getSuccessForkCount());
     blockChain.setFailForkCount(getFailForkCount());
     blockChain.setHeadBlockNum((int) chainBaseManager.getHeadBlockNum());
     blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size());
