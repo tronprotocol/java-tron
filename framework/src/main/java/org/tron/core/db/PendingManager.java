@@ -28,7 +28,8 @@ public class PendingManager implements AutoCloseable {
         tmpTransactions.add(transactionCapsule);
       }
     });
-    metricsService.meterMark(MetricsKey.BLOCKCHAIN_MISS_TRANSACTION, tmpTransactions.size());
+    metricsService.getInstance().meterMark(MetricsKey.BLOCKCHAIN_MISS_TRANSACTION,
+        tmpTransactions.size());
     db.getPendingTransactions().clear();
     db.getSession().reset();
     db.getShieldedTransInPendingCounts().set(0);
