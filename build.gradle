@@ -29,7 +29,7 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url 'http://repo.spring.io/plugins-release' }
+        maven { url 'https://repo.spring.io/plugins-release' }
         maven { url 'https://jitpack.io' }
     }
 
@@ -58,6 +58,11 @@ subprojects {
     artifacts {
 //        archives jar
         archives sourcesJar
+    }
+
+    tasks.withType(AbstractArchiveTask) {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
     }
 }
 
