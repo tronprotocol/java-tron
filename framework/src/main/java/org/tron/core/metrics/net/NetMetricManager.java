@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.filter.HttpInterceptor;
@@ -165,7 +166,7 @@ public class NetMetricManager {
 
   private RateInfo getRateInfo(String key) {
     RateInfo rateInfo = new RateInfo();
-    Meter meter = metricsService.getMeter(key);
+    Meter meter = MetricsUtil.getMeter(key);
     rateInfo.setCount(meter.getCount());
     rateInfo.setMeanRate(meter.getMeanRate());
     rateInfo.setOneMinuteRate(meter.getOneMinuteRate());
