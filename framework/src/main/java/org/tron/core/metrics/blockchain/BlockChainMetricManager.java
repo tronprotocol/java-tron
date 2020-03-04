@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
+import lombok.Setter;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,10 @@ public class BlockChainMetricManager {
 
   @Getter
   private Map<String, Long> dupWitnessBlockNum = new ConcurrentHashMap<String, Long>();
+  @Setter
+  private long failProcessBlockNum = 0;
+  @Setter
+  private String failProcessBlockReason = "";
 
   public void init() {
     metricsService.setBlockChainMetricManager(this);
@@ -68,8 +73,8 @@ public class BlockChainMetricManager {
 
     blockChain.setWitnesses(witnesses);
 
-    blockChain.setFailProcessBlockNum(metricsService.getFailProcessBlockNum());
-    blockChain.setFailProcessBlockReason(metricsService.getFailProcessBlockReason());
+    blockChain.setFailProcessBlockNum(failProcessBlockNum);
+    blockChain.setFailProcessBlockReason(failProcessBlockReason);
     List<DupWitnessInfo> dupWitness = getDupWitness();
     blockChain.setDupWitness(dupWitness);
   }
@@ -97,19 +102,15 @@ public class BlockChainMetricManager {
     long netTime = nowTime - block.getTimeStamp();
     metricsService.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY, netTime);
     metricsService.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress, netTime);
-    if (netTime >= 1000) {
+    if (netTime >= 3000) {
+      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".3S", 1L);
+      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S", 1L);
+    } else if (netTime >= 2000) {
+      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".2S", 1L);
+      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S", 1L);
+    } else if (netTime >= 1000) {
       metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".1S", 1L);
       metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
-      if (netTime >= 2000) {
-        metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".2S", 1L);
-        metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S",
-                1L);
-        if (netTime >= 3000) {
-          metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".3S", 1L);
-          metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S",
-                  1L);
-        }
-      }
     }
 
     //TPS

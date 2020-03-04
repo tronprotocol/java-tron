@@ -23,10 +23,6 @@ public class MetricsService {
   private static MetricsService metricsService = new MetricsService();
   @Setter
   private BlockChainMetricManager blockChainMetricManager;
-  @Getter
-  private long failProcessBlockNum = 0;
-  @Getter
-  private String failProcessBlockReason = "";
 
   public static MetricsService getInstance() {
     return metricsService;
@@ -113,8 +109,13 @@ public class MetricsService {
   }
 
   public void failProcessBlock(long blockNum, String errorInfo) {
-    failProcessBlockNum = blockNum;
-    failProcessBlockReason = errorInfo;
+    try {
+      blockChainMetricManager.setFailProcessBlockNum(blockNum);
+      blockChainMetricManager.setFailProcessBlockReason(errorInfo);
+    } catch (Exception e) {
+      logger.warn("record fail process block failed, {}, reason: {}.",
+              blockNum, errorInfo);
+    }
   }
 
   public MetricsInfo getMetricsInfo() {
