@@ -423,7 +423,7 @@ public class TriggerConstant001 {
     System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
-        containsString("CONTRACT_VALIDATE_ERROR"));
+        containsString("SUCCESS"));
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
     PublicMethed.waitProduceNextBlock(blockingStubFull);
