@@ -1,8 +1,6 @@
 pragma solidity ^0.5.8;
 pragma experimental ABIEncoderV2;
 
-//import "./MerkleTree.sol";
-
 contract PrivateUSDT {
 
     //USDTToken private usdtToken; // the  ERC-20 token contract
@@ -21,7 +19,7 @@ contract PrivateUSDT {
     address hashor = address(0x0010);
     address calTimeContract = address(0x0011);
 
-    event returnPath(uint256 index, bytes32[33] path);
+    //event returnPath(uint256 index, bytes32[33] path);
 
     event returnCurrentTime(bytes time);
 
@@ -81,9 +79,9 @@ contract PrivateUSDT {
         return nodeValue;
     }
     //position: index of leafnode, start from 0
-    function getPath(uint256 position) external {
+    function getPath(uint256 position) external returns(bytes32, bytes32[32] memory, uint256){
         uint256 index = position + 2**32 - 1;
-        bytes32[33] memory path;
+        bytes32[32] memory path;
         require(position >= 0, "position should be non-negative");
         require(position < leafCount, "position should be smaller than leafCount");
 
@@ -92,18 +90,17 @@ contract PrivateUSDT {
 
         for (uint32 i = 0; i < 32; i++){
             if(i == level) {
-                path[i] = targetNodeValue;
+                path[31-i] = targetNodeValue;
             } else {
                 if (index % 2 == 0) {
-                    path[i] = tree[index - 1];
+                    path[31-i] = tree[index - 1];
                 } else {
-                    path[i] = tree[index + 1] == 0?zeroes[i]:tree[index + 1];
+                    path[31-i] = tree[index + 1] == 0?zeroes[i]:tree[index + 1];
                 }
             }
             index = (index - 1) / 2;
         }
-        path[32] = latestRoot;
-        emit returnPath(position, path);
+        return (latestRoot, path, position);
     }
 
     // get current time
@@ -142,14 +139,18 @@ contract PrivateUSDT {
 
         uint256 slot = uint8(msg[0]);
         uint256 nodeIndex = leafCount + 2 ** 32 - 1;
-        for (uint256 i = 0; i < slot+1; i++) {
-            tree[nodeIndex] = bytesToBytes32(msg, i*32+1);
+        tree[nodeIndex] = note_commitment;
+        if(slot == 0){
+            frontier[0] = note_commitment;
+        }
+        for (uint256 i = 1; i < slot+1; i++) {
+            nodeIndex = (nodeIndex - 1) / 2;
+            tree[nodeIndex] = bytesToBytes32(msg, i*32-31);
             if(i == slot){
                 frontier[slot] = tree[nodeIndex];
             }
-            nodeIndex = (nodeIndex - 1) / 2;
         }
-        latestRoot = bytesToBytes32(msg, (slot+1)*32+1);
+        latestRoot = bytesToBytes32(msg, slot*32+1);
         tree[0]= latestRoot;
 
         roots[latestRoot] = latestRoot;
@@ -186,24 +187,32 @@ contract PrivateUSDT {
         uint slot2 = uint8(msg[1]);
         //process slot1
         uint256 nodeIndex = leafCount + 2 ** 32 - 1;
-        for (uint256 i = 0; i < slot1+1; i++) {
-            tree[nodeIndex] = bytesToBytes32(msg, i * 32 + 2);
+        tree[nodeIndex] = output1[1];//cm
+        if(slot1 == 0){
+            frontier[0] = output1[1];
+        }
+        for (uint256 i = 1; i < slot1+1; i++) {
+            nodeIndex = (nodeIndex - 1) / 2;
+            tree[nodeIndex] = bytesToBytes32(msg, i * 32 - 30);
             if(i == slot1){
                 frontier[slot1] = tree[nodeIndex];
             }
-            nodeIndex = (nodeIndex - 1) / 2;
         }
         //process slot2
         nodeIndex = leafCount + 2 ** 32;
-        for (uint256 i = 0; i < slot2 + 1; i++) {
-            tree[nodeIndex] = bytesToBytes32(msg, (i + slot1 + 1) * 32 + 2);
+        tree[nodeIndex] = output2[1];//cm
+        if(slot2 == 0){
+            frontier[0] = output2[1];
+        }
+        for (uint256 i = 1; i < slot2 + 1; i++) {
+            nodeIndex = (nodeIndex - 1) / 2;
+            tree[nodeIndex] = bytesToBytes32(msg, (i + slot1) * 32 - 30);
             if(i == slot2){
                 frontier[slot2] = tree[nodeIndex];
             }
-            nodeIndex = (nodeIndex - 1) / 2;
         }
 
-        latestRoot = bytesToBytes32(msg, (slot1+slot2+2)*32+2);
+        latestRoot = bytesToBytes32(msg, (slot1+slot2)*32+2);
 
         roots[latestRoot] = latestRoot;
         leafCount = leafCount + 2;

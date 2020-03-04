@@ -1352,9 +1352,9 @@ public class PrecompiledContracts {
       logger.info("leafCount is " + leafCount + ", slot is " + slot);
 
       boolean success = true;
-      byte[] result = new byte[(slot+2)*32+1];
+      byte[] result = new byte[(slot+1)*32+1];
       result[0] = (byte)slot;
-      System.arraycopy(leafValue, 0, result, 1, 32);
+      //System.arraycopy(leafValue, 0, result, 1, 32);
       //compute root of Merkle Tree
       //TODO: optimization
       try {
@@ -1377,7 +1377,7 @@ public class PrecompiledContracts {
           JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level, leftInput, rightInput, hash));
           System.arraycopy(hash, 0, nodeValue, 0, 32);
           if (level < slot) {
-            System.arraycopy(hash, 0, result, (level + 1) * 32 + 1, 32);
+            System.arraycopy(hash, 0, result, level * 32 + 1, 32);
           }
         }
 
@@ -1389,7 +1389,7 @@ public class PrecompiledContracts {
       }
 
       logger.info("Merkle root is " + ByteArray.toHexString(nodeValue));
-      System.arraycopy(nodeValue, 0, result, (slot+1)*32+1, 32);
+      System.arraycopy(nodeValue, 0, result, slot*32+1, 32);
       return Pair.of(true, result);
     }
 
@@ -1406,7 +1406,7 @@ public class PrecompiledContracts {
       slot[0] = getFrontierSlot(leafCount);
       slot[1] = getFrontierSlot(leafCount + 1);
 
-      byte[] result = new byte[(slot[0] + slot[1] + 3) * 32 + 2];
+      byte[] result = new byte[(slot[0] + slot[1] + 1) * 32 + 2];
       result[0] = (byte) (slot[0] & 0xFF);
       result[1] = (byte) (slot[1] & 0xFF);
       logger.info("slot count is " + (slot[0] + slot[1] + 2));
@@ -1419,8 +1419,8 @@ public class PrecompiledContracts {
           logger.info("leaf index is " + (leafCount + i) + ", slot is " + slot[i]);
 
           System.arraycopy(leafValue[i], 0, nodeValue, 0, 32);
-          System.arraycopy(leafValue[i], 0, result, resultIdx, 32);
-          resultIdx += 32;
+          //System.arraycopy(leafValue[i], 0, result, resultIdx, 32);
+          //resultIdx += 32;
           if (slot[i] == 0) {
             System.arraycopy(nodeValue, 0, frontier[0], 0, 32);
             continue;
