@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 
 @Component
@@ -21,7 +22,7 @@ public class GetSpendingKeyServlet extends RateLimiterServlet {
       boolean visible = Util.getVisible(request);
       BytesMessage reply = wallet.getSpendingKey();
 
-      String base58check = Wallet.encode58Check(reply.toByteArray());
+      String base58check = StringUtil.encode58Check(reply.toByteArray());
       String hexString = ByteArray.toHexString(reply.toByteArray());
       System.out.println("b58 is: " + base58check + ", hex is: " + hexString);
       response.getWriter().println(JsonFormat.printToString(reply, visible));

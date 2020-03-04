@@ -45,7 +45,7 @@ public class LogInfo {
   public static Log buildLog(LogInfo logInfo) {
     List<ByteString> topics = Lists.newArrayList();
     logInfo.getTopics().forEach(topic ->
-      topics.add(ByteString.copyFrom(topic.getData()))
+        topics.add(ByteString.copyFrom(topic.getData()))
     );
     ByteString address = ByteString.copyFrom(logInfo.getAddress());
     ByteString data = ByteString.copyFrom(logInfo.getData());
