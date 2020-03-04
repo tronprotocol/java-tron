@@ -17,6 +17,7 @@ import org.tron.common.logsfilter.trigger.InternalTransactionPojo;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -76,12 +77,12 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
               if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
                 transactionLogTrigger.setFromAddress(
-                    Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+                    StringUtil.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
               }
 
               if (Objects.nonNull(contractTransfer.getToAddress())) {
                 transactionLogTrigger.setToAddress(
-                    Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
+                    StringUtil.encode58Check(contractTransfer.getToAddress().toByteArray()));
               }
 
               transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
@@ -98,12 +99,12 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
               if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
                 transactionLogTrigger.setFromAddress(
-                    Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+                    StringUtil.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
               }
 
               if (Objects.nonNull(contractTransfer.getToAddress())) {
                 transactionLogTrigger.setToAddress(
-                    Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
+                    StringUtil.encode58Check(contractTransfer.getToAddress().toByteArray()));
               }
               transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
             }
@@ -137,7 +138,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
       if (Objects.nonNull(contractAddress) && contractAddress.size() > 0) {
         transactionLogTrigger
-            .setContractAddress(Wallet.encode58Check((contractAddress.toByteArray())));
+            .setContractAddress(StringUtil.encode58Check((contractAddress.toByteArray())));
       }
 
       // internal transaction

@@ -18,6 +18,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -65,7 +66,7 @@ public class ValidateMultiSignContractTest {
 
     //Address non exist
     Assert.assertEquals(
-        validateMultiSign(Wallet.encode58Check(key.getAddress()), 1, hash, signs)
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), 1, hash, signs)
             .getValue(), DataWord.ZERO().getData());
 
 
@@ -126,28 +127,28 @@ public class ValidateMultiSignContractTest {
     signs.add(Hex.toHexString(key2.sign(toSign).toByteArray()));
 
     Assert.assertEquals(
-        validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ONE().getData());
 
     //weight not enough
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     Assert.assertEquals(
-        validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ZERO().getData());
 
     //put wrong sign
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     Assert.assertEquals(
-        validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ZERO().getData());
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     signs.add(Hex.toHexString(new ECKey().sign(toSign).toByteArray()));
 
     Assert.assertEquals(
-        validateMultiSign(Wallet.encode58Check(key.getAddress()), permissionId, data, signs)
+        validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ZERO().getData());
   }
 

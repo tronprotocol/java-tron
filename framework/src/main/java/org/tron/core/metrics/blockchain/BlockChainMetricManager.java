@@ -62,11 +62,13 @@ public class BlockChainMetricManager {
     blockChain.setForkCount(getSuccessForkCount());
     blockChain.setFailForkCount(getFailForkCount());
     blockChain.setHeadBlockNum((int) chainBaseManager.getHeadBlockNum());
-    blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size());
-    blockChain.setMissedTransactionCount(dbManager.getPendingTransactions().size()
-            + dbManager.getRePushTransactions().size());
+    blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size()
+        + dbManager.getRePushTransactions().size());
 
-    RateInfo tpsInfo = getTransactionRate();
+    RateInfo missTx = getRate(MetricsKey.BLOCKCHAIN_MISS_TRANSACTION);
+    blockChain.setMissedTransaction(missTx);
+
+    RateInfo tpsInfo = getRate(MetricsKey.BLOCKCHAIN_TPS);
     blockChain.setTps(tpsInfo);
 
     List<WitnessInfo> witnesses = getSrList();
@@ -146,15 +148,15 @@ public class BlockChainMetricManager {
     return blockProcessTime;
   }
 
-  private RateInfo getTransactionRate() {
-    Meter transactionRate = metricsService.getMeter(MetricsKey.BLOCKCHAIN_TPS);
-    RateInfo tpsInfo = new RateInfo();
-    tpsInfo.setCount(transactionRate.getCount());
-    tpsInfo.setMeanRate(transactionRate.getMeanRate());
-    tpsInfo.setOneMinuteRate(transactionRate.getOneMinuteRate());
-    tpsInfo.setFiveMinuteRate(transactionRate.getFiveMinuteRate());
-    tpsInfo.setFifteenMinuteRate(transactionRate.getFifteenMinuteRate());
-    return tpsInfo;
+  private RateInfo getRate(String key) {
+    Meter transactionRate = metricsService.getMeter(key);
+    RateInfo rateInfo = new RateInfo();
+    rateInfo.setCount(transactionRate.getCount());
+    rateInfo.setMeanRate(transactionRate.getMeanRate());
+    rateInfo.setOneMinuteRate(transactionRate.getOneMinuteRate());
+    rateInfo.setFiveMinuteRate(transactionRate.getFiveMinuteRate());
+    rateInfo.setFifteenMinuteRate(transactionRate.getFifteenMinuteRate());
+    return rateInfo;
   }
 
 
