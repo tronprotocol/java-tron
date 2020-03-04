@@ -31,7 +31,7 @@ public class MetricsInfo {
   public void setNodeInfo(NodeInfo node) {
     this.node = node;
   }
-  
+
   public BlockChainInfo getBlockChainInfo() {
     return this.blockchain;
   }

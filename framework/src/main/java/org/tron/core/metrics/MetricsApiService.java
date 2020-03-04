@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.metrics.blockchain.BlockChainInfo;
 import org.tron.core.metrics.blockchain.BlockChainMetricManager;
-import org.tron.core.metrics.blockchain.StartTimeRecorder;
 import org.tron.core.metrics.net.NetInfo;
 import org.tron.core.metrics.net.NetMetricManager;
 import org.tron.core.metrics.node.NodeInfo;
@@ -33,7 +32,7 @@ public class MetricsApiService {
 
     MetricsInfo metricsInfo = new MetricsInfo();
 
-    metricsInfo.setInterval(StartTimeRecorder.getInstance().getStartRecordTime());
+    metricsInfo.setInterval(System.currentTimeMillis() / 1000);
 
     NodeInfo nodeInfo = nodeMetricManager.getNodeInfo();
     metricsInfo.setNodeInfo(nodeInfo);
