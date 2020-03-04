@@ -52,6 +52,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 
 
@@ -753,7 +754,7 @@ public class JsonFormat {
   static String escapeBytesSelfType(ByteString input, final String fliedName) {
     //Address
     if (HttpSelfFormatFieldName.isAddressFormat(fliedName)) {
-      return Wallet.encode58Check(input.toByteArray());
+      return StringUtil.encode58Check(input.toByteArray());
     }
 
     //Normal String

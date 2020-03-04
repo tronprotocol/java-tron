@@ -132,10 +132,10 @@ public class AssetIssueActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
@@ -171,10 +171,10 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     int precision = assetIssueContract.getPrecision();
-    if (precision != 0 && dynamicStore.getAllowSameTokenName() != 0) {
-      if (precision < 0 || precision > 6) {
-        throw new ContractValidateException("precision cannot exceed 6");
-      }
+    if (precision != 0
+        && dynamicStore.getAllowSameTokenName() != 0
+        && (precision < 0 || precision > 6)) {
+      throw new ContractValidateException("precision cannot exceed 6");
     }
 
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil

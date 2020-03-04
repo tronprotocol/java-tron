@@ -10,6 +10,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.PrecompiledContracts.BatchValidateSign;
@@ -48,9 +49,9 @@ public class BatchValidateSignContractTest {
         signatures.add(Hex.toHexString(sign));
       }
       if (i == 13) {
-        addresses.add(Wallet.encode58Check(MUtil.convertToTronAddress(new byte[20])));
+        addresses.add(StringUtil.encode58Check(MUtil.convertToTronAddress(new byte[20])));
       } else {
-        addresses.add(Wallet.encode58Check(key.getAddress()));
+        addresses.add(StringUtil.encode58Check(key.getAddress()));
       }
     }
     Pair<Boolean, byte[]> ret;
@@ -78,7 +79,7 @@ public class BatchValidateSignContractTest {
       } else {
         signatures.add(Hex.toHexString(sign));
       }
-      addresses.add(Wallet.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);
@@ -96,10 +97,10 @@ public class BatchValidateSignContractTest {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       if (i % 5 == 0) {
-        addresses.add(Wallet.encode58Check(MUtil.convertToTronAddress(new byte[20])));
+        addresses.add(StringUtil.encode58Check(MUtil.convertToTronAddress(new byte[20])));
         signatures.add(Hex.toHexString(DataWord.ONE().getData()));
       } else {
-        addresses.add(Wallet.encode58Check(key.getAddress()));
+        addresses.add(StringUtil.encode58Check(key.getAddress()));
         signatures.add(Hex.toHexString(sign));
       }
     }
@@ -139,7 +140,7 @@ public class BatchValidateSignContractTest {
       } else {
         signatures.add(Hex.toHexString(sign));
       }
-      addresses.add(Wallet.encode58Check(key.getAddress()));
+      addresses.add(StringUtil.encode58Check(key.getAddress()));
     }
     ret = validateMultiSign(hash, signatures, addresses);
     Assert.assertEquals(ret.getValue().length, 32);

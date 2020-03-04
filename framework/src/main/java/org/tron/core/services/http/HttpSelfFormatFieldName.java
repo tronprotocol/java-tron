@@ -111,6 +111,8 @@ public class HttpSelfFormatFieldName {
     AddressFieldNameMap.put("protocol.ExchangeTransactionContract.owner_address", 1);
     //AccountPermissionUpdateContract
     AddressFieldNameMap.put("protocol.AccountPermissionUpdateContract.owner_address", 1);
+    //UpdateBrokerageContract
+    AddressFieldNameMap.put("protocol.UpdateBrokerageContract.owner_address", 1);
     //ShieldedTransferContract
     AddressFieldNameMap.put("protocol.ShieldedTransferContract.transparent_from_address", 1);
     AddressFieldNameMap.put("protocol.ShieldedTransferContract.transparent_to_address", 1);

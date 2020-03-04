@@ -27,13 +27,7 @@ public class GetAccountNetServlet extends RateLimiterServlet {
       if (visible) {
         address = Util.getHexAddress(address);
       }
-      AccountNetMessage reply = wallet
-          .getAccountNet(ByteString.copyFrom(ByteArray.fromHexString(address)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(address)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -47,14 +41,19 @@ public class GetAccountNetServlet extends RateLimiterServlet {
       boolean visible = Util.getVisiblePost(account);
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build, visible);
-      AccountNetMessage reply = wallet.getAccountNet(build.getAddress());
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, build.getAddress(), response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(boolean visible, ByteString address, HttpServletResponse response)
+      throws Exception {
+    AccountNetMessage reply = wallet.getAccountNet(address);
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }
