@@ -16,7 +16,7 @@ public class BlockChainInfo {
   private RateInfo blockProcessTime;
   private RateInfo tps;
   private int transactionCacheSize;
-  private int missedTransactionCount;
+  private RateInfo missedTransaction;
   private List<WitnessInfo> witnesses;
   private long failProcessBlockNum;
   private String failProcessBlockReason;
@@ -86,12 +86,12 @@ public class BlockChainInfo {
     this.transactionCacheSize = transactionCacheSize;
   }
 
-  public int getMissedTransactionCount() {
-    return missedTransactionCount;
+  public RateInfo getMissedTransactionCount() {
+    return missedTransaction;
   }
 
-  public void setMissedTransactionCount(int missedTransactionCount) {
-    this.missedTransactionCount = missedTransactionCount;
+  public void setMissedTransaction(RateInfo missedTransaction) {
+    this.missedTransaction = missedTransaction;
   }
 
   public List<WitnessInfo> getWitnesses() {
