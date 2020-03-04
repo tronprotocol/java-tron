@@ -86,7 +86,7 @@ public class BlockChainInfo {
     this.transactionCacheSize = transactionCacheSize;
   }
 
-  public RateInfo getMissedTransactionCount() {
+  public RateInfo getMissedTransaction() {
     return missedTransaction;
   }
 
