@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.parameter.RateLimiterInitialization.RpcRateLimiterItem;
 import org.tron.core.config.args.Args;
 import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
 import org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter;
@@ -40,9 +40,6 @@ public class RateLimiterInterceptor implements ServerInterceptor {
 
   @Autowired
   private RateLimiterContainer container;
-
-  @Autowired
-  private MetricsService metricsService;
 
 
   public void init(Server server) {
@@ -101,8 +98,8 @@ public class RateLimiterInterceptor implements ServerInterceptor {
 
     String methodMeterName = MetricsKey.NET_API_DETAIL_ENDPOINT_QPS
         + "." + call.getMethodDescriptor().getFullMethodName();
-    metricsService.getInstance().meterMark(MetricsKey.NET_API_QPS, 1);
-    metricsService.getInstance().meterMark(methodMeterName, 1);
+    MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
+    MetricsUtil.meterMark(methodMeterName, 1);
     if (!HttpInterceptor.getEndpointList().containsKey(methodMeterName)) {
       Set<String> st = new HashSet<>();
       st.add(methodMeterName);
@@ -149,8 +146,8 @@ public class RateLimiterInterceptor implements ServerInterceptor {
     } catch (Exception e) {
       String grpcFailMeterName = MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS + "."
           + call.getMethodDescriptor().getFullMethodName();
-      metricsService.getInstance().meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
-      metricsService.getInstance().meterMark(grpcFailMeterName, 1);
+      MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
+      MetricsUtil.meterMark(grpcFailMeterName, 1);
       Set<String> st = HttpInterceptor.getEndpointList().get(grpcFailMeterName);
       if (!st.contains(call.getMethodDescriptor().getFullMethodName())) {
         st.add(grpcFailMeterName);

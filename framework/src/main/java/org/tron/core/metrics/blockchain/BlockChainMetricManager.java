@@ -17,7 +17,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.metrics.net.RateInfo;
 
 @Component
@@ -30,9 +30,6 @@ public class BlockChainMetricManager {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  @Autowired
-  private MetricsService metricsService;
-
   private Map<String, BlockCapsule> witnessInfo = new ConcurrentHashMap<String, BlockCapsule>();
 
   @Getter
@@ -41,10 +38,6 @@ public class BlockChainMetricManager {
   private long failProcessBlockNum = 0;
   @Setter
   private String failProcessBlockReason = "";
-
-  public void init() {
-    metricsService.setBlockChainMetricManager(this);
-  }
 
   public BlockChainInfo getBlockChainInfo() {
     BlockChainInfo blockChainInfo = new BlockChainInfo();
@@ -94,7 +87,7 @@ public class BlockChainMetricManager {
       BlockCapsule oldBlock = witnessInfo.get(witnessAddress);
       if ((!oldBlock.getBlockId().equals(block.getBlockId()))
               && oldBlock.getTimeStamp() == block.getTimeStamp()) {
-        metricsService.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT + witnessAddress, 1);
+        MetricsUtil.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT + witnessAddress, 1);
         dupWitnessBlockNum.put(witnessAddress, block.getNum());
       }
     }
@@ -102,22 +95,22 @@ public class BlockChainMetricManager {
 
     //latency
     long netTime = nowTime - block.getTimeStamp();
-    metricsService.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY, netTime);
-    metricsService.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress, netTime);
+    MetricsUtil.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY, netTime);
+    MetricsUtil.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress, netTime);
     if (netTime >= 3000) {
-      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".3S", 1L);
-      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".3S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S", 1L);
     } else if (netTime >= 2000) {
-      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".2S", 1L);
-      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".2S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S", 1L);
     } else if (netTime >= 1000) {
-      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".1S", 1L);
-      metricsService.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".1S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
     }
 
     //TPS
     if (block.getTransactions().size() > 0) {
-      metricsService.meterMark(MetricsKey.BLOCKCHAIN_TPS, block.getTransactions().size());
+      MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_TPS, block.getTransactions().size());
     }
   }
 
@@ -139,7 +132,7 @@ public class BlockChainMetricManager {
 
   private RateInfo getBlockProcessTime() {
     RateInfo blockProcessTime = new RateInfo();
-    blockProcessTime.setCount(metricsService.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_COUNT)
+    blockProcessTime.setCount(MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_COUNT)
             .getCount());
     blockProcessTime.setMeanRate(getAvgBlockProcessTimeByGap(0));
     blockProcessTime.setOneMinuteRate(getAvgBlockProcessTimeByGap(1));
@@ -149,7 +142,7 @@ public class BlockChainMetricManager {
   }
 
   private RateInfo getRate(String key) {
-    Meter transactionRate = metricsService.getMeter(key);
+    Meter transactionRate = MetricsUtil.getMeter(key);
     RateInfo rateInfo = new RateInfo();
     rateInfo.setCount(transactionRate.getCount());
     rateInfo.setMeanRate(transactionRate.getMeanRate());
@@ -163,8 +156,8 @@ public class BlockChainMetricManager {
   // gap: 1 minute, 5 minute, 15 minute, 0: avg for total block and time
   private double getAvgBlockProcessTimeByGap(int gap) {
     Meter meterBlockProcessTime =
-        metricsService.getMeter(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME);
-    Meter meterBlockTxCount = metricsService.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_COUNT);
+        MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME);
+    Meter meterBlockTxCount = MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_COUNT);
     if (meterBlockTxCount.getCount() == 0) {
       return 0;
     }
@@ -195,17 +188,17 @@ public class BlockChainMetricManager {
   }
 
   public int getForkCount() {
-    return (int) metricsService.getMeter(MetricsKey.BLOCKCHAIN__FORK_COUNT).getCount();
+    return (int) MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN__FORK_COUNT).getCount();
   }
 
   public int getFailForkCount() {
-    return (int) metricsService.getMeter(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT).getCount();
+    return (int) MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT).getCount();
   }
 
   private List<DupWitnessInfo> getDupWitness() {
     List<DupWitnessInfo> dupWitnesses = new ArrayList<>();
     SortedMap<String, Counter> dupWitnessMap =
-            metricsService.getCounters(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT);
+            MetricsUtil.getCounters(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT);
     for (Map.Entry<String, Counter> entry : dupWitnessMap.entrySet()) {
       DupWitnessInfo dupWitness = new DupWitnessInfo();
       String witness = entry.getKey().substring(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT.length());

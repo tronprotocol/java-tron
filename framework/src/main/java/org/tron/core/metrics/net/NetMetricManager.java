@@ -11,7 +11,6 @@ import java.util.SortedMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsService;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.peer.PeerConnection;
@@ -23,9 +22,6 @@ public class NetMetricManager {
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
-
-  @Autowired
-  private MetricsService metricsService;
 
   /**
    * get net info.
@@ -49,7 +45,7 @@ public class NetMetricManager {
     }
     netInfo.setValidConnectionCount(validConnectionCount);
 
-    long errorProtoCount = metricsService.getCounter(MetricsKey.NET_ERROR_PROTO_COUNT)
+    long errorProtoCount = MetricsUtil.getCounter(MetricsKey.NET_ERROR_PROTO_COUNT)
         .getCount();
     netInfo.setErrorProtoCount((int) errorProtoCount);
 
@@ -101,12 +97,12 @@ public class NetMetricManager {
     netInfo.setApi(apiInfo);
 
     long disconnectionCount
-        = metricsService.getCounter(MetricsKey.NET_DISCONNECTION_COUNT).getCount();
+        = MetricsUtil.getCounter(MetricsKey.NET_DISCONNECTION_COUNT).getCount();
     netInfo.setDisconnectionCount((int) disconnectionCount);
     List<DisconnectionDetailInfo> disconnectionDetails =
         new ArrayList<>();
     SortedMap<String, Counter> disconnectionReason
-        = metricsService.getCounters(MetricsKey.NET_DISCONNECTION_REASON);
+        = MetricsUtil.getCounters(MetricsKey.NET_DISCONNECTION_REASON);
     for (Map.Entry<String, Counter> entry : disconnectionReason.entrySet()) {
       DisconnectionDetailInfo detail = new DisconnectionDetailInfo();
       String reason = entry.getKey().substring(MetricsKey.NET_DISCONNECTION_REASON.length());
@@ -122,16 +118,16 @@ public class NetMetricManager {
 
   private LatencyInfo getBlockLatencyInfo() {
     LatencyInfo latencyInfo = new LatencyInfo();
-    long delay1SCount = metricsService.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".1S")
+    long delay1SCount = MetricsUtil.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".1S")
             .getCount();
     latencyInfo.setDelay1S((int) delay1SCount);
-    long delay2SCount = metricsService.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".2S")
+    long delay2SCount = MetricsUtil.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".2S")
             .getCount();
     latencyInfo.setDelay2S((int) delay2SCount);
-    long delay3SCount = metricsService.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".3S")
+    long delay3SCount = MetricsUtil.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".3S")
             .getCount();
     latencyInfo.setDelay3S((int) delay3SCount);
-    Histogram blockLatency = metricsService.getHistogram(MetricsKey.NET_BLOCK_LATENCY);
+    Histogram blockLatency = MetricsUtil.getHistogram(MetricsKey.NET_BLOCK_LATENCY);
     latencyInfo.setTop99((int) blockLatency.getSnapshot().get99thPercentile());
     latencyInfo.setTop95((int) blockLatency.getSnapshot().get95thPercentile());
     latencyInfo.setTop75((int) blockLatency.getSnapshot().get75thPercentile());
@@ -139,7 +135,7 @@ public class NetMetricManager {
 
     List<LatencyDetailInfo> latencyDetailInfos = new ArrayList<>();
     SortedMap<String, Histogram> witnessLatencyMap
-            = metricsService.getHistograms(MetricsKey.NET_BLOCK_LATENCY_WITNESS);
+            = MetricsUtil.getHistograms(MetricsKey.NET_BLOCK_LATENCY_WITNESS);
     for (Map.Entry<String, Histogram> entry : witnessLatencyMap.entrySet()) {
       LatencyDetailInfo latencyDetailTemp = new LatencyDetailInfo();
       String address = entry.getKey().substring(MetricsKey.NET_BLOCK_LATENCY_WITNESS.length());
@@ -148,13 +144,13 @@ public class NetMetricManager {
       latencyDetailTemp.setTop99((int) entry.getValue().getSnapshot().get99thPercentile());
       latencyDetailTemp.setTop95((int) entry.getValue().getSnapshot().get95thPercentile());
       latencyDetailTemp.setTop75((int) entry.getValue().getSnapshot().get75thPercentile());
-      long witnessDelay1S = metricsService.getCounter(
+      long witnessDelay1S = MetricsUtil.getCounter(
               MetricsKey.NET_BLOCK_LATENCY_WITNESS + address + ".1S").getCount();
       latencyDetailTemp.setDelay1S((int) witnessDelay1S);
-      long witnessDelay2S = metricsService.getCounter(
+      long witnessDelay2S = MetricsUtil.getCounter(
               MetricsKey.NET_BLOCK_LATENCY_WITNESS + address + ".2S").getCount();
       latencyDetailTemp.setDelay2S((int) witnessDelay2S);
-      long witnessDelay3S = metricsService.getCounter(
+      long witnessDelay3S = MetricsUtil.getCounter(
               MetricsKey.NET_BLOCK_LATENCY_WITNESS + address + ".3S").getCount();
       latencyDetailTemp.setDelay3S((int) witnessDelay3S);
       latencyDetailInfos.add(latencyDetailTemp);

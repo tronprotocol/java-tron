@@ -14,17 +14,14 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.MetricsUtil;
 
 @Slf4j(topic = "httpIntercetpor")
 public class HttpInterceptor implements Filter {
 
   private static final Map<String, Set<String>> EndpointMeterNameList = new HashMap<>();
   private String endpoint;
-  @Autowired
-  private MetricsService metricsService;
 
 
   public static Map<String, Set<String>> getEndpointList() {
@@ -44,8 +41,8 @@ public class HttpInterceptor implements Filter {
       if (request instanceof HttpServletRequest) {
         endpoint = ((HttpServletRequest) request).getRequestURI();
         String endpointQPS = MetricsKey.NET_API_DETAIL_ENDPOINT_QPS + "." + endpoint;
-        metricsService.getInstance().meterMark(MetricsKey.NET_API_QPS, 1);
-        metricsService.getInstance().meterMark(endpointQPS, 1);
+        MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
+        MetricsUtil.meterMark(endpointQPS, 1);
 
         CharResponseWrapper responseWrapper = new CharResponseWrapper(
             (HttpServletResponse) response);
@@ -53,10 +50,10 @@ public class HttpInterceptor implements Filter {
 
         int reposeContentSize = responseWrapper.getByteSize();
         String endpointOutTraffic = MetricsKey.NET_API_DETAIL_ENDPOINT_OUT_TRAFFIC + "." + endpoint;
-        metricsService.getInstance().meterMark(MetricsKey.NET_API_TOTAL_OUT_TRAFFIC,
+        MetricsUtil.meterMark(MetricsKey.NET_API_TOTAL_OUT_TRAFFIC,
             reposeContentSize);
 
-        metricsService.getInstance().meterMark(endpointOutTraffic, reposeContentSize);
+        MetricsUtil.meterMark(endpointOutTraffic, reposeContentSize);
         if (!EndpointMeterNameList.containsKey(endpointOutTraffic)) {
           Set<String> st = new HashSet<>();
           st.add(endpointQPS);
@@ -67,8 +64,8 @@ public class HttpInterceptor implements Filter {
         HttpServletResponse resp = (HttpServletResponse) response;
         if (resp.getStatus() != 200) {
           String endpointFailQPS = MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS + "." + endpoint;
-          metricsService.getInstance().meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
-          metricsService.getInstance().meterMark(endpointFailQPS, 1);
+          MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
+          MetricsUtil.meterMark(endpointFailQPS, 1);
           Set<String> st = EndpointMeterNameList.get(endpoint);
           if (!st.contains(endpointFailQPS)) {
             st.add(endpointQPS);
@@ -83,13 +80,13 @@ public class HttpInterceptor implements Filter {
 
     } catch (Exception e) {
       if (EndpointMeterNameList.containsKey(endpoint)) {
-        metricsService.getInstance().meterMark(MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS
+        MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS
             + "." + endpoint, 1);
-        metricsService.getInstance().meterMark(MetricsKey.NET_API_DETAIL_ENDPOINT_QPS
+        MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_ENDPOINT_QPS
             + "." + endpoint, 1);
       }
-      metricsService.getInstance().meterMark(MetricsKey.NET_API_QPS, 1);
-      metricsService.getInstance().meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
+      MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
+      MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
 
     }
 

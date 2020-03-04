@@ -4,7 +4,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.overlay.message.MessageFactory;
 import org.tron.core.exception.P2pException;
 import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.MetricsUtil;
 
 /**
  * msg factory.
@@ -29,7 +29,7 @@ public class TronMessageFactory extends MessageFactory {
           "type=" + data[0] + DATA_LEN + data.length + ", error msg: " + e.getMessage());
     } finally {
       if (isException) {
-        MetricsService.getInstance().counterInc(MetricsKey.NET_ERROR_PROTO_COUNT, 1);
+        MetricsUtil.counterInc(MetricsKey.NET_ERROR_PROTO_COUNT, 1);
       }
     }
   }
