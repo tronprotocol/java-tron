@@ -24,17 +24,14 @@ public class MetricsInfo {
     this.interval = interval;
   }
 
-  @JSONField(name = "node")
   public NodeInfo getNodeInfo() {
     return this.node;
   }
 
-
   public void setNodeInfo(NodeInfo node) {
     this.node = node;
   }
-
-  @JSONField(name = "blockchain")
+  
   public BlockChainInfo getBlockChainInfo() {
     return this.blockchain;
   }
