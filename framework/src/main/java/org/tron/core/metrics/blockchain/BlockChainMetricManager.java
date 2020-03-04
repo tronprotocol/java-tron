@@ -59,7 +59,7 @@ public class BlockChainMetricManager {
 
     RateInfo blockProcessTime = getBlockProcessTime();
     blockChain.setBlockProcessTime(blockProcessTime);
-    blockChain.setForkCount(getSuccessForkCount());
+    blockChain.setForkCount(getForkCount());
     blockChain.setFailForkCount(getFailForkCount());
     blockChain.setHeadBlockNum((int) chainBaseManager.getHeadBlockNum());
     blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size()
@@ -194,11 +194,11 @@ public class BlockChainMetricManager {
     }
   }
 
-  private int getSuccessForkCount() {
+  public int getForkCount() {
     return (int) metricsService.getMeter(MetricsKey.BLOCKCHAIN__FORK_COUNT).getCount();
   }
 
-  private int getFailForkCount() {
+  public int getFailForkCount() {
     return (int) metricsService.getMeter(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT).getCount();
   }
 
