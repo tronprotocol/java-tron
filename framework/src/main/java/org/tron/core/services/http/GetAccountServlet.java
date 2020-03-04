@@ -1,12 +1,14 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.protobuf.ByteString;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 
@@ -26,9 +28,7 @@ public class GetAccountServlet extends RateLimiterServlet {
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("address", address);
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
-
-      Account reply = wallet.getAccount(build.build());
-      Util.printAccount(reply, response, visible);
+      fillResponse(visible, build.build(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -42,11 +42,15 @@ public class GetAccountServlet extends RateLimiterServlet {
       boolean visible = Util.getVisiblePost(account);
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build, visible);
-
-      Account reply = wallet.getAccount(build.build());
-      Util.printAccount(reply, response, visible);
+      fillResponse(visible, build.build(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
+  }
+
+  private void fillResponse(boolean visible, Account account, HttpServletResponse response)
+      throws Exception {
+    Account reply = wallet.getAccount(account);
+    Util.printAccount(reply, response, visible);
   }
 }

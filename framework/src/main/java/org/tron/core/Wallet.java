@@ -18,6 +18,8 @@
 
 package org.tron.core;
 
+import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
+import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
@@ -238,15 +240,6 @@ public class Wallet {
     DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
 
-  public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), input);
-    byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), hash0);
-    byte[] inputCheck = new byte[input.length + 4];
-    System.arraycopy(input, 0, inputCheck, 0, input.length);
-    System.arraycopy(hash1, 0, inputCheck, input.length, 4);
-    return Base58.encode(inputCheck);
-  }
-
   public byte[] getAddress() {
     return cryptoEngine.getAddress();
   }
@@ -361,6 +354,7 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signedTransaction);
+    trx.setTime(System.currentTimeMillis());
     try {
       Message message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
@@ -589,7 +583,10 @@ public class Wallet {
 
   public ExchangeList getExchangeList() {
     ExchangeList.Builder builder = ExchangeList.newBuilder();
-    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStoreFinal().getAllExchanges();
+    List<ExchangeCapsule> exchangeCapsuleList =
+        getExchangeStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getExchangeStore(),
+            chainBaseManager.getExchangeV2Store()).getAllExchanges();
 
     exchangeCapsuleList
         .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
@@ -792,8 +789,14 @@ public class Wallet {
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getShieldedTransactionCreateAccountFee")
             .setValue(
-                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
+                chainBaseManager.getDynamicPropertiesStore()
+                    .getShieldedTransactionCreateAccountFee())
             .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getForbidTransferToContract")
+        .setValue(dbManager.getDynamicPropertiesStore().getForbidTransferToContract())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAdaptiveResourceLimitTargetRatio")
@@ -822,7 +825,9 @@ public class Wallet {
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
-    dbManager.getAssetIssueStoreFinal().getAllAssetIssues()
+    getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+        chainBaseManager.getAssetIssueStore(),
+        chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues()
         .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
@@ -832,7 +837,9 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
     List<AssetIssueCapsule> assetIssueList =
-        dbManager.getAssetIssueStoreFinal().getAssetIssuesPaginated(offset, limit);
+        getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getAssetIssueStore(),
+            chainBaseManager.getAssetIssueV2Store()).getAssetIssuesPaginated(offset, limit);
 
     if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
@@ -848,7 +855,9 @@ public class Wallet {
     }
 
     List<AssetIssueCapsule> assetIssueCapsuleList =
-        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
+        getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getAssetIssueStore(),
+            chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues();
 
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
@@ -861,19 +870,19 @@ public class Wallet {
   private Map<String, Long> setAssetNetLimit(Map<String, Long> assetNetLimitMap,
       AccountCapsule accountCapsule) {
     Map<String, Long> allFreeAssetNetUsage;
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+    if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+            .put(asset, chainBaseManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
       });
     } else {
       allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+            .put(asset, chainBaseManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
       });
     }
     return allFreeAssetNetUsage;
@@ -1029,7 +1038,9 @@ public class Wallet {
     }
 
     List<AssetIssueCapsule> assetIssueCapsuleList =
-        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
+        getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getAssetIssueStore(),
+            chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues();
 
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
@@ -1050,7 +1061,7 @@ public class Wallet {
 
   public NumberMessage totalTransaction() {
     NumberMessage.Builder builder = NumberMessage.newBuilder()
-        .setNum(dbManager.getTransactionStore().getTotalTransactions());
+        .setNum(chainBaseManager.getTransactionStore().getTotalTransactions());
     return builder.build();
   }
 
@@ -1096,7 +1107,7 @@ public class Wallet {
     }
     TransactionCapsule transactionCapsule = null;
     try {
-      transactionCapsule = dbManager.getTransactionStore()
+      transactionCapsule = chainBaseManager.getTransactionStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
@@ -1113,7 +1124,7 @@ public class Wallet {
     }
     TransactionInfoCapsule transactionInfoCapsule;
     try {
-      transactionInfoCapsule = dbManager.getTransactionHistoryStore()
+      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
@@ -1122,7 +1133,7 @@ public class Wallet {
       return transactionInfoCapsule.getInstance();
     }
     try {
-      transactionInfoCapsule = dbManager.getTransactionRetStore()
+      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
           .getTransactionInfo(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
@@ -1152,9 +1163,11 @@ public class Wallet {
     if (Objects.isNull(exchangeId)) {
       return null;
     }
-    ExchangeCapsule exchangeCapsule = null;
+    ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
+      exchangeCapsule = getExchangeStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+          chainBaseManager.getExchangeStore(),
+          chainBaseManager.getExchangeV2Store()).get(exchangeId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1188,7 +1201,7 @@ public class Wallet {
     }
     ByteString txId = outPoint.getHash();
 
-    long blockNum = dbManager.getTransactionStore().getBlockNumber(txId.toByteArray());
+    long blockNum = chainBaseManager.getTransactionStore().getBlockNumber(txId.toByteArray());
     if (blockNum <= 0) {
       throw new RuntimeException("tx is not found:" + ByteArray.toHexString(txId.toByteArray()));
     }
@@ -2232,7 +2245,9 @@ public class Wallet {
         .asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
       try {
-        return dbManager.getExchangeStoreFinal().get(key);
+        return getExchangeStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getExchangeStore(),
+            chainBaseManager.getExchangeV2Store()).get(key);
       } catch (Exception ex) {
         return null;
       }

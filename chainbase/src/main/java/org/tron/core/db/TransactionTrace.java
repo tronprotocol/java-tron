@@ -17,6 +17,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Constant;
@@ -132,9 +133,9 @@ public class TransactionTrace {
       ContractCapsule contract = contractStore
           .get(triggerContractFromTransaction.getContractAddress().toByteArray());
       if (contract == null) {
-        logger.info("contract: {} is not in contract store", WalletUtil
+        logger.info("contract: {} is not in contract store", StringUtil
             .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray()));
-        throw new ContractValidateException("contract: " + WalletUtil
+        throw new ContractValidateException("contract: " + StringUtil
             .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
             + " is not in contract store");
       }
