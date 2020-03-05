@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -134,6 +135,28 @@ public class DelegationService {
         beginCycle, endCycle, accountCapsule.getVotesList());
   }
 
+  public long queryRewardByTimeStamp(byte[] address, long startCycle, long finishCycle) {
+    if (!dynamicPropertiesStore.allowChangeDelegation()) {
+      return 0;
+    }
+
+    AccountCapsule accountCapsule = accountStore.get(address);
+    long beginCycle = startCycle;
+    long endCycle = finishCycle;
+    long reward = 0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        int brokerage = delegationStore.getBrokerage(cycle, address);
+        double brokerageRate = (double) brokerage / 100;
+        reward += delegationStore.getReward(cycle, address) / (1 - brokerageRate);
+      }
+    }
+    return reward + accountCapsule.getAllowance();
+  }
+
   public long queryReward(byte[] address) {
     if (!dynamicPropertiesStore.allowChangeDelegation()) {
       return 0;
@@ -226,4 +249,18 @@ public class DelegationService {
         .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
+  public long getCycleFromTimeStamp(long timeStamp) {
+    long currentCycleTimeStamp = dynamicPropertiesStore.getCurrentCycleTimeStamp();
+    if (timeStamp >= currentCycleTimeStamp) {
+      return dynamicPropertiesStore.getCurrentCycleNumber();
+    }
+    long maintenanceNum = (currentCycleTimeStamp - timeStamp) / CommonParameter
+        .getInstance().getMaintenanceTimeInterval() ;
+    if ((currentCycleTimeStamp - timeStamp) % CommonParameter
+        .getInstance().getMaintenanceTimeInterval() != 0) {
+      maintenanceNum = maintenanceNum + 1;
+    }
+    return (dynamicPropertiesStore.getCurrentCycleNumber() - maintenanceNum) > 0 ?
+        (dynamicPropertiesStore.getCurrentCycleNumber() - maintenanceNum) : 0;
+  }
 }
