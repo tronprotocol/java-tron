@@ -135,14 +135,14 @@ public class DelegationService {
         beginCycle, endCycle, accountCapsule.getVotesList());
   }
 
-  public long queryRewardByTimeStamp(byte[] address, long startCycle, long finishCycle) {
+  public long queryRewardByTimeStamp(byte[] address, long startTimeStamp, long endTimeStamp) {
     if (!dynamicPropertiesStore.allowChangeDelegation()) {
       return 0;
     }
 
     AccountCapsule accountCapsule = accountStore.get(address);
-    long beginCycle = startCycle;
-    long endCycle = finishCycle;
+    long beginCycle = getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = getCycleFromTimeStamp(endTimeStamp);
     long reward = 0;
     if (accountCapsule == null) {
       return 0;
