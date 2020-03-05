@@ -19,6 +19,8 @@ public class ApplicationImpl implements Application {
   private BlockStore blockStoreDb;
   private ServiceContainer services;
 
+  public static final long startRecordTime = System.currentTimeMillis() / 1000;
+
   @Autowired
   private TronNetService tronNetService;
 
