@@ -105,7 +105,7 @@ public class MessageQueue {
       logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
     }
     channel.getNodeStatistics().messageStatistics.addTcpOutMessage(msg);
-    MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC, msg.getSendData().writableBytes());
+    MetricsUtil.meterMark(MetricsKey.NET_TCP_OUT_TRAFFIC, msg.getSendData().readableBytes());
     sendTime = System.currentTimeMillis();
     if (msg.getAnswerMessage() != null) {
       requestQueue.add(new MessageRoundTrip(msg));
