@@ -2,7 +2,6 @@ package org.tron.core.services.filter;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.servlet.Filter;
@@ -40,7 +39,7 @@ public class HttpInterceptor implements Filter {
     try {
       if (request instanceof HttpServletRequest) {
         endpoint = ((HttpServletRequest) request).getRequestURI();
-        String endpointQPS = MetricsKey.NET_API_DETAIL_ENDPOINT_QPS + "." + endpoint;
+        String endpointQPS = MetricsKey.NET_API_DETAIL_QPS + endpoint;
         MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
         MetricsUtil.meterMark(endpointQPS, 1);
 
@@ -49,29 +48,17 @@ public class HttpInterceptor implements Filter {
         chain.doFilter(request, responseWrapper);
 
         int reposeContentSize = responseWrapper.getByteSize();
-        String endpointOutTraffic = MetricsKey.NET_API_DETAIL_ENDPOINT_OUT_TRAFFIC + "." + endpoint;
-        MetricsUtil.meterMark(MetricsKey.NET_API_TOTAL_OUT_TRAFFIC,
+        String endpointOutTraffic = MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpoint;
+        MetricsUtil.meterMark(MetricsKey.NET_API_OUT_TRAFFIC,
             reposeContentSize);
 
         MetricsUtil.meterMark(endpointOutTraffic, reposeContentSize);
-        if (!EndpointMeterNameList.containsKey(endpointOutTraffic)) {
-          Set<String> st = new HashSet<>();
-          st.add(endpointQPS);
-          st.add(endpointOutTraffic);
-          EndpointMeterNameList.put(endpoint, st);
-        }
 
         HttpServletResponse resp = (HttpServletResponse) response;
         if (resp.getStatus() != 200) {
-          String endpointFailQPS = MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS + "." + endpoint;
+          String endpointFailQPS = MetricsKey.NET_API_DETAIL_FAIL_QPS  + endpoint;
           MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
           MetricsUtil.meterMark(endpointFailQPS, 1);
-          Set<String> st = EndpointMeterNameList.get(endpoint);
-          if (!st.contains(endpointFailQPS)) {
-            st.add(endpointQPS);
-            st.add(endpointOutTraffic);
-            EndpointMeterNameList.put(endpoint, st);
-          }
         }
 
       } else {
@@ -79,11 +66,12 @@ public class HttpInterceptor implements Filter {
       }
 
     } catch (Exception e) {
-      if (EndpointMeterNameList.containsKey(endpoint)) {
-        MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS
-            + "." + endpoint, 1);
-        MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_ENDPOINT_QPS
-            + "." + endpoint, 1);
+      if (MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_FAIL_QPS).containsKey(
+          MetricsKey.NET_API_DETAIL_FAIL_QPS + endpoint)) {
+        MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_FAIL_QPS
+            + endpoint, 1);
+        MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_QPS
+            + endpoint, 1);
       }
       MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
       MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
