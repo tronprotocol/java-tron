@@ -269,7 +269,7 @@ public class DataWord implements Comparable<DataWord> {
     return result == 0x80;
   }
 
-  // todo new一个？
+  // todo new一个？ && 如果w2.data.length<this.data.length怎么办
   public DataWord and(DataWord w2) {
 
     byte[] newData = this.getClonedData();
@@ -549,8 +549,7 @@ public class DataWord implements Comparable<DataWord> {
     if (arg.value().compareTo(BigInteger.valueOf(MAX_POW)) >= 0) {
       if (this.isNegative()) {
         DataWord result = ONE();
-        result.negate();
-        return result;
+        return result.negate();
       } else {
         return ZERO();
       }
