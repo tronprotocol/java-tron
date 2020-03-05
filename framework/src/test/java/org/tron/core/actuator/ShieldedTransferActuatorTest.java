@@ -30,6 +30,7 @@ import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -71,6 +72,7 @@ public class ShieldedTransferActuatorTest {
   private static Wallet wallet;
   private static Manager dbManager;
   private static TronApplicationContext context;
+  private static TransactionUtil transactionUtil;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -94,6 +96,7 @@ public class ShieldedTransferActuatorTest {
   public static void init() throws ZksnarkException {
     Args.setFullNodeAllowShieldedTransaction(true);
     wallet = context.getBean(Wallet.class);
+    transactionUtil = context.getBean(TransactionUtil.class);
     dbManager = context.getBean(Manager.class);
     librustzcashInitZksnarkParams();
   }
@@ -122,7 +125,6 @@ public class ShieldedTransferActuatorTest {
   @Before
   public void createCapsule() {
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
-    Args.initConfig(Args.getInstance());
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
 
@@ -234,7 +236,7 @@ public class ShieldedTransferActuatorTest {
       transactionSignBuild.setTransaction(transactionCap.getInstance());
       transactionSignBuild.setPrivateKey(ByteString.copyFrom(
           ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCap = wallet.addSign(transactionSignBuild.build());
+      transactionCap = transactionUtil.addSign(transactionSignBuild.build());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCap));
     } catch (Exception e) {
@@ -265,7 +267,7 @@ public class ShieldedTransferActuatorTest {
       transactionSignBuild.setTransaction(transactionCap.getInstance());
       transactionSignBuild.setPrivateKey(ByteString.copyFrom(
           ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCap = wallet.addSign(transactionSignBuild.build());
+      transactionCap = transactionUtil.addSign(transactionSignBuild.build());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCap));
     } catch (Exception e) {
@@ -288,7 +290,7 @@ public class ShieldedTransferActuatorTest {
       transactionSignBuild.setTransaction(transactionCap.getInstance());
       transactionSignBuild.setPrivateKey(ByteString.copyFrom(
           ByteArray.fromHexString(ADDRESS_TWO_PRIVATE_KEY)));
-      wallet.addSign(transactionSignBuild.build());
+      transactionUtil.addSign(transactionSignBuild.build());
       Assert.assertTrue(false);
     } catch (PermissionException e) {
       Assert.assertTrue(e instanceof PermissionException);
@@ -431,7 +433,7 @@ public class ShieldedTransferActuatorTest {
       transactionSignBuild.setTransaction(transactionCap.getInstance());
       transactionSignBuild.setPrivateKey(ByteString.copyFrom(
           ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCap = wallet.addSign(transactionSignBuild.build());
+      transactionCap = transactionUtil.addSign(transactionSignBuild.build());
 
       AccountCapsule accountCapsule =
           dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
@@ -1022,7 +1024,7 @@ public class ShieldedTransferActuatorTest {
       transactionSignBuild.setTransaction(transactionCapOne.getInstance());
       transactionSignBuild.setPrivateKey(ByteString.copyFrom(
           ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-      transactionCapOne = wallet.addSign(transactionSignBuild.build());
+      transactionCapOne = transactionUtil.addSign(transactionSignBuild.build());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCapOne));
       AccountCapsule accountCapsuleOne =
@@ -1280,7 +1282,7 @@ public class ShieldedTransferActuatorTest {
       //set note nullifiers
       ShieldedTransferContract shieldContract = transactionCap.getInstance().getRawData()
           .getContract(0).getParameter().unpack(ShieldedTransferContract.class);
-      dbManager.getNullfierStore().put(
+      dbManager.getNullifierStore().put(
           new BytesCapsule(shieldContract.getSpendDescription(0).getNullifier().toByteArray()));
 
       actuator.validate();
@@ -1334,6 +1336,53 @@ public class ShieldedTransferActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("shieldedPoolValue error", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertTrue(false);
+    }
+  }
+
+  /**
+   * success
+   */
+  @Test
+  public void shieldAddressToPublic() {
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT);
+
+    try {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      //From shield address
+      SpendingKey sk = SpendingKey.random();
+      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+      PaymentAddress address = sk.defaultAddress();
+      Note note = new Note(address, AMOUNT);
+      IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+      byte[] anchor = voucher.root().getContent().toByteArray();
+      dbManager.getMerkleContainer()
+          .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+      builder.addSpend(expsk, note, anchor, voucher);
+
+      //TO amount
+      addZeroValueOutputNote(builder);
+
+      long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee();
+      String addressNotExist =
+          Wallet.getAddressPreFixString() + "8ba2aaae540c642e44e3bed5522c63bbc21f0000";
+
+      builder.setTransparentOutput(ByteArray.fromHexString(addressNotExist), AMOUNT - fee);
+
+      TransactionCapsule transactionCap = builder.build();
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
+
+      actuator.validate();
+      actuator.execute(ret);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(false);
     }

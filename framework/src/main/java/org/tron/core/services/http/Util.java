@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import static org.tron.common.utils.Commons.decodeFromBase58Check;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -14,11 +16,12 @@ import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.util.StringUtil;
-import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.BlockList;
@@ -27,12 +30,11 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DecodeUtil;
-import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Wallet;
+import org.tron.core.Constant;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -43,6 +45,7 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+
 
 @Slf4j(topic = "API")
 public class Util {
@@ -173,14 +176,15 @@ public class Util {
 
   public static byte[] generateContractAddress(Transaction trx, byte[] ownerAddress) {
     // get tx hash
-    byte[] txRawDataHash = Sha256Hash.of(trx.getRawData().toByteArray()).getBytes();
+    byte[] txRawDataHash = Sha256Hash.of(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray()).getBytes();
 
     // combine
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return DecodeUtil.sha3omit12(combined);
+    return Hash.sha3omit12(combined);
   }
 
   public static JSONObject printTransactionToJSON(Transaction transaction, boolean selfType) {
@@ -230,7 +234,8 @@ public class Util {
     jsonTransaction.put("raw_data", rawData);
     String rawDataHex = ByteArray.toHexString(transaction.getRawData().toByteArray());
     jsonTransaction.put("raw_data_hex", rawDataHex);
-    String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+    String txID = ByteArray.toHexString(Sha256Hash.hash(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
     return jsonTransaction;
   }
@@ -316,7 +321,7 @@ public class Util {
 
   public static String getHexAddress(final String address) {
     if (address != null) {
-      byte[] addressByte = Wallet.decodeFromBase58Check(address);
+      byte[] addressByte = decodeFromBase58Check(address);
       return ByteArray.toHexString(addressByte);
     } else {
       return null;
@@ -370,7 +375,7 @@ public class Util {
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
     //System.out.println(methodSign + ":" + Hex.toHexString(selector));
-    if (StringUtils.isNullOrEmpty(input)) {
+    if (StringUtils.isEmpty(input)) {
       return Hex.toHexString(selector);
     }
 
@@ -435,6 +440,29 @@ public class Util {
     } else {
       response.getWriter().println("{}");
     }
+  }
+
+  public static byte[] getAddress(HttpServletRequest request)
+          throws Exception {
+    byte[] address = null;
+    String addressParam = "address";
+    String addressStr = request.getParameter(addressParam);
+    if (StringUtils.isBlank(addressStr)) {
+      String input = request.getReader().lines()
+              .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
+      JSONObject jsonObject = JSONObject.parseObject(input);
+      addressStr = jsonObject.getString(addressParam);
+    }
+    if (StringUtils.isNotBlank(addressStr)) {
+      if (StringUtils.startsWith(addressStr,
+              Constant.ADD_PRE_FIX_STRING_MAINNET)) {
+        address = Hex.decode(addressStr);
+      } else {
+        address = decodeFromBase58Check(addressStr);
+      }
+    }
+    return address;
   }
 
 }

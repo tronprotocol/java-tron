@@ -23,16 +23,13 @@ public class BroadcastServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      Transaction transaction = Util.packTransaction(input, visible);
+      PostParams params = PostParams.getPostParams(request);
+      Transaction transaction = Util.packTransaction(params.getParams(), params.isVisible());
       TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
       String transactionID = ByteArray
           .toHexString(transactionCapsule.getTransactionId().getBytes());
       GrpcAPI.Return result = wallet.broadcastTransaction(transaction);
-      JSONObject res = JSONObject.parseObject(JsonFormat.printToString(result, visible));
+      JSONObject res = JSONObject.parseObject(JsonFormat.printToString(result, params.isVisible()));
       res.put("txid", transactionID);
       response.getWriter().println(res.toJSONString());
     } catch (Exception e) {

@@ -682,6 +682,9 @@ service Wallet {
   rpc GetDiversifier (EmptyMessage) returns (DiversifierMessage) {
   }
 
+  rpc GetNewShieldedAddress (EmptyMessage) returns (ShieldedAddressInfo) {
+  }
+
   rpc GetZenPaymentAddress (IncomingViewingKeyDiversifierMessage) returns (PaymentAddressMessage) {
   }
 
@@ -1272,6 +1275,19 @@ message PaymentAddressMessage {
   DiversifierMessage d = 1;
   bytes pkD = 2;
   string payment_address = 3;
+}
+
+message ShieldedAddressInfo{
+  bytes sk = 1;
+  bytes ask = 2;
+  bytes nsk = 3;
+  bytes ovk = 4;
+  bytes ak = 5;
+  bytes nk = 6;
+  bytes ivk = 7;
+  bytes d = 8;
+  bytes pkD = 9;
+  string payment_address = 10;
 }
 
 message NoteParameters {

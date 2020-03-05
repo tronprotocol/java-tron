@@ -3,7 +3,6 @@ package org.tron.core.actuator;
 import static junit.framework.TestCase.fail;
 
 import com.google.protobuf.Any;
-
 import org.junit.Assert;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
@@ -12,6 +11,7 @@ import org.tron.core.exception.ContractValidateException;
 
 
 public class ActuatorTest {
+
   private AbstractActuator actuator;
   private Manager dbManager;
   private Any contract = null;
@@ -21,7 +21,6 @@ public class ActuatorTest {
   private String expectedMsg;
   private String nullChainMangerErrorMsg = "No account store or contract store!";
   private String ownerAddress = null;
-  private String invalidAddressErrorMsg = "Invalid address";
 
   public ActuatorTest(Any contract, AbstractActuator actuator, Manager dbManager) {
     this.actuator = actuator;
@@ -82,10 +81,9 @@ public class ActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(this.contract);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    processAndCheckInvalid(actuator, ret, this.invalidAddressErrorMsg,
-        this.invalidAddressErrorMsg);
+    processAndCheckInvalid(actuator, ret, this.failMsg,
+        this.expectedMsg);
   }
-
 
   /**
    * No account store, null DB Manager
@@ -116,8 +114,7 @@ public class ActuatorTest {
   }
 
   /**
-   * invalid contract exception, create PermissionAddKeyContract as an invalid
-   * contract
+   * invalid contract exception, create PermissionAddKeyContract as an invalid contract
    */
   public void invalidContractType() {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
@@ -140,9 +137,9 @@ public class ActuatorTest {
   }
 
   private void processAndCheckInvalid(AbstractActuator actuator,
-                                      TransactionResultCapsule ret,
-                                      String failMsg,
-                                      String expectedMsg) {
+      TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
     try {
       actuator.validate();
       actuator.execute(ret);

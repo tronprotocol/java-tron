@@ -162,7 +162,7 @@ public class StorageMarket {
     long quant = exchange_from_supply(true, relay);
 
     long newBalance = accountCapsule.getBalance() - quant;
-    logger.info("newBalance： " + newBalance);
+    logger.info("newBalance: " + newBalance);
 
     long newStorageLimit = currentStorageLimit + storageBought;
     logger.info(
@@ -189,7 +189,7 @@ public class StorageMarket {
     long currentStorageLimit = accountCapsule.getStorageLimit();
 
     long newBalance = accountCapsule.getBalance() - quant;
-    logger.info("newBalance： " + newBalance);
+    logger.info("newBalance: " + newBalance);
 
     long storageBought = exchange(quant, true);
     long newStorageLimit = currentStorageLimit + storageBought;

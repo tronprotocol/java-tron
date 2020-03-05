@@ -31,9 +31,11 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
-import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -126,7 +128,8 @@ public class RpcApiServiceOnSolidity implements Service {
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
     trxExtBuilder.setTransaction(transaction);
-    trxExtBuilder.setTxid(Sha256Hash.of(transaction.getRawData().toByteArray()).getByteString());
+    trxExtBuilder.setTxid(Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        transaction.getRawData().toByteArray()).getByteString());
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExtBuilder.setResult(retBuilder);
     return trxExtBuilder.build();
@@ -364,10 +367,11 @@ public class RpcApiServiceOnSolidity implements Service {
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<AddressPrKeyPairMessage> responseObserver) {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      byte[] priKey = ecKey.getPrivKeyBytes();
-      byte[] address = ecKey.getAddress();
-      String addressStr = Wallet.encode58Check(address);
+      SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
+          Args.getInstance().isECKeyCryptoEngine());
+      byte[] priKey = cryptoEngine.getPrivateKey();
+      byte[] address = cryptoEngine.getAddress();
+      String addressStr = StringUtil.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
       builder.setAddress(addressStr);

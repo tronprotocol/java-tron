@@ -12,12 +12,17 @@ import io.grpc.ServerServiceDefinition;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import java.lang.reflect.Constructor;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.RateLimiterInitialization.RpcRateLimiterItem;
 import org.tron.core.config.args.Args;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
+import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
 import org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPQPSRateLimiterAdapter;
@@ -90,6 +95,17 @@ public class RateLimiterInterceptor implements ServerInterceptor {
   public <ReqT, RespT> Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
       ServerCallHandler<ReqT, RespT> next) {
 
+
+    String methodMeterName = MetricsKey.NET_API_DETAIL_ENDPOINT_QPS
+        + "." + call.getMethodDescriptor().getFullMethodName();
+    MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
+    MetricsUtil.meterMark(methodMeterName, 1);
+    if (!HttpInterceptor.getEndpointList().containsKey(methodMeterName)) {
+      Set<String> st = new HashSet<>();
+      st.add(methodMeterName);
+      HttpInterceptor.getEndpointList().put(call.getMethodDescriptor().getFullMethodName(), st);
+    }
+
     IRateLimiter rateLimiter = container
         .get(KEY_PREFIX_RPC, call.getMethodDescriptor().getFullMethodName());
 
@@ -128,6 +144,15 @@ public class RateLimiterInterceptor implements ServerInterceptor {
         call.close(Status.fromCode(Code.RESOURCE_EXHAUSTED), new Metadata());
       }
     } catch (Exception e) {
+      String grpcFailMeterName = MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS + "."
+          + call.getMethodDescriptor().getFullMethodName();
+      MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
+      MetricsUtil.meterMark(grpcFailMeterName, 1);
+      Set<String> st = HttpInterceptor.getEndpointList().get(grpcFailMeterName);
+      if (!st.contains(call.getMethodDescriptor().getFullMethodName())) {
+        st.add(grpcFailMeterName);
+        HttpInterceptor.getEndpointList().put(call.getMethodDescriptor().getFullMethodName(), st);
+      }
       logger.error("Rpc Api Error: {}", e.getMessage());
     }
 

@@ -21,9 +21,10 @@ package org.tron.core.vm.program.invoke;
 import com.google.protobuf.ByteString;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.Hash;
+import org.tron.common.crypto.Hash;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
@@ -44,6 +45,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   private Repository deposit;
   private byte[] ownerAddress = Hex.decode("cd2a3d9f938e13cd947ec05abc7fe734df8dd826");
   private boolean isConstantCall;
+  private boolean isStaticCall;
   private long energyLimit = 50;
 
   public ProgramInvokeMockImpl(byte[] msgDataRaw) {
@@ -87,7 +89,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   public DataWord getOriginAddress() {
 
     byte[] cowPrivKey = Hash.sha3("horse".getBytes());
-    byte[] addr = ECKey.fromPrivate(cowPrivKey).getAddress();
+    byte[] addr = SignUtils.fromPrivate(cowPrivKey
+        , CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress();
 
     return new DataWord(addr);
   }
@@ -96,7 +99,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   public DataWord getCallerAddress() {
 
     byte[] cowPrivKey = Hash.sha3("monkey".getBytes());
-    byte[] addr = ECKey.fromPrivate(cowPrivKey).getAddress();
+    byte[] addr = SignUtils.fromPrivate(cowPrivKey
+        , CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress();
 
     return new DataWord(addr);
   }
@@ -215,6 +219,11 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   public void setOwnerAddress(byte[] ownerAddress) {
     this.ownerAddress = Arrays.clone(ownerAddress);
+  }
+
+  @Override
+  public boolean isStaticCall() {
+    return isStaticCall;
   }
 
   @Override

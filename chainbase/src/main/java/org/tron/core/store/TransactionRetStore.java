@@ -7,8 +7,8 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.db.TransactionStore;
@@ -30,7 +30,8 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
 
   @Override
   public void put(byte[] key, TransactionRetCapsule item) {
-    if (BooleanUtils.toBoolean(DBConfig.getTransactionHistoreSwitch())) {
+    if (BooleanUtils.toBoolean(CommonParameter.getInstance()
+        .getStorage().getTransactionHistoreSwitch())) {
       super.put(key, item);
     }
   }
@@ -46,7 +47,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
     }
 
     TransactionRetCapsule result = new TransactionRetCapsule(value);
-    if (Objects.isNull(result) || Objects.isNull(result.getInstance())) {
+    if (Objects.isNull(result.getInstance())) {
       return null;
     }
 

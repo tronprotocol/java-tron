@@ -1,5 +1,7 @@
 package stest.tron.wallet.onlinestress;
 
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
+
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -135,7 +137,7 @@ public class TestExchangeTransaction {
     }
     //500000000000000L  //5000000L
     Assert.assertTrue(PublicMethed.exchangeCreate(name.getBytes(), 500000000000000L,
-        "_".getBytes(), 500000000000000L, exchangeAddress, exchangeKey, blockingStubFull));
+        TRX_SYMBOL_BYTES, 500000000000000L, exchangeAddress, exchangeKey, blockingStubFull));
     try {
       Thread.sleep(300000);
     } catch (InterruptedException e) {
@@ -146,7 +148,7 @@ public class TestExchangeTransaction {
 
     Integer i = 0;
     while (i++ < 10000) {
-      PublicMethed.exchangeTransaction(exchangeId, "_".getBytes(), 100000, 99,
+      PublicMethed.exchangeTransaction(exchangeId, TRX_SYMBOL_BYTES, 100000, 99,
           transactionAddress, transactionKey, blockingStubFull);
       try {
         Thread.sleep(100);

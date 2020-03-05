@@ -30,7 +30,7 @@ public class Constant {
   public static final long MAXIMUM_TIME_UNTIL_EXPIRATION = 24 * 60 * 60 * 1_000L; //one day
   public static final long TRANSACTION_DEFAULT_EXPIRATION_TIME = 60 * 1_000L; //60 seconds
   // config for smart contract
-  public static final long SUN_PER_ENERGY = 100; // 1 us = 100 DROP = 100 * 10^-6 TRX
+  public static final long SUN_PER_ENERGY = 100; // 1 us = 100 SUN = 100 * 10^-6 TRX
   public static final long ENERGY_LIMIT_IN_CONSTANT_TX = 3_000_000L; // ref: 1 us = 1 energy
   public static final long MAX_RESULT_SIZE_IN_TX = 64; // max 8 * 8 items in result
   public static final long PB_DEFAULT_ENERGY_LIMIT = 0L;
@@ -94,6 +94,8 @@ public class Constant {
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
   public static final String NODE_HTTP_FULLNODE_PORT = "node.http.fullNodePort";
   public static final String NODE_HTTP_SOLIDITY_PORT = "node.http.solidityPort";
+  public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
+  public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
 
   public static final String NODE_RPC_THREAD = "node.rpc.thread";
   public static final String NODE_SOLIDITY_THREADS = "node.solidity.threads";
@@ -131,6 +133,8 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_TVM_SOLIDITY059 = "committee.allowTvmSolidity059";
 
+  public static final String COMMITTEE_FORBID_TRANSFER_TO_CONTRACT = "committee.forbidTransferToContract";
+
   public static final String NODE_TCP_NETTY_WORK_THREAD_NUM = "node.tcpNettyWorkThreadNum";
 
   public static final String NODE_UDP_NETTY_WORK_THREAD_NUM = "node.udpNettyWorkThreadNum";
@@ -152,6 +156,8 @@ public class Constant {
   public static final String NODE_RECEIVE_TCP_MIN_DATA_LENGTH = "node.receiveTcpMinDataLength";
 
   public static final String NODE_IS_OPEN_FULL_TCP_DISCONNECT = "node.isOpenFullTcpDisconnect";
+
+  public static final String NODE_MAX_TRANSACTION_PENDING_SIZE = "node.maxTransactionPendingSize";
 
   public static final String STORAGE_NEEDTO_UPDATE_ASSET = "storage.needToUpdateAsset";
 
@@ -195,6 +201,10 @@ public class Constant {
 
   public static final String COMMITTEE_CHANGED_DELEGATION = "committee.changedDelegation";
 
+  public static final String CRYPTO_ENGINE = "crypto.engine";
+
+  public static final String ECKey_ENGINE = "ECKey";
+
   public static final String USE_NATIVE_QUEUE = "event.subscribe.native.useNativeQueue";
 
   public static final String NATIVE_QUEUE_BIND_PORT = "event.subscribe.native.bindport";
@@ -233,4 +243,6 @@ public class Constant {
   public static final String RATE_LIMITER_RPC = "rate.limiter.rpc";
 
   public static final String SEED_NODE_IP_LIST = "seed.node.ip.list";
+
+  public static final String NODE_METRICS_ENABLE = "node.metricsEnable";
 }

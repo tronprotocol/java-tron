@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 import com.google.common.math.LongMath;
 import com.google.protobuf.ByteString;
@@ -8,8 +9,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -34,7 +35,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
   public boolean execute(Object result) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -74,10 +75,10 @@ public class WithdrawBalanceActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -108,7 +109,8 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-    boolean isGP = DBConfig.getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
+    boolean isGP = CommonParameter.getInstance()
+        .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
         Arrays.equals(ownerAddress, witness.getAddress()));
     if (isGP) {
       throw new ContractValidateException(
@@ -118,7 +120,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
-    long witnessAllowanceFrozenTime = dynamicStore.getWitnessAllowanceFrozenTime() * 86_400_000L;
+    long witnessAllowanceFrozenTime = dynamicStore.getWitnessAllowanceFrozenTime() * FROZEN_PERIOD;
 
     if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
       throw new ContractValidateException("The last withdraw time is "

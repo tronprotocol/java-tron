@@ -24,16 +24,11 @@ public class CreateShieldNullifierServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-
+      PostParams params = PostParams.getPostParams(request);
       NfParameters.Builder build = NfParameters.newBuilder();
-      JsonFormat.merge(input, build);
-
+      JsonFormat.merge(params.getParams(), build);
       BytesMessage result = wallet.createShieldNullifier(build.build());
-      response.getWriter().println(JsonFormat.printToString(result, visible));
+      response.getWriter().println(JsonFormat.printToString(result, params.isVisible()));
     } catch (Exception e) {
       Util.processError(e, response);
     }

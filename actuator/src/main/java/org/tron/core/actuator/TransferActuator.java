@@ -32,7 +32,7 @@ public class TransferActuator extends AbstractActuator {
   public boolean execute(Object object) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -71,16 +71,16 @@ public class TransferActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(TransferContract.class)) {
       throw new ContractValidateException(
-          "contract type error, expected type [TransferContract], real type [" + contract
+          "contract type error, expected type [TransferContract], real type [" + this.any
               .getClass() + "]");
     }
     long fee = calcFee();
@@ -124,8 +124,8 @@ public class TransferActuator extends AbstractActuator {
       if (toAccount == null) {
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
-      //after TvmSolidity059 proposal, send trx to smartContract by actuator is not allowed.
-      if (dynamicStore.getAllowTvmSolidity059() == 1
+      //after ForbidTransferToContract proposal, send trx to smartContract by actuator is not allowed.
+      if (dynamicStore.getForbidTransferToContract() == 1
           && toAccount != null
           && toAccount.getType() == AccountType.Contract) {
 

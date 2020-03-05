@@ -15,6 +15,8 @@
 
 package org.tron.core.actuator;
 
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
@@ -52,7 +54,7 @@ public class AssetIssueActuator extends AbstractActuator {
   public boolean execute(Object result) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -95,7 +97,7 @@ public class AssetIssueActuator extends AbstractActuator {
 
       while (iterator.hasNext()) {
         FrozenSupply next = iterator.next();
-        long expireTime = startTime + next.getFrozenDays() * 86_400_000;
+        long expireTime = startTime + next.getFrozenDays() * FROZEN_PERIOD;
         Frozen newFrozen = Frozen.newBuilder()
             .setFrozenBalance(next.getFrozenAmount())
             .setExpireTime(expireTime)
@@ -130,10 +132,10 @@ public class AssetIssueActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
@@ -169,10 +171,10 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     int precision = assetIssueContract.getPrecision();
-    if (precision != 0 && dynamicStore.getAllowSameTokenName() != 0) {
-      if (precision < 0 || precision > 6) {
-        throw new ContractValidateException("precision cannot exceed 6");
-      }
+    if (precision != 0
+        && dynamicStore.getAllowSameTokenName() != 0
+        && (precision < 0 || precision > 6)) {
+      throw new ContractValidateException("precision cannot exceed 6");
     }
 
     if ((!assetIssueContract.getAbbr().isEmpty()) && !TransactionUtil

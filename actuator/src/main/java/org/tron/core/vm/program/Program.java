@@ -41,14 +41,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.Hash;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -307,7 +307,7 @@ public class Program {
 
   /**
    * @param transferAddress the address send trx to.
-   * @param value the trx value transferred in the internaltransaction
+   * @param value  the trx value transferred in the internaltransaction
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] transferAddress,
@@ -474,9 +474,9 @@ public class Program {
   /**
    * . Allocates a piece of memory and stores value at given offset address
    *
-   * @param addr is the offset address
+   * @param addr      is the offset address
    * @param allocSize size of memory needed to write
-   * @param value the data to write to memory
+   * @param value     the data to write to memory
    */
   public void memorySave(int addr, int allocSize, byte[] value) {
     memory.extendAndWrite(addr, allocSize, value);
@@ -508,7 +508,7 @@ public class Program {
    * . Allocates extra memory in the program for a specified size, calculated from a given offset
    *
    * @param offset the memory address offset
-   * @param size the number of bytes to allocate
+   * @param size   the number of bytes to allocate
    */
   public void allocateMemory(int offset, int size) {
     memory.extend(offset, size);
@@ -661,7 +661,9 @@ public class Program {
         new DataWord(0),
         newBalance, null, deposit, false, byTestingSuite(), vmStartInUs,
         getVmShouldEndInUs(), energyLimit.longValueSafe());
-
+    if (isConstantCall()) {
+      programInvoke.setConstantCall();
+    }
     ProgramResult createResult = ProgramResult.createEmpty();
 
     if (contractAlreadyExists) {
@@ -875,8 +877,11 @@ public class Program {
           !isTokenTransfer ? callValue : new DataWord(0),
           !isTokenTransfer ? new DataWord(0) : callValue,
           !isTokenTransfer ? new DataWord(0) : msg.getTokenId(),
-          contextBalance, data, deposit, msg.getType().callIsStatic() || isConstantCall(),
+          contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
+      if (isConstantCall()) {
+        programInvoke.setConstantCall();
+      }
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
@@ -964,10 +969,10 @@ public class Program {
 
   public void checkCPUTimeLimit(String opName) {
 
-    if (DBConfig.isDebug()) {
+    if (CommonParameter.getInstance().isDebug()) {
       return;
     }
-    if (DBConfig.isSolidityNode()) {
+    if (CommonParameter.getInstance().isSolidityNode()) {
       return;
     }
     long vmNowInUs = System.nanoTime() / 1000;
@@ -975,7 +980,7 @@ public class Program {
       logger.info(
           "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
               + "vm now time in us: {}, vm start time in us: {}",
-          VMConfig.getMinTimeRatio(), VMConfig.getMaxTimeRatio(),
+          CommonParameter.getInstance().getMinTimeRatio(), CommonParameter.getInstance().getMaxTimeRatio(),
           getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }
@@ -1173,6 +1178,8 @@ public class Program {
   public DataWord getDifficulty() {
     return invoke.getDifficulty().clone();
   }
+
+  public boolean isStaticCall() { return invoke.isStaticCall(); }
 
   public boolean isConstantCall() {
     return invoke.isConstantCall();

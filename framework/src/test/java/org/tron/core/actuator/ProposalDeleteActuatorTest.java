@@ -50,7 +50,7 @@ public class ProposalDeleteActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -215,6 +215,7 @@ public class ProposalDeleteActuatorTest {
 
     ActuatorTest actuatorTest = new ActuatorTest(actuator, dbManager);
     actuatorTest.setContract(getContract(OWNER_ADDRESS_INVALID, id));
+    actuatorTest.setMessage("Invalid address", "Invalid address");
     actuatorTest.invalidOwnerAddress();
 
   }

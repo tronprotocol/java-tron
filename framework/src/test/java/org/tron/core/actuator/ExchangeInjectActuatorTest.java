@@ -1,12 +1,11 @@
 package org.tron.core.actuator;
 
 import static org.testng.Assert.fail;
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-
 import java.io.File;
-
 import java.util.Arrays;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +52,7 @@ public class ExchangeInjectActuatorTest {
   private static Manager dbManager;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -140,7 +139,7 @@ public class ExchangeInjectActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             2,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "def".getBytes());
     exchangeCapsule2.setBalance(1_000_000_000000L, 10_000_000L);
     dbManager.getExchangeStore()
@@ -161,7 +160,7 @@ public class ExchangeInjectActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             2,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "2".getBytes());
     exchangeCapsule4.setBalance(1_000_000_000000L, 10_000_000L);
     dbManager.getExchangeV2Store()
@@ -185,7 +184,7 @@ public class ExchangeInjectActuatorTest {
             ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_FIRST)),
             2,
             1000000,
-            "_".getBytes(),
+            TRX_SYMBOL_BYTES,
             "456".getBytes());
     exchangeCapsule2.setBalance(1_000_000_000000L, 10_000_000L);
 
@@ -1838,9 +1837,9 @@ public class ExchangeInjectActuatorTest {
   }
 
   private void processAndCheckInvalid(ExchangeInjectActuator actuator,
-                                      TransactionResultCapsule ret,
-                                      String failMsg,
-                                      String expectedMsg) {
+      TransactionResultCapsule ret,
+      String failMsg,
+      String expectedMsg) {
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -1855,6 +1854,5 @@ public class ExchangeInjectActuatorTest {
       Assert.assertEquals(expectedMsg, e.getMessage());
     }
   }
-
 
 }

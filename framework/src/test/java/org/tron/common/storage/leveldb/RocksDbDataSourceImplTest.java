@@ -288,7 +288,7 @@ public class RocksDbDataSourceImplTest {
   @Test
   public void testGetNext() {
     RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
-            Args.getInstance().getOutputDirectory(), "test_getNext_key");
+        Args.getInstance().getOutputDirectory(), "test_getNext_key");
     dataSource.initDB();
     dataSource.resetDb();
     putSomeKeyValue(dataSource);
@@ -315,7 +315,7 @@ public class RocksDbDataSourceImplTest {
   @Test
   public void testGetlatestValues() {
     RocksDbDataSourceImpl dataSource = new RocksDbDataSourceImpl(
-            Args.getInstance().getOutputDirectory(), "test_getlatestValues_key");
+        Args.getInstance().getOutputDirectory(), "test_getlatestValues_key");
     dataSource.initDB();
     dataSource.resetDb();
     putSomeKeyValue(dataSource);

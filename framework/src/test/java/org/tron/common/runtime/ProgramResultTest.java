@@ -78,8 +78,6 @@ public class ProgramResultTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
@@ -340,7 +338,7 @@ public class ProgramResultTest {
     TransactionTrace traceFailed = TvmTestUtils
         .processTransactionAndReturnTrace(trx2, deposit, null);
     runtime = traceFailed.getRuntime();
-    byte[] bContract2 = Wallet
+    byte[] bContract2 = TransactionUtil
         .generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
     List<InternalTransaction> internalTransactionsListFail = runtime.getResult()
         .getInternalTransactions();
