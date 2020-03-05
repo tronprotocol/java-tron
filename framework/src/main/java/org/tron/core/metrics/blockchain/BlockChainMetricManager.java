@@ -58,10 +58,10 @@ public class BlockChainMetricManager {
     blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size()
         + dbManager.getRePushTransactions().size());
 
-    RateInfo missTx = getRate(MetricsKey.BLOCKCHAIN_MISS_TRANSACTION);
+    RateInfo missTx = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_MISS_TRANSACTION);
     blockChain.setMissedTransaction(missTx);
 
-    RateInfo tpsInfo = getRate(MetricsKey.BLOCKCHAIN_TPS);
+    RateInfo tpsInfo = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_TPS);
     blockChain.setTps(tpsInfo);
 
     List<WitnessInfo> witnesses = getSrList();
@@ -79,7 +79,6 @@ public class BlockChainMetricManager {
    * @param block BlockCapsule
    */
   public void applyBlock(BlockCapsule block) {
-    long nowTime = System.currentTimeMillis();
     String witnessAddress = Hex.toHexString(block.getWitnessAddress().toByteArray());
 
     //witness info
@@ -92,21 +91,6 @@ public class BlockChainMetricManager {
       }
     }
     witnessInfo.put(witnessAddress, block);
-
-    //latency
-    long netTime = nowTime - block.getTimeStamp();
-    MetricsUtil.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY, netTime);
-    MetricsUtil.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress, netTime);
-    if (netTime >= 3000) {
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".3S", 1L);
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S", 1L);
-    } else if (netTime >= 2000) {
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".2S", 1L);
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S", 1L);
-    } else if (netTime >= 1000) {
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".1S", 1L);
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
-    }
 
     //TPS
     if (block.getTransactions().size() > 0) {
@@ -139,17 +123,6 @@ public class BlockChainMetricManager {
     blockProcessTime.setFiveMinuteRate(getAvgBlockProcessTimeByGap(5));
     blockProcessTime.setFifteenMinuteRate(getAvgBlockProcessTimeByGap(15));
     return blockProcessTime;
-  }
-
-  private RateInfo getRate(String key) {
-    Meter transactionRate = MetricsUtil.getMeter(key);
-    RateInfo rateInfo = new RateInfo();
-    rateInfo.setCount(transactionRate.getCount());
-    rateInfo.setMeanRate(transactionRate.getMeanRate());
-    rateInfo.setOneMinuteRate(transactionRate.getOneMinuteRate());
-    rateInfo.setFiveMinuteRate(transactionRate.getFiveMinuteRate());
-    rateInfo.setFifteenMinuteRate(transactionRate.getFifteenMinuteRate());
-    return rateInfo;
   }
 
 

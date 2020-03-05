@@ -12,6 +12,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.TronMessage;
@@ -37,6 +38,9 @@ public class BlockMsgHandler implements TronMsgHandler {
 
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
+
+  @Autowired
+  private MetricsService metricsService;
 
   private int maxBlockSize = BLOCK_SIZE + 1000;
 
@@ -116,6 +120,8 @@ public class BlockMsgHandler implements TronMsgHandler {
         tronNetDelegate.trustNode(peer);
       }
     }
+
+    metricsService.collectLatencyInfo(block);
 
     tronNetDelegate.processBlock(block);
     witnessProductBlockService.validWitnessProductTwoBlock(block);

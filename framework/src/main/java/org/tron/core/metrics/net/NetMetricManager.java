@@ -2,7 +2,6 @@ package org.tron.core.metrics.net;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,27 +48,27 @@ public class NetMetricManager {
         .getCount();
     netInfo.setErrorProtoCount((int) errorProtoCount);
 
-    RateInfo tcpInTraffic = getRateInfo(MetricsKey.NET_TCP_IN_TRAFFIC);
+    RateInfo tcpInTraffic = MetricsUtil.getRateInfo(MetricsKey.NET_TCP_IN_TRAFFIC);
     netInfo.setTcpInTraffic(tcpInTraffic);
 
-    RateInfo tcpOutTraffic = getRateInfo(MetricsKey.NET_TCP_OUT_TRAFFIC);
+    RateInfo tcpOutTraffic = MetricsUtil.getRateInfo(MetricsKey.NET_TCP_OUT_TRAFFIC);
     netInfo.setTcpOutTraffic(tcpOutTraffic);
 
-    RateInfo udpInTraffic = getRateInfo(MetricsKey.NET_UDP_IN_TRAFFIC);
+    RateInfo udpInTraffic = MetricsUtil.getRateInfo(MetricsKey.NET_UDP_IN_TRAFFIC);
     netInfo.setUdpInTraffic(udpInTraffic);
 
-    RateInfo udpOutTraffic = getRateInfo(MetricsKey.NET_UDP_OUT_TRAFFIC);
+    RateInfo udpOutTraffic = MetricsUtil.getRateInfo(MetricsKey.NET_UDP_OUT_TRAFFIC);
     netInfo.setUdpOutTraffic(udpOutTraffic);
 
     // set api request info
     ApiInfo apiInfo = new ApiInfo();
-    RateInfo APIQPS = getRateInfo(MetricsKey.NET_API_QPS);
+    RateInfo APIQPS = MetricsUtil.getRateInfo(MetricsKey.NET_API_QPS);
     apiInfo.setQps(APIQPS);
 
-    RateInfo FailQPS = getRateInfo(MetricsKey.NET_API_FAIL_QPS);
+    RateInfo FailQPS = MetricsUtil.getRateInfo(MetricsKey.NET_API_FAIL_QPS);
     apiInfo.setFailQps(FailQPS);
 
-    RateInfo totalOutTraffic = getRateInfo(MetricsKey.NET_API_TOTAL_OUT_TRAFFIC);
+    RateInfo totalOutTraffic = MetricsUtil.getRateInfo(MetricsKey.NET_API_TOTAL_OUT_TRAFFIC);
     apiInfo.setOutTraffic(totalOutTraffic);
 
 
@@ -79,15 +78,15 @@ public class NetMetricManager {
       apiDetail.setName(entry.getKey());
       for (String meterName : entry.getValue()) {
         if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_QPS)) {
-          RateInfo APIDetailQPS = getRateInfo(meterName);
+          RateInfo APIDetailQPS = MetricsUtil.getRateInfo(meterName);
           apiDetail.setQps(APIDetailQPS);
         }
         if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_OUT_TRAFFIC)) {
-          RateInfo APIDetailOutTraffic = getRateInfo(meterName);
+          RateInfo APIDetailOutTraffic = MetricsUtil.getRateInfo(meterName);
           apiDetail.setOutTraffic(APIDetailOutTraffic);
         }
         if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS)) {
-          RateInfo APIDetailFailQPS = getRateInfo(meterName);
+          RateInfo APIDetailFailQPS = MetricsUtil.getRateInfo(meterName);
           apiDetail.setFailQps(APIDetailFailQPS);
         }
       }
@@ -158,16 +157,5 @@ public class NetMetricManager {
     latencyInfo.setDetail(latencyDetailInfos);
 
     return latencyInfo;
-  }
-
-  private RateInfo getRateInfo(String key) {
-    RateInfo rateInfo = new RateInfo();
-    Meter meter = MetricsUtil.getMeter(key);
-    rateInfo.setCount(meter.getCount());
-    rateInfo.setMeanRate(meter.getMeanRate());
-    rateInfo.setOneMinuteRate(meter.getOneMinuteRate());
-    rateInfo.setFiveMinuteRate(meter.getFiveMinuteRate());
-    rateInfo.setFifteenMinuteRate(meter.getFifteenMinuteRate());
-    return rateInfo;
   }
 }
