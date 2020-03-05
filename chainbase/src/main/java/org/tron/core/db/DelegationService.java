@@ -135,28 +135,6 @@ public class DelegationService {
         beginCycle, endCycle, accountCapsule.getVotesList());
   }
 
-  public long queryRewardByTimeStamp(byte[] address, long startTimeStamp, long endTimeStamp) {
-    if (!dynamicPropertiesStore.allowChangeDelegation()) {
-      return 0;
-    }
-
-    AccountCapsule accountCapsule = accountStore.get(address);
-    long beginCycle = getCycleFromTimeStamp(startTimeStamp);
-    long endCycle = getCycleFromTimeStamp(endTimeStamp);
-    long reward = 0;
-    if (accountCapsule == null) {
-      return 0;
-    }
-    if (beginCycle < endCycle) {
-      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
-        int brokerage = delegationStore.getBrokerage(cycle, address);
-        double brokerageRate = (double) brokerage / 100;
-        reward += delegationStore.getReward(cycle, address) / (1 - brokerageRate);
-      }
-    }
-    return reward;
-  }
-
   public long queryReward(byte[] address) {
     if (!dynamicPropertiesStore.allowChangeDelegation()) {
       return 0;

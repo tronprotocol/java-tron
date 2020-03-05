@@ -1,26 +1,22 @@
 package org.tron.core.services.http;
 
-import static org.tron.common.utils.Commons.decodeFromBase58Check;
-
 import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.Constant;
-import org.tron.core.db.Manager;
+import org.tron.core.Wallet;
 
 
 @Component
 @Slf4j(topic = "API")
-public class GetRewardByTimeStampServlet extends RateLimiterServlet {
+public class GetSRPayByTimeStampServlet extends RateLimiterServlet {
 
   @Autowired
-  private Manager manager;
+  private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
@@ -33,8 +29,8 @@ public class GetRewardByTimeStampServlet extends RateLimiterServlet {
           .getJsonLongValue(jsonObject, "startTimeStamp", true);
       long endTimeStamp = Util.getJsonLongValue(jsonObject, "endTimeStamp", true);
       if (startTimeStamp < endTimeStamp && address != null) {
-        value = manager.getDelegationService()
-            .queryRewardByTimeStamp(address, startTimeStamp, endTimeStamp);
+        value = wallet
+            .queryPayByTimeStamp(address, startTimeStamp, endTimeStamp);
 
       }
       response.getWriter().println("{\"reward\": " + value + "}");

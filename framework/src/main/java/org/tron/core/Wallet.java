@@ -42,6 +42,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -90,6 +91,7 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
@@ -146,6 +148,7 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.store.DelegationStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -169,6 +172,7 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
@@ -2271,6 +2275,86 @@ public class Wallet {
     byte[] memoStrip = new byte[index];
     System.arraycopy(memo, 0, memoStrip, 0, index);
     return memoStrip;
+  }
+
+  public HashMap<String, Long> computeRewardByTimeStamp(byte[] address,
+      long startTimeStamp, long endTimeStamp) {
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    HashMap<String, Long> rewardMap = new HashMap<>();
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    if (accountCapsule == null) {
+      return rewardMap;
+    }
+
+    for (Vote vote : accountCapsule.getVotesList()) {
+      long reward = 0;
+      byte[] srAddress = vote.getVoteAddress().toByteArray();
+      if (beginCycle < endCycle) {
+        for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+          long totalReward = dbManager.getDelegationStore().getReward(cycle, srAddress);
+          long totalVote = dbManager.getDelegationStore()
+              .getWitnessVote(cycle, srAddress);
+          if (totalVote == DelegationStore.REMARK || totalVote == 0) {
+            continue;
+          }
+          long userVote = vote.getVoteCount();
+          double voteRate = (double) userVote / totalVote;
+          reward += voteRate * totalReward;
+        }
+      }
+      rewardMap.put(StringUtil
+          .encode58Check(srAddress), reward);
+    }
+    return rewardMap;
+  }
+
+  public long queryPayByTimeStamp(byte[] address, long startTimeStamp, long endTimeStamp) {
+    if (!dbManager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      return 0;
+    }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    long reward = 0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
+        double brokerageRate = (double) brokerage / 100;
+        reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
+      }
+    }
+    return reward;
+  }
+
+  public long queryRewardByTimeStamp(byte[] address, long startTimeStamp, long endTimeStamp) {
+    if (!dbManager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      return 0;
+    }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    long reward = 0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        reward += dbManager.getDelegationStore().getReward(cycle, address);
+      }
+    }
+    return reward;
   }
 
   /*
