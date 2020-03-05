@@ -154,7 +154,7 @@ public class DelegationService {
         reward += delegationStore.getReward(cycle, address) / (1 - brokerageRate);
       }
     }
-    return reward + accountCapsule.getAllowance();
+    return reward;
   }
 
   public long queryReward(byte[] address) {
