@@ -4,10 +4,10 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import java.util.SortedMap;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
-
-import java.util.SortedMap;
+import org.tron.core.metrics.net.RateInfo;
 
 @Slf4j(topic = "metrics")
 public class MetricsUtil {
@@ -77,5 +77,21 @@ public class MetricsUtil {
     } catch (Exception e) {
       logger.warn("inc counter failed, key:{}, value:{}", key, value);
     }
+  }
+
+  /**
+   * get rate info.
+   * @param key String
+   * @return RateInfo
+   */
+  public static RateInfo getRateInfo(String key) {
+    RateInfo rateInfo = new RateInfo();
+    Meter meter = MetricsUtil.getMeter(key);
+    rateInfo.setCount(meter.getCount());
+    rateInfo.setMeanRate(meter.getMeanRate());
+    rateInfo.setOneMinuteRate(meter.getOneMinuteRate());
+    rateInfo.setFiveMinuteRate(meter.getFiveMinuteRate());
+    rateInfo.setFifteenMinuteRate(meter.getFifteenMinuteRate());
+    return rateInfo;
   }
 }
