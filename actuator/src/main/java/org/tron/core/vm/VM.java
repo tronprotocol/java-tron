@@ -266,7 +266,7 @@ public class VM {
                 energyCost, program.getEnergyLimitLeft().longValueSafe());
           }
           DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
-          getEnergyLimitLeft.sub(new DataWord(energyCost));
+          getEnergyLimitLeft = getEnergyLimitLeft.sub(new DataWord(energyCost));
 
           adjustedCallEnergy = program.getCallEnergy(op, callEnergyWord, getEnergyLimitLeft);
           energyCost += adjustedCallEnergy.longValueSafe();
@@ -338,7 +338,7 @@ public class VM {
             hint = word1.value() + " + " + word2.value();
           }
 
-          word1.add(word2);
+          word1 = word1.add(word2);
           program.stackPush(word1);
           program.step();
 
@@ -352,7 +352,7 @@ public class VM {
             hint = word1.value() + " * " + word2.value();
           }
 
-          word1.mul(word2);
+          word1 = word1.mul(word2);
           program.stackPush(word1);
           program.step();
         }
@@ -365,7 +365,7 @@ public class VM {
             hint = word1.value() + " - " + word2.value();
           }
 
-          word1.sub(word2);
+          word1 = word1.sub(word2);
           program.stackPush(word1);
           program.step();
         }
@@ -378,7 +378,7 @@ public class VM {
             hint = word1.value() + " / " + word2.value();
           }
 
-          word1.div(word2);
+          word1 = word1.div(word2);
           program.stackPush(word1);
           program.step();
         }
@@ -391,7 +391,7 @@ public class VM {
             hint = word1.sValue() + " / " + word2.sValue();
           }
 
-          word1.sDiv(word2);
+          word1 = word1.sDiv(word2);
           program.stackPush(word1);
           program.step();
         }
@@ -404,7 +404,7 @@ public class VM {
             hint = word1.value() + " % " + word2.value();
           }
 
-          word1.mod(word2);
+          word1 = word1.mod(word2);
           program.stackPush(word1);
           program.step();
         }
@@ -417,7 +417,7 @@ public class VM {
             hint = word1.sValue() + " #% " + word2.sValue();
           }
 
-          word1.sMod(word2);
+          word1 = word1.sMod(word2);
           program.stackPush(word1);
           program.step();
         }
@@ -430,7 +430,7 @@ public class VM {
             hint = word1.value() + " ** " + word2.value();
           }
 
-          word1.exp(word2);
+          word1 = word1.exp(word2);
           program.stackPush(word1);
           program.step();
         }
@@ -444,7 +444,7 @@ public class VM {
             if (logger.isDebugEnabled()) {
               hint = word1 + "  " + word2.value();
             }
-            word2.signExtend(k.byteValue());
+            word2 = word2.signExtend(k.byteValue());
             program.stackPush(word2);
           }
           program.step();
@@ -452,7 +452,7 @@ public class VM {
         break;
         case NOT: {
           DataWord word1 = program.stackPop();
-          word1.bnot();
+          word1 = word1.bnot();
 
           if (logger.isDebugEnabled()) {
             hint = "" + word1.value();
@@ -472,10 +472,10 @@ public class VM {
           }
 
           if (word1.value().compareTo(word2.value()) < 0) {
-            word1.and(DataWord.ZERO);
+            word1 = word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
-            word1.and(DataWord.ZERO);
+            word1 = word1.and(DataWord.ZERO);
           }
           program.stackPush(word1);
           program.step();
@@ -491,10 +491,10 @@ public class VM {
           }
 
           if (word1.sValue().compareTo(word2.sValue()) < 0) {
-            word1.and(DataWord.ZERO);
+            word1 = word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
-            word1.and(DataWord.ZERO);
+            word1 = word1.and(DataWord.ZERO);
           }
           program.stackPush(word1);
           program.step();
@@ -510,10 +510,10 @@ public class VM {
           }
 
           if (word1.sValue().compareTo(word2.sValue()) > 0) {
-            word1.and(DataWord.ZERO);
+            word1 = word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
-            word1.and(DataWord.ZERO);
+            word1 = word1.and(DataWord.ZERO);
           }
           program.stackPush(word1);
           program.step();
@@ -529,10 +529,10 @@ public class VM {
           }
 
           if (word1.value().compareTo(word2.value()) > 0) {
-            word1.and(DataWord.ZERO);
+            word1 = word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
-            word1.and(DataWord.ZERO);
+            word1 = word1.and(DataWord.ZERO);
           }
           program.stackPush(word1);
           program.step();
@@ -546,11 +546,13 @@ public class VM {
             hint = word1.value() + " == " + word2.value();
           }
 
+          //todo xiang：可能有bug
           if (word1.xor(word2).isZero()) {
-            word1.and(DataWord.ZERO);
+
+            word1 = word1.and(DataWord.ZERO);
             word1.getData()[31] = 1;
           } else {
-            word1.and(DataWord.ZERO);
+            word1 = word1.and(DataWord.ZERO);
           }
           program.stackPush(word1);
           program.step();
@@ -561,7 +563,7 @@ public class VM {
           if (word1.isZero()) {
             word1.getData()[31] = 1;
           } else {
-            word1.and(DataWord.ZERO);
+            word1 = word1.and(DataWord.ZERO);
           }
 
           if (logger.isDebugEnabled()) {
@@ -584,7 +586,7 @@ public class VM {
             hint = word1.value() + " && " + word2.value();
           }
 
-          word1.and(word2);
+          word1 = word1.and(word2);
           program.stackPush(word1);
           program.step();
         }
@@ -597,7 +599,7 @@ public class VM {
             hint = word1.value() + " || " + word2.value();
           }
 
-          word1.or(word2);
+          word1 = word1.or(word2);
           program.stackPush(word1);
           program.step();
         }
@@ -610,7 +612,7 @@ public class VM {
             hint = word1.value() + " ^ " + word2.value();
           }
 
-          word1.xor(word2);
+          word1 = word1.xor(word2);
           program.stackPush(word1);
           program.step();
         }
@@ -621,7 +623,7 @@ public class VM {
           final DataWord result;
           if (word1.value().compareTo(_32_) < 0) {
             byte tmp = word2.getData()[word1.intValue()];
-            word2.and(DataWord.ZERO);
+            word2 = word2.and(DataWord.ZERO);
             word2.getData()[31] = tmp;
             result = word2;
           } else {
@@ -679,7 +681,7 @@ public class VM {
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
           DataWord word3 = program.stackPop();
-          word1.addmod(word2, word3);
+          word1 = word1.addmod(word2, word3);
           program.stackPush(word1);
           program.step();
         }
@@ -688,7 +690,7 @@ public class VM {
           DataWord word1 = program.stackPop();
           DataWord word2 = program.stackPop();
           DataWord word3 = program.stackPop();
-          word1.mulmod(word2, word3);
+          word1 = word1.mulmod(word2, word3);
           program.stackPush(word1);
           program.step();
         }
@@ -1350,7 +1352,7 @@ public class VM {
           }
 
           if (!value.isZero()) {
-            adjustedCallEnergy.add(new DataWord(energyCosts.getSTIPEND_CALL()));
+            adjustedCallEnergy = adjustedCallEnergy.add(new DataWord(energyCosts.getSTIPEND_CALL()));
           }
 
           DataWord tokenId = new DataWord(0);
