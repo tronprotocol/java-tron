@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace.TimeResultType;
 import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.MetricsUtil;
 
 @Slf4j(topic = "DB")
 public class PendingManager implements AutoCloseable {
@@ -24,7 +24,7 @@ public class PendingManager implements AutoCloseable {
         tmpTransactions.add(transactionCapsule);
       }
     });
-    MetricsService.getInstance().meterMark(MetricsKey.BLOCKCHAIN_MISS_TRANSACTION,
+    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_MISS_TRANSACTION,
         tmpTransactions.size());
     db.getPendingTransactions().clear();
     db.getSession().reset();

@@ -35,7 +35,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.MetricsUtil;
 
 @Slf4j(topic = "discover")
 @Component
@@ -62,9 +62,6 @@ public class NodeManager implements EventHandler {
   private Timer nodeManagerTasksTimer = new Timer("NodeManagerTasks");
 
   private ScheduledExecutorService pongTimer;
-
-  @Autowired
-  private MetricsService metricsService;
 
   @Autowired
   public NodeManager(ChainBaseManager chainBaseManager) {
@@ -236,7 +233,7 @@ public class NodeManager implements EventHandler {
 
     NodeHandler nodeHandler = getNodeHandler(n);
     nodeHandler.getNodeStatistics().messageStatistics.addUdpInMessage(m.getType());
-    metricsService.meterMark(MetricsKey.NET_UDP_IN_TRAFFIC,
+    MetricsUtil.meterMark(MetricsKey.NET_UDP_IN_TRAFFIC,
             udpEvent.getMessage().getData().length + 1);
 
     switch (m.getType()) {
@@ -260,7 +257,7 @@ public class NodeManager implements EventHandler {
   public void sendOutbound(UdpEvent udpEvent) {
     if (discoveryEnabled && messageSender != null) {
       messageSender.accept(udpEvent);
-      metricsService.meterMark(MetricsKey.NET_UDP_OUT_TRAFFIC,
+      MetricsUtil.meterMark(MetricsKey.NET_UDP_OUT_TRAFFIC,
               udpEvent.getMessage().getSendData().length);
     }
   }

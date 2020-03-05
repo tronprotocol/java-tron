@@ -23,7 +23,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsService;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -39,9 +39,6 @@ public class ChannelManager {
   private SyncPool syncPool;
   @Autowired
   private FastForward fastForward;
-
-  @Autowired
-  private MetricsService metricsService;
 
   private CommonParameter parameter = CommonParameter.getInstance();
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
@@ -109,8 +106,8 @@ public class ChannelManager {
         recentlyDisconnected.put(channel.getInetAddress(), reason);
         break;
     }
-    metricsService.counterInc(MetricsKey.NET_DISCONNECTION_COUNT, 1L);
-    metricsService.counterInc(MetricsKey.NET_DISCONNECTION_REASON + reason, 1L);
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_COUNT, 1L);
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_REASON + reason, 1L);
   }
 
   public void notifyDisconnect(Channel channel) {
