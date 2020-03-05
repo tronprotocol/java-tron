@@ -17,5 +17,7 @@ public interface DB<K, V> extends Iterable<Map.Entry<K, V>>, Instance<DB<K, V>> 
 
   Iterator iterator();
 
+  void close();
+
   String getDbName();
 }

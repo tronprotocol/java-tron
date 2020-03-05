@@ -10,6 +10,12 @@ public class Constant {
 
   public static final String DATABASE_DIR = "storage.directory";
 
+  // locate in storageDbDirectory, store the db infos,
+  // now only has the snapshot block number
+  public static final String INFO_FILE_NAME = "info.properties";
+  // the block number that split between the snapshot and history
+  public static final String SPLIT_BLOCK_NUM = "split_block_num";
+
   public static final byte ADD_PRE_FIX_BYTE_MAINNET = (byte) 0x41;   //41 + address
   public static final String ADD_PRE_FIX_STRING_MAINNET = "41";
   public static final byte ADD_PRE_FIX_BYTE_TESTNET = (byte) 0xa0;   //a0 + address
@@ -104,6 +110,8 @@ public class Constant {
   public static final String NODE_RPC_MAX_MESSAGE_SIZE = "node.rpc.maxMessageSize";
 
   public static final String NODE_RPC_MAX_HEADER_LIST_SIZE = "node.rpc.maxHeaderListSize";
+
+  public static final String NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN = "node.openHistoryQueryWhenLiteFN";
 
   public static final String BLOCK_MAINTENANCE_TIME_INTERVAL = "block.maintenanceTimeInterval";
   public static final String BLOCK_PROPOSAL_EXPIRE_TIME = "block.proposalExpireTime";

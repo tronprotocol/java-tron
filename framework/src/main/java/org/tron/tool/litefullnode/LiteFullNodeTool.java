@@ -153,7 +153,7 @@ public class LiteFullNodeTool {
       return;
     }
     long end = System.currentTimeMillis();
-    System.out.printf("merge history finished, take %ds", (end - start) / 1000);
+    System.out.printf("merge history finished, take %ds \n", (end - start) / 1000);
   }
 
   private void mergeCheckpoint2Snapshot(String sourceDir, String historyDir) {
@@ -166,6 +166,7 @@ public class LiteFullNodeTool {
 
   private void split(String sourceDir, String destDir, List<String> dbs) throws IOException {
     logger.info("begin to split the dbs.");
+    System.out.println("-- begin to split the dbs.");
     if (!new File(sourceDir).isDirectory()) {
       throw new RuntimeException("sourceDir must be a directory");
     }
@@ -181,6 +182,7 @@ public class LiteFullNodeTool {
 
   private void mergeCheckpoint(String sourceDir, String destDir, List<String> destDbs) {
     logger.info("begin to merge checkpoint to dataset");
+    System.out.println(("-- begin to merge checkpoint to dataset"));
     try {
       DBInterface tmpDb = DbTool.getDB(sourceDir, CHECKPOINT_DB);
       try (DBIterator iterator = tmpDb.iterator()) {
@@ -208,6 +210,7 @@ public class LiteFullNodeTool {
   private void generateInfoProperties(String propertyfile, String databaseDir)
           throws IOException, RocksDBException {
     logger.info("create {} for dataset", INFO_FILE_NAME);
+    System.out.printf("-- create %s for dataset.\n", INFO_FILE_NAME);
     if (!FileUtil.createFileIfNotExists(propertyfile)) {
       throw new RuntimeException("create properties file failed...");
     }
@@ -240,6 +243,7 @@ public class LiteFullNodeTool {
   private void fillSnapshotBlockDb(String sourceDir, String snapshotDir)
           throws IOException, RocksDBException {
     logger.info("begin to fill latest block and genesis block to snapshot");
+    System.out.println(("-- begin to fill latest block and genesis block to snapshot"));
     DBInterface sourceBlockIndexDb = DbTool.getDB(sourceDir, "block-index");
     DBInterface sourceBlockDb = DbTool.getDB(sourceDir, "block");
     DBInterface destBlockDb = DbTool.getDB(snapshotDir, "block");
@@ -274,6 +278,7 @@ public class LiteFullNodeTool {
   private void checkTranCacheStore(String sourceDir, String snapshotDir)
           throws IOException, RocksDBException {
     logger.info("create trans-cache db if not exists.");
+    System.out.println("-- create trans-cache db if not exists.");
     if (FileUtil.isExists(String.format("%s%s%s", snapshotDir, File.separator, "trans-cache"))) {
       return;
     }
@@ -313,7 +318,11 @@ public class LiteFullNodeTool {
   private byte[] getGenesisBlockHash(String parentDir) throws IOException, RocksDBException {
     long genesisBlockNum = 0L;
     DBInterface blockIndexDb = DbTool.getDB(parentDir, "block-index");
-    return blockIndexDb.get(ByteArray.fromLong(genesisBlockNum));
+    byte[] result = blockIndexDb.get(ByteArray.fromLong(genesisBlockNum));
+    // when merge history, block-index db will be moved to bak dir and replaced by history
+    // so should close this db and reopen it.
+    DbTool.closeDB(parentDir, "block-index");
+    return result;
   }
 
   private static byte[] simpleEncode(String s) {
@@ -327,6 +336,8 @@ public class LiteFullNodeTool {
 
   private BlockNumInfo checkAndGetBlockNumInfo(String historyDir, String databaseDir)
           throws IOException, RocksDBException {
+    logger.info("check the compatibility of this history");
+    System.out.println("-- check the compatibility of this history");
     String snapshotInfo = String.format("%s%s%s", databaseDir, File.separator, INFO_FILE_NAME);
     String historyInfo = String.format("%s%s%s", historyDir, File.separator, INFO_FILE_NAME);
     if (!FileUtil.isExists(snapshotInfo)) {
@@ -355,7 +366,8 @@ public class LiteFullNodeTool {
   private void backupArchiveDbs(String databaseDir) throws IOException {
     String bakDir = String.format("%s%s%s%d",
             databaseDir, File.separator, BACKUP_DIR_PREFIX, START_TIME);
-    logger.info("backup: back archive dbs to {}", bakDir);
+    logger.info("backup the archive dbs to {}", bakDir);
+    System.out.printf("-- backup the archive dbs to %s \n", bakDir);
     if (!FileUtil.createDirIfNotExists(bakDir)) {
       throw new RuntimeException("create bak dir failed");
     }
@@ -367,12 +379,14 @@ public class LiteFullNodeTool {
 
   private void copyHistory2Database(String historyDir, String databaseDir) throws IOException {
     logger.info("begin to copy history to database");
+    System.out.println("-- begin to copy history to database");
     Util.copyDatabases(Paths.get(historyDir), Paths.get(databaseDir), archiveDbs);
   }
 
   private void trimHistory(String databaseDir, BlockNumInfo blockNumInfo)
           throws BadItemException, IOException, RocksDBException {
     logger.info("begin to trim the history data.");
+    System.out.println("-- begin to trim the history data.");
     DBInterface blockIndexDb = DbTool.getDB(databaseDir, "block-index");
     DBInterface blockDb = DbTool.getDB(databaseDir, "block");
     DBInterface transDb = DbTool.getDB(databaseDir, "trans");
@@ -397,6 +411,7 @@ public class LiteFullNodeTool {
     String bakDir = String.format("%s%s%s%d",
             databaseDir, File.separator, BACKUP_DIR_PREFIX, START_TIME);
     logger.info("begin to merge {} to database", bakDir);
+    System.out.printf("-- begin to merge %s to database. \n", bakDir);
     for (String dbName : archiveDbs) {
       DBInterface bakDb = DbTool.getDB(bakDir, dbName);
       DBInterface destDb = DbTool.getDB(databaseDir, dbName);
@@ -439,10 +454,14 @@ public class LiteFullNodeTool {
 
   private void deleteSnapshotFlag(String databaseDir) throws IOException {
     logger.info("delete the info file to identify this node is a real fullnode.");
+    System.out.println("-- delete the info file to identify this node is a real fullnode.");
     Files.delete(Paths.get(databaseDir, INFO_FILE_NAME));
   }
 
   private void run(Args argv) {
+    if (argv.fnDataPath.isEmpty() || argv.datasetPath.isEmpty()) {
+      throw new ParameterException("fnDataPath or datasetPath can't be null");
+    }
     switch (argv.operate) {
       case "split":
         if (Strings.isNullOrEmpty(argv.type)) {

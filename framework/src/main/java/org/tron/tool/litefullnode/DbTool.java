@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
@@ -20,6 +21,7 @@ import org.tron.tool.litefullnode.db.DBInterface;
 import org.tron.tool.litefullnode.db.LevelDBImpl;
 import org.tron.tool.litefullnode.db.RocksDBImpl;
 
+@Slf4j(topic = "tool")
 public class DbTool {
 
   private static final String KEY_ENGINE = "ENGINE";
@@ -66,6 +68,21 @@ public class DbTool {
         throw new IllegalStateException("Unexpected value: " + type);
     }
     return db;
+  }
+
+  public static void closeDB(String sourceDir, String dbName)
+          throws IOException {
+    Path path = Paths.get(sourceDir, dbName);
+    DBInterface db = dbMap.get(path.toString());
+    if (db != null) {
+      try {
+        dbMap.remove(path.toString());
+        db.close();
+      } catch (IOException e) {
+        logger.error("close db {} error: {}", path, e);
+        throw e;
+      }
+    }
   }
 
   /**

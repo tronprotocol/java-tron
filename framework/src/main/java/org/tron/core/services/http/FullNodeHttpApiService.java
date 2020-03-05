@@ -23,6 +23,8 @@ import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.filter.HttpInterceptor;
+import org.tron.core.services.filter.LiteFnQueryHttpFilter;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -276,6 +278,9 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetMarketPairListServlet getMarketPairListServlet;
 
+  @Autowired
+  private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
+
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
         .getResourceAsStream("params" + File.separator + fileName);
@@ -511,7 +516,6 @@ public class FullNodeHttpApiService implements Service {
 
       context.addServlet(new ServletHolder(metricsServlet), "/monitor/getstatsinfo");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
-
       context.addServlet(new ServletHolder(marketSellAssetServlet), "/wallet/marketsellasset");
       context.addServlet(new ServletHolder(marketCancelOrderServlet), "/wallet/marketcancelorder");
       context.addServlet(new ServletHolder(getMarketOrderByAccountServlet),
@@ -535,6 +539,11 @@ public class FullNodeHttpApiService implements Service {
           .addFilterWithMapping((Class<? extends Filter>) HttpInterceptor.class, "/*",
               EnumSet.of(DispatcherType.REQUEST));
       context.addFilter(fh, "/*", EnumSet.of(DispatcherType.REQUEST));
+
+      // filters the specified APIs
+      // when node is lite fullnode and openHistoryQueryWhenLiteFN is false
+      context.addFilter(new FilterHolder(liteFnQueryHttpFilter), "/*",
+              EnumSet.allOf(DispatcherType.class));
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
