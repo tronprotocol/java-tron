@@ -35,10 +35,10 @@ public class MetricsApiService {
     metricsInfo.setInterval(System.currentTimeMillis() / 1000);
 
     NodeInfo nodeInfo = nodeMetricManager.getNodeInfo();
-    metricsInfo.setNodeInfo(nodeInfo);
+    metricsInfo.setNode(nodeInfo);
 
     BlockChainInfo blockChainInfo = blockChainMetricManager.getBlockChainInfo();
-    metricsInfo.setBlockChainInfo(blockChainInfo);
+    metricsInfo.setBlockchain(blockChainInfo);
 
     NetInfo netInfo = netMetricManager.getNetInfo();
     metricsInfo.setNet(netInfo);

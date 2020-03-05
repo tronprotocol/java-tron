@@ -2,6 +2,7 @@ package org.tron.core.metrics;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.tron.core.metrics.blockchain.BlockChainInfo;
 import org.tron.core.metrics.net.NetInfo;
 import org.tron.core.metrics.node.NodeInfo;
@@ -24,22 +25,21 @@ public class MetricsInfo {
     this.interval = interval;
   }
 
-  public NodeInfo getNodeInfo() {
-    return this.node;
+  public NodeInfo getNode() {
+    return node;
   }
 
-  public void setNodeInfo(NodeInfo node) {
+  public void setNode(NodeInfo node) {
     this.node = node;
   }
 
-  public BlockChainInfo getBlockChainInfo() {
-    return this.blockchain;
+  public BlockChainInfo getBlockchain() {
+    return blockchain;
   }
 
-  public void setBlockChainInfo(BlockChainInfo blockChain) {
-    this.blockchain = blockChain;
+  public void setBlockchain(BlockChainInfo blockchain) {
+    this.blockchain = blockchain;
   }
-
 
   public NetInfo getNet() {
     return net;
@@ -47,5 +47,9 @@ public class MetricsInfo {
 
   public void setNet(NetInfo net) {
     this.net = net;
+  }
+
+  public static Logger getLogger() {
+    return logger;
   }
 }
