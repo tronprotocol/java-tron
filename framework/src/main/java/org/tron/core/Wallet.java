@@ -2557,5 +2557,25 @@ public class Wallet {
     } //end of block list
     return builder.build();
   }
+
+  public double queryVoteNumber(byte[] address, long startTimeStamp, long endTimeStamp) {
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    long voteNumber = 0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        voteNumber += dbManager.getDelegationStore().getWitnessVote(cycle,address);
+//        reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
+      }
+    }
+    return voteNumber;
+  }
 }
 
