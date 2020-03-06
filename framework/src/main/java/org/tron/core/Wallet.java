@@ -38,11 +38,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -87,7 +88,6 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -145,11 +145,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.store.AccountIdIndexStore;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DelegationStore;
-import org.tron.core.store.StoreFactory;
+import org.tron.core.store.*;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
@@ -2572,10 +2568,53 @@ public class Wallet {
     if (beginCycle < endCycle) {
       for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
         voteNumber += dbManager.getDelegationStore().getWitnessVote(cycle,address);
-//        reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
       }
+//      voteNumber = voteNumber / (endCycle - beginCycle);
     }
     return voteNumber;
+  }
+
+  public double queryTotalVoteNumber(long startTimeStamp, long endTimeStamp) {
+
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    AtomicLong voteNumber = new AtomicLong();
+//    double voteNumberTotal=0;
+
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        List<WitnessCapsule> allWitnesses = dbManager.getWitnessStore().getAllWitnesses();
+        long finalCycle = cycle;
+        allWitnesses.forEach(witness ->{
+          voteNumber.addAndGet(dbManager.getDelegationStore().getWitnessVote(finalCycle, witness.getAddress().toByteArray()));
+        });
+      }
+//      voteNumberTotal= voteNumber.longValue() / (endCycle - beginCycle);
+    }
+//    return voteNumberTotal;
+    return voteNumber.doubleValue();
+  }
+
+  public double querySrRatio(byte[] address, long startTimeStamp, long endTimeStamp) {
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    double srRatio = 0;
+//    double brokerage=0.0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        srRatio += dbManager.getDelegationStore().getBrokerage(cycle, address);
+      }
+    }
+//    srRatio = brokerage / (endCycle - beginCycle);
+    return srRatio/100;
   }
 }
 
