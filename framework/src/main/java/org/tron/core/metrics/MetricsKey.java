@@ -3,8 +3,8 @@ package org.tron.core.metrics;
 public class MetricsKey {
 
   public static final String BLOCKCHAIN_TPS = "blockchain.tps";
-  public static final String BLOCKCHAIN_BLOCKPROCESS_TIME = "blockchain.blockProcessTime";
-  public static final String BLOCKCHAIN__FORK_COUNT = "blockchain.forkCount";
+  public static final String BLOCKCHAIN_BLOCK_PROCESS_TIME = "blockchain.blockProcessTime";
+  public static final String BLOCKCHAIN_FORK_COUNT = "blockchain.forkCount";
   public static final String BLOCKCHAIN_FAIL_FORK_COUNT = "blockchain.failForkCount";
   public static final String BLOCKCHAIN_MISSED_TRANSACTION = "blockchain.missedTransaction";
   public static final String BLOCKCHAIN_DUP_WITNESS = "blockchain.dupWitness.";
