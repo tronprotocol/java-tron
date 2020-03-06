@@ -84,7 +84,7 @@ public class NetMetricManager {
       ApiDetailInfo apiDetail = new ApiDetailInfo();
       String endpointName = entry.getKey().substring(MetricsKey.NET_API_DETAIL_QPS.length());
       apiDetail.setName(endpointName);
-      RateInfo APIDetailQPS = MetricsUtil.getRateInfo(endpointName);
+      RateInfo APIDetailQPS = MetricsUtil.getRateInfo(entry.getKey());
       apiDetail.setQps(APIDetailQPS);
       if (endpointOutTrafficMap.containsKey(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpointName)) {
         RateInfo APIDetailOutTraffic = MetricsUtil
