@@ -84,16 +84,16 @@ public class NetMetricManager {
       ApiDetailInfo apiDetail = new ApiDetailInfo();
       String endpointName = entry.getKey().substring(MetricsKey.NET_API_DETAIL_QPS.length());
       apiDetail.setName(endpointName);
-      RateInfo APIDetailQPS = MetricsUtil.getRateInfo(entry.getValue());
+      RateInfo APIDetailQPS = MetricsUtil.getRateInfo(entry.getKey());
       apiDetail.setQps(APIDetailQPS);
       if (endpointOutTrafficMap.containsKey(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpointName)) {
-        RateInfo APIDetailOutTraffic = MetricsUtil.getRateInfo(endpointOutTrafficMap
-            .get(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpointName));
+        RateInfo APIDetailOutTraffic = MetricsUtil
+            .getRateInfo(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpointName);
         apiDetail.setOutTraffic(APIDetailOutTraffic);
       }
       if (endpointFailQPSMap.containsKey(MetricsKey.NET_API_DETAIL_FAIL_QPS + endpointName)) {
-        RateInfo APIDetailFailQps = MetricsUtil.getRateInfo(endpointFailQPSMap
-            .get(MetricsKey.NET_API_DETAIL_FAIL_QPS + endpointName));
+        RateInfo APIDetailFailQps = MetricsUtil
+            .getRateInfo(MetricsKey.NET_API_DETAIL_FAIL_QPS + endpointName);
         apiDetail.setFailQps(APIDetailFailQps);
       }
       apiDetails.add(apiDetail);
