@@ -79,8 +79,6 @@ public class FullNode {
       appT.addService(httpApiService);
     }
 
-    // set start time
-    MetricsUtil.setStartTime(System.currentTimeMillis());
 
     // full node and solidity node fuse together
     // provide solidity rpc and http server on the full node.

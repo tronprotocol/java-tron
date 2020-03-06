@@ -39,8 +39,7 @@ public class MetricsInfo {
   public void setBlockchain(BlockChainInfo blockChain) {
     this.blockchain = blockChain;
   }
-
-
+  
   public NetInfo getNet() {
     return net;
   }

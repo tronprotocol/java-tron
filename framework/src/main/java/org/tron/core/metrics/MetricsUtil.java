@@ -14,14 +14,8 @@ public class MetricsUtil {
 
   private static MetricRegistry metricRegistry = new MetricRegistry();
 
-  private static long startTime;
-
   public static long getInterval() {
-    return (System.currentTimeMillis() - startTime) / 1000;
-  }
-
-  public static void setStartTime(long time) {
-    startTime = time;
+    return (System.currentTimeMillis() - MetricsApiService.startTime) / 1000;
   }
 
   public static Histogram getHistogram(String key) {

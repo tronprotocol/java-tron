@@ -14,6 +14,8 @@ import org.tron.core.metrics.node.NodeMetricManager;
 @Component
 public class MetricsApiService {
 
+  public static final long startTime = System.currentTimeMillis();
+
   @Autowired
   private BlockChainMetricManager blockChainMetricManager;
 
