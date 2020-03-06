@@ -51,6 +51,14 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     put(address, new BytesCapsule(ByteArray.fromLong(number)));
   }
 
+  public BytesCapsule getRemark(long cycle, byte[] address) {
+    return get(buildRemarkKey(cycle, address));
+  }
+
+  public void setRemark(long cycle, byte[] address) {
+    put(buildRemarkKey(cycle, address), new BytesCapsule(ByteArray.fromLong(REMARK)));
+  }
+
   public long getBeginCycle(byte[] address) {
     BytesCapsule bytesCapsule = get(address);
     return bytesCapsule == null ? 0 : ByteArray.toLong(bytesCapsule.getData());
@@ -118,6 +126,10 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildRewardKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-reward").getBytes();
+  }
+
+  private byte[] buildRemarkKey(long cycle, byte[] address) {
+    return (cycle + "-" + Hex.toHexString(address) + "remark").getBytes();
   }
 
   private byte[] buildAccountVoteKey(long cycle, byte[] address) {

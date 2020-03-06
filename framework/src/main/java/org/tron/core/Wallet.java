@@ -2277,23 +2277,38 @@ public class Wallet {
     return memoStrip;
   }
 
+  private List<Vote> getVoteList (byte[] address, long cycle) {
+    for (long i = cycle; i >=0 ;i --) {
+      AccountCapsule accountCapsule = dbManager.getDelegationStore()
+          .getAccountVote(cycle, address);
+      if (accountCapsule != null) {
+        return accountCapsule.getVotesList();
+      }
+      BytesCapsule remark = dbManager.getDelegationStore()
+          .getRemark(cycle, address);
+      if (remark != null) {
+        return null;
+      }
+    }
+    return null;
+  }
+
   public HashMap<String, Long> computeRewardByTimeStamp(byte[] address,
       long startTimeStamp, long endTimeStamp) {
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
     HashMap<String, Long> rewardMap = new HashMap<>();
     long beginCycle = dbManager.getDelegationService().
         getCycleFromTimeStamp(startTimeStamp);
     long endCycle = dbManager.getDelegationService().
         getCycleFromTimeStamp(endTimeStamp);
-    if (accountCapsule == null) {
+    if (address.length == 0) {
       return rewardMap;
     }
 
-    for (Vote vote : accountCapsule.getVotesList()) {
-      long reward = 0;
-      byte[] srAddress = vote.getVoteAddress().toByteArray();
-      if (beginCycle < endCycle) {
-        for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+    for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+      List<Vote> voteList = getVoteList(address, cycle);
+      if (voteList != null) {
+        for (Vote vote : voteList) {
+          byte[] srAddress = vote.getVoteAddress().toByteArray();
           long totalReward = dbManager.getDelegationStore().getReward(cycle, srAddress);
           long totalVote = dbManager.getDelegationStore()
               .getWitnessVote(cycle, srAddress);
@@ -2302,11 +2317,16 @@ public class Wallet {
           }
           long userVote = vote.getVoteCount();
           double voteRate = (double) userVote / totalVote;
-          reward += voteRate * totalReward;
+          String SR = StringUtil
+              .encode58Check(srAddress);
+          if (rewardMap.containsKey(SR) == false) {
+            rewardMap.put(SR, (long)(voteRate * totalReward));
+          } else {
+            long reward = rewardMap.get(SR) + (long)(voteRate * totalReward);
+            rewardMap.put(SR, reward);
+          }
         }
       }
-      rewardMap.put(StringUtil
-          .encode58Check(srAddress), reward);
     }
     return rewardMap;
   }

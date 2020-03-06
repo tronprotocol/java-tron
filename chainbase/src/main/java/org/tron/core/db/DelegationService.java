@@ -118,6 +118,7 @@ public class DelegationService {
     //
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
+      delegationStore.setRemark(endCycle, address);
       delegationStore.setBeginCycle(address, endCycle + 1);
       return;
     }
@@ -127,6 +128,7 @@ public class DelegationService {
       }
       adjustAllowance(address, reward);
     }
+
     delegationStore.setBeginCycle(address, endCycle);
     delegationStore.setEndCycle(address, endCycle + 1);
     delegationStore.setAccountVote(endCycle, address, accountCapsule);
