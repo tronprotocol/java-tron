@@ -546,7 +546,6 @@ public class VM {
             hint = word1.value() + " == " + word2.value();
           }
 
-          //todo xiang：可能有bug
           if (word1.xor(word2).isZero()) {
 
             word1 = word1.and(DataWord.ZERO);

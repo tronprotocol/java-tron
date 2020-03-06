@@ -73,13 +73,11 @@ public class DataWord implements Comparable<DataWord> {
     this(wrappedData.getData());
   }
 
-  //todo Util里的static有问题 && 应该拷贝data?
   public DataWord(byte[] data) {
     if (data == null) {
       this.data = ByteUtil.EMPTY_BYTE_ARRAY;
     } else if (data.length == WORD_SIZE) {
       this.data = data;
-//      this.data = Arrays.clone(data, this.data);
     } else if (data.length < WORD_SIZE) {
       System.arraycopy(data, 0, this.data, WORD_SIZE - data.length, data.length);
     } else {
@@ -125,7 +123,6 @@ public class DataWord implements Comparable<DataWord> {
     return bytesSize == 0 ? 0 : (bytesSize - 1) / WORD_SIZE + 1;
   }
 
-  // todo 如果new DataWord(bytes) 修改了，这里可以优化
   public static DataWord[] parseArray(byte[] data) {
     int len = data.length / WORD_SIZE;
     DataWord[] words = new DataWord[len];
@@ -140,7 +137,6 @@ public class DataWord implements Comparable<DataWord> {
     if (arr1 == arr2) {
       return true;
     }
-    // ??20是什么
     if (arr1 == null || arr2 == null || arr1.length < 20 || arr2.length < 20) {
       return false;
     }
@@ -163,7 +159,6 @@ public class DataWord implements Comparable<DataWord> {
   /**
    * be careful, this one will not throw Exception when data.length > WORD_SIZE
    */
-  // todo 当data=null时
   public byte[] getClonedData() {
     byte[] ret = ByteUtil.EMPTY_BYTE_ARRAY;
     if (data != null) {
@@ -269,7 +264,6 @@ public class DataWord implements Comparable<DataWord> {
     return result == 0x80;
   }
 
-  // todo new一个？ && 如果w2.data.length<this.data.length怎么办
   public DataWord and(DataWord w2) {
 
     byte[] newData = this.getClonedData();
@@ -279,7 +273,6 @@ public class DataWord implements Comparable<DataWord> {
     return new DataWord(newData);
   }
 
-  // todo new一个？
   public DataWord or(DataWord w2) {
 
     byte[] newData = this.getClonedData();
@@ -289,7 +282,6 @@ public class DataWord implements Comparable<DataWord> {
     return new DataWord(newData);
   }
 
-  // todo new一个？
   public DataWord xor(DataWord w2) {
 
     byte[] newData = this.getClonedData();
@@ -299,7 +291,6 @@ public class DataWord implements Comparable<DataWord> {
     return new DataWord(newData);
   }
 
-  //todo zero?
   public DataWord negate() {
     if (this.isZero()) {
       return ZERO();
@@ -308,7 +299,6 @@ public class DataWord implements Comparable<DataWord> {
     return bnot().add(DataWord.ONE());
   }
 
-  //todo
   public DataWord bnot() {
     if (this.isZero()) {
       return new DataWord(ByteUtil.copyToArray(MAX_VALUE));
@@ -479,7 +469,6 @@ public class DataWord implements Comparable<DataWord> {
     return (int) Math.signum(result);
   }
 
-  // todo ??
   public DataWord signExtend(byte k) {
     if (0 > k || k > 31) {
       throw new IndexOutOfBoundsException();
