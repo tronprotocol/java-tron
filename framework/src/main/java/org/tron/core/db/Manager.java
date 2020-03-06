@@ -990,7 +990,6 @@ public class Manager {
 
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME,
         System.currentTimeMillis() - start);
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_COUNT, 1);
 
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),

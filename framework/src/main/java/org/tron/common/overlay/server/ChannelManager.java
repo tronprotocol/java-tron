@@ -107,7 +107,7 @@ public class ChannelManager {
         break;
     }
     MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_COUNT, 1L);
-    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_REASON + reason, 1L);
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_DETAIL + reason, 1L);
   }
 
   public void notifyDisconnect(Channel channel) {

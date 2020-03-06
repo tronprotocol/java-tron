@@ -1,7 +1,6 @@
 package org.tron.core.metrics.blockchain;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +49,7 @@ public class BlockChainMetricManager {
     blockChain.setHeadBlockHash(dbManager.getDynamicPropertiesStore()
             .getLatestBlockHeaderHash().toString());
 
-    RateInfo blockProcessTime = getBlockProcessTime();
+    RateInfo blockProcessTime = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME);
     blockChain.setBlockProcessTime(blockProcessTime);
     blockChain.setForkCount(getForkCount());
     blockChain.setFailForkCount(getFailForkCount());
@@ -58,7 +57,7 @@ public class BlockChainMetricManager {
     blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size()
         + dbManager.getRePushTransactions().size());
 
-    RateInfo missTx = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_MISS_TRANSACTION);
+    RateInfo missTx = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_MISSED_TRANSACTION);
     blockChain.setMissedTransaction(missTx);
 
     RateInfo tpsInfo = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_TPS);
@@ -87,7 +86,7 @@ public class BlockChainMetricManager {
       BlockCapsule oldBlock = witnessInfo.get(witnessAddress);
       if ((!oldBlock.getBlockId().equals(block.getBlockId()))
               && oldBlock.getTimeStamp() == block.getTimeStamp()) {
-        MetricsUtil.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT + witnessAddress, 1);
+        MetricsUtil.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS + witnessAddress, 1);
         dupWitnessBlockNum.put(witnessAddress, block.getNum());
       }
     }
@@ -130,51 +129,6 @@ public class BlockChainMetricManager {
     return witnessInfos;
   }
 
-  private RateInfo getBlockProcessTime() {
-    RateInfo blockProcessTime = new RateInfo();
-    blockProcessTime.setCount(MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_COUNT)
-            .getCount());
-    blockProcessTime.setMeanRate(getAvgBlockProcessTimeByGap(0));
-    blockProcessTime.setOneMinuteRate(getAvgBlockProcessTimeByGap(1));
-    blockProcessTime.setFiveMinuteRate(getAvgBlockProcessTimeByGap(5));
-    blockProcessTime.setFifteenMinuteRate(getAvgBlockProcessTimeByGap(15));
-    return blockProcessTime;
-  }
-
-
-  // gap: 1 minute, 5 minute, 15 minute, 0: avg for total block and time
-  private double getAvgBlockProcessTimeByGap(int gap) {
-    Meter meterBlockProcessTime =
-        MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME);
-    Meter meterBlockTxCount = MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_COUNT);
-    if (meterBlockTxCount.getCount() == 0) {
-      return 0;
-    }
-    switch (gap) {
-      case 0:
-        return (meterBlockProcessTime.getCount() / (double) meterBlockTxCount.getCount());
-      case 1:
-        int gapMinuteTimeBlock =
-            Math.round(Math.round(meterBlockProcessTime.getOneMinuteRate() * 60));
-        int gapMinuteCount = Math.round(Math.round(meterBlockTxCount.getOneMinuteRate() * 60));
-        return gapMinuteTimeBlock / (double) gapMinuteCount;
-      case 5:
-        int gapFiveTimeBlock =
-            Math.round(Math.round(meterBlockProcessTime.getFiveMinuteRate() * gap * 60));
-        int gapFiveTimeCount =
-            Math.round(Math.round(meterBlockTxCount.getFiveMinuteRate() * gap * 60));
-        return gapFiveTimeBlock / (double) gapFiveTimeCount;
-      case 15:
-        int gapFifteenTimeBlock =
-            Math.round(Math.round(meterBlockProcessTime.getFifteenMinuteRate() * gap * 60));
-        int gapFifteenTimeCount =
-            Math.round(Math.round(meterBlockTxCount.getFifteenMinuteRate() * gap * 60));
-        return gapFifteenTimeBlock / (double) gapFifteenTimeCount;
-
-      default:
-        return -1;
-    }
-  }
 
   public int getForkCount() {
     return (int) MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN__FORK_COUNT).getCount();
@@ -187,10 +141,10 @@ public class BlockChainMetricManager {
   private List<DupWitnessInfo> getDupWitness() {
     List<DupWitnessInfo> dupWitnesses = new ArrayList<>();
     SortedMap<String, Counter> dupWitnessMap =
-            MetricsUtil.getCounters(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT);
+            MetricsUtil.getCounters(MetricsKey.BLOCKCHAIN_DUP_WITNESS);
     for (Map.Entry<String, Counter> entry : dupWitnessMap.entrySet()) {
       DupWitnessInfo dupWitness = new DupWitnessInfo();
-      String witness = entry.getKey().substring(MetricsKey.BLOCKCHAIN_DUP_WITNESS_COUNT.length());
+      String witness = entry.getKey().substring(MetricsKey.BLOCKCHAIN_DUP_WITNESS.length());
       long blockNum = dupWitnessBlockNum.get(witness);
       dupWitness.setAddress(witness);
       dupWitness.setBlockNum(blockNum);

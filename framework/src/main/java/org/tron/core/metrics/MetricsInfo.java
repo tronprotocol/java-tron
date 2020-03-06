@@ -24,19 +24,19 @@ public class MetricsInfo {
     this.interval = interval;
   }
 
-  public NodeInfo getNodeInfo() {
+  public NodeInfo getNode() {
     return this.node;
   }
 
-  public void setNodeInfo(NodeInfo node) {
+  public void setNode(NodeInfo node) {
     this.node = node;
   }
 
-  public BlockChainInfo getBlockChainInfo() {
+  public BlockChainInfo getBlockchain() {
     return this.blockchain;
   }
 
-  public void setBlockChainInfo(BlockChainInfo blockChain) {
+  public void setBlockchain(BlockChainInfo blockChain) {
     this.blockchain = blockChain;
   }
 
