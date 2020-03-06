@@ -988,7 +988,7 @@ public class Manager {
     }
 
 
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME,
+    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME,
         System.currentTimeMillis() - start);
 
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",

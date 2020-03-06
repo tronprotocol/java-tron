@@ -49,7 +49,7 @@ public class BlockChainMetricManager {
     blockChain.setHeadBlockHash(dbManager.getDynamicPropertiesStore()
             .getLatestBlockHeaderHash().toString());
 
-    RateInfo blockProcessTime = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_BLOCKPROCESS_TIME);
+    RateInfo blockProcessTime = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME);
     blockChain.setBlockProcessTime(blockProcessTime);
     blockChain.setForkCount(getForkCount());
     blockChain.setFailForkCount(getFailForkCount());
