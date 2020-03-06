@@ -192,7 +192,7 @@ public class TronNetDelegate {
     }
   }
 
-  public void processBlock(BlockCapsule block) throws P2pException {
+  public void processBlock(BlockCapsule block, boolean isSync) throws P2pException {
     BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
       try {
@@ -203,6 +203,10 @@ public class TronNetDelegate {
                 Hex.toHexString(block.getWitnessAddress().toByteArray()),
                 getHeadBlockId().getString());
           }
+          if (!isSync) {
+            //record metrics
+            metricsService.applyBlock(block);
+          }
           dbManager.pushBlock(block);
           freshBlockId.add(blockId);
           logger.info("Success process block {}.", blockId.getString());
@@ -211,9 +215,6 @@ public class TronNetDelegate {
             backupServerStartFlag = true;
             backupServer.initServer();
           }
-
-          //record metrics
-          metricsService.applyBlock(block);
         }
       } catch (ValidateSignatureException
           | ContractValidateException
