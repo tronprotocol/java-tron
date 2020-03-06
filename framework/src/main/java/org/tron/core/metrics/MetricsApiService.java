@@ -33,7 +33,7 @@ public class MetricsApiService {
 
     MetricsInfo metricsInfo = new MetricsInfo();
 
-    metricsInfo.setInterval(System.currentTimeMillis() - time);
+    metricsInfo.setInterval((System.currentTimeMillis() - time) / 1000);
 
     NodeInfo nodeInfo = nodeMetricManager.getNodeInfo();
     metricsInfo.setNode(nodeInfo);
