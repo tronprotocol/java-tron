@@ -1,12 +1,9 @@
 package org.tron.core.metrics;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import lombok.extern.slf4j.Slf4j;
 import org.tron.core.metrics.blockchain.BlockChainInfo;
 import org.tron.core.metrics.net.NetInfo;
 import org.tron.core.metrics.node.NodeInfo;
 
-@Slf4j
 public class MetricsInfo {
   private long interval;
 
