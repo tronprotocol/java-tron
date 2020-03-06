@@ -19,13 +19,16 @@ public class PendingManager implements AutoCloseable {
 
   public PendingManager(Manager db) {
     this.dbManager = db;
+
     db.getPendingTransactions().forEach(transactionCapsule -> {
       if (System.currentTimeMillis() - transactionCapsule.getTime() < timeout) {
         tmpTransactions.add(transactionCapsule);
       }
     });
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_MISS_TRANSACTION,
-        tmpTransactions.size());
+    if (db.getPendingTransactions().size() > tmpTransactions.size()) {
+      MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_MISSED_TRANSACTION,
+          db.getPendingTransactions().size() - tmpTransactions.size());
+    }
     db.getPendingTransactions().clear();
     db.getSession().reset();
     db.getShieldedTransInPendingCounts().set(0);

@@ -14,6 +14,16 @@ public class MetricsUtil {
 
   private static MetricRegistry metricRegistry = new MetricRegistry();
 
+  private static long startTime;
+
+  public static long getInterval() {
+    return (System.currentTimeMillis() - startTime) / 1000;
+  }
+
+  public static void setStartTime(long time) {
+    startTime = time;
+  }
+
   public static Histogram getHistogram(String key) {
     return metricRegistry.histogram(key);
   }
@@ -39,6 +49,14 @@ public class MetricsUtil {
 
   public static Meter getMeter(String name) {
     return metricRegistry.meter(name);
+  }
+
+  /**
+   * get all Meters with same prefix
+   * @param key prefix String
+   */
+  public static SortedMap<String, Meter> getMeters(String key) {
+    return metricRegistry.getMeters((s, metric) -> s.startsWith(key));
   }
 
   /**
@@ -94,4 +112,20 @@ public class MetricsUtil {
     rateInfo.setFifteenMinuteRate(meter.getFifteenMinuteRate());
     return rateInfo;
   }
+
+  /**
+   * get rate info.
+   * @param meter Meter
+   * @return RateInfo
+   */
+  public static RateInfo getRateInfo(Meter meter) {
+    RateInfo rateInfo = new RateInfo();
+    rateInfo.setCount(meter.getCount());
+    rateInfo.setMeanRate(meter.getMeanRate());
+    rateInfo.setOneMinuteRate(meter.getOneMinuteRate());
+    rateInfo.setFiveMinuteRate(meter.getFiveMinuteRate());
+    rateInfo.setFifteenMinuteRate(meter.getFifteenMinuteRate());
+    return rateInfo;
+  }
+
 }

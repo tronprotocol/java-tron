@@ -2,6 +2,7 @@ package org.tron.core.metrics.net;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -68,30 +69,36 @@ public class NetMetricManager {
     RateInfo FailQPS = MetricsUtil.getRateInfo(MetricsKey.NET_API_FAIL_QPS);
     apiInfo.setFailQps(FailQPS);
 
-    RateInfo totalOutTraffic = MetricsUtil.getRateInfo(MetricsKey.NET_API_TOTAL_OUT_TRAFFIC);
+    RateInfo totalOutTraffic = MetricsUtil.getRateInfo(MetricsKey.NET_API_OUT_TRAFFIC);
     apiInfo.setOutTraffic(totalOutTraffic);
 
 
     List<ApiDetailInfo> apiDetails = new ArrayList<>();
-    for (Map.Entry<String, Set<String>> entry : HttpInterceptor.getEndpointList().entrySet()) {
+    SortedMap<String, Meter> endpointQPSMap
+        = MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_QPS);
+    SortedMap<String, Meter> endpointFailQPSMap
+        = MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_FAIL_QPS);
+    SortedMap<String, Meter> endpointOutTrafficMap
+        = MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC);
+    for (Map.Entry<String, Meter> entry : endpointQPSMap.entrySet()) {
       ApiDetailInfo apiDetail = new ApiDetailInfo();
-      apiDetail.setName(entry.getKey());
-      for (String meterName : entry.getValue()) {
-        if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_QPS)) {
-          RateInfo APIDetailQPS = MetricsUtil.getRateInfo(meterName);
-          apiDetail.setQps(APIDetailQPS);
-        }
-        if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_OUT_TRAFFIC)) {
-          RateInfo APIDetailOutTraffic = MetricsUtil.getRateInfo(meterName);
-          apiDetail.setOutTraffic(APIDetailOutTraffic);
-        }
-        if (meterName.contains(MetricsKey.NET_API_DETAIL_ENDPOINT_FAIL_QPS)) {
-          RateInfo APIDetailFailQPS = MetricsUtil.getRateInfo(meterName);
-          apiDetail.setFailQps(APIDetailFailQPS);
-        }
+      String endpointName = entry.getKey().substring(MetricsKey.NET_API_DETAIL_QPS.length());
+      apiDetail.setName(endpointName);
+      RateInfo APIDetailQPS = MetricsUtil.getRateInfo(entry.getValue());
+      apiDetail.setQps(APIDetailQPS);
+      if (endpointOutTrafficMap.containsKey(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpointName)) {
+        RateInfo APIDetailOutTraffic = MetricsUtil.getRateInfo(endpointOutTrafficMap
+            .get(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpointName));
+        apiDetail.setOutTraffic(APIDetailOutTraffic);
+      }
+      if (endpointFailQPSMap.containsKey(MetricsKey.NET_API_DETAIL_FAIL_QPS + endpointName)) {
+        RateInfo APIDetailFailQps = MetricsUtil.getRateInfo(endpointFailQPSMap
+            .get(MetricsKey.NET_API_DETAIL_FAIL_QPS + endpointName));
+        apiDetail.setFailQps(APIDetailFailQps);
       }
       apiDetails.add(apiDetail);
     }
+
     apiInfo.setDetail(apiDetails);
     netInfo.setApi(apiInfo);
 
@@ -101,10 +108,10 @@ public class NetMetricManager {
     List<DisconnectionDetailInfo> disconnectionDetails =
         new ArrayList<>();
     SortedMap<String, Counter> disconnectionReason
-        = MetricsUtil.getCounters(MetricsKey.NET_DISCONNECTION_REASON);
+        = MetricsUtil.getCounters(MetricsKey.NET_DISCONNECTION_DETAIL);
     for (Map.Entry<String, Counter> entry : disconnectionReason.entrySet()) {
       DisconnectionDetailInfo detail = new DisconnectionDetailInfo();
-      String reason = entry.getKey().substring(MetricsKey.NET_DISCONNECTION_REASON.length());
+      String reason = entry.getKey().substring(MetricsKey.NET_DISCONNECTION_DETAIL.length());
       detail.setReason(reason);
       detail.setCount((int) entry.getValue().getCount());
       disconnectionDetails.add(detail);
@@ -115,18 +122,19 @@ public class NetMetricManager {
     netInfo.setLatency(latencyInfo);
   }
 
+
   private LatencyInfo getBlockLatencyInfo() {
     LatencyInfo latencyInfo = new LatencyInfo();
-    long delay1SCount = MetricsUtil.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".1S")
+    long delay1SCount = MetricsUtil.getCounter(MetricsKey.NET_LATENCY + ".1S")
             .getCount();
     latencyInfo.setDelay1S((int) delay1SCount);
-    long delay2SCount = MetricsUtil.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".2S")
+    long delay2SCount = MetricsUtil.getCounter(MetricsKey.NET_LATENCY + ".2S")
             .getCount();
     latencyInfo.setDelay2S((int) delay2SCount);
-    long delay3SCount = MetricsUtil.getCounter(MetricsKey.NET_BLOCK_LATENCY + ".3S")
+    long delay3SCount = MetricsUtil.getCounter(MetricsKey.NET_LATENCY + ".3S")
             .getCount();
     latencyInfo.setDelay3S((int) delay3SCount);
-    Histogram blockLatency = MetricsUtil.getHistogram(MetricsKey.NET_BLOCK_LATENCY);
+    Histogram blockLatency = MetricsUtil.getHistogram(MetricsKey.NET_LATENCY);
     latencyInfo.setTop99((int) blockLatency.getSnapshot().get99thPercentile());
     latencyInfo.setTop95((int) blockLatency.getSnapshot().get95thPercentile());
     latencyInfo.setTop75((int) blockLatency.getSnapshot().get75thPercentile());
@@ -134,23 +142,23 @@ public class NetMetricManager {
 
     List<LatencyDetailInfo> latencyDetailInfos = new ArrayList<>();
     SortedMap<String, Histogram> witnessLatencyMap
-            = MetricsUtil.getHistograms(MetricsKey.NET_BLOCK_LATENCY_WITNESS);
+            = MetricsUtil.getHistograms(MetricsKey.NET_LATENCY_WITNESS);
     for (Map.Entry<String, Histogram> entry : witnessLatencyMap.entrySet()) {
       LatencyDetailInfo latencyDetailTemp = new LatencyDetailInfo();
-      String address = entry.getKey().substring(MetricsKey.NET_BLOCK_LATENCY_WITNESS.length());
+      String address = entry.getKey().substring(MetricsKey.NET_LATENCY_WITNESS.length());
       latencyDetailTemp.setCount((int) entry.getValue().getCount());
       latencyDetailTemp.setWitness(address);
       latencyDetailTemp.setTop99((int) entry.getValue().getSnapshot().get99thPercentile());
       latencyDetailTemp.setTop95((int) entry.getValue().getSnapshot().get95thPercentile());
       latencyDetailTemp.setTop75((int) entry.getValue().getSnapshot().get75thPercentile());
       long witnessDelay1S = MetricsUtil.getCounter(
-              MetricsKey.NET_BLOCK_LATENCY_WITNESS + address + ".1S").getCount();
+              MetricsKey.NET_LATENCY_WITNESS + address + ".1S").getCount();
       latencyDetailTemp.setDelay1S((int) witnessDelay1S);
       long witnessDelay2S = MetricsUtil.getCounter(
-              MetricsKey.NET_BLOCK_LATENCY_WITNESS + address + ".2S").getCount();
+              MetricsKey.NET_LATENCY_WITNESS + address + ".2S").getCount();
       latencyDetailTemp.setDelay2S((int) witnessDelay2S);
       long witnessDelay3S = MetricsUtil.getCounter(
-              MetricsKey.NET_BLOCK_LATENCY_WITNESS + address + ".3S").getCount();
+              MetricsKey.NET_LATENCY_WITNESS + address + ".3S").getCount();
       latencyDetailTemp.setDelay3S((int) witnessDelay3S);
       latencyDetailInfos.add(latencyDetailTemp);
     }
