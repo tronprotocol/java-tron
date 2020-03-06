@@ -94,17 +94,17 @@ public class BlockChainMetricManager {
 
     //latency
     long netTime = nowTime - block.getTimeStamp();
-    MetricsUtil.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY, netTime);
-    MetricsUtil.histogramUpdate(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress, netTime);
+    MetricsUtil.histogramUpdate(MetricsKey.NET_LATENCY, netTime);
+    MetricsUtil.histogramUpdate(MetricsKey.NET_LATENCY_WITNESS + witnessAddress, netTime);
     if (netTime >= 3000) {
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".3S", 1L);
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".3S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY + ".3S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY_WITNESS + witnessAddress + ".3S", 1L);
     } else if (netTime >= 2000) {
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".2S", 1L);
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".2S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY + ".2S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY_WITNESS + witnessAddress + ".2S", 1L);
     } else if (netTime >= 1000) {
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY + ".1S", 1L);
-      MetricsUtil.counterInc(MetricsKey.NET_BLOCK_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY + ".1S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
     }
 
     //TPS
