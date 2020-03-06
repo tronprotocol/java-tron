@@ -13,7 +13,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
@@ -78,9 +77,6 @@ public class FullNode {
     if (CommonParameter.getInstance().fullNodeHttpEnable) {
       appT.addService(httpApiService);
     }
-
-    // set start time
-    MetricsUtil.setStartTime(System.currentTimeMillis());
 
     // full node and solidity node fuse together
     // provide solidity rpc and http server on the full node.

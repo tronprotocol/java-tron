@@ -14,6 +14,7 @@ import org.tron.core.metrics.node.NodeMetricManager;
 @Component
 public class MetricsApiService {
 
+  private static final long time = System.currentTimeMillis();
   @Autowired
   private BlockChainMetricManager blockChainMetricManager;
 
@@ -32,7 +33,7 @@ public class MetricsApiService {
 
     MetricsInfo metricsInfo = new MetricsInfo();
 
-    metricsInfo.setInterval(MetricsUtil.getInterval());
+    metricsInfo.setInterval((System.currentTimeMillis() - time) / 1000);
 
     NodeInfo nodeInfo = nodeMetricManager.getNodeInfo();
     metricsInfo.setNode(nodeInfo);
