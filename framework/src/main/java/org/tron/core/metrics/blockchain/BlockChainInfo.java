@@ -8,7 +8,7 @@ import org.tron.core.metrics.net.RateInfo;
 @Slf4j(topic = "blockChainInfo")
 
 public class BlockChainInfo {
-  private int headBlockNum;
+  private long headBlockNum;
   private long headBlockTimestamp;
   private String headBlockHash;
   private int forkCount;
@@ -22,11 +22,11 @@ public class BlockChainInfo {
   private String failProcessBlockReason;
   private List<DupWitnessInfo> dupWitness;
 
-  public int getHeadBlockNum() {
+  public long getHeadBlockNum() {
     return headBlockNum;
   }
 
-  public void setHeadBlockNum(int headBlockNum) {
+  public void setHeadBlockNum(long headBlockNum) {
     this.headBlockNum = headBlockNum;
   }
 
