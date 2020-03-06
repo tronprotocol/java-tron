@@ -131,7 +131,7 @@ public class BlockChainMetricManager {
 
 
   public int getForkCount() {
-    return (int) MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN__FORK_COUNT).getCount();
+    return (int) MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_FORK_COUNT).getCount();
   }
 
   public int getFailForkCount() {
