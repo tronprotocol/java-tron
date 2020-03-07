@@ -10,7 +10,7 @@ public class MetricsKey {
   public static final String BLOCKCHAIN_DUP_WITNESS = "blockchain.dupWitness.";
   public static final String NET_LATENCY = "net.latency";
   public static final String NET_LATENCY_WITNESS = "net.latency.witness.";
-  public static final String NET_DISCONNECTION_COUNT = "net.disconnection.count";
+  public static final String NET_DISCONNECTION_COUNT = "net.disconnectionCount";
   public static final String NET_DISCONNECTION_DETAIL = "net.disconnectionDetail.";
   public static final String NET_ERROR_PROTO_COUNT = "net.errorProtoCount";
   public static final String NET_TCP_IN_TRAFFIC = "net.tcpInTraffic";

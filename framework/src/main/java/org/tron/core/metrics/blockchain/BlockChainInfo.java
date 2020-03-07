@@ -1,11 +1,7 @@
 package org.tron.core.metrics.blockchain;
 
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.tron.core.metrics.net.RateInfo;
-
-@Slf4j(topic = "blockChainInfo")
 
 public class BlockChainInfo {
   private long headBlockNum;
@@ -126,8 +122,5 @@ public class BlockChainInfo {
     this.dupWitness = dupWitness;
   }
 
-  public static Logger getLogger() {
-    return logger;
-  }
 }
 
