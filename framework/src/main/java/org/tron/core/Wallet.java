@@ -1612,16 +1612,7 @@ public class Wallet {
     }
 
     // output
-    for (ReceiveNote receiveNote : shieldedReceives) {
-      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
-          receiveNote.getNote().getPaymentAddress());
-      if (paymentAddress == null) {
-        throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
-      }
-      builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
-          receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
-          receiveNote.getNote().getMemo().toByteArray());
-    }
+    ShieldedTransactionOutput(shieldedReceives, builder, ovk);
 
     TransactionCapsule transactionCapsule = null;
     try {
@@ -1719,16 +1710,7 @@ public class Wallet {
     }
 
     // output
-    for (ReceiveNote receiveNote : shieldedReceives) {
-      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
-          receiveNote.getNote().getPaymentAddress());
-      if (paymentAddress == null) {
-        throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
-      }
-      builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
-          receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
-          receiveNote.getNote().getMemo().toByteArray());
-    }
+    ShieldedTransactionOutput(shieldedReceives, builder, ovk);
 
     TransactionCapsule transactionCapsule = null;
     try {
@@ -1739,6 +1721,21 @@ public class Wallet {
     }
     return transactionCapsule;
 
+  }
+  
+  private void ShieldedTransactionOutput (List<ReceiveNote> shieldedReceives,
+                                          ZenTransactionBuilder builder,
+                                          byte[] ovk) throws ZksnarkException {
+    for (ReceiveNote receiveNote : shieldedReceives) {
+      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
+              receiveNote.getNote().getPaymentAddress());
+      if (paymentAddress == null) {
+        throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
+      }
+      builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
+              receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
+              receiveNote.getNote().getMemo().toByteArray());
+    }
   }
 
 
