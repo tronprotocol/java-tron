@@ -31,29 +31,25 @@ public class PendingManager implements AutoCloseable {
   public void close() {
 
     for (TransactionCapsule tx : tmpTransactions) {
-      try {
-        if (tx.getTrxTrace() != null
-            && tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {
-          dbManager.getRePushTransactions().put(tx);
-        }
-      } catch (InterruptedException e) {
-        logger.error(e.getMessage());
-        Thread.currentThread().interrupt();
-      }
+      TxIteration(tx);
     }
     tmpTransactions.clear();
 
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
-      try {
-        if (tx.getTrxTrace() != null
-            && tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {
-          dbManager.getRePushTransactions().put(tx);
-        }
-      } catch (InterruptedException e) {
-        logger.error(e.getMessage());
-        Thread.currentThread().interrupt();
-      }
+      TxIteration(tx);
     }
     dbManager.getPoppedTransactions().clear();
+  }
+  
+  private void TxIteration(TransactionCapsule tx) {
+    try {
+      if (tx.getTrxTrace() != null
+              && tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {
+        dbManager.getRePushTransactions().put(tx);
+      }
+    } catch (InterruptedException e) {
+      logger.error(e.getMessage());
+      Thread.currentThread().interrupt();
+    }
   }
 }
