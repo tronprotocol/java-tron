@@ -7,10 +7,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteOptions;
 import org.rocksdb.BlockBasedTableConfig;
@@ -89,13 +91,16 @@ public class DbTool {
    * Close the dbs.
    */
   public static void close() {
-    dbMap.forEach((key, value) -> {
+    Iterator<Map.Entry<String, DBInterface>> iterator = dbMap.entrySet().iterator();
+    while (iterator.hasNext()) {
+      Map.Entry<String, DBInterface> next = iterator.next();
       try {
-        value.close();
-      } catch (IOException ex) {
-        ex.printStackTrace();
+        next.getValue().close();
+      } catch (IOException e) {
+        e.printStackTrace();
       }
-    });
+      iterator.remove();
+    }
   }
 
   private static DbType getDbType(String sourceDir, String dbName) {

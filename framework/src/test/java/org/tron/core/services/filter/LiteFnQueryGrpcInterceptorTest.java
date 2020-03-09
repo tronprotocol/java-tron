@@ -50,7 +50,6 @@ public class LiteFnQueryGrpcInterceptorTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    //private String fullnode = Configuration.getByPath(Constant.TEST_CONF).getString("node.trustNode");
     String fullnode = String.format("%s:%d", Args.getInstance().getNodeDiscoveryBindIp(),
             Args.getInstance().getRpcPort());
     channelFull = ManagedChannelBuilder.forTarget(fullnode)

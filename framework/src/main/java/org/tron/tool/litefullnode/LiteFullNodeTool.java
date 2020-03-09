@@ -41,6 +41,7 @@ public class LiteFullNodeTool {
   private static final String BACKUP_DIR_PREFIX = ".bak_";
   private static final String CHECKPOINT_DB = "tmp";
   private static final long VM_NEED_RECENT_bLKS = 256;
+
   private static List<String> archiveDbs = Arrays.asList(
           "block", "block-index", "trans", "transactionRetStore", "transactionHistoryStore");
   private static List<String> snapshotDbs = Arrays.asList(
@@ -168,7 +169,7 @@ public class LiteFullNodeTool {
     logger.info("begin to split the dbs.");
     System.out.println("-- begin to split the dbs.");
     if (!new File(sourceDir).isDirectory()) {
-      throw new RuntimeException("sourceDir must be a directory");
+      throw new RuntimeException("sourceDir must be a directory, sourceDir: " + sourceDir);
     }
     File destPath = new File(destDir);
     if (new File(destDir).exists()) {
@@ -263,8 +264,8 @@ public class LiteFullNodeTool {
           byte[] blockId = null;
           byte[] block = null;
           try {
-            blockId = getDateFromSourceDB(sourceDir, "block-index", Longs.toByteArray(blockNum));
-            block = getDateFromSourceDB(sourceDir, "block", blockId);
+            blockId = getDataFromSourceDB(sourceDir, "block-index", Longs.toByteArray(blockNum));
+            block = getDataFromSourceDB(sourceDir, "block", blockId);
           } catch (IOException | RocksDBException e) {
             throw new RuntimeException(e.getMessage());
           }
@@ -293,8 +294,8 @@ public class LiteFullNodeTool {
           byte[] blockId = null;
           byte[] block = null;
           try {
-            blockId = getDateFromSourceDB(sourceDir, "block-index", Longs.toByteArray(blockNum));
-            block = getDateFromSourceDB(sourceDir, "block", blockId);
+            blockId = getDataFromSourceDB(sourceDir, "block-index", Longs.toByteArray(blockNum));
+            block = getDataFromSourceDB(sourceDir, "block", blockId);
           } catch (IOException | RocksDBException e) {
             throw new RuntimeException(e.getMessage());
           }
@@ -423,7 +424,7 @@ public class LiteFullNodeTool {
     }
   }
 
-  private byte[] getDateFromSourceDB(String sourceDir, String dbName, byte[] key)
+  private byte[] getDataFromSourceDB(String sourceDir, String dbName, byte[] key)
           throws IOException, RocksDBException {
     DBInterface sourceDb = DbTool.getDB(sourceDir, dbName);
     DBInterface checkpointDb = DbTool.getDB(sourceDir, "tmp");
