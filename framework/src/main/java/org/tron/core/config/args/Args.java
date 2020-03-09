@@ -152,7 +152,7 @@ public class Args extends CommonParameter {
     PARAMETER.changedDelegation = 0;
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
-    PARAMETER.nodeMetricsEnable = false;
+    PARAMETER.nodeMetricsEnable = true;
   }
 
   /**
