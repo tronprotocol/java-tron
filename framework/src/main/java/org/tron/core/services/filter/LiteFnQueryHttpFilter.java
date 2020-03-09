@@ -18,7 +18,12 @@ import org.tron.common.parameter.CommonParameter;
 @Slf4j(topic = "API")
 public class LiteFnQueryHttpFilter implements Filter {
 
-  public static Set<String> filterPaths = Sets.newHashSet();
+  private static Set<String> filterPaths = Sets.newHashSet();
+
+  // for test
+  public static Set<String> getFilterPaths() {
+    return filterPaths;
+  }
 
   static {
     // base path: /wallet
@@ -76,6 +81,5 @@ public class LiteFnQueryHttpFilter implements Filter {
 
   @Override
   public void destroy() {
-
   }
 }

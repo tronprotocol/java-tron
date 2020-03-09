@@ -19,6 +19,7 @@ import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
@@ -102,7 +103,6 @@ public class LiteFullNodeToolTest {
    * shutdown the fullnode.
    */
   public void shutdown() {
-    // Args.clearParam();
     appTest.shutdownServices();
     appTest.shutdown();
     context.destroy();
@@ -116,6 +116,8 @@ public class LiteFullNodeToolTest {
 
   @Test
   public void testToolsWithRocksDB() {
+    // init dbBackupConfig to avoid NPE
+    Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
     testTools("ROCKSDB");
     destory();
   }
@@ -137,8 +139,16 @@ public class LiteFullNodeToolTest {
     generateSomeTransactions(10);
     // stop the node
     shutdown();
+    // delete tran-cache
+    FileUtil.deleteDir(Paths.get(dbPath, databaseDir, "trans-cache").toFile());
     // generate snapshot
     LiteFullNodeTool.main(argsForSnapshot);
+    // start fullnode
+    startApp();
+    // produce transactions for 10 seconds
+    generateSomeTransactions(4);
+    // stop the node
+    shutdown();
     // generate history
     LiteFullNodeTool.main(argsForHistory);
     // backup original database to database_bak

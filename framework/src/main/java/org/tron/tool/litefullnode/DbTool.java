@@ -72,6 +72,12 @@ public class DbTool {
     return db;
   }
 
+  /**
+   * Close db.
+   * @param sourceDir db parentPath
+   * @param dbName db dirname
+   * @throws IOException IOException
+   */
   public static void closeDB(String sourceDir, String dbName)
           throws IOException {
     Path path = Paths.get(sourceDir, dbName);
@@ -88,7 +94,7 @@ public class DbTool {
   }
 
   /**
-   * Close the dbs.
+   * Close all dbs.
    */
   public static void close() {
     Iterator<Map.Entry<String, DBInterface>> iterator = dbMap.entrySet().iterator();

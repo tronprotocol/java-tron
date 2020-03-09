@@ -14,7 +14,12 @@ import org.tron.common.parameter.CommonParameter;
 @Component
 public class LiteFnQueryGrpcInterceptor implements ServerInterceptor {
 
-  public static final Set<String> filterMethods = Sets.newHashSet();
+  private static final Set<String> filterMethods = Sets.newHashSet();
+
+  // for test
+  public static Set<String> getFilterMethods() {
+    return filterMethods;
+  }
 
   static {
     // wallet

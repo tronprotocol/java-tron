@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.RocksDBException;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -460,7 +461,7 @@ public class LiteFullNodeTool {
   }
 
   private void run(Args argv) {
-    if (argv.fnDataPath.isEmpty() || argv.datasetPath.isEmpty()) {
+    if (StringUtils.isBlank(argv.fnDataPath) || StringUtils.isBlank(argv.datasetPath)) {
       throw new ParameterException("fnDataPath or datasetPath can't be null");
     }
     switch (argv.operate) {
