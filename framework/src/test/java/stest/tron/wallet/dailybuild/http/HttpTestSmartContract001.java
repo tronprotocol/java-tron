@@ -213,8 +213,14 @@ public class HttpTestSmartContract001 {
       Assert.assertEquals(2, responseContentByBlocknum.size());
       HttpMethed.printJsonContent(responseContentByBlocknum.get(0));
       HttpMethed.printJsonContent(responseContentByBlocknum.get(1));
-      Assert.assertEquals(responseContent, responseContentByBlocknum.get(0));
-      Assert.assertEquals(responseContent2, responseContentByBlocknum.get(1));
+      if (responseContent.getString("id")
+          .equals(responseContentByBlocknum.get(0).getString("id"))) {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(0));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(1));
+      } else {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(1));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(0));
+      }
     }
   }
 
@@ -252,8 +258,14 @@ public class HttpTestSmartContract001 {
       Assert.assertEquals(2, responseContentByBlocknum.size());
       HttpMethed.printJsonContent(responseContentByBlocknum.get(0));
       HttpMethed.printJsonContent(responseContentByBlocknum.get(1));
-      Assert.assertEquals(responseContent, responseContentByBlocknum.get(0));
-      Assert.assertEquals(responseContent2, responseContentByBlocknum.get(1));
+      if (responseContent.getString("id")
+          .equals(responseContentByBlocknum.get(0).getString("id"))) {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(0));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(1));
+      } else {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(1));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(0));
+      }
     }
   }
 
@@ -291,8 +303,14 @@ public class HttpTestSmartContract001 {
       Assert.assertEquals(2, responseContentByBlocknum.size());
       HttpMethed.printJsonContent(responseContentByBlocknum.get(0));
       HttpMethed.printJsonContent(responseContentByBlocknum.get(1));
-      Assert.assertEquals(responseContent, responseContentByBlocknum.get(0));
-      Assert.assertEquals(responseContent2, responseContentByBlocknum.get(1));
+      if (responseContent.getString("id")
+          .equals(responseContentByBlocknum.get(0).getString("id"))) {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(0));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(1));
+      } else {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(1));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(0));
+      }
     }
   }
 
