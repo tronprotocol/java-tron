@@ -31,17 +31,17 @@ public class PendingManager implements AutoCloseable {
   public void close() {
 
     for (TransactionCapsule tx : tmpTransactions) {
-      TxIteration(tx);
+      txIteration(tx);
     }
     tmpTransactions.clear();
 
     for (TransactionCapsule tx : dbManager.getPoppedTransactions()) {
-      TxIteration(tx);
+      txIteration(tx);
     }
     dbManager.getPoppedTransactions().clear();
   }
   
-  private void TxIteration(TransactionCapsule tx) {
+  private void txIteration(TransactionCapsule tx) {
     try {
       if (tx.getTrxTrace() != null
               && tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {
