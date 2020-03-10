@@ -116,6 +116,7 @@ public class DelegationService {
       beginCycle += 1;
     }
     //
+    delegationStore.setLastWithdrawCycle(currentCycle, address);
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
       delegationStore.setRemark(endCycle, address);

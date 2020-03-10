@@ -2293,6 +2293,43 @@ public class Wallet {
     return null;
   }
 
+  public HashMap<String, Long> computeUnwithdrawReward(byte[] address) {
+    HashMap<String, Long> rewardMap = new HashMap<>();
+    long beginCycle =  dbManager.getDelegationStore()
+        .getLastWithdrawCycle(address) + 1;
+    long endCycle =    dbManager.getDynamicPropertiesStore()
+        .getCurrentCycleNumber();
+    if (address.length == 0) {
+      return rewardMap;
+    }
+
+    for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+      List<Vote> voteList = getVoteList(address, cycle);
+      if (voteList != null) {
+        for (Vote vote : voteList) {
+          byte[] srAddress = vote.getVoteAddress().toByteArray();
+          long totalReward = dbManager.getDelegationStore().getReward(cycle, srAddress);
+          long totalVote = dbManager.getDelegationStore()
+              .getWitnessVote(cycle, srAddress);
+          if (totalVote == DelegationStore.REMARK || totalVote == 0) {
+            continue;
+          }
+          long userVote = vote.getVoteCount();
+          double voteRate = (double) userVote / totalVote;
+          String SR = StringUtil
+              .encode58Check(srAddress);
+          if (rewardMap.containsKey(SR) == false) {
+            rewardMap.put(SR, (long)(voteRate * totalReward));
+          } else {
+            long reward = rewardMap.get(SR) + (long)(voteRate * totalReward);
+            rewardMap.put(SR, reward);
+          }
+        }
+      }
+    }
+    return rewardMap;
+  }
+
   public HashMap<String, Long> computeRewardByTimeStamp(byte[] address,
       long startTimeStamp, long endTimeStamp) {
     HashMap<String, Long> rewardMap = new HashMap<>();
