@@ -29,11 +29,13 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
       long startTimeStamp = Util
           .getJsonLongValue(jsonObject, "startTimeStamp", true);
       long endTimeStamp = Util.getJsonLongValue(jsonObject, "endTimeStamp", true);
+//当时的
 
-      int rewardOfVoteEachBlock = 160;
-      int rewardOfBlockEachBlock = 16;
-      int srNumber = 27;
+      long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock();
+      long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock();
+      int srNumber = wallet.getSrNumber();
       int blockNumberEachDay = 28792;
+
       double totalVote;
       double srVote;
       double ratio;

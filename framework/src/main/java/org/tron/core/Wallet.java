@@ -2613,8 +2613,20 @@ public class Wallet {
         srRatio += dbManager.getDelegationStore().getBrokerage(cycle, address);
       }
     }
-//    srRatio = brokerage / (endCycle - beginCycle);
+    srRatio = srRatio / (endCycle - beginCycle);
     return srRatio/100;
+  }
+
+  public long getRewardOfVoteEachBlock() {
+    return dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock();
+  }
+
+  public long getRewardOfBlockEachBlock() {
+    return dbManager.getDynamicPropertiesStore().getWitnessPayPerBlock();
+  }
+
+  public int getSrNumber() {
+    return dbManager.getWitnessStore().getAllWitnesses().size();
   }
 }
 
