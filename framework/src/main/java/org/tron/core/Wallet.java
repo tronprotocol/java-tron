@@ -1612,7 +1612,7 @@ public class Wallet {
     }
 
     // output
-    ShieldedTransactionOutput(shieldedReceives, builder, ovk);
+    shieldedOutput(shieldedReceives, builder, ovk);
 
     TransactionCapsule transactionCapsule = null;
     try {
@@ -1710,7 +1710,7 @@ public class Wallet {
     }
 
     // output
-    ShieldedTransactionOutput(shieldedReceives, builder, ovk);
+    shieldedOutput(shieldedReceives, builder, ovk);
 
     TransactionCapsule transactionCapsule = null;
     try {
@@ -1723,7 +1723,7 @@ public class Wallet {
 
   }
   
-  private void ShieldedTransactionOutput (List<ReceiveNote> shieldedReceives,
+  private void shieldedOutput(List<ReceiveNote> shieldedReceives,
                                           ZenTransactionBuilder builder,
                                           byte[] ovk) throws ZksnarkException {
     for (ReceiveNote receiveNote : shieldedReceives) {
