@@ -18,7 +18,8 @@ public class MetricsApiServiceTest {
     Assert.assertEquals(30,
         MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME).getCount());
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME, 20);
-    TimeUnit.SECONDS.sleep(59);
+    Thread.sleep(59000);
+    // TimeUnit.SECONDS.sleep(59);
     // meanRate
     MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME, 10);
     Assert.assertEquals(1.0,
@@ -64,10 +65,6 @@ public class MetricsApiServiceTest {
         0.1);
   }
 
-
-  @Test
-  public void MonitorApiIntervalTest() throws InterruptedException {
-  }
 
 
 }
