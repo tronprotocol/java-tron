@@ -6,7 +6,6 @@ import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Paths;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -46,23 +45,10 @@ public class LiteFullNodeToolTest {
   private RpcApiServiceOnSolidity rpcApiServiceOnSolidity;
   private Application appTest;
 
-  private static String dbPath = "output_lite_fn_test";
   private String databaseDir;
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
-
-
-  /**
-   * init.
-   */
-  @Before
-  public void init() {
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-localtest.conf");
-    // allow account root
-    Args.getInstance().setAllowAccountStateRoot(1);
-    databaseDir = Args.getInstance().getStorage().getDbDirectory();
-  }
 
   /**
    * init logic.
@@ -91,7 +77,7 @@ public class LiteFullNodeToolTest {
   /**
    *  Delete the database when exit.
    */
-  public static void destory() {
+  public static void destory(String dbPath) {
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
@@ -110,19 +96,29 @@ public class LiteFullNodeToolTest {
 
   @Test
   public void testToolsWithLevelDB() {
-    testTools("LEVELDB");
-    destory();
+    String dbPath = "output_lite_fn_leveldb_test";
+    Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-localtest.conf");
+    // allow account root
+    Args.getInstance().setAllowAccountStateRoot(1);
+    databaseDir = Args.getInstance().getStorage().getDbDirectory();
+    testTools("LEVELDB", dbPath);
+    destory(dbPath);
   }
 
   @Test
   public void testToolsWithRocksDB() {
+    String dbPath = "output_lite_fn_rocksdb_test";
+    Args.setParam(new String[]{"-d", dbPath, "-w"}, "config-localtest.conf");
+    // allow account root
+    Args.getInstance().setAllowAccountStateRoot(1);
+    databaseDir = Args.getInstance().getStorage().getDbDirectory();
     // init dbBackupConfig to avoid NPE
     Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
-    testTools("ROCKSDB");
-    destory();
+    testTools("ROCKSDB", dbPath);
+    destory(dbPath);
   }
 
-  private void testTools(String dbType) {
+  private void testTools(String dbType, String dbPath) {
     final String[] argsForSnapshot =
         new String[]{"-o", "split", "-t", "snapshot", "--fn-data-path",
             dbPath + File.separator + databaseDir, "--dataset-path", dbPath};

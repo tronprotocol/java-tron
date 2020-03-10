@@ -47,6 +47,7 @@ public class LiteFnQueryHttpFilterTest {
   @Before
   public void init() {
     Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
+    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(false);
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
     FullNodeHttpApiService httpApiService = context

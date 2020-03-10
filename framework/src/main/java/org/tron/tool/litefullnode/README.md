@@ -4,13 +4,12 @@
 
 Lite FullNode Tool is used to split the database of a FullNode into a `Snapshot dataset` and a `History dataset`.
 
-- `Snapshot dataset`: contains a minimum dataset for quick startup of the Lite FullNode.
-- `History dataset`: contains the archive dataset that used for historical data queries.
+- `Snapshot dataset`: the minimum dataset for quick startup of the Lite FullNode.
+- `History dataset`: the archive dataset that used for historical data queries.
 
-Remember stop the FullNode process before any operation. As to get a `History dataset` may take a very long time,
-This tool provides the ability to specify which dataset to split. All the two datasets are split by the `latest_block_number`.
-Lite FullNode that startup by `Snapshot` does not support query the historical data behind the `latest_block_number`,
-this tool also provides a merge function that can merge `History` into the database of Lite FullNode. For more API details: [HTTP&GRPC APIs](#HTTP&GRPC-APIs)
+Remember stop the FullNode process before any operation. This tool provides the ability to specify which dataset to split.
+The two datasets are split by the `latest_block_number`. Lite FullNode that startup by `Snapshot dataset` does not support query the historical data behind the `latest_block_number`,
+this tool also provides a merge function that can merge `History dataset` into the database of Lite FullNode. For more API details: [HTTP&GRPC APIs](#HTTP&GRPC-APIs)
 
 For more design details, please refer to: [TIP128](https://github.com/tronprotocol/tips/issues/128)
 
@@ -39,7 +38,7 @@ First, stop the FullNode and execute:
 java -jar LiteFullNodeTool.jar -o split -t snapshot --fn-data-path output-directory/database --dataset-path /tmp
 ```
 then a `snapshot` directory will be generated in `/tmp`, pack this directory and copy it to somewhere that is ready to run a Lite Fullnode.
-Do not forget the rename the directory `snapshot` to `database`.
+Do not forget rename the directory from `snapshot` to `database`.
 (the default value of the storage.db.directory is `database`, make sure rename the snapshot to the specified value)
 
 #### Split a `History`
@@ -55,9 +54,9 @@ A `history` directory will be generated in `/tmp`, pack this directory and copy 
 #### Merge
 
 Both `History Dataset` and `Snapshot Dataset` have an info.properties file to identify the block height from which they are segmented.
-Make sure that the `split_block_num` in `History Dataset`is not less than the corresponding value in the `Snapshot Dataset`.
+Make sure that the `split_block_num` in `History Dataset` is not less than the corresponding value in the `Snapshot Dataset`.
 
-After copy the `History dataset`, the Lite FullNode can merge the `History dataset` and become a real FullNode.
+After getting the `History dataset`, the Lite FullNode can merge the `History dataset` and become a real FullNode.
 ```
 // just for simplify, assume `History dataset` is locate in /tmp
 java -jar LiteFullNodeTool.jar -o merge --fn-data-path output-directory/database --dataset-path /tmp/history

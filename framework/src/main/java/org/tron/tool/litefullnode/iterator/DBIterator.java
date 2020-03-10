@@ -4,15 +4,15 @@ import java.io.Closeable;
 
 public interface DBIterator extends Closeable {
 
-  public void seek(byte[] key);
+  void seek(byte[] key);
 
-  public void seekToFirst();
+  void seekToFirst();
 
-  public boolean hasNext();
+  boolean hasNext();
 
-  public byte[] getKey();
+  byte[] getKey();
 
-  public byte[] getValue();
+  byte[] getValue();
 
-  public void next();
+  void next();
 }

@@ -30,9 +30,8 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   private Multimap<Long, Key> blockNumMap = ArrayListMultimap.create();
   private String name;
 
-  // add a persistent storage, just for now the store name is: trans-cache
-  // when fullnode startup, transactionCache will  read transations from this store
-  // instead of blockStore
+  // add a persistent storage, the store name is: trans-cache
+  // when fullnode startup, transactionCache initializes transactions from this store
   private DB<byte[], byte[]> persistentStore;
 
   public TxCacheDB(String name) {
@@ -67,8 +66,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   /**
-   * this method only used for init, put all data from tran-cache into the two map,
-   * does not check the map.size()
+   * this method only used for init, put all data in tran-cache into the two maps.
    */
   private void init() {
     DBIterator iterator = (DBIterator) persistentStore.iterator();
@@ -102,7 +100,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     Long v = Longs.fromByteArray(value);
     blockNumMap.put(v, k);
     db.put(k, v);
-    // also put the data into persistent storage
+    // put the data into persistent storage
     persistentStore.put(key, value);
     removeEldest();
   }

@@ -11,7 +11,7 @@ public class Constant {
   public static final String DATABASE_DIR = "storage.directory";
 
   // locate in storageDbDirectory, store the db infos,
-  // now only has the snapshot block number
+  // now only has the split block number
   public static final String INFO_FILE_NAME = "info.properties";
   // the block number that split between the snapshot and history
   public static final String SPLIT_BLOCK_NUM = "split_block_num";

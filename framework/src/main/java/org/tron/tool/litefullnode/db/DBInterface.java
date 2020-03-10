@@ -6,16 +6,16 @@ import org.tron.tool.litefullnode.iterator.DBIterator;
 
 public interface DBInterface extends Closeable {
 
-  public byte[] get(byte[] key);
+  byte[] get(byte[] key);
 
-  public void put(byte[] key, byte[] value);
+  void put(byte[] key, byte[] value);
 
-  public void delete(byte[] key);
+  void delete(byte[] key);
 
-  public DBIterator iterator();
+  DBIterator iterator();
 
-  public long size();
+  long size();
 
-  public void close() throws IOException;
+  void close() throws IOException;
 
 }

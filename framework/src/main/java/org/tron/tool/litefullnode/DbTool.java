@@ -28,9 +28,10 @@ public class DbTool {
 
   private static final String KEY_ENGINE = "ENGINE";
   private static final String ENGINE_FILE = "engine.properties";
+  private static final String FILE_SEPARATOR = File.separator;
+  private static final String ROCKSDB = "ROCKSDB";
 
   private static Map<String, DBInterface> dbMap = Maps.newHashMap();
-  private static DbType type;
 
   enum DbType {
     LevelDB,
@@ -55,7 +56,7 @@ public class DbTool {
     if (dbMap.containsKey(path.toString())) {
       return dbMap.get(path.toString());
     }
-    type = getDbType(sourceDir, dbName);
+    DbType type = getDbType(sourceDir, dbName);
     DBInterface db;
     switch (type) {
       case LevelDB:
@@ -103,20 +104,20 @@ public class DbTool {
       try {
         next.getValue().close();
       } catch (IOException e) {
-        e.printStackTrace();
+        logger.error("close db failed, db: {}", next.getKey(), e);
       }
       iterator.remove();
     }
   }
 
   private static DbType getDbType(String sourceDir, String dbName) {
-    String engineFile = String.format("%s%s%s%s%s", sourceDir, File.separator,
-            dbName, File.separator, ENGINE_FILE);
+    String engineFile = String.format("%s%s%s%s%s", sourceDir, FILE_SEPARATOR,
+            dbName, FILE_SEPARATOR, ENGINE_FILE);
     if (!new File(engineFile).exists()) {
       return DbType.LevelDB;
     }
     String engine = PropUtil.readProperty(engineFile, KEY_ENGINE);
-    if (engine.equalsIgnoreCase("ROCKSDB")) {
+    if (engine.equalsIgnoreCase(ROCKSDB)) {
       return DbType.RocksDB;
     } else {
       return DbType.LevelDB;

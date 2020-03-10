@@ -59,6 +59,7 @@ public class LiteFnQueryHttpFilter implements Filter {
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
+    // do nothing
   }
 
   @Override
@@ -67,10 +68,9 @@ public class LiteFnQueryHttpFilter implements Filter {
     String requestPath = ((HttpServletRequest) servletRequest).getRequestURI();
     boolean shouldBeFiltered = false;
     if (CommonParameter.getInstance().isLiteFullNode
-            && !CommonParameter.getInstance().openHistoryQueryWhenLiteFN) {
-      if (filterPaths.contains(requestPath)) {
-        shouldBeFiltered = true;
-      }
+            && !CommonParameter.getInstance().openHistoryQueryWhenLiteFN
+            && filterPaths.contains(requestPath)) {
+      shouldBeFiltered = true;
     }
     if (shouldBeFiltered) {
       servletResponse.getWriter().write("this API is closed because this node is a lite fullnode");
@@ -81,5 +81,6 @@ public class LiteFnQueryHttpFilter implements Filter {
 
   @Override
   public void destroy() {
+    // do nothing
   }
 }

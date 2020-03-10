@@ -59,13 +59,11 @@ public class LiteFnQueryGrpcInterceptor implements ServerInterceptor {
   @Override
   public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
       Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-    String methodName = call.getMethodDescriptor().getFullMethodName();
     boolean shouldBeFiltered = false;
     if (CommonParameter.getInstance().isLiteFullNode
-            && !CommonParameter.getInstance().openHistoryQueryWhenLiteFN) {
-      if (filterMethods.contains(methodName)) {
-        shouldBeFiltered = true;
-      }
+            && !CommonParameter.getInstance().openHistoryQueryWhenLiteFN
+            && filterMethods.contains(call.getMethodDescriptor().getFullMethodName())) {
+      shouldBeFiltered = true;
     }
     if (shouldBeFiltered) {
       call.close(Status.UNAVAILABLE
