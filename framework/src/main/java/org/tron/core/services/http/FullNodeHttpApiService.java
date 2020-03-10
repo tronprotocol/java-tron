@@ -421,8 +421,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getSRPayByTimeStampServlet), "/getSRPayByTimeStamp");
       context.addServlet(new ServletHolder(getSRRewardByTimeStampServlet),
           "/getSRRewardByTimeStamp");
-      context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet), "/getAccountLastUnwithdrawRewarD");
       context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet), "/getSRAnnualizedRateOfReturnServlet");
+      context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet), "/getAccountLastUnwithdrawReward");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {

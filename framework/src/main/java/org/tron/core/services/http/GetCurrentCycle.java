@@ -1,0 +1,32 @@
+package org.tron.core.services.http;
+
+import com.alibaba.fastjson.JSONObject;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.core.db.Manager;
+
+public class GetCurrentCycle extends RateLimiterServlet {
+  @Autowired
+  private Manager manager;
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      int value = 0;
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      JSONObject jsonObject = JSONObject.parseObject(input);
+      long startTimeStamp = Util
+          .getJsonLongValue(jsonObject, "timeStamp", true);
+
+      long cycle = manager.getDelegationService().getCycleFromTimeStamp(startTimeStamp);
+      response.getWriter().println("{\"cycle\": " + cycle + "}");
+    } catch (Exception e) {
+      Util.processError(e, response);
+    }
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    doGet(request, response);
+  }
+}
