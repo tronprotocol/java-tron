@@ -513,8 +513,13 @@ public class ContractTrcToken011 {
           .getTransactionInfoByBlockNum(infoById1.get().getBlockNumber(), blockingStubFull);
       TransactionInfoList transactionInfoList = transactionInfoByBlockNum.get();
       Assert.assertEquals(2, transactionInfoList.getTransactionInfoCount());
-      Assert.assertEquals(transactionInfo1, transactionInfoList.getTransactionInfo(0));
-      Assert.assertEquals(transactionInfo2, transactionInfoList.getTransactionInfo(1));
+      if (transactionInfo1.getId().equals(transactionInfoList.getTransactionInfo(0).getId())) {
+        Assert.assertEquals(transactionInfo1, transactionInfoList.getTransactionInfo(0));
+        Assert.assertEquals(transactionInfo2, transactionInfoList.getTransactionInfo(1));
+      } else {
+        Assert.assertEquals(transactionInfo1, transactionInfoList.getTransactionInfo(1));
+        Assert.assertEquals(transactionInfo2, transactionInfoList.getTransactionInfo(0));
+      }
     }
   }
 
@@ -558,8 +563,13 @@ public class ContractTrcToken011 {
               blockingStubSolidity);
       TransactionInfoList transactionInfoList = transactionInfoByBlockNum.get();
       Assert.assertEquals(2, transactionInfoList.getTransactionInfoCount());
-      Assert.assertEquals(transactionInfo1, transactionInfoList.getTransactionInfo(0));
-      Assert.assertEquals(transactionInfo2, transactionInfoList.getTransactionInfo(1));
+      if (transactionInfo1.getId().equals(transactionInfoList.getTransactionInfo(0).getId())) {
+        Assert.assertEquals(transactionInfo1, transactionInfoList.getTransactionInfo(0));
+        Assert.assertEquals(transactionInfo2, transactionInfoList.getTransactionInfo(1));
+      } else {
+        Assert.assertEquals(transactionInfo1, transactionInfoList.getTransactionInfo(1));
+        Assert.assertEquals(transactionInfo2, transactionInfoList.getTransactionInfo(0));
+      }
     }
   }
 
