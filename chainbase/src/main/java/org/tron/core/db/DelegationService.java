@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -29,6 +30,7 @@ public class DelegationService {
   private WitnessStore witnessStore;
 
   @Setter
+  @Getter
   private DelegationStore delegationStore;
 
   @Setter
@@ -116,7 +118,6 @@ public class DelegationService {
       beginCycle += 1;
     }
     //
-    delegationStore.setLastWithdrawCycle(currentCycle, address);
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
       delegationStore.setRemark(endCycle, address);

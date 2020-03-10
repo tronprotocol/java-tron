@@ -53,6 +53,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     delegationService.withdrawReward(withdrawBalanceContract.getOwnerAddress()
         .toByteArray());
+    delegationService.getDelegationStore().setLastWithdrawCycle(
+        dynamicStore.getCurrentCycleNumber(), withdrawBalanceContract.getOwnerAddress()
+            .toByteArray());
 
     AccountCapsule accountCapsule = accountStore.
         get(withdrawBalanceContract.getOwnerAddress().toByteArray());
