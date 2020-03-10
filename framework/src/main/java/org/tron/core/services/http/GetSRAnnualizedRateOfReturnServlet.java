@@ -19,6 +19,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
   @Autowired
   private Wallet wallet;
 
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       double annualizedRateOfReturn=0;
@@ -29,7 +30,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
       long startTimeStamp = Util
           .getJsonLongValue(jsonObject, "startTimeStamp", true);
       long endTimeStamp = Util.getJsonLongValue(jsonObject, "endTimeStamp", true);
-//当时的
+
 
       long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock();
       long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock();
@@ -60,6 +61,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
     }
   }
 
+  @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
