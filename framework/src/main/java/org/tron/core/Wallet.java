@@ -2292,7 +2292,7 @@ public class Wallet {
   public HashMap<String, Long> computeUnwithdrawReward(byte[] address) {
     HashMap<String, Long> rewardMap = new HashMap<>();
     long beginCycle =  dbManager.getDelegationStore()
-        .getLastWithdrawCycle(address) + 1;
+        .getLastWithdrawCycle(address);
     long endCycle =    dbManager.getDynamicPropertiesStore()
         .getCurrentCycleNumber();
     if (address.length == 0) {

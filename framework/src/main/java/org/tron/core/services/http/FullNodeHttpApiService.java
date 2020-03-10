@@ -225,6 +225,14 @@ public class FullNodeHttpApiService implements Service {
   private UpdateBrokerageServlet updateBrokerageServlet;
   @Autowired
   private CreateCommonTransactionServlet createCommonTransactionServlet;
+  @Autowired
+  private GetAccountRewardByTimeStampServlet getAccountRewardByTimeStampServlet;
+  @Autowired
+  private GetSRPayByTimeStampServlet getSRPayByTimeStampServlet;
+  @Autowired
+  private GetSRRewardByTimeStampServlet getSRRewardByTimeStampServlet;
+  @Autowired
+  private GetAccountLastUnwithdrawRewardServlet getAccountLastUnwithdrawRewardServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -404,6 +412,14 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/createCommonTransaction");
+      context.addServlet(new ServletHolder(createCommonTransactionServlet),
+          "/createCommonTransaction");
+      context.addServlet(new ServletHolder(getAccountRewardByTimeStampServlet)
+          , "/getAccountRewardByTimeStamp");
+      context.addServlet(new ServletHolder(getSRPayByTimeStampServlet), "/getSRPayByTimeStamp");
+      context.addServlet(new ServletHolder(getSRRewardByTimeStampServlet),
+          "/getSRRewardByTimeStamp");
+      context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet), "/getAccountLastUnwithdrawRewarD");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
