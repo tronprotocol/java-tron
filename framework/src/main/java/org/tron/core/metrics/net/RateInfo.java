@@ -49,18 +49,14 @@ public class RateInfo {
     this.count = count;
   }
 
-  public Protocol.MetricsInfo.RateInfo toProtoEntity(RateInfo rateInfo) {
+  public Protocol.MetricsInfo.RateInfo toProtoEntity() {
     Protocol.MetricsInfo.RateInfo.Builder rateInfoBuild =
         Protocol.MetricsInfo.RateInfo.newBuilder();
-    if (rateInfo == null) {
-      // TODO: error message
-      return rateInfoBuild.build();
-    }
-    rateInfoBuild.setCount(rateInfo.getCount());
-    rateInfoBuild.setOneMinuteRate(rateInfo.getOneMinuteRate());
-    rateInfoBuild.setFifteenMinuteRate(rateInfo.getFiveMinuteRate());
-    rateInfoBuild.setFifteenMinuteRate(rateInfo.getFifteenMinuteRate());
-    rateInfoBuild.setMeanRate(rateInfo.getMeanRate());
+    rateInfoBuild.setCount(getCount());
+    rateInfoBuild.setOneMinuteRate(getOneMinuteRate());
+    rateInfoBuild.setFifteenMinuteRate(getFiveMinuteRate());
+    rateInfoBuild.setFifteenMinuteRate(getFifteenMinuteRate());
+    rateInfoBuild.setMeanRate(getMeanRate());
     return rateInfoBuild.build();
   }
 }

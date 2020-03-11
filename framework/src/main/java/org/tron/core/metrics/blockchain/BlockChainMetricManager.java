@@ -60,15 +60,15 @@ public class BlockChainMetricManager {
     blockChainInfo.setTransactionCacheSize(blockChain.getTransactionCacheSize());
     RateInfo missTransaction = blockChain.getMissedTransaction();
     Protocol.MetricsInfo.RateInfo missTransactionInfo =
-        missTransaction.toProtoEntity(missTransaction);
+        missTransaction.toProtoEntity();
     blockChainInfo.setMissedTransaction(missTransactionInfo);
 
     RateInfo blockProcessTime = blockChain.getBlockProcessTime();
     Protocol.MetricsInfo.RateInfo blockProcessTimeInfo =
-        blockProcessTime.toProtoEntity(blockProcessTime);
+        blockProcessTime.toProtoEntity();
     blockChainInfo.setBlockProcessTime(blockProcessTimeInfo);
     RateInfo tps = blockChain.getTps();
-    Protocol.MetricsInfo.RateInfo tpsInfo = tps.toProtoEntity(tps);
+    Protocol.MetricsInfo.RateInfo tpsInfo = tps.toProtoEntity();
 
     blockChainInfo.setTps(tpsInfo);
     for (WitnessInfo witness : blockChain.getWitnesses()) {

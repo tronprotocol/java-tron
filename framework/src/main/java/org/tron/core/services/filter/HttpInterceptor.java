@@ -36,7 +36,7 @@ public class HttpInterceptor implements Filter {
 
         HttpServletResponse resp = (HttpServletResponse) response;
 
-        if (resp.getStatus() != 404) {  // cannot find endpoint, wrong endpoint
+        if (resp.getStatus() != 404) {  // correct endpoint
           String endpointQPS = MetricsKey.NET_API_DETAIL_QPS + endpoint;
           MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
           MetricsUtil.meterMark(endpointQPS, 1);
@@ -60,7 +60,7 @@ public class HttpInterceptor implements Filter {
 
     } catch (Exception e) {
       if (MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_FAIL_QPS).containsKey(
-          MetricsKey.NET_API_DETAIL_FAIL_QPS + endpoint)) {
+          MetricsKey.NET_API_DETAIL_FAIL_QPS + endpoint)) {   // correct endpoint
         MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_FAIL_QPS
             + endpoint, 1);
         MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_QPS
