@@ -9,6 +9,7 @@ import org.tron.core.metrics.net.NetInfo;
 import org.tron.core.metrics.net.NetMetricManager;
 import org.tron.core.metrics.node.NodeInfo;
 import org.tron.core.metrics.node.NodeMetricManager;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "metrics")
 @Component
@@ -46,5 +47,23 @@ public class MetricsApiService {
     metricsInfo.setNet(netInfo);
 
     return metricsInfo;
+  }
+
+  public Protocol.MetricsInfo getMetricProtoInfo() {
+
+    Protocol.MetricsInfo.Builder builder = Protocol.MetricsInfo.newBuilder();
+    builder.setInterval((System.currentTimeMillis() - time) / 1000);
+
+    Protocol.MetricsInfo.NodeInfo nodeInfo = nodeMetricManager.getNodeProtoInfo();
+    builder.setNode(nodeInfo);
+
+    Protocol.MetricsInfo.BlockChainInfo blockChainInfo =
+        blockChainMetricManager.getBlockChainProtoInfo();
+    builder.setBlockchain(blockChainInfo);
+
+    Protocol.MetricsInfo.NetInfo netInfo = netMetricManager.getNetProtoInfo();
+    builder.setNet(netInfo);
+
+    return builder.build();
   }
 }
