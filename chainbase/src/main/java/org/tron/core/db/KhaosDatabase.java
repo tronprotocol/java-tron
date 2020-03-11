@@ -249,7 +249,6 @@ public class KhaosDatabase extends TronDatabase {
     private BlockCapsule blk;
     private Reference<KhaosBlock> parent = new WeakReference<>(null);
     private BlockId id;
-    private Boolean invalid;
     private long num;
 
     public KhaosBlock(BlockCapsule blk) {

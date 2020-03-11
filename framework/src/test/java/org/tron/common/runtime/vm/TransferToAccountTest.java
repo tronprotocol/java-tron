@@ -17,6 +17,7 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
@@ -131,17 +132,17 @@ public class TransferToAccountTest {
 
   /**
    * pragma solidity ^0.5.4;
-   *
+   * <p>
    * contract TestTransferTo { constructor() public payable{}
-   *
+   * <p>
    * function depositIn() public payable{}
-   *
+   * <p>
    * function transferTokenTo(address  payable toAddress, trcToken id,uint256 amount) public payable
    * { toAddress.transferToken(amount,id); }
-   *
+   * <p>
    * function transferTo(address  payable toAddress ,uint256 amount) public payable {
    * toAddress.transfer(amount); }
-   *
+   * <p>
    * }
    */
   @Test
@@ -162,7 +163,7 @@ public class TransferToAccountTest {
 
     byte[] input = Hex.decode(AbiUtil
         .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(Hex.decode(TRANSFER_TO)) + "\"" + "," + id + ",9"));
+            "\"" + StringUtil.encode58Check(Hex.decode(TRANSFER_TO)) + "\"" + "," + id + ",9"));
 
     //  2. Test trigger with tokenValue and tokenId,
     //  also test internal transaction transferToken function */
@@ -188,7 +189,7 @@ public class TransferToAccountTest {
     ECKey ecKey = new ECKey(Utils.getRandom());
     input = Hex.decode(AbiUtil
         .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(ecKey.getAddress()) + "\"" + "," + id + ",9"));
+            "\"" + StringUtil.encode58Check(ecKey.getAddress()) + "\"" + "," + id + ",9"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
@@ -211,7 +212,7 @@ public class TransferToAccountTest {
     selectorStr = "transferTo(address,uint256)";
     input = Hex.decode(AbiUtil
         .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(Hex.decode(TRANSFER_TO)) + "\"" + ",9"));
+            "\"" + StringUtil.encode58Check(Hex.decode(TRANSFER_TO)) + "\"" + ",9"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
@@ -227,7 +228,7 @@ public class TransferToAccountTest {
     ecKey = new ECKey(Utils.getRandom());
     input = Hex.decode(AbiUtil
         .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(ecKey.getAddress()) + "\"" + ",9"));
+            "\"" + StringUtil.encode58Check(ecKey.getAddress()) + "\"" + ",9"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
@@ -246,7 +247,7 @@ public class TransferToAccountTest {
     selectorStr = "transferTo(address,uint256)";
     input = Hex.decode(AbiUtil
         .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(contractAddress) + "\"" + ",9"));
+            "\"" + StringUtil.encode58Check(contractAddress) + "\"" + ",9"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
@@ -276,7 +277,7 @@ public class TransferToAccountTest {
     ecKey = new ECKey(Utils.getRandom());
     input = Hex.decode(AbiUtil
         .parseMethod(selectorStr,
-            "\"" + Wallet.encode58Check(ecKey.getAddress()) + "\"" + ",1"));
+            "\"" + StringUtil.encode58Check(ecKey.getAddress()) + "\"" + ",1"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
             input,
@@ -295,9 +296,7 @@ public class TransferToAccountTest {
 
     ProgramResult result = context.getProgramResult();
 
-    Assert.assertEquals("Attempt to call a state modifying opcode inside STATICCALL",
-        result.getRuntimeError());
-
+    Assert.assertNull(result.getRuntimeError());
 
   }
 
