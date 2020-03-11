@@ -29,22 +29,25 @@ public class HttpInterceptor implements Filter {
     try {
       if (request instanceof HttpServletRequest) {
         endpoint = ((HttpServletRequest) request).getRequestURI();
-        String endpointQPS = MetricsKey.NET_API_DETAIL_QPS + endpoint;
-        MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
-        MetricsUtil.meterMark(endpointQPS, 1);
 
         CharResponseWrapper responseWrapper = new CharResponseWrapper(
             (HttpServletResponse) response);
         chain.doFilter(request, responseWrapper);
 
-        int reposeContentSize = responseWrapper.getByteSize();
-        String endpointOutTraffic = MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpoint;
-        MetricsUtil.meterMark(MetricsKey.NET_API_OUT_TRAFFIC,
-            reposeContentSize);
-
-        MetricsUtil.meterMark(endpointOutTraffic, reposeContentSize);
-
         HttpServletResponse resp = (HttpServletResponse) response;
+
+        if (resp.getStatus() != 404) {  // cannot find endpoint, wrong endpoint
+          String endpointQPS = MetricsKey.NET_API_DETAIL_QPS + endpoint;
+          MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
+          MetricsUtil.meterMark(endpointQPS, 1);
+
+          int reposeContentSize = responseWrapper.getByteSize();
+          String endpointOutTraffic = MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpoint;
+          MetricsUtil.meterMark(MetricsKey.NET_API_OUT_TRAFFIC,
+              reposeContentSize);
+          MetricsUtil.meterMark(endpointOutTraffic, reposeContentSize);
+        }
+
         if (resp.getStatus() != 200) {
           String endpointFailQPS = MetricsKey.NET_API_DETAIL_FAIL_QPS  + endpoint;
           MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);

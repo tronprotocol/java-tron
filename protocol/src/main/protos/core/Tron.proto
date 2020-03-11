@@ -631,3 +631,108 @@ message NodeInfo {
     }
   }
 }
+
+message MetricsInfo {
+  int64 interval = 1;
+  NodeInfo node = 2;
+  BlockChainInfo blockchain = 3;
+  NetInfo net = 4;
+
+  message NodeInfo {
+    string ip = 1;
+    int32 nodeType = 2;
+    string version = 3;
+    int32 backupStatus = 4;
+  }
+
+  message BlockChainInfo {
+    int64 headBlockNum = 1;
+    int64 headBlockTimestamp = 2;
+    string headBlockHash = 3;
+    int32 forkCount = 4;
+    int32 failForkCount = 5;
+    RateInfo blockProcessTime = 6;
+    RateInfo tps = 7;
+    int32 transactionCacheSize = 8;
+    RateInfo missedTransaction = 9;
+    repeated Witness witnesses = 10;
+    int64 failProcessBlockNum = 11;
+    string failProcessBlockReason = 12;
+    repeated DupWitness dupWitness = 13;
+
+    message Witness {
+      string address = 1;
+      int32 version = 2;
+    }
+
+    message DupWitness {
+      string address = 1;
+      int64 blockNum = 2;
+      int32 count = 3;
+    }
+  }
+
+  message RateInfo {
+    int64 count = 1;
+    double meanRate = 2;
+    double oneMinuteRate = 3;
+    double fiveMinuteRate = 4;
+    double fifteenMinuteRate = 5;
+  }
+
+  message NetInfo {
+    int32 errorProtoCount = 1;
+    ApiInfo api = 2;
+    int32 connectionCount = 3;
+    int32 validConnectionCount = 4;
+    RateInfo tcpInTraffic = 5;
+    RateInfo tcpOutTraffic = 6;
+    int32 disconnectionCount = 7;
+    repeated DisconnectionDetailInfo disconnectionDetail = 8;
+    RateInfo udpInTraffic = 9;
+    RateInfo udpOutTraffic = 10;
+    LatencyInfo latency = 11;
+
+    message ApiInfo {
+      RateInfo qps = 1;
+      RateInfo failQps = 2;
+      RateInfo outTraffic = 3;
+      repeated ApiDetailInfo detail = 4;
+
+      message ApiDetailInfo {
+        string name = 1;
+        RateInfo qps = 2;
+        RateInfo failQps = 3;
+        RateInfo outTraffic = 4;
+      }
+    }
+
+    message DisconnectionDetailInfo {
+      string reason = 1;
+      int32 count = 2;
+    }
+
+    message LatencyInfo {
+      int32 top99 = 1;
+      int32 top95 = 2;
+      int32 top75 = 3;
+      int32 totalCount = 4;
+      int32 delay1S = 5;
+      int32 delay2S = 6;
+      int32 delay3S = 7;
+      repeated LatencyDetailInfo detail = 8;
+
+      message LatencyDetailInfo {
+        string witness = 1;
+        int32 top99 = 2;
+        int32 top95 = 3;
+        int32 top75 = 4;
+        int32 count = 5;
+        int32 delay1S = 6;
+        int32 delay2S = 7;
+        int32 delay3S = 8;
+      }
+    }
+  }
+}
+
