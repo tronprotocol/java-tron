@@ -414,8 +414,6 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/createCommonTransaction");
-      context.addServlet(new ServletHolder(createCommonTransactionServlet),
-          "/createCommonTransaction");
       context.addServlet(new ServletHolder(getAccountRewardByTimeStampServlet)
           , "/getAccountRewardByTimeStamp");
       context.addServlet(new ServletHolder(getSRPayByTimeStampServlet), "/getSRPayByTimeStamp");
