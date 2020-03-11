@@ -194,9 +194,9 @@ public class Args extends CommonParameter {
       }
       localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
       logger.debug("Got privateKey from cmd");
-    } else if (config.hasPath(Constant.LOCAL_WITENSS)) {
+    } else if (config.hasPath(Constant.LOCAL_WITNESS)) {
       localWitnesses = new LocalWitnesses();
-      List<String> localwitness = config.getStringList(Constant.LOCAL_WITENSS);
+      List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS);
       if (localwitness.size() > 1) {
         logger.warn("localwitness size must be one, get the first one");
         localwitness = localwitness.subList(0, 1);
@@ -476,8 +476,8 @@ public class Args extends CommonParameter {
     PARAMETER.maxMessageSize = config.hasPath(Constant.NODE_RPC_MAX_MESSAGE_SIZE)
         ? config.getInt(Constant.NODE_RPC_MAX_MESSAGE_SIZE) : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
 
-    PARAMETER.maxHeaderListSize = config.hasPath(Constant.NODE_RPC_MAX_HEADER_LIST_ISZE)
-        ? config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_ISZE)
+    PARAMETER.maxHeaderListSize = config.hasPath(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
+        ? config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
         : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
 
     PARAMETER.maintenanceTimeInterval =
@@ -764,8 +764,8 @@ public class Args extends CommonParameter {
         }
       }
 
-      if (config.hasPath(Constant.EVENT_SUBSCIBE_DB_CONFIG)) {
-        String dbConfig = config.getString(Constant.EVENT_SUBSCIBE_DB_CONFIG);
+      if (config.hasPath(Constant.EVENT_SUBSCRIBE_DB_CONFIG)) {
+        String dbConfig = config.getString(Constant.EVENT_SUBSCRIBE_DB_CONFIG);
         if (StringUtils.isNotEmpty(dbConfig)) {
           eventPluginConfig.setDbConfig(dbConfig.trim());
         }
@@ -859,8 +859,8 @@ public class Args extends CommonParameter {
   }
 
   private static void externalIp(final com.typesafe.config.Config config) {
-    if (!config.hasPath(Constant.NODE_DISCOVERY_EXTENNAL_IP) || config
-        .getString(Constant.NODE_DISCOVERY_EXTENNAL_IP).trim().isEmpty()) {
+    if (!config.hasPath(Constant.NODE_DISCOVERY_EXTERNAL_IP) || config
+        .getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim().isEmpty()) {
       if (PARAMETER.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
         BufferedReader in = null;
@@ -895,7 +895,7 @@ public class Args extends CommonParameter {
         }
       }
     } else {
-      PARAMETER.nodeExternalIp = config.getString(Constant.NODE_DISCOVERY_EXTENNAL_IP).trim();
+      PARAMETER.nodeExternalIp = config.getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim();
     }
   }
 
