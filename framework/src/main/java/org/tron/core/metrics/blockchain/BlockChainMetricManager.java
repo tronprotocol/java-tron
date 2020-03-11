@@ -18,6 +18,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.metrics.net.RateInfo;
+import org.tron.protos.Protocol;
 
 @Component
 public class BlockChainMetricManager {
@@ -42,6 +43,51 @@ public class BlockChainMetricManager {
     BlockChainInfo blockChainInfo = new BlockChainInfo();
     setBlockChainInfo(blockChainInfo);
     return blockChainInfo;
+  }
+
+  public Protocol.MetricsInfo.BlockChainInfo getBlockChainProtoInfo() {
+    Protocol.MetricsInfo.BlockChainInfo.Builder blockChainInfo =
+        Protocol.MetricsInfo.BlockChainInfo.newBuilder();
+
+    BlockChainInfo blockChain = getBlockChainInfo();
+    blockChainInfo.setHeadBlockNum(blockChain.getHeadBlockNum());
+    blockChainInfo.setHeadBlockTimestamp(blockChain.getHeadBlockTimestamp());
+    blockChainInfo.setHeadBlockHash(blockChain.getHeadBlockHash());
+    blockChainInfo.setFailProcessBlockNum(blockChain.getFailProcessBlockNum());
+    blockChainInfo.setFailProcessBlockReason(blockChain.getFailProcessBlockReason());
+    blockChainInfo.setForkCount(blockChain.getForkCount());
+    blockChainInfo.setFailForkCount(blockChain.getFailForkCount());
+    blockChainInfo.setTransactionCacheSize(blockChain.getTransactionCacheSize());
+    RateInfo missTransaction = blockChain.getMissedTransaction();
+    Protocol.MetricsInfo.RateInfo missTransactionInfo =
+        missTransaction.toProtoEntity(missTransaction);
+    blockChainInfo.setMissedTransaction(missTransactionInfo);
+
+    RateInfo blockProcessTime = blockChain.getBlockProcessTime();
+    Protocol.MetricsInfo.RateInfo blockProcessTimeInfo =
+        blockProcessTime.toProtoEntity(blockProcessTime);
+    blockChainInfo.setBlockProcessTime(blockProcessTimeInfo);
+    RateInfo tps = blockChain.getTps();
+    Protocol.MetricsInfo.RateInfo tpsInfo = tps.toProtoEntity(tps);
+
+    blockChainInfo.setTps(tpsInfo);
+    for (WitnessInfo witness : blockChain.getWitnesses()) {
+      Protocol.MetricsInfo.BlockChainInfo.Witness.Builder witnessInfo =
+          Protocol.MetricsInfo.BlockChainInfo.Witness.newBuilder();
+      witnessInfo.setAddress(witness.getAddress());
+      witnessInfo.setVersion(witness.getVersion());
+      blockChainInfo.addWitnesses(witnessInfo.build());
+    }
+    for (DupWitnessInfo dupWitness : blockChain.getDupWitness()) {
+      Protocol.MetricsInfo.BlockChainInfo.DupWitness.Builder dupWitnessInfo =
+          Protocol.MetricsInfo.BlockChainInfo.DupWitness.newBuilder();
+      dupWitnessInfo.setAddress(dupWitness.getAddress());
+      dupWitnessInfo.setBlockNum(dupWitness.getBlockNum());
+      dupWitnessInfo.setCount(dupWitness.getCount());
+      blockChainInfo.addDupWitness(dupWitnessInfo.build());
+    }
+    return blockChainInfo.build();
+
   }
 
   private void setBlockChainInfo(BlockChainInfo blockChain) {

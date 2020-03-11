@@ -98,6 +98,7 @@ import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.metrics.MetricsApiService;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
@@ -175,6 +176,9 @@ public class RpcApiService implements Service {
   private NodeInfoService nodeInfoService;
   @Autowired
   private RateLimiterInterceptor rateLimiterInterceptor;
+
+  @Autowired
+  private MetricsApiService metricsApiService;
 
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
@@ -1417,8 +1421,8 @@ public class RpcApiService implements Service {
                     .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
                     .setPort(node.getPort())));
           });
-
-      responseObserver.onNext(nodeListBuilder.build());
+//      responseObserver.onNext(nodeListBuilder.build());
+      responseObserver.onNext(metricsApiService.getMetricProtoInfo());
       responseObserver.onCompleted();
     }
 

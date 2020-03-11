@@ -8,6 +8,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.program.Version;
+import org.tron.protos.Protocol;
 
 
 @Component
@@ -49,6 +50,16 @@ public class NodeMetricManager {
     } else {
       nodeInfo.setBackupStatus(0);
     }
+  }
+
+  public Protocol.MetricsInfo.NodeInfo getNodeProtoInfo() {
+    Protocol.MetricsInfo.NodeInfo.Builder nodeInfo = Protocol.MetricsInfo.NodeInfo.newBuilder();
+    NodeInfo node = getNodeInfo();
+    nodeInfo.setIp(node.getIp());
+    nodeInfo.setNodeType(node.getNodeType());
+    nodeInfo.setVersion(node.getVersion());
+    nodeInfo.setBackupStatus(node.getBackupStatus());
+    return nodeInfo.build();
   }
 
 

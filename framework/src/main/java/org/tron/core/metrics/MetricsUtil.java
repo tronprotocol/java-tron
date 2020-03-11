@@ -102,6 +102,6 @@ public class MetricsUtil {
     rateInfo.setFifteenMinuteRate(meter.getFifteenMinuteRate());
     return rateInfo;
   }
-  
+
 
 }
