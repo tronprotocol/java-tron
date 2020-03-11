@@ -288,131 +288,154 @@ public class FullNodeHttpApiService implements Service {
     try {
       server = new Server(port);
       ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-      context.setContextPath("/wallet/");
+      context.setContextPath("/");
       server.setHandler(context);
 
-      context.addServlet(new ServletHolder(getAccountServlet), "/getaccount");
-      context.addServlet(new ServletHolder(transferServlet), "/createtransaction");
-      context.addServlet(new ServletHolder(broadcastServlet), "/broadcasttransaction");
-      context.addServlet(new ServletHolder(transactionSignServlet), "/gettransactionsign");
-      context.addServlet(new ServletHolder(updateAccountServlet), "/updateaccount");
-      context.addServlet(new ServletHolder(voteWitnessAccountServlet), "/votewitnessaccount");
-      context.addServlet(new ServletHolder(createAssetIssueServlet), "/createassetissue");
-      context.addServlet(new ServletHolder(updateWitnessServlet), "/updatewitness");
-      context.addServlet(new ServletHolder(createAccountServlet), "/createaccount");
-      context.addServlet(new ServletHolder(createWitnessServlet), "/createwitness");
-      context.addServlet(new ServletHolder(transferAssetServlet), "/transferasset");
-      context.addServlet(new ServletHolder(participateAssetIssueServlet), "/participateassetissue");
-      context.addServlet(new ServletHolder(freezeBalanceServlet), "/freezebalance");
-      context.addServlet(new ServletHolder(unFreezeBalanceServlet), "/unfreezebalance");
-      context.addServlet(new ServletHolder(unFreezeAssetServlet), "/unfreezeasset");
-      context.addServlet(new ServletHolder(withdrawBalanceServlet), "/withdrawbalance");
-      context.addServlet(new ServletHolder(updateAssetServlet), "/updateasset");
-      context.addServlet(new ServletHolder(listNodesServlet), "/listnodes");
+      context.addServlet(new ServletHolder(getAccountServlet), "/wallet/getaccount");
+      context.addServlet(new ServletHolder(transferServlet), "/wallet/createtransaction");
+      context.addServlet(new ServletHolder(broadcastServlet), "/wallet/broadcasttransaction");
+      context.addServlet(new ServletHolder(transactionSignServlet), "/wallet/gettransactionsign");
+      context.addServlet(new ServletHolder(updateAccountServlet), "/wallet/updateaccount");
+      context.addServlet(new ServletHolder(voteWitnessAccountServlet),
+          "/wallet/votewitnessaccount");
+      context.addServlet(new ServletHolder(createAssetIssueServlet), "/wallet/createassetissue");
+      context.addServlet(new ServletHolder(updateWitnessServlet), "/wallet/updatewitness");
+      context.addServlet(new ServletHolder(createAccountServlet), "/wallet/createaccount");
+      context.addServlet(new ServletHolder(createWitnessServlet), "/wallet/createwitness");
+      context.addServlet(new ServletHolder(transferAssetServlet), "/wallet/transferasset");
+      context.addServlet(new ServletHolder(participateAssetIssueServlet),
+          "/wallet/participateassetissue");
+      context.addServlet(new ServletHolder(freezeBalanceServlet), "/wallet/freezebalance");
+      context.addServlet(new ServletHolder(unFreezeBalanceServlet), "/wallet/unfreezebalance");
+      context.addServlet(new ServletHolder(unFreezeAssetServlet), "/wallet/unfreezeasset");
+      context.addServlet(new ServletHolder(withdrawBalanceServlet), "/wallet/withdrawbalance");
+      context.addServlet(new ServletHolder(updateAssetServlet), "/wallet/updateasset");
+      context.addServlet(new ServletHolder(listNodesServlet), "/monitor/listnodes");
       context.addServlet(
-          new ServletHolder(getAssetIssueByAccountServlet), "/getassetissuebyaccount");
-      context.addServlet(new ServletHolder(getAccountNetServlet), "/getaccountnet");
-      context.addServlet(new ServletHolder(getAssetIssueByNameServlet), "/getassetissuebyname");
+          new ServletHolder(getAssetIssueByAccountServlet), "/wallet/getassetissuebyaccount");
+      context.addServlet(new ServletHolder(getAccountNetServlet), "/wallet/getaccountnet");
+      context.addServlet(new ServletHolder(getAssetIssueByNameServlet),
+          "/wallet/getassetissuebyname");
       context.addServlet(new ServletHolder(getAssetIssueListByNameServlet),
           "/getassetissuelistbyname");
-      context.addServlet(new ServletHolder(getAssetIssueByIdServlet), "/getassetissuebyid");
-      context.addServlet(new ServletHolder(getNowBlockServlet), "/getnowblock");
-      context.addServlet(new ServletHolder(getBlockByNumServlet), "/getblockbynum");
-      context.addServlet(new ServletHolder(getBlockByIdServlet), "/getblockbyid");
-      context.addServlet(new ServletHolder(getBlockByLimitNextServlet), "/getblockbylimitnext");
-      context.addServlet(new ServletHolder(getBlockByLatestNumServlet), "/getblockbylatestnum");
-      context.addServlet(new ServletHolder(getTransactionByIdServlet), "/gettransactionbyid");
+      context.addServlet(new ServletHolder(getAssetIssueByIdServlet), "/wallet/getassetissuebyid");
+      context.addServlet(new ServletHolder(getNowBlockServlet), "/wallet/getnowblock");
+      context.addServlet(new ServletHolder(getBlockByNumServlet), "/wallet/getblockbynum");
+      context.addServlet(new ServletHolder(getBlockByIdServlet), "/wallet/getblockbyid");
+      context.addServlet(new ServletHolder(getBlockByLimitNextServlet),
+          "/wallet/getblockbylimitnext");
+      context.addServlet(new ServletHolder(getBlockByLatestNumServlet),
+          "/wallet/getblockbylatestnum");
+      context.addServlet(new ServletHolder(getTransactionByIdServlet),
+          "/wallet/gettransactionbyid");
       context.addServlet(
-          new ServletHolder(getTransactionInfoByIdServlet), "/gettransactioninfobyid");
+          new ServletHolder(getTransactionInfoByIdServlet), "/wallet/gettransactioninfobyid");
       context.addServlet(
-          new ServletHolder(getTransactionReceiptByIdServlet), "/gettransactionreceiptbyid");
+          new ServletHolder(getTransactionReceiptByIdServlet), "/wallet/gettransactionreceiptbyid");
       context.addServlet(
           new ServletHolder(getTransactionCountByBlockNumServlet),
-          "/gettransactioncountbyblocknum");
-      context.addServlet(new ServletHolder(listWitnessesServlet), "/listwitnesses");
-      context.addServlet(new ServletHolder(getAssetIssueListServlet), "/getassetissuelist");
+          "/wallet/gettransactioncountbyblocknum");
+      context.addServlet(new ServletHolder(listWitnessesServlet), "/wallet/listwitnesses");
+      context.addServlet(new ServletHolder(getAssetIssueListServlet), "/wallet/getassetissuelist");
       context.addServlet(
-          new ServletHolder(getPaginatedAssetIssueListServlet), "/getpaginatedassetissuelist");
+          new ServletHolder(getPaginatedAssetIssueListServlet),
+          "/wallet/getpaginatedassetissuelist");
       context.addServlet(
-          new ServletHolder(getPaginatedProposalListServlet), "/getpaginatedproposallist");
+          new ServletHolder(getPaginatedProposalListServlet), "/wallet/getpaginatedproposallist");
       context.addServlet(
-          new ServletHolder(getPaginatedExchangeListServlet), "/getpaginatedexchangelist");
-      context.addServlet(new ServletHolder(totalTransactionServlet), "/totaltransaction");
+          new ServletHolder(getPaginatedExchangeListServlet), "/wallet/getpaginatedexchangelist");
+      context.addServlet(new ServletHolder(totalTransactionServlet), "/wallet/totaltransaction");
       context.addServlet(
-          new ServletHolder(getNextMaintenanceTimeServlet), "/getnextmaintenancetime");
-      context.addServlet(new ServletHolder(createAddressServlet), "/createaddress");
-      context.addServlet(new ServletHolder(easyTransferServlet), "/easytransfer");
-      context.addServlet(new ServletHolder(easyTransferByPrivateServlet), "/easytransferbyprivate");
-      context.addServlet(new ServletHolder(easyTransferAssetServlet), "/easytransferasset");
+          new ServletHolder(getNextMaintenanceTimeServlet), "/wallet/getnextmaintenancetime");
+      context.addServlet(new ServletHolder(createAddressServlet), "/wallet/createaddress");
+      context.addServlet(new ServletHolder(easyTransferServlet), "/wallet/easytransfer");
+      context.addServlet(new ServletHolder(easyTransferByPrivateServlet),
+          "/wallet/easytransferbyprivate");
+      context.addServlet(new ServletHolder(easyTransferAssetServlet), "/wallet/easytransferasset");
       context.addServlet(new ServletHolder(easyTransferAssetByPrivateServlet),
-          "/easytransferassetbyprivate");
-      context.addServlet(new ServletHolder(generateAddressServlet), "/generateaddress");
-      context.addServlet(new ServletHolder(validateAddressServlet), "/validateaddress");
-      context.addServlet(new ServletHolder(deployContractServlet), "/deploycontract");
-      context.addServlet(new ServletHolder(triggerSmartContractServlet), "/triggersmartcontract");
+          "/wallet/easytransferassetbyprivate");
+      context.addServlet(new ServletHolder(generateAddressServlet), "/wallet/generateaddress");
+      context.addServlet(new ServletHolder(validateAddressServlet), "/wallet/validateaddress");
+      context.addServlet(new ServletHolder(deployContractServlet), "/wallet/deploycontract");
+      context.addServlet(new ServletHolder(triggerSmartContractServlet),
+          "/wallet/triggersmartcontract");
       context.addServlet(new ServletHolder(triggerConstantContractServlet),
-          "/triggerconstantcontract");
-      context.addServlet(new ServletHolder(getContractServlet), "/getcontract");
-      context.addServlet(new ServletHolder(clearABIServlet), "/clearabi");
-      context.addServlet(new ServletHolder(proposalCreateServlet), "/proposalcreate");
-      context.addServlet(new ServletHolder(proposalApproveServlet), "/proposalapprove");
-      context.addServlet(new ServletHolder(proposalDeleteServlet), "/proposaldelete");
-      context.addServlet(new ServletHolder(listProposalsServlet), "/listproposals");
-      context.addServlet(new ServletHolder(getProposalByIdServlet), "/getproposalbyid");
-      context.addServlet(new ServletHolder(exchangeCreateServlet), "/exchangecreate");
-      context.addServlet(new ServletHolder(exchangeInjectServlet), "/exchangeinject");
-      context.addServlet(new ServletHolder(exchangeTransactionServlet), "/exchangetransaction");
-      context.addServlet(new ServletHolder(exchangeWithdrawServlet), "/exchangewithdraw");
-      context.addServlet(new ServletHolder(getExchangeByIdServlet), "/getexchangebyid");
-      context.addServlet(new ServletHolder(listExchangesServlet), "/listexchanges");
-      context.addServlet(new ServletHolder(getChainParametersServlet), "/getchainparameters");
-      context.addServlet(new ServletHolder(getAccountResourceServlet), "/getaccountresource");
-      context.addServlet(new ServletHolder(addTransactionSignServlet), "/addtransactionsign");
-      context.addServlet(new ServletHolder(getTransactionSignWeightServlet), "/getsignweight");
-      context.addServlet(new ServletHolder(getTransactionApprovedListServlet), "/getapprovedlist");
+          "/wallet/triggerconstantcontract");
+      context.addServlet(new ServletHolder(getContractServlet), "/wallet/getcontract");
+      context.addServlet(new ServletHolder(clearABIServlet), "/wallet/clearabi");
+      context.addServlet(new ServletHolder(proposalCreateServlet), "/wallet/proposalcreate");
+      context.addServlet(new ServletHolder(proposalApproveServlet), "/wallet/proposalapprove");
+      context.addServlet(new ServletHolder(proposalDeleteServlet), "/wallet/proposaldelete");
+      context.addServlet(new ServletHolder(listProposalsServlet), "/wallet/listproposals");
+      context.addServlet(new ServletHolder(getProposalByIdServlet), "/wallet/getproposalbyid");
+      context.addServlet(new ServletHolder(exchangeCreateServlet), "/wallet/exchangecreate");
+      context.addServlet(new ServletHolder(exchangeInjectServlet), "/wallet/exchangeinject");
+      context.addServlet(new ServletHolder(exchangeTransactionServlet),
+          "/wallet/exchangetransaction");
+      context.addServlet(new ServletHolder(exchangeWithdrawServlet), "/wallet/exchangewithdraw");
+      context.addServlet(new ServletHolder(getExchangeByIdServlet), "/wallet/getexchangebyid");
+      context.addServlet(new ServletHolder(listExchangesServlet), "/wallet/listexchanges");
+      context.addServlet(new ServletHolder(getChainParametersServlet),
+          "/wallet/getchainparameters");
+      context.addServlet(new ServletHolder(getAccountResourceServlet),
+          "/wallet/getaccountresource");
+      context.addServlet(new ServletHolder(addTransactionSignServlet),
+          "/wallet/addtransactionsign");
+      context.addServlet(new ServletHolder(getTransactionSignWeightServlet),
+          "/wallet/getsignweight");
+      context.addServlet(new ServletHolder(getTransactionApprovedListServlet),
+          "/wallet/getapprovedlist");
       context.addServlet(new ServletHolder(accountPermissionUpdateServlet),
-          "/accountpermissionupdate");
-      context.addServlet(new ServletHolder(getNodeInfoServlet), "/getnodeinfo");
-      context.addServlet(new ServletHolder(updateSettingServlet), "/updatesetting");
-      context.addServlet(new ServletHolder(updateEnergyLimitServlet), "/updateenergylimit");
-      context.addServlet(new ServletHolder(getDelegatedResourceServlet), "/getdelegatedresource");
+          "/wallet/accountpermissionupdate");
+      context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
+      context.addServlet(new ServletHolder(updateSettingServlet), "/wallet/updatesetting");
+      context.addServlet(new ServletHolder(updateEnergyLimitServlet), "/wallet/updateenergylimit");
+      context.addServlet(new ServletHolder(getDelegatedResourceServlet),
+          "/wallet/getdelegatedresource");
       context.addServlet(
           new ServletHolder(getDelegatedResourceAccountIndexServlet),
-          "/getdelegatedresourceaccountindex");
-      context.addServlet(new ServletHolder(setAccountServlet), "/setaccountid");
-      context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
+          "/wallet/getdelegatedresourceaccountindex");
+      context.addServlet(new ServletHolder(setAccountServlet), "/wallet/setaccountid");
+      context.addServlet(new ServletHolder(getAccountByIdServlet), "/wallet/getaccountbyid");
       context
-          .addServlet(new ServletHolder(getExpandedSpendingKeyServlet), "/getexpandedspendingkey");
-      context.addServlet(new ServletHolder(getAkFromAskServlet), "/getakfromask");
-      context.addServlet(new ServletHolder(getNkFromNskServlet), "/getnkfromnsk");
-      context.addServlet(new ServletHolder(getSpendingKeyServlet), "/getspendingkey");
+          .addServlet(new ServletHolder(getExpandedSpendingKeyServlet),
+              "/wallet/getexpandedspendingkey");
+      context.addServlet(new ServletHolder(getAkFromAskServlet), "/wallet/getakfromask");
+      context.addServlet(new ServletHolder(getNkFromNskServlet), "/wallet/getnkfromnsk");
+      context.addServlet(new ServletHolder(getSpendingKeyServlet), "/wallet/getspendingkey");
       context
-          .addServlet(new ServletHolder(getNewShieldedAddressServlet), "/getnewshieldedaddress");
-      context.addServlet(new ServletHolder(getDiversifierServlet), "/getdiversifier");
-      context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
-      context.addServlet(new ServletHolder(getZenPaymentAddressServlet), "/getzenpaymentaddress");
+          .addServlet(new ServletHolder(getNewShieldedAddressServlet),
+              "/wallet/getnewshieldedaddress");
+      context.addServlet(new ServletHolder(getDiversifierServlet), "/wallet/getdiversifier");
+      context.addServlet(new ServletHolder(getIncomingViewingKeyServlet),
+          "/wallet/getincomingviewingkey");
+      context.addServlet(new ServletHolder(getZenPaymentAddressServlet),
+          "/wallet/getzenpaymentaddress");
       context.addServlet(new ServletHolder(createShieldedTransactionServlet),
-          "/createshieldedtransaction");
+          "/wallet/createshieldedtransaction");
       context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
-          "/createshieldedtransactionwithoutspendauthsig");
-      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/scannotebyivk");
-      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet), "/scanandmarknotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/scannotebyovk");
-      context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
+          "/wallet/createshieldedtransactionwithoutspendauthsig");
+      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/wallet/scannotebyivk");
+      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
+          "/wallet/scanandmarknotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/wallet/scannotebyovk");
+      context.addServlet(new ServletHolder(getRcmServlet), "/wallet/getrcm");
       context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
-          "/getmerkletreevoucherinfo");
-      context.addServlet(new ServletHolder(isSpendServlet), "/isspend");
-      context.addServlet(new ServletHolder(createSpendAuthSigServlet), "/createspendauthsig");
-      context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
+          "/wallet/getmerkletreevoucherinfo");
+      context.addServlet(new ServletHolder(isSpendServlet), "/wallet/isspend");
+      context.addServlet(new ServletHolder(createSpendAuthSigServlet),
+          "/wallet/createspendauthsig");
+      context.addServlet(new ServletHolder(createShieldNullifierServlet),
+          "/wallet/createshieldnullifier");
       context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
-          "/getshieldtransactionhash");
-      context.addServlet(new ServletHolder(broadcastHexServlet), "/broadcasthex");
-      context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
-      context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
-      context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
+          "/wallet/getshieldtransactionhash");
+      context.addServlet(new ServletHolder(broadcastHexServlet), "/wallet/broadcasthex");
+      context.addServlet(new ServletHolder(getBrokerageServlet), "/wallet/getBrokerage");
+      context.addServlet(new ServletHolder(getRewardServlet), "/wallet/getReward");
+      context.addServlet(new ServletHolder(updateBrokerageServlet), "/wallet/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
-          "/createCommonTransaction");
-      context.addServlet(new ServletHolder(metricsServlet), "/metrics");
+          "/wallet/createCommonTransaction");
+      context.addServlet(new ServletHolder(metricsServlet), "/monitor/metrics");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
