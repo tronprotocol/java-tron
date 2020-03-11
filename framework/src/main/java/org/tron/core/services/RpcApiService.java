@@ -70,6 +70,7 @@ import org.tron.api.GrpcAPI.TransactionListExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.ViewingKeyMessage;
 import org.tron.api.GrpcAPI.WitnessList;
+import org.tron.api.MonitorGrpc;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
@@ -185,6 +186,8 @@ public class RpcApiService implements Service {
   private WalletApi walletApi = new WalletApi();
   @Getter
   private WalletSolidityApi walletSolidityApi = new WalletSolidityApi();
+  @Getter
+  private MonitorApi monitorApi = new MonitorApi();
 
   @Override
   public void init() {
@@ -213,6 +216,10 @@ public class RpcApiService implements Service {
         }
       } else {
         serverBuilder = serverBuilder.addService(walletApi);
+      }
+
+      if (parameter.isNodeMetricsEnable()) {
+        serverBuilder = serverBuilder.addService(monitorApi);
       }
 
       // Set configs from config.conf or default value
@@ -2188,6 +2195,15 @@ public class RpcApiService implements Service {
       Transaction.Contract contract = request.getRawData().getContract(0);
       createTransactionExtention(contract.getParameter(), contract.getType(),
           responseObserver);
+    }
+  }
+
+  public class MonitorApi extends MonitorGrpc.MonitorImplBase {
+    @Override
+    public void metrics(EmptyMessage request,
+                        StreamObserver<Protocol.MetricsInfo> responseObserver) {
+      responseObserver.onNext(metricsApiService.getMetricProtoInfo());
+      responseObserver.onCompleted();
     }
   }
 }
