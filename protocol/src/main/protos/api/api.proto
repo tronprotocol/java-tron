@@ -913,6 +913,18 @@ service Database {
   }
 };
 
+service Monitor {
+  rpc Metrics (EmptyMessage) returns (MetricsInfo) {
+    option (google.api.http) = {
+      post: "/monitor/metrics"
+      body: "*"
+      additional_bindings {
+        get: "/monitor/metrics"
+      }
+    };
+  }
+}
+
 message Return {
   enum response_code {
     SUCCESS = 0;
