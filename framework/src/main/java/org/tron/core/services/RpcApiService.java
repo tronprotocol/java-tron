@@ -1421,8 +1421,7 @@ public class RpcApiService implements Service {
                     .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
                     .setPort(node.getPort())));
           });
-//      responseObserver.onNext(nodeListBuilder.build());
-      responseObserver.onNext(metricsApiService.getMetricProtoInfo());
+      responseObserver.onNext(nodeListBuilder.build());
       responseObserver.onCompleted();
     }
 
