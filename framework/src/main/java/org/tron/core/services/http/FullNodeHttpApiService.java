@@ -435,7 +435,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/wallet/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/wallet/createCommonTransaction");
-      context.addServlet(new ServletHolder(metricsServlet), "/monitor/metrics");
+      context.addServlet(new ServletHolder(metricsServlet), "/monitor/getstatsinfo");
       context.addServlet(new ServletHolder(listNodesServlet), "/monitor/listnodes");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
 
