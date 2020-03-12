@@ -1,0 +1,76 @@
+allprojects {
+    version = "1.0.0"
+    apply plugin: "java"
+}
+
+subprojects {
+    apply plugin: "java"
+    apply plugin: "jacoco"
+    apply plugin: "maven"
+    apply plugin: "maven-publish"
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+    buildscript {
+        repositories {
+            mavenCentral()
+            jcenter()
+            maven { url 'https://jitpack.io' }
+        }
+        dependencies {
+            classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
+            classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
+        }
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url 'https://repo.spring.io/plugins-release' }
+        maven { url 'https://jitpack.io' }
+    }
+
+    dependencies {
+        compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+        compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
+        compile "org.slf4j:jcl-over-slf4j:1.7.25"
+        compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+        compile group: 'org.projectlombok', name: 'lombok', version: '1.18.2'
+        compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
+        compile "com.google.code.findbugs:jsr305:3.0.0"
+        compile group: 'org.springframework', name: 'spring-context', version: '4.2.4.RELEASE'
+        compile group: 'org.springframework', name: 'spring-tx', version: '4.2.4.RELEASE'
+        compile "org.apache.commons:commons-lang3:3.4"
+        compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
+        compile "org.apache.commons:commons-collections4:4.0"
+        compile group: 'joda-time', name: 'joda-time', version: '2.3'
+
+    }
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = "sources"
+        from sourceSets.main.allSource
+    }
+
+    artifacts {
+//        archives jar
+        archives sourcesJar
+    }
+
+    tasks.withType(AbstractArchiveTask) {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+}
+
+task copyToParent(type: Copy) {
+    into "$buildDir/libs"
+    subprojects {
+        from tasks.withType(Jar)
+    }
+}
+
+build.finalizedBy(copyToParent) 
