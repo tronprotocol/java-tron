@@ -39,7 +39,6 @@ public class ChannelManager {
   private SyncPool syncPool;
   @Autowired
   private FastForward fastForward;
-
   private CommonParameter parameter = CommonParameter.getInstance();
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();

@@ -54,7 +54,7 @@ public class RateInfo {
         Protocol.MetricsInfo.RateInfo.newBuilder();
     rateInfoBuild.setCount(getCount());
     rateInfoBuild.setOneMinuteRate(getOneMinuteRate());
-    rateInfoBuild.setFifteenMinuteRate(getFiveMinuteRate());
+    rateInfoBuild.setFiveMinuteRate(getFiveMinuteRate());
     rateInfoBuild.setFifteenMinuteRate(getFifteenMinuteRate());
     rateInfoBuild.setMeanRate(getMeanRate());
     return rateInfoBuild.build();

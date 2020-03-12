@@ -56,15 +56,19 @@ public class NetMetricManager {
           Protocol.MetricsInfo.NetInfo.ApiInfo.ApiDetailInfo.newBuilder();
       detailInfo.setName(apiDetail.getName());
       RateInfo detailQps = apiDetail.getQps();
-      Protocol.MetricsInfo.RateInfo detailqpsInfo = detailQps.toProtoEntity();
-      apiInfo.setQps(detailqpsInfo);
+      Protocol.MetricsInfo.RateInfo detailQpsInfo = detailQps.toProtoEntity();
+      detailInfo.setQps(detailQpsInfo);
       RateInfo detailFailQps = apiDetail.getFailQps();
-      Protocol.MetricsInfo.RateInfo detailFailQpsInfo = detailFailQps.toProtoEntity();
-      apiInfo.setFailQps(detailFailQpsInfo);
+      if (detailFailQps != null) {
+        Protocol.MetricsInfo.RateInfo detailFailQpsInfo = detailFailQps.toProtoEntity();
+        detailInfo.setFailQps(detailFailQpsInfo);
+      }
       RateInfo DetailOutTraffic = apiDetail.getOutTraffic();
-      Protocol.MetricsInfo.RateInfo DetailOutTrafficInfo =
-          DetailOutTraffic.toProtoEntity();
-      apiInfo.setOutTraffic(DetailOutTrafficInfo);
+      if (DetailOutTraffic != null) {
+        Protocol.MetricsInfo.RateInfo DetailOutTrafficInfo =
+            DetailOutTraffic.toProtoEntity();
+        detailInfo.setOutTraffic(DetailOutTrafficInfo);
+      }
       apiInfo.addDetail(detailInfo);
     }
     netInfo.setApi(apiInfo.build());
@@ -112,9 +116,9 @@ public class NetMetricManager {
       detailInfo.setTop95(detail.getTop95());
       detailInfo.setTop75(detail.getTop75());
       detailInfo.setCount(detail.getCount());
-      detail.setDelay1S(detail.getDelay1S());
-      detail.setDelay2S(detail.getDelay2S());
-      detail.setDelay3S(detail.getDelay3S());
+      detailInfo.setDelay1S(detail.getDelay1S());
+      detailInfo.setDelay2S(detail.getDelay2S());
+      detailInfo.setDelay3S(detail.getDelay3S());
       latencyInfo.addDetail(detailInfo.build());
     }
 
