@@ -187,8 +187,7 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/walletsolidity/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
-
-      context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
+      
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
