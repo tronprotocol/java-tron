@@ -459,6 +459,35 @@ public class Wallet {
 
   public TransactionCapsule createTransactionCapsuleWithoutValidate(
       com.google.protobuf.Message message,
+      ContractType contractType,
+      long timeout) {
+    TransactionCapsule trx = new TransactionCapsule(message, contractType);
+    try {
+      BlockId blockId = dbManager.getHeadBlockId();
+      if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
+        blockId = dbManager.getSolidBlockId();
+      }
+      trx.setReference(blockId.getNum(), blockId.getBytes());
+
+      long expiration;
+      if (timeout > 0) {
+        expiration =
+            dbManager.getHeadBlockTimeStamp() + timeout * 1000;
+      } else {
+        expiration =
+            dbManager.getHeadBlockTimeStamp() + Args.getInstance()
+                .getTrxExpirationTimeInMilliseconds();
+      }
+      trx.setExpiration(expiration);
+      trx.setTimestamp();
+    } catch (Exception e) {
+      logger.error("Create transaction capsule failed.", e);
+    }
+    return trx;
+  }
+
+  public TransactionCapsule createTransactionCapsuleWithoutValidate(
+      com.google.protobuf.Message message,
       ContractType contractType) {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
     try {
@@ -1777,6 +1806,13 @@ public class Wallet {
     }
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
+    // set timeout
+    long timeout = request.getTimeout();
+    if (timeout < 0) {
+      throw new ContractValidateException("Timeout must >= 0");
+    }
+    builder.setTimeout(timeout);
+
     byte[] transparentFromAddress = request.getTransparentFromAddress().toByteArray();
     byte[] ask = request.getAsk().toByteArray();
     byte[] nsk = request.getNsk().toByteArray();
@@ -1882,6 +1918,13 @@ public class Wallet {
     }
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
+
+    // set timeout
+    long timeout = request.getTimeout();
+    if (timeout < 0) {
+      throw new ContractValidateException("Timeout must >= 0");
+    }
+    builder.setTimeout(timeout);
 
     byte[] transparentFromAddress = request.getTransparentFromAddress().toByteArray();
     byte[] ak = request.getAk().toByteArray();
