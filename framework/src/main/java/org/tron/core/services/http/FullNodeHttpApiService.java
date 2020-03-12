@@ -310,7 +310,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(unFreezeAssetServlet), "/wallet/unfreezeasset");
       context.addServlet(new ServletHolder(withdrawBalanceServlet), "/wallet/withdrawbalance");
       context.addServlet(new ServletHolder(updateAssetServlet), "/wallet/updateasset");
-      context.addServlet(new ServletHolder(listNodesServlet), "/monitor/listnodes");
+      context.addServlet(new ServletHolder(listNodesServlet), "/wallet/listnodes");
       context.addServlet(
           new ServletHolder(getAssetIssueByAccountServlet), "/wallet/getassetissuebyaccount");
       context.addServlet(new ServletHolder(getAccountNetServlet), "/wallet/getaccountnet");
@@ -387,7 +387,7 @@ public class FullNodeHttpApiService implements Service {
           "/wallet/getapprovedlist");
       context.addServlet(new ServletHolder(accountPermissionUpdateServlet),
           "/wallet/accountpermissionupdate");
-      context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
+      context.addServlet(new ServletHolder(getNodeInfoServlet), "/wallet/getnodeinfo");
       context.addServlet(new ServletHolder(updateSettingServlet), "/wallet/updatesetting");
       context.addServlet(new ServletHolder(updateEnergyLimitServlet), "/wallet/updateenergylimit");
       context.addServlet(new ServletHolder(getDelegatedResourceServlet),
@@ -436,6 +436,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/wallet/createCommonTransaction");
       context.addServlet(new ServletHolder(metricsServlet), "/monitor/metrics");
+      context.addServlet(new ServletHolder(listNodesServlet), "/monitor/listnodes");
+      context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
