@@ -51,6 +51,10 @@ public class ZenTransactionBuilder {
   @Getter
   private long valueBalance = 0;
 
+  @Setter
+  @Getter
+  private long timeout = 0;
+
   @Getter
   private ShieldedTransferContract.Builder contractBuilder = ShieldedTransferContract.newBuilder();
 
@@ -59,6 +63,10 @@ public class ZenTransactionBuilder {
   }
 
   public ZenTransactionBuilder() {
+  }
+
+  public void setTimeout(long value) {
+    timeout = value;
   }
 
   public void addSpend(SpendDescriptionInfo spendDescriptionInfo) {
@@ -150,7 +158,7 @@ public class ZenTransactionBuilder {
       // Empty output script
       byte[] dataHashToBeSigned; //256
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
-          contractBuilder.build(), ContractType.ShieldedTransferContract);
+          contractBuilder.build(), ContractType.ShieldedTransferContract, timeout);
 
       dataHashToBeSigned = TransactionCapsule
           .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
