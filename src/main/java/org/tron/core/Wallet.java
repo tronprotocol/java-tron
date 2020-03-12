@@ -457,7 +457,7 @@ public class Wallet {
     return new TransactionCapsule(contract, accountStore).getInstance();
   }
 
-  public TransactionCapsule createTransactionCapsuleWithoutValidate(
+  private TransactionCapsule createTransactionCapsuleWithoutValidateWithTimeout(
       com.google.protobuf.Message message,
       ContractType contractType,
       long timeout) {
@@ -488,23 +488,15 @@ public class Wallet {
 
   public TransactionCapsule createTransactionCapsuleWithoutValidate(
       com.google.protobuf.Message message,
+      ContractType contractType,
+      long timeout) {
+    return createTransactionCapsuleWithoutValidateWithTimeout(message, contractType, timeout);
+  }
+
+  public TransactionCapsule createTransactionCapsuleWithoutValidate(
+      com.google.protobuf.Message message,
       ContractType contractType) {
-    TransactionCapsule trx = new TransactionCapsule(message, contractType);
-    try {
-      BlockId blockId = dbManager.getHeadBlockId();
-      if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
-        blockId = dbManager.getSolidBlockId();
-      }
-      trx.setReference(blockId.getNum(), blockId.getBytes());
-      long expiration =
-          dbManager.getHeadBlockTimeStamp() + Args.getInstance()
-              .getTrxExpirationTimeInMilliseconds();
-      trx.setExpiration(expiration);
-      trx.setTimestamp();
-    } catch (Exception e) {
-      logger.error("Create transaction capsule failed.", e);
-    }
-    return trx;
+    return createTransactionCapsuleWithoutValidateWithTimeout(message, contractType, 0);
   }
 
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
