@@ -2626,7 +2626,7 @@ public class Wallet {
       for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
         voteNumber += dbManager.getDelegationStore().getWitnessVote(cycle,address);
       }
-//      voteNumber = voteNumber / (endCycle - beginCycle);
+      voteNumber = voteNumber / (endCycle - beginCycle);
     }
     return voteNumber;
   }
@@ -2638,7 +2638,7 @@ public class Wallet {
     long endCycle = dbManager.getDelegationService().
         getCycleFromTimeStamp(endTimeStamp);
     AtomicLong voteNumber = new AtomicLong();
-//    double voteNumberTotal=0;
+    double voteNumberTotal=0;
 
     if (beginCycle < endCycle) {
       for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
@@ -2648,10 +2648,10 @@ public class Wallet {
           voteNumber.addAndGet(dbManager.getDelegationStore().getWitnessVote(finalCycle, witness.getAddress().toByteArray()));
         });
       }
-//      voteNumberTotal= voteNumber.longValue() / (endCycle - beginCycle);
+      voteNumberTotal= voteNumber.longValue() / (endCycle - beginCycle);
     }
-//    return voteNumberTotal;
-    return voteNumber.doubleValue();
+    return voteNumberTotal;
+//    return voteNumber.doubleValue();
   }
 
   public double querySrRatio(byte[] address, long startTimeStamp, long endTimeStamp) {

@@ -34,7 +34,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
 
       long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock()/1000000;
       long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock()/1000000;
-      int srNumber = wallet.getSrNumber();
+      int srNumber = 27;
       int blockNumberEachDay = 28792;
 
       double totalVote;
@@ -53,7 +53,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
         logger.info("totalVote: {}, srVote: {}, ratio: {},",
             totalVote,srVote,ratio);
 
-        annualizedRateOfReturn=(rewardOfBlockEachBlock/srNumber/srVote+rewardOfVoteEachBlock/totalVote)*blockNumberEachDay*ratio*365;
+        annualizedRateOfReturn=(rewardOfBlockEachBlock/srNumber/srVote+rewardOfVoteEachBlock/totalVote)*4*blockNumberEachDay*ratio*365;
       }
 
       response.getWriter().println("{\"annualizedRateOfReturn\": " + annualizedRateOfReturn + "}");
