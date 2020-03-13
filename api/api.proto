@@ -1087,7 +1087,7 @@ message EasyTransferAssetByPrivateMessage {
 message EasyTransferResponse {
   Transaction transaction = 1;
   Return result = 2;
-  bytes txid = 3; //transaction id =  sha256(transaction.rowdata)
+  bytes txid = 3; //transaction id =  sha256(transaction.rawdata)
 }
 
 message AddressPrKeyPairMessage {
@@ -1097,7 +1097,7 @@ message AddressPrKeyPairMessage {
 
 message TransactionExtention {
   Transaction transaction = 1;
-  bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
+  bytes txid = 2; //transaction id =  sha256(transaction.rawdata)
   repeated bytes constant_result = 3;
   Return result = 4;
 }
@@ -1182,7 +1182,7 @@ message OvkDecryptParameters {
 message DecryptNotes {
   message NoteTx {
     Note note = 1;
-    bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
+    bytes txid = 2; //transaction id =  sha256(transaction.rawdata)
     int32 index = 3; //the index of note in receive
   }
   repeated NoteTx noteTxs = 1;
@@ -1191,7 +1191,7 @@ message DecryptNotes {
 message DecryptNotesMarked {
   message NoteTx {
     Note note = 1;
-    bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
+    bytes txid = 2; //transaction id =  sha256(transaction.rawdata)
     int32 index = 3; //the index of note in receive
     bool is_spend = 4;
   }
