@@ -52,7 +52,6 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
             rewardOfVoteEachBlock,rewardOfBlockEachBlock,srNumber);
         logger.info("totalVote: {}, srVote: {}, ratio: {},",
             totalVote,srVote,ratio);
-
         annualizedRateOfReturn=(rewardOfBlockEachBlock/srNumber/srVote+rewardOfVoteEachBlock/totalVote)*4*blockNumberEachDay*ratio*365;
       }
 
