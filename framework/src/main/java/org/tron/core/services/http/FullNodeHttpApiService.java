@@ -423,7 +423,6 @@ public class FullNodeHttpApiService implements Service {
           "/getSRRewardByTimeStamp");
       context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet), "/getSRAnnualizedRateOfReturnServlet");
       context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet), "/getAccountLastUnwithdrawReward");
-      context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet), "/getAccountLastUnwithdrawReward");
       context.addServlet(new ServletHolder(getCurrentCycleServlet), "/getCurrentCycleServlet");
 
 
