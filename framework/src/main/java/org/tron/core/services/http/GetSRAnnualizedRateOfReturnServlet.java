@@ -32,8 +32,8 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
       long endTimeStamp = Util.getJsonLongValue(jsonObject, "endTimeStamp", true);
 
 
-      long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock();
-      long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock();
+      long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock()/1000000;
+      long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock()/1000000;
       int srNumber = wallet.getSrNumber();
       int blockNumberEachDay = 28792;
 
@@ -47,6 +47,12 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
         if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 1 || ratio < 0) {
           throw new Exception("bad parameters");
         }
+        //debug
+        logger.info("getRewardOfVoteEachBlock: {}, getRewardOfBlockEachBlock: {}, getSrNumber: {},",
+            rewardOfVoteEachBlock,rewardOfBlockEachBlock,srNumber);
+        logger.info("totalVote: {}, srVote: {}, ratio: {},",
+            totalVote,srVote,ratio);
+
         annualizedRateOfReturn=(rewardOfBlockEachBlock/srNumber/srVote+rewardOfVoteEachBlock/totalVote)*blockNumberEachDay*ratio*365;
       }
 
@@ -65,4 +71,4 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
-  }
+}
