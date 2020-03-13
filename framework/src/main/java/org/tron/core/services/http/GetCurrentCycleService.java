@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.core.db.Manager;
 
-public class GetCurrentCycle extends RateLimiterServlet {
+public class GetCurrentCycleService extends RateLimiterServlet {
   @Autowired
   private Manager manager;
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {

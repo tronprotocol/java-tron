@@ -234,6 +234,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetAccountLastUnwithdrawRewardServlet getAccountLastUnwithdrawRewardServlet;
   @Autowired
+  private GetCurrentCycleService getCurrentCycleServlet;
+  @Autowired
   private GetSRAnnualizedRateOfReturnServlet getSRAnnualizedRateOfReturnServlet;
 
   private static String getParamsFile(String fileName) {
@@ -421,6 +423,10 @@ public class FullNodeHttpApiService implements Service {
           "/getSRRewardByTimeStamp");
       context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet), "/getSRAnnualizedRateOfReturnServlet");
       context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet), "/getAccountLastUnwithdrawReward");
+      context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet), "/getAccountLastUnwithdrawReward");
+      context.addServlet(new ServletHolder(getCurrentCycleServlet), "/getCurrentCycleServlet");
+
+
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
