@@ -2,9 +2,17 @@ syntax = "proto3";
 package protocol;
 
 import "core/Tron.proto";
-import "core/Contract.proto";
 import "google/api/annotations.proto";
 
+import "core/contract/asset_issue_contract.proto";
+import "core/contract/account_contract.proto";
+import "core/contract/witness_contract.proto";
+import "core/contract/balance_contract.proto";
+import "core/contract/proposal_contract.proto";
+import "core/contract/storage_contract.proto";
+import "core/contract/exchange_contract.proto";
+import "core/contract/smart_contract.proto";
+import "core/contract/shield_contract.proto";
 
 option java_package = "org.tron.api"; //Specify the name of the package that generated the Java file
 option java_outer_classname = "GrpcAPI"; //Specify the class name of the generated Java file
@@ -630,6 +638,16 @@ service Wallet {
   rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
   };
 
+  rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
+  };
+
+  rpc UpdateBrokerage (UpdateBrokerageContract) returns (TransactionExtention) {
+
+  };
+
   // for shiededTransaction
   rpc CreateShieldedTransaction (PrivateParameters) returns (TransactionExtention) {
   };
@@ -689,14 +707,11 @@ service Wallet {
   };
   // end for shiededTransaction
 
-  rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
+  rpc CreateCommonTransaction (Transaction) returns (TransactionExtention) {
   };
 
-  rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
-  };
-
-  rpc UpdateBrokerage (UpdateBrokerageContract) returns (TransactionExtention) {
-  };
+  rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
+  }
 };
 
 service WalletSolidity {
@@ -829,7 +844,6 @@ service WalletSolidity {
     };
   }
 
-
   rpc GetMerkleTreeVoucherInfo (OutputPointInfo) returns (IncrementalMerkleVoucherInfo) {
   }
 
@@ -845,14 +859,17 @@ service WalletSolidity {
   rpc IsSpend (NoteParameters) returns (SpendResult) {
   }
 
-  rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
-  }
-
   rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
   };
 
   rpc GetBrokerageInfo (BytesMessage) returns (NumberMessage) {
   };
+
+  rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
+  }
+
+  rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
+  }
 
 };
 
@@ -1070,7 +1087,7 @@ message EasyTransferAssetByPrivateMessage {
 message EasyTransferResponse {
   Transaction transaction = 1;
   Return result = 2;
-  bytes txid = 3; //transaction id = sha256(transaction.raw_data)
+  bytes txid = 3; //transaction id =  sha256(transaction.rowdata)
 }
 
 message AddressPrKeyPairMessage {
@@ -1080,7 +1097,7 @@ message AddressPrKeyPairMessage {
 
 message TransactionExtention {
   Transaction transaction = 1;
-  bytes txid = 2; //transaction id = sha256(transaction.raw_data)
+  bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
   repeated bytes constant_result = 3;
   Return result = 4;
 }
@@ -1165,7 +1182,7 @@ message OvkDecryptParameters {
 message DecryptNotes {
   message NoteTx {
     Note note = 1;
-    bytes txid = 2; //transaction id = sha256(transaction.raw_data)
+    bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
     int32 index = 3; //the index of note in receive
   }
   repeated NoteTx noteTxs = 1;
@@ -1174,7 +1191,7 @@ message DecryptNotes {
 message DecryptNotesMarked {
   message NoteTx {
     Note note = 1;
-    bytes txid = 2; //transaction id = sha256(transaction.raw_data)
+    bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
     int32 index = 3; //the index of note in receive
     bool is_spend = 4;
   }
@@ -1290,4 +1307,8 @@ message NoteParameters {
 message SpendResult {
   bool result = 1;
   string message = 2;
+}
+
+message TransactionInfoList {
+  repeated TransactionInfo transactionInfo = 1;
 }

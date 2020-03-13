@@ -259,9 +259,6 @@ message Transaction {
       ProposalDeleteContract = 18;
       SetAccountIdContract = 19;
       CustomContract = 20;
-      // BuyStorageContract = 21;
-      // BuyStorageBytesContract = 22;
-      // SellStorageContract = 23;
       CreateSmartContract = 30;
       TriggerSmartContract = 31;
       GetContract = 32;
@@ -325,9 +322,9 @@ message Transaction {
     bytes ref_block_hash = 4;
     int64 expiration = 8;
     repeated authority auths = 9;
-    // transaction note
+    // data not used
     bytes data = 10;
-    //only support size = 1, repeated list here for extension
+    //only support size = 1,  repeated list here for extension
     repeated Contract contract = 11;
     // scripts not used
     bytes scripts = 12;
@@ -336,7 +333,7 @@ message Transaction {
   }
 
   raw raw_data = 1;
-  // only support size = 1, repeated list here for muti-sig extension
+  // only support size = 1,  repeated list here for muti-sig extension
   repeated bytes signature = 2;
   repeated Result ret = 5;
 }
@@ -507,53 +504,6 @@ message HelloMessage {
   BlockId genesisBlockId = 4;
   BlockId solidBlockId = 5;
   BlockId headBlockId = 6;
-}
-
-message SmartContract {
-  message ABI {
-    message Entry {
-      enum EntryType {
-        UnknownEntryType = 0;
-        Constructor = 1;
-        Function = 2;
-        Event = 3;
-        Fallback = 4;
-      }
-      message Param {
-        bool indexed = 1;
-        string name = 2;
-        string type = 3;
-        // SolidityType type = 3;
-      }
-      enum StateMutabilityType {
-        UnknownMutabilityType = 0;
-        Pure = 1;
-        View = 2;
-        Nonpayable = 3;
-        Payable = 4;
-      }
-
-      bool anonymous = 1;
-      bool constant = 2;
-      string name = 3;
-      repeated Param inputs = 4;
-      repeated Param outputs = 5;
-      EntryType type = 6;
-      bool payable = 7;
-      StateMutabilityType stateMutability = 8;
-    }
-    repeated Entry entrys = 1;
-  }
-  bytes origin_address = 1;
-  bytes contract_address = 2;
-  ABI abi = 3;
-  bytes bytecode = 4;
-  int64 call_value = 5;
-  int64 consume_user_resource_percent = 6;
-  string name = 7;
-  int64 origin_energy_limit = 8;
-  bytes code_hash = 9;
-  bytes trx_hash = 10;
 }
 
 message InternalTransaction {
