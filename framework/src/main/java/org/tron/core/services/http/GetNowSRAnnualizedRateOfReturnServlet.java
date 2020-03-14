@@ -43,14 +43,15 @@ public class GetNowSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
         srVote = wallet.queryNowVoteNumber(address);
         totalVote = wallet.queryNowTotalVoteNumber();
         ratio = wallet.queryNowSrRatio(address);
+      //debug
+      logger.info("getRewardOfVoteEachBlock: {}, getRewardOfBlockEachBlock: {}, getSrNumber: {},",
+          rewardOfVoteEachBlock,rewardOfBlockEachBlock,srNumber);
+      logger.info("totalVoteNow: {}, srVoteNow: {}, ratioNow: {},",
+          totalVote,srVote,ratio);
+
         if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 1 || ratio < 0) {
           throw new Exception("bad parameters");
         }
-        //debug
-        logger.info("getRewardOfVoteEachBlock: {}, getRewardOfBlockEachBlock: {}, getSrNumber: {},",
-            rewardOfVoteEachBlock,rewardOfBlockEachBlock,srNumber);
-        logger.info("totalVoteNow: {}, srVoteNow: {}, ratioNow: {},",
-            totalVote,srVote,ratio);
         annualizedRateOfReturn=(rewardOfBlockEachBlock/srNumber/srVote+rewardOfVoteEachBlock/totalVote)*blockNumberEachDay*ratio*365;
 //      }
 
