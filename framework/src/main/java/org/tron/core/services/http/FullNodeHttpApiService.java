@@ -237,6 +237,8 @@ public class FullNodeHttpApiService implements Service {
   private GetCurrentCycleService getCurrentCycleServlet;
   @Autowired
   private GetSRAnnualizedRateOfReturnServlet getSRAnnualizedRateOfReturnServlet;
+  @Autowired
+  private GetNowSRAnnualizedRateOfReturnServlet getNowSRAnnualizedRateOfReturnServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -422,6 +424,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getSRRewardByTimeStampServlet),
           "/getSRRewardByTimeStamp");
       context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet), "/getSRAnnualizedRateOfReturnServlet");
+      context.addServlet(new ServletHolder(getNowSRAnnualizedRateOfReturnServlet), "/getNowSRAnnualizedRateOfReturnServlet");
       context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet), "/getAccountLastUnwithdrawReward");
       context.addServlet(new ServletHolder(getCurrentCycleServlet), "/getCurrentCycleServlet");
 

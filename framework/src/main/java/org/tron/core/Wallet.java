@@ -2685,5 +2685,22 @@ public class Wallet {
   public int getSrNumber() {
     return dbManager.getWitnessStore().getAllWitnesses().size();
   }
+
+  public double queryNowVoteNumber(byte[] address) {
+    return dbManager.getWitnessStore().get(address).getVoteCount();
+  }
+
+  public double queryNowTotalVoteNumber() {
+    AtomicLong voteNumber = new AtomicLong();
+    List<WitnessCapsule> allWitnesses = dbManager.getWitnessStore().getAllWitnesses();
+    allWitnesses.forEach(witness ->{
+      voteNumber.addAndGet(dbManager.getWitnessStore().get(witness.getAddress().toByteArray()).getVoteCount());
+    });
+    return voteNumber.doubleValue();
+  }
+
+  public double queryNowSrRatio(byte[] address) {
+    return dbManager.getDelegationStore().getBrokerage(address);
+  }
 }
 
