@@ -916,10 +916,10 @@ service Database {
 service Monitor {
   rpc Metrics (EmptyMessage) returns (MetricsInfo) {
     option (google.api.http) = {
-      post: "/monitor/metrics"
+      post: "/monitor/getstatsinfo"
       body: "*"
       additional_bindings {
-        get: "/monitor/metrics"
+        get: "/monitor/getstatsinfo"
       }
     };
   }
