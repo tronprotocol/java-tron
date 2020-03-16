@@ -46,12 +46,15 @@ public class HttpInterceptor implements Filter {
           MetricsUtil.meterMark(MetricsKey.NET_API_OUT_TRAFFIC,
               reposeContentSize);
           MetricsUtil.meterMark(endpointOutTraffic, reposeContentSize);
-        }
 
-        if (resp.getStatus() != 200) {
-          String endpointFailQPS = MetricsKey.NET_API_DETAIL_FAIL_QPS  + endpoint;
+          if (resp.getStatus() != 200) {  //http fail
+            String endpointFailQPS = MetricsKey.NET_API_DETAIL_FAIL_QPS + endpoint;
+            MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
+            MetricsUtil.meterMark(endpointFailQPS, 1);
+          }
+        } else { // wrong endpoint
+          MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 1);
           MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
-          MetricsUtil.meterMark(endpointFailQPS, 1);
         }
 
       } else {
@@ -59,8 +62,9 @@ public class HttpInterceptor implements Filter {
       }
 
     } catch (Exception e) {
-      if (MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_FAIL_QPS).containsKey(
-          MetricsKey.NET_API_DETAIL_FAIL_QPS + endpoint)) {   // correct endpoint
+
+      if (MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_QPS).containsKey(
+          MetricsKey.NET_API_DETAIL_QPS + endpoint)) {   // correct endpoint
         MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_FAIL_QPS
             + endpoint, 1);
         MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_QPS
