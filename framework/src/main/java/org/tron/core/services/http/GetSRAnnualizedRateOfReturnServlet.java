@@ -44,7 +44,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
         srVote = wallet.queryVoteNumber(address, startTimeStamp, endTimeStamp);
         totalVote = wallet.queryTotalVoteNumber(startTimeStamp, endTimeStamp);
         ratio = wallet.querySrRatio(address, startTimeStamp, endTimeStamp);
-        if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 1 || ratio < 0) {
+        if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 100 || ratio < 0) {
           throw new Exception("bad parameters");
         }
         //debug

@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,9 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 
+import java.util.Arrays;
+
+@Slf4j
 @Component
 public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
@@ -24,6 +28,9 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
   @Override
   public BytesCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
+    //debug
+    logger.info("Account-revokingDB.getUnchecked(key): {},Account-key: {},",
+        Arrays.toString(value),key);
     return ArrayUtils.isEmpty(value) ? null : new BytesCapsule(value);
   }
 
@@ -101,6 +108,10 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public AccountCapsule getAccountVote(long cycle, byte[] address) {
     BytesCapsule bytesCapsule = get(buildAccountVoteKey(cycle, address));
+    //debug
+    logger.info("Account-bytesCapsule: {},Account-cycle: {},Account-address: {},Account-buildAccountVoteKey: {}",
+        bytesCapsule,cycle,address,buildAccountVoteKey(cycle, address));
+
     if (bytesCapsule == null) {
       return null;
     } else {

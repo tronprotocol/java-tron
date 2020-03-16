@@ -2276,12 +2276,16 @@ public class Wallet {
   private List<Vote> getVoteList (byte[] address, long cycle) {
     for (long i = cycle; i >=0 ;i --) {
       AccountCapsule accountCapsule = dbManager.getDelegationStore()
-          .getAccountVote(cycle, address);
+          .getAccountVote(i, address);
       if (accountCapsule != null) {
         return accountCapsule.getVotesList();
       }
       BytesCapsule remark = dbManager.getDelegationStore()
-          .getRemark(cycle, address);
+          .getRemark(i, address);
+      //debug
+      logger.info("Account-accountCapsule: {},Account-remark: {}",
+          accountCapsule,remark);
+
       if (remark != null) {
         return null;
       }
@@ -2337,6 +2341,10 @@ public class Wallet {
       return rewardMap;
     }
 
+    //debug
+    logger.info("Account-beginCycle: {}, Account-beginCycle: {},",
+        beginCycle,endCycle);
+
     for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
       List<Vote> voteList = getVoteList(address, cycle);
       if (voteList != null) {
@@ -2352,6 +2360,10 @@ public class Wallet {
           double voteRate = (double) userVote / totalVote;
           String SR = StringUtil
               .encode58Check(srAddress);
+
+          logger.info("Account-userVote: {}, Account-totalVote: {},Account-SR: {},",
+              userVote,totalVote,SR);
+
           if (rewardMap.containsKey(SR) == false) {
             rewardMap.put(SR, (long)(voteRate * totalReward));
           } else {
@@ -2361,6 +2373,8 @@ public class Wallet {
         }
       }
     }
+    logger.info("Account-rewardMap: {}",
+        rewardMap);
     return rewardMap;
   }
 
@@ -2671,7 +2685,7 @@ public class Wallet {
       }
     }
     srRatio = srRatio / (endCycle - beginCycle);
-    return srRatio/100;
+    return srRatio;
   }
 
   public long getRewardOfVoteEachBlock() {
