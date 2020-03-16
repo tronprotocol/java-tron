@@ -61,7 +61,7 @@ public class Constant {
   // Configuration items
   public static final String NET_TYPE = "net.type";
   public static final String TESTNET = "testnet";
-  public static final String LOCAL_WITENSS = "localwitness";
+  public static final String LOCAL_WITNESS = "localwitness";
   public static final String LOCAL_WITNESS_ACCOUNT_ADDRESS = "localWitnessAccountAddress";
   public static final String LOCAL_WITNESS_KEYSTORE = "localwitnesskeystore";
   public static final String VM_SUPPORT_CONSTANT = "vm.supportConstant";
@@ -110,7 +110,7 @@ public class Constant {
   public static final String NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS = "node.rpc.maxConnectionAgeInMillis";
   public static final String NODE_RPC_MAX_MESSAGE_SIZE = "node.rpc.maxMessageSize";
 
-  public static final String NODE_RPC_MAX_HEADER_LIST_ISZE = "node.rpc.maxHeaderListSize";
+  public static final String NODE_RPC_MAX_HEADER_LIST_SIZE = "node.rpc.maxHeaderListSize";
 
   public static final String BLOCK_MAINTENANCE_TIME_INTERVAL = "block.maintenanceTimeInterval";
   public static final String BLOCK_PROPOSAL_EXPIRE_TIME = "block.proposalExpireTime";
@@ -213,7 +213,7 @@ public class Constant {
 
   public static final String EVENT_SUBSCRIBE_PATH = "event.subscribe.path";
   public static final String EVENT_SUBSCRIBE_SERVER = "event.subscribe.server";
-  public static final String EVENT_SUBSCIBE_DB_CONFIG = "event.subscribe.dbconfig";
+  public static final String EVENT_SUBSCRIBE_DB_CONFIG = "event.subscribe.dbconfig";
   public static final String EVENT_SUBSCRIBE_TOPICS = "event.subscribe.topics";
   public static final String EVENT_SUBSCRIBE_FROM_BLOCK = "event.subscribe.filter.fromblock";
   public static final String EVENT_SUBSCRIBE_TO_BLOCK = "event.subscribe.filter.toblock";
@@ -222,7 +222,7 @@ public class Constant {
 
   public static final String NODE_DISCOVERY_BIND_IP = "node.discovery.bind.ip";
 
-  public static final String NODE_DISCOVERY_EXTENNAL_IP = "node.discovery.external.ip";
+  public static final String NODE_DISCOVERY_EXTERNAL_IP = "node.discovery.external.ip";
   public static final String AMAZONAWS_URL = "http://checkip.amazonaws.com";
 
   public static final String NODE_BACKUP_PRIORITY = "node.backup.priority";
