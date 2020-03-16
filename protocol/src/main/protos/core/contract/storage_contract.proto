@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+//option java_outer_classname = "BuyStorageBytesContract"; //Specify the class name of the generated Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+message BuyStorageBytesContract {
+    bytes owner_address = 1;
+    int64 bytes = 2; // storage bytes for buy
+}
+
+message BuyStorageContract {
+    bytes owner_address = 1;
+    int64 quant = 2; // trx quantity for buy storage (sun)
+}
+
+message SellStorageContract {
+    bytes owner_address = 1;
+    int64 storage_bytes = 2;
+}
+
+message UpdateBrokerageContract {
+    bytes owner_address = 1;
+    int32 brokerage = 2; // 1 mean 1%
+}
