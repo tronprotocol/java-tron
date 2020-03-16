@@ -15,7 +15,7 @@ import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net-cross")
 @Component
-public class CrossChainService {
+public class CrossChainMsgProcess {
 
   @Autowired
   private CommunicateService communicateService;

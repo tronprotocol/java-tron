@@ -8,6 +8,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.interfaceOnPBFT.http.CheckCrossTxCommitOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountByIdOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAccountOnPBFTServlet;
 import org.tron.core.services.interfaceOnPBFT.http.GetAssetIssueByIdOnPBFTServlet;
@@ -106,6 +107,8 @@ public class HttpApiOnPBFTService implements Service {
   private GetRewardOnPBFTServlet getRewardServlet;
   @Autowired
   private TriggerConstantContractOnPBFTServlet triggerConstantContractOnPBFTServlet;
+  @Autowired
+  private CheckCrossTxCommitOnPBFTServlet checkCrossTxCommitOnPBFTServlet;
 
   @Override
   public void init() {
@@ -186,6 +189,7 @@ public class HttpApiOnPBFTService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoOnPBFTServlet), "/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
+      context.addServlet(new ServletHolder(checkCrossTxCommitOnPBFTServlet), "/checkcrosscommit");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));

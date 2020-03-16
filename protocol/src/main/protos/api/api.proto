@@ -706,6 +706,10 @@ service Wallet {
   rpc CreateCommonTransaction (Transaction) returns (TransactionExtention) {
 
   };
+  //check the cross chain transaction is commit or not
+  rpc checkCrossTransactionCommit(BytesMessage) returns (Return) {
+
+  };
 };
 
 service WalletSolidity {
@@ -861,6 +865,10 @@ service WalletSolidity {
 
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
+
+  rpc checkCrossTransactionCommit(BytesMessage) returns (Return) {
+
+  };
 
 };
 

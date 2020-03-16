@@ -431,5 +431,11 @@ public class RpcApiServiceOnSolidity implements Service {
       );
     }
 
+    @Override
+    public void checkCrossTransactionCommit(BytesMessage request,
+        StreamObserver<Return> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .checkCrossTransactionCommit(request, responseObserver));
+    }
   }
 }

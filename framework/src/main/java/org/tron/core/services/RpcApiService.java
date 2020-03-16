@@ -94,6 +94,7 @@ import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.ibc.common.CrossChainService;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -162,6 +163,8 @@ public class RpcApiService implements Service {
   private NodeInfoService nodeInfoService;
   @Autowired
   private RateLimiterInterceptor rateLimiterInterceptor;
+  @Autowired
+  private CrossChainService crossChainService;
 
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
@@ -719,6 +722,11 @@ public class RpcApiService implements Service {
       callContract(request, responseObserver, true);
     }
 
+    @Override
+    public void checkCrossTransactionCommit(BytesMessage request,
+        StreamObserver<Return> responseObserver) {
+      checkCrossTransactionCommitCommon(request, responseObserver);
+    }
   }
 
   /**
@@ -2156,5 +2164,24 @@ public class RpcApiService implements Service {
       createTransactionExtention(contract.getParameter(), contract.getType(),
           responseObserver);
     }
+
+    @Override
+    public void checkCrossTransactionCommit(BytesMessage request,
+        StreamObserver<Return> responseObserver) {
+      checkCrossTransactionCommitCommon(request, responseObserver);
+    }
+  }
+
+  private void checkCrossTransactionCommitCommon(BytesMessage request,
+      StreamObserver<Return> responseObserver) {
+    try {
+      boolean value = crossChainService.checkCrossChainCommit(request.getValue());
+      Return.Builder builder = Return.newBuilder();
+      builder.setResult(value);
+      responseObserver.onNext(builder.build());
+    } catch (Exception e) {
+      responseObserver.onError(e);
+    }
+    responseObserver.onCompleted();
   }
 }

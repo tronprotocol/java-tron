@@ -1,6 +1,5 @@
 package org.tron.core.services.interfaceOnPBFT;
 
-import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -25,20 +24,16 @@ import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.Return;
-import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.interfaceOnPBFT.WalletOnPBFT;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -404,5 +399,11 @@ public class RpcApiServiceOnPBFT implements Service {
       );
     }
 
+    @Override
+    public void checkCrossTransactionCommit(BytesMessage request,
+        StreamObserver<Return> responseObserver) {
+      walletOnPBFT.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .checkCrossTransactionCommit(request, responseObserver));
+    }
   }
 }

@@ -19,7 +19,7 @@ public class CrossChainHandler extends SimpleChannelInboundHandler<TronMessage> 
   private MessageQueue msgQueue;
 
   @Autowired
-  private CrossChainService crossChainService;
+  private CrossChainMsgProcess crossChainService;
 
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) throws Exception {

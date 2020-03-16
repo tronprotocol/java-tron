@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.http.CheckCrossTransactionCommitServlet;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.http.GetAccountByIdServlet;
 import org.tron.core.services.http.GetAccountServlet;
@@ -108,6 +109,8 @@ public class SolidityNodeHttpApiService implements Service {
   private GetRewardServlet getRewardServlet;
   @Autowired
   private TriggerConstantContractServlet triggerConstantContractServlet;
+  @Autowired
+  private CheckCrossTransactionCommitServlet checkCrossTransactionCommitServlet;
 
   @Override
   public void init() {
@@ -187,6 +190,8 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/wallet/getnodeinfo");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/walletsolidity/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/walletsolidity/getReward");
+      context.addServlet(new ServletHolder(checkCrossTransactionCommitServlet),
+          "/walletsolidity/checkcrosscommit");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
