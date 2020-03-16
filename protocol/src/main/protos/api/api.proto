@@ -914,7 +914,7 @@ service Database {
 };
 
 service Monitor {
-  rpc Metrics (EmptyMessage) returns (MetricsInfo) {
+  rpc GetStatsInfo (EmptyMessage) returns (MetricsInfo) {
     option (google.api.http) = {
       post: "/monitor/getstatsinfo"
       body: "*"
