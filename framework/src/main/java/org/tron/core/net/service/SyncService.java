@@ -259,7 +259,7 @@ public class SyncService {
     boolean flag = true;
     BlockId blockId = block.getBlockId();
     try {
-      tronNetDelegate.processBlock(block);
+      tronNetDelegate.processBlock(block, true);
     } catch (Exception e) {
       logger.error("Process sync block {} failed.", blockId.getString(), e);
       flag = false;

@@ -22,6 +22,8 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -103,6 +105,8 @@ public class ChannelManager {
         recentlyDisconnected.put(channel.getInetAddress(), reason);
         break;
     }
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_COUNT, 1L);
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_DETAIL + reason, 1L);
   }
 
   public void notifyDisconnect(Channel channel) {

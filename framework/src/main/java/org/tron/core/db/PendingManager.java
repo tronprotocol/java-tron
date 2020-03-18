@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace.TimeResultType;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 
 @Slf4j(topic = "DB")
 public class PendingManager implements AutoCloseable {
@@ -17,11 +19,16 @@ public class PendingManager implements AutoCloseable {
 
   public PendingManager(Manager db) {
     this.dbManager = db;
+
     db.getPendingTransactions().forEach(transactionCapsule -> {
       if (System.currentTimeMillis() - transactionCapsule.getTime() < timeout) {
         tmpTransactions.add(transactionCapsule);
       }
     });
+    if (db.getPendingTransactions().size() > tmpTransactions.size()) {
+      MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_MISSED_TRANSACTION,
+          db.getPendingTransactions().size() - tmpTransactions.size());
+    }
     db.getPendingTransactions().clear();
     db.getSession().reset();
     db.getShieldedTransInPendingCounts().set(0);
