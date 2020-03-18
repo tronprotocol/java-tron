@@ -93,7 +93,7 @@ public class CommonParameter {
   public String storageIndexSwitch = "";
   @Parameter(names = {"--storage-transactionHistory-switch"},
       description = "Storage transaction history switch.(on or off)")
-  public String storageTransactionHistoreSwitch = "";
+  public String storageTransactionHistorySwitch = "";
   @Getter
   @Parameter(names = {"--fast-forward"})
   public boolean fastForward = false;
