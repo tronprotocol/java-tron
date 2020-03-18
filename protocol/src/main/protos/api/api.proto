@@ -875,6 +875,12 @@ service WalletSolidity {
   rpc IsSpend (NoteParameters) returns (SpendResult) {
   }
 
+  rpc ScanShieldedTRC20NotesbyIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  };
+
+  rpc ScanShieldedTRC20NotesbyOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  };
+
   rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
   };
 
@@ -1377,7 +1383,7 @@ message IvkDecryptTRC20Parameters {
 message OvkDecryptTRC20Parameters {
   int64 start_block_index = 1;
   int64 end_block_index = 2;
-  bytes Ovk = 3;
+  bytes ovk = 3;
   bytes shielded_TRC20_contract_address = 4;
 }
 

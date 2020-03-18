@@ -36,6 +36,7 @@ import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.DecryptNotesMarked;
+import org.tron.api.GrpcAPI.DecryptNotesTRC20;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.DiversifierMessage;
@@ -49,18 +50,24 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
+import org.tron.api.GrpcAPI.IvkDecryptTRC20Parameters;
+import org.tron.api.GrpcAPI.NfTRC20Parameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.OvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
+import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
+import org.tron.api.GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
+import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -2294,6 +2301,99 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void createShieldedContractParameters(PrivateShieldedTRC20Parameters request,
+        StreamObserver<org.tron.api.GrpcAPI.ShieldedTRC20Parameters> responseObserver) {
+
+      try {
+        checkSupportShieldedTransaction();
+
+        ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
+            .createShieldedContractParameters(request);
+        responseObserver.onNext(shieldedTRC20Parameters);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info("exception caught: " + e.getMessage());
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createShieldedContractParametersWithoutAsk(
+        PrivateShieldedTRC20ParametersWithoutAsk request,
+        StreamObserver<org.tron.api.GrpcAPI.ShieldedTRC20Parameters> responseObserver) {
+      try {
+        checkSupportShieldedTransaction();
+
+        ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
+            .createShieldedContractParametersWithoutAsk(request);
+        responseObserver.onNext(shieldedTRC20Parameters);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info("exception caught: " + e.getMessage());
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void scanShieldedTRC20NotesbyIvk(IvkDecryptTRC20Parameters request,
+        StreamObserver<org.tron.api.GrpcAPI.DecryptNotesTRC20> responseObserver) {
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+
+      try {
+        checkSupportShieldedTransaction();
+
+        DecryptNotesTRC20 decryptNotes = wallet.scanShieldedTRC20NotesbyIvk(startNum, endNum,
+            request.getIvk().toByteArray(),
+            request.getShieldedTRC20ContractAddress().toByteArray());
+        responseObserver.onNext(decryptNotes);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info("exception caught: " + e.getMessage());
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void scanShieldedTRC20NotesbyOvk(OvkDecryptTRC20Parameters request,
+        StreamObserver<org.tron.api.GrpcAPI.DecryptNotesTRC20> responseObserver) {
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+
+      try {
+        checkSupportShieldedTransaction();
+
+        DecryptNotesTRC20 decryptNotes = wallet.scanShieldedTRC20NotesbyOvk(startNum, endNum,
+            request.getOvk().toByteArray(),
+            request.getShieldedTRC20ContractAddress().toByteArray());
+        responseObserver.onNext(decryptNotes);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info("exception caught: " + e.getMessage());
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createShieldedTRC20ContractNullifier(NfTRC20Parameters request,
+        StreamObserver<org.tron.api.GrpcAPI.BytesMessage> responseObserver) {
+      try {
+        checkSupportShieldedTransaction();
+
+        BytesMessage nf = wallet
+            .createShieldedTRC20ContractNullifier(request);
+        responseObserver.onNext(nf);
+      } catch (ZksnarkException e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getRewardInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       try {
@@ -2349,5 +2449,6 @@ public class RpcApiService implements Service {
 
       responseObserver.onCompleted();
     }
+
   }
 }

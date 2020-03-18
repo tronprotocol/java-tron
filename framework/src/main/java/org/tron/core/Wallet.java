@@ -58,12 +58,14 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.DecryptNotes.NoteTx;
+import org.tron.api.GrpcAPI.DecryptNotesTRC20;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DiversifierMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
 import org.tron.api.GrpcAPI.NfParameters;
+import org.tron.api.GrpcAPI.NfTRC20Parameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
@@ -71,11 +73,14 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
+import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
+import org.tron.api.GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
+import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
@@ -339,7 +344,6 @@ public class Wallet {
     long balance = getBalance(address);
     return new TransactionCapsule(address, to, amount, balance, utxoStore).getInstance();
   } */
-
   public byte[] getAddress() {
     return cryptoEngine.getAddress();
   }
@@ -665,7 +669,8 @@ public class Wallet {
 
       if (trx.getSignatureCount() > 0) {
         List<ByteString> approveList = new ArrayList<ByteString>();
-        byte[] hash = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), trx.getRawData().toByteArray());
+        byte[] hash = Sha256Hash
+            .hash(DBConfig.isECKeyCryptoEngine(), trx.getRawData().toByteArray());
         for (ByteString sig : trx.getSignatureList()) {
           if (sig.size() < 65) {
             throw new SignatureFormatException(
@@ -2691,6 +2696,30 @@ public class Wallet {
       } // end of transaction
     } //end of blocklist
     return builder.build();
+  }
+
+  public ShieldedTRC20Parameters createShieldedContractParameters(
+      PrivateShieldedTRC20Parameters request) throws Exception {
+    return null;
+  }
+
+  public ShieldedTRC20Parameters createShieldedContractParametersWithoutAsk(
+      PrivateShieldedTRC20ParametersWithoutAsk request) throws Exception {
+    return null;
+  }
+
+  public DecryptNotesTRC20 scanShieldedTRC20NotesbyIvk(long startNum, long endNum,
+      byte[] ivk, byte[] shieldedTRC20ContractAddress) throws Exception {
+    return null;
+  }
+
+  public DecryptNotesTRC20 scanShieldedTRC20NotesbyOvk(long startNum, long endNum,
+      byte[] ovk, byte[] shieldedTRC20ContractAddress) throws Exception {
+    return null;
+  }
+
+  public BytesMessage createShieldedTRC20ContractNullifier(NfTRC20Parameters request) {
+    return null;
   }
 }
 
