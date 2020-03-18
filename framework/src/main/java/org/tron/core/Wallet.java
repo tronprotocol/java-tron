@@ -161,6 +161,8 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
+import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -2701,14 +2703,225 @@ public class Wallet {
     return builder.build();
   }
 
-  public ShieldedTRC20Parameters createShieldedContractParameters(
-      PrivateShieldedTRC20Parameters request) throws Exception {
-    return null;
+  public void checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType type,
+             List<GrpcAPI.SpendNoteTRC20> spendNoteTRC20s, List<ReceiveNote> receiveNotes) throws ContractValidateException {
+    switch (type) {
+      case MINT:
+        if (receiveNotes.get(0).getNote().getValue() <= 0) {
+          throw new ContractValidateException("The value in ReceiveNote must >= 0");
+        }
+        break;
+      case TRANSTER:
+        for (GrpcAPI.SpendNoteTRC20 spendNote : spendNoteTRC20s) {
+          if (spendNote.getNote().getValue() <= 0) {
+            throw new ContractValidateException("The value in SpendNoteTRC20 must >= 0");
+          }
+        }
+        for (ReceiveNote receiveNote : receiveNotes) {
+          if (receiveNote.getNote().getValue() <= 0) {
+            throw new ContractValidateException("The value in ReceiveNote must >= 0");
+          }
+        }
+        break;
+      case BRUN:
+        if (spendNoteTRC20s.get(0).getNote().getValue() <= 0) {
+          throw new ContractValidateException("The value in SpendNoteTRC20 must >= 0");
+        }
+    }
   }
 
+  private ShieldedTRC20ParametersBuilder buildShilededTRC20Input(ShieldedTRC20ParametersBuilder builder,
+                GrpcAPI.SpendNoteTRC20 spendNote, ExpandedSpendingKey expsk) throws ZksnarkException {
+    GrpcAPI.Note note = spendNote.getNote();
+    PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(note.getPaymentAddress());
+    if (paymentAddress == null) {
+      throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
+    }
+    Note baseNote = new Note(paymentAddress.getD(),
+            paymentAddress.getPkD(), note.getValue(), note.getRcm().toByteArray());
+
+    builder.addSpend(expsk,
+            baseNote,
+            spendNote.getAlpha().toByteArray(),
+            spendNote.getRoot().toByteArray(),
+            spendNote.getPath().toByteArray());
+    return builder;
+  }
+
+  private ShieldedTRC20ParametersBuilder buildShilededTRC20Output(ShieldedTRC20ParametersBuilder builder,
+           ReceiveNote receiveNote, byte[] ovk) throws ZksnarkException {
+    PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
+            receiveNote.getNote().getPaymentAddress());
+    if (paymentAddress == null) {
+      throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
+    }
+    builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
+            receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
+            receiveNote.getNote().getMemo().toByteArray());
+    return builder;
+  }
+
+  public ShieldedTRC20Parameters createShieldedContractParameters(
+      PrivateShieldedTRC20Parameters request) throws ContractValidateException, ZksnarkException {
+    ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder(this);
+
+    byte[] shieldedTRC20ContractAddress =  request.getShieldedTRC20ContractAddress().toByteArray();
+    if (ArrayUtils.isEmpty(shieldedTRC20ContractAddress)) {
+      throw new ContractValidateException("No shielded TRC-20 contract address");
+    }
+    builder.setShieldedTRC20Address(shieldedTRC20ContractAddress);
+    long fromAmount = request.getFromAmount();
+    long toAmount = request.getToAmount();
+    List<GrpcAPI.SpendNoteTRC20> shieldedSpends = request.getShieldedSpendsList();
+    int spendSize = shieldedSpends.size();
+    List<ReceiveNote> shieldedReceives = request.getShieldedReceivesList();
+    int receiveSize = shieldedReceives.size();
+
+    if (fromAmount > 0 && spendSize == 0
+            && receiveSize == 1 && toAmount == 0) {
+      byte[] ovk = request.getOvk().toByteArray();
+      if(ArrayUtils.isEmpty(ovk)) {
+         ovk = SpendingKey.random().fullViewingKey().getOvk();
+      }
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
+      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.MINT, null, shieldedReceives);
+      builder.setTransparentFromAmount(fromAmount);
+      ReceiveNote receiveNote = shieldedReceives.get(0);
+      builder = buildShilededTRC20Output(builder, receiveNote, ovk);
+
+    } else if (fromAmount == 0 && spendSize >0 && spendSize < 3
+            && receiveSize > 0 && receiveSize < 3 && toAmount == 0) {
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSTER);
+      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.TRANSTER, shieldedSpends, shieldedReceives);
+      byte[] ask = request.getAsk().toByteArray();
+      byte[] nsk = request.getNsk().toByteArray();
+      byte[] ovk = request.getOvk().toByteArray();
+      if ((ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
+        throw new ContractValidateException("No shielded TRC-20 expended spending key");
+      }
+      //input
+      ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
+      for (GrpcAPI.SpendNoteTRC20 spendNote : shieldedSpends) {
+        builder = buildShilededTRC20Input(builder, spendNote, expsk);
+      }
+      //output
+      for (ReceiveNote receiveNote : shieldedReceives) {
+        builder = buildShilededTRC20Output(builder, receiveNote, ovk);
+      }
+    } else if (fromAmount == 0 && spendSize == 1
+            && receiveSize == 0 && toAmount > 0) {
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BRUN);
+      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.BRUN, shieldedSpends, null);
+      byte[] ask = request.getAsk().toByteArray();
+      byte[] nsk = request.getNsk().toByteArray();
+      if ((ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk))) {
+        throw new ContractValidateException("No shielded TRC-20 address");
+      }
+      byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
+      if (ArrayUtils.isEmpty(transparentToAddress)) {
+        throw new ContractValidateException("No transparent TRC-20 output address");
+      }
+      builder.setTransparentToAddress(transparentToAddress);
+      builder.setTransparentFromAmount(toAmount);
+
+      ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, null);
+      GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
+      builder = buildShilededTRC20Input(builder, spendNote, expsk);
+
+    } else {
+      throw new ContractValidateException("invalid shielded TRC-20 parameters");
+    }
+    return builder.build(true);
+  }
+
+  private ShieldedTRC20ParametersBuilder buildShilededTRC20InputWithAK(ShieldedTRC20ParametersBuilder builder,
+                              GrpcAPI.SpendNoteTRC20 spendNote, byte[] ak, byte[] nsk, byte[] ovk) throws ZksnarkException {
+    GrpcAPI.Note note = spendNote.getNote();
+    PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(note.getPaymentAddress());
+    if (paymentAddress == null) {
+      throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
+    }
+    Note baseNote = new Note(paymentAddress.getD(),
+            paymentAddress.getPkD(), note.getValue(), note.getRcm().toByteArray());
+
+    builder.addSpend(ak,
+            nsk,
+            ovk,
+            baseNote,
+            spendNote.getAlpha().toByteArray(),
+            spendNote.getRoot().toByteArray(),
+            spendNote.getPath().toByteArray());
+    return builder;
+  }
   public ShieldedTRC20Parameters createShieldedContractParametersWithoutAsk(
       PrivateShieldedTRC20ParametersWithoutAsk request) throws Exception {
-    return null;
+    ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder(this);
+
+    byte[] shieldedTRC20ContractAddress =  request.getShieldedTRC20ContractAddress().toByteArray();
+    if (ArrayUtils.isEmpty(shieldedTRC20ContractAddress)) {
+      throw new ContractValidateException("No shielded TRC-20 contract address");
+    }
+    builder.setShieldedTRC20Address(shieldedTRC20ContractAddress);
+    long fromAmount = request.getFromAmount();
+    long toAmount = request.getToAmount();
+    List<GrpcAPI.SpendNoteTRC20> shieldedSpends = request.getShieldedSpendsList();
+    int spendSize = shieldedSpends.size();
+    List<ReceiveNote> shieldedReceives = request.getShieldedReceivesList();
+    int receiveSize = shieldedReceives.size();
+
+    if (fromAmount > 0 && spendSize == 0
+            && receiveSize == 1 && toAmount == 0) {
+      byte[] ovk = request.getOvk().toByteArray();
+      if(ArrayUtils.isEmpty(ovk)) {
+        ovk = SpendingKey.random().fullViewingKey().getOvk();
+      }
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
+      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.MINT, null, shieldedReceives);
+      builder.setTransparentFromAmount(fromAmount);
+      ReceiveNote receiveNote = shieldedReceives.get(0);
+      builder = buildShilededTRC20Output(builder, receiveNote, ovk);
+
+    } else if (fromAmount == 0 && spendSize >0 && spendSize < 3
+            && receiveSize > 0 && receiveSize < 3 && toAmount == 0) {
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSTER);
+      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.TRANSTER, shieldedSpends, shieldedReceives);
+      byte[] ak = request.getAk().toByteArray();
+      byte[] nsk = request.getNsk().toByteArray();
+      byte[] ovk = request.getOvk().toByteArray();
+      if ((ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
+        throw new ContractValidateException("No shielded TRC-20 expended spending key");
+      }
+      //input
+      for (GrpcAPI.SpendNoteTRC20 spendNote : shieldedSpends) {
+        builder = buildShilededTRC20InputWithAK(builder, spendNote, ak, nsk, ovk);
+      }
+      //output
+      for (ReceiveNote receiveNote : shieldedReceives) {
+        builder = buildShilededTRC20Output(builder, receiveNote, ovk);
+      }
+    } else if (fromAmount == 0 && spendSize == 1
+            && receiveSize == 0 && toAmount > 0) {
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BRUN);
+      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.BRUN, shieldedSpends, null);
+      byte[] ak = request.getAk().toByteArray();
+      byte[] nsk = request.getNsk().toByteArray();
+      if ((ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nsk))) {
+        throw new ContractValidateException("No shielded TRC-20 address");
+      }
+      byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
+      if (ArrayUtils.isEmpty(transparentToAddress)) {
+        throw new ContractValidateException("No transparent TRC-20 output address");
+      }
+      builder.setTransparentToAddress(transparentToAddress);
+      builder.setTransparentFromAmount(toAmount);
+
+      GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
+      builder = buildShilededTRC20InputWithAK(builder, spendNote, ak, nsk, null);
+
+    } else {
+      throw new ContractValidateException("invalid shielded TRC-20 parameters");
+    }
+    return builder.build(false);
   }
 
   public DecryptNotesTRC20 scanShieldedTRC20NotesbyIvk(long startNum, long endNum,
