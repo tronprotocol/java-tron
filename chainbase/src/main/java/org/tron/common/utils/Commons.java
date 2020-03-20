@@ -22,12 +22,6 @@ public class Commons {
 
   public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
 
-  public static byte[] clone(byte[] value) {
-    byte[] clone = new byte[value.length];
-    System.arraycopy(value, 0, clone, 0, value.length);
-    return clone;
-  }
-
   private static byte[] decode58Check(String input) {
     byte[] decodeCheck = Base58.decode(input);
     if (decodeCheck.length <= 4) {

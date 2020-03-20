@@ -28,6 +28,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
+import org.tron.common.utils.Utils;
 import org.tron.core.db.common.SourceInter;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.common.IRevokingDB;
@@ -138,7 +139,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       return;
     }
 
-    state.oldValues.put(tuple, Commons.clone(value));
+    state.oldValues.put(tuple, Utils.clone(value));
   }
 
   public synchronized void onRemove(RevokingTuple tuple, byte[] value) {
@@ -163,7 +164,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
       return;
     }
 
-    state.removed.put(tuple, Commons.clone(value));
+    state.removed.put(tuple, Utils.clone(value));
   }
 
   @Override

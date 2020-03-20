@@ -38,7 +38,7 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
 
   public void exeTransFinish() {
     for (TrieEntry trieEntry : trieEntryList) {
-      trie.put(RLP.encodeElement(trieEntry.getKey()), trieEntry.getData());
+      trie.put(Hash.encodeElement(trieEntry.getKey()), trieEntry.getData());
     }
     trieEntryList.clear();
   }
@@ -47,7 +47,7 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
     if (!exe()) {
       return;
     }
-    trie.delete(RLP.encodeElement(key));
+    trie.delete(Hash.encodeElement(key));
   }
 
   public void preExecute(BlockCapsule blockCapsule) {
