@@ -1340,6 +1340,7 @@ message SpendNoteTRC20 {
   bytes alpha = 2;
   bytes root = 3;
   bytes path = 4;
+  int64 pos = 5;
 }
 
 message PrivateShieldedTRC20Parameters {
