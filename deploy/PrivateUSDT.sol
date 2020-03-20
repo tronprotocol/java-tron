@@ -15,11 +15,13 @@ contract PrivateUSDT {
     bytes32[33] frontier;
     uint256 public leafCount;
 
+    uint8 i = 0;
+
     address verifyProofContract = address(0x000F);
     address hashor = address(0x0010);
     address calTimeContract = address(0x0011);
 
-    //event returnPath(uint256 index, bytes32[33] path);
+    event newLeaf(uint256 position, bytes32 cm, bytes32 cv, bytes32 epk, bytes32[21] c);
 
     event returnCurrentTime(bytes time);
 
@@ -123,13 +125,12 @@ contract PrivateUSDT {
         return msg;
     }
 
-    // input: cv, epk, proof, bindingSig
-    function mint(uint64 value, bytes32 note_commitment, bytes32[10] calldata input, bytes32 signHash) external {
+    // output: cm, cv, epk, proof
+    function mint(uint64 value, bytes32[9] calldata output, bytes32[2] calldata bindingSignature, bytes32 signHash, bytes32[21] calldata c) external {
         require(value > 0, "Mint negative value.");
-        //bytes32 signHash = keccak256(abi.encode(address(this), msg.sender, value, outputDescription));
+        //bytes32 signHash = keccak256(abi.encode(address(this), value, output));
 
-        //1504 = 288 + 64 + "32" + 32 + 32*33 + 32
-        (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(note_commitment, input, value, signHash, frontier, leafCount));
+        (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(output, bindingSignature, value, signHash, frontier, leafCount));
         require(result, "The proof and signature have not been verified by the contract");
 
         // get time
@@ -139,9 +140,9 @@ contract PrivateUSDT {
 
         uint256 slot = uint8(msg[0]);
         uint256 nodeIndex = leafCount + 2 ** 32 - 1;
-        tree[nodeIndex] = note_commitment;
+        tree[nodeIndex] = output[0];
         if(slot == 0){
-            frontier[0] = note_commitment;
+            frontier[0] = output[0];
         }
         for (uint256 i = 1; i < slot+1; i++) {
             nodeIndex = (nodeIndex - 1) / 2;
@@ -151,10 +152,11 @@ contract PrivateUSDT {
             }
         }
         latestRoot = bytesToBytes32(msg, slot*32+1);
-        tree[0]= latestRoot;
 
         roots[latestRoot] = latestRoot;
         leafCount ++;
+        
+        emit newLeaf(leafCount-1, output[0], output[1], output[2], c);
         // Finally, transfer the fTokens from the sender to this contract
         //usdtToken.transferFrom(msg.sender, address(this), value);
 
@@ -165,76 +167,81 @@ contract PrivateUSDT {
     }
 
 
-    //input_bytes32*10: cv, rk, spend_auth_sig, proof
-    //output1_bytes32*9: cv, cm, epk, proof
-    //output2_bytes32*9: cv, cm, epk, proof
-    function transfer(bytes32[10] calldata input, bytes32 anchor, bytes32 nf, bytes32[9] calldata output1, bytes32[9] calldata output2, bytes32[2] calldata bindingSignature, bytes32 signHash) external {
+    //input_bytes32*10: nf, anchor, cv, rk, proof
+    //output1_bytes32*9: cm, cv, epk, proof
+    //output2_bytes32*9: cm, cv, epk, proof
+    function transfer(bytes32[10][] calldata input, bytes32[2][] calldata spend_auth_sig, bytes32[9][] calldata output, bytes32[2] calldata bindingSignature, bytes32 signHash, bytes32[21][] calldata c) external {
+        
+        require(input.length>=1 && input.length <=2, "input number must be 1 or 2");
+        require(input.length == spend_auth_sig.length, "input number must be equal to spend_auth_sig number");
+        for(i = 0; i < input.length; i++){
+            //require(nullifiers[input[i][0]] == 0, "The notecommitment being spent has already been nullified!");
+            require(roots[input[i][1]] != 0, "The anchor must exist");
+        }
+        
+        //bytes32 signHash = keccak256(abi.encode(address(this), input, output, cenc, cout));
+        require(output.length>=1 && output.length <=2, "output number must be 1 or 2");
+        require(output.length == c.length, "output number must be equal to c number");
 
-        // require(nullifiers[nf] == 0, "The notecommitment being spent has already been nullified!");
-        require(roots[anchor] != 0, "The anchor must exist");
-        //bytes32 signHash = keccak256(abi.encode(address(this), msg.sender, spendDescription, outputDescription));
-
-        //2144 = 384 + 288 + 288 + 64 + 32 + 32*33 + 32
-        (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(input, anchor, nf, output1, output2, bindingSignature, signHash, frontier, leafCount));
+        (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(input, spend_auth_sig, output, bindingSignature, signHash, frontier, leafCount));
         require(result, "The proof and signature has not been verified by the contract");
 
         // get time
-        (bool r1, bytes memory t1) = calTimeContract.call("");
-        require(r1, "getCurrentTime failed");
-        bytes8 startTime = bytesToBytes8(t1, 0);
-
-        uint slot1 = uint8(msg[0]);
-        uint slot2 = uint8(msg[1]);
-        //process slot1
-        uint256 nodeIndex = leafCount + 2 ** 32 - 1;
-        tree[nodeIndex] = output1[1];//cm
-        if(slot1 == 0){
-            frontier[0] = output1[1];
-        }
-        for (uint256 i = 1; i < slot1+1; i++) {
-            nodeIndex = (nodeIndex - 1) / 2;
-            tree[nodeIndex] = bytesToBytes32(msg, i * 32 - 30);
-            if(i == slot1){
-                frontier[slot1] = tree[nodeIndex];
+        // (bool r1, bytes memory t1) = calTimeContract.call("");
+        // require(r1, "getCurrentTime failed");
+        // bytes8 startTime = bytesToBytes8(t1, 0);
+        i = 0;
+        uint256 j = 0;//msg offset
+        while (i < output.length) {
+            uint slot = uint8(msg[j]);
+            j = j + 1;
+            uint256 nodeIndex = leafCount + 2 ** 32 - 1 + i;
+            tree[nodeIndex] = output[i][0];//cm
+            if(slot == 0){
+                frontier[0] = output[i][0];
             }
-        }
-        //process slot2
-        nodeIndex = leafCount + 2 ** 32;
-        tree[nodeIndex] = output2[1];//cm
-        if(slot2 == 0){
-            frontier[0] = output2[1];
-        }
-        for (uint256 i = 1; i < slot2 + 1; i++) {
-            nodeIndex = (nodeIndex - 1) / 2;
-            tree[nodeIndex] = bytesToBytes32(msg, (i + slot1) * 32 - 30);
-            if(i == slot2){
-                frontier[slot2] = tree[nodeIndex];
+            for (uint256 k = 1; k < slot+1; k++) {
+                nodeIndex = (nodeIndex - 1) / 2;
+                tree[nodeIndex] = bytesToBytes32(msg, j);
+                j = j + 32;
+                if(k == slot){
+                    frontier[slot] = tree[nodeIndex];
+                }
             }
+            i++;
         }
 
-        latestRoot = bytesToBytes32(msg, (slot1+slot2)*32+2);
-
+        latestRoot = bytesToBytes32(msg, j);
         roots[latestRoot] = latestRoot;
-        leafCount = leafCount + 2;
+        leafCount = leafCount + output.length;
 
-        nullifiers[nf] = nf;
+        for(i = 0; i < input.length; i++){
+            bytes32 nf = input[i][0];
+            nullifiers[nf] = nf;
+        }
+        
+        for(i = 0; i < output.length; i++){
+            emit newLeaf(leafCount-(output.length-i), output[i][0], output[i][1], output[i][2], c[i]);
+        }
+    
 
         // cal delta time and get time, delta time is slot process
-        (bool r2, bytes memory t2) = calTimeContract.call(abi.encode(startTime));
-        require(r2, "getCurrentTime failed");
-//        bytes8 startTimeSlot = bytesToBytes8(t2, 0);
+        // (bool r2, bytes memory t2) = calTimeContract.call(abi.encode(startTime));
+        // require(r2, "getCurrentTime failed");
+        //bytes8 startTimeSlot = bytesToBytes8(t2, 0);
     }
 
-    //input_bytes32*10: cv, rk, spend_auth_sig, proof
-    function burn(bytes32[10] calldata input, bytes32 anchor, bytes32 nf, uint64 value, bytes32[2] calldata bindingSignature, bytes32 signHash) external {
-
+    //input_bytes32*10: nf, anchor, cv, rk, proof
+    function burn(bytes32[10] calldata input, bytes32[2] calldata spend_auth_sig, uint64 value, bytes32[2] calldata bindingSignature, bytes32 signHash) external {
+        bytes32 nf = input[0];
+        bytes32 anchor = input[1];
         require(value > 0, "Mint negative value.");
         require(nullifiers[nf] == 0, "The notecommitment being spent has already been nullified!");
         require(roots[anchor] != 0, "The anchor must exist");
 
-        //bytes32 signHash = keccak256(abi.encode(address(this), msg.sender, spendDescription, payTo, value));
-        // 512 = 384 + 64 + 32 + 32
-        (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(input, anchor, nf, value, bindingSignature, signHash));
+        //bytes32 signHash = keccak256(abi.encode(address(this), input, payTo, value));
+
+        (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(input, spend_auth_sig, value, bindingSignature, signHash));
         require(result, "The proof and signature have not been verified by the contract");
 
         nullifiers[nf] = nf;
@@ -269,5 +276,4 @@ contract PrivateUSDT {
 
         return out;
     }
-
 }

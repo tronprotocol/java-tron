@@ -257,7 +257,7 @@ public class JLibrustzcash {
       return true;
     }
     return INSTANCE.librustzcashSaplingFinalCheckNew(params.getValueBalance(), params.getBindingSig(),
-            params.getSighashValue(), params.getSpendCv(),params.getOutputCv1(), params.getOutputCv2());
+            params.getSighashValue(), params.getSpendCv(),params.getSpendCvLen(), params.getOutputCv(),params.getOutputCvLen());
   }
 
   public static void librustzcashSaplingVerificationCtxFree(long ctx) {

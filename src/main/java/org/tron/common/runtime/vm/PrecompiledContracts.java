@@ -897,11 +897,13 @@ public class PrecompiledContracts {
   public static class ValidateProof extends PrecompiledContract {
 
     private static final int MINT_SIZE = 416 + 32 * 33 + 32;
-    private static final int TRANSFER_SIZE = 1056 + 32 * 33 + 32;
+    private static final int TRANSFER_SIZE1 = 1862;
+    private static final int TRANSFER_SIZE2 = 2150;
+    private static final int TRANSFER_SIZE3 = 2246;
+    private static final int TRANSFER_SIZE4 = 2534;
     private static final int BURN_SIZE = 512;
     private static final long TREE_WIDTH = 1L << 32;
 
-    private ExecutorService validateSignService = Executors.newFixedThreadPool(3);
 
     private static final byte[][] UNCOMMITTED = {
             {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00},
@@ -950,14 +952,17 @@ public class PrecompiledContracts {
       if (data == null) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
+      logger.info("begin check");
       if (data.length == MINT_SIZE) {
         return checkMint(data);
-      } else if (data.length == TRANSFER_SIZE) {
-        return checkTransfer(data);
       } else if (data.length == BURN_SIZE) {
         return checkBurn(data);
+//      } else if (data.length == TRANSFER_SIZE1 || data.length == TRANSFER_SIZE2 ||
+//              data.length == TRANSFER_SIZE3 || data.length == TRANSFER_SIZE4){
+//        return checkTransfer(data);
       } else {
-        return Pair.of(false, EMPTY_BYTE_ARRAY);
+//        return Pair.of(false, EMPTY_BYTE_ARRAY);
+        return checkTransfer(data);
       }
     }
 
@@ -966,8 +971,8 @@ public class PrecompiledContracts {
     private Pair<Boolean, byte[]> checkMint(byte[] data) {
       long start_time = System.currentTimeMillis();
 
-      byte[] cv = new byte[32];
       byte[] cm = new byte[32];
+      byte[] cv = new byte[32];
       byte[] epk = new byte[32];
       byte[] proof = new byte[192];
       byte[] bindingSig = new byte[64];
@@ -1120,55 +1125,67 @@ public class PrecompiledContracts {
       //transfer: 1 shielded --> 2 shielded
     private Pair<Boolean, byte[]> checkTransfer(byte[] data) {
       long startTime = System.currentTimeMillis();
-
-      byte[] spendCv = new byte[32];
-      byte[] anchor = new byte[32];
-      byte[] nullifier = new byte[32];
-      byte[] rk = new byte[32];
-      byte[] spendAuthSig = new byte[64];
-      byte[] spendProof = new byte[192];
-
-      byte[][] cm = new byte[2][32];
-      byte[] receiveCv0 = new byte[32];
-      byte[] receiveEpk0 = new byte[32];
-      byte[] receiveProof0 = new byte[192];
-
-      byte[] receiveCv1 = new byte[32];
-      byte[] receiveEpk1 = new byte[32];
-      byte[] receiveProof1 = new byte[192];
-
+      logger.info("begin check transfer");
       byte[] bindingSig = new byte[64];
       byte[] signHash = new byte[32];
-
       byte[][] frontier = new byte[33][32];
 
-      //spend
-      System.arraycopy(data, 0, spendCv, 0, 32);
-      System.arraycopy(data, 32, rk, 0, 32);
-      System.arraycopy(data, 64, spendAuthSig, 0, 64);
-      System.arraycopy(data, 128, spendProof, 0, 192);
-      System.arraycopy(data, 320, anchor, 0, 32);
-      System.arraycopy(data, 352, nullifier, 0, 32);
-      //receive0
-      System.arraycopy(data, 384, receiveCv0, 0, 32);
-      System.arraycopy(data, 416, cm[0], 0, 32);
-      System.arraycopy(data, 448, receiveEpk0, 0, 32);
-      System.arraycopy(data, 480, receiveProof0, 0, 192);
-      //receive1
-      System.arraycopy(data, 672, receiveCv1, 0, 32);
-      System.arraycopy(data, 704, cm[1], 0, 32);
-      System.arraycopy(data, 736, receiveEpk1, 0, 32);
-      System.arraycopy(data, 768, receiveProof1, 0, 192);
+      //parse unfixed field offset
+      int spendOffset = parseInt(data, 0);
+      int spendAuthSigOffset = parseInt(data, 32);
+      int receiveOffset = parseInt(data, 64);
 
-      System.arraycopy(data, 960, bindingSig, 0, 64);
-      System.arraycopy(data, 1024, signHash, 0, 32);
-
+      System.arraycopy(data, 96, bindingSig, 0, 64);
+      System.arraycopy(data, 160, signHash, 0, 32);
       for (int i = 0; i < 33; i++) {
-        System.arraycopy(data, i * 32 + 1056, frontier[i], 0, 32);
+        System.arraycopy(data, i * 32 + 192, frontier[i], 0, 32);
       }
-      long leafCount = parseLong(data, 2112);
+      long leafCount = parseLong(data, 1248);
       if (leafCount >= TREE_WIDTH - 1) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      int spendCount = parseInt(data, spendOffset);
+      int spendAuthSigCount = parseInt(data, spendAuthSigOffset);
+      int receiveCount = parseInt(data, receiveOffset);
+
+      if(spendCount != spendAuthSigCount || spendCount < 1 || spendCount > 2 || receiveCount < 1 || receiveCount > 2){
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      byte[][] anchor = new byte[spendCount][32];
+      byte[][] nullifier = new byte[spendCount][32];
+      byte[][] spendCv = new byte[spendCount][32];
+      byte[][] rk = new byte[spendCount][32];
+      byte[][] spendProof = new byte[spendCount][192];
+      byte[][] spendAuthSig = new byte[spendCount][64];
+
+      byte[][] receiveCm = new byte[receiveCount][32];
+      byte[][] receiveCv = new byte[receiveCount][32];
+      byte[][] receiveEpk = new byte[receiveCount][32];
+      byte[][] receiveProof = new byte[receiveCount][192];
+
+      //spend
+      spendOffset += 32;
+      for(int i = 0; i < spendCount; i++) {
+        System.arraycopy(data, spendOffset + 320 * i, nullifier[i], 0, 32);
+        System.arraycopy(data, spendOffset + 320 * i + 32, anchor[i], 0, 32);
+        System.arraycopy(data, spendOffset + 320 * i + 64, spendCv[i], 0, 32);
+        System.arraycopy(data, spendOffset + 320 * i + 96, rk[i], 0, 32);
+        System.arraycopy(data, spendOffset + 320 * i + 128, spendProof[i], 0, 192);
+      }
+      spendAuthSigOffset += 32;
+      for(int i = 0; i < spendCount; i++) {
+        System.arraycopy(data, spendAuthSigOffset + 64 * i, spendAuthSig[i], 0, 64);
+      }
+
+      //output
+      receiveOffset += 32;
+      for(int i = 0; i < receiveCount; i++) {
+        System.arraycopy(data, receiveOffset + 288 * i, receiveCm[i], 0, 32);
+        System.arraycopy(data, receiveOffset + 288 * i + 32, receiveCv[i], 0, 32);
+        System.arraycopy(data, receiveOffset + 288 * i + 64, receiveEpk[i], 0, 32);
+        System.arraycopy(data, receiveOffset + 288 * i + 96, receiveProof[i], 0, 192);
       }
 
       boolean parallel = true;
@@ -1179,21 +1196,23 @@ public class PrecompiledContracts {
       long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
 
       if (parallel) {
+        int threadCount = spendCount + receiveCount;
+        ExecutorService validateSignService = Executors.newFixedThreadPool(threadCount);
         // thread poll
-        int threadCount = 3;
         CountDownLatch countDownLatch = new CountDownLatch(threadCount);
         List<Future<Boolean>> futures = new ArrayList<>(threadCount);
 
-        // submit 3 check task
-        Future<Boolean> future1 = validateSignService
-            .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv, anchor, nullifier, rk, spendProof, spendAuthSig, signHash));
-        futures.add(future1);
-        Future<Boolean> future2 = validateSignService
-            .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv0, cm[0], receiveEpk0, receiveProof0));
-        futures.add(future2);
-        Future<Boolean> future3 = validateSignService
-            .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv1, cm[1], receiveEpk1, receiveProof1));
-        futures.add(future3);
+        // submit check task
+        for(int i = 0; i < spendCount; i++) {
+          Future<Boolean> future1 = validateSignService
+                  .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i], nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
+          futures.add(future1);
+        }
+        for(int i = 0; i < receiveCount; i++) {
+          Future<Boolean> future2 = validateSignService
+                  .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i], receiveEpk[i], receiveProof[i]));
+          futures.add(future2);
+        }
 
         result = true;
         try {
@@ -1206,8 +1225,17 @@ public class PrecompiledContracts {
 
           if (result) {
             long checkFinalCheckStartTime = System.currentTimeMillis();
+            byte[] spendCvs = new byte[spendCount * 32];
+            byte[] receiveCvs = new byte[receiveCount * 32];
+            for(int i = 0; i < spendCount; i++) {
+              System.arraycopy(spendCv[i], 0, spendCvs, 32 * i, 32);
+            }
+            for(int i = 0; i < receiveCount; i++) {
+              System.arraycopy(receiveCv[i], 0, receiveCvs, 32 * i, 32);
+            }
+
             boolean checkResult = JLibrustzcash.librustzcashSaplingFinalCheckNew(
-                new LibrustzcashParam.FinalCheckNewParams(0, bindingSig, signHash, spendCv, receiveCv0, receiveCv1));
+                new LibrustzcashParam.FinalCheckNewParams(0, bindingSig, signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
             long checkFinalCheckEndTime = System.currentTimeMillis();
             logger.info("parallel Transfer finalCheck cost is: " +
                 (checkFinalCheckEndTime - checkFinalCheckStartTime) + "ms" +
@@ -1225,25 +1253,23 @@ public class PrecompiledContracts {
 
       } else {
         try {
-          result = JLibrustzcash.librustzcashSaplingCheckSpend(
-              new LibrustzcashParam.CheckSpendParams(ctx, spendCv, anchor, nullifier, rk, spendProof, spendAuthSig, signHash));
-          long checkSpendEndTime = System.currentTimeMillis();
-          logger.info("Transfer checkSpend cost is: " + (checkSpendEndTime - verifyStartTime) + "ms");
+          result = true;
+          for(int i = 0; i < spendCount; i++) {
+            result &= JLibrustzcash.librustzcashSaplingCheckSpend(
+                    new LibrustzcashParam.CheckSpendParams(ctx, spendCv[i], anchor[i], nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
+          }
 
-          result &= JLibrustzcash.librustzcashSaplingCheckOutput(
-              new LibrustzcashParam.CheckOutputParams(ctx, receiveCv0, cm[0], receiveEpk0, receiveProof0));
-          long checkOutput1EndTime = System.currentTimeMillis();
-          logger.info("Transfer checkOutput cost is: " + (checkOutput1EndTime - checkSpendEndTime) + "ms");
+          for(int i = 0; i < receiveCount; i++) {
+            result &= JLibrustzcash.librustzcashSaplingCheckOutput(
+                    new LibrustzcashParam.CheckOutputParams(ctx, receiveCv[i], receiveCm[i], receiveEpk[i], receiveProof[i]));
 
-          result &= JLibrustzcash.librustzcashSaplingCheckOutput(
-              new LibrustzcashParam.CheckOutputParams(ctx, receiveCv1, cm[1], receiveEpk1, receiveProof1));
-          long checkOutput2EndTime = System.currentTimeMillis();
-          logger.info("Transfer checkOutput cost is: " + (checkOutput2EndTime - checkOutput1EndTime) + "ms");
+          }
 
           result &= JLibrustzcash.librustzcashSaplingFinalCheck(
               new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
+
           long checkFinalCheckEndTime = System.currentTimeMillis();
-          logger.info("Transfer finalCheck cost is: " + (checkFinalCheckEndTime - checkOutput2EndTime) + "ms");
+          logger.info("Transfer cost is: " + (checkFinalCheckEndTime - verifyStartTime) + "ms");
 
         } catch (Throwable any) {
           result = false;
@@ -1260,7 +1286,7 @@ public class PrecompiledContracts {
       logger.info("Transfer verify successfully, " + "check cost is: " + costTime + "ms");
 
       long startTimeInsert = System.currentTimeMillis();
-      Pair<Boolean, byte[]> pair = insertTwoleaves(frontier, cm, leafCount);
+      Pair<Boolean, byte[]> pair = insertLeaves(frontier, leafCount, receiveCm);
       costTime = System.currentTimeMillis() - startTimeInsert;
       logger.info("insertLeaf cost is: " + costTime + "ms");
 
@@ -1274,22 +1300,22 @@ public class PrecompiledContracts {
 
     private Pair<Boolean, byte[]> checkBurn(byte[] data) {
       //spend
-      byte[] cv = new byte[32];
-      byte[] anchor = new byte[32];
       byte[] nullifier = new byte[32];
+      byte[] anchor = new byte[32];
+      byte[] cv = new byte[32];
       byte[] rk = new byte[32];
-      byte[] spendAuthSig = new byte[64];
       byte[] proof = new byte[192];
+      byte[] spendAuthSig = new byte[64];
 
       byte[] bindingSig = new byte[64];
       byte[] signHash = new byte[32];
       //spend
-      System.arraycopy(data, 0, cv, 0, 32);
-      System.arraycopy(data, 32, rk, 0, 32);
-      System.arraycopy(data, 64, spendAuthSig, 0, 64);
+      System.arraycopy(data, 0, nullifier, 0, 32);
+      System.arraycopy(data, 32, anchor, 0, 32);
+      System.arraycopy(data, 64, cv, 0, 32);
+      System.arraycopy(data, 96, rk, 0, 32);
       System.arraycopy(data, 128, proof, 0, 192);
-      System.arraycopy(data, 320, anchor, 0, 32);
-      System.arraycopy(data, 352, nullifier, 0, 32);
+      System.arraycopy(data, 320, spendAuthSig, 0, 64);
       long value = parseLong(data, 384);
       System.arraycopy(data, 416, bindingSig, 0, 64);
       System.arraycopy(data, 480, signHash, 0, 32);
@@ -1316,6 +1342,10 @@ public class PrecompiledContracts {
     private long parseLong(byte[] data, int idx) {
       byte[] bytes = parseBytes(data, idx, 32);
       return new DataWord(bytes).longValueSafe();
+    }
+    private int parseInt(byte[] data, int idx) {
+      byte[] bytes = parseBytes(data, idx, 32);
+      return new DataWord(bytes).intValueSafe();
     }
 
     private int getFrontierSlot(long leafIndex) {
@@ -1393,34 +1423,38 @@ public class PrecompiledContracts {
       return Pair.of(true, result);
     }
 
-    private Pair<Boolean, byte[]> insertTwoleaves(byte[][] frontier, byte[][] leafValue, long leafCount) {
+    private Pair<Boolean, byte[]> insertLeaves(byte[][] frontier, long leafCount, byte[][] leafValue) {
 
       long nodeIndex = 0;
       boolean success = true;
-      int[] slot = new int[2];
       byte[] leftInput;
       byte[] rightInput;
       byte[] hash = new byte[32];
       byte[] nodeValue = new byte[32];
 
-      slot[0] = getFrontierSlot(leafCount);
-      slot[1] = getFrontierSlot(leafCount + 1);
+      int cmCount = leafValue.length;
+      int[] slot = new int[cmCount];
 
-      byte[] result = new byte[(slot[0] + slot[1] + 1) * 32 + 2];
-      result[0] = (byte) (slot[0] & 0xFF);
-      result[1] = (byte) (slot[1] & 0xFF);
-      logger.info("slot count is " + (slot[0] + slot[1] + 2));
+      for(int i = 0; i < cmCount; i++){
+        slot[i] = getFrontierSlot(leafCount + i);
+      }
+      int resultArrayLength = 32;
+      for(int i = 0; i < cmCount; i++) {
+        resultArrayLength += slot[i] * 32 + 1;
+      }
+
+      byte[] result = new byte[resultArrayLength];
 
       // consider each new leaf in turn, from left to right:
       try {
-        int resultIdx = 2;
-        for (int i = 0; i < 2; i++) {
+        int offset = 0;
+        for (int i = 0; i < cmCount; i++) {
+          result[offset] = (byte) (slot[i] & 0xFF);
+          offset += 1;
           nodeIndex = i + leafCount + TREE_WIDTH - 1; // convert the leafIndex to a nodeIndex
           logger.info("leaf index is " + (leafCount + i) + ", slot is " + slot[i]);
 
           System.arraycopy(leafValue[i], 0, nodeValue, 0, 32);
-          //System.arraycopy(leafValue[i], 0, result, resultIdx, 32);
-          //resultIdx += 32;
           if (slot[i] == 0) {
             System.arraycopy(nodeValue, 0, frontier[0], 0, 32);
             continue;
@@ -1443,8 +1477,8 @@ public class PrecompiledContracts {
             }
             JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level - 1, leftInput, rightInput, hash));
             System.arraycopy(hash, 0, nodeValue, 0, 32);
-            System.arraycopy(hash, 0, result, resultIdx, 32);
-            resultIdx += 32;
+            System.arraycopy(hash, 0, result, offset, 32);
+            offset += 32;
           }
 
           System.arraycopy(nodeValue, 0, frontier[slot[i]], 0, 32);// store in frontier
@@ -1452,7 +1486,7 @@ public class PrecompiledContracts {
 
         // So far we've added all leaves, and hashed up to a particular level of the tree.
         // We now need to continue hashing from that level until the root:
-        for (int level = slot[1] + 1; level <= 32; level++) {
+        for (int level = slot[cmCount-1] + 1; level <= 32; level++) {
 
           if (nodeIndex % 2 == 0) {
             // even nodeIndex
@@ -1470,9 +1504,10 @@ public class PrecompiledContracts {
           JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level - 1, leftInput, rightInput, hash));
           System.arraycopy(hash, 0, nodeValue, 0, 32);
         }
-        System.arraycopy(nodeValue, 0, result, resultIdx, 32);
+        System.arraycopy(nodeValue, 0, result, offset, 32);
+        offset += 32;
 
-        //logger.info("Result index is " + (resultIdx + 32));
+        logger.info("Result length is " + offset);
       } catch (Throwable any) {
         success = false;
       }

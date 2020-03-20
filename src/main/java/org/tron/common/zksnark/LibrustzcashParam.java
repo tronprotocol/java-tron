@@ -822,19 +822,23 @@ public class LibrustzcashParam {
     private byte[] spendCv;
     @Setter
     @Getter
-    private byte[] outputCv1;
+    private int spendCvLen;
     @Setter
     @Getter
-    private byte[] outputCv2;
+    private byte[] outputCv;
+    @Setter
+    @Getter
+    private int outputCvLen;
 
     public FinalCheckNewParams(long valueBalance, byte[] bindingSig, byte[] sighashValue,
-                               byte[] spendCv, byte[] outputCv1, byte[] outputCv2) throws ZksnarkException {
+                               byte[] spendCv, int spendCvLen, byte[] outputCv, int outputCvLen) throws ZksnarkException {
       this.valueBalance = valueBalance;
       this.bindingSig = bindingSig;
       this.sighashValue = sighashValue;
       this.spendCv = spendCv;
-      this.outputCv1 = outputCv1;
-      this.outputCv2 = outputCv2;
+      this.spendCvLen = spendCvLen;
+      this.outputCv = outputCv;
+      this.outputCvLen = outputCvLen;
       valid();
     }
 
@@ -842,9 +846,14 @@ public class LibrustzcashParam {
     public void valid() throws ZksnarkException {
       validParamLength(bindingSig, 64);
       valid32Params(sighashValue);
-      valid32Params(spendCv);
-      valid32Params(outputCv1);
-      valid32Params(outputCv2);
+      if(spendCvLen <=0 || outputCvLen <=0) {
+        throw new ZksnarkException("spendCvLen and  outputCvLen must be positive");
+      }
+      if(spendCvLen % 32 != 0 || outputCvLen % 32 != 0) {
+        throw new ZksnarkException("spendCvLen and  outputCvLen must be multiple of 32");
+      }
+      validParamLength(spendCv, spendCvLen);
+      validParamLength(outputCv, outputCvLen);
     }
   }
 
