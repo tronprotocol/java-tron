@@ -453,6 +453,11 @@ public class Args {
   @Setter
   private boolean fullNodeAllowShieldedTransactionArgs;
 
+  // full node used this parameter to close shielded TRC-20 transaction
+  @Getter
+  @Setter
+  private boolean fullNodeAllowShieldedTRC20TransactionArgs;
+
   @Getter
   @Setter
   private long blockNumForEneryLimit;

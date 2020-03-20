@@ -45,8 +45,6 @@ public class ShieldedTRC20ParametersBuilder {
     @Getter
     private List<ReceiveDescriptionInfo> receives = new ArrayList<>();
 
-    private Wallet wallet;
-
     @Getter
     private ShieldedTRC20Parameters.Builder builder = ShieldedTRC20Parameters.newBuilder();
     @Getter
@@ -61,10 +59,6 @@ public class ShieldedTRC20ParametersBuilder {
     private byte[] transparentToAddress;
     @Setter
     private long transparentToAmount;
-
-    public ShieldedTRC20ParametersBuilder(Wallet wallet) {
-        this.wallet = wallet;
-    }
 
     private long getPositionFromPath (byte[] path) throws ZksnarkException {
        if (path.length != MERKLE_TREE_PATH_LENGTH) {
@@ -266,6 +260,7 @@ public class ShieldedTRC20ParametersBuilder {
         if (withAsk) {
             createSpendAuth(dataHashToBeSigned);
         }
+        builder.setMessageHash(ByteString.copyFrom(dataHashToBeSigned));
         try {
             byte[] bindingSig = new byte[64];
             JLibrustzcash.librustzcashSaplingBindingSig(

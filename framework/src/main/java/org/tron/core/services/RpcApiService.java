@@ -2346,8 +2346,10 @@ public class RpcApiService implements Service {
         checkSupportShieldedTransaction();
 
         DecryptNotesTRC20 decryptNotes = wallet.scanShieldedTRC20NotesbyIvk(startNum, endNum,
+            request.getShieldedTRC20ContractAddress().toByteArray(),
             request.getIvk().toByteArray(),
-            request.getShieldedTRC20ContractAddress().toByteArray());
+            request.getAk().toByteArray(),
+            request.getNk().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
@@ -2380,11 +2382,11 @@ public class RpcApiService implements Service {
 
     @Override
     public void createShieldedTRC20ContractNullifier(NfTRC20Parameters request,
-        StreamObserver<org.tron.api.GrpcAPI.BytesMessage> responseObserver) {
+        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
       try {
         checkSupportShieldedTransaction();
 
-        BytesMessage nf = wallet
+        GrpcAPI.NullifierResult nf = wallet
             .createShieldedTRC20ContractNullifier(request);
         responseObserver.onNext(nf);
       } catch (ZksnarkException e) {

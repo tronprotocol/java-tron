@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.NfTRC20Parameters;
 import org.tron.core.Wallet;
@@ -31,7 +32,7 @@ public class CreateShieldedTRC20ContractNullifierServlet extends RateLimiterServ
       NfTRC20Parameters.Builder build = NfTRC20Parameters.newBuilder();
       JsonFormat.merge(input, build);
 
-      BytesMessage result = wallet.createShieldedTRC20ContractNullifier(build.build());
+      GrpcAPI.NullifierResult result = wallet.createShieldedTRC20ContractNullifier(build.build());
       response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {
       Util.processError(e, response);

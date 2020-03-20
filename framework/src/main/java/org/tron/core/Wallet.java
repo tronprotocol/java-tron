@@ -40,6 +40,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -89,6 +92,7 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
+import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
@@ -96,13 +100,7 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.Base58;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
-import org.tron.common.utils.DecodeUtil;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.*;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -218,6 +216,7 @@ public class Wallet {
   @Autowired
   private NodeManager nodeManager;
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
+  private static final String SHIELDED_TRC20_IS_NOT_ALLOWED = "ShieldedTRC20TransactionApi is not allowed";
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -2763,7 +2762,10 @@ public class Wallet {
 
   public ShieldedTRC20Parameters createShieldedContractParameters(
       PrivateShieldedTRC20Parameters request) throws ContractValidateException, ZksnarkException {
-    ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder(this);
+    if (!getFullNodeAllowShieldedTRC20Transaction()) {
+      throw new ZksnarkException(SHIELDED_TRC20_IS_NOT_ALLOWED);
+    }
+    ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
 
     byte[] shieldedTRC20ContractAddress =  request.getShieldedTRC20ContractAddress().toByteArray();
     if (ArrayUtils.isEmpty(shieldedTRC20ContractAddress)) {
@@ -2855,8 +2857,10 @@ public class Wallet {
   }
   public ShieldedTRC20Parameters createShieldedContractParametersWithoutAsk(
       PrivateShieldedTRC20ParametersWithoutAsk request) throws Exception {
-    ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder(this);
-
+    if (!getFullNodeAllowShieldedTRC20Transaction()) {
+      throw new ZksnarkException(SHIELDED_TRC20_IS_NOT_ALLOWED);
+    }
+    ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     byte[] shieldedTRC20ContractAddress =  request.getShieldedTRC20ContractAddress().toByteArray();
     if (ArrayUtils.isEmpty(shieldedTRC20ContractAddress)) {
       throw new ContractValidateException("No shielded TRC-20 contract address");
@@ -2924,18 +2928,288 @@ public class Wallet {
     return builder.build(false);
   }
 
+  private Optional<DecryptNotesTRC20.NoteTx> getNoteTxFromLogList(DecryptNotesTRC20.NoteTx.Builder builder,
+               TransactionInfo.Log log, byte[] ivk, byte[] ak, byte[] nk) throws ZksnarkException {
+    if (log.getTopicsCount() == 6) {
+      byte[] cEnc = log.getTopics(0).toByteArray();
+      byte[] epk = log.getTopics(2).toByteArray();
+      byte[] cm = log.getTopics(3).toByteArray();
+      long pos = ByteArray.toLong(log.getTopics(5).toByteArray());
+      Optional<Note> notePlaintext = Note.decrypt(cEnc,//ciphertext
+              ivk, epk, cm);
+      if (notePlaintext.isPresent()) {
+        Note noteText = notePlaintext.get();
+        byte[] pkD = new byte[32];
+        if (!JLibrustzcash
+                .librustzcashIvkToPkd(new IvkToPkdParams(ivk, noteText.getD().getData(),
+                        pkD))) {
+          throw new ZksnarkException("get payment address error");
+        }
+        String paymentAddress = KeyIo
+                .encodePaymentAddress(new PaymentAddress(noteText.getD(), pkD));
+        GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
+                .setPaymentAddress(paymentAddress)
+                .setValue(noteText.getValue())
+                .setRcm(ByteString.copyFrom(noteText.getRcm()))
+                .setMemo(ByteString.copyFrom(stripRightZero(noteText.getMemo())))
+                .build();
+        if (!(ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nk))) {
+          builder.setIsSpend(isShilededTRC20NoteSpent(note, pos, ak, nk));
+        }
+        return Optional.of(builder.setNote(note).setPosition(pos).build());
+      }
+      return Optional.empty();
+    } else {
+      throw new ZksnarkException("invalid log topics");
+    }
+  }
+
+  /*
+   * query note by ivk
+   */
+  private DecryptNotesTRC20  queryTRC20NoteByIvk(long startNum, long endNum,
+         byte[] shieldedTRC20ContractAddress, byte[] ivk, byte[] ak, byte[] nk) throws BadItemException, ZksnarkException {
+      DecryptNotesTRC20.Builder builder = DecryptNotesTRC20.newBuilder();
+
+    if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
+      throw new BadItemException(
+              "request requires start_block_index >= 0 && end_block_index > start_block_index "
+                      + "&& end_block_index - start_block_index <= 1000");
+    }
+    BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
+    for (Block block : blockList.getBlockList()) {
+      for (Transaction transaction : block.getTransactionsList()) {
+        TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+
+        byte[] txid = transactionCapsule.getTransactionId().getBytes();
+
+        TransactionInfoCapsule transactionInfoCapsule;
+        try {
+           transactionInfoCapsule = dbManager.getTransactionRetStore()
+                  .getTransactionInfo(txid);
+        } catch (BadItemException e) {
+          throw new ZksnarkException(
+                  "get TransactionInfoCapsule failed.");
+        }
+        TransactionInfo info = transactionInfoCapsule.getInstance();
+        if (ByteUtil.equals(info.getContractAddress().toByteArray(), shieldedTRC20ContractAddress)) {
+          DecryptNotesTRC20.NoteTx.Builder noteBuilder;
+          List<TransactionInfo.Log> logList = info.getLogList();
+          Optional<DecryptNotesTRC20.NoteTx> noteTx;
+          if (logList.size() == 1) {
+            noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
+            noteBuilder.setTxid(ByteString.copyFrom(txid));
+            noteBuilder.setIndex(0);
+            noteTx = getNoteTxFromLogList(noteBuilder, logList.get(0), ivk, ak, nk);
+            if (noteTx.isPresent()) {
+              builder.addNoteTxs(noteTx.get());
+            }
+
+          } else if (logList.size() == 2) {
+            int index = 0;
+            for(TransactionInfo.Log log : logList) {
+              noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
+              noteBuilder.setTxid(ByteString.copyFrom(txid));
+              noteBuilder.setIndex(index);
+              index += 1;
+              noteTx = getNoteTxFromLogList(noteBuilder, logList.get(0), ivk, ak, nk);
+              if (noteTx.isPresent()) {
+                builder.addNoteTxs(noteTx.get());
+              }
+            }
+          } else {
+            throw new ZksnarkException(
+                    "unexpected log size.");
+          }
+        }
+      } //end of transaction
+    } //end of blocklist
+    return builder.build();
+  }
+
+  private boolean isShilededTRC20NoteSpent(GrpcAPI.Note note, long pos, byte[] ak, byte[] nk) throws ZksnarkException {
+    ManagedChannel channelFull = ManagedChannelBuilder.forTarget("127.0.0.1:50056")
+            .usePlaintext(true)
+            .build();
+    WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    byte[] callerAddress = Wallet.decodeFromBase58Check("TJCnKsPa7y5okkXvQAidZBzqx3QyQ6sxMW");
+
+    byte[] nf = getShieldedTRC20Nullifier(note, pos, ak, nk);
+    //todo: check whether nullifer exists in shielded contract:
+    //       mapping(bytes32 => bytes32) public nullifiers;
+
+    byte[] contractAddress = null;
+//    String result = PublicMethed.triggerContract(contractAddress,
+//            "nullifiers(bytes32)",
+//            nf,
+//            true,
+//            0L, 1000000000L,
+//            callerAddress, "D95611A9AF2A2A45359106222ED1AFED48853D9A44DEFF8DC7913F5CBA727366",
+//            blockingStubFull);
+//    logger.info(result);
+    return false;
+  }
+
   public DecryptNotesTRC20 scanShieldedTRC20NotesbyIvk(long startNum, long endNum,
-      byte[] ivk, byte[] shieldedTRC20ContractAddress) throws Exception {
-    return null;
+      byte[] shieldedTRC20ContractAddress, byte[] ivk, byte[] ak, byte[] nk) throws Exception {
+    if (!getFullNodeAllowShieldedTRC20Transaction()) {
+      throw new ZksnarkException(SHIELDED_TRC20_IS_NOT_ALLOWED);
+    }
+    GrpcAPI.DecryptNotesTRC20 notes = queryTRC20NoteByIvk(startNum, endNum, shieldedTRC20ContractAddress, ivk, ak, nk);
+    return notes;
+  }
+  private Optional<DecryptNotesTRC20.NoteTx> getNoteTxFromLogList2(DecryptNotesTRC20.NoteTx.Builder builder,
+              TransactionInfo.Log log, byte[] ovk) throws ZksnarkException {
+    if (log.getTopicsCount() == 6) {
+      byte[] cEnc = log.getTopics(0).toByteArray();
+      byte[] cOutText = log.getTopics(1).toByteArray();
+      byte[] epk = log.getTopics(2).toByteArray();
+      byte[] cm = log.getTopics(3).toByteArray();
+      byte[] cv = log.getTopics(4).toByteArray();
+      long pos = ByteArray.toLong(log.getTopics(5).toByteArray());
+      Encryption.OutCiphertext cOut = new Encryption.OutCiphertext();
+      cOut.setData(cOutText);
+      Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(cOut,//ciphertext
+              ovk, cv, cm, epk);
+
+      if (notePlaintext.isPresent()) {
+        OutgoingPlaintext decryptedOutCtUnwrapped = notePlaintext.get();
+        //decode c_enc with pkd、esk
+        Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
+        ciphertext.setData(cEnc);
+        Optional<Note> foo = Note.decrypt(ciphertext,
+                epk,
+                decryptedOutCtUnwrapped.getEsk(),
+                decryptedOutCtUnwrapped.getPkD(),
+                cm);
+
+        if (foo.isPresent()) {
+          Note bar = foo.get();
+          String paymentAddress = KeyIo.encodePaymentAddress(
+                  new PaymentAddress(bar.getD(), decryptedOutCtUnwrapped.getPkD()));
+          GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
+                  .setPaymentAddress(paymentAddress)
+                  .setValue(bar.getValue())
+                  .setRcm(ByteString.copyFrom(bar.getRcm()))
+                  .setMemo(ByteString.copyFrom(stripRightZero(bar.getMemo())))
+                  .build();
+
+          builder.setNote(note)
+                  .build();
+
+          return Optional.of(builder.build());
+        }
+      }
+      return Optional.empty();
+    } else {
+        throw new ZksnarkException("invalid log topics");
+      }
   }
 
-  public DecryptNotesTRC20 scanShieldedTRC20NotesbyOvk(long startNum, long endNum,
-      byte[] ovk, byte[] shieldedTRC20ContractAddress) throws Exception {
-    return null;
+
+  public DecryptNotesTRC20 scanShieldedTRC20NotesbyOvk ( long startNum, long endNum,
+    byte[] ovk, byte[] shieldedTRC20ContractAddress) throws Exception {
+      if (!getFullNodeAllowShieldedTRC20Transaction()) {
+        throw new ZksnarkException(SHIELDED_TRC20_IS_NOT_ALLOWED);
+      }
+      DecryptNotesTRC20.Builder builder = DecryptNotesTRC20.newBuilder();
+      if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
+        throw new BadItemException(
+                "request requires start_block_index >= 0 && end_block_index > start_block_index "
+                        + "&& end_block_index - start_block_index <= 1000");
+      }
+      BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
+      for (Block block : blockList.getBlockList()) {
+        for (Transaction transaction : block.getTransactionsList()) {
+          TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+
+          byte[] txid = transactionCapsule.getTransactionId().getBytes();
+
+          TransactionInfoCapsule transactionInfoCapsule;
+          try {
+            transactionInfoCapsule = dbManager.getTransactionRetStore()
+                    .getTransactionInfo(txid);
+          } catch (BadItemException e) {
+            throw new ZksnarkException(
+                    "get TransactionInfoCapsule failed.");
+          }
+          TransactionInfo info = transactionInfoCapsule.getInstance();
+          if (ByteUtil.equals(info.getContractAddress().toByteArray(), shieldedTRC20ContractAddress)) {
+            DecryptNotesTRC20.NoteTx.Builder noteBuilder;
+            List<TransactionInfo.Log> logList = info.getLogList();
+            Optional<DecryptNotesTRC20.NoteTx> noteTx;
+            if (logList.size() == 1) {
+              noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
+              noteBuilder.setTxid(ByteString.copyFrom(txid));
+              noteBuilder.setIndex(0);
+              noteTx = getNoteTxFromLogList2(noteBuilder, logList.get(0), ovk);
+              if (noteTx.isPresent()) {
+                builder.addNoteTxs(noteTx.get());
+              }
+
+            } else if (logList.size() == 2) {
+              int index = 0;
+              for (TransactionInfo.Log log : logList) {
+                noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
+                noteBuilder.setTxid(ByteString.copyFrom(txid));
+                noteBuilder.setIndex(index);
+                index += 1;
+                noteTx = getNoteTxFromLogList2(noteBuilder, logList.get(0), ovk);
+                if (noteTx.isPresent()) {
+                  builder.addNoteTxs(noteTx.get());
+                }
+              }
+            } else {
+              throw new ZksnarkException(
+                      "unexpected log size.");
+            }
+          }
+        } //end of transaction
+      } //end of blocklist
+      return builder.build();
+    }
+
+    private byte[] getShieldedTRC20Nullifier (GrpcAPI.Note note,long pos, byte[] ak, byte[] nk) throws ZksnarkException
+    {
+      byte[] result = new byte[32]; // 256
+      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
+              note.getPaymentAddress());
+      ComputeNfParams computeNfParams = new ComputeNfParams(
+              paymentAddress.getD().getData(),
+              paymentAddress.getPkD(),
+              note.getValue(),
+              note.getRcm().toByteArray(),
+              ak,
+              nk,
+              pos,
+              result);
+      if (!JLibrustzcash.librustzcashComputeNf(computeNfParams)) {
+        return null;
+      }
+      return result;
+    }
+
+    public GrpcAPI.NullifierResult createShieldedTRC20ContractNullifier (NfTRC20Parameters request) throws
+    ZksnarkException {
+      if (!getFullNodeAllowShieldedTRC20Transaction()) {
+        throw new ZksnarkException(SHIELDED_TRC20_IS_NOT_ALLOWED);
+      }
+      byte[] ak = request.getAk().toByteArray();
+      byte[] nk = request.getNk().toByteArray();
+
+      GrpcAPI.Note note = request.getNote();
+      long pos = request.getPosition();
+
+      byte[] nullifier = getShieldedTRC20Nullifier(note, pos, ak, nk);
+
+      return GrpcAPI.NullifierResult.newBuilder().setNf(ByteString.copyFrom(nullifier))
+              .setResult(isShilededTRC20NoteSpent(note, pos, ak, nk))
+              .build();
+    }
+
+  public boolean getFullNodeAllowShieldedTRC20Transaction() {
+    return Args.getInstance().isFullNodeAllowShieldedTRC20TransactionArgs();
   }
 
-  public BytesMessage createShieldedTRC20ContractNullifier(NfTRC20Parameters request) {
-    return null;
-  }
 }
 

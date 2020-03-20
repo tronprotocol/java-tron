@@ -48,8 +48,10 @@ public class ScanShieldedTRC20NotesbyIvkServlet extends RateLimiterServlet {
       GrpcAPI.DecryptNotesTRC20 notes = wallet
           .scanShieldedTRC20NotesbyIvk(ivkDecryptTRC20Parameters.getStartBlockIndex(),
               ivkDecryptTRC20Parameters.getEndBlockIndex(),
+              ivkDecryptTRC20Parameters.getShieldedTRC20ContractAddress().toByteArray(),
               ivkDecryptTRC20Parameters.getIvk().toByteArray(),
-              ivkDecryptTRC20Parameters.getShieldedTRC20ContractAddress().toByteArray());
+              ivkDecryptTRC20Parameters.getAk().toByteArray(),
+              ivkDecryptTRC20Parameters.getNk().toByteArray());
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
       Util.processError(e, response);
@@ -62,11 +64,14 @@ public class ScanShieldedTRC20NotesbyIvkServlet extends RateLimiterServlet {
       long endNum = Long.parseLong(request.getParameter("end_block_index"));
       String ivk = request.getParameter("ivk");
       String contractAddress = request.getParameter("contract_address");
+      String ak = request.getParameter("ak");
+      String nk = request.getParameter("nk");
       boolean visible = Util.getVisible(request);
 
       GrpcAPI.DecryptNotesTRC20 notes = wallet
-          .scanShieldedTRC20NotesbyIvk(startNum, endNum, ByteArray.fromHexString(ivk),
-              ByteArray.fromHexString(contractAddress));
+          .scanShieldedTRC20NotesbyIvk(startNum, endNum,
+              ByteArray.fromHexString(contractAddress), ByteArray.fromHexString(ivk),
+                  ByteArray.fromHexString(ak),ByteArray.fromHexString(nk));
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
       Util.processError(e, response);

@@ -719,7 +719,7 @@ service Wallet {
   rpc ScanShieldedTRC20NotesbyOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc CreateShieldedTRC20ContractNullifier (NfTRC20Parameters) returns (BytesMessage) {
+  rpc CreateShieldedTRC20ContractNullifier (NfTRC20Parameters) returns (NullifierResult) {
   };
   // end for shiededTransaction
 
@@ -1376,8 +1376,10 @@ message ShieldedTRC20Parameters {
 message IvkDecryptTRC20Parameters {
   int64 start_block_index = 1;
   int64 end_block_index = 2;
-  bytes ivk = 3;
-  bytes shielded_TRC20_contract_address = 4;
+  bytes shielded_TRC20_contract_address = 3;
+  bytes ivk = 4;
+  bytes ak = 5;
+  bytes nk = 6;
 }
 
 message OvkDecryptTRC20Parameters {
@@ -1403,4 +1405,10 @@ message NfTRC20Parameters {
   bytes ak = 2;
   bytes nk = 3;
   int64 position = 4;
+  bytes shielded_TRC20_contract_address = 5;
+}
+
+message NullifierResult {
+  bool result = 1;
+  bytes nf = 2;
 }
