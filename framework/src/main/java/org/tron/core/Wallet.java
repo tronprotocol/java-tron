@@ -3217,7 +3217,7 @@ public class Wallet {
       return result;
     }
 
-    public GrpcAPI.NullifierResult createShieldedTRC20ContractNullifier (NfTRC20Parameters request) throws
+    public GrpcAPI.NullifierResult getShieldedTRC20ContractNullifier (NfTRC20Parameters request) throws
     ZksnarkException {
       if (!getFullNodeAllowShieldedTRC20Transaction()) {
         throw new ZksnarkException(SHIELDED_TRC20_IS_NOT_ALLOWED);

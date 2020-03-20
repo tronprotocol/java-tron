@@ -719,7 +719,7 @@ service Wallet {
   rpc ScanShieldedTRC20NotesbyOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc CreateShieldedTRC20ContractNullifier (NfTRC20Parameters) returns (NullifierResult) {
+  rpc GetShieldedTRC20ContractNullifier (NfTRC20Parameters) returns (NullifierResult) {
   };
   // end for shiededTransaction
 

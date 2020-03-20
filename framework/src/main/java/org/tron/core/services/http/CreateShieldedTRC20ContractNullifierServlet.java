@@ -32,7 +32,7 @@ public class CreateShieldedTRC20ContractNullifierServlet extends RateLimiterServ
       NfTRC20Parameters.Builder build = NfTRC20Parameters.newBuilder();
       JsonFormat.merge(input, build);
 
-      GrpcAPI.NullifierResult result = wallet.createShieldedTRC20ContractNullifier(build.build());
+      GrpcAPI.NullifierResult result = wallet.getShieldedTRC20ContractNullifier(build.build());
       response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {
       Util.processError(e, response);

@@ -2381,13 +2381,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createShieldedTRC20ContractNullifier(NfTRC20Parameters request,
+    public void getShieldedTRC20ContractNullifier(NfTRC20Parameters request,
         StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
       try {
         checkSupportShieldedTransaction();
 
         GrpcAPI.NullifierResult nf = wallet
-            .createShieldedTRC20ContractNullifier(request);
+            .getShieldedTRC20ContractNullifier(request);
         responseObserver.onNext(nf);
       } catch (ZksnarkException e) {
         responseObserver.onError(getRunTimeException(e));
