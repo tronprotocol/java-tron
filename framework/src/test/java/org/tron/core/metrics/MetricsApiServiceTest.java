@@ -40,7 +40,8 @@ public class MetricsApiServiceTest {
   public void metricCounterTest() {
     String key = "testCounter";
     MetricsUtil.getCounter(key);
-    MetricsUtil.counterInc(key, 2);
+    MetricsUtil.counterInc(key);
+    MetricsUtil.counterInc(key);
     Assert.assertEquals(2.0, MetricsUtil.getCounter(key).getCount(), 0.1);
   }
 

@@ -27,7 +27,7 @@ public class TransactionHistoryStore extends TronStoreWithRevoking<TransactionIn
   @Override
   public void put(byte[] key, TransactionInfoCapsule item) {
     if (BooleanUtils.toBoolean(CommonParameter.getInstance()
-        .getStorage().getTransactionHistoreSwitch())) {
+        .getStorage().getTransactionHistorySwitch())) {
       super.put(key, item);
     }
   }

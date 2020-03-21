@@ -329,10 +329,10 @@ public class Args extends CommonParameter {
         .orElse(Storage.getIndexSwitchFromConfig(config)));
 
     PARAMETER.storage
-        .setTransactionHistoreSwitch(
-            Optional.ofNullable(PARAMETER.storageTransactionHistoreSwitch)
+        .setTransactionHistorySwitch(
+            Optional.ofNullable(PARAMETER.storageTransactionHistorySwitch)
                 .filter(StringUtils::isNotEmpty)
-                .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
+                .orElse(Storage.getTransactionHistorySwitchFromConfig(config)));
 
     PARAMETER.storage.setPropertyMapFromConfig(config);
 
