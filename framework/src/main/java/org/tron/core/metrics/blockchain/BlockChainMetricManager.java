@@ -45,6 +45,35 @@ public class BlockChainMetricManager {
     return blockChainInfo;
   }
 
+  private void setBlockChainInfo(BlockChainInfo blockChain) {
+    blockChain.setHeadBlockTimestamp(chainBaseManager.getHeadBlockTimeStamp());
+    blockChain.setHeadBlockHash(dbManager.getDynamicPropertiesStore()
+        .getLatestBlockHeaderHash().toString());
+
+    RateInfo blockProcessTime = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME);
+    blockChain.setBlockProcessTime(blockProcessTime);
+    blockChain.setForkCount(getForkCount());
+    blockChain.setFailForkCount(getFailForkCount());
+    blockChain.setHeadBlockNum(chainBaseManager.getHeadBlockNum());
+    blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size()
+        + dbManager.getRePushTransactions().size());
+
+    RateInfo missTx = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_MISSED_TRANSACTION);
+    blockChain.setMissedTransaction(missTx);
+
+    RateInfo tpsInfo = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_TPS);
+    blockChain.setTps(tpsInfo);
+
+    List<WitnessInfo> witnesses = getSrList();
+
+    blockChain.setWitnesses(witnesses);
+
+    blockChain.setFailProcessBlockNum(failProcessBlockNum);
+    blockChain.setFailProcessBlockReason(failProcessBlockReason);
+    List<DupWitnessInfo> dupWitness = getDupWitness();
+    blockChain.setDupWitness(dupWitness);
+  }
+
   public Protocol.MetricsInfo.BlockChainInfo getBlockChainProtoInfo() {
     Protocol.MetricsInfo.BlockChainInfo.Builder blockChainInfo =
         Protocol.MetricsInfo.BlockChainInfo.newBuilder();
@@ -90,37 +119,9 @@ public class BlockChainMetricManager {
 
   }
 
-  private void setBlockChainInfo(BlockChainInfo blockChain) {
-    blockChain.setHeadBlockTimestamp(chainBaseManager.getHeadBlockTimeStamp());
-    blockChain.setHeadBlockHash(dbManager.getDynamicPropertiesStore()
-            .getLatestBlockHeaderHash().toString());
-
-    RateInfo blockProcessTime = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_BLOCK_PROCESS_TIME);
-    blockChain.setBlockProcessTime(blockProcessTime);
-    blockChain.setForkCount(getForkCount());
-    blockChain.setFailForkCount(getFailForkCount());
-    blockChain.setHeadBlockNum(chainBaseManager.getHeadBlockNum());
-    blockChain.setTransactionCacheSize(dbManager.getPendingTransactions().size()
-        + dbManager.getRePushTransactions().size());
-
-    RateInfo missTx = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_MISSED_TRANSACTION);
-    blockChain.setMissedTransaction(missTx);
-
-    RateInfo tpsInfo = MetricsUtil.getRateInfo(MetricsKey.BLOCKCHAIN_TPS);
-    blockChain.setTps(tpsInfo);
-
-    List<WitnessInfo> witnesses = getSrList();
-
-    blockChain.setWitnesses(witnesses);
-
-    blockChain.setFailProcessBlockNum(failProcessBlockNum);
-    blockChain.setFailProcessBlockReason(failProcessBlockReason);
-    List<DupWitnessInfo> dupWitness = getDupWitness();
-    blockChain.setDupWitness(dupWitness);
-  }
-
   /**
    * apply block.
+   *
    * @param block BlockCapsule
    */
   public void applyBlock(BlockCapsule block) {
@@ -131,7 +132,7 @@ public class BlockChainMetricManager {
     if (witnessInfo.containsKey(witnessAddress)) {
       BlockCapsule oldBlock = witnessInfo.get(witnessAddress);
       if ((!oldBlock.getBlockId().equals(block.getBlockId()))
-              && oldBlock.getTimeStamp() == block.getTimeStamp()) {
+          && oldBlock.getTimeStamp() == block.getTimeStamp()) {
         MetricsUtil.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS + witnessAddress);
         dupWitnessBlockNum.put(witnessAddress, block.getNum());
       }
@@ -168,7 +169,7 @@ public class BlockChainMetricManager {
       if (witnessInfo.containsKey(address)) {
         BlockCapsule block = witnessInfo.get(address);
         WitnessInfo witness = new WitnessInfo(address,
-                block.getInstance().getBlockHeader().getRawData().getVersion());
+            block.getInstance().getBlockHeader().getRawData().getVersion());
         witnessInfos.add(witness);
       }
     }
@@ -187,14 +188,14 @@ public class BlockChainMetricManager {
   private List<DupWitnessInfo> getDupWitness() {
     List<DupWitnessInfo> dupWitnesses = new ArrayList<>();
     SortedMap<String, Counter> dupWitnessMap =
-            MetricsUtil.getCounters(MetricsKey.BLOCKCHAIN_DUP_WITNESS);
+        MetricsUtil.getCounters(MetricsKey.BLOCKCHAIN_DUP_WITNESS);
     for (Map.Entry<String, Counter> entry : dupWitnessMap.entrySet()) {
       DupWitnessInfo dupWitness = new DupWitnessInfo();
       String witness = entry.getKey().substring(MetricsKey.BLOCKCHAIN_DUP_WITNESS.length());
       long blockNum = dupWitnessBlockNum.get(witness);
       dupWitness.setAddress(witness);
       dupWitness.setBlockNum(blockNum);
-      dupWitness.setCount((int)entry.getValue().getCount());
+      dupWitness.setCount((int) entry.getValue().getCount());
       dupWitnesses.add(dupWitness);
     }
     return dupWitnesses;
