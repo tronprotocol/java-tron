@@ -75,15 +75,14 @@ public class MetricsUtil {
   /**
    * Counter inc.
    * @param key String
-   * @param value long
    */
-  public static void counterInc(String key, long value) {
+  public static void counterInc(String key) {
     try {
       if (CommonParameter.getInstance().isNodeMetricsEnable()) {
-        metricRegistry.counter(key).inc(value);
+        metricRegistry.counter(key).inc(1L);
       }
     } catch (Exception e) {
-      logger.warn("inc counter failed, key:{}, value:{}", key, value);
+      logger.warn("inc counter failed, key:{}", key);
     }
   }
 

@@ -29,7 +29,7 @@ public class TronMessageFactory extends MessageFactory {
           "type=" + data[0] + DATA_LEN + data.length + ", error msg: " + e.getMessage());
     } finally {
       if (isException) {
-        MetricsUtil.counterInc(MetricsKey.NET_ERROR_PROTO_COUNT, 1);
+        MetricsUtil.counterInc(MetricsKey.NET_ERROR_PROTO_COUNT);
       }
     }
   }

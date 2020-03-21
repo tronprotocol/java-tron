@@ -132,7 +132,7 @@ public class BlockChainMetricManager {
       BlockCapsule oldBlock = witnessInfo.get(witnessAddress);
       if ((!oldBlock.getBlockId().equals(block.getBlockId()))
               && oldBlock.getTimeStamp() == block.getTimeStamp()) {
-        MetricsUtil.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS + witnessAddress, 1);
+        MetricsUtil.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS + witnessAddress);
         dupWitnessBlockNum.put(witnessAddress, block.getNum());
       }
     }
@@ -143,14 +143,14 @@ public class BlockChainMetricManager {
     MetricsUtil.histogramUpdate(MetricsKey.NET_LATENCY, netTime);
     MetricsUtil.histogramUpdate(MetricsKey.NET_LATENCY_WITNESS + witnessAddress, netTime);
     if (netTime >= 3000) {
-      MetricsUtil.counterInc(MetricsKey.NET_LATENCY + ".3S", 1L);
-      MetricsUtil.counterInc(MetricsKey.NET_LATENCY_WITNESS + witnessAddress + ".3S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY + ".3S");
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY_WITNESS + witnessAddress + ".3S");
     } else if (netTime >= 2000) {
-      MetricsUtil.counterInc(MetricsKey.NET_LATENCY + ".2S", 1L);
-      MetricsUtil.counterInc(MetricsKey.NET_LATENCY_WITNESS + witnessAddress + ".2S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY + ".2S");
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY_WITNESS + witnessAddress + ".2S");
     } else if (netTime >= 1000) {
-      MetricsUtil.counterInc(MetricsKey.NET_LATENCY + ".1S", 1L);
-      MetricsUtil.counterInc(MetricsKey.NET_LATENCY_WITNESS + witnessAddress + ".1S", 1L);
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY + ".1S");
+      MetricsUtil.counterInc(MetricsKey.NET_LATENCY_WITNESS + witnessAddress + ".1S");
     }
 
     //TPS

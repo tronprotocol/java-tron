@@ -105,8 +105,8 @@ public class ChannelManager {
         recentlyDisconnected.put(channel.getInetAddress(), reason);
         break;
     }
-    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_COUNT, 1L);
-    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_DETAIL + reason, 1L);
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_COUNT);
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_DETAIL + reason);
   }
 
   public void notifyDisconnect(Channel channel) {
