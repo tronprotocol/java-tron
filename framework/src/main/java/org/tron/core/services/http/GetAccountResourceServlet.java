@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -35,16 +34,13 @@ public class GetAccountResourceServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
+      PostParams params = PostParams.getPostParams(request);
+      JSONObject jsonObject = JSONObject.parseObject(params.getParams());
       String address = jsonObject.getString("address");
-      if (visible) {
+      if (params.isVisible()) {
         address = Util.getHexAddress(address);
       }
-      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(address)), response);
+      fillResponse(params.isVisible(), ByteString.copyFrom(ByteArray.fromHexString(address)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
