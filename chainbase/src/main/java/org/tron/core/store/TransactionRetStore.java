@@ -31,7 +31,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
   @Override
   public void put(byte[] key, TransactionRetCapsule item) {
     if (BooleanUtils.toBoolean(CommonParameter.getInstance()
-        .getStorage().getTransactionHistoreSwitch())) {
+        .getStorage().getTransactionHistorySwitch())) {
       super.put(key, item);
     }
   }
