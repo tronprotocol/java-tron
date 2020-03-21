@@ -4,6 +4,7 @@ import java.util.List;
 import org.tron.core.metrics.net.RateInfo;
 
 public class BlockChainInfo {
+
   private long headBlockNum;
   private long headBlockTimestamp;
   private String headBlockHash;
