@@ -10,6 +10,7 @@ import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
+import org.tron.common.zksnark.LibrustzcashParam.FinalCheckNewParams;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.KaAgreeParams;
@@ -246,6 +247,14 @@ public class JLibrustzcash {
     }
     return INSTANCE.librustzcashSaplingFinalCheck(params.getCtx(),
         params.getValueBalance(), params.getBindingSig(), params.getSighashValue());
+  }
+
+  public static boolean librustzcashSaplingFinalCheckNew(FinalCheckNewParams params) {
+    if (!isOpenZen()) {
+      return true;
+    }
+    return INSTANCE.librustzcashSaplingFinalCheckNew(params.getValueBalance(), params.getBindingSig(),
+            params.getSighashValue(), params.getSpendCv(),params.getSpendCvLen(), params.getOutputCv(),params.getOutputCvLen());
   }
 
   public static void librustzcashSaplingVerificationCtxFree(long ctx) {

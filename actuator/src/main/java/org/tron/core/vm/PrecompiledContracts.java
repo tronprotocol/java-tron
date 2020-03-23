@@ -63,8 +63,11 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.JLibrustzcash;
+import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
@@ -90,6 +93,11 @@ public class PrecompiledContracts {
   private static final BatchValidateSign batchValidateSign = new BatchValidateSign();
   private static final ValidateMultiSign validateMultiSign = new ValidateMultiSign();
 
+  private static final VerifyMintProof verifyMintProof = new VerifyMintProof();
+  private static final VerifyTransferProof verifyTransferProof = new VerifyTransferProof();
+  private static final VerifyBurnProof verifyBurnProof = new VerifyBurnProof();
+
+  private static final MerkleHash merkleHash = new MerkleHash();
 
   private static final DataWord ecRecoverAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000001");
@@ -111,6 +119,14 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000000009");
   private static final DataWord validateMultiSignAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000000000a");
+  private static final DataWord verifyMintProofAddr = new DataWord(
+          "000000000000000000000000000000000000000000000000000000000000000b");
+  private static final DataWord verifyTransferProofAddr = new DataWord(
+          "000000000000000000000000000000000000000000000000000000000000000c");
+  private static final DataWord verifyBurnProofAddr = new DataWord(
+          "000000000000000000000000000000000000000000000000000000000000000d");
+  private static final DataWord merkleHashAddr = new DataWord(
+          "000000000000000000000000000000000000000000000000000000000000000e");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -147,6 +163,18 @@ public class PrecompiledContracts {
     }
     if (VMConfig.allowTvmSolidity059() && address.equals(validateMultiSignAddr)) {
       return validateMultiSign;
+    }
+    if (address.equals(verifyMintProofAddr)) {
+      return verifyMintProof;
+    }
+    if (address.equals(verifyTransferProofAddr)) {
+      return verifyTransferProof;
+    }
+    if (address.equals(verifyBurnProofAddr)) {
+      return verifyBurnProof;
+    }
+    if (address.equals(merkleHashAddr)) {
+      return merkleHash;
     }
 
     return null;
@@ -861,6 +889,593 @@ public class PrecompiledContracts {
     }
 
 
+  }
+
+  public static abstract class VerifyProof extends PrecompiledContract {
+
+    protected static final long TREE_WIDTH = 1L << 32;
+    protected static final byte[][] UNCOMMITTED = {
+            {(byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00},
+            {(byte) 0x81, (byte) 0x7d, (byte) 0xe3, (byte) 0x6a, (byte) 0xb2, (byte) 0xd5, (byte) 0x7f, (byte) 0xeb, (byte) 0x07, (byte) 0x76, (byte) 0x34, (byte) 0xbc, (byte) 0xa7, (byte) 0x78, (byte) 0x19, (byte) 0xc8, (byte) 0xe0, (byte) 0xbd, (byte) 0x29, (byte) 0x8c, (byte) 0x04, (byte) 0xf6, (byte) 0xfe, (byte) 0xd0, (byte) 0xe6, (byte) 0xa8, (byte) 0x3c, (byte) 0xc1, (byte) 0x35, (byte) 0x6c, (byte) 0xa1, (byte) 0x55},
+            {(byte) 0xff, (byte) 0xe9, (byte) 0xfc, (byte) 0x03, (byte) 0xf1, (byte) 0x8b, (byte) 0x17, (byte) 0x6c, (byte) 0x99, (byte) 0x88, (byte) 0x06, (byte) 0x43, (byte) 0x9f, (byte) 0xf0, (byte) 0xbb, (byte) 0x8a, (byte) 0xd1, (byte) 0x93, (byte) 0xaf, (byte) 0xdb, (byte) 0x27, (byte) 0xb2, (byte) 0xcc, (byte) 0xbc, (byte) 0x88, (byte) 0x85, (byte) 0x69, (byte) 0x16, (byte) 0xdd, (byte) 0x80, (byte) 0x4e, (byte) 0x34},
+            {(byte) 0xd8, (byte) 0x28, (byte) 0x33, (byte) 0x86, (byte) 0xef, (byte) 0x2e, (byte) 0xf0, (byte) 0x7e, (byte) 0xbd, (byte) 0xbb, (byte) 0x43, (byte) 0x83, (byte) 0xc1, (byte) 0x2a, (byte) 0x73, (byte) 0x9a, (byte) 0x95, (byte) 0x3a, (byte) 0x4d, (byte) 0x6e, (byte) 0x0d, (byte) 0x6f, (byte) 0xb1, (byte) 0x13, (byte) 0x9a, (byte) 0x40, (byte) 0x36, (byte) 0xd6, (byte) 0x93, (byte) 0xbf, (byte) 0xbb, (byte) 0x6c},
+            {(byte) 0xe1, (byte) 0x10, (byte) 0xde, (byte) 0x65, (byte) 0xc9, (byte) 0x07, (byte) 0xb9, (byte) 0xde, (byte) 0xa4, (byte) 0xae, (byte) 0x0b, (byte) 0xd8, (byte) 0x3a, (byte) 0x4b, (byte) 0x0a, (byte) 0x51, (byte) 0xbe, (byte) 0xa1, (byte) 0x75, (byte) 0x64, (byte) 0x6a, (byte) 0x64, (byte) 0xc1, (byte) 0x2b, (byte) 0x4c, (byte) 0x9f, (byte) 0x93, (byte) 0x1b, (byte) 0x2c, (byte) 0xb3, (byte) 0x1b, (byte) 0x49},
+            {(byte) 0x91, (byte) 0x2d, (byte) 0x82, (byte) 0xb2, (byte) 0xc2, (byte) 0xbc, (byte) 0xa2, (byte) 0x31, (byte) 0xf7, (byte) 0x1e, (byte) 0xfc, (byte) 0xf6, (byte) 0x17, (byte) 0x37, (byte) 0xfb, (byte) 0xf0, (byte) 0xa0, (byte) 0x8b, (byte) 0xef, (byte) 0xa0, (byte) 0x41, (byte) 0x62, (byte) 0x15, (byte) 0xae, (byte) 0xef, (byte) 0x53, (byte) 0xe8, (byte) 0xbb, (byte) 0x6d, (byte) 0x23, (byte) 0x39, (byte) 0x0a},
+            {(byte) 0x8a, (byte) 0xc9, (byte) 0xcf, (byte) 0x9c, (byte) 0x39, (byte) 0x1e, (byte) 0x3f, (byte) 0xd4, (byte) 0x28, (byte) 0x91, (byte) 0xd2, (byte) 0x72, (byte) 0x38, (byte) 0xa8, (byte) 0x1a, (byte) 0x8a, (byte) 0x5c, (byte) 0x1d, (byte) 0x3a, (byte) 0x72, (byte) 0xb1, (byte) 0xbc, (byte) 0xbe, (byte) 0xa8, (byte) 0xcf, (byte) 0x44, (byte) 0xa5, (byte) 0x8c, (byte) 0xe7, (byte) 0x38, (byte) 0x96, (byte) 0x13},
+            {(byte) 0xd6, (byte) 0xc6, (byte) 0x39, (byte) 0xac, (byte) 0x24, (byte) 0xb4, (byte) 0x6b, (byte) 0xd1, (byte) 0x93, (byte) 0x41, (byte) 0xc9, (byte) 0x1b, (byte) 0x13, (byte) 0xfd, (byte) 0xca, (byte) 0xb3, (byte) 0x15, (byte) 0x81, (byte) 0xdd, (byte) 0xaf, (byte) 0x7f, (byte) 0x14, (byte) 0x11, (byte) 0x33, (byte) 0x6a, (byte) 0x27, (byte) 0x1f, (byte) 0x3d, (byte) 0x0a, (byte) 0xa5, (byte) 0x28, (byte) 0x13},
+            {(byte) 0x7b, (byte) 0x99, (byte) 0xab, (byte) 0xdc, (byte) 0x37, (byte) 0x30, (byte) 0x99, (byte) 0x1c, (byte) 0xc9, (byte) 0x27, (byte) 0x47, (byte) 0x27, (byte) 0xd7, (byte) 0xd8, (byte) 0x2d, (byte) 0x28, (byte) 0xcb, (byte) 0x79, (byte) 0x4e, (byte) 0xdb, (byte) 0xc7, (byte) 0x03, (byte) 0x4b, (byte) 0x4f, (byte) 0x00, (byte) 0x53, (byte) 0xff, (byte) 0x7c, (byte) 0x4b, (byte) 0x68, (byte) 0x04, (byte) 0x44},
+            {(byte) 0x43, (byte) 0xff, (byte) 0x54, (byte) 0x57, (byte) 0xf1, (byte) 0x3b, (byte) 0x92, (byte) 0x6b, (byte) 0x61, (byte) 0xdf, (byte) 0x55, (byte) 0x2d, (byte) 0x4e, (byte) 0x40, (byte) 0x2e, (byte) 0xe6, (byte) 0xdc, (byte) 0x14, (byte) 0x63, (byte) 0xf9, (byte) 0x9a, (byte) 0x53, (byte) 0x5f, (byte) 0x9a, (byte) 0x71, (byte) 0x34, (byte) 0x39, (byte) 0x26, (byte) 0x4d, (byte) 0x5b, (byte) 0x61, (byte) 0x6b},
+            {(byte) 0xba, (byte) 0x49, (byte) 0xb6, (byte) 0x59, (byte) 0xfb, (byte) 0xd0, (byte) 0xb7, (byte) 0x33, (byte) 0x42, (byte) 0x11, (byte) 0xea, (byte) 0x6a, (byte) 0x9d, (byte) 0x9d, (byte) 0xf1, (byte) 0x85, (byte) 0xc7, (byte) 0x57, (byte) 0xe7, (byte) 0x0a, (byte) 0xa8, (byte) 0x1d, (byte) 0xa5, (byte) 0x62, (byte) 0xfb, (byte) 0x91, (byte) 0x2b, (byte) 0x84, (byte) 0xf4, (byte) 0x9b, (byte) 0xce, (byte) 0x72},
+            {(byte) 0x47, (byte) 0x77, (byte) 0xc8, (byte) 0x77, (byte) 0x6a, (byte) 0x3b, (byte) 0x1e, (byte) 0x69, (byte) 0xb7, (byte) 0x3a, (byte) 0x62, (byte) 0xfa, (byte) 0x70, (byte) 0x1f, (byte) 0xa4, (byte) 0xf7, (byte) 0xa6, (byte) 0x28, (byte) 0x2d, (byte) 0x9a, (byte) 0xee, (byte) 0x2c, (byte) 0x7a, (byte) 0x6b, (byte) 0x82, (byte) 0xe7, (byte) 0x93, (byte) 0x7d, (byte) 0x70, (byte) 0x81, (byte) 0xc2, (byte) 0x3c},
+            {(byte) 0xec, (byte) 0x67, (byte) 0x71, (byte) 0x14, (byte) 0xc2, (byte) 0x72, (byte) 0x06, (byte) 0xf5, (byte) 0xde, (byte) 0xbc, (byte) 0x1c, (byte) 0x1e, (byte) 0xd6, (byte) 0x6f, (byte) 0x95, (byte) 0xe2, (byte) 0xb1, (byte) 0x88, (byte) 0x5d, (byte) 0xa5, (byte) 0xb7, (byte) 0xbe, (byte) 0x3d, (byte) 0x73, (byte) 0x6b, (byte) 0x1d, (byte) 0xe9, (byte) 0x85, (byte) 0x79, (byte) 0x47, (byte) 0x30, (byte) 0x48},
+            {(byte) 0x1b, (byte) 0x77, (byte) 0xda, (byte) 0xc4, (byte) 0xd2, (byte) 0x4f, (byte) 0xb7, (byte) 0x25, (byte) 0x8c, (byte) 0x3c, (byte) 0x52, (byte) 0x87, (byte) 0x04, (byte) 0xc5, (byte) 0x94, (byte) 0x30, (byte) 0xb6, (byte) 0x30, (byte) 0x71, (byte) 0x8b, (byte) 0xec, (byte) 0x48, (byte) 0x64, (byte) 0x21, (byte) 0x83, (byte) 0x70, (byte) 0x21, (byte) 0xcf, (byte) 0x75, (byte) 0xda, (byte) 0xb6, (byte) 0x51},
+            {(byte) 0xbd, (byte) 0x74, (byte) 0xb2, (byte) 0x5a, (byte) 0xac, (byte) 0xb9, (byte) 0x23, (byte) 0x78, (byte) 0xa8, (byte) 0x71, (byte) 0xbf, (byte) 0x27, (byte) 0xd2, (byte) 0x25, (byte) 0xcf, (byte) 0xc2, (byte) 0x6b, (byte) 0xac, (byte) 0xa3, (byte) 0x44, (byte) 0xa1, (byte) 0xea, (byte) 0x35, (byte) 0xfd, (byte) 0xd9, (byte) 0x45, (byte) 0x10, (byte) 0xf3, (byte) 0xd1, (byte) 0x57, (byte) 0x08, (byte) 0x2c},
+            {(byte) 0xd6, (byte) 0xac, (byte) 0xde, (byte) 0xdf, (byte) 0x95, (byte) 0xf6, (byte) 0x08, (byte) 0xe0, (byte) 0x9f, (byte) 0xa5, (byte) 0x3f, (byte) 0xb4, (byte) 0x3d, (byte) 0xcd, (byte) 0x09, (byte) 0x90, (byte) 0x47, (byte) 0x57, (byte) 0x26, (byte) 0xc5, (byte) 0x13, (byte) 0x12, (byte) 0x10, (byte) 0xc9, (byte) 0xe5, (byte) 0xca, (byte) 0xea, (byte) 0xb9, (byte) 0x7f, (byte) 0x0e, (byte) 0x64, (byte) 0x2f},
+            {(byte) 0x1e, (byte) 0xa6, (byte) 0x67, (byte) 0x5f, (byte) 0x95, (byte) 0x51, (byte) 0xee, (byte) 0xb9, (byte) 0xdf, (byte) 0xaa, (byte) 0xa9, (byte) 0x24, (byte) 0x7b, (byte) 0xc9, (byte) 0x85, (byte) 0x82, (byte) 0x70, (byte) 0xd3, (byte) 0xd3, (byte) 0xa4, (byte) 0xc5, (byte) 0xaf, (byte) 0xa7, (byte) 0x17, (byte) 0x7a, (byte) 0x98, (byte) 0x4d, (byte) 0x5e, (byte) 0xd1, (byte) 0xbe, (byte) 0x24, (byte) 0x51},
+            {(byte) 0x6e, (byte) 0xdb, (byte) 0x16, (byte) 0xd0, (byte) 0x19, (byte) 0x07, (byte) 0xb7, (byte) 0x59, (byte) 0x97, (byte) 0x7d, (byte) 0x76, (byte) 0x50, (byte) 0xda, (byte) 0xd7, (byte) 0xe3, (byte) 0xec, (byte) 0x04, (byte) 0x9a, (byte) 0xf1, (byte) 0xa3, (byte) 0xd8, (byte) 0x75, (byte) 0x38, (byte) 0x0b, (byte) 0x69, (byte) 0x7c, (byte) 0x86, (byte) 0x2c, (byte) 0x9e, (byte) 0xc5, (byte) 0xd5, (byte) 0x1c},
+            {(byte) 0xcd, (byte) 0x1c, (byte) 0x8d, (byte) 0xbf, (byte) 0x6e, (byte) 0x3a, (byte) 0xcc, (byte) 0x7a, (byte) 0x80, (byte) 0x43, (byte) 0x9b, (byte) 0xc4, (byte) 0x96, (byte) 0x2c, (byte) 0xf2, (byte) 0x5b, (byte) 0x9d, (byte) 0xce, (byte) 0x7c, (byte) 0x89, (byte) 0x6f, (byte) 0x3a, (byte) 0x5b, (byte) 0xd7, (byte) 0x08, (byte) 0x03, (byte) 0xfc, (byte) 0x5a, (byte) 0x0e, (byte) 0x33, (byte) 0xcf, (byte) 0x00},
+            {(byte) 0x6a, (byte) 0xca, (byte) 0x84, (byte) 0x48, (byte) 0xd8, (byte) 0x26, (byte) 0x3e, (byte) 0x54, (byte) 0x7d, (byte) 0x5f, (byte) 0xf2, (byte) 0x95, (byte) 0x0e, (byte) 0x2e, (byte) 0xd3, (byte) 0x83, (byte) 0x9e, (byte) 0x99, (byte) 0x8d, (byte) 0x31, (byte) 0xcb, (byte) 0xc6, (byte) 0xac, (byte) 0x9f, (byte) 0xd5, (byte) 0x7b, (byte) 0xc6, (byte) 0x00, (byte) 0x2b, (byte) 0x15, (byte) 0x92, (byte) 0x16},
+            {(byte) 0x8d, (byte) 0x5f, (byte) 0xa4, (byte) 0x3e, (byte) 0x5a, (byte) 0x10, (byte) 0xd1, (byte) 0x16, (byte) 0x05, (byte) 0xac, (byte) 0x74, (byte) 0x30, (byte) 0xba, (byte) 0x1f, (byte) 0x5d, (byte) 0x81, (byte) 0xfb, (byte) 0x1b, (byte) 0x68, (byte) 0xd2, (byte) 0x9a, (byte) 0x64, (byte) 0x04, (byte) 0x05, (byte) 0x76, (byte) 0x77, (byte) 0x49, (byte) 0xe8, (byte) 0x41, (byte) 0x52, (byte) 0x76, (byte) 0x73},
+            {(byte) 0x08, (byte) 0xee, (byte) 0xab, (byte) 0x0c, (byte) 0x13, (byte) 0xab, (byte) 0xd6, (byte) 0x06, (byte) 0x9e, (byte) 0x63, (byte) 0x10, (byte) 0x19, (byte) 0x7b, (byte) 0xf8, (byte) 0x0f, (byte) 0x9c, (byte) 0x1e, (byte) 0xa6, (byte) 0xde, (byte) 0x78, (byte) 0xfd, (byte) 0x19, (byte) 0xcb, (byte) 0xae, (byte) 0x24, (byte) 0xd4, (byte) 0xa5, (byte) 0x20, (byte) 0xe6, (byte) 0xcf, (byte) 0x30, (byte) 0x23},
+            {(byte) 0x07, (byte) 0x69, (byte) 0x55, (byte) 0x7b, (byte) 0xc6, (byte) 0x82, (byte) 0xb1, (byte) 0xbf, (byte) 0x30, (byte) 0x86, (byte) 0x46, (byte) 0xfd, (byte) 0x0b, (byte) 0x22, (byte) 0xe6, (byte) 0x48, (byte) 0xe8, (byte) 0xb9, (byte) 0xe9, (byte) 0x8f, (byte) 0x57, (byte) 0xe2, (byte) 0x9f, (byte) 0x5a, (byte) 0xf4, (byte) 0x0f, (byte) 0x6e, (byte) 0xdb, (byte) 0x83, (byte) 0x3e, (byte) 0x2c, (byte) 0x49},
+            {(byte) 0x4c, (byte) 0x69, (byte) 0x37, (byte) 0xd7, (byte) 0x8f, (byte) 0x42, (byte) 0x68, (byte) 0x5f, (byte) 0x84, (byte) 0xb4, (byte) 0x3a, (byte) 0xd3, (byte) 0xb7, (byte) 0xb0, (byte) 0x0f, (byte) 0x81, (byte) 0x28, (byte) 0x56, (byte) 0x62, (byte) 0xf8, (byte) 0x5c, (byte) 0x6a, (byte) 0x68, (byte) 0xef, (byte) 0x11, (byte) 0xd6, (byte) 0x2a, (byte) 0xd1, (byte) 0xa3, (byte) 0xee, (byte) 0x08, (byte) 0x50},
+            {(byte) 0xfe, (byte) 0xe0, (byte) 0xe5, (byte) 0x28, (byte) 0x02, (byte) 0xcb, (byte) 0x0c, (byte) 0x46, (byte) 0xb1, (byte) 0xeb, (byte) 0x4d, (byte) 0x37, (byte) 0x6c, (byte) 0x62, (byte) 0x69, (byte) 0x7f, (byte) 0x47, (byte) 0x59, (byte) 0xf6, (byte) 0xc8, (byte) 0x91, (byte) 0x7f, (byte) 0xa3, (byte) 0x52, (byte) 0x57, (byte) 0x12, (byte) 0x02, (byte) 0xfd, (byte) 0x77, (byte) 0x8f, (byte) 0xd7, (byte) 0x12},
+            {(byte) 0x16, (byte) 0xd6, (byte) 0x25, (byte) 0x29, (byte) 0x68, (byte) 0x97, (byte) 0x1a, (byte) 0x83, (byte) 0xda, (byte) 0x85, (byte) 0x21, (byte) 0xd6, (byte) 0x53, (byte) 0x82, (byte) 0xe6, (byte) 0x1f, (byte) 0x01, (byte) 0x76, (byte) 0x64, (byte) 0x6d, (byte) 0x77, (byte) 0x1c, (byte) 0x91, (byte) 0x52, (byte) 0x8e, (byte) 0x32, (byte) 0x76, (byte) 0xee, (byte) 0x45, (byte) 0x38, (byte) 0x3e, (byte) 0x4a},
+            {(byte) 0xd2, (byte) 0xe1, (byte) 0x64, (byte) 0x2c, (byte) 0x9a, (byte) 0x46, (byte) 0x22, (byte) 0x29, (byte) 0x28, (byte) 0x9e, (byte) 0x5b, (byte) 0x0e, (byte) 0x3b, (byte) 0x7f, (byte) 0x90, (byte) 0x08, (byte) 0xe0, (byte) 0x30, (byte) 0x1c, (byte) 0xbb, (byte) 0x93, (byte) 0x38, (byte) 0x5e, (byte) 0xe0, (byte) 0xe2, (byte) 0x1d, (byte) 0xa2, (byte) 0x54, (byte) 0x50, (byte) 0x73, (byte) 0xcb, (byte) 0x58},
+            {(byte) 0xa5, (byte) 0x12, (byte) 0x2c, (byte) 0x08, (byte) 0xff, (byte) 0x9c, (byte) 0x16, (byte) 0x1d, (byte) 0x9c, (byte) 0xa6, (byte) 0xfc, (byte) 0x46, (byte) 0x20, (byte) 0x73, (byte) 0x39, (byte) 0x6c, (byte) 0x7d, (byte) 0x7d, (byte) 0x38, (byte) 0xe8, (byte) 0xee, (byte) 0x48, (byte) 0xcd, (byte) 0xb3, (byte) 0xbe, (byte) 0xa7, (byte) 0xe2, (byte) 0x23, (byte) 0x01, (byte) 0x34, (byte) 0xed, (byte) 0x6a},
+            {(byte) 0x28, (byte) 0xe7, (byte) 0xb8, (byte) 0x41, (byte) 0xdc, (byte) 0xbc, (byte) 0x47, (byte) 0xcc, (byte) 0xeb, (byte) 0x69, (byte) 0xd7, (byte) 0xcb, (byte) 0x8d, (byte) 0x94, (byte) 0x24, (byte) 0x5f, (byte) 0xb7, (byte) 0xcb, (byte) 0x2b, (byte) 0xa3, (byte) 0xa7, (byte) 0xa6, (byte) 0xbc, (byte) 0x18, (byte) 0xf1, (byte) 0x3f, (byte) 0x94, (byte) 0x5f, (byte) 0x7d, (byte) 0xbd, (byte) 0x6e, (byte) 0x2a},
+            {(byte) 0xe1, (byte) 0xf3, (byte) 0x4b, (byte) 0x03, (byte) 0x4d, (byte) 0x4a, (byte) 0x3c, (byte) 0xd2, (byte) 0x85, (byte) 0x57, (byte) 0xe2, (byte) 0x90, (byte) 0x7e, (byte) 0xbf, (byte) 0x99, (byte) 0x0c, (byte) 0x91, (byte) 0x8f, (byte) 0x64, (byte) 0xec, (byte) 0xb5, (byte) 0x0a, (byte) 0x94, (byte) 0xf0, (byte) 0x1d, (byte) 0x6f, (byte) 0xda, (byte) 0x5c, (byte) 0xa5, (byte) 0xc7, (byte) 0xef, (byte) 0x72},
+            {(byte) 0x12, (byte) 0x93, (byte) 0x5f, (byte) 0x14, (byte) 0xb6, (byte) 0x76, (byte) 0x50, (byte) 0x9b, (byte) 0x81, (byte) 0xeb, (byte) 0x49, (byte) 0xef, (byte) 0x25, (byte) 0xf3, (byte) 0x92, (byte) 0x69, (byte) 0xed, (byte) 0x72, (byte) 0x30, (byte) 0x92, (byte) 0x38, (byte) 0xb4, (byte) 0xc1, (byte) 0x45, (byte) 0x80, (byte) 0x35, (byte) 0x44, (byte) 0xb6, (byte) 0x46, (byte) 0xdc, (byte) 0xa6, (byte) 0x2d},
+            {(byte) 0xb2, (byte) 0xee, (byte) 0xd0, (byte) 0x31, (byte) 0xd4, (byte) 0xd6, (byte) 0xa4, (byte) 0xf0, (byte) 0x2a, (byte) 0x09, (byte) 0x7f, (byte) 0x80, (byte) 0xb5, (byte) 0x4c, (byte) 0xc1, (byte) 0x54, (byte) 0x1d, (byte) 0x41, (byte) 0x63, (byte) 0xc6, (byte) 0xb6, (byte) 0xf5, (byte) 0x97, (byte) 0x1f, (byte) 0x88, (byte) 0xb6, (byte) 0xe4, (byte) 0x1d, (byte) 0x35, (byte) 0xc5, (byte) 0x38, (byte) 0x14},
+            {(byte) 0xfb, (byte) 0xc2, (byte) 0xf4, (byte) 0x30, (byte) 0x0c, (byte) 0x01, (byte) 0xf0, (byte) 0xb7, (byte) 0x82, (byte) 0x0d, (byte) 0x00, (byte) 0xe3, (byte) 0x34, (byte) 0x7c, (byte) 0x8d, (byte) 0xa4, (byte) 0xee, (byte) 0x61, (byte) 0x46, (byte) 0x74, (byte) 0x37, (byte) 0x6c, (byte) 0xbc, (byte) 0x45, (byte) 0x35, (byte) 0x9d, (byte) 0xaa, (byte) 0x54, (byte) 0xf9, (byte) 0xb5, (byte) 0x49, (byte) 0x3e}
+    };
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+
+      // energy charge for the execution:
+      // minimum 50 and additional 50 for each 32 bytes word (round  up)
+//      if (data == null) {
+//        return 60;
+//      }
+//      return 60L + (data.length + 31) / 32 * 12;
+      return 0;
+    }
+
+    protected long parseLong(byte[] data, int idx) {
+      byte[] bytes = parseBytes(data, idx, 32);
+      return new DataWord(bytes).longValueSafe();
+    }
+    protected int parseInt(byte[] data, int idx) {
+      byte[] bytes = parseBytes(data, idx, 32);
+      return new DataWord(bytes).intValueSafe();
+    }
+
+    private int getFrontierSlot(long leafIndex) {
+      int slot = 0;
+      if (leafIndex % 2 == 1) {
+        int exp1 = 1;
+        long pow1 = 2;
+        long pow2 = pow1 << 1;
+        while (slot == 0) {
+          if ((leafIndex + 1 - pow1) % pow2 == 0) {
+            slot = exp1;
+          } else {
+            pow1 = pow2;
+            pow2 = pow2 << 1;
+            exp1++;
+          }
+        }
+      }
+
+      return slot;
+    }
+
+    protected Pair<Boolean, byte[]> insertLeaf(byte[][] frontier, byte[] leafValue, long leafCount) {
+
+      byte[] leftInput;
+      byte[] rightInput;
+      byte[] hash = new byte[32];
+      byte[] nodeValue = new byte[32];
+
+      int slot = getFrontierSlot(leafCount);
+      long nodeIndex = leafCount + TREE_WIDTH - 1;
+      System.arraycopy(leafValue, 0, nodeValue, 0, 32);
+
+
+      boolean success = true;
+      byte[] result = new byte[(slot+1)*32+1];
+      result[0] = (byte)slot;
+
+      try {
+        for (int level = 0; level < 32; level++) {
+          if (level == slot) {
+            System.arraycopy(nodeValue, 0, frontier[slot], 0, 32);
+
+          }
+          if (nodeIndex % 2 == 0) {
+            leftInput = frontier[level];
+            rightInput = nodeValue;
+
+            nodeIndex = (nodeIndex - 1) / 2;
+          } else {
+            leftInput = nodeValue;
+            rightInput = UNCOMMITTED[level];
+
+            nodeIndex = nodeIndex / 2;
+          }
+          JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level, leftInput, rightInput, hash));
+          System.arraycopy(hash, 0, nodeValue, 0, 32);
+          if (level < slot) {
+            System.arraycopy(hash, 0, result, level * 32 + 1, 32);
+          }
+        }
+
+      } catch (Throwable any) {
+        success = false;
+      }
+      if (!success) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      logger.info("Merkle root is " + ByteArray.toHexString(nodeValue));
+      System.arraycopy(nodeValue, 0, result, slot*32+1, 32);
+      return Pair.of(true, result);
+    }
+
+    protected Pair<Boolean, byte[]> insertLeaves(byte[][] frontier, long leafCount, byte[][] leafValue) {
+
+      long nodeIndex = 0;
+      boolean success = true;
+      byte[] leftInput;
+      byte[] rightInput;
+      byte[] hash = new byte[32];
+      byte[] nodeValue = new byte[32];
+
+      int cmCount = leafValue.length;
+      int[] slot = new int[cmCount];
+
+      for(int i = 0; i < cmCount; i++){
+        slot[i] = getFrontierSlot(leafCount + i);
+      }
+      int resultArrayLength = 32;
+      for(int i = 0; i < cmCount; i++) {
+        resultArrayLength += slot[i] * 32 + 1;
+      }
+
+      byte[] result = new byte[resultArrayLength];
+
+      try {
+        int offset = 0;
+        for (int i = 0; i < cmCount; i++) {
+          result[offset] = (byte) (slot[i] & 0xFF);
+          offset += 1;
+          nodeIndex = i + leafCount + TREE_WIDTH - 1;
+
+          System.arraycopy(leafValue[i], 0, nodeValue, 0, 32);
+          if (slot[i] == 0) {
+            System.arraycopy(nodeValue, 0, frontier[0], 0, 32);
+            continue;
+          }
+
+          for (int level = 1; level <= slot[i]; level++) {
+            if (nodeIndex % 2 == 0) {
+              leftInput = frontier[level - 1];
+              rightInput = nodeValue;
+
+              nodeIndex = (nodeIndex - 1) / 2;
+            } else {
+              leftInput = nodeValue;
+              rightInput = UNCOMMITTED[level - 1];
+
+              nodeIndex = nodeIndex / 2;
+            }
+            JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level - 1, leftInput, rightInput, hash));
+            System.arraycopy(hash, 0, nodeValue, 0, 32);
+            System.arraycopy(hash, 0, result, offset, 32);
+            offset += 32;
+          }
+
+          System.arraycopy(nodeValue, 0, frontier[slot[i]], 0, 32);// store in frontier
+        }
+
+        for (int level = slot[cmCount-1] + 1; level <= 32; level++) {
+
+          if (nodeIndex % 2 == 0) {
+            // even nodeIndex
+            leftInput = frontier[level - 1];
+            rightInput = nodeValue;
+
+            nodeIndex = (nodeIndex - 1) / 2;
+          } else {
+            // odd nodeIndex
+            leftInput = nodeValue;
+            rightInput = UNCOMMITTED[level - 1];
+
+            nodeIndex = nodeIndex / 2;
+          }
+          JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level - 1, leftInput, rightInput, hash));
+          System.arraycopy(hash, 0, nodeValue, 0, 32);
+        }
+        System.arraycopy(nodeValue, 0, result, offset, 32);
+
+      } catch (Throwable any) {
+        success = false;
+      }
+      if (!success) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      logger.info("Merkle root is " + ByteArray.toHexString(nodeValue));
+      return Pair.of(true, result);
+    }
+  }
+
+  public static class VerifyMintProof extends VerifyProof {
+
+    private static final int SIZE = 1504;
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data){
+      if (data == null) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+      if(data.length != SIZE) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      byte[] cm = new byte[32];
+      byte[] cv = new byte[32];
+      byte[] epk = new byte[32];
+      byte[] proof = new byte[192];
+      byte[] bindingSig = new byte[64];
+      byte[] signHash = new byte[32];
+      byte[][] frontier = new byte[33][32];
+
+      System.arraycopy(data, 0, cm, 0, 32);
+      System.arraycopy(data, 32, cv, 0, 32);
+      System.arraycopy(data, 64, epk, 0, 32);
+      System.arraycopy(data, 96, proof, 0, 192);
+      System.arraycopy(data, 288, bindingSig, 0, 64);
+      long value = parseLong(data, 352);
+      System.arraycopy(data, 384, signHash, 0, 32);
+      for (int i = 0; i < 33; i++) {
+        System.arraycopy(data, i * 32 + 416, frontier[i], 0, 32);
+      }
+      long leafCount = parseLong(data, 1472);
+      if (leafCount >= TREE_WIDTH) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      boolean result;
+      //verify receiveProof && bindingSignature
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      try {
+        result = JLibrustzcash.librustzcashSaplingCheckOutput(
+                new LibrustzcashParam.CheckOutputParams(ctx, cv, cm, epk, proof));
+        long valueBalance = -value;
+
+        result &= JLibrustzcash.librustzcashSaplingFinalCheck(
+                new LibrustzcashParam.FinalCheckParams(ctx, valueBalance, bindingSig, signHash));
+      } catch (Throwable any) {
+        result = false;
+      } finally {
+        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      }
+      logger.info("mint verify " + result);
+      if (!result) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      Pair<Boolean, byte[]> pair = insertLeaf(frontier, cm, leafCount);
+      return pair;
+    }
+  }
+
+  public static class VerifyTransferProof extends VerifyProof {
+
+    private static final Integer[] SIZE = {2048, 2336, 2432, 2720};
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+      if (!Arrays.asList(SIZE).contains(data.length)) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      byte[] bindingSig = new byte[64];
+      byte[] signHash = new byte[32];
+      byte[][] frontier = new byte[33][32];
+
+      //parse unfixed field offset
+      int spendOffset = parseInt(data, 0);
+      int spendAuthSigOffset = parseInt(data, 32);
+      int receiveOffset = parseInt(data, 64);
+
+      System.arraycopy(data, 96, bindingSig, 0, 64);
+      System.arraycopy(data, 160, signHash, 0, 32);
+      for (int i = 0; i < 33; i++) {
+        System.arraycopy(data, i * 32 + 192, frontier[i], 0, 32);
+      }
+      long leafCount = parseLong(data, 1248);
+      if (leafCount >= TREE_WIDTH - 1) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      int spendCount = parseInt(data, spendOffset);
+      int spendAuthSigCount = parseInt(data, spendAuthSigOffset);
+      int receiveCount = parseInt(data, receiveOffset);
+
+      if (spendCount != spendAuthSigCount || spendCount < 1 || spendCount > 2 || receiveCount < 1 || receiveCount > 2) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      byte[][] anchor = new byte[spendCount][32];
+      byte[][] nullifier = new byte[spendCount][32];
+      byte[][] spendCv = new byte[spendCount][32];
+      byte[][] rk = new byte[spendCount][32];
+      byte[][] spendProof = new byte[spendCount][192];
+      byte[][] spendAuthSig = new byte[spendCount][64];
+
+      byte[][] receiveCm = new byte[receiveCount][32];
+      byte[][] receiveCv = new byte[receiveCount][32];
+      byte[][] receiveEpk = new byte[receiveCount][32];
+      byte[][] receiveProof = new byte[receiveCount][192];
+
+      //spend
+      spendOffset += 32;
+      for (int i = 0; i < spendCount; i++) {
+        System.arraycopy(data, spendOffset + 320 * i, nullifier[i], 0, 32);
+        System.arraycopy(data, spendOffset + 320 * i + 32, anchor[i], 0, 32);
+        System.arraycopy(data, spendOffset + 320 * i + 64, spendCv[i], 0, 32);
+        System.arraycopy(data, spendOffset + 320 * i + 96, rk[i], 0, 32);
+        System.arraycopy(data, spendOffset + 320 * i + 128, spendProof[i], 0, 192);
+      }
+      spendAuthSigOffset += 32;
+      for (int i = 0; i < spendCount; i++) {
+        System.arraycopy(data, spendAuthSigOffset + 64 * i, spendAuthSig[i], 0, 64);
+      }
+
+      //output
+      receiveOffset += 32;
+      for (int i = 0; i < receiveCount; i++) {
+        System.arraycopy(data, receiveOffset + 288 * i, receiveCm[i], 0, 32);
+        System.arraycopy(data, receiveOffset + 288 * i + 32, receiveCv[i], 0, 32);
+        System.arraycopy(data, receiveOffset + 288 * i + 64, receiveEpk[i], 0, 32);
+        System.arraycopy(data, receiveOffset + 288 * i + 96, receiveProof[i], 0, 192);
+      }
+
+      //verify spendProof, receiveProof && bindingSignature
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+
+      int threadCount = spendCount + receiveCount;
+      ExecutorService validateSignService = Executors.newFixedThreadPool(threadCount);
+      // thread poll
+      CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+      List<Future<Boolean>> futures = new ArrayList<>(threadCount);
+
+      // submit check task
+      for (int i = 0; i < spendCount; i++) {
+        Future<Boolean> future1 = validateSignService
+                .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i], nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
+        futures.add(future1);
+      }
+      for (int i = 0; i < receiveCount; i++) {
+        Future<Boolean> future2 = validateSignService
+                .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i], receiveEpk[i], receiveProof[i]));
+        futures.add(future2);
+      }
+
+      boolean result = true;
+      try {
+        countDownLatch.await();
+        for (Future<Boolean> future : futures) {
+          boolean fResult = future.get();
+          result &= fResult;
+        }
+
+        if (result) {
+          byte[] spendCvs = new byte[spendCount * 32];
+          byte[] receiveCvs = new byte[receiveCount * 32];
+          for (int i = 0; i < spendCount; i++) {
+            System.arraycopy(spendCv[i], 0, spendCvs, 32 * i, 32);
+          }
+          for (int i = 0; i < receiveCount; i++) {
+            System.arraycopy(receiveCv[i], 0, receiveCvs, 32 * i, 32);
+          }
+
+          boolean checkResult = JLibrustzcash.librustzcashSaplingFinalCheckNew(
+                  new LibrustzcashParam.FinalCheckNewParams(0, bindingSig, signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
+          result &= checkResult;
+        }
+
+      } catch (Exception e) {
+        result = false;
+        logger.error("parallel check sign interrupted exception! ", e);
+        Thread.currentThread().interrupt();
+      } finally {
+        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      }
+      logger.info("transfer verify " + result);
+      if (!result) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+
+      Pair<Boolean, byte[]> pair = insertLeaves(frontier, leafCount, receiveCm);
+      return pair;
+    }
+
+    private static class SaplingCheckSpendTask implements Callable<Boolean> {
+
+      private long ctx;
+      private byte[] cv;
+      private byte[] anchor;
+      private byte[] nullifier;
+      private byte[] rk;
+      private byte[] zkproof;
+      private byte[] spendAuthSig;
+      private byte[] sighashValue;
+
+      private CountDownLatch countDownLatch;
+
+      SaplingCheckSpendTask(CountDownLatch countDownLatch, long ctx, byte[] cv, byte[] anchor,
+                            byte[] nullifier, byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue) {
+        this.ctx = ctx;
+        this.cv = cv;
+        this.anchor = anchor;
+        this.nullifier = nullifier;
+        this.rk = rk;
+        this.zkproof = zkproof;
+        this.spendAuthSig = spendAuthSig;
+        this.sighashValue = sighashValue;
+
+        this.countDownLatch = countDownLatch;
+      }
+
+      @Override
+      public Boolean call() throws ZksnarkException {
+        boolean result;
+        try {
+          result = JLibrustzcash.librustzcashSaplingCheckSpend(
+                  new LibrustzcashParam.CheckSpendParams(this.ctx, this.cv, this.anchor, this.nullifier,
+                          this.rk, this.zkproof, this.spendAuthSig, this.sighashValue));
+
+        } catch (ZksnarkException e) {
+          throw e;
+        } finally {
+          countDownLatch.countDown();
+        }
+        return result;
+      }
+    }
+
+    private static class SaplingCheckOutput implements Callable<Boolean> {
+
+      private long ctx;
+      private byte[] cv;
+      private byte[] cm;
+      private byte[] ephemeralKey;
+      private byte[] zkproof;
+
+      private CountDownLatch countDownLatch;
+
+      SaplingCheckOutput(CountDownLatch countDownLatch, long ctx, byte[] cv, byte[] cm, byte[] ephemeralKey,
+                         byte[] zkproof) {
+        this.ctx = ctx;
+        this.cv = cv;
+        this.cm = cm;
+        this.ephemeralKey = ephemeralKey;
+        this.zkproof = zkproof;
+
+        this.countDownLatch = countDownLatch;
+      }
+
+      @Override
+      public Boolean call() throws ZksnarkException {
+        boolean result;
+        try {
+          result = JLibrustzcash.librustzcashSaplingCheckOutput(
+                  new LibrustzcashParam.CheckOutputParams(this.ctx, this.cv, this.cm, this.ephemeralKey, this.zkproof));
+        } catch (ZksnarkException e) {
+          throw e;
+        } finally {
+          countDownLatch.countDown();
+        }
+        return result;
+      }
+    }
+  }
+
+  public static class VerifyBurnProof extends VerifyProof {
+
+    private static final int SIZE = 512;
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+      if (data.length != SIZE) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+      byte[] nullifier = new byte[32];
+      byte[] anchor = new byte[32];
+      byte[] cv = new byte[32];
+      byte[] rk = new byte[32];
+      byte[] proof = new byte[192];
+      byte[] spendAuthSig = new byte[64];
+
+      byte[] bindingSig = new byte[64];
+      byte[] signHash = new byte[32];
+      //spend
+      System.arraycopy(data, 0, nullifier, 0, 32);
+      System.arraycopy(data, 32, anchor, 0, 32);
+      System.arraycopy(data, 64, cv, 0, 32);
+      System.arraycopy(data, 96, rk, 0, 32);
+      System.arraycopy(data, 128, proof, 0, 192);
+      System.arraycopy(data, 320, spendAuthSig, 0, 64);
+      long value = parseLong(data, 384);
+      System.arraycopy(data, 416, bindingSig, 0, 64);
+      System.arraycopy(data, 480, signHash, 0, 32);
+
+      boolean result;
+      //verify spendProof && bindingSignature
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      try {
+        result = JLibrustzcash.librustzcashSaplingCheckSpend(
+                new LibrustzcashParam.CheckSpendParams(ctx, cv, anchor, nullifier, rk, proof, spendAuthSig, signHash));
+        long valueBalance = value;
+        result &= JLibrustzcash.librustzcashSaplingFinalCheck(
+                new LibrustzcashParam.FinalCheckParams(ctx, valueBalance, bindingSig, signHash));
+      } catch (Throwable any) {
+        result = false;
+      } finally {
+        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      }
+      logger.info("burn verify " + result);
+      return Pair.of(result, EMPTY_BYTE_ARRAY);
+    }
+  }
+
+  // compute Merkle Hash
+  public static class MerkleHash extends PrecompiledContract {
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      if (data == null) {
+        return 60;
+      }
+      return 60L + (data.length + 31) / 32 * 12;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      byte[] left = new byte[32];
+      byte[] right = new byte[32];
+      byte[] hash = new byte[32];
+
+      boolean res = true;
+      try {
+        int level = parseInt(data, 0);
+        System.arraycopy(data, 32, left, 0, 32);
+        System.arraycopy(data, 64, right, 0, 32);
+        JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level, left, right, hash));
+      } catch (Throwable any) {
+        res = false;
+      }
+      if (!res){
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
+      return Pair.of(true, hash);
+
+    }
+
+    private int parseInt(byte[] data, int idx) {
+      byte[] bytes = parseBytes(data, idx, 32);
+      return new DataWord(bytes).intValueSafe();
+    }
   }
 
 }
