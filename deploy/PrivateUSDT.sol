@@ -17,9 +17,10 @@ contract PrivateUSDT {
 
     uint8 i = 0;
 
-    address verifyProofContract = address(0x000F);
-    address hashor = address(0x0010);
-    address calTimeContract = address(0x0011);
+    address verifyMintProofContract = address(0x000B);
+    address verifyTransferProofContract = address(0x000C);
+    address verifyBurnProofContract = address(0x000D);
+    address hashor = address(0x000E);
 
     event newLeaf(uint256 position, bytes32 cm, bytes32 cv, bytes32 epk, bytes32[21] c);
 
@@ -105,38 +106,13 @@ contract PrivateUSDT {
         return (latestRoot, path, position);
     }
 
-    // get current time
-    function getCurrentTime() private returns (bytes memory) {
-        (bool result, bytes memory msg) = calTimeContract.call("");
-        require(result, "getCurrentTime failed");
-
-//        uint64 time = bytesToUint64(msg);
-
-        return msg;
-    }
-
-    // print delta and get new current time
-    function calDeltaTime(bytes memory param) private returns (bytes memory) {
-        (bool result, bytes memory msg) = calTimeContract.call(abi.encode(param));
-        require(result, "calDeltaTime failed");
-
-//        uint64 time = bytesToUint64(msg);
-
-        return msg;
-    }
-
     // output: cm, cv, epk, proof
     function mint(uint64 value, bytes32[9] calldata output, bytes32[2] calldata bindingSignature, bytes32 signHash, bytes32[21] calldata c) external {
         require(value > 0, "Mint negative value.");
         //bytes32 signHash = keccak256(abi.encode(address(this), value, output));
 
-        (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(output, bindingSignature, value, signHash, frontier, leafCount));
+        (bool result,bytes memory msg) = verifyMintProofContract.call(abi.encode(output, bindingSignature, value, signHash, frontier, leafCount));
         require(result, "The proof and signature have not been verified by the contract");
-
-        // get time
-        (bool r1, bytes memory t1) = calTimeContract.call("");
-        require(r1, "getCurrentTime failed");
-        bytes8 startTime = bytesToBytes8(t1, 0);
 
         uint256 slot = uint8(msg[0]);
         uint256 nodeIndex = leafCount + 2 ** 32 - 1;
@@ -159,13 +135,7 @@ contract PrivateUSDT {
         emit newLeaf(leafCount-1, output[0], output[1], output[2], c);
         // Finally, transfer the fTokens from the sender to this contract
         //usdtToken.transferFrom(msg.sender, address(this), value);
-
-        // cal delta time, slot process
-        (bool r2, bytes memory t2) = calTimeContract.call(abi.encode(startTime));
-        require(r2, "getCurrentTime failed");
-//        bytes8 startTimeSlot = bytesToBytes8(t2, 0);
     }
-
 
     //input_bytes32*10: nf, anchor, cv, rk, proof
     //output1_bytes32*9: cm, cv, epk, proof
@@ -183,13 +153,9 @@ contract PrivateUSDT {
         require(output.length>=1 && output.length <=2, "output number must be 1 or 2");
         require(output.length == c.length, "output number must be equal to c number");
 
-        (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(input, spend_auth_sig, output, bindingSignature, signHash, frontier, leafCount));
+        (bool result,bytes memory msg) = verifyTransferProofContract.call(abi.encode(input, spend_auth_sig, output, bindingSignature, signHash, frontier, leafCount));
         require(result, "The proof and signature has not been verified by the contract");
 
-        // get time
-        // (bool r1, bytes memory t1) = calTimeContract.call("");
-        // require(r1, "getCurrentTime failed");
-        // bytes8 startTime = bytesToBytes8(t1, 0);
         i = 0;
         uint256 j = 0;//msg offset
         while (i < output.length) {
@@ -223,12 +189,6 @@ contract PrivateUSDT {
         for(i = 0; i < output.length; i++){
             emit newLeaf(leafCount-(output.length-i), output[i][0], output[i][1], output[i][2], c[i]);
         }
-    
-
-        // cal delta time and get time, delta time is slot process
-        // (bool r2, bytes memory t2) = calTimeContract.call(abi.encode(startTime));
-        // require(r2, "getCurrentTime failed");
-        //bytes8 startTimeSlot = bytesToBytes8(t2, 0);
     }
 
     //input_bytes32*10: nf, anchor, cv, rk, proof
@@ -241,7 +201,7 @@ contract PrivateUSDT {
 
         //bytes32 signHash = keccak256(abi.encode(address(this), input, payTo, value));
 
-        (bool result,bytes memory msg) = verifyProofContract.call(abi.encode(input, spend_auth_sig, value, bindingSignature, signHash));
+        (bool result,bytes memory msg) = verifyBurnProofContract.call(abi.encode(input, spend_auth_sig, value, bindingSignature, signHash));
         require(result, "The proof and signature have not been verified by the contract");
 
         nullifiers[nf] = nf;
@@ -255,25 +215,6 @@ contract PrivateUSDT {
         for (uint i = 0; i < 32; i++) {
             out |= bytes32(b[i+offset] & 0xFF) >> (i * 8);
         }
-        return out;
-    }
-
-    function bytesToBytes8(bytes memory b, uint offset) private returns (bytes8) {
-        bytes8 out;
-        for (uint i = 0; i < 8; i++) {
-            out |= bytes8(b[i+offset] & 0xFF) >> (i * 8);
-        }
-        return out;
-    }
-
-    function bytesToUint64(bytes memory b) public returns (uint64) {
-        require(b.length >= 8, "array too small");
-        uint64 out;
-
-        for (uint i = 0; i < 8; i++) {
-            out |= uint8(b[i] & 0xFF) << (7-i);
-        }
-
         return out;
     }
 }
