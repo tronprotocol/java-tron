@@ -24,8 +24,6 @@ contract PrivateUSDT {
 
     event newLeaf(uint256 position, bytes32 cm, bytes32 cv, bytes32 epk, bytes32[21] c);
 
-    event returnCurrentTime(bytes time);
-
     constructor () public {
         _owner = msg.sender;
         //usdtToken = USDTToken(_USDToken);
@@ -109,7 +107,7 @@ contract PrivateUSDT {
     // output: cm, cv, epk, proof
     function mint(uint64 value, bytes32[9] calldata output, bytes32[2] calldata bindingSignature, bytes32 signHash, bytes32[21] calldata c) external {
         require(value > 0, "Mint negative value.");
-        //bytes32 signHash = keccak256(abi.encode(address(this), value, output));
+        //bytes32 signHash = keccak256(abi.encodePacked(address(this), value, output，c));
 
         (bool result,bytes memory msg) = verifyMintProofContract.call(abi.encode(output, bindingSignature, value, signHash, frontier, leafCount));
         require(result, "The proof and signature have not been verified by the contract");
@@ -145,11 +143,11 @@ contract PrivateUSDT {
         require(input.length>=1 && input.length <=2, "input number must be 1 or 2");
         require(input.length == spend_auth_sig.length, "input number must be equal to spend_auth_sig number");
         for(i = 0; i < input.length; i++){
-            //require(nullifiers[input[i][0]] == 0, "The notecommitment being spent has already been nullified!");
+            require(nullifiers[input[i][0]] == 0, "The notecommitment being spent has already been nullified!");
             require(roots[input[i][1]] != 0, "The anchor must exist");
         }
         
-        //bytes32 signHash = keccak256(abi.encode(address(this), input, output, cenc, cout));
+        // bytes32 signHash = keccak256(abi.encodePacked(address(this), input, output, c));
         require(output.length>=1 && output.length <=2, "output number must be 1 or 2");
         require(output.length == c.length, "output number must be equal to c number");
 
@@ -199,7 +197,7 @@ contract PrivateUSDT {
         require(nullifiers[nf] == 0, "The notecommitment being spent has already been nullified!");
         require(roots[anchor] != 0, "The anchor must exist");
 
-        //bytes32 signHash = keccak256(abi.encode(address(this), input, payTo, value));
+        //bytes32 signHash = keccak256(abi.encodePacked(address(this), input, payTo, value));
 
         (bool result,bytes memory msg) = verifyBurnProofContract.call(abi.encode(input, spend_auth_sig, value, bindingSignature, signHash));
         require(result, "The proof and signature have not been verified by the contract");
