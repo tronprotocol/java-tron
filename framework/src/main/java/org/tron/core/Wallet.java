@@ -3031,13 +3031,11 @@ public class Wallet {
   }
 
   private boolean isShilededTRC20NoteSpent(GrpcAPI.Note note, long pos, byte[] ak, byte[] nk, byte[] contractAddress) throws ZksnarkException {
-    ManagedChannel channelFull = ManagedChannelBuilder.forTarget("127.0.0.1:50056")
-            .usePlaintext(true)
-            .build();
-    WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
     byte[] callerAddress = Wallet.decodeFromBase58Check("TJCnKsPa7y5okkXvQAidZBzqx3QyQ6sxMW");
     byte[] nf = getShieldedTRC20Nullifier(note, pos, ak, nk);
-
+//    byte[] input = Hex.decode(AbiUtil.parseMethod(
+//            "getLott(uint256)", lottId + "", false));
     TriggerSmartContract.Builder triggerBuilder = TriggerSmartContract.newBuilder();
     triggerBuilder.setOwnerAddress(ByteString.copyFrom(callerAddress));
     triggerBuilder.setContractAddress(ByteString.copyFrom(contractAddress));

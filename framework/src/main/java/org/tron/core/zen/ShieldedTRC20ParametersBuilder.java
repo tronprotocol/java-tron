@@ -13,6 +13,7 @@ import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
+import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
@@ -71,6 +72,12 @@ public class ShieldedTRC20ParametersBuilder {
            System.arraycopy(path, i*32, result, 2 + i * 33,32);
        }
        byte[] positionBytes = ByteArray.fromLong(position);
+//       int len = positionBytes.length;
+////       byte[] reverserPosBytes = new byte[len];
+////       for (int i = 0; i < len; i++) {
+////           reverserPosBytes[i] = positionBytes[len - 1 - i];
+////       }
+        ZksnarkUtils.sort(positionBytes);
        System.arraycopy(positionBytes, 0, result, 1057,8);
        return result;
     }
@@ -229,7 +236,7 @@ public class ShieldedTRC20ParametersBuilder {
                 ReceiveDescriptionInfo receive =  receives.get(0);
                 receiveDescription = generateOutputProof(receive, ctx).getInstance();
                 builder.addReceiveDescription(receiveDescription);
-                valueBalance += transparentFromAmount;
+                //valueBalance += transparentFromAmount;
                 mergedBytes = ByteUtil.merge(shieldedTRC20Address, ByteArray.fromLong(transparentFromAmount),
                         encodeReceiveDescriptionWithoutC(receiveDescription), encodeCencCout(receiveDescription));
                 break;
@@ -256,7 +263,7 @@ public class ShieldedTRC20ParametersBuilder {
                 SpendDescriptionInfo spend = spends.get(0);
                 spendDescription = generateSpendProof(spend, ctx).getInstance();
                 builder.addSpendDescription(spendDescription);
-                valueBalance -= transparentToAmount;
+                //valueBalance -= transparentToAmount;
                 mergedBytes = ByteUtil.merge(shieldedTRC20Address, encodeSpendDescriptionWithoutSpendAuthSig(spendDescription),
                                     transparentToAddress,ByteArray.fromLong(transparentToAmount));
                 break;
@@ -264,7 +271,7 @@ public class ShieldedTRC20ParametersBuilder {
                 mergedBytes = null;
         }
 
-        dataHashToBeSigned = Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),mergedBytes).getBytes();
+        dataHashToBeSigned = Sha256Hash.of(true,mergedBytes).getBytes();
 
         if (dataHashToBeSigned == null) {
             throw new ZksnarkException("cal transaction hash failed");
