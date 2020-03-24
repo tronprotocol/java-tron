@@ -2708,24 +2708,24 @@ public class Wallet {
     switch (type) {
       case MINT:
         if (receiveNotes.get(0).getNote().getValue() <= 0) {
-          throw new ContractValidateException("The value in ReceiveNote must >= 0");
+          throw new ContractValidateException("The value in ReceiveNote must > 0");
         }
         break;
-      case TRANSTER:
+      case TRANSFER:
         for (GrpcAPI.SpendNoteTRC20 spendNote : spendNoteTRC20s) {
-          if (spendNote.getNote().getValue() <= 0) {
+          if (spendNote.getNote().getValue() < 0) {
             throw new ContractValidateException("The value in SpendNoteTRC20 must >= 0");
           }
         }
         for (ReceiveNote receiveNote : receiveNotes) {
-          if (receiveNote.getNote().getValue() <= 0) {
+          if (receiveNote.getNote().getValue() < 0) {
             throw new ContractValidateException("The value in ReceiveNote must >= 0");
           }
         }
         break;
-      case BRUN:
+      case BURN:
         if (spendNoteTRC20s.get(0).getNote().getValue() <= 0) {
-          throw new ContractValidateException("The value in SpendNoteTRC20 must >= 0");
+          throw new ContractValidateException("The value in SpendNoteTRC20 must > 0");
         }
     }
   }
@@ -2744,7 +2744,8 @@ public class Wallet {
             baseNote,
             spendNote.getAlpha().toByteArray(),
             spendNote.getRoot().toByteArray(),
-            spendNote.getPath().toByteArray());
+            spendNote.getPath().toByteArray(),
+            spendNote.getPos());
     return builder;
   }
 
@@ -2794,8 +2795,8 @@ public class Wallet {
 
     } else if (fromAmount == 0 && spendSize >0 && spendSize < 3
             && receiveSize > 0 && receiveSize < 3 && toAmount == 0) {
-      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSTER);
-      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.TRANSTER, shieldedSpends, shieldedReceives);
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
+      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.TRANSFER, shieldedSpends, shieldedReceives);
       byte[] ask = request.getAsk().toByteArray();
       byte[] nsk = request.getNsk().toByteArray();
       byte[] ovk = request.getOvk().toByteArray();
@@ -2813,8 +2814,8 @@ public class Wallet {
       }
     } else if (fromAmount == 0 && spendSize == 1
             && receiveSize == 0 && toAmount > 0) {
-      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BRUN);
-      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.BRUN, shieldedSpends, null);
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
+      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.BURN, shieldedSpends, null);
       byte[] ask = request.getAsk().toByteArray();
       byte[] nsk = request.getNsk().toByteArray();
       if ((ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk))) {
@@ -2853,7 +2854,8 @@ public class Wallet {
             baseNote,
             spendNote.getAlpha().toByteArray(),
             spendNote.getRoot().toByteArray(),
-            spendNote.getPath().toByteArray());
+            spendNote.getPath().toByteArray(),
+            spendNote.getPos());
     return builder;
   }
   public ShieldedTRC20Parameters createShieldedContractParametersWithoutAsk(
@@ -2888,8 +2890,8 @@ public class Wallet {
 
     } else if (fromAmount == 0 && spendSize >0 && spendSize < 3
             && receiveSize > 0 && receiveSize < 3 && toAmount == 0) {
-      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSTER);
-      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.TRANSTER, shieldedSpends, shieldedReceives);
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
+      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.TRANSFER, shieldedSpends, shieldedReceives);
       byte[] ak = request.getAk().toByteArray();
       byte[] nsk = request.getNsk().toByteArray();
       byte[] ovk = request.getOvk().toByteArray();
@@ -2906,8 +2908,8 @@ public class Wallet {
       }
     } else if (fromAmount == 0 && spendSize == 1
             && receiveSize == 0 && toAmount > 0) {
-      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BRUN);
-      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.BRUN, shieldedSpends, null);
+      builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
+      checkShieldedTRC20NoteValue(ShieldedTRC20ParametersType.BURN, shieldedSpends, null);
       byte[] ak = request.getAk().toByteArray();
       byte[] nsk = request.getNsk().toByteArray();
       if ((ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nsk))) {
