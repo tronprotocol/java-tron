@@ -174,26 +174,6 @@ public class TransactionUtil {
     return transaction.getRet(0).getContractRet();
   }
 
-
-  public static long getCallValue(Transaction.Contract contract) {
-    try {
-      Any contractParameter = contract.getParameter();
-      switch (contract.getType()) {
-        case TriggerSmartContract:
-          return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
-
-        case CreateSmartContract:
-          return contractParameter.unpack(CreateSmartContract.class).getNewContract()
-              .getCallValue();
-        default:
-          return 0L;
-      }
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
-      return 0L;
-    }
-  }
-
   public static long getCallTokenValue(Transaction.Contract contract) {
     try {
       Any contractParameter = contract.getParameter();
@@ -282,17 +262,6 @@ public class TransactionUtil {
   public static String makeUpperCamelMethod(String originName) {
     return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)
         .replace("_", "");
-  }
-
-  public static byte[] getSelector(byte[] data) {
-    if (data == null
-        || data.length < 4) {
-      return null;
-    }
-
-    byte[] ret = new byte[4];
-    System.arraycopy(data, 0, ret, 0, 4);
-    return ret;
   }
 
   public static TransactionCapsule getTransactionSign(TransactionSign transactionSign) {

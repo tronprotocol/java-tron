@@ -54,16 +54,6 @@ public class WalletUtil {
     return Hash.sha3omit12(mergedData);
   }
 
-  // for `CREATE`
-  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
-    byte[] nonceBytes = Longs.toByteArray(nonce);
-    byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
-    System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
-    System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
-
-    return Hash.sha3omit12(combined);
-  }
-
   public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract)
       throws ContractValidateException {
     try {
@@ -121,7 +111,7 @@ public class WalletUtil {
   }
 
 
-  private static byte[] getSelector(byte[] data) {
+  public static byte[] getSelector(byte[] data) {
     if (data == null ||
         data.length < 4) {
       return null;
