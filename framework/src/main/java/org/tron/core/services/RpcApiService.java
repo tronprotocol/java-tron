@@ -2299,7 +2299,7 @@ public class RpcApiService implements Service {
         StreamObserver<org.tron.api.GrpcAPI.ShieldedTRC20Parameters> responseObserver) {
 
       try {
-        checkSupportShieldedTransaction();
+        //checkSupportShieldedTransaction();
 
         ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
             .createShieldedContractParameters(request);
@@ -2317,7 +2317,7 @@ public class RpcApiService implements Service {
         PrivateShieldedTRC20ParametersWithoutAsk request,
         StreamObserver<org.tron.api.GrpcAPI.ShieldedTRC20Parameters> responseObserver) {
       try {
-        checkSupportShieldedTransaction();
+        //checkSupportShieldedTransaction();
 
         ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
             .createShieldedContractParametersWithoutAsk(request);
@@ -2337,7 +2337,7 @@ public class RpcApiService implements Service {
       long endNum = request.getEndBlockIndex();
 
       try {
-        checkSupportShieldedTransaction();
+        //checkSupportShieldedTransaction();
 
         DecryptNotesTRC20 decryptNotes = wallet.scanShieldedTRC20NotesbyIvk(startNum, endNum,
             request.getShieldedTRC20ContractAddress().toByteArray(),
@@ -2360,7 +2360,7 @@ public class RpcApiService implements Service {
       long endNum = request.getEndBlockIndex();
 
       try {
-        checkSupportShieldedTransaction();
+        //checkSupportShieldedTransaction();
 
         DecryptNotesTRC20 decryptNotes = wallet.scanShieldedTRC20NotesbyOvk(startNum, endNum,
             request.getOvk().toByteArray(),
@@ -2375,13 +2375,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getShieldedTRC20ContractNullifier(NfTRC20Parameters request,
+    public void isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request,
         StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
       try {
-        checkSupportShieldedTransaction();
+        //checkSupportShieldedTransaction();
 
         GrpcAPI.NullifierResult nf = wallet
-            .getShieldedTRC20ContractNullifier(request);
+            .isShieldedTRC20ContractNoteSpent(request);
         responseObserver.onNext(nf);
       } catch (ZksnarkException | ContractExeException e) {
         responseObserver.onError(getRunTimeException(e));

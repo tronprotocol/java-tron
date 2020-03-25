@@ -2655,7 +2655,6 @@ public class Wallet {
           throw new RuntimeException(
               "unpack ShieldedTransferContract failed.");
         }
-
         for (int index = 0; index < stContract.getReceiveDescriptionList().size(); index++) {
           ReceiveDescription r = stContract.getReceiveDescription(index);
           Encryption.OutCiphertext cOut = new Encryption.OutCiphertext();
@@ -2952,7 +2951,7 @@ public class Wallet {
                 .setMemo(ByteString.copyFrom(stripRightZero(noteText.getMemo())))
                 .build();
         if (!(ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nk))) {
-          builder.setIsSpend(isShilededTRC20NoteSpent(note, pos, ak, nk, contractAddress));
+          builder.setIsSpent(isShilededTRC20NoteSpent(note, pos, ak, nk, contractAddress));
         }
         return Optional.of(builder.setNote(note).setPosition(pos).build());
       }
@@ -2979,15 +2978,7 @@ public class Wallet {
       for (Transaction transaction : block.getTransactionsList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
-        TransactionInfoCapsule transactionInfoCapsule;
-        try {
-           transactionInfoCapsule = dbManager.getTransactionRetStore()
-                  .getTransactionInfo(txid);
-        } catch (BadItemException e) {
-          throw new ZksnarkException(
-                  "get TransactionInfoCapsule failed.");
-        }
-        TransactionInfo info = transactionInfoCapsule.getInstance();
+        TransactionInfo info  = this.getTransactionInfoById(ByteString.copyFrom(txid));
         if (ByteUtil.equals(info.getContractAddress().toByteArray(), shieldedTRC20ContractAddress)) {
           DecryptNotesTRC20.NoteTx.Builder noteBuilder;
           List<TransactionInfo.Log> logList = info.getLogList();
@@ -3003,9 +2994,6 @@ public class Wallet {
               builder.addNoteTxs(noteTx.get());
             }
           }
-          if ( index > 1 ) {
-            throw new ZksnarkException("unexpected log size.");
-          }
         }
       } //end of transaction
     } //end of blocklist
@@ -3013,23 +3001,14 @@ public class Wallet {
   }
 
   private boolean isShilededTRC20NoteSpent(GrpcAPI.Note note, long pos, byte[] ak, byte[] nk, byte[] contractAddress) throws ZksnarkException, ContractExeException {
-
-    //byte[] callerAddress = Wallet.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
     byte[] nf = getShieldedTRC20Nullifier(note, pos, ak, nk);
-
-//    byte[] input = Hex.decode(AbiUtil.parseMethod(
-//            "getLott(uint256)", lottId + "", false));
     String methodSign = "nullifiers(bytes32)";
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
     byte[] input = ByteUtil.merge(selector,nf);
     TriggerSmartContract.Builder triggerBuilder = TriggerSmartContract.newBuilder();
-    //triggerBuilder.setOwnerAddress(ByteString.copyFrom(callerAddress));
     triggerBuilder.setContractAddress(ByteString.copyFrom(contractAddress));
-    //triggerBuilder.setCallValue(0);
     triggerBuilder.setData(ByteString.copyFrom(input));
-//    triggerBuilder.setTokenId(0);
-//    triggerBuilder.setCallTokenValue(0);
     TriggerSmartContract trigger = triggerBuilder.build();
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
@@ -3038,7 +3017,6 @@ public class Wallet {
       TransactionCapsule trxCap = createTransactionCapsule(trigger,
               ContractType.TriggerSmartContract);
       Transaction trx = triggerConstantContract(trigger, trxCap, trxExtBuilder, retBuilder);
-
       trxExtBuilder.setTransaction(trx);
       trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
@@ -3062,9 +3040,8 @@ public class Wallet {
       trxExt = trxExtBuilder.build();
     }
     String code = trxExt.getResult().getCode().toString();
-    boolean bool = trxExt.getResult().getResult();
+    //boolean bool = trxExt.getResult().getResult();
     List<ByteString> list = trxExt.getConstantResultList();
-    //String message = list.toArray().toString();
     byte[] listBytes = new byte[0];
     for(ByteString bs: list) {
       listBytes =  ByteUtil.merge(listBytes,bs.toByteArray());
@@ -3100,7 +3077,6 @@ public class Wallet {
       byte[] cEnc = ByteArray.subArray(logData,128,708);
       byte[] cOutText = ByteArray.subArray(logData,708,788);
 
-      //long pos = ByteArray.toLong(log.getTopics(5).toByteArray());
       Encryption.OutCiphertext cOut = new Encryption.OutCiphertext();
       cOut.setData(cOutText);
       Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(cOut,//ciphertext
@@ -3176,9 +3152,6 @@ public class Wallet {
                 builder.addNoteTxs(noteTx.get());
               }
             }
-            if (index > 1) {
-              throw new ZksnarkException("unexpected log size.");
-            }
           }
         } //end of transaction
       } //end of blocklist
@@ -3205,7 +3178,7 @@ public class Wallet {
       return result;
     }
 
-    public GrpcAPI.NullifierResult getShieldedTRC20ContractNullifier (NfTRC20Parameters request) throws
+    public GrpcAPI.NullifierResult isShieldedTRC20ContractNoteSpent (NfTRC20Parameters request) throws
             ZksnarkException, ContractExeException {
       if (!getFullNodeAllowShieldedTRC20Transaction()) {
         throw new ZksnarkException(SHIELDED_TRC20_IS_NOT_ALLOWED);
@@ -3215,9 +3188,8 @@ public class Wallet {
       byte[] contractAddress = request.getShieldedTRC20ContractAddress().toByteArray();
       GrpcAPI.Note note = request.getNote();
       long pos = request.getPosition();
-      byte[] nullifier = getShieldedTRC20Nullifier(note, pos, ak, nk);
-      return GrpcAPI.NullifierResult.newBuilder().setNf(ByteString.copyFrom(nullifier))
-              .setResult(isShilededTRC20NoteSpent(note, pos, ak, nk, contractAddress))
+      return GrpcAPI.NullifierResult.newBuilder()
+              .setIsSpent(isShilededTRC20NoteSpent(note, pos, ak, nk, contractAddress))
               .build();
     }
 

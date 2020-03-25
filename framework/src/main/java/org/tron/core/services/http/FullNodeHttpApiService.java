@@ -225,7 +225,7 @@ public class FullNodeHttpApiService implements Service {
   private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
 
   @Autowired
-  private CreateShieldedTRC20ContractNullifierServlet createShieldedTRC20ContractNullifierServlet;
+  private IsShieldedTRC20ContractNoteSpentServlet isShieldedTRC20ContractNoteSpentServlet;
   @Autowired
   private CreateShieldedContractParametersServlet createShieldedContractParametersServlet;
   @Autowired
@@ -404,8 +404,8 @@ public class FullNodeHttpApiService implements Service {
           "/getshieldtransactionhash");
       //for shielded contract
       context
-          .addServlet(new ServletHolder(createShieldedTRC20ContractNullifierServlet),
-              "/createshieldedtrc20contractnullifier");
+          .addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
+              "/isshieldedtrc20contractNoteSpent");
       context.addServlet(new ServletHolder(createShieldedContractParametersServlet),
           "/createshieldedcontractparameters");
       context.addServlet(new ServletHolder(createShieldedContractParametersWithoutAskServlet),

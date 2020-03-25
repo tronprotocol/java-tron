@@ -13,7 +13,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class CreateShieldedTRC20ContractNullifierServlet extends RateLimiterServlet {
+public class IsShieldedTRC20ContractNoteSpentServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -32,7 +32,7 @@ public class CreateShieldedTRC20ContractNullifierServlet extends RateLimiterServ
       NfTRC20Parameters.Builder build = NfTRC20Parameters.newBuilder();
       JsonFormat.merge(input, build);
 
-      GrpcAPI.NullifierResult result = wallet.getShieldedTRC20ContractNullifier(build.build());
+      GrpcAPI.NullifierResult result = wallet.isShieldedTRC20ContractNoteSpent(build.build());
       response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {
       Util.processError(e, response);

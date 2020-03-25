@@ -719,7 +719,7 @@ service Wallet {
   rpc ScanShieldedTRC20NotesbyOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc GetShieldedTRC20ContractNullifier (NfTRC20Parameters) returns (NullifierResult) {
+  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
   };
   // end for shiededTransaction
 
@@ -1394,7 +1394,7 @@ message DecryptNotesTRC20 {
   message NoteTx {
     Note note = 1;
     int64 position = 2;
-    bool isSpend = 3;
+    bool isSpent = 3;
     bytes txid = 4;
     int32 index = 5; //the index of note in txid
   }
@@ -1410,6 +1410,5 @@ message NfTRC20Parameters {
 }
 
 message NullifierResult {
-  bool result = 1;
-  bytes nf = 2;
+  bool isSpent = 1;
 }
