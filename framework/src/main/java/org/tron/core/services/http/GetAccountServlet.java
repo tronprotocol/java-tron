@@ -1,14 +1,11 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
-import com.google.protobuf.ByteString;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 
@@ -36,13 +33,10 @@ public class GetAccountServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String account = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(account);
-      boolean visible = Util.getVisiblePost(account);
+      PostParams params = PostParams.getPostParams(request);
       Account.Builder build = Account.newBuilder();
-      JsonFormat.merge(account, build, visible);
-      fillResponse(visible, build.build(), response);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      fillResponse(params.isVisible(), build.build(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }

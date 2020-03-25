@@ -77,7 +77,7 @@ public class FullNode {
     if (CommonParameter.getInstance().fullNodeHttpEnable) {
       appT.addService(httpApiService);
     }
-
+    
     // full node and solidity node fuse together
     // provide solidity rpc and http server on the full node.
     if (Args.getInstance().getStorage().getDbVersion() == 2) {

@@ -1,7 +1,6 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -36,15 +35,12 @@ public class GetAccountByIdServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String account = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(account);
-      boolean visible = Util.getVisiblePost(account);
+      PostParams params = PostParams.getPostParams(request);
       Account.Builder build = Account.newBuilder();
-      JsonFormat.merge(account, build, visible);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
 
       Account reply = wallet.getAccountById(build.build());
-      Util.printAccount(reply, response, visible);
+      Util.printAccount(reply, response, params.isVisible());
     } catch (Exception e) {
       Util.processError(e, response);
     }
