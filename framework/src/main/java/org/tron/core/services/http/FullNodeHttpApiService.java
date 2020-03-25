@@ -317,7 +317,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getAssetIssueByNameServlet),
           "/wallet/getassetissuebyname");
       context.addServlet(new ServletHolder(getAssetIssueListByNameServlet),
-          "/getassetissuelistbyname");
+          "/wallet/getassetissuelistbyname");
       context.addServlet(new ServletHolder(getAssetIssueByIdServlet), "/wallet/getassetissuebyid");
       context.addServlet(new ServletHolder(getNowBlockServlet), "/wallet/getnowblock");
       context.addServlet(new ServletHolder(getBlockByNumServlet), "/wallet/getblockbynum");
