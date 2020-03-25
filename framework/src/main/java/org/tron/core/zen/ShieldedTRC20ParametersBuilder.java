@@ -38,14 +38,12 @@ public class ShieldedTRC20ParametersBuilder {
 
     private static final int MERKLE_TREE_PATH_LENGTH = 1024; // 32*32
     private static final String MERKLE_TREE_PATH_LENGTH_ERROR = "Merkle tree path format is wrong";
-
     @Setter
     @Getter
     private List<SpendDescriptionInfo> spends = new ArrayList<>();
     @Setter
     @Getter
     private List<ReceiveDescriptionInfo> receives = new ArrayList<>();
-
     @Getter
     private ShieldedTRC20Parameters.Builder builder = ShieldedTRC20Parameters.newBuilder();
     @Getter
@@ -72,22 +70,15 @@ public class ShieldedTRC20ParametersBuilder {
            System.arraycopy(path, i*32, result, 2 + i * 33,32);
        }
        byte[] positionBytes = ByteArray.fromLong(position);
-//       int len = positionBytes.length;
-////       byte[] reverserPosBytes = new byte[len];
-////       for (int i = 0; i < len; i++) {
-////           reverserPosBytes[i] = positionBytes[len - 1 - i];
-////       }
-        ZksnarkUtils.sort(positionBytes);
+       ZksnarkUtils.sort(positionBytes);
        System.arraycopy(positionBytes, 0, result, 1057,8);
        return result;
     }
 
     // Note: should call librustzcashSaplingProvingCtxFree in the caller
     public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-                                                      long ctx) throws ZksnarkException {
-
+                     long ctx) throws ZksnarkException {
         byte[] cm = spend.note.cm();
-
         // check if ak exists
         byte[] ak;
         byte[] nf;
@@ -103,11 +94,9 @@ public class ShieldedTRC20ParametersBuilder {
             nf = spend.note.nullifier(spend.expsk.fullViewingKey(), spend.position);
             nsk = spend.expsk.getNsk();
         }
-
         if (ByteArray.isEmpty(cm) || ByteArray.isEmpty(nf)) {
             throw new ZksnarkException("Spend is invalid");
         }
-
         byte[] cv = new byte[32];
         byte[] rk = new byte[32];
         byte[] zkproof = new byte[192];
@@ -142,16 +131,13 @@ public class ShieldedTRC20ParametersBuilder {
         if (ByteArray.isEmpty(cm)) {
             throw new ZksnarkException("Output is invalid");
         }
-
         Optional<Note.NotePlaintextEncryptionResult> res = output.getNote()
                 .encrypt(output.getNote().getPkD());
         if (!res.isPresent()) {
             throw new ZksnarkException("Failed to encrypt note");
         }
-
         Note.NotePlaintextEncryptionResult enc = res.get();
         NoteEncryption encryptor = enc.getNoteEncryption();
-
         byte[] cv = new byte[32];
         byte[] zkProof = new byte[192];
         if (!JLibrustzcash.librustzcashSaplingOutputProof(
@@ -165,18 +151,15 @@ public class ShieldedTRC20ParametersBuilder {
                         zkProof))) {
             throw new ZksnarkException("Output proof failed");
         }
-
         if (ArrayUtils.isEmpty(output.ovk) || output.ovk.length != 32) {
             throw new ZksnarkException("ovk is null or invalid and ovk should be 32 bytes (256 bit)");
         }
-
         ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
         receiveDescriptionCapsule.setValueCommitment(cv);
         receiveDescriptionCapsule.setNoteCommitment(cm);
         receiveDescriptionCapsule.setEpk(encryptor.getEpk());
         receiveDescriptionCapsule.setCEnc(enc.getEncCiphertext());
         receiveDescriptionCapsule.setZkproof(zkProof);
-
         OutgoingPlaintext outPlaintext =
                 new OutgoingPlaintext(output.getNote().getPkD(), encryptor.getEsk());
         receiveDescriptionCapsule.setCOut(outPlaintext
@@ -223,11 +206,9 @@ public class ShieldedTRC20ParametersBuilder {
 
     public ShieldedTRC20Parameters build(boolean withAsk) throws ZksnarkException {
         long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
-
         // Empty output script
         byte[] mergedBytes;
         byte[] dataHashToBeSigned; //256
-
         ShieldContract.SpendDescription spendDescription;
         ShieldContract.ReceiveDescription receiveDescription;
 
@@ -248,7 +229,6 @@ public class ShieldedTRC20ParametersBuilder {
                     builder.addSpendDescription(spendDescription);
                     mergedBytes = ByteUtil.merge(mergedBytes, encodeSpendDescriptionWithoutSpendAuthSig(spendDescription));
                 }
-
                 // Create OutputDescriptions
                 byte[] cencCout = new byte[0];
                 for (ReceiveDescriptionInfo receiveD : receives) {
@@ -270,13 +250,10 @@ public class ShieldedTRC20ParametersBuilder {
             default:
                 mergedBytes = null;
         }
-
         dataHashToBeSigned = Sha256Hash.of(true,mergedBytes).getBytes();
-
         if (dataHashToBeSigned == null) {
             throw new ZksnarkException("cal transaction hash failed");
         }
-
         // Create spendAuth and binding signatures
         if (withAsk) {
             createSpendAuth(dataHashToBeSigned);
@@ -349,7 +326,6 @@ public class ShieldedTRC20ParametersBuilder {
     }
 
     public static class SpendDescriptionInfo {
-
         @Getter
         @Setter
         private ExpandedSpendingKey expsk;
@@ -426,15 +402,10 @@ public class ShieldedTRC20ParametersBuilder {
             this.alpha = alpha;
             this.ovk = ovk;
         }
-
-        public byte[] encode() {
-            return ByteUtil.merge();
-        }
     }
 
     @AllArgsConstructor
     public class ReceiveDescriptionInfo {
-
         @Getter
         private byte[] ovk;
         @Getter

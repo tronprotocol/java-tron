@@ -95,13 +95,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.NonUniqueObjectException;
-import org.tron.core.exception.StoreException;
-import org.tron.core.exception.VMIllegalException;
-import org.tron.core.exception.ZksnarkException;
+import org.tron.core.exception.*;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -2389,7 +2383,7 @@ public class RpcApiService implements Service {
         GrpcAPI.NullifierResult nf = wallet
             .getShieldedTRC20ContractNullifier(request);
         responseObserver.onNext(nf);
-      } catch (ZksnarkException e) {
+      } catch (ZksnarkException | ContractExeException e) {
         responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
