@@ -27,6 +27,7 @@ import org.tron.core.config.Parameter;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
@@ -304,7 +305,7 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public void putStorageValue(byte[] address, DataWord key, DataWord value) {
-    address = MUtil.convertToTronAddress(address);
+    address = TransactionTrace.convertToTronAddress(address);
     if (getAccount(address) == null) {
       return;
     }
@@ -321,7 +322,7 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public DataWord getStorageValue(byte[] address, DataWord key) {
-    address = MUtil.convertToTronAddress(address);
+    address = TransactionTrace.convertToTronAddress(address);
     if (getAccount(address) == null) {
       return null;
     }

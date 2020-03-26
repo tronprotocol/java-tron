@@ -796,7 +796,7 @@ public class Wallet {
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getForbidTransferToContract")
-        .setValue(dbManager.getDynamicPropertiesStore().getForbidTransferToContract())
+        .setValue(chainBaseManager.getDynamicPropertiesStore().getForbidTransferToContract())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -2417,7 +2417,7 @@ public class Wallet {
         if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
           continue;
         }
-        ShieldedTransferContract stContract = null;
+        ShieldedTransferContract stContract;
         try {
           stContract = c.getParameter().unpack(
               ShieldedTransferContract.class);

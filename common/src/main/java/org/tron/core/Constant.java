@@ -3,15 +3,6 @@ package org.tron.core;
 import org.tron.common.utils.ByteArray;
 
 public class Constant {
-
-  // whole
-  public static final byte[] LAST_HASH = ByteArray.fromString("lastHash");
-  public static final String DIFFICULTY = "2001";
-
-  // DB
-  public static final String BLOCK_DB_NAME = "block_data";
-  public static final String TRANSACTION_DB_NAME = "transaction_data";
-
   //config for testnet, mainnet, beta
   public static final String TESTNET_CONF = "config.conf";
 
