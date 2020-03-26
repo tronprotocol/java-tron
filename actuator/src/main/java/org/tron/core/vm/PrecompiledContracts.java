@@ -967,26 +967,21 @@ public class PrecompiledContracts {
           }
         }
       }
-
       return slot;
     }
 
     protected Pair<Boolean, byte[]> insertLeaf(byte[][] frontier, byte[] leafValue, long leafCount) {
-
       byte[] leftInput;
       byte[] rightInput;
       byte[] hash = new byte[32];
       byte[] nodeValue = new byte[32];
-
       int slot = getFrontierSlot(leafCount);
       long nodeIndex = leafCount + TREE_WIDTH - 1;
       System.arraycopy(leafValue, 0, nodeValue, 0, 32);
 
-
       boolean success = true;
       byte[] result = new byte[(slot+1)*32+1];
       result[0] = (byte)slot;
-
       try {
         for (int level = 0; level < 32; level++) {
           if (level == slot) {
@@ -996,12 +991,10 @@ public class PrecompiledContracts {
           if (nodeIndex % 2 == 0) {
             leftInput = frontier[level];
             rightInput = nodeValue;
-
             nodeIndex = (nodeIndex - 1) / 2;
           } else {
             leftInput = nodeValue;
             rightInput = UNCOMMITTED[level];
-
             nodeIndex = nodeIndex / 2;
           }
           JLibrustzcash.librustzcashMerkleHash(new LibrustzcashParam.MerkleHashParams(level, leftInput, rightInput, hash));
@@ -1010,31 +1003,26 @@ public class PrecompiledContracts {
             System.arraycopy(hash, 0, result, level * 32 + 1, 32);
           }
         }
-
       } catch (Throwable any) {
         success = false;
       }
       if (!success) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
-
       logger.info("Merkle root is " + ByteArray.toHexString(nodeValue));
       System.arraycopy(nodeValue, 0, result, slot*32+1, 32);
       return Pair.of(true, result);
     }
 
     protected Pair<Boolean, byte[]> insertLeaves(byte[][] frontier, long leafCount, byte[][] leafValue) {
-
       long nodeIndex = 0;
       boolean success = true;
       byte[] leftInput;
       byte[] rightInput;
       byte[] hash = new byte[32];
       byte[] nodeValue = new byte[32];
-
       int cmCount = leafValue.length;
       int[] slot = new int[cmCount];
-
       for(int i = 0; i < cmCount; i++){
         slot[i] = getFrontierSlot(leafCount + i);
       }
@@ -1044,20 +1032,17 @@ public class PrecompiledContracts {
       }
 
       byte[] result = new byte[resultArrayLength];
-
       try {
         int offset = 0;
         for (int i = 0; i < cmCount; i++) {
           result[offset] = (byte) (slot[i] & 0xFF);
           offset += 1;
           nodeIndex = i + leafCount + TREE_WIDTH - 1;
-
           System.arraycopy(leafValue[i], 0, nodeValue, 0, 32);
           if (slot[i] == 0) {
             System.arraycopy(nodeValue, 0, frontier[0], 0, 32);
             continue;
           }
-
           for (int level = 1; level <= slot[i]; level++) {
             if (nodeIndex % 2 == 0) {
               leftInput = frontier[level - 1];
@@ -1075,7 +1060,6 @@ public class PrecompiledContracts {
             System.arraycopy(hash, 0, result, offset, 32);
             offset += 32;
           }
-
           System.arraycopy(nodeValue, 0, frontier[slot[i]], 0, 32);// store in frontier
         }
 
@@ -1098,14 +1082,12 @@ public class PrecompiledContracts {
           System.arraycopy(hash, 0, nodeValue, 0, 32);
         }
         System.arraycopy(nodeValue, 0, result, offset, 32);
-
       } catch (Throwable any) {
         success = false;
       }
       if (!success) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
-
       logger.info("Merkle root is " + ByteArray.toHexString(nodeValue));
       return Pair.of(true, result);
     }
@@ -1166,7 +1148,6 @@ public class PrecompiledContracts {
       if (!result) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
-
       Pair<Boolean, byte[]> pair = insertLeaf(frontier, cm, leafCount);
       return pair;
     }
@@ -1184,16 +1165,13 @@ public class PrecompiledContracts {
       if (!Arrays.asList(SIZE).contains(data.length)) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
-
       byte[] bindingSig = new byte[64];
       byte[] signHash = new byte[32];
       byte[][] frontier = new byte[33][32];
-
       //parse unfixed field offset
       int spendOffset = parseInt(data, 0);
       int spendAuthSigOffset = parseInt(data, 32);
       int receiveOffset = parseInt(data, 64);
-
       System.arraycopy(data, 96, bindingSig, 0, 64);
       System.arraycopy(data, 160, signHash, 0, 32);
       for (int i = 0; i < 33; i++) {
@@ -1211,19 +1189,16 @@ public class PrecompiledContracts {
       if (spendCount != spendAuthSigCount || spendCount < 1 || spendCount > 2 || receiveCount < 1 || receiveCount > 2) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
-
       byte[][] anchor = new byte[spendCount][32];
       byte[][] nullifier = new byte[spendCount][32];
       byte[][] spendCv = new byte[spendCount][32];
       byte[][] rk = new byte[spendCount][32];
       byte[][] spendProof = new byte[spendCount][192];
       byte[][] spendAuthSig = new byte[spendCount][64];
-
       byte[][] receiveCm = new byte[receiveCount][32];
       byte[][] receiveCv = new byte[receiveCount][32];
       byte[][] receiveEpk = new byte[receiveCount][32];
       byte[][] receiveProof = new byte[receiveCount][192];
-
       //spend
       spendOffset += 32;
       for (int i = 0; i < spendCount; i++) {
@@ -1237,7 +1212,6 @@ public class PrecompiledContracts {
       for (int i = 0; i < spendCount; i++) {
         System.arraycopy(data, spendAuthSigOffset + 64 * i, spendAuthSig[i], 0, 64);
       }
-
       //output
       receiveOffset += 32;
       for (int i = 0; i < receiveCount; i++) {
@@ -1249,13 +1223,11 @@ public class PrecompiledContracts {
 
       //verify spendProof, receiveProof && bindingSignature
       long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
-
       int threadCount = spendCount + receiveCount;
       ExecutorService validateSignService = Executors.newFixedThreadPool(threadCount);
       // thread poll
       CountDownLatch countDownLatch = new CountDownLatch(threadCount);
       List<Future<Boolean>> futures = new ArrayList<>(threadCount);
-
       // submit check task
       for (int i = 0; i < spendCount; i++) {
         Future<Boolean> future1 = validateSignService
@@ -1275,7 +1247,6 @@ public class PrecompiledContracts {
           boolean fResult = future.get();
           result &= fResult;
         }
-
         if (result) {
           byte[] spendCvs = new byte[spendCount * 32];
           byte[] receiveCvs = new byte[receiveCount * 32];
@@ -1302,7 +1273,6 @@ public class PrecompiledContracts {
       if (!result) {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
-
       Pair<Boolean, byte[]> pair = insertLeaves(frontier, leafCount, receiveCm);
       return pair;
     }
@@ -1406,7 +1376,6 @@ public class PrecompiledContracts {
       byte[] rk = new byte[32];
       byte[] proof = new byte[192];
       byte[] spendAuthSig = new byte[64];
-
       byte[] bindingSig = new byte[64];
       byte[] signHash = new byte[32];
       //spend
@@ -1455,7 +1424,6 @@ public class PrecompiledContracts {
       byte[] left = new byte[32];
       byte[] right = new byte[32];
       byte[] hash = new byte[32];
-
       boolean res = true;
       try {
         int level = parseInt(data, 0);
@@ -1469,7 +1437,6 @@ public class PrecompiledContracts {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
       return Pair.of(true, hash);
-
     }
 
     private int parseInt(byte[] data, int idx) {

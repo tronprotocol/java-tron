@@ -798,87 +798,12 @@ public class WalletTest {
     //GrpcAPI.ShieldedTRC20Parameters transferParam = wallet.createShieldedContractParameters(privateTRC20Builder.build());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParameters(privateTRC20Builder.build());
 
-    //logger.info(transferParam.toString());
-    //checkTransferParams(transferParam);
-
     String transferInput = transferParamsToHexString(transferParam);
     String txid  = triggerTransfer(blockingStubFull,contractAddress,callerAddress,privateKey, transferInput);
     logger.info("..............transfer result...........");
     logger.info(txid);
     logger.info("..............end..............");
   }
-
-//  private void checkTransferParams(GrpcAPI.ShieldedTRC20Parameters transferParam) {
-//    //verify spendProof, receiveProof && bindingSignature
-//    long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
-//    int spendCount = transferParam.getSpendDescriptionList().size();
-//    int receiveCount = transferParam.getReceiveDescriptionList().size();
-//    int threadCount = spendCount + receiveCount;
-//    ExecutorService validateSignService = Executors.newFixedThreadPool(threadCount);
-//    // thread poll
-//    CountDownLatch countDownLatch = new CountDownLatch(threadCount);
-//    List<Future<Boolean>> futures = new ArrayList<>(threadCount);
-//
-//    // submit check task
-//    for (int i = 0; i < spendCount; i++) {
-//      ShieldContract.SpendDescription spend = transferParam.getSpendDescription(i);
-//      Future<Boolean> future1 = validateSignService
-//              .submit(new PrecompiledContracts.VerifyTransferProof.SaplingCheckSpendTask(countDownLatch,
-//                      ctx,
-//                      spend.getValueCommitment().toByteArray(),
-//                      spend.getAnchor().toByteArray(),
-//                      spend.getNullifier().toByteArray(),
-//                      spend.getRk().toByteArray(),
-//                      spend.getZkproof().toByteArray(),
-//                      spend.getSpendAuthoritySignature().toByteArray(),
-//                      transferParam.getMessageHash().toByteArray()));
-//      futures.add(future1);
-//    }
-//    for (int i = 0; i < receiveCount; i++) {
-//      ShieldContract.ReceiveDescription recvDesc = transferParam.getReceiveDescription(i);
-//      Future<Boolean> future2 = validateSignService
-//              .submit(new PrecompiledContracts.VerifyTransferProof.SaplingCheckOutput(countDownLatch, ctx,
-//                      recvDesc.getValueCommitment().toByteArray(),
-//                      recvDesc.getNoteCommitment().toByteArray(),
-//                      recvDesc.getEpk().toByteArray(),
-//                      recvDesc.getZkproof().toByteArray()));
-//      futures.add(future2);
-//    }
-//
-//    boolean result = true;
-//    try {
-//      countDownLatch.await();
-//      for (Future<Boolean> future : futures) {
-//        boolean fResult = future.get();
-//        result &= fResult;
-//      }
-//
-//      if (result) {
-//        byte[] spendCvs = new byte[spendCount * 32];
-//        byte[] receiveCvs = new byte[receiveCount * 32];
-//        for (int i = 0; i < spendCount; i++) {
-//          ShieldContract.SpendDescription spend = transferParam.getSpendDescription(i);
-//          System.arraycopy(spend.getValueCommitment().toByteArray(), 0, spendCvs, 32 * i, 32);
-//        }
-//        for (int i = 0; i < receiveCount; i++) {
-//          ShieldContract.ReceiveDescription recvDesc = transferParam.getReceiveDescription(i);
-//          System.arraycopy(recvDesc.getValueCommitment().toByteArray(), 0, receiveCvs, 32 * i, 32);
-//        }
-//
-//        boolean checkResult = JLibrustzcash.librustzcashSaplingFinalCheckNew(
-//                new LibrustzcashParam.FinalCheckNewParams(0, transferParam.getBindingSignature().toByteArray(), transferParam.getMessageHash().toByteArray(), spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
-//        result &= checkResult;
-//      }
-//
-//    } catch (Exception e) {
-//      result = false;
-//      logger.error("parallel check sign interrupted exception! ", e);
-//      Thread.currentThread().interrupt();
-//    } finally {
-//      JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-//    }
-//    Assert.assertTrue(result);
-//  }
 
   private String triggerGetPath(WalletGrpc.WalletBlockingStub blockingStubFull,
                                 byte[] contractAddress, byte[] callerAddress,String privateKey,long pos) {
@@ -901,8 +826,8 @@ public class WalletTest {
                               byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
-            "burn(bytes32[10],bytes32[2],uint64,bytes32[2],bytes32)",
-             input, //"00000000000000000000000000000000000000000000000000000000ee6b2800d763de0ca35072efec2918cdb48fd6681e4eea2a7e9697c460385ea4ff4b4623cf294f0d985ca8f3264f9ba1054107b46104d3a6fda44e0df8d812bcffd54ba081807586761790343886f6c08ccc8e6d77853372c36ce5917736e7c1b73f0f0f847f557cc2f701771beef2d1d4d0c049bd2e3fece6e4020d3a38b9869a6c87fdd3f5137bbf2b869362eda7089a59aefa8b392e24487e56541dcc47cc7dbf0089b7de230846a0e23ccc6bfe31f9e04e55b7100afbb7c4b01908fe3e2b0db9d54900ac28be5a4eded86ee7da43c10e423e2ada11d4394ff292d883a092e1975c18b5c6a9eff91c48052c69d66759f97e219486385013aac1c4d44d6bb54ba375c407e700495e57a2862bdbe1fd1c8c4350d96759927d93c7ddc8af0938bfa42791f48def75c0525891ff95fe0e6b1004982a2cd517ba2be4d7eafdca5e779ff6bfb4194e00b1732bc2af860ebe52fccc0c2efa48a8c81d76be3515088a888eba0b8948e3483e2e66086b29247948e3df08b775be41814ded1afeec8ec783e1e7ddb27773cc6e9a71abcb66c67e45ff3e0ebcc6af459525df99cd9cbbbc2d9373f37a52ec4a7b0b31350b2a116342a2122473c6f1c58a34e0db1621579a9345d6ab6c4129eb6d9af218596fa619c744a2a9240f4997465a936886fc1330160d8ce8e3d5e698bc4bf0976eafe7b4840f201d4f1f9e441422bf1d5d2b2f7ff78c548a229695baa4442fb8310806f537f0cbb6dbfa36c41e78e049f12ee8da8c91e0394ccf5307f23108a076744086f355cc30cc43c66d4224079b894f8c5a516c3df523063e3b23f66f13c5ac50f3f02a1aa7b6773e70c4b3a1fd944020034046ec9d3f282a36368452fd38108876d43645a1ede8fc39df2bebde823aacf9d947a9e76401bc4c79a41f4ce7e7985c936229c1555d91b0770d7e36505ea33bb58ed033e8030c2a1f693c81ba606279ac905a77cf29e75515c8d6fb8be16324ee7ffce0e7914534aa79b349a93fb8ae4b3d0f334f93385c4ace2a3698049d857f60dd72066cd76ef51a77213a2680fb58e5c915ea4d8d35731b17d9c3d8f203ea840c4b81f8b18abf8d11e2b0719cd81d5828446f66f2c62d312fe05a9400a8bf3168c1c5a1b49ca3c4fb6287ee7186d480e492b3470be6b348f41c5ddbaf824836e445be3daa73b9ef4624eae96f8e6ea2e4e4e2cdf392b696ea2c05211573444878c8284dc3db48a34aa059654cb30aa42591ac7b7a41ec5768e6195943fd21675ec658e9c08a42bc5beabf3dbe8f65c609ca273abfffc79247bf261508a61524ec4aeef13fec532011f72ffbb5c738a6b3c8d42940393f554f9f30a28415c3b2d68c8e5d1e3b54d98c7a39faeb0b75d71c3efb77d85666e83a3e1a99467b51e85556178f30e851c653cc9c9ce10271432249037778bf1f9c8d137c84adb8da0c2dd2c66188c27402c8c2693d84920acecfb453e3dbcd000000000000000000000000",
+            "burn(bytes32[10],bytes32[2],uint64,bytes32[2],address)",
+             input,
             true,
             0L, 1000000000L,
             callerAddress, privateKey,
@@ -920,8 +845,8 @@ public class WalletTest {
                               byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
-            "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32,bytes32[21][])",
-            input, //"00000000000000000000000000000000000000000000000000000000ee6b2800d763de0ca35072efec2918cdb48fd6681e4eea2a7e9697c460385ea4ff4b4623cf294f0d985ca8f3264f9ba1054107b46104d3a6fda44e0df8d812bcffd54ba081807586761790343886f6c08ccc8e6d77853372c36ce5917736e7c1b73f0f0f847f557cc2f701771beef2d1d4d0c049bd2e3fece6e4020d3a38b9869a6c87fdd3f5137bbf2b869362eda7089a59aefa8b392e24487e56541dcc47cc7dbf0089b7de230846a0e23ccc6bfe31f9e04e55b7100afbb7c4b01908fe3e2b0db9d54900ac28be5a4eded86ee7da43c10e423e2ada11d4394ff292d883a092e1975c18b5c6a9eff91c48052c69d66759f97e219486385013aac1c4d44d6bb54ba375c407e700495e57a2862bdbe1fd1c8c4350d96759927d93c7ddc8af0938bfa42791f48def75c0525891ff95fe0e6b1004982a2cd517ba2be4d7eafdca5e779ff6bfb4194e00b1732bc2af860ebe52fccc0c2efa48a8c81d76be3515088a888eba0b8948e3483e2e66086b29247948e3df08b775be41814ded1afeec8ec783e1e7ddb27773cc6e9a71abcb66c67e45ff3e0ebcc6af459525df99cd9cbbbc2d9373f37a52ec4a7b0b31350b2a116342a2122473c6f1c58a34e0db1621579a9345d6ab6c4129eb6d9af218596fa619c744a2a9240f4997465a936886fc1330160d8ce8e3d5e698bc4bf0976eafe7b4840f201d4f1f9e441422bf1d5d2b2f7ff78c548a229695baa4442fb8310806f537f0cbb6dbfa36c41e78e049f12ee8da8c91e0394ccf5307f23108a076744086f355cc30cc43c66d4224079b894f8c5a516c3df523063e3b23f66f13c5ac50f3f02a1aa7b6773e70c4b3a1fd944020034046ec9d3f282a36368452fd38108876d43645a1ede8fc39df2bebde823aacf9d947a9e76401bc4c79a41f4ce7e7985c936229c1555d91b0770d7e36505ea33bb58ed033e8030c2a1f693c81ba606279ac905a77cf29e75515c8d6fb8be16324ee7ffce0e7914534aa79b349a93fb8ae4b3d0f334f93385c4ace2a3698049d857f60dd72066cd76ef51a77213a2680fb58e5c915ea4d8d35731b17d9c3d8f203ea840c4b81f8b18abf8d11e2b0719cd81d5828446f66f2c62d312fe05a9400a8bf3168c1c5a1b49ca3c4fb6287ee7186d480e492b3470be6b348f41c5ddbaf824836e445be3daa73b9ef4624eae96f8e6ea2e4e4e2cdf392b696ea2c05211573444878c8284dc3db48a34aa059654cb30aa42591ac7b7a41ec5768e6195943fd21675ec658e9c08a42bc5beabf3dbe8f65c609ca273abfffc79247bf261508a61524ec4aeef13fec532011f72ffbb5c738a6b3c8d42940393f554f9f30a28415c3b2d68c8e5d1e3b54d98c7a39faeb0b75d71c3efb77d85666e83a3e1a99467b51e85556178f30e851c653cc9c9ce10271432249037778bf1f9c8d137c84adb8da0c2dd2c66188c27402c8c2693d84920acecfb453e3dbcd000000000000000000000000",
+            "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32[21][])",
+            input,
             true,
             0L, 1000000000L,
             callerAddress, privateKey,
@@ -941,8 +866,8 @@ public class WalletTest {
                               byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
-            "mint(uint64,bytes32[9],bytes32[2],bytes32,bytes32[21])",
-            input, //"00000000000000000000000000000000000000000000000000000000ee6b2800d763de0ca35072efec2918cdb48fd6681e4eea2a7e9697c460385ea4ff4b4623cf294f0d985ca8f3264f9ba1054107b46104d3a6fda44e0df8d812bcffd54ba081807586761790343886f6c08ccc8e6d77853372c36ce5917736e7c1b73f0f0f847f557cc2f701771beef2d1d4d0c049bd2e3fece6e4020d3a38b9869a6c87fdd3f5137bbf2b869362eda7089a59aefa8b392e24487e56541dcc47cc7dbf0089b7de230846a0e23ccc6bfe31f9e04e55b7100afbb7c4b01908fe3e2b0db9d54900ac28be5a4eded86ee7da43c10e423e2ada11d4394ff292d883a092e1975c18b5c6a9eff91c48052c69d66759f97e219486385013aac1c4d44d6bb54ba375c407e700495e57a2862bdbe1fd1c8c4350d96759927d93c7ddc8af0938bfa42791f48def75c0525891ff95fe0e6b1004982a2cd517ba2be4d7eafdca5e779ff6bfb4194e00b1732bc2af860ebe52fccc0c2efa48a8c81d76be3515088a888eba0b8948e3483e2e66086b29247948e3df08b775be41814ded1afeec8ec783e1e7ddb27773cc6e9a71abcb66c67e45ff3e0ebcc6af459525df99cd9cbbbc2d9373f37a52ec4a7b0b31350b2a116342a2122473c6f1c58a34e0db1621579a9345d6ab6c4129eb6d9af218596fa619c744a2a9240f4997465a936886fc1330160d8ce8e3d5e698bc4bf0976eafe7b4840f201d4f1f9e441422bf1d5d2b2f7ff78c548a229695baa4442fb8310806f537f0cbb6dbfa36c41e78e049f12ee8da8c91e0394ccf5307f23108a076744086f355cc30cc43c66d4224079b894f8c5a516c3df523063e3b23f66f13c5ac50f3f02a1aa7b6773e70c4b3a1fd944020034046ec9d3f282a36368452fd38108876d43645a1ede8fc39df2bebde823aacf9d947a9e76401bc4c79a41f4ce7e7985c936229c1555d91b0770d7e36505ea33bb58ed033e8030c2a1f693c81ba606279ac905a77cf29e75515c8d6fb8be16324ee7ffce0e7914534aa79b349a93fb8ae4b3d0f334f93385c4ace2a3698049d857f60dd72066cd76ef51a77213a2680fb58e5c915ea4d8d35731b17d9c3d8f203ea840c4b81f8b18abf8d11e2b0719cd81d5828446f66f2c62d312fe05a9400a8bf3168c1c5a1b49ca3c4fb6287ee7186d480e492b3470be6b348f41c5ddbaf824836e445be3daa73b9ef4624eae96f8e6ea2e4e4e2cdf392b696ea2c05211573444878c8284dc3db48a34aa059654cb30aa42591ac7b7a41ec5768e6195943fd21675ec658e9c08a42bc5beabf3dbe8f65c609ca273abfffc79247bf261508a61524ec4aeef13fec532011f72ffbb5c738a6b3c8d42940393f554f9f30a28415c3b2d68c8e5d1e3b54d98c7a39faeb0b75d71c3efb77d85666e83a3e1a99467b51e85556178f30e851c653cc9c9ce10271432249037778bf1f9c8d137c84adb8da0c2dd2c66188c27402c8c2693d84920acecfb453e3dbcd000000000000000000000000",
+            "mint(uint64,bytes32[9],bytes32[2],bytes32[21])",
+            input,
             true,
             0L, 1000000000L,
             callerAddress, privateKey,
@@ -1052,7 +977,7 @@ public class WalletTest {
     }
     Assert.assertTrue(result);
 
-    String burnInput = burnParamsToHexString(burnParam,value);
+    String burnInput = burnParamsToHexString(burnParam,value,callerAddress);
     String txid2 = triggerBurn(blockingStubFull,contractAddress,callerAddress,privateKey,burnInput);
     byte[] nf = burnParam.getSpendDescription(0).getNullifier().toByteArray();
     logger.info("..............burn result...........");
@@ -1523,7 +1448,7 @@ public class WalletTest {
     //logger.info(privateTRC20Builder.build().toString());
     GrpcAPI.ShieldedTRC20Parameters burnParam = wallet.createShieldedContractParameters(privateTRC20Builder.build());
     //logger.info(transferParam.toString());
-    String burnInput = burnParamsToHexString(burnParam,value);
+    String burnInput = burnParamsToHexString(burnParam,value,callerAddress);
     String txid2 = triggerBurn(blockingStubFull,contractAddress,callerAddress,privateKey,burnInput);
     byte[] nf = burnParam.getSpendDescription(0).getNullifier().toByteArray();
     logger.info("..............burn result...........");
@@ -1619,7 +1544,7 @@ public class WalletTest {
 
 
   private String getContractAddress() {
-    return "TAazQLq4VosMRvHAmTZPFZLFziyFYuV8BF";
+    return "TVxZpXzJcEcxgtogNCKR1MPPodcZz2voef";
   }
 
   @Test
@@ -1643,7 +1568,6 @@ public class WalletTest {
       revDesc.getEpk().toByteArray(),
       revDesc.getZkproof().toByteArray(),
       mintParams.getBindingSignature().toByteArray(),
-      mintParams.getMessageHash().toByteArray(),
       revDesc.getCEnc().toByteArray(),
       revDesc.getCOut().toByteArray(),
       new byte[12]
@@ -1668,10 +1592,10 @@ public class WalletTest {
       );
       spendAuthSig = ByteUtil.merge(spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(224L);
+    byte[] inputOffsetbytes = longTo32Bytes(192);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(224+32+320*spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(192+32+320*spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for(ShieldContract.ReceiveDescription recvDesc:recvDescs) {
       output = ByteUtil.merge(output,
@@ -1688,14 +1612,13 @@ public class WalletTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(224+32+320*spendCount+32+64*spendCount);
-    byte[] coffsetBytes = longTo32Bytes(224+32+320*spendCount+32+64*spendCount+32+288*recvCount);
+    byte[] outputOffsetbytes = longTo32Bytes(192+32+320*spendCount+32+64*spendCount);
+    byte[] coffsetBytes = longTo32Bytes(192+32+320*spendCount+32+64*spendCount+32+288*recvCount);
     bindingSig = params.getBindingSignature().toByteArray();
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
             authOffsetBytes,
             outputOffsetbytes,
             bindingSig,
-            params.getMessageHash().toByteArray(),
             coffsetBytes,
             spendCountBytes,
             input,
@@ -1756,8 +1679,11 @@ public class WalletTest {
 //    return Hex.toHexString(mergedBytes);
 //  }
 
-   private String burnParamsToHexString(GrpcAPI.ShieldedTRC20Parameters burnParams, long value) {
+   private String burnParamsToHexString(GrpcAPI.ShieldedTRC20Parameters burnParams, long value,
+                                        byte[] transparent_to_address) {
         byte[] mergedBytes;
+        byte[] payTo = new byte[32];
+        System.arraycopy(transparent_to_address,1,payTo,12,20);
         ShieldContract.SpendDescription spendDesc = burnParams.getSpendDescription(0);
         mergedBytes = ByteUtil.merge(
                 spendDesc.getNullifier().toByteArray(),
@@ -1768,8 +1694,9 @@ public class WalletTest {
                 spendDesc.getSpendAuthoritySignature().toByteArray(),
                 longTo32Bytes(value),
                 burnParams.getBindingSignature().toByteArray(),
-                burnParams.getMessageHash().toByteArray()
+                payTo
         );
+        logger.info("merged bytes: " + ByteArray.toHexString(mergedBytes));
         return Hex.toHexString(mergedBytes);
     }
 

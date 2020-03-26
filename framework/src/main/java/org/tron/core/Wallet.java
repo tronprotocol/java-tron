@@ -2773,7 +2773,9 @@ public class Wallet {
     if (ArrayUtils.isEmpty(shieldedTRC20ContractAddress)) {
       throw new ContractValidateException("No shielded TRC-20 contract address");
     }
-    builder.setShieldedTRC20Address(shieldedTRC20ContractAddress);
+    byte[] shieldedTRC20ContractAddressTvm = new byte[20];
+    System.arraycopy(shieldedTRC20ContractAddress,1,shieldedTRC20ContractAddressTvm,0,20);
+    builder.setShieldedTRC20Address(shieldedTRC20ContractAddressTvm);
     long fromAmount = request.getFromAmount();
     long toAmount = request.getToAmount();
     List<GrpcAPI.SpendNoteTRC20> shieldedSpends = request.getShieldedSpendsList();
@@ -2824,8 +2826,10 @@ public class Wallet {
       if (ArrayUtils.isEmpty(transparentToAddress)) {
         throw new ContractValidateException("No transparent TRC-20 output address");
       }
-      builder.setTransparentToAddress(transparentToAddress);
-      builder.setTransparentFromAmount(toAmount);
+      byte[] transparentToAddressTvm = new byte[20];
+      System.arraycopy(transparentToAddress,1,transparentToAddressTvm,0,20);
+      builder.setTransparentToAddress(transparentToAddressTvm);
+      builder.setTransparentToAmount(toAmount);
       ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, null);
       GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
       builder = buildShilededTRC20Input(builder, spendNote, expsk);
@@ -2864,7 +2868,9 @@ public class Wallet {
     if (ArrayUtils.isEmpty(shieldedTRC20ContractAddress)) {
       throw new ContractValidateException("No shielded TRC-20 contract address");
     }
-    builder.setShieldedTRC20Address(shieldedTRC20ContractAddress);
+    byte[] shieldedTRC20ContractAddressTvm = new byte[20];
+    System.arraycopy(shieldedTRC20ContractAddress,1,shieldedTRC20ContractAddressTvm,0,20);
+    builder.setShieldedTRC20Address(shieldedTRC20ContractAddressTvm);
     long fromAmount = request.getFromAmount();
     long toAmount = request.getToAmount();
     List<GrpcAPI.SpendNoteTRC20> shieldedSpends = request.getShieldedSpendsList();
@@ -2913,7 +2919,9 @@ public class Wallet {
       if (ArrayUtils.isEmpty(transparentToAddress)) {
         throw new ContractValidateException("No transparent TRC-20 output address");
       }
-      builder.setTransparentToAddress(transparentToAddress);
+      byte[] transparentToAddressTvm = new byte[20];
+      System.arraycopy(transparentToAddress,1,transparentToAddressTvm,0,20);
+      builder.setTransparentToAddress(transparentToAddressTvm);
       builder.setTransparentFromAmount(toAmount);
       GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
       builder = buildShilededTRC20InputWithAK(builder, spendNote, ak, nsk, null);
