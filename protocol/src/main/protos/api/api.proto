@@ -881,6 +881,9 @@ service WalletSolidity {
   rpc ScanShieldedTRC20NotesbyOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
+  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
+  };
+
   rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
   };
 

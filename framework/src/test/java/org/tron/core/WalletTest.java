@@ -549,12 +549,10 @@ public class WalletTest {
     return noteBuilder.build();
   }
 
-
+  @Ignore
   @Test
   public void testCreateShieldedContractParametersForMint() throws ZksnarkException, ContractValidateException {
-
     librustzcashInitZksnarkParams();
-
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -562,20 +560,12 @@ public class WalletTest {
             .usePlaintext(true)
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
-
-//    SpendingKey sk = SpendingKey
-//            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
 
     long from_amount = 50;
-//    SpendingKey sk = SpendingKey
-//            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-//    byte[] ask = expsk.getAsk();
-//    byte[] nsk = expsk.getNsk();
     byte[] ovk = expsk.getOvk();
 
     //ReceiveNote
@@ -592,17 +582,13 @@ public class WalletTest {
     revNoteBuilder.setNote(revNote);
 
     byte[] contractAddress = WalletClient.decodeFromBase58Check(getContractAddress());
-
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
-//    paramBuilder.setAsk(ByteString.copyFrom(ask));
-//    paramBuilder.setNsk(ByteString.copyFrom(nsk));
     paramBuilder.setOvk(ByteString.copyFrom(ovk));
     paramBuilder.setFromAmount(from_amount);
     paramBuilder.addShieldedReceives(revNoteBuilder.build());
     paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
 
     GrpcAPI.ShieldedTRC20Parameters trc20MintParams = blockingStubFull.createShieldedContractParameters(paramBuilder.build());
-
     //verify receiveProof && bindingSignature
     boolean result;
     long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
@@ -615,9 +601,7 @@ public class WalletTest {
                       revDesc.getNoteCommitment().toByteArray(),
                       revDesc.getEpk().toByteArray(),
                       revDesc.getZkproof().toByteArray()));
-
       long valueBalance = -revValue;
-
       result &= JLibrustzcash.librustzcashSaplingFinalCheck(
               new LibrustzcashParam.FinalCheckParams(
                       ctx,
@@ -630,7 +614,6 @@ public class WalletTest {
       JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
     }
     Assert.assertTrue(result);
-
     String mintInput = mintParamsToHexString(trc20MintParams,revValue);
     String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput);
     logger.info("..............result...........");
@@ -641,9 +624,6 @@ public class WalletTest {
   private GrpcAPI.PrivateShieldedTRC20Parameters mintParams(String privKey, long value, String contractAddr) throws ZksnarkException, ContractValidateException {
     librustzcashInitZksnarkParams();
     long from_amount = value;
-//    SpendingKey sk = SpendingKey
-//            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
-//    SpendingKey sk = SpendingKey.random();
     SpendingKey sk = SpendingKey.decode(privKey);
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     byte[] ask = expsk.getAsk();
@@ -662,7 +642,6 @@ public class WalletTest {
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
     GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
     revNoteBuilder.setNote(revNote);
-
     byte[] contractAddress = WalletClient.decodeFromBase58Check(contractAddr);
 
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
@@ -672,16 +651,13 @@ public class WalletTest {
     paramBuilder.setFromAmount(from_amount);
     paramBuilder.addShieldedReceives(revNoteBuilder.build());
     paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-
     return paramBuilder.build();
   }
 
-
+  @Ignore
   @Test
   public void testCreateShieldedContractParametersForTransfer2v2() throws ZksnarkException, ContractValidateException {
-
     librustzcashInitZksnarkParams();
-
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -694,16 +670,11 @@ public class WalletTest {
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check(contractAddr);
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
-
-//    SpendingKey sk = SpendingKey
-//            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
-    //String  privateKey2 = "03d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8";
     GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
     //GrpcAPI.ShieldedTRC20Parameters mintParam1 = wallet.createShieldedContractParameters(mintPrivateParam1);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(mintPrivateParam1);
-
     GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam2 = mintParams(privateKey,40,contractAddr);
     //GrpcAPI.ShieldedTRC20Parameters mintParam2 = wallet.createShieldedContractParameters(mintPrivateParam2);
     GrpcAPI.ShieldedTRC20Parameters mintParam2 = blockingStubFull.createShieldedContractParameters(mintPrivateParam2);
@@ -754,11 +725,9 @@ public class WalletTest {
     note2Builder.setPath(ByteString.copyFrom(path2));
     note2Builder.setRoot(ByteString.copyFrom(root2));
     note2Builder.setNote(mintPrivateParam2.getShieldedReceives(0).getNote());
-
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
     privateTRC20Builder.addShieldedSpends(note1Builder.build());
     privateTRC20Builder.addShieldedSpends(note2Builder.build());
-
 
     //ReceiveNote 1
     GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
@@ -784,7 +753,6 @@ public class WalletTest {
     String paymentAddressStr2 = KeyIo.encodePaymentAddress(paymentAddress2);
     GrpcAPI.Note revNote2 = getNote(revValue2,paymentAddressStr2, rcm2,memo2);
     revNoteBuilder2.setNote(revNote2);
-
     privateTRC20Builder.addShieldedReceives(revNoteBuilder.build());
     privateTRC20Builder.addShieldedReceives(revNoteBuilder2.build());
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
@@ -794,10 +762,8 @@ public class WalletTest {
     privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
 
-    //logger.info(privateTRC20Builder.build().toString());
     //GrpcAPI.ShieldedTRC20Parameters transferParam = wallet.createShieldedContractParameters(privateTRC20Builder.build());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParameters(privateTRC20Builder.build());
-
     String transferInput = transferParamsToHexString(transferParam);
     String txid  = triggerTransfer(blockingStubFull,contractAddress,callerAddress,privateKey, transferInput);
     logger.info("..............transfer result...........");
@@ -860,8 +826,6 @@ public class WalletTest {
     return txid;
   }
 
-
-
   private String  triggerMint(WalletGrpc.WalletBlockingStub blockingStubFull,
                               byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -881,12 +845,10 @@ public class WalletTest {
     return txid;
   }
 
-
+  @Ignore
   @Test
   public void testCreateShieldedContractParametersForBurn() throws ZksnarkException, ContractValidateException {
-
     librustzcashInitZksnarkParams();
-
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -894,14 +856,11 @@ public class WalletTest {
             .usePlaintext(true)
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
     String contractAddr = getContractAddress();
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check(contractAddr);
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
 
-//    SpendingKey sk = SpendingKey
-//            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
     //String  privateKey2 = "03d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8";
@@ -932,26 +891,16 @@ public class WalletTest {
     note1Builder.setPath(ByteString.copyFrom(path1));
     note1Builder.setRoot(ByteString.copyFrom(root1));
     note1Builder.setNote(mintPrivateParam1.getShieldedReceives(0).getNote());
-
-
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
     privateTRC20Builder.addShieldedSpends(note1Builder.build());
 
-
-
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-
     privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
-//    privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
     privateTRC20Builder.setToAmount(60);
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-
-    //logger.info(privateTRC20Builder.build().toString());
     GrpcAPI.ShieldedTRC20Parameters burnParam = blockingStubFull.createShieldedContractParameters(privateTRC20Builder.build());
-    //logger.info(transferParam.toString());
-
     //check the proof
     boolean result;
     //verify spendProof && bindingSignature
@@ -986,11 +935,10 @@ public class WalletTest {
     logger.info("..............end..............");
   }
 
+  @Ignore
   @Test
   public void testCreateShieldedContractParametersForMintWithoutAsk() throws Exception {
-
     librustzcashInitZksnarkParams();
-
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -999,8 +947,6 @@ public class WalletTest {
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     long from_amount = 50;
-//    SpendingKey sk = SpendingKey
-//            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     FullViewingKey fvk = expsk.fullViewingKey();
@@ -1023,10 +969,7 @@ public class WalletTest {
     revNoteBuilder.setNote(revNote);
 
     byte[] contractAddress = WalletClient.decodeFromBase58Check(getContractAddress());
-
     GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder paramBuilder = GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
-//    paramBuilder.setAsk(ByteString.copyFrom(ask));
-//    paramBuilder.setNsk(ByteString.copyFrom(nsk));
     paramBuilder.setOvk(ByteString.copyFrom(ovk));
     paramBuilder.setFromAmount(from_amount);
     paramBuilder.addShieldedReceives(revNoteBuilder.build());
@@ -1063,11 +1006,10 @@ public class WalletTest {
     Assert.assertTrue(result);
   }
 
+  @Ignore
   @Test
   public void testCreateShieldedContractParametersForTransferWithoutAsk2v2() throws Exception {
-
     librustzcashInitZksnarkParams();
-
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -1080,9 +1022,6 @@ public class WalletTest {
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check(contractAddr);
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
-
-//    SpendingKey sk = SpendingKey
-//            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
     //String  privateKey2 = "03d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8";
@@ -1138,11 +1077,9 @@ public class WalletTest {
     note2Builder.setPath(ByteString.copyFrom(path2));
     note2Builder.setRoot(ByteString.copyFrom(root2));
     note2Builder.setNote(mintPrivateParam2.getShieldedReceives(0).getNote());
-
     GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
     privateTRC20Builder.addShieldedSpends(note1Builder.build());
     privateTRC20Builder.addShieldedSpends(note2Builder.build());
-
 
     //ReceiveNote 1
     GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
@@ -1184,11 +1121,11 @@ public class WalletTest {
    // checkTransferParams(transferParam);
   }
 
+  @Ignore
   @Test
   public void testCreateShieldedContractParametersForBurnWithoutAsk() throws Exception {
 
     librustzcashInitZksnarkParams();
-
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -1196,17 +1133,13 @@ public class WalletTest {
             .usePlaintext(true)
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-
     String contractAddr = getContractAddress();
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check(contractAddr);
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
 
-//    SpendingKey sk = SpendingKey
-//            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
-    //String  privateKey2 = "03d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8";
     GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = wallet.createShieldedContractParameters(mintPrivateParam1);
     long value = 60;
@@ -1216,7 +1149,6 @@ public class WalletTest {
     logger.info(txid1);
     logger.info("..............end..............");
 
-    // SpendNoteTRC20 1
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
@@ -1235,10 +1167,8 @@ public class WalletTest {
     note1Builder.setRoot(ByteString.copyFrom(root1));
     note1Builder.setNote(mintPrivateParam1.getShieldedReceives(0).getNote());
 
-
     GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
     privateTRC20Builder.addShieldedSpends(note1Builder.build());
-
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     FullViewingKey fvk = expsk.fullViewingKey();
     privateTRC20Builder.setAk(ByteString.copyFrom(fvk.getAk()));
@@ -1253,9 +1183,9 @@ public class WalletTest {
     logger.info(transferParam.toString());
   }
 
+  @Ignore
   @Test
   public void testScanShieldedTRC20NotesbyIvk() throws ZksnarkException {
-
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -1265,7 +1195,7 @@ public class WalletTest {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     int statNum = 1;
-    int endNum = 1000;
+    int endNum = 140;
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check(getContractAddress());
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
@@ -1274,6 +1204,11 @@ public class WalletTest {
     FullViewingKey fvk = sk.fullViewingKey();
     byte[] ivk = fvk.inViewingKey().value;
     GrpcAPI.IvkDecryptTRC20Parameters.Builder  paramBuilder = GrpcAPI.IvkDecryptTRC20Parameters.newBuilder();
+
+    logger.info(Hex.toHexString(contractAddress));
+    logger.info(Hex.toHexString(ivk));
+    logger.info(Hex.toHexString(fvk.getAk()));
+    logger.info(Hex.toHexString(fvk.getNk()));
 
     paramBuilder.setAk(ByteString.copyFrom(fvk.getAk()));
     paramBuilder.setNk(ByteString.copyFrom(fvk.getNk()));
@@ -1286,9 +1221,10 @@ public class WalletTest {
       logger.info(noteTx.toString());
     }
   }
+
+  @Ignore
   @Test
   public void testscanShieldedTRC20NotesbyOvk() throws ZksnarkException {
-
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -1298,13 +1234,16 @@ public class WalletTest {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     int statNum = 1;
-    int endNum = 1000;
+    int endNum = 140;
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check(getContractAddress());
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
     FullViewingKey fvk = sk.fullViewingKey();
     GrpcAPI.OvkDecryptTRC20Parameters.Builder  paramBuilder = GrpcAPI.OvkDecryptTRC20Parameters.newBuilder();
+
+    logger.info(Hex.toHexString(contractAddress));
+    logger.info(Hex.toHexString(fvk.getOvk()));
 
     paramBuilder.setOvk(ByteString.copyFrom(fvk.getOvk()));
     paramBuilder.setStartBlockIndex(statNum);
@@ -1316,6 +1255,7 @@ public class WalletTest {
     }
   }
 
+  @Ignore
   @Test
   public void isShieldedTRC20ContractNoteSpent() throws ZksnarkException {
     ManagedChannel channelFull = null;
@@ -1327,7 +1267,7 @@ public class WalletTest {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     int statNum = 1;
-    int endNum = 1000;
+    int endNum = 140;
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check(getContractAddress());
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
@@ -1377,12 +1317,10 @@ public class WalletTest {
     Assert.assertFalse(result2.getIsSpent());
   }
 
-
+  @Ignore
   @Test
   public void testTriggerNullifer() throws ZksnarkException, ContractValidateException {
-
     librustzcashInitZksnarkParams();
-
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -1430,24 +1368,15 @@ public class WalletTest {
     note1Builder.setRoot(ByteString.copyFrom(root1));
     note1Builder.setNote(mintPrivateParam1.getShieldedReceives(0).getNote());
 
-
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
     privateTRC20Builder.addShieldedSpends(note1Builder.build());
-
-
-
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-
     privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
-//    privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
     privateTRC20Builder.setToAmount(60);
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-
-    //logger.info(privateTRC20Builder.build().toString());
     GrpcAPI.ShieldedTRC20Parameters burnParam = wallet.createShieldedContractParameters(privateTRC20Builder.build());
-    //logger.info(transferParam.toString());
     String burnInput = burnParamsToHexString(burnParam,value,callerAddress);
     String txid2 = triggerBurn(blockingStubFull,contractAddress,callerAddress,privateKey,burnInput);
     byte[] nf = burnParam.getSpendDescription(0).getNullifier().toByteArray();
@@ -1464,14 +1393,8 @@ public class WalletTest {
     SmartContractOuterClass.TriggerSmartContract.Builder triggerBuilder = SmartContractOuterClass.TriggerSmartContract.newBuilder();
 
     triggerBuilder.setContractAddress(ByteString.copyFrom(contractAddress));
-    // triggerBuilder.setCallValue(0);
     triggerBuilder.setData(ByteString.copyFrom(input));
-//    triggerBuilder.setTokenId(0);
-//    triggerBuilder.setCallTokenValue(0);
-
     GrpcAPI.TransactionExtention trxExt2 = blockingStubFull.triggerConstantContract(triggerBuilder.build());
-
-
     String code = trxExt2.getResult().getCode().toString();
     boolean bool = trxExt2.getResult().getResult();
     List<ByteString> list = trxExt2.getConstantResultList();
@@ -1479,22 +1402,18 @@ public class WalletTest {
     byte[] listBytes = new byte[0];
     for(ByteString bs: list) {
       listBytes =  ByteUtil.merge(listBytes,bs.toByteArray());
-
     }
-
     logger.info("..............nullifier result...........");
     logger.info(code);
     logger.info(String.valueOf(bool));
     logger.info(Hex.toHexString(listBytes));
     logger.info("..............end..............");
     Assert.assertArrayEquals(nf,listBytes);
-
   }
 
   @Ignore
   @Test
   public void  testNullier() {
-
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -1509,20 +1428,12 @@ public class WalletTest {
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
     byte[] input = ByteUtil.merge(selector,nf);
     SmartContractOuterClass.TriggerSmartContract.Builder triggerBuilder = SmartContractOuterClass.TriggerSmartContract.newBuilder();
-//    byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
-//
-//    triggerBuilder.setOwnerAddress(ByteString.copyFrom(callerAddress));
     String contractAddr = getContractAddress();
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check(contractAddr);
     triggerBuilder.setContractAddress(ByteString.copyFrom(contractAddress));
-   // triggerBuilder.setCallValue(0);
     triggerBuilder.setData(ByteString.copyFrom(input));
-//    triggerBuilder.setTokenId(0);
-//    triggerBuilder.setCallTokenValue(0);
-
     GrpcAPI.TransactionExtention trxExt2 = blockingStubFull.triggerConstantContract(triggerBuilder.build());
-
 
     String code = trxExt2.getResult().getCode().toString();
      boolean bool = trxExt2.getResult().getResult();
@@ -1533,7 +1444,6 @@ public class WalletTest {
        listBytes =  ByteUtil.merge(listBytes,bs.toByteArray());
 
      }
-
     logger.info("..............nullifier result...........");
     logger.info(code);
     logger.info(String.valueOf(bool));
@@ -1541,21 +1451,8 @@ public class WalletTest {
     logger.info("..............end..............");
   }
 
-
-
   private String getContractAddress() {
-    return "TVxZpXzJcEcxgtogNCKR1MPPodcZz2voef";
-  }
-
-  @Test
-  public void testTest() throws ZksnarkException, ContractValidateException {
-    long value = 100;
-    byte[] valueByte = longTo32Bytes(value);
-    long value2 = Bytes32Tolong(valueByte);
-    logger.info("..............result...........");
-    logger.info(Hex.toHexString(valueByte));
-    logger.info(String.valueOf(value2));
-    logger.info("..............end..............");
+    return "TX29caJFwDPZ9tzjuQ1GB6Ci59ocxQThKN";
   }
 
   private String mintParamsToHexString(GrpcAPI.ShieldedTRC20Parameters mintParams, long value) {
@@ -1633,52 +1530,6 @@ public class WalletTest {
     return Hex.toHexString(mergedBytes);
   }
 
-  private byte[] getInputFromSpendDescripton(ShieldContract.SpendDescription spend) {
-     return ByteUtil.merge(
-              spend.getNullifier().toByteArray(),
-              spend.getAnchor().toByteArray(),
-              spend.getValueCommitment().toByteArray(),
-              spend.getRk().toByteArray(),
-              spend.getZkproof().toByteArray());
-  }
-
-  private byte[] getOutputFromReceiveDescripton(ShieldContract.ReceiveDescription receive) {
-    return ByteUtil.merge(
-            receive.getNoteCommitment().toByteArray(),
-            receive.getValueCommitment().toByteArray(),
-            receive.getEpk().toByteArray(),
-            receive.getZkproof().toByteArray());
-  }
-
-  private byte[] getCencCoutFromReceiveDescription(ShieldContract.ReceiveDescription receive) {
-    return ByteUtil.merge(
-            receive.getCEnc().toByteArray(),
-            receive.getCOut().toByteArray(),
-            new byte[12]
-    );
-  }
-
-//  private String transferParamsToHexString(GrpcAPI.ShieldedTRC20Parameters transferParams) {
-//    byte[] mergedBytes = new byte[0];
-//    for (ShieldContract.SpendDescription spend: transferParams.getSpendDescriptionList()) {
-//      mergedBytes = ByteUtil.merge(mergedBytes, getInputFromSpendDescripton(spend));
-//    }
-//    for (ShieldContract.SpendDescription spend: transferParams.getSpendDescriptionList()) {
-//      mergedBytes = ByteUtil.merge(mergedBytes, spend.getSpendAuthoritySignature().toByteArray());
-//    }
-//    for (ShieldContract.ReceiveDescription receive: transferParams.getReceiveDescriptionList()) {
-//      mergedBytes = ByteUtil.merge(mergedBytes,getOutputFromReceiveDescripton(receive));
-//
-//    }
-//    mergedBytes = ByteUtil.merge(mergedBytes,transferParams.getBindingSignature().toByteArray(),transferParams.getMessageHash().toByteArray());
-//
-//    for (ShieldContract.ReceiveDescription receive : transferParams.getReceiveDescriptionList()) {
-//      mergedBytes = ByteUtil.merge(mergedBytes,getCencCoutFromReceiveDescription(receive));
-//    }
-//
-//    return Hex.toHexString(mergedBytes);
-//  }
-
    private String burnParamsToHexString(GrpcAPI.ShieldedTRC20Parameters burnParams, long value,
                                         byte[] transparent_to_address) {
         byte[] mergedBytes;
@@ -1700,13 +1551,13 @@ public class WalletTest {
         return Hex.toHexString(mergedBytes);
     }
 
-
   private byte[] longTo32Bytes(long value) {
     byte[] longBytes =  ByteArray.fromLong(value);
     byte[] zeroBytes = new byte[24];
 
     return ByteUtil.merge(zeroBytes,longBytes);
   }
+
   private long Bytes32Tolong(byte[] value) {
     return ByteArray.toLong(value);
   }

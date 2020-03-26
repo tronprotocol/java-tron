@@ -735,6 +735,49 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void scanShieldedTRC20NotesbyIvk(IvkDecryptTRC20Parameters request,
+        StreamObserver<DecryptNotesTRC20> responseObserver) {
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+      byte[] contractAddress = request.getShieldedTRC20ContractAddress().toByteArray();
+      byte[] ivk =  request.getIvk().toByteArray();
+      byte[] ak = request.getAk().toByteArray();
+      byte[] nk = request.getNk().toByteArray();
+      try {
+        responseObserver.onNext(wallet.scanShieldedTRC20NotesbyIvk(startNum, endNum, contractAddress, ivk, ak, nk));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void scanShieldedTRC20NotesbyOvk(OvkDecryptTRC20Parameters request,
+        StreamObserver<DecryptNotesTRC20> responseObserver) {
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+      byte[] contractAddress = request.getShieldedTRC20ContractAddress().toByteArray();
+      byte[] ovk = request.getOvk().toByteArray();
+      try {
+        responseObserver.onNext(wallet.scanShieldedTRC20NotesbyOvk(startNum, endNum, ovk, contractAddress));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request,
+        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.isShieldedTRC20ContractNoteSpent(request));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void triggerConstantContract(TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver) {
 
