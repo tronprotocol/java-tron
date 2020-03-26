@@ -29,6 +29,7 @@ import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -173,7 +174,7 @@ public class VMActuator implements Actuator2 {
         result = program.getResult();
 
         if (isConstanCall) {
-          long callValue = TransactionUtil.getCallValue(trx.getRawData().getContract(0));
+          long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           long callTokenValue = TransactionUtil
               .getCallTokenValue(trx.getRawData().getContract(0));
           if (callValue > 0 || callTokenValue > 0) {

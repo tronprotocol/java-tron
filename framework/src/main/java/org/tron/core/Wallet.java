@@ -91,6 +91,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -2082,7 +2083,7 @@ public class Wallet {
           "No contract or not a valid smart contract");
     }
 
-    byte[] selector = TransactionUtil.getSelector(
+    byte[] selector = WalletUtil.getSelector(
         triggerSmartContract.getData().toByteArray());
 
     if (TransactionUtil.isConstant(abi, selector)) {

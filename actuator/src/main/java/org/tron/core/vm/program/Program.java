@@ -55,6 +55,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
 import org.tron.core.vm.OpCode;
@@ -572,7 +573,7 @@ public class Program {
     // [1] FETCH THE CODE FROM THE MEMORY
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
-    byte[] newAddress = WalletUtil
+    byte[] newAddress = TransactionUtil
         .generateContractAddress(rootTransactionId, nonce);
 
     createContractImpl(value, programCode, newAddress, false);
