@@ -1,9 +1,9 @@
 pragma solidity ^0.5.8;
 pragma experimental ABIEncoderV2;
-// contract TRC20Token {
-//      function transfer(address to, uint tokens) public returns (bool success);
-//     function transferFrom(address from, address to, uint tokens) public returns (bool success);
-//  }
+contract TokenTRC20 {
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+ }
 
 contract PrivateUSDT {
     mapping(bytes32 => bytes32) public nullifiers; // store nullifiers of spent commitments
@@ -14,7 +14,7 @@ contract PrivateUSDT {
     uint256 public leafCount;
     bytes32 public latestRoot;
     address _owner;
-    // TRC20Token _trc20Token;
+    TokenTRC20 _trc20Token;
 
     uint8 i = 0;
 
@@ -24,91 +24,17 @@ contract PrivateUSDT {
     address hashor = address(0x000E);
 
     event newLeaf(uint256 position, bytes32 cm, bytes32 cv, bytes32 epk, bytes32[21] c);
-    //event tokenMint(address fromAddress, uint64 value);
-    event tokenBurn(address toAddress, uint64 value);
+    event tokenMint(address from, uint64 value);
+    event tokenBurn(address to, uint64 value);
 
-    constructor () public {
+    constructor (uint256 trc20ContractAddress) public {
         _owner = msg.sender;
-        //_trc20Token = TRC20Token(address(trc20Contract));
-    }
-
-    function ancestorLevel(uint256 leafIndex) private returns(uint32) {
-        uint256 nodeIndex1 =  leafIndex + 2 ** 32 - 1;
-        uint256 nodeIndex2 = leafCount + 2 ** 32 - 2;
-        uint32 level = 0;
-        while (((nodeIndex1 - 1) / 2) != ((nodeIndex2 -1) / 2)) {
-            nodeIndex1 = (nodeIndex1 - 1) / 2;
-            nodeIndex2 = (nodeIndex2 - 1) / 2;
-            level = level + 1;
-        }
-
-        return level;
-    }
-
-    function getTargetNodeValue(uint256 leafIndex, uint32 level) private returns(bytes32) {
-        bytes32 left;
-        bytes32 right;
-        uint256 index = leafIndex + 2 ** 32 - 1;
-        uint256 nodeIndex = leafCount + 2 ** 32 - 2;
-        bytes32 nodeValue = tree[nodeIndex];
-        if(level == 0) {
-            if(index < nodeIndex) {
-                return nodeValue;
-            }
-            if(index == nodeIndex) {
-                if(index % 2 == 0){
-                    return tree[index - 1];
-                } else {
-                    return zeroes[0];
-                }
-            }
-        }
-
-        for(uint32 i = 0; i < level; i++) {
-            if (nodeIndex % 2 == 0) {
-                left  = tree[nodeIndex - 1];
-                right = nodeValue;
-            } else {
-                left = nodeValue;
-                right = zeroes[i];
-            }
-
-            (bool result,bytes memory msg) = hashor.call(abi.encode(i, left, right));
-            require(result, "hash error");
-
-            nodeValue = bytesToBytes32(msg, 0);
-            nodeIndex = (nodeIndex - 1) / 2;
-        }
-
-        return nodeValue;
-    }
-    //position: index of leafnode, start from 0
-    function getPath(uint256 position) external returns(bytes32, bytes32[32] memory, uint256){
-        uint256 index = position + 2**32 - 1;
-        bytes32[32] memory path;
-        require(position >= 0, "position should be non-negative");
-        require(position < leafCount, "position should be smaller than leafCount");
-
-        uint32 level = ancestorLevel(position);
-        bytes32 targetNodeValue = getTargetNodeValue(position, level);
-
-        for (uint32 i = 0; i < 32; i++){
-            if(i == level) {
-                path[31-i] = targetNodeValue;
-            } else {
-                if (index % 2 == 0) {
-                    path[31-i] = tree[index - 1];
-                } else {
-                    path[31-i] = tree[index + 1] == 0?zeroes[i]:tree[index + 1];
-                }
-            }
-            index = (index - 1) / 2;
-        }
-        return (latestRoot, path, position);
+        _trc20Token = TokenTRC20(address(trc20ContractAddress));
     }
 
     // output: cm, cv, epk, proof
     function mint(uint64 value, bytes32[9] calldata output, bytes32[2] calldata bindingSignature, bytes32[21] calldata c) external {
+        address sender = msg.sender;
         require(value > 0, "Mint negative value.");
         bytes32 signHash = sha256(abi.encodePacked(address(this), value, output, c));
 
@@ -129,14 +55,14 @@ contract PrivateUSDT {
             }
         }
         latestRoot = bytesToBytes32(msg, slot*32+1);
-
         roots[latestRoot] = latestRoot;
         leafCount ++;
         
         emit newLeaf(leafCount-1, output[0], output[1], output[2], c);
-        // Finally, transfer the fTokens from the sender to this contract
-        // _trc20Token.transferFrom(msg.sender, address(this), value);
-       //emit tokenMint(msg.sender, value);
+        // Finally, transfer the trc20Token from the sender to this contract
+        bool transferResult = _trc20Token.transferFrom(sender, address(this), value);
+        require(transferResult, "transferFrom failed.");
+        emit tokenMint(sender, value);
     }
 
     //input_bytes32*10: nf, anchor, cv, rk, proof
@@ -175,7 +101,6 @@ contract PrivateUSDT {
             }
             i++;
         }
-
         latestRoot = bytesToBytes32(msg, j);
         roots[latestRoot] = latestRoot;
         leafCount = leafCount + output.length;
@@ -184,29 +109,102 @@ contract PrivateUSDT {
             bytes32 nf = input[i][0];
             nullifiers[nf] = nf;
         }
-        
         for(i = 0; i < output.length; i++){
             emit newLeaf(leafCount-(output.length-i), output[i][0], output[i][1], output[i][2], c[i]);
         }
     }
 
     //input_bytes32*10: nf, anchor, cv, rk, proof
-    function burn(bytes32[10] calldata input, bytes32[2] calldata spend_auth_sig, uint64 value, bytes32[2] calldata bindingSignature, address payTo) external {
+    function burn(bytes32[10] calldata input, bytes32[2] calldata spend_auth_sig, uint64 value, bytes32[2] calldata bindingSignature, uint256 payToAddress) external {
         bytes32 nf = input[0];
         bytes32 anchor = input[1];
         require(value > 0, "Mint negative value.");
         require(nullifiers[nf] == 0, "The notecommitment being spent has already been nullified!");
         require(roots[anchor] != 0, "The anchor must exist");
-
+        address payTo = address(payToAddress);
         bytes32 signHash = sha256(abi.encodePacked(address(this), input, payTo, value));
         (bool result,bytes memory msg) = verifyBurnProofContract.call(abi.encode(input, spend_auth_sig, value, bindingSignature, signHash));
         require(result, "The proof and signature have not been verified by the contract");
 
         nullifiers[nf] = nf;
-        //Finally, transfer USDT from this contract to the nominated address
-        //address payToAddress = address(payTo);
-        //usdtToken.transfer(payToAddress, value);
+        //Finally, transfer trc20Token from this contract to the nominated address
+        bool transferResult = _trc20Token.transfer(payTo, value);
+        require(transferResult, "transfer failed.");
         emit tokenBurn(payTo, value);
+    }
+
+    //position: index of leafnode, start from 0
+    function getPath(uint256 position) external returns(bytes32, bytes32[32] memory, uint256){
+        uint256 index = position + 2**32 - 1;
+        bytes32[32] memory path;
+        require(position >= 0, "position should be non-negative");
+        require(position < leafCount, "position should be smaller than leafCount");
+
+        uint32 level = ancestorLevel(position);
+        bytes32 targetNodeValue = getTargetNodeValue(position, level);
+
+        for (uint32 i = 0; i < 32; i++){
+            if(i == level) {
+                path[31-i] = targetNodeValue;
+            } else {
+                if (index % 2 == 0) {
+                    path[31-i] = tree[index - 1];
+                } else {
+                    path[31-i] = tree[index + 1] == 0?zeroes[i]:tree[index + 1];
+                }
+            }
+            index = (index - 1) / 2;
+        }
+        return (latestRoot, path, position);
+    }
+
+    function ancestorLevel(uint256 leafIndex) private returns(uint32) {
+        uint256 nodeIndex1 =  leafIndex + 2 ** 32 - 1;
+        uint256 nodeIndex2 = leafCount + 2 ** 32 - 2;
+        uint32 level = 0;
+        while (((nodeIndex1 - 1) / 2) != ((nodeIndex2 -1) / 2)) {
+            nodeIndex1 = (nodeIndex1 - 1) / 2;
+            nodeIndex2 = (nodeIndex2 - 1) / 2;
+            level = level + 1;
+        }
+        return level;
+    }
+
+    function getTargetNodeValue(uint256 leafIndex, uint32 level) private returns(bytes32) {
+        bytes32 left;
+        bytes32 right;
+        uint256 index = leafIndex + 2 ** 32 - 1;
+        uint256 nodeIndex = leafCount + 2 ** 32 - 2;
+        bytes32 nodeValue = tree[nodeIndex];
+        if(level == 0) {
+            if(index < nodeIndex) {
+                return nodeValue;
+            }
+            if(index == nodeIndex) {
+                if(index % 2 == 0){
+                    return tree[index - 1];
+                } else {
+                    return zeroes[0];
+                }
+            }
+        }
+
+        for(uint32 i = 0; i < level; i++) {
+            if (nodeIndex % 2 == 0) {
+                left  = tree[nodeIndex - 1];
+                right = nodeValue;
+            } else {
+                left = nodeValue;
+                right = zeroes[i];
+            }
+
+            (bool result,bytes memory msg) = hashor.call(abi.encode(i, left, right));
+            require(result, "hash error");
+
+            nodeValue = bytesToBytes32(msg, 0);
+            nodeIndex = (nodeIndex - 1) / 2;
+        }
+        return nodeValue;
     }
     function bytesToBytes32(bytes memory b, uint offset) private returns (bytes32) {
         bytes32 out;
