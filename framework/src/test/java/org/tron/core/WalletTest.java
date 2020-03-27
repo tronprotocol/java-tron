@@ -1192,6 +1192,32 @@ public class WalletTest {
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     GrpcAPI.ShieldedTRC20Parameters burnParam = blockingStubFull.createShieldedContractParameters(privateTRC20Builder.build());
+
+    GrpcAPI.PrivateShieldedTRC20Parameters privateTrc20Params = privateTRC20Builder.build();
+    logger.info("input parameters:");
+    logger.info(Hex.toHexString(expsk.getAsk()));
+    logger.info(Hex.toHexString(expsk.getNsk()));
+    for (GrpcAPI.SpendNoteTRC20 spend : privateTrc20Params.getShieldedSpendsList()) {
+      GrpcAPI.Note note = spend.getNote();
+      logger.info(String.valueOf(note.getValue()));
+      logger.info(note.getPaymentAddress());
+      logger.info(Hex.toHexString(note.getRcm().toByteArray()));
+      logger.info(Hex.toHexString(spend.getAlpha().toByteArray()));
+      logger.info(Hex.toHexString(spend.getRoot().toByteArray()));
+      logger.info(Hex.toHexString(spend.getPath().toByteArray()));
+      logger.info(String.valueOf(spend.getPos()));
+    }
+    for (GrpcAPI.ReceiveNote rNote : privateTrc20Params.getShieldedReceivesList()) {
+      GrpcAPI.Note note = rNote.getNote();
+      logger.info(String.valueOf(note.getValue()));
+      logger.info(note.getPaymentAddress());
+      logger.info(Hex.toHexString(note.getRcm().toByteArray()));
+    }
+    logger.info(String.valueOf(privateTrc20Params.getToAmount()));
+    logger.info(Hex.toHexString(privateTrc20Params.getTransparentToAddress().toByteArray()));
+    logger.info(Hex.toHexString(privateTrc20Params.getShieldedTRC20ContractAddress().toByteArray()));
+
+
     //check the proof
     boolean result;
     //verify spendProof && bindingSignature
@@ -1267,6 +1293,32 @@ public class WalletTest {
     paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
 
     GrpcAPI.ShieldedTRC20Parameters trc20MintParams = blockingStubFull.createShieldedContractParametersWithoutAsk(paramBuilder.build());
+
+    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk privateParams =  paramBuilder.build();
+    logger.info("input parameters:");
+    logger.info(Hex.toHexString(expsk.getOvk()));
+    logger.info(String.valueOf(privateParams.getFromAmount()));
+    for (GrpcAPI.SpendNoteTRC20 spend : privateParams.getShieldedSpendsList()) {
+      GrpcAPI.Note note = spend.getNote();
+      logger.info(String.valueOf(note.getValue()));
+      logger.info(note.getPaymentAddress());
+      logger.info(Hex.toHexString(note.getRcm().toByteArray()));
+      logger.info(Hex.toHexString(spend.getAlpha().toByteArray()));
+      logger.info(Hex.toHexString(spend.getRoot().toByteArray()));
+      logger.info(Hex.toHexString(spend.getPath().toByteArray()));
+      logger.info(String.valueOf(spend.getPos()));
+    }
+    for (GrpcAPI.ReceiveNote rNote : privateParams.getShieldedReceivesList()) {
+      GrpcAPI.Note note = rNote.getNote();
+      logger.info(String.valueOf(note.getValue()));
+      logger.info(note.getPaymentAddress());
+      logger.info(Hex.toHexString(note.getRcm().toByteArray()));
+    }
+    logger.info(Hex.toHexString(privateParams.getShieldedTRC20ContractAddress().toByteArray()));
+//    logger.info(String.valueOf(privateTrc20Params.getToAmount()));
+//    logger.info(Hex.toHexString(privateTrc20Params.getTransparentToAddress().toByteArray()));
+//    logger.info(Hex.toHexString(privateTrc20Params.getShieldedTRC20ContractAddress().toByteArray()));
+
 
     //verify receiveProof && bindingSignature
     boolean result;
@@ -1410,6 +1462,34 @@ public class WalletTest {
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
     logger.info(transferParam.toString());
    // checkTransferParams(transferParam);
+    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk privateParams =  privateTRC20Builder.build();
+    logger.info("input parameters:");
+    logger.info(Hex.toHexString(expsk.getNsk()));
+    logger.info(Hex.toHexString(fvk.getAk()));
+    logger.info(Hex.toHexString(expsk.getOvk()));
+    //logger.info(String.valueOf(privateParams.getFromAmount()));
+    for (GrpcAPI.SpendNoteTRC20 spend : privateParams.getShieldedSpendsList()) {
+      GrpcAPI.Note note = spend.getNote();
+      logger.info(String.valueOf(note.getValue()));
+      logger.info(note.getPaymentAddress());
+      logger.info(Hex.toHexString(note.getRcm().toByteArray()));
+      logger.info(Hex.toHexString(spend.getAlpha().toByteArray()));
+      logger.info(Hex.toHexString(spend.getRoot().toByteArray()));
+      logger.info(Hex.toHexString(spend.getPath().toByteArray()));
+      logger.info(String.valueOf(spend.getPos()));
+    }
+    for (GrpcAPI.ReceiveNote rNote : privateParams.getShieldedReceivesList()) {
+      GrpcAPI.Note note = rNote.getNote();
+      logger.info(String.valueOf(note.getValue()));
+      logger.info(note.getPaymentAddress());
+      logger.info(Hex.toHexString(note.getRcm().toByteArray()));
+    }
+    logger.info(Hex.toHexString(privateParams.getShieldedTRC20ContractAddress().toByteArray()));
+//    logger.info(String.valueOf(privateTrc20Params.getToAmount()));
+//    logger.info(Hex.toHexString(privateTrc20Params.getTransparentToAddress().toByteArray()));
+//    logger.info(Hex.toHexString(privateTrc20Params.getShieldedTRC20ContractAddress().toByteArray()));
+
+
   }
 
   @Ignore
@@ -1686,7 +1766,7 @@ public class WalletTest {
   }
 
 
-  @Ignore
+  //@Ignore
   @Test
   public void testCreateShieldedContractParametersForBurnWithoutAsk() throws Exception {
 
@@ -1746,6 +1826,32 @@ public class WalletTest {
     //logger.info(privateTRC20Builder.build().toString());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
     logger.info(transferParam.toString());
+
+    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk privateParams =  privateTRC20Builder.build();
+    logger.info("input parameters:");
+    logger.info(Hex.toHexString(expsk.getNsk()));
+    logger.info(Hex.toHexString(fvk.getAk()));
+    //logger.info(Hex.toHexString(expsk.getOvk()));
+    //logger.info(String.valueOf(privateParams.getFromAmount()));
+    for (GrpcAPI.SpendNoteTRC20 spend : privateParams.getShieldedSpendsList()) {
+      GrpcAPI.Note note = spend.getNote();
+      logger.info(String.valueOf(note.getValue()));
+      logger.info(note.getPaymentAddress());
+      logger.info(Hex.toHexString(note.getRcm().toByteArray()));
+      logger.info(Hex.toHexString(spend.getAlpha().toByteArray()));
+      logger.info(Hex.toHexString(spend.getRoot().toByteArray()));
+      logger.info(Hex.toHexString(spend.getPath().toByteArray()));
+      logger.info(String.valueOf(spend.getPos()));
+    }
+    for (GrpcAPI.ReceiveNote rNote : privateParams.getShieldedReceivesList()) {
+      GrpcAPI.Note note = rNote.getNote();
+      logger.info(String.valueOf(note.getValue()));
+      logger.info(note.getPaymentAddress());
+      logger.info(Hex.toHexString(note.getRcm().toByteArray()));
+    }
+    logger.info(String.valueOf(privateParams.getToAmount()));
+    logger.info(Hex.toHexString(privateParams.getTransparentToAddress().toByteArray()));
+    logger.info(Hex.toHexString(privateParams.getShieldedTRC20ContractAddress().toByteArray()));
   }
 
   @Ignore
