@@ -792,7 +792,7 @@ public class WalletTest {
                               byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
-            "burn(bytes32[10],bytes32[2],uint64,bytes32[2],address)",
+            "burn(bytes32[10],bytes32[2],uint64,bytes32[2],uint256)",
              input,
             true,
             0L, 1000000000L,
@@ -1266,8 +1266,8 @@ public class WalletTest {
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    int statNum = 1;
-    int endNum = 140;
+    int statNum = 770;
+    int endNum = 870;
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check(getContractAddress());
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
@@ -1422,7 +1422,7 @@ public class WalletTest {
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    byte[] nf =  Hex.decode("8c17a0bbe1a6887c1f13b42121ffd0136e9a21329a6cf24e83a3dc52a0e0727d");
+    byte[] nf =  Hex.decode("5f8c5fe4948b86bf7acf230925afb9b073b03f97231d95cb09cb01ae3eec5a60");
     String methodSign = "nullifiers(bytes32)";
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
@@ -1452,7 +1452,7 @@ public class WalletTest {
   }
 
   private String getContractAddress() {
-    return "TX29caJFwDPZ9tzjuQ1GB6Ci59ocxQThKN";
+    return "TWQLLWFkZqy1HWsoehYLPvsx81Mf8aM5u1";
   }
 
   private String mintParamsToHexString(GrpcAPI.ShieldedTRC20Parameters mintParams, long value) {
@@ -1471,6 +1471,7 @@ public class WalletTest {
     );
     return Hex.toHexString(mergedBytes);
   }
+
   private String transferParamsToHexString(GrpcAPI.ShieldedTRC20Parameters params) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
@@ -1534,7 +1535,7 @@ public class WalletTest {
                                         byte[] transparent_to_address) {
         byte[] mergedBytes;
         byte[] payTo = new byte[32];
-        System.arraycopy(transparent_to_address,1,payTo,12,20);
+        System.arraycopy(transparent_to_address,0,payTo,11,21);
         ShieldContract.SpendDescription spendDesc = burnParams.getSpendDescription(0);
         mergedBytes = ByteUtil.merge(
                 spendDesc.getNullifier().toByteArray(),
@@ -1560,6 +1561,88 @@ public class WalletTest {
 
   private long Bytes32Tolong(byte[] value) {
     return ByteArray.toLong(value);
+  }
+
+  @Ignore
+  @Test
+  public void getTRC20AccountBalance(){
+    byte[] contractAddress = WalletClient
+            .decodeFromBase58Check("TG3Tj3hwXMgE33zWugDTh2NWshRexU4QtN");
+    logger.info("trc20 contract address: " + ByteArray.toHexString(contractAddress));
+    ManagedChannel channelFull = null;
+    WalletGrpc.WalletBlockingStub blockingStubFull = null;
+    String fullnode = "127.0.0.1:50051";
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build();
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    //byte[] userAccountAddress =  ByteArray.fromHexString(
+    //        "00000000000000000000004140cd765f8e637a2bbe00f9bc458f6b21eb0e648f6933d2fb");
+    //get balance of shielded contract account
+    byte[] userAccountAddress = new byte[32];
+    String shieldedContractAddr = getContractAddress();
+    byte[] shieldedContractAddress = WalletClient
+            .decodeFromBase58Check(shieldedContractAddr);
+    System.arraycopy(shieldedContractAddress, 0, userAccountAddress,11,21);
+
+    String methodSign = "balanceOf(address)";
+    byte[] selector = new byte[4];
+    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
+    byte[] input = ByteUtil.merge(selector,userAccountAddress);
+
+    SmartContractOuterClass.TriggerSmartContract.Builder triggerBuilder = SmartContractOuterClass.TriggerSmartContract.newBuilder();
+    triggerBuilder.setContractAddress(ByteString.copyFrom(contractAddress));
+    triggerBuilder.setData(ByteString.copyFrom(input));
+    GrpcAPI.TransactionExtention trxExt2 = blockingStubFull.triggerConstantContract(triggerBuilder.build());
+
+    List<ByteString> list = trxExt2.getConstantResultList();
+    byte[] listBytes = new byte[0];
+    for(ByteString bs: list) {
+      listBytes =  ByteUtil.merge(listBytes,bs.toByteArray());
+
+    }
+    logger.info("balance " + Hex.toHexString(listBytes));
+  }
+
+  @Ignore
+  @Test
+  public void setAllowance() {
+    byte[] contractAddress = WalletClient
+            .decodeFromBase58Check("TG3Tj3hwXMgE33zWugDTh2NWshRexU4QtN");
+    ManagedChannel channelFull = null;
+    WalletGrpc.WalletBlockingStub blockingStubFull = null;
+    String fullnode = "127.0.0.1:50051";
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build();
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
+    String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
+
+    String shieldedContractAddr = getContractAddress();
+    byte[] shieldedContractAddress = WalletClient
+            .decodeFromBase58Check(shieldedContractAddr);
+    byte[] shieldedContractAddressPadding = new byte[32];
+    System.arraycopy(shieldedContractAddress, 0, shieldedContractAddressPadding,11,21);
+    logger.info("shielded contract address " + ByteArray.toHexString(shieldedContractAddressPadding));
+    byte[] valueBytes = longTo32Bytes(100_000L);
+    String input = Hex.toHexString(ByteUtil.merge(shieldedContractAddressPadding, valueBytes));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String txid = PublicMethed.triggerContract(contractAddress,
+            "approve(address,uint256)",
+            input,
+            true,
+            0L,
+            1000000000L,
+            callerAddress,
+            privateKey,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+            .getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertEquals(Transaction.Result.contractResult.SUCCESS, infoById.get().getReceipt().getResult());
   }
 
 }
