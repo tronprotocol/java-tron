@@ -888,13 +888,6 @@ service WalletSolidity {
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
-
-  rpc MarketSellAsset (MarketSellAssetContract) returns (TransactionExtention) {
-  }
-
-  rpc MarketCancelOrder (MarketCancelOrderContract) returns (TransactionExtention) {
-  }
-
   rpc GetMarketOrderById (BytesMessage) returns (MarketOrder) {
   }
 
@@ -909,8 +902,6 @@ service WalletSolidity {
 
   rpc GetMarketPairList (EmptyMessage) returns (MarketOrderPairList) {
   }
-
-
 
 };
 

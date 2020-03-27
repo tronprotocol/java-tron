@@ -736,6 +736,76 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getMarketOrderByAccount(BytesMessage request,
+        StreamObserver<MarketOrderList> responseObserver) {
+      try {
+        ByteString address = request.getValue();
+
+        MarketOrderList marketOrderList = wallet
+            .getMarketOrderByAccount(address);
+        responseObserver.onNext(marketOrderList);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMarketOrderById(BytesMessage request,
+        StreamObserver<MarketOrder> responseObserver) {
+      try {
+        ByteString address = request.getValue();
+
+        MarketOrder marketOrder = wallet
+            .getMarketOrderById(address);
+        responseObserver.onNext(marketOrder);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMarketPriceByPair(MarketOrderPair request,
+        StreamObserver<MarketPriceList> responseObserver) {
+      try {
+        MarketPriceList marketPriceList = wallet
+            .getMarketPriceByPair(request.getSellTokenId().toByteArray(),
+                request.getBuyTokenId().toByteArray());
+        responseObserver.onNext(marketPriceList);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMarketOrderListByPair(org.tron.protos.Protocol.MarketOrderPair request,
+        StreamObserver<MarketOrderList> responseObserver) {
+      try {
+        MarketOrderList orderPairList = wallet
+            .getMarketOrderListByPair(request.getSellTokenId().toByteArray(),
+                request.getBuyTokenId().toByteArray());
+        responseObserver.onNext(orderPairList);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMarketPairList(EmptyMessage request,
+        StreamObserver<MarketOrderPairList> responseObserver) {
+      try {
+        MarketOrderPairList pairList = wallet.getMarketPairList();
+        responseObserver.onNext(pairList);
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void triggerConstantContract(TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver) {
 
