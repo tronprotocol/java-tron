@@ -2,6 +2,7 @@ package org.tron.core.vm;
 
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import static org.tron.core.vm.OpCode.CALL;
 import static org.tron.core.vm.OpCode.CALLTOKEN;
 import static org.tron.core.vm.OpCode.CALLTOKENID;
@@ -15,7 +16,6 @@ import static org.tron.core.vm.OpCode.SAR;
 import static org.tron.core.vm.OpCode.SHL;
 import static org.tron.core.vm.OpCode.SHR;
 import static org.tron.core.vm.OpCode.TOKENBALANCE;
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
