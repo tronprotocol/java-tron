@@ -3,6 +3,7 @@ package org.tron.core.metrics.net;
 import org.tron.protos.Protocol;
 
 public class RateInfo {
+
   private double meanRate;
   private double oneMinuteRate;
   private double fiveMinuteRate;
