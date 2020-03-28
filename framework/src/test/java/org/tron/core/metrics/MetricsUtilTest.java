@@ -5,29 +5,34 @@ import org.junit.Test;
 
 public class MetricsUtilTest {
 
+  private String test1 = "test1";
+  private String test2 = "test2";
+  private String test3 = "test3";
+  private String test4 = "test4";
+
   @Test
   public void testCounterInc() {
-    MetricsUtil.counterInc(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT);
+    MetricsUtil.counterInc(test1);
     Assert
-        .assertEquals(1, MetricsUtil.getCounter(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT).getCount());
+        .assertEquals(1, MetricsUtil.getCounter(test1).getCount());
   }
 
   @Test
   public void testMeterMark() {
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FORK_COUNT);
-    Assert.assertEquals(1, MetricsUtil.getMeter(MetricsKey.BLOCKCHAIN_FORK_COUNT).getCount());
+    MetricsUtil.meterMark(test2);
+    Assert.assertEquals(1, MetricsUtil.getMeter(test2).getCount());
   }
 
   @Test
   public void testMeterMark2() {
-    MetricsUtil.meterMark(MetricsKey.NET_API_QPS, 2);
-    Assert.assertEquals(2, MetricsUtil.getMeter(MetricsKey.NET_API_QPS).getCount());
+    MetricsUtil.meterMark(test3, 1);
+    Assert.assertEquals(1, MetricsUtil.getMeter(test3).getCount());
   }
 
   @Test
   public void testHistogramUpdate() {
-    MetricsUtil.histogramUpdate(MetricsKey.NET_API_FAIL_QPS, 2);
-    Assert.assertEquals(2,
-        MetricsUtil.getHistogram(MetricsKey.NET_API_FAIL_QPS).getCount());
+    MetricsUtil.histogramUpdate(test4, 1);
+    Assert.assertEquals(1,
+        MetricsUtil.getHistogram(test4).getCount());
   }
 }
