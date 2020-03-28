@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ApiInfo {
+
   private RateInfo qps;
   private RateInfo failQps;
   private RateInfo outTraffic;

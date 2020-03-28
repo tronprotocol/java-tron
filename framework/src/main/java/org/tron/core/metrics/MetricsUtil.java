@@ -52,6 +52,20 @@ public class MetricsUtil {
   /**
    * Meter mark.
    * @param key String
+   */
+  public static void meterMark(String key) {
+    try {
+      if (CommonParameter.getInstance().isNodeMetricsEnable()) {
+        metricRegistry.meter(key).mark(1L);
+      }
+    } catch (Exception e) {
+      logger.warn("mark meter failed, key:{}", key);
+    }
+  }
+
+  /**
+   * Meter mark.
+   * @param key String
    * @param value long
    */
   public static void meterMark(String key, long value) {

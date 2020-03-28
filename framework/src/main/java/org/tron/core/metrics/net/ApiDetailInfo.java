@@ -1,6 +1,7 @@
 package org.tron.core.metrics.net;
 
 public class ApiDetailInfo {
+
   private String name;
   private RateInfo qps;
   private RateInfo failQps;
