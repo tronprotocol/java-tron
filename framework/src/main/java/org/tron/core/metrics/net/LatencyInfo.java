@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LatencyInfo {
+
   private int top99;
   private int top95;
   private int top75;
