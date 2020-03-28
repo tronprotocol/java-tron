@@ -27,11 +27,13 @@ class ServletOutputStreamCopy extends ServletOutputStream {
     return this.copy.size();
   }
 
-  @Override public boolean isReady() {
+  @Override
+  public boolean isReady() {
     return false;
   }
 
-  @Override public void setWriteListener(WriteListener writeListener) {
+  @Override
+  public void setWriteListener(WriteListener writeListener) {
 
   }
 }

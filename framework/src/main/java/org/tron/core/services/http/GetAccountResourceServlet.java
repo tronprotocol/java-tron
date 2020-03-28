@@ -40,7 +40,8 @@ public class GetAccountResourceServlet extends RateLimiterServlet {
       if (params.isVisible()) {
         address = Util.getHexAddress(address);
       }
-      fillResponse(params.isVisible(), ByteString.copyFrom(ByteArray.fromHexString(address)), response);
+      fillResponse(params.isVisible(), ByteString.copyFrom(ByteArray.fromHexString(address)),
+          response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
