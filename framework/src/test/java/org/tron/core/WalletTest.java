@@ -578,7 +578,7 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
 
     byte[] contractAddress = WalletClient.decodeFromBase58Check(getContractAddress());
@@ -589,14 +589,13 @@ public class WalletTest {
     paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
 
     GrpcAPI.ShieldedTRC20Parameters trc20MintParams = blockingStubFull.createShieldedContractParameters(paramBuilder.build());
-    GrpcAPI.PrivateShieldedTRC20Parameters trc20Params =  paramBuilder.build();
+    GrpcAPI.PrivateShieldedTRC20Parameters trc20Params = paramBuilder.build();
     logger.info(Hex.toHexString(trc20Params.getOvk().toByteArray()));
     logger.info(String.valueOf(trc20Params.getFromAmount()));
     logger.info(String.valueOf(trc20Params.getShieldedReceives(0).getNote().getValue()));
     logger.info(trc20Params.getShieldedReceives(0).getNote().getPaymentAddress());
     logger.info(Hex.toHexString(trc20Params.getShieldedReceives(0).getNote().getRcm().toByteArray()));
     logger.info(Hex.toHexString(trc20Params.getShieldedTRC20ContractAddress().toByteArray()));
-
 
     //verify receiveProof && bindingSignature
     boolean result;
@@ -623,8 +622,8 @@ public class WalletTest {
       JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
     }
     Assert.assertTrue(result);
-    String mintInput = mintParamsToHexString(trc20MintParams,revValue);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput);
+    String mintInput = mintParamsToHexString(trc20MintParams, revValue);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput);
     logger.info("..............result...........");
     logger.info(txid1);
     logger.info("..............end..............");
@@ -639,9 +638,9 @@ public class WalletTest {
     byte[] nsk = expsk.getNsk();
     byte[] ovk = expsk.getOvk();
 
-    //ReceiveNote
+    // ReceiveNote
     GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-//    SpendingKey spendingKey = SpendingKey.random();
+    // SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = sk.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
@@ -649,7 +648,7 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
     byte[] contractAddress = WalletClient.decodeFromBase58Check(contractAddr);
 
@@ -681,17 +680,17 @@ public class WalletTest {
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
     //GrpcAPI.ShieldedTRC20Parameters mintParam1 = wallet.createShieldedContractParameters(mintPrivateParam1);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(mintPrivateParam1);
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam2 = mintParams(privateKey,40,contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam2 = mintParams(privateKey, 40, contractAddr);
     //GrpcAPI.ShieldedTRC20Parameters mintParam2 = wallet.createShieldedContractParameters(mintPrivateParam2);
     GrpcAPI.ShieldedTRC20Parameters mintParam2 = blockingStubFull.createShieldedContractParameters(mintPrivateParam2);
 
-    String mintInput1 = mintParamsToHexString(mintParam1,60);
-    String mintInput2 = mintParamsToHexString(mintParam2,40);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
-    String txid2  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput2);
+    String mintInput1 = mintParamsToHexString(mintParam1, 60);
+    String mintInput2 = mintParamsToHexString(mintParam2, 40);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
+    String txid2 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput2);
     logger.info("..............mint result...........");
     logger.info(txid1);
     logger.info(txid2);
@@ -701,13 +700,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -720,13 +719,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById2 = PublicMethed
             .getTransactionInfoById(txid2, blockingStubFull);
     byte[] tx2Data = infoById2.get().getLog(0).getData().toByteArray();
-    long pos2 = Bytes32Tolong(ByteArray.subArray(tx2Data,0,32));
-    String txid4 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos2);
+    long pos2 = Bytes32Tolong(ByteArray.subArray(tx2Data, 0, 32));
+    String txid4 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos2);
     Optional<TransactionInfo> infoById4 = PublicMethed
             .getTransactionInfoById(txid4, blockingStubFull);
     byte[] contractResult2 = infoById4.get().getContractResult(0).toByteArray();
-    byte[] path2 = ByteArray.subArray(contractResult2,32, 1056);
-    byte[] root2 = ByteArray.subArray(contractResult2,0,32);
+    byte[] path2 = ByteArray.subArray(contractResult2, 32, 1056);
+    byte[] root2 = ByteArray.subArray(contractResult2, 0, 32);
     logger.info(Hex.toHexString(contractResult2));
     GrpcAPI.SpendNoteTRC20.Builder note2Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note2Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -748,7 +747,7 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
 
     //ReceiveNote 2
@@ -760,7 +759,7 @@ public class WalletTest {
     byte[] memo2 = new byte[512];
     byte[] rcm2 = Note.generateR();
     String paymentAddressStr2 = KeyIo.encodePaymentAddress(paymentAddress2);
-    GrpcAPI.Note revNote2 = getNote(revValue2,paymentAddressStr2, rcm2,memo2);
+    GrpcAPI.Note revNote2 = getNote(revValue2, paymentAddressStr2, rcm2, memo2);
     revNoteBuilder2.setNote(revNote2);
     privateTRC20Builder.addShieldedReceives(revNoteBuilder.build());
     privateTRC20Builder.addShieldedReceives(revNoteBuilder2.build());
@@ -770,11 +769,10 @@ public class WalletTest {
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
     privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-
     //GrpcAPI.ShieldedTRC20Parameters transferParam = wallet.createShieldedContractParameters(privateTRC20Builder.build());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParameters(privateTRC20Builder.build());
     String transferInput = transferParamsToHexString(transferParam);
-    String txid  = triggerTransfer(blockingStubFull,contractAddress,callerAddress,privateKey, transferInput);
+    String txid = triggerTransfer(blockingStubFull, contractAddress, callerAddress, privateKey, transferInput);
     logger.info("..............transfer result...........");
     logger.info(txid);
     logger.info("..............end..............");
@@ -798,12 +796,11 @@ public class WalletTest {
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
     //GrpcAPI.ShieldedTRC20Parameters mintParam1 = wallet.createShieldedContractParameters(mintPrivateParam1);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(mintPrivateParam1);
-
-    String mintInput1 = mintParamsToHexString(mintParam1,60);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
+    String mintInput1 = mintParamsToHexString(mintParam1, 60);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............mint result...........");
     logger.info(txid1);
     logger.info("..............end..............");
@@ -812,13 +809,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -826,8 +823,6 @@ public class WalletTest {
     note1Builder.setPath(ByteString.copyFrom(path1));
     note1Builder.setRoot(ByteString.copyFrom(root1));
     note1Builder.setNote(mintPrivateParam1.getShieldedReceives(0).getNote());
-
-
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
     privateTRC20Builder.addShieldedSpends(note1Builder.build());
 
@@ -841,13 +836,11 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
     privateTRC20Builder.addShieldedReceives(revNoteBuilder.build());
 
-
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-
     privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
     privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
@@ -856,7 +849,7 @@ public class WalletTest {
     //GrpcAPI.ShieldedTRC20Parameters transferParam = wallet.createShieldedContractParameters(privateTRC20Builder.build());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParameters(privateTRC20Builder.build());
     String transferInput = transferParamsToHexString(transferParam);
-    String txid  = triggerTransfer(blockingStubFull,contractAddress,callerAddress,privateKey, transferInput);
+    String txid = triggerTransfer(blockingStubFull, contractAddress, callerAddress, privateKey, transferInput);
     logger.info("..............transfer result...........");
     logger.info(txid);
     logger.info("..............end..............");
@@ -880,12 +873,12 @@ public class WalletTest {
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 100, contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, 100, contractAddr);
     //GrpcAPI.ShieldedTRC20Parameters mintParam1 = wallet.createShieldedContractParameters(mintPrivateParam1);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(mintPrivateParam1);
 
-    String mintInput1 = mintParamsToHexString(mintParam1,100);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
+    String mintInput1 = mintParamsToHexString(mintParam1, 100);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............mint result...........");
     logger.info(txid1);
     logger.info("..............end..............");
@@ -894,13 +887,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -908,10 +901,8 @@ public class WalletTest {
     note1Builder.setPath(ByteString.copyFrom(path1));
     note1Builder.setRoot(ByteString.copyFrom(root1));
     note1Builder.setNote(mintPrivateParam1.getShieldedReceives(0).getNote());
-
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder privateTRC20Builder = GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
     privateTRC20Builder.addShieldedSpends(note1Builder.build());
-
 
     //ReceiveNote 1
     GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
@@ -923,7 +914,7 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
 
     //ReceiveNote 2
@@ -935,7 +926,7 @@ public class WalletTest {
     byte[] memo2 = new byte[512];
     byte[] rcm2 = Note.generateR();
     String paymentAddressStr2 = KeyIo.encodePaymentAddress(paymentAddress2);
-    GrpcAPI.Note revNote2 = getNote(revValue2,paymentAddressStr2, rcm2,memo2);
+    GrpcAPI.Note revNote2 = getNote(revValue2, paymentAddressStr2, rcm2, memo2);
     revNoteBuilder2.setNote(revNote2);
     privateTRC20Builder.addShieldedReceives(revNoteBuilder.build());
     privateTRC20Builder.addShieldedReceives(revNoteBuilder2.build());
@@ -949,7 +940,7 @@ public class WalletTest {
     //GrpcAPI.ShieldedTRC20Parameters transferParam = wallet.createShieldedContractParameters(privateTRC20Builder.build());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParameters(privateTRC20Builder.build());
     String transferInput = transferParamsToHexString(transferParam);
-    String txid  = triggerTransfer(blockingStubFull,contractAddress,callerAddress,privateKey, transferInput);
+    String txid = triggerTransfer(blockingStubFull, contractAddress, callerAddress, privateKey, transferInput);
     logger.info("..............transfer result...........");
     logger.info(txid);
     logger.info("..............end..............");
@@ -973,17 +964,17 @@ public class WalletTest {
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
     //GrpcAPI.ShieldedTRC20Parameters mintParam1 = wallet.createShieldedContractParameters(mintPrivateParam1);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(mintPrivateParam1);
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam2 = mintParams(privateKey,40,contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam2 = mintParams(privateKey, 40, contractAddr);
     //GrpcAPI.ShieldedTRC20Parameters mintParam2 = wallet.createShieldedContractParameters(mintPrivateParam2);
     GrpcAPI.ShieldedTRC20Parameters mintParam2 = blockingStubFull.createShieldedContractParameters(mintPrivateParam2);
 
-    String mintInput1 = mintParamsToHexString(mintParam1,60);
-    String mintInput2 = mintParamsToHexString(mintParam2,40);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
-    String txid2  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput2);
+    String mintInput1 = mintParamsToHexString(mintParam1, 60);
+    String mintInput2 = mintParamsToHexString(mintParam2, 40);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
+    String txid2 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput2);
     logger.info("..............mint result...........");
     logger.info(txid1);
     logger.info(txid2);
@@ -993,13 +984,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -1012,13 +1003,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById2 = PublicMethed
             .getTransactionInfoById(txid2, blockingStubFull);
     byte[] tx2Data = infoById2.get().getLog(0).getData().toByteArray();
-    long pos2 = Bytes32Tolong(ByteArray.subArray(tx2Data,0,32));
-    String txid4 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos2);
+    long pos2 = Bytes32Tolong(ByteArray.subArray(tx2Data, 0, 32));
+    String txid4 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos2);
     Optional<TransactionInfo> infoById4 = PublicMethed
             .getTransactionInfoById(txid4, blockingStubFull);
     byte[] contractResult2 = infoById4.get().getContractResult(0).toByteArray();
-    byte[] path2 = ByteArray.subArray(contractResult2,32, 1056);
-    byte[] root2 = ByteArray.subArray(contractResult2,0,32);
+    byte[] path2 = ByteArray.subArray(contractResult2, 32, 1056);
+    byte[] root2 = ByteArray.subArray(contractResult2, 0, 32);
     logger.info(Hex.toHexString(contractResult2));
     GrpcAPI.SpendNoteTRC20.Builder note2Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note2Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -1040,13 +1031,12 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
 
 
     privateTRC20Builder.addShieldedReceives(revNoteBuilder.build());
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-
     privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
     privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
@@ -1055,7 +1045,7 @@ public class WalletTest {
     //GrpcAPI.ShieldedTRC20Parameters transferParam = wallet.createShieldedContractParameters(privateTRC20Builder.build());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParameters(privateTRC20Builder.build());
     String transferInput = transferParamsToHexString(transferParam);
-    String txid  = triggerTransfer(blockingStubFull,contractAddress,callerAddress,privateKey, transferInput);
+    String txid = triggerTransfer(blockingStubFull, contractAddress, callerAddress, privateKey, transferInput);
     logger.info("..............transfer result...........");
     logger.info(txid);
     logger.info("..............end..............");
@@ -1063,14 +1053,14 @@ public class WalletTest {
 
 
   private String triggerGetPath(WalletGrpc.WalletBlockingStub blockingStubFull,
-                                byte[] contractAddress, byte[] callerAddress,String privateKey,long pos) {
+                                byte[] contractAddress, byte[] callerAddress, String privateKey, long pos) {
     String txid = PublicMethed.triggerContract(contractAddress,
             "getPath(uint256)",
             Hex.toHexString(longTo32Bytes(pos)),
             true,
             0L,
             1000000000L,
-            callerAddress,privateKey,blockingStubFull);
+            callerAddress, privateKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
             .getTransactionInfoById(txid, blockingStubFull);
@@ -1079,17 +1069,17 @@ public class WalletTest {
     return txid;
   }
 
-  private String  triggerBurn(WalletGrpc.WalletBlockingStub blockingStubFull,
-                              byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
+  private String triggerBurn(WalletGrpc.WalletBlockingStub blockingStubFull,
+                             byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
             "burn(bytes32[10],bytes32[2],uint64,bytes32[2],uint256)",
-             input,
+            input,
             true,
             0L, 1000000000L,
             callerAddress, privateKey,
             blockingStubFull);
-//    logger.info(txid);
+    // logger.info(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
             .getTransactionInfoById(txid, blockingStubFull);
@@ -1098,8 +1088,8 @@ public class WalletTest {
     return txid;
   }
 
-  private String  triggerTransfer(WalletGrpc.WalletBlockingStub blockingStubFull,
-                              byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
+  private String triggerTransfer(WalletGrpc.WalletBlockingStub blockingStubFull,
+                                 byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
             "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32[21][])",
@@ -1108,7 +1098,7 @@ public class WalletTest {
             0L, 1000000000L,
             callerAddress, privateKey,
             blockingStubFull);
-//    logger.info(txid);
+    //  logger.info(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
             .getTransactionInfoById(txid, blockingStubFull);
@@ -1117,8 +1107,8 @@ public class WalletTest {
     return txid;
   }
 
-  private String  triggerMint(WalletGrpc.WalletBlockingStub blockingStubFull,
-                              byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
+  private String triggerMint(WalletGrpc.WalletBlockingStub blockingStubFull,
+                             byte[] contractAddress, byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
             "mint(uint64,bytes32[9],bytes32[2],bytes32[21])",
@@ -1127,7 +1117,7 @@ public class WalletTest {
             0L, 1000000000L,
             callerAddress, privateKey,
             blockingStubFull);
-//    logger.info(txid);
+    // logger.info(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
             .getTransactionInfoById(txid, blockingStubFull);
@@ -1155,11 +1145,11 @@ public class WalletTest {
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
     //String  privateKey2 = "03d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8";
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(mintPrivateParam1);
     long value = 60;
-    String mintInput1 = mintParamsToHexString(mintParam1,value);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
+    String mintInput1 = mintParamsToHexString(mintParam1, value);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............result...........");
     logger.info(txid1);
     logger.info("..............end..............");
@@ -1168,13 +1158,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -1191,7 +1181,8 @@ public class WalletTest {
     privateTRC20Builder.setToAmount(60);
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-    GrpcAPI.ShieldedTRC20Parameters burnParam = blockingStubFull.createShieldedContractParameters(privateTRC20Builder.build());
+    GrpcAPI.ShieldedTRC20Parameters burnParam = blockingStubFull
+            .createShieldedContractParameters(privateTRC20Builder.build());
 
     GrpcAPI.PrivateShieldedTRC20Parameters privateTrc20Params = privateTRC20Builder.build();
     logger.info("input parameters:");
@@ -1217,7 +1208,6 @@ public class WalletTest {
     logger.info(Hex.toHexString(privateTrc20Params.getTransparentToAddress().toByteArray()));
     logger.info(Hex.toHexString(privateTrc20Params.getShieldedTRC20ContractAddress().toByteArray()));
 
-
     //check the proof
     boolean result;
     //verify spendProof && bindingSignature
@@ -1235,16 +1225,17 @@ public class WalletTest {
                       burnParam.getMessageHash().toByteArray()));
       long valueBalance = value;
       result &= JLibrustzcash.librustzcashSaplingFinalCheck(
-              new LibrustzcashParam.FinalCheckParams(ctx, valueBalance, burnParam.getBindingSignature().toByteArray(), burnParam.getMessageHash().toByteArray()));
+              new LibrustzcashParam.FinalCheckParams(ctx, valueBalance,
+                      burnParam.getBindingSignature().toByteArray(),
+                      burnParam.getMessageHash().toByteArray()));
     } catch (Throwable any) {
       result = false;
     } finally {
       JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
     }
     Assert.assertTrue(result);
-
-    String burnInput = burnParamsToHexString(burnParam,value,callerAddress);
-    String txid2 = triggerBurn(blockingStubFull,contractAddress,callerAddress,privateKey,burnInput);
+    String burnInput = burnParamsToHexString(burnParam, value, callerAddress);
+    String txid2 = triggerBurn(blockingStubFull, contractAddress, callerAddress, privateKey, burnInput);
     byte[] nf = burnParam.getSpendDescription(0).getNullifier().toByteArray();
     logger.info("..............burn result...........");
     logger.info(txid2);
@@ -1267,9 +1258,6 @@ public class WalletTest {
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     FullViewingKey fvk = expsk.fullViewingKey();
-    //byte[] ask = expsk.getAsk();
-    byte[] ak = fvk.getAk();
-    byte[] nsk = expsk.getNsk();
     byte[] ovk = expsk.getOvk();
 
     //ReceiveNote
@@ -1282,7 +1270,7 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
 
     byte[] contractAddress = WalletClient.decodeFromBase58Check(getContractAddress());
@@ -1291,10 +1279,10 @@ public class WalletTest {
     paramBuilder.setFromAmount(from_amount);
     paramBuilder.addShieldedReceives(revNoteBuilder.build());
     paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
+    GrpcAPI.ShieldedTRC20Parameters trc20MintParams = blockingStubFull
+            .createShieldedContractParametersWithoutAsk(paramBuilder.build());
 
-    GrpcAPI.ShieldedTRC20Parameters trc20MintParams = blockingStubFull.createShieldedContractParametersWithoutAsk(paramBuilder.build());
-
-    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk privateParams =  paramBuilder.build();
+    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk privateParams = paramBuilder.build();
     logger.info("input parameters:");
     logger.info(Hex.toHexString(expsk.getOvk()));
     logger.info(String.valueOf(privateParams.getFromAmount()));
@@ -1315,10 +1303,6 @@ public class WalletTest {
       logger.info(Hex.toHexString(note.getRcm().toByteArray()));
     }
     logger.info(Hex.toHexString(privateParams.getShieldedTRC20ContractAddress().toByteArray()));
-//    logger.info(String.valueOf(privateTrc20Params.getToAmount()));
-//    logger.info(Hex.toHexString(privateTrc20Params.getTransparentToAddress().toByteArray()));
-//    logger.info(Hex.toHexString(privateTrc20Params.getShieldedTRC20ContractAddress().toByteArray()));
-
 
     //verify receiveProof && bindingSignature
     boolean result;
@@ -1334,7 +1318,6 @@ public class WalletTest {
                       revDesc.getZkproof().toByteArray()));
 
       long valueBalance = -revValue;
-
       result &= JLibrustzcash.librustzcashSaplingFinalCheck(
               new LibrustzcashParam.FinalCheckParams(
                       ctx,
@@ -1368,16 +1351,15 @@ public class WalletTest {
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
     //String  privateKey2 = "03d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8";
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(mintPrivateParam1);
-
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam2 = mintParams(privateKey,40,contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam2 = mintParams(privateKey, 40, contractAddr);
     GrpcAPI.ShieldedTRC20Parameters mintParam2 = blockingStubFull.createShieldedContractParameters(mintPrivateParam2);
 
-    String mintInput1 = mintParamsToHexString(mintParam1,60);
-    String mintInput2 = mintParamsToHexString(mintParam2,40);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
-    String txid2  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput2);
+    String mintInput1 = mintParamsToHexString(mintParam1, 60);
+    String mintInput2 = mintParamsToHexString(mintParam2, 40);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
+    String txid2 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput2);
     logger.info("..............result...........");
     logger.info(txid1);
     logger.info(txid2);
@@ -1387,13 +1369,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -1406,13 +1388,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById2 = PublicMethed
             .getTransactionInfoById(txid2, blockingStubFull);
     byte[] tx2Data = infoById2.get().getLog(0).getData().toByteArray();
-    long pos2 = Bytes32Tolong(ByteArray.subArray(tx2Data,0,32));
-    String txid4 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos2);
+    long pos2 = Bytes32Tolong(ByteArray.subArray(tx2Data, 0, 32));
+    String txid4 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos2);
     Optional<TransactionInfo> infoById4 = PublicMethed
             .getTransactionInfoById(txid4, blockingStubFull);
     byte[] contractResult2 = infoById4.get().getContractResult(0).toByteArray();
-    byte[] path2 = ByteArray.subArray(contractResult2,32, 1056);
-    byte[] root2 = ByteArray.subArray(contractResult2,0,32);
+    byte[] path2 = ByteArray.subArray(contractResult2, 32, 1056);
+    byte[] root2 = ByteArray.subArray(contractResult2, 0, 32);
     logger.info(Hex.toHexString(contractResult2));
     GrpcAPI.SpendNoteTRC20.Builder note2Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note2Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -1434,7 +1416,7 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
 
     //ReceiveNote 2
@@ -1446,7 +1428,7 @@ public class WalletTest {
     byte[] memo2 = new byte[512];
     byte[] rcm2 = Note.generateR();
     String paymentAddressStr2 = KeyIo.encodePaymentAddress(paymentAddress2);
-    GrpcAPI.Note revNote2 = getNote(revValue2,paymentAddressStr2, rcm2,memo2);
+    GrpcAPI.Note revNote2 = getNote(revValue2, paymentAddressStr2, rcm2, memo2);
     revNoteBuilder2.setNote(revNote2);
 
     privateTRC20Builder.addShieldedReceives(revNoteBuilder.build());
@@ -1461,8 +1443,8 @@ public class WalletTest {
     //logger.info(privateTRC20Builder.build().toString());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
     logger.info(transferParam.toString());
-   // checkTransferParams(transferParam);
-    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk privateParams =  privateTRC20Builder.build();
+    // checkTransferParams(transferParam);
+    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk privateParams = privateTRC20Builder.build();
     logger.info("input parameters:");
     logger.info(Hex.toHexString(expsk.getNsk()));
     logger.info(Hex.toHexString(fvk.getAk()));
@@ -1485,11 +1467,6 @@ public class WalletTest {
       logger.info(Hex.toHexString(note.getRcm().toByteArray()));
     }
     logger.info(Hex.toHexString(privateParams.getShieldedTRC20ContractAddress().toByteArray()));
-//    logger.info(String.valueOf(privateTrc20Params.getToAmount()));
-//    logger.info(Hex.toHexString(privateTrc20Params.getTransparentToAddress().toByteArray()));
-//    logger.info(Hex.toHexString(privateTrc20Params.getShieldedTRC20ContractAddress().toByteArray()));
-
-
   }
 
   @Ignore
@@ -1511,16 +1488,15 @@ public class WalletTest {
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
     //String  privateKey2 = "03d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8";
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(mintPrivateParam1);
-
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam2 = mintParams(privateKey,40,contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam2 = mintParams(privateKey, 40, contractAddr);
     GrpcAPI.ShieldedTRC20Parameters mintParam2 = blockingStubFull.createShieldedContractParameters(mintPrivateParam2);
 
-    String mintInput1 = mintParamsToHexString(mintParam1,60);
-    String mintInput2 = mintParamsToHexString(mintParam2,40);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
-    String txid2  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput2);
+    String mintInput1 = mintParamsToHexString(mintParam1, 60);
+    String mintInput2 = mintParamsToHexString(mintParam2, 40);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
+    String txid2 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput2);
     logger.info("..............result...........");
     logger.info(txid1);
     logger.info(txid2);
@@ -1530,13 +1506,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -1549,13 +1525,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById2 = PublicMethed
             .getTransactionInfoById(txid2, blockingStubFull);
     byte[] tx2Data = infoById2.get().getLog(0).getData().toByteArray();
-    long pos2 = Bytes32Tolong(ByteArray.subArray(tx2Data,0,32));
-    String txid4 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos2);
+    long pos2 = Bytes32Tolong(ByteArray.subArray(tx2Data, 0, 32));
+    String txid4 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos2);
     Optional<TransactionInfo> infoById4 = PublicMethed
             .getTransactionInfoById(txid4, blockingStubFull);
     byte[] contractResult2 = infoById4.get().getContractResult(0).toByteArray();
-    byte[] path2 = ByteArray.subArray(contractResult2,32, 1056);
-    byte[] root2 = ByteArray.subArray(contractResult2,0,32);
+    byte[] path2 = ByteArray.subArray(contractResult2, 32, 1056);
+    byte[] root2 = ByteArray.subArray(contractResult2, 0, 32);
     logger.info(Hex.toHexString(contractResult2));
     GrpcAPI.SpendNoteTRC20.Builder note2Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note2Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -1577,10 +1553,8 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
-
-
 
     privateTRC20Builder.addShieldedReceives(revNoteBuilder.build());
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
@@ -1589,11 +1563,8 @@ public class WalletTest {
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
     privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-
-    //logger.info(privateTRC20Builder.build().toString());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
     logger.info(transferParam.toString());
-    // checkTransferParams(transferParam);
   }
 
   @Ignore
@@ -1615,11 +1586,10 @@ public class WalletTest {
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
     //String  privateKey2 = "03d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8";
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(mintPrivateParam1);
-
-    String mintInput1 = mintParamsToHexString(mintParam1,60);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
+    String mintInput1 = mintParamsToHexString(mintParam1, 60);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............result...........");
     logger.info(txid1);
     logger.info("..............end..............");
@@ -1628,13 +1598,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -1642,7 +1612,6 @@ public class WalletTest {
     note1Builder.setPath(ByteString.copyFrom(path1));
     note1Builder.setRoot(ByteString.copyFrom(root1));
     note1Builder.setNote(mintPrivateParam1.getShieldedReceives(0).getNote());
-
     GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
     privateTRC20Builder.addShieldedSpends(note1Builder.build());
 
@@ -1656,10 +1625,8 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
-
-
 
     privateTRC20Builder.addShieldedReceives(revNoteBuilder.build());
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
@@ -1668,11 +1635,8 @@ public class WalletTest {
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
     privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-
-    //logger.info(privateTRC20Builder.build().toString());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
     logger.info(transferParam.toString());
-    // checkTransferParams(transferParam);
   }
 
   @Ignore
@@ -1694,11 +1658,11 @@ public class WalletTest {
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
     //String  privateKey2 = "03d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8";
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 100, contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, 100, contractAddr);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(mintPrivateParam1);
 
-    String mintInput1 = mintParamsToHexString(mintParam1,100);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
+    String mintInput1 = mintParamsToHexString(mintParam1, 100);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............result...........");
     logger.info(txid1);
     logger.info("..............end..............");
@@ -1707,13 +1671,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -1721,8 +1685,8 @@ public class WalletTest {
     note1Builder.setPath(ByteString.copyFrom(path1));
     note1Builder.setRoot(ByteString.copyFrom(root1));
     note1Builder.setNote(mintPrivateParam1.getShieldedReceives(0).getNote());
-
-    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
+    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder privateTRC20Builder = GrpcAPI
+            .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
     privateTRC20Builder.addShieldedSpends(note1Builder.build());
 
     //ReceiveNote 1
@@ -1735,7 +1699,7 @@ public class WalletTest {
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue,paymentAddressStr, rcm,memo);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
     revNoteBuilder.setNote(revNote);
 
     //ReceiveNote 2
@@ -1747,7 +1711,7 @@ public class WalletTest {
     byte[] memo2 = new byte[512];
     byte[] rcm2 = Note.generateR();
     String paymentAddressStr2 = KeyIo.encodePaymentAddress(paymentAddress2);
-    GrpcAPI.Note revNote2 = getNote(revValue2,paymentAddressStr2, rcm2,memo2);
+    GrpcAPI.Note revNote2 = getNote(revValue2, paymentAddressStr2, rcm2, memo2);
     revNoteBuilder2.setNote(revNote2);
 
     privateTRC20Builder.addShieldedReceives(revNoteBuilder.build());
@@ -1758,18 +1722,14 @@ public class WalletTest {
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
     privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-
-    //logger.info(privateTRC20Builder.build().toString());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
     logger.info(transferParam.toString());
-    // checkTransferParams(transferParam);
   }
 
 
-  //@Ignore
+  @Ignore
   @Test
   public void testCreateShieldedContractParametersForBurnWithoutAsk() throws Exception {
-
     librustzcashInitZksnarkParams();
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -1785,11 +1745,11 @@ public class WalletTest {
 
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, 60, contractAddr);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = wallet.createShieldedContractParameters(mintPrivateParam1);
     long value = 60;
-    String mintInput1 = mintParamsToHexString(mintParam1,value);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
+    String mintInput1 = mintParamsToHexString(mintParam1, value);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............result...........");
     logger.info(txid1);
     logger.info("..............end..............");
@@ -1797,13 +1757,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -1818,16 +1778,15 @@ public class WalletTest {
     FullViewingKey fvk = expsk.fullViewingKey();
     privateTRC20Builder.setAk(ByteString.copyFrom(fvk.getAk()));
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
-//  privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
+    //privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
     privateTRC20Builder.setToAmount(60);
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-
     //logger.info(privateTRC20Builder.build().toString());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull.createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
     logger.info(transferParam.toString());
 
-    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk privateParams =  privateTRC20Builder.build();
+    GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk privateParams = privateTRC20Builder.build();
     logger.info("input parameters:");
     logger.info(Hex.toHexString(expsk.getNsk()));
     logger.info(Hex.toHexString(fvk.getAk()));
@@ -1874,8 +1833,8 @@ public class WalletTest {
     ExpandedSpendingKey esk = sk.expandedSpendingKey();
     FullViewingKey fvk = sk.fullViewingKey();
     byte[] ivk = fvk.inViewingKey().value;
-    GrpcAPI.IvkDecryptTRC20Parameters.Builder  paramBuilder = GrpcAPI.IvkDecryptTRC20Parameters.newBuilder();
-
+    GrpcAPI.IvkDecryptTRC20Parameters.Builder paramBuilder = GrpcAPI
+            .IvkDecryptTRC20Parameters.newBuilder();
     logger.info(Hex.toHexString(contractAddress));
     logger.info(Hex.toHexString(ivk));
     logger.info(Hex.toHexString(fvk.getAk()));
@@ -1911,8 +1870,7 @@ public class WalletTest {
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
     FullViewingKey fvk = sk.fullViewingKey();
-    GrpcAPI.OvkDecryptTRC20Parameters.Builder  paramBuilder = GrpcAPI.OvkDecryptTRC20Parameters.newBuilder();
-
+    GrpcAPI.OvkDecryptTRC20Parameters.Builder paramBuilder = GrpcAPI.OvkDecryptTRC20Parameters.newBuilder();
     logger.info(Hex.toHexString(contractAddress));
     logger.info(Hex.toHexString(fvk.getOvk()));
 
@@ -1946,7 +1904,7 @@ public class WalletTest {
     ExpandedSpendingKey esk = sk.expandedSpendingKey();
     FullViewingKey fvk = sk.fullViewingKey();
     byte[] ivk = fvk.inViewingKey().value;
-    GrpcAPI.IvkDecryptTRC20Parameters.Builder  paramBuilder = GrpcAPI.IvkDecryptTRC20Parameters.newBuilder();
+    GrpcAPI.IvkDecryptTRC20Parameters.Builder paramBuilder = GrpcAPI.IvkDecryptTRC20Parameters.newBuilder();
 
     paramBuilder.setAk(ByteString.copyFrom(fvk.getAk()));
     paramBuilder.setNk(ByteString.copyFrom(fvk.getNk()));
@@ -1959,7 +1917,7 @@ public class WalletTest {
       logger.info(noteTx.toString());
     }
 
-    GrpcAPI.NfTRC20Parameters.Builder NfBuilfer ;
+    GrpcAPI.NfTRC20Parameters.Builder NfBuilfer;
     NfBuilfer = GrpcAPI.NfTRC20Parameters.newBuilder();
     NfBuilfer.setAk(ByteString.copyFrom(fvk.getAk()));
     NfBuilfer.setNk(ByteString.copyFrom(fvk.getNk()));
@@ -1977,7 +1935,7 @@ public class WalletTest {
     NfBuilfer.setNote(scannedNotes.getNoteTxs(1).getNote());
     GrpcAPI.NullifierResult result1 = blockingStubFull.isShieldedTRC20ContractNoteSpent(NfBuilfer.build());
     Assert.assertTrue(result1.getIsSpent());
-    GrpcAPI.NfTRC20Parameters nfParma =  NfBuilfer.build();
+    GrpcAPI.NfTRC20Parameters nfParma = NfBuilfer.build();
     logger.info(String.valueOf(nfParma.getNote().getValue()));
     logger.info(nfParma.getNote().getPaymentAddress());
     logger.info(Hex.toHexString(nfParma.getNote().getRcm().toByteArray()));
@@ -2013,18 +1971,14 @@ public class WalletTest {
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check(contractAddr);
     byte[] callerAddress = WalletClient.decodeFromBase58Check("TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ");
-
-//    SpendingKey sk = SpendingKey
-//            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
     SpendingKey sk = SpendingKey.decode(privateKey);
     //String  privateKey2 = "03d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8";
-      long value = 60;
-    GrpcAPI.PrivateShieldedTRC20Parameters  mintPrivateParam1 = mintParams(privateKey, value, contractAddr);
+    long value = 60;
+    GrpcAPI.PrivateShieldedTRC20Parameters mintPrivateParam1 = mintParams(privateKey, value, contractAddr);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = wallet.createShieldedContractParameters(mintPrivateParam1);
-
-    String mintInput1 = mintParamsToHexString(mintParam1,value);
-    String txid1  = triggerMint(blockingStubFull,contractAddress,callerAddress,privateKey, mintInput1);
+    String mintInput1 = mintParamsToHexString(mintParam1, value);
+    String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............min result...........");
     logger.info(txid1);
     logger.info("..............end..............");
@@ -2033,13 +1987,13 @@ public class WalletTest {
     Optional<TransactionInfo> infoById1 = PublicMethed
             .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
-    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data,0,32));
-    String txid3 = triggerGetPath(blockingStubFull,contractAddress,callerAddress,privateKey,pos1);
+    long pos1 = Bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
+    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
     Optional<TransactionInfo> infoById3 = PublicMethed
             .getTransactionInfoById(txid3, blockingStubFull);
     byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
-    byte[] path1 = ByteArray.subArray(contractResult1,32, 1056);
-    byte[] root1 = ByteArray.subArray(contractResult1,0,32);
+    byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
+    byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
     GrpcAPI.SpendNoteTRC20.Builder note1Builder = GrpcAPI.SpendNoteTRC20.newBuilder();
     note1Builder.setAlpha(ByteString.copyFrom(Note.generateR()));
@@ -2057,8 +2011,8 @@ public class WalletTest {
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     GrpcAPI.ShieldedTRC20Parameters burnParam = wallet.createShieldedContractParameters(privateTRC20Builder.build());
-    String burnInput = burnParamsToHexString(burnParam,value,callerAddress);
-    String txid2 = triggerBurn(blockingStubFull,contractAddress,callerAddress,privateKey,burnInput);
+    String burnInput = burnParamsToHexString(burnParam, value, callerAddress);
+    String txid2 = triggerBurn(blockingStubFull, contractAddress, callerAddress, privateKey, burnInput);
     byte[] nf = burnParam.getSpendDescription(0).getNullifier().toByteArray();
     logger.info("..............burn result...........");
     logger.info(txid2);
@@ -2069,9 +2023,8 @@ public class WalletTest {
     String methodSign = "nullifiers(bytes32)";
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
-    byte[] input = ByteUtil.merge(selector,nf);
+    byte[] input = ByteUtil.merge(selector, nf);
     SmartContractOuterClass.TriggerSmartContract.Builder triggerBuilder = SmartContractOuterClass.TriggerSmartContract.newBuilder();
-
     triggerBuilder.setContractAddress(ByteString.copyFrom(contractAddress));
     triggerBuilder.setData(ByteString.copyFrom(input));
     GrpcAPI.TransactionExtention trxExt2 = blockingStubFull.triggerConstantContract(triggerBuilder.build());
@@ -2080,20 +2033,20 @@ public class WalletTest {
     List<ByteString> list = trxExt2.getConstantResultList();
     //String message = list.toArray().toString();
     byte[] listBytes = new byte[0];
-    for(ByteString bs: list) {
-      listBytes =  ByteUtil.merge(listBytes,bs.toByteArray());
+    for (ByteString bs : list) {
+      listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
     }
     logger.info("..............nullifier result...........");
     logger.info(code);
     logger.info(String.valueOf(bool));
     logger.info(Hex.toHexString(listBytes));
     logger.info("..............end..............");
-    Assert.assertArrayEquals(nf,listBytes);
+    Assert.assertArrayEquals(nf, listBytes);
   }
 
   @Ignore
   @Test
-  public void  testNullier() {
+  public void testNullier() {
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
     String fullnode = "127.0.0.1:50051";
@@ -2102,11 +2055,11 @@ public class WalletTest {
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    byte[] nf =  Hex.decode("5f8c5fe4948b86bf7acf230925afb9b073b03f97231d95cb09cb01ae3eec5a60");
+    byte[] nf = Hex.decode("5f8c5fe4948b86bf7acf230925afb9b073b03f97231d95cb09cb01ae3eec5a60");
     String methodSign = "nullifiers(bytes32)";
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
-    byte[] input = ByteUtil.merge(selector,nf);
+    byte[] input = ByteUtil.merge(selector, nf);
     SmartContractOuterClass.TriggerSmartContract.Builder triggerBuilder = SmartContractOuterClass.TriggerSmartContract.newBuilder();
     String contractAddr = getContractAddress();
     byte[] contractAddress = WalletClient
@@ -2116,14 +2069,13 @@ public class WalletTest {
     GrpcAPI.TransactionExtention trxExt2 = blockingStubFull.triggerConstantContract(triggerBuilder.build());
 
     String code = trxExt2.getResult().getCode().toString();
-     boolean bool = trxExt2.getResult().getResult();
-     List<ByteString> list = trxExt2.getConstantResultList();
-     //String message = list.toArray().toString();
-     byte[] listBytes = new byte[0];
-     for(ByteString bs: list) {
-       listBytes =  ByteUtil.merge(listBytes,bs.toByteArray());
-
-     }
+    boolean bool = trxExt2.getResult().getResult();
+    List<ByteString> list = trxExt2.getConstantResultList();
+    //String message = list.toArray().toString();
+    byte[] listBytes = new byte[0];
+    for (ByteString bs : list) {
+      listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
+    }
     logger.info("..............nullifier result...........");
     logger.info(code);
     logger.info(String.valueOf(bool));
@@ -2139,15 +2091,15 @@ public class WalletTest {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = mintParams.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
-      longTo32Bytes(value),
-      revDesc.getNoteCommitment().toByteArray(),
-      revDesc.getValueCommitment().toByteArray(),
-      revDesc.getEpk().toByteArray(),
-      revDesc.getZkproof().toByteArray(),
-      mintParams.getBindingSignature().toByteArray(),
-      revDesc.getCEnc().toByteArray(),
-      revDesc.getCOut().toByteArray(),
-      new byte[12]
+            longTo32Bytes(value),
+            revDesc.getNoteCommitment().toByteArray(),
+            revDesc.getValueCommitment().toByteArray(),
+            revDesc.getEpk().toByteArray(),
+            revDesc.getZkproof().toByteArray(),
+            mintParams.getBindingSignature().toByteArray(),
+            revDesc.getCEnc().toByteArray(),
+            revDesc.getCOut().toByteArray(),
+            new byte[12]
     );
     return Hex.toHexString(mergedBytes);
   }
@@ -2173,9 +2125,9 @@ public class WalletTest {
     byte[] inputOffsetbytes = longTo32Bytes(192);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(192+32+320*spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(192 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
-    for(ShieldContract.ReceiveDescription recvDesc:recvDescs) {
+    for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
               recvDesc.getNoteCommitment().toByteArray(),
               recvDesc.getValueCommitment().toByteArray(),
@@ -2190,8 +2142,8 @@ public class WalletTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(192+32+320*spendCount+32+64*spendCount);
-    byte[] coffsetBytes = longTo32Bytes(192+32+320*spendCount+32+64*spendCount+32+288*recvCount);
+    byte[] outputOffsetbytes = longTo32Bytes(192 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] coffsetBytes = longTo32Bytes(192 + 32 + 320 * spendCount + 32 + 64 * spendCount + 32 + 288 * recvCount);
     bindingSig = params.getBindingSignature().toByteArray();
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
             authOffsetBytes,
@@ -2211,32 +2163,31 @@ public class WalletTest {
     return Hex.toHexString(mergedBytes);
   }
 
-   private String burnParamsToHexString(GrpcAPI.ShieldedTRC20Parameters burnParams, long value,
-                                        byte[] transparent_to_address) {
-        byte[] mergedBytes;
-        byte[] payTo = new byte[32];
-        System.arraycopy(transparent_to_address,0,payTo,11,21);
-        ShieldContract.SpendDescription spendDesc = burnParams.getSpendDescription(0);
-        mergedBytes = ByteUtil.merge(
-                spendDesc.getNullifier().toByteArray(),
-                spendDesc.getAnchor().toByteArray(),
-                spendDesc.getValueCommitment().toByteArray(),
-                spendDesc.getRk().toByteArray(),
-                spendDesc.getZkproof().toByteArray(),
-                spendDesc.getSpendAuthoritySignature().toByteArray(),
-                longTo32Bytes(value),
-                burnParams.getBindingSignature().toByteArray(),
-                payTo
-        );
-        logger.info("merged bytes: " + ByteArray.toHexString(mergedBytes));
-        return Hex.toHexString(mergedBytes);
-    }
+  private String burnParamsToHexString(GrpcAPI.ShieldedTRC20Parameters burnParams, long value,
+                                       byte[] transparent_to_address) {
+    byte[] mergedBytes;
+    byte[] payTo = new byte[32];
+    System.arraycopy(transparent_to_address, 0, payTo, 11, 21);
+    ShieldContract.SpendDescription spendDesc = burnParams.getSpendDescription(0);
+    mergedBytes = ByteUtil.merge(
+            spendDesc.getNullifier().toByteArray(),
+            spendDesc.getAnchor().toByteArray(),
+            spendDesc.getValueCommitment().toByteArray(),
+            spendDesc.getRk().toByteArray(),
+            spendDesc.getZkproof().toByteArray(),
+            spendDesc.getSpendAuthoritySignature().toByteArray(),
+            longTo32Bytes(value),
+            burnParams.getBindingSignature().toByteArray(),
+            payTo
+    );
+    logger.info("merged bytes: " + ByteArray.toHexString(mergedBytes));
+    return Hex.toHexString(mergedBytes);
+  }
 
   private byte[] longTo32Bytes(long value) {
-    byte[] longBytes =  ByteArray.fromLong(value);
+    byte[] longBytes = ByteArray.fromLong(value);
     byte[] zeroBytes = new byte[24];
-
-    return ByteUtil.merge(zeroBytes,longBytes);
+    return ByteUtil.merge(zeroBytes, longBytes);
   }
 
   private long Bytes32Tolong(byte[] value) {
@@ -2245,7 +2196,7 @@ public class WalletTest {
 
   @Ignore
   @Test
-  public void getTRC20AccountBalance(){
+  public void getTRC20AccountBalance() {
     byte[] contractAddress = WalletClient
             .decodeFromBase58Check("TG3Tj3hwXMgE33zWugDTh2NWshRexU4QtN");
     logger.info("trc20 contract address: " + ByteArray.toHexString(contractAddress));
@@ -2257,20 +2208,16 @@ public class WalletTest {
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    //byte[] userAccountAddress =  ByteArray.fromHexString(
-    //        "00000000000000000000004140cd765f8e637a2bbe00f9bc458f6b21eb0e648f6933d2fb");
-    //get balance of shielded contract account
     byte[] userAccountAddress = new byte[32];
     String shieldedContractAddr = getContractAddress();
     byte[] shieldedContractAddress = WalletClient
             .decodeFromBase58Check(shieldedContractAddr);
-    System.arraycopy(shieldedContractAddress, 0, userAccountAddress,11,21);
+    System.arraycopy(shieldedContractAddress, 0, userAccountAddress, 11, 21);
 
     String methodSign = "balanceOf(address)";
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
-    byte[] input = ByteUtil.merge(selector,userAccountAddress);
-
+    byte[] input = ByteUtil.merge(selector, userAccountAddress);
     SmartContractOuterClass.TriggerSmartContract.Builder triggerBuilder = SmartContractOuterClass.TriggerSmartContract.newBuilder();
     triggerBuilder.setContractAddress(ByteString.copyFrom(contractAddress));
     triggerBuilder.setData(ByteString.copyFrom(input));
@@ -2278,9 +2225,8 @@ public class WalletTest {
 
     List<ByteString> list = trxExt2.getConstantResultList();
     byte[] listBytes = new byte[0];
-    for(ByteString bs: list) {
-      listBytes =  ByteUtil.merge(listBytes,bs.toByteArray());
-
+    for (ByteString bs : list) {
+      listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
     }
     logger.info("balance " + Hex.toHexString(listBytes));
   }
@@ -2305,7 +2251,7 @@ public class WalletTest {
     byte[] shieldedContractAddress = WalletClient
             .decodeFromBase58Check(shieldedContractAddr);
     byte[] shieldedContractAddressPadding = new byte[32];
-    System.arraycopy(shieldedContractAddress, 0, shieldedContractAddressPadding,11,21);
+    System.arraycopy(shieldedContractAddress, 0, shieldedContractAddressPadding, 11, 21);
     logger.info("shielded contract address " + ByteArray.toHexString(shieldedContractAddressPadding));
     byte[] valueBytes = longTo32Bytes(100_000L);
     String input = Hex.toHexString(ByteUtil.merge(shieldedContractAddressPadding, valueBytes));
@@ -2324,5 +2270,4 @@ public class WalletTest {
             .getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(Transaction.Result.contractResult.SUCCESS, infoById.get().getReceipt().getResult());
   }
-
 }
