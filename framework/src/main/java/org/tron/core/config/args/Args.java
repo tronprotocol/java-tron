@@ -453,6 +453,10 @@ public class Args {
   @Setter
   private boolean fullNodeAllowShieldedTransactionArgs;
 
+  @Getter/**/
+  @Setter
+  private long allowShieldedTRC20TokenTransaction;
+
   // full node used this parameter to close shielded TRC-20 transaction
   @Getter
   @Setter
