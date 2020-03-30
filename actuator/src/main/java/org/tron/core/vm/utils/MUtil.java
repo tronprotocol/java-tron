@@ -55,13 +55,4 @@ public class MUtil {
   public static boolean isNotNullOrEmpty(String str) {
     return !isNullOrEmpty(str);
   }
-
-  public static byte[] allZero32TronAddress() {
-    byte[] newAddress = new byte[32];
-    byte[] temp = new byte[]{DecodeUtil.addressPreFixByte};
-    System.arraycopy(temp, 0, newAddress, 11, temp.length);
-
-    return newAddress;
-  }
-
 }
