@@ -1162,11 +1162,14 @@ public class PrecompiledContracts {
 
   public static class VerifyTransferProof extends VerifyProof {
 
-    private static final ExecutorService workers;
     private static final Integer[] SIZE = {2048, 2336, 2432, 2720};
+    private static final ExecutorService workersInConstantCall;
+    private static final ExecutorService workersInNonConstantCall;
 
     static {
-      workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2 + 1);
+      int maxThreads = Runtime.getRuntime().availableProcessors() / 2;
+      workersInConstantCall = Executors.newFixedThreadPool(maxThreads);
+      workersInNonConstantCall = Executors.newFixedThreadPool(maxThreads);
     }
 
     @Override
@@ -1242,55 +1245,38 @@ public class PrecompiledContracts {
       for (int i = 0; i < receiveCount; i++) {
         System.arraycopy(receiveCv[i], 0, receiveCvs, 32 * i, 32);
       }
-      boolean checkResult = true;
+
       int threadCount = spendCount + receiveCount;
       CountDownLatch countDownLatch = new CountDownLatch(threadCount);
       List<Future<Boolean>> futures = new ArrayList<>(threadCount);
-      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      ExecutorService workers;
       if (isConstantCall()) {
-        final ExecutorService workersInConstantCall = Executors.newFixedThreadPool(
-                 Runtime.getRuntime().availableProcessors() / 2 + 1);
-        // submit check spend task
-        for (int i = 0; i < spendCount; i++) {
-          Future<Boolean> futureCheckSpend = workersInConstantCall
-                  .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
-                          nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
-          futures.add(futureCheckSpend);
-        }
-        //submit check output task
-        for (int i = 0; i < receiveCount; i++) {
-          Future<Boolean> futureCheckOutput = workersInConstantCall
-                  .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
-                          receiveEpk[i], receiveProof[i]));
-          futures.add(futureCheckOutput);
-        }
-        // submit check binding signature
-        Future<Boolean> futureCheckBindingSig = workersInConstantCall
-                .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
-                        signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
-        futures.add(futureCheckBindingSig);
+        workers = workersInConstantCall;
       } else {
-        // submit check spend task
-        for (int i = 0; i < spendCount; i++) {
-          Future<Boolean> futureCheckSpend = workers
-                  .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
-                          nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
-          futures.add(futureCheckSpend);
-        }
-        //submit check output task
-        for (int i = 0; i < receiveCount; i++) {
-          Future<Boolean> futureCheckOutput = workers
-                  .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
-                          receiveEpk[i], receiveProof[i]));
-          futures.add(futureCheckOutput);
-        }
-        // submit check binding signature
-        Future<Boolean> futureCheckBindingSig = workers
-                .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
-                        signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
-        futures.add(futureCheckBindingSig);
+        workers = workersInNonConstantCall;
       }
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      // submit check spend task
+      for (int i = 0; i < spendCount; i++) {
+        Future<Boolean> futureCheckSpend = workers
+                .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
+                        nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
+        futures.add(futureCheckSpend);
+      }
+      //submit check output task
+      for (int i = 0; i < receiveCount; i++) {
+        Future<Boolean> futureCheckOutput = workers
+                .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
+                        receiveEpk[i], receiveProof[i]));
+        futures.add(futureCheckOutput);
+      }
+      // submit check binding signature
+      Future<Boolean> futureCheckBindingSig = workers
+              .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
+                      signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
+      futures.add(futureCheckBindingSig);
 
+      boolean checkResult = true;
       try {
         countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
         for (Future<Boolean> future : futures) {
@@ -1321,12 +1307,13 @@ public class PrecompiledContracts {
       private byte[] rk;
       private byte[] zkproof;
       private byte[] spendAuthSig;
-      private byte[] sighashValue;
+      private byte[] signHash;
 
       private CountDownLatch countDownLatch;
 
-      SaplingCheckSpendTask(CountDownLatch countDownLatch, long ctx, byte[] cv, byte[] anchor,
-                            byte[] nullifier, byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue) {
+      SaplingCheckSpendTask(CountDownLatch countDownLatch,
+                            long ctx, byte[] cv, byte[] anchor, byte[] nullifier,
+                            byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
         this.ctx = ctx;
         this.cv = cv;
         this.anchor = anchor;
@@ -1334,7 +1321,7 @@ public class PrecompiledContracts {
         this.rk = rk;
         this.zkproof = zkproof;
         this.spendAuthSig = spendAuthSig;
-        this.sighashValue = sighashValue;
+        this.signHash = signHash;
         this.countDownLatch = countDownLatch;
       }
 
@@ -1344,7 +1331,7 @@ public class PrecompiledContracts {
         try {
           result = JLibrustzcash.librustzcashSaplingCheckSpend(
                   new LibrustzcashParam.CheckSpendParams(this.ctx, this.cv, this.anchor,
-                          this.nullifier, this.rk, this.zkproof, this.spendAuthSig, this.sighashValue));
+                          this.nullifier, this.rk, this.zkproof, this.spendAuthSig, this.signHash));
         } catch (ZksnarkException e) {
           throw e;
         } finally {
