@@ -317,6 +317,13 @@ public class RpcApiService implements Service {
     }
   }
 
+  private void checkSupportShieldedTRC20TokenTransaction() throws ZksnarkException {
+    String msg = "Not support Shielded TRC20 Token Transaction, need to be opened by the committee";
+    if (!dbManager.getDynamicPropertiesStore().supportShieldedTRC20TokenTransaction()) {
+      throw new ZksnarkException(msg);
+    }
+  }
+
   @Override
   public void stop() {
     if (apiServer != null) {
@@ -2338,93 +2345,83 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createShieldedContractParameters(PrivateShieldedTRC20Parameters request,
-        StreamObserver<org.tron.api.GrpcAPI.ShieldedTRC20Parameters> responseObserver) {
-
+    public void createShieldedContractParameters(
+            PrivateShieldedTRC20Parameters request, StreamObserver<org.tron.api.GrpcAPI.ShieldedTRC20Parameters> responseObserver) {
       try {
-        //checkSupportShieldedTransaction();
-
+        //checkSupportShieldedTRC20TokenTransaction();
         ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
-            .createShieldedContractParameters(request);
+                .createShieldedContractParameters(request);
         responseObserver.onNext(shieldedTRC20Parameters);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
         logger.info("exception caught: " + e.getMessage());
       }
-
       responseObserver.onCompleted();
     }
 
     @Override
     public void createShieldedContractParametersWithoutAsk(
-        PrivateShieldedTRC20ParametersWithoutAsk request,
-        StreamObserver<org.tron.api.GrpcAPI.ShieldedTRC20Parameters> responseObserver) {
+            PrivateShieldedTRC20ParametersWithoutAsk request,
+            StreamObserver<org.tron.api.GrpcAPI.ShieldedTRC20Parameters> responseObserver) {
       try {
-        //checkSupportShieldedTransaction();
-
+        //checkSupportShieldedTRC20TokenTransaction();
         ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
-            .createShieldedContractParametersWithoutAsk(request);
+                .createShieldedContractParametersWithoutAsk(request);
         responseObserver.onNext(shieldedTRC20Parameters);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
         logger.info("exception caught: " + e.getMessage());
       }
-
       responseObserver.onCompleted();
     }
 
     @Override
-    public void scanShieldedTRC20NotesbyIvk(IvkDecryptTRC20Parameters request,
-        StreamObserver<org.tron.api.GrpcAPI.DecryptNotesTRC20> responseObserver) {
+    public void scanShieldedTRC20NotesbyIvk(
+            IvkDecryptTRC20Parameters request,
+            StreamObserver<org.tron.api.GrpcAPI.DecryptNotesTRC20> responseObserver) {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
-
       try {
-        //checkSupportShieldedTransaction();
-
+        //checkSupportShieldedTRC20TokenTransaction();
         DecryptNotesTRC20 decryptNotes = wallet.scanShieldedTRC20NotesbyIvk(startNum, endNum,
-            request.getShieldedTRC20ContractAddress().toByteArray(),
-            request.getIvk().toByteArray(),
-            request.getAk().toByteArray(),
-            request.getNk().toByteArray());
+                request.getShieldedTRC20ContractAddress().toByteArray(),
+                request.getIvk().toByteArray(),
+                request.getAk().toByteArray(),
+                request.getNk().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
         logger.info("exception caught: " + e.getMessage());
       }
-
       responseObserver.onCompleted();
     }
 
     @Override
-    public void scanShieldedTRC20NotesbyOvk(OvkDecryptTRC20Parameters request,
-        StreamObserver<org.tron.api.GrpcAPI.DecryptNotesTRC20> responseObserver) {
+    public void scanShieldedTRC20NotesbyOvk(
+            OvkDecryptTRC20Parameters request,
+            StreamObserver<org.tron.api.GrpcAPI.DecryptNotesTRC20> responseObserver) {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
-
       try {
-        //checkSupportShieldedTransaction();
-
+        //checkSupportShieldedTRC20TokenTransaction();
         DecryptNotesTRC20 decryptNotes = wallet.scanShieldedTRC20NotesbyOvk(startNum, endNum,
-            request.getOvk().toByteArray(),
-            request.getShieldedTRC20ContractAddress().toByteArray());
+                request.getOvk().toByteArray(),
+                request.getShieldedTRC20ContractAddress().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
         logger.info("exception caught: " + e.getMessage());
       }
-
       responseObserver.onCompleted();
     }
 
     @Override
-    public void isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request,
-        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
+    public void isShieldedTRC20ContractNoteSpent(
+            NfTRC20Parameters request, StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
       try {
-        //checkSupportShieldedTransaction();
-
+        //checkSupportShieldedTRC20TokenTransaction();
         GrpcAPI.NullifierResult nf = wallet
-            .isShieldedTRC20ContractNoteSpent(request);
+                .isShieldedTRC20ContractNoteSpent(request);
         responseObserver.onNext(nf);
       } catch (ZksnarkException | ContractExeException e) {
         responseObserver.onError(getRunTimeException(e));
