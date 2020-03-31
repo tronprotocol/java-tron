@@ -2,6 +2,7 @@ package org.tron.core.services.http;
 
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
+import javax.servlet.http.HttpServletResponse;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;

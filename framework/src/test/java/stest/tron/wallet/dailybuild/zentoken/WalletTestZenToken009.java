@@ -88,7 +88,7 @@ public class WalletTestZenToken009 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -127,7 +127,7 @@ public class WalletTestZenToken009 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Public to shield transaction with mutisign")
+  @Test(enabled = false, description = "Public to shield transaction with mutisign")
   public void test1Public2ShieldTransaction() {
     Args.setFullNodeAllowShieldedTransaction(true);
     shieldAddressInfo = PublicMethed.generateShieldAddress();
@@ -173,7 +173,7 @@ public class WalletTestZenToken009 {
     Assert.assertEquals(memo, PublicMethed.getMemo(note));
   }
 
-  @Test(enabled = true, description = "When from is shield,sign this transaction is forbidden")
+  @Test(enabled = false, description = "When from is shield,sign this transaction is forbidden")
   public void test2ShieldFromShouldNotSign() {
     receiverAddressInfo = PublicMethed.generateShieldAddress();
     receiverAddress = shieldAddressInfo.get().getAddress();
@@ -210,7 +210,7 @@ public class WalletTestZenToken009 {
    * constructor.
    */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     PublicMethedForMutiSign.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,

@@ -34,7 +34,6 @@ public class StringUtil {
     return str.matches(regex);
   }
 
-
   public static byte[] createDbKey(ByteString string) {
     return string.toByteArray();
   }
@@ -56,17 +55,7 @@ public class StringUtil {
     return createReadableString(string.toByteArray());
   }
 
-  public static List<String> getAddressStringList(Collection<ByteString> collection) {
-    return collection.stream()
-        .map(bytes -> encode58Check(bytes.toByteArray()))
-        .collect(Collectors.toList());
-  }
 
-  public static List<String> getAddressStringListFromByteArray(Collection<byte[]> collection) {
-    return collection.stream()
-        .map(bytes -> createReadableString(bytes))
-        .collect(Collectors.toList());
-  }
 
   public static ByteString hexString2ByteString(String hexString) {
     return ByteString.copyFrom(ByteArray.fromHexString(hexString));

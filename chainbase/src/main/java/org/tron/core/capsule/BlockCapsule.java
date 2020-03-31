@@ -149,7 +149,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
     ByteString sig = ByteString.copyFrom(ecKeyEngine.Base64toBytes(ecKeyEngine.signHash(getRawHash()
             .getBytes())));
-
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
             .build();
 

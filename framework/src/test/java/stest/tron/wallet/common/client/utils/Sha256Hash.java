@@ -23,6 +23,9 @@ import com.google.common.io.ByteStreams;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import org.spongycastle.crypto.digests.SM3Digest;
+import org.tron.common.utils.ByteArray;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -31,9 +34,6 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import org.spongycastle.crypto.digests.SM3Digest;
-import org.tron.common.utils.ByteArray;
-
 
 /**
  * A Sha256Hash just wraps a byte[] so that equals and hashcode work correctly, allowing it to be
@@ -47,29 +47,16 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
 
   private final byte[] bytes;
 
-  private long blockNum;
-
-
-  /**
-   * constructor.
-   */
-
   public Sha256Hash(long num, byte[] hash) {
     byte[] rawHashBytes = this.generateBlockId(num, hash);
     checkArgument(rawHashBytes.length == LENGTH);
     this.bytes = rawHashBytes;
-    this.blockNum = num;
   }
-
-  /**
-   * constructor.
-   */
 
   public Sha256Hash(long num, Sha256Hash hash) {
     byte[] rawHashBytes = this.generateBlockId(num, hash);
     checkArgument(rawHashBytes.length == LENGTH);
     this.bytes = rawHashBytes;
-    this.blockNum = num;
   }
 
   /**
@@ -263,20 +250,18 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
 
   private byte[] generateBlockId(long blockNum, Sha256Hash blockHash) {
     byte[] numBytes = Longs.toByteArray(blockNum);
-    byte[] hash = blockHash.getBytes();
+    byte[] hash = new byte[blockHash.getBytes().length];
     System.arraycopy(numBytes, 0, hash, 0, 8);
+    System.arraycopy(blockHash.getBytes(), 8, hash, 8, blockHash.getBytes().length - 8);
     return hash;
   }
 
   private byte[] generateBlockId(long blockNum, byte[] blockHash) {
     byte[] numBytes = Longs.toByteArray(blockNum);
-    byte[] hash = blockHash;
+    byte[] hash = new byte[blockHash.length];
     System.arraycopy(numBytes, 0, hash, 0, 8);
+    System.arraycopy(blockHash, 8, hash, 8, blockHash.length - 8);
     return hash;
-  }
-
-  public long getBlockNum() {
-    return blockNum;
   }
 
   @Override

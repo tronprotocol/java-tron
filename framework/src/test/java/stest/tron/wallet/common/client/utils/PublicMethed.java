@@ -51,6 +51,7 @@ import org.tron.api.GrpcAPI.IvkDecryptParameters;
 import org.tron.api.GrpcAPI.NfParameters;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.GrpcAPI.NoteParameters;
+import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.OvkDecryptParameters;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
@@ -62,6 +63,7 @@ import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -70,6 +72,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.Hash;
 import org.tron.core.Wallet;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -1082,7 +1085,6 @@ public class PublicMethed {
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
     return ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
         .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
-
   }
 
   /**
@@ -1163,8 +1165,6 @@ public class PublicMethed {
     return ByteArray.toHexString(Sha256Hash.hash(
         CommonParameter.getInstance()
             .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
-
-
   }
 
 
@@ -1292,6 +1292,7 @@ public class PublicMethed {
       logger.info("transaction == null");
     }
     transaction = signTransaction(ecKey, transaction);
+
     logger.info("Txid is " + ByteArray.toHexString(Sha256Hash.hash(
         CommonParameter.getInstance()
             .isECKeyCryptoEngine(), transaction
@@ -3145,6 +3146,24 @@ public class PublicMethed {
     TransactionInfo transactionInfo;
     transactionInfo = blockingStubFull.getTransactionInfoById(request);
     return Optional.ofNullable(transactionInfo);
+  }
+
+  public static Optional<TransactionInfoList> getTransactionInfoByBlockNum(long blockNum,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    builder.setNum(blockNum);
+    TransactionInfoList transactionInfoList;
+    transactionInfoList = blockingStubFull.getTransactionInfoByBlockNum(builder.build());
+    return Optional.ofNullable(transactionInfoList);
+  }
+
+  public static Optional<TransactionInfoList> getTransactionInfoByBlockNumFromSolidity(
+      long blockNum, WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    builder.setNum(blockNum);
+    TransactionInfoList transactionInfoList;
+    transactionInfoList = blockingStubSolidity.getTransactionInfoByBlockNum(builder.build());
+    return Optional.ofNullable(transactionInfoList);
   }
 
   /**

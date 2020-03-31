@@ -59,6 +59,9 @@ public class ProposalServiceTest {
       }
       proposalCapsule = new ProposalCapsule(proposal);
       result = ProposalService.process(manager, proposalCapsule);
+      if (result == false) {
+        ProposalService.process(manager, proposalCapsule);
+      }
       Assert.assertTrue(result);
     }
   }

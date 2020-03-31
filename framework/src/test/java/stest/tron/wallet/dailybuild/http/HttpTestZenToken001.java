@@ -77,14 +77,14 @@ public class HttpTestZenToken001 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     Args.setFullNodeAllowShieldedTransaction(true);
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
   }
 
-  @Test(enabled = true, description = "Get spending key by http")
+  @Test(enabled = false, description = "Get spending key by http")
   public void test01GetSpendingKey() {
     response = HttpMethed.getSpendingKey(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -94,7 +94,7 @@ public class HttpTestZenToken001 {
 
   }
 
-  @Test(enabled = true, description = "Get diversifier by http")
+  @Test(enabled = false, description = "Get diversifier by http")
   public void test02GetDiversifier() {
     response = HttpMethed.getDiversifier(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -115,7 +115,7 @@ public class HttpTestZenToken001 {
     logger.info("d3: " + d3);
   }
 
-  @Test(enabled = true, description = "Get expanded spending key by http")
+  @Test(enabled = false, description = "Get expanded spending key by http")
   public void test03GetExpandedSpendingKey() {
     response = HttpMethed.getExpandedSpendingKey(httpnode, sk);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -128,7 +128,7 @@ public class HttpTestZenToken001 {
     logger.info("ovk: " + ovk);
   }
 
-  @Test(enabled = true, description = "Get AK from ASK by http")
+  @Test(enabled = false, description = "Get AK from ASK by http")
   public void test04GetAkFromAsk() {
     response = HttpMethed.getAkFromAsk(httpnode, ask);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -137,7 +137,7 @@ public class HttpTestZenToken001 {
     logger.info("ak: " + ak);
   }
 
-  @Test(enabled = true, description = "Get Nk from Nsk by http")
+  @Test(enabled = false, description = "Get Nk from Nsk by http")
   public void test05GetNkFromNsk() {
     response = HttpMethed.getNkFromNsk(httpnode, nsk);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -146,7 +146,7 @@ public class HttpTestZenToken001 {
     logger.info("nk: " + nk);
   }
 
-  @Test(enabled = true, description = "Get incoming viewing Key by http")
+  @Test(enabled = false, description = "Get incoming viewing Key by http")
   public void test06GetIncomingViewingKey() {
     response = HttpMethed.getIncomingViewingKey(httpnode, ak, nk);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -155,7 +155,7 @@ public class HttpTestZenToken001 {
     logger.info("ivk: " + ivk);
   }
 
-  @Test(enabled = true, description = "Get Zen Payment Address by http")
+  @Test(enabled = false, description = "Get Zen Payment Address by http")
   public void test07GetZenPaymentAddress() {
     response = HttpMethed.getZenPaymentAddress(httpnode, ivk, d1);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -200,7 +200,7 @@ public class HttpTestZenToken001 {
     shieldAddressOptionalInfo3 = Optional.of(shieldAddressInfo3);
   }
 
-  @Test(enabled = true, description = "Get rcm by http")
+  @Test(enabled = false, description = "Get rcm by http")
   public void test08GetRcm() {
     response = HttpMethed.getRcm(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -209,7 +209,7 @@ public class HttpTestZenToken001 {
     logger.info("rcm: " + rcm);
   }
 
-  @Test(enabled = true, description = "Public to shield transaction withoutask by http")
+  @Test(enabled = false, description = "Public to shield transaction withoutask by http")
   public void test09PublicToShieldTransactionWithoutAsk() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, tokenId,
@@ -293,7 +293,7 @@ public class HttpTestZenToken001 {
     Assert.assertFalse(shieldNoteInfoByMarkList.get(2).getIsSpend());
   }
 
-  @Test(enabled = true, description = "Shield to shield transaction withoutask by http")
+  @Test(enabled = false, description = "Shield to shield transaction withoutask by http")
   public void test10ShieldToShieldTransactionWithoutAsk() {
     Optional<ShieldAddressInfo> receiverShieldAddressInfo1 = HttpMethed
         .generateShieldAddress(httpnode);
@@ -368,7 +368,7 @@ public class HttpTestZenToken001 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     final Long assetBalance = HttpMethed
         .getAssetIssueValue(httpnode, zenTokenOwnerAddress, assetIssueId);

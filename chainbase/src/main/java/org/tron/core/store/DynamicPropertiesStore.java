@@ -505,6 +505,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getForbidTransferToContract();
+    } catch (IllegalArgumentException e) {
+      this.saveForbidTransferToContract(CommonParameter.getInstance()
+          .getForbidTransferToContract());
+    }
+
+    try {
       this.getAvailableContractType();
     } catch (IllegalArgumentException e) {
       String contractType = "7fff1fc0037e0000000000000000000000000000000000000000000000000000";
@@ -543,8 +550,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowShieldedTransaction();
     } catch (IllegalArgumentException e) {
-      this.saveAllowShieldedTransaction(CommonParameter.getInstance()
-          .getAllowShieldedTransaction());
+      this.saveAllowShieldedTransaction(0L);
     }
 
     try {

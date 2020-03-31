@@ -384,7 +384,7 @@ public class TransactionCapsuleTest {
       Assert.assertFalse(true);
     } catch (PermissionException e) {
       Assert.assertEquals(e.getMessage(),
-          Wallet.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11)) + " has signed twice!");
+          WalletUtil.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11)) + " has signed twice!");
     } catch (SignatureFormatException e) {
       Assert.assertFalse(true);
     }
@@ -485,7 +485,7 @@ public class TransactionCapsuleTest {
       Assert.assertFalse(true);
     } catch (PermissionException e) {
       Assert.assertEquals(e.getMessage(),
-          KEY_11 + "'s address is " + Wallet.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11))
+          KEY_11 + "'s address is " + WalletUtil.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11))
               + " but it is not contained of permission.");
     } catch (SignatureException e) {
       Assert.assertFalse(true);
@@ -519,7 +519,7 @@ public class TransactionCapsuleTest {
       Assert.assertFalse(true);
     } catch (PermissionException e) {
       Assert.assertEquals(e.getMessage(),
-          Wallet.encode58Check(ByteArray.fromHexString(OWNER_ADDRESS)) + " had signed!");
+          WalletUtil.encode58Check(ByteArray.fromHexString(OWNER_ADDRESS)) + " had signed!");
     } catch (SignatureException e) {
       Assert.assertFalse(true);
     } catch (SignatureFormatException e) {
@@ -839,7 +839,7 @@ public class TransactionCapsuleTest {
       Assert.assertFalse(true);
     } catch (PermissionException e) {
       Assert.assertEquals(e.getMessage(),
-          Wallet.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_21)) + " has signed twice!");
+          WalletUtil.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_21)) + " has signed twice!");
     } catch (SignatureFormatException e) {
       Assert.assertFalse(true);
     }
@@ -1027,7 +1027,7 @@ public class TransactionCapsuleTest {
       Assert.assertFalse(true);
     } catch (ValidateSignatureException e) {
       Assert.assertEquals(e.getMessage(),
-          Wallet.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_21)) + " has signed twice!");
+          WalletUtil.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_21)) + " has signed twice!");
     }
 
     //

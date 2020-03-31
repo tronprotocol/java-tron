@@ -87,7 +87,7 @@ public class WalletTestZenToken010 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -123,7 +123,7 @@ public class WalletTestZenToken010 {
 
   }
 
-  @Test(enabled = true, description = "Shield to itself transaction")
+  @Test(enabled = false, description = "Shield to itself transaction")
   public void test1Shield2ShieldTransaction() {
     shieldOutList.clear();
     memo = "Send shield to itself memo1 in " + System.currentTimeMillis();
@@ -156,7 +156,7 @@ public class WalletTestZenToken010 {
     Assert.assertTrue(notes.getNoteTxsCount() == 2);
   }
 
-  @Test(enabled = true, description = "From shield only have one zenToken fee")
+  @Test(enabled = false, description = "From shield only have one zenToken fee")
   public void test2Shield2ShieldTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -202,7 +202,7 @@ public class WalletTestZenToken010 {
     Assert.assertEquals(notes.getNoteTxs(1).getTxid(), notes.getNoteTxs(2).getTxid());
   }
 
-  @Test(enabled = true, description = "From public and to public is same one")
+  @Test(enabled = false, description = "From public and to public is same one")
   public void test3Public2ShieldAndPublicItselfTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -245,7 +245,7 @@ public class WalletTestZenToken010 {
    * constructor.
    */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,

@@ -57,7 +57,7 @@ public class HttpTestZenToken002 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -70,7 +70,7 @@ public class HttpTestZenToken002 {
 
   }
 
-  @Test(enabled = true, description = "Public to shield transaction by http")
+  @Test(enabled = false, description = "Public to shield transaction by http")
   public void test01PublicToShieldTransaction() {
     response = HttpMethed.getAccount(httpnode, foundationZenTokenAddress);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -116,7 +116,7 @@ public class HttpTestZenToken002 {
     Assert.assertFalse(scanAndMarkNoteSendNote.getIsSpend());
   }
 
-  @Test(enabled = true, description = "Shield to shield transaction by http")
+  @Test(enabled = false, description = "Shield to shield transaction by http")
   public void test02ShieldToShieldTransaction() {
     receiverShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     receiverShieldAddress = receiverShieldAddressInfo.get().getAddress();
@@ -149,7 +149,7 @@ public class HttpTestZenToken002 {
         HttpMethed.getSpendResult(httpnode, receiverShieldAddressInfo.get(), receiverNote));
   }
 
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on FullNode by http")
+  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on FullNode by http")
   public void test03ScanNoteByIvkAndOvk() {
     //Scan sender note by ovk equals scan receiver note by ivk on FullNode
     noteByOvk = HttpMethed.scanNoteByOvk(httpnode, sendShieldAddressInfo.get()).get(0);
@@ -160,7 +160,7 @@ public class HttpTestZenToken002 {
     Assert.assertEquals(noteByIvk.getPaymentAddress(), noteByOvk.getPaymentAddress());
   }
 
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on Solidity by http")
+  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on Solidity by http")
   public void test04ScanNoteByIvkAndOvkFromSolidity() {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     //Scan sender note by ovk equals scan receiver note by ivk on Solidity
@@ -177,7 +177,7 @@ public class HttpTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Query whether note is spend on solidity by http")
+  @Test(enabled = false, description = "Query whether note is spend on solidity by http")
   public void test05QueryNoteIsSpendOnSolidity() {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     Assert.assertTrue(HttpMethed
@@ -188,7 +188,7 @@ public class HttpTestZenToken002 {
             receiverNote));
   }
 
-  @Test(enabled = true, description = "Query note and spend status on fullnode")
+  @Test(enabled = false, description = "Query note and spend status on fullnode")
   public void test06QueryNoteAndSpendStatusOnFullnode() {
     ShieldNoteInfo scanAndMarkNoteSendNote = HttpMethed
         .scanAndMarkNoteByIvk(httpnode, sendShieldAddressInfo.get())
@@ -210,7 +210,7 @@ public class HttpTestZenToken002 {
         receiverNote.getPaymentAddress());
   }
 
-  @Test(enabled = true, description = "Query note and spend status on solidity")
+  @Test(enabled = false, description = "Query note and spend status on solidity")
   public void test07QueryNoteAndSpendStatusOnSolidity() {
     ShieldNoteInfo scanAndMarkNoteSendNote = HttpMethed
         .scanAndMarkNoteByIvkFromSolidity(httpnode, httpSolidityNode, sendShieldAddressInfo.get())
@@ -234,7 +234,7 @@ public class HttpTestZenToken002 {
 
   }
 
-  @Test(enabled = true, description = "Shield to public transaction by http")
+  @Test(enabled = false, description = "Shield to public transaction by http")
   public void test08ShieldToPublicTransaction() {
     final Long beforeAssetBalance = HttpMethed
         .getAssetIssueValue(httpnode, zenTokenOwnerAddress, assetIssueId);
@@ -270,7 +270,7 @@ public class HttpTestZenToken002 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     final Long assetBalance = HttpMethed
         .getAssetIssueValue(httpnode, zenTokenOwnerAddress, assetIssueId);

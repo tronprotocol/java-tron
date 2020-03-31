@@ -1,6 +1,7 @@
 package stest.tron.wallet.dailybuild.http;
 
 import com.alibaba.fastjson.JSONObject;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -40,6 +41,12 @@ public class HttpTestSmartContract001 {
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(0);
+  private String httpSolidityNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list")
+      .get(2);
+  private String httpRealSolidityNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list")
+      .get(3);
 
   /**
    * constructor.
@@ -173,12 +180,145 @@ public class HttpTestSmartContract001 {
     Assert.assertTrue(!responseContent.getString("assetV2").isEmpty());
   }
 
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get transaction info by http")
+  public void test4GetTransactionInfoByBlocknum() {
+    String hexReceiverAddress = ByteArray.toHexString(assetReceiverAddress);
+    String addressParam = "000000000000000000000000" + hexReceiverAddress.substring(2);//[0,3)
+    String tokenIdParam = "00000000000000000000000000000000000000000000000000000000000"
+        + Integer.toHexString(Integer.parseInt(assetIssueId));
+    String tokenValueParam = "0000000000000000000000000000000000000000000000000000000000000001";
+    String param = addressParam + tokenIdParam + tokenValueParam;
+    Long callValue = 10L;
+    String txid1 = HttpMethed.triggerContractGetTxid(httpnode, assetOwnerAddress, contractAddress,
+        "TransferTokenTo(address,trcToken,uint256)",
+        param, 1000000000L, callValue, Integer.parseInt(assetIssueId), 20L, assetOwnerKey);
+    String txid2 = HttpMethed.triggerContractGetTxid(httpnode, assetOwnerAddress, contractAddress,
+        "TransferTokenTo(address,trcToken,uint256)",
+        param, 1000000000L, callValue, Integer.parseInt(assetIssueId), 20L, assetOwnerKey);
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed.getTransactionInfoById(httpnode, txid1);
+    HttpResponse response2 = HttpMethed.getTransactionInfoById(httpnode, txid2);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONObject responseContent2 = HttpMethed.parseResponseContent(response2);
+    HttpMethed.printJsonContent(responseContent2);
+    if (responseContent.getLong("blockNumber").equals(responseContent2.getLong("blockNumber"))) {
+      HttpResponse responseByBlocknum = HttpMethed
+          .getTransactionInfoByBlocknum(httpnode, responseContent.getLong("blockNumber"));
+      List<JSONObject> responseContentByBlocknum = HttpMethed
+          .parseResponseContentArray(responseByBlocknum);
+      Assert.assertEquals(2, responseContentByBlocknum.size());
+      HttpMethed.printJsonContent(responseContentByBlocknum.get(0));
+      HttpMethed.printJsonContent(responseContentByBlocknum.get(1));
+      if (responseContent.getString("id")
+          .equals(responseContentByBlocknum.get(0).getString("id"))) {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(0));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(1));
+      } else {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(1));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(0));
+      }
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get transaction info by http from solidity")
+  public void test5GetTransactionInfoByBlocknumFromSolidity() {
+    String hexReceiverAddress = ByteArray.toHexString(assetReceiverAddress);
+    String addressParam = "000000000000000000000000" + hexReceiverAddress.substring(2);//[0,3)
+    String tokenIdParam = "00000000000000000000000000000000000000000000000000000000000"
+        + Integer.toHexString(Integer.parseInt(assetIssueId));
+    String tokenValueParam = "0000000000000000000000000000000000000000000000000000000000000001";
+    String param = addressParam + tokenIdParam + tokenValueParam;
+    Long callValue = 10L;
+    String txid1 = HttpMethed.triggerContractGetTxid(httpnode, assetOwnerAddress, contractAddress,
+        "TransferTokenTo(address,trcToken,uint256)",
+        param, 1000000000L, callValue, Integer.parseInt(assetIssueId), 20L, assetOwnerKey);
+    String txid2 = HttpMethed.triggerContractGetTxid(httpnode, assetOwnerAddress, contractAddress,
+        "TransferTokenTo(address,trcToken,uint256)",
+        param, 1000000000L, callValue, Integer.parseInt(assetIssueId), 20L, assetOwnerKey);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
+    response = HttpMethed.getTransactionInfoById(httpnode, txid1);
+    HttpResponse response2 = HttpMethed.getTransactionInfoById(httpnode, txid2);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONObject responseContent2 = HttpMethed.parseResponseContent(response2);
+    HttpMethed.printJsonContent(responseContent2);
+    if (responseContent.getLong("blockNumber").equals(responseContent2.getLong("blockNumber"))) {
+      HttpResponse responseByBlocknum = HttpMethed
+          .getTransactionInfoByBlocknumFromSolidity(httpSolidityNode,
+              responseContent.getLong("blockNumber"));
+      List<JSONObject> responseContentByBlocknum = HttpMethed
+          .parseResponseContentArray(responseByBlocknum);
+      Assert.assertEquals(2, responseContentByBlocknum.size());
+      HttpMethed.printJsonContent(responseContentByBlocknum.get(0));
+      HttpMethed.printJsonContent(responseContentByBlocknum.get(1));
+      if (responseContent.getString("id")
+          .equals(responseContentByBlocknum.get(0).getString("id"))) {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(0));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(1));
+      } else {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(1));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(0));
+      }
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get transaction info by http from real solidity")
+  public void test6GetTransactionInfoByBlocknumFromRealSolidity() {
+    String hexReceiverAddress = ByteArray.toHexString(assetReceiverAddress);
+    String addressParam = "000000000000000000000000" + hexReceiverAddress.substring(2);//[0,3)
+    String tokenIdParam = "00000000000000000000000000000000000000000000000000000000000"
+        + Integer.toHexString(Integer.parseInt(assetIssueId));
+    String tokenValueParam = "0000000000000000000000000000000000000000000000000000000000000001";
+    String param = addressParam + tokenIdParam + tokenValueParam;
+    Long callValue = 10L;
+    String txid1 = HttpMethed.triggerContractGetTxid(httpnode, assetOwnerAddress, contractAddress,
+        "TransferTokenTo(address,trcToken,uint256)",
+        param, 1000000000L, callValue, Integer.parseInt(assetIssueId), 20L, assetOwnerKey);
+    String txid2 = HttpMethed.triggerContractGetTxid(httpnode, assetOwnerAddress, contractAddress,
+        "TransferTokenTo(address,trcToken,uint256)",
+        param, 1000000000L, callValue, Integer.parseInt(assetIssueId), 20L, assetOwnerKey);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpRealSolidityNode);
+    response = HttpMethed.getTransactionInfoById(httpnode, txid1);
+    HttpResponse response2 = HttpMethed.getTransactionInfoById(httpnode, txid2);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONObject responseContent2 = HttpMethed.parseResponseContent(response2);
+    HttpMethed.printJsonContent(responseContent2);
+    if (responseContent.getLong("blockNumber").equals(responseContent2.getLong("blockNumber"))) {
+      HttpResponse responseByBlocknum = HttpMethed
+          .getTransactionInfoByBlocknumFromSolidity(httpRealSolidityNode,
+              responseContent.getLong("blockNumber"));
+      List<JSONObject> responseContentByBlocknum = HttpMethed
+          .parseResponseContentArray(responseByBlocknum);
+      Assert.assertEquals(2, responseContentByBlocknum.size());
+      HttpMethed.printJsonContent(responseContentByBlocknum.get(0));
+      HttpMethed.printJsonContent(responseContentByBlocknum.get(1));
+      if (responseContent.getString("id")
+          .equals(responseContentByBlocknum.get(0).getString("id"))) {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(0));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(1));
+      } else {
+        Assert.assertEquals(responseContent, responseContentByBlocknum.get(1));
+        Assert.assertEquals(responseContent2, responseContentByBlocknum.get(0));
+      }
+    }
+  }
 
   /**
    * constructor.
    */
   @Test(enabled = true, description = "UpdateSetting contract by http")
-  public void test4UpdateSetting() {
+  public void test7UpdateSetting() {
 
     //assetOwnerAddress, assetOwnerKey
     response = HttpMethed
@@ -203,7 +343,7 @@ public class HttpTestSmartContract001 {
    * constructor.
    */
   @Test(enabled = true, description = "UpdateEnergyLimit contract by http")
-  public void test5UpdateEnergyLimit() {
+  public void test8UpdateEnergyLimit() {
 
     //assetOwnerAddress, assetOwnerKey
     response = HttpMethed

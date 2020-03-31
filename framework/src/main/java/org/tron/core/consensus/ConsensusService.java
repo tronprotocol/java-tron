@@ -1,6 +1,7 @@
 package org.tron.core.consensus;
 
 import com.google.protobuf.ByteString;
+import com.sun.org.apache.xpath.internal.Arg;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;

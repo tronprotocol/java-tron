@@ -96,7 +96,7 @@ public class WalletTestZenToken001 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -110,7 +110,7 @@ public class WalletTestZenToken001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Public to shield transaction")
+  @Test(enabled = false, description = "Public to shield transaction")
   public void test1Public2ShieldTransaction() {
     Args.setFullNodeAllowShieldedTransaction(true);
     shieldAddressInfo = PublicMethed.generateShieldAddress();
@@ -149,7 +149,7 @@ public class WalletTestZenToken001 {
     Assert.assertEquals(memo, PublicMethed.getMemo(note));
   }
 
-  @Test(enabled = true, description = "Shield to public transaction")
+  @Test(enabled = false, description = "Shield to public transaction")
   public void test2Shield2PublicTransaction() {
     note = notes.getNoteTxs(0).getNote();
     SpendResult result = PublicMethed.getSpendResult(shieldAddressInfo.get(),
@@ -191,7 +191,7 @@ public class WalletTestZenToken001 {
   }
 
 
-  @Test(enabled = true, description = "Output amount can't be zero or below zero")
+  @Test(enabled = false, description = "Output amount can't be zero or below zero")
   public void test3Shield2PublicAmountIsZero() {
     shieldAddressInfo = PublicMethed.generateShieldAddress();
     shieldAddress = shieldAddressInfo.get().getAddress();
@@ -249,7 +249,7 @@ public class WalletTestZenToken001 {
    * constructor.
    */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,

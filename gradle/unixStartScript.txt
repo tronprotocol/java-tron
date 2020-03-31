@@ -91,12 +91,16 @@ case "`uname`" in
     ;;
 esac
 
+<<<<<<< HEAD
 for file in `ls \$APP_HOME/lib`
 do
     CLASSPATH='\$APP_HOME'/lib/\$file:\$CLASSPATH
 done
 
 #CLASSPATH=$classpath
+=======
+CLASSPATH=$classpath
+>>>>>>> d73ac958875403e551f8a29f9dd7b13e8c2772b9
 
 # Determine the Java command to use to start the JVM.
 if [ -n "\$JAVA_HOME" ] ; then
