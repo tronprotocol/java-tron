@@ -78,7 +78,7 @@ public class ShieldedTRC20ContractStress {
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.getInstance().setFullNodeAllowShieldedTRC20TransactionArgs(true);
   }
 
   private String getMintInput() throws ZksnarkException {
@@ -639,7 +639,6 @@ public class ShieldedTRC20ContractStress {
       } else {
         transferFalse++;
       }
-
       burnInput = getShieldedTRC20BurnInput();
       if (sendShieldedTRC20MintTx(burnInput)) {
         mintTrue++;
@@ -647,7 +646,6 @@ public class ShieldedTRC20ContractStress {
       } else {
         burnFalse++;
       }
-
       logger.info("..........test number: " + i + ".........");
       if (i % 1 == 0) {
         logger.info("total transactions: " + i * 14);

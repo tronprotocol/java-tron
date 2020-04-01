@@ -747,11 +747,12 @@ public class RpcApiService implements Service {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
       byte[] contractAddress = request.getShieldedTRC20ContractAddress().toByteArray();
-      byte[] ivk =  request.getIvk().toByteArray();
+      byte[] ivk = request.getIvk().toByteArray();
       byte[] ak = request.getAk().toByteArray();
       byte[] nk = request.getNk().toByteArray();
       try {
-        responseObserver.onNext(wallet.scanShieldedTRC20NotesbyIvk(startNum, endNum, contractAddress, ivk, ak, nk));
+        responseObserver.onNext(
+            wallet.scanShieldedTRC20NotesbyIvk(startNum, endNum, contractAddress, ivk, ak, nk));
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
       }
@@ -766,7 +767,8 @@ public class RpcApiService implements Service {
       byte[] contractAddress = request.getShieldedTRC20ContractAddress().toByteArray();
       byte[] ovk = request.getOvk().toByteArray();
       try {
-        responseObserver.onNext(wallet.scanShieldedTRC20NotesbyOvk(startNum, endNum, ovk, contractAddress));
+        responseObserver
+            .onNext(wallet.scanShieldedTRC20NotesbyOvk(startNum, endNum, ovk, contractAddress));
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
       }

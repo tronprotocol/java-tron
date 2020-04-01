@@ -18,7 +18,6 @@ public class CreateShieldedContractParametersServlet extends RateLimiterServlet 
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
@@ -27,13 +26,10 @@ public class CreateShieldedContractParametersServlet extends RateLimiterServlet 
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       boolean visible = Util.getVisiblePost(contract);
-
       PrivateShieldedTRC20Parameters.Builder build = PrivateShieldedTRC20Parameters.newBuilder();
       JsonFormat.merge(contract, build, visible);
-
       ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
           .createShieldedContractParameters(build.build());
-
       response.getWriter().println(JsonFormat.printToString(shieldedTRC20Parameters, visible));
     } catch (Exception e) {
       Util.processError(e, response);
