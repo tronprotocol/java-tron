@@ -78,7 +78,10 @@ import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
@@ -118,6 +121,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
@@ -240,6 +244,24 @@ public class Wallet {
   public static void setAddressPreFixByte(byte addressPreFixByte) {
     DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
+
+//  public ShieldAddress generateShieldAddress() {
+//    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
+//    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
+//
+//    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
+//    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
+//
+//    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
+//    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
+//
+//    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
+//    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
+//
+//    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
+//    builder.setPublicAddress(ByteString.copyFrom(addPublic));
+//    return builder.build();
+//  }
 
   public byte[] getAddress() {
     return cryptoEngine.getAddress();
@@ -1775,7 +1797,6 @@ public class Wallet {
 
   }
 
-
   public BytesMessage getSpendingKey() throws ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
@@ -2031,6 +2052,37 @@ public class Wallet {
     byte[] transactionHash = TransactionCapsule
         .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(transactionHash)).build();
+  }
+
+  public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) {
+    TransactionInfoList.Builder transactionInfoList = TransactionInfoList.newBuilder();
+
+    try {
+      TransactionRetCapsule result = dbManager.getTransactionRetStore()
+          .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
+
+      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+        result.getInstance().getTransactioninfoList().forEach(
+            transactionInfo -> transactionInfoList.addTransactionInfo(transactionInfo)
+        );
+      } else {
+        Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
+
+        if (block != null) {
+          List<Transaction> listTransaction = block.getTransactionsList();
+          for (Transaction transaction : listTransaction) {
+            TransactionInfoCapsule transactionInfoCapsule = dbManager.getTransactionHistoryStore()
+                .get(Sha256Hash.hash(CommonParameter.getInstance()
+                    .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
+            transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
+          }
+        }
+      }
+    } catch (BadItemException | ItemNotFoundException e) {
+      logger.error(e.getMessage());
+    }
+
+    return transactionInfoList.build();
   }
 
   public NodeList listNodes() {

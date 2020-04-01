@@ -31,6 +31,7 @@ import org.tron.core.services.http.GetNowBlockServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
 import org.tron.core.services.http.GetRewardServlet;
 import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
+import org.tron.core.services.http.GetTransactionInfoByBlockNumServlet;
 import org.tron.core.services.http.IsSpendServlet;
 import org.tron.core.services.http.ListExchangesServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
@@ -110,6 +111,9 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private TriggerConstantContractServlet triggerConstantContractServlet;
 
+  @Autowired
+  private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
+
   @Override
   public void init() {
   }
@@ -160,16 +164,20 @@ public class SolidityNodeHttpApiService implements Service {
           "/walletsolidity/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet),
           "/walletsolidity/getblockbylatestnum");
-      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
-          "/walletsolidity/getmerkletreevoucherinfo");
-      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
-          "/walletsolidity/scanandmarknotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByIvkServlet),
-          "/walletsolidity/scannotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByOvkServlet),
-          "/walletsolidity/scannotebyovk");
-      context.addServlet(new ServletHolder(isSpendServlet),
-          "/walletsolidity/isspend");
+
+      // context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
+      //     "/walletsolidity/getmerkletreevoucherinfo");
+      // context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
+      //     "/walletsolidity/scanandmarknotebyivk");
+      // context.addServlet(new ServletHolder(scanNoteByIvkServlet),
+      //     "/walletsolidity/scannotebyivk");
+      // context.addServlet(new ServletHolder(scanNoteByOvkServlet),
+      //     "/walletsolidity/scannotebyovk");
+      // context.addServlet(new ServletHolder(isSpendServlet),
+      //     "/walletsolidity/isspend");
+
+      context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
+          "/walletsolidity/gettransactioninfobyblocknum");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),

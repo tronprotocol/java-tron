@@ -212,11 +212,12 @@ public class TriggerConstant014 {
     System.out.println("Code = " + transactionExtention.getResult().getCode());
     System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
-    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
-        containsString("SUCCESS"));
-    //Assert
-    //    .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-    //        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Assert
+        .assertThat(transactionExtention.getResult().getCode().toString(),
+            containsString("SUCCESS"));
+    /*Assert
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a non-constant function "
@@ -230,11 +231,12 @@ public class TriggerConstant014 {
     System.out.println("Code = " + transactionExtention.getResult().getCode());
     System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
-    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
-        containsString("SUCCESS"));
-    //Assert
-    //    .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-    //        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Assert
+        .assertThat(transactionExtention.getResult().getCode().toString(),
+            containsString("SUCCESS"));
+    /*Assert
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a non-constant function "
@@ -248,11 +250,12 @@ public class TriggerConstant014 {
     System.out.println("Code = " + transactionExtention.getResult().getCode());
     System.out.println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
 
-    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
-        containsString("SUCCESS"));
-    //Assert
-    //    .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-    //        containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    Assert
+        .assertThat(transactionExtention.getResult().getCode().toString(),
+            containsString("SUCCESS"));
+    /*Assert
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
   }
 
   /**

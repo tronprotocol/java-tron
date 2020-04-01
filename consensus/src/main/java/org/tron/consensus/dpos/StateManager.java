@@ -85,6 +85,11 @@ public class StateManager {
       return;
     }
 
+    if (dposService.getBlockHandle().getState() != State.OK) {
+      dupBlockCount.set(1);
+      return;
+    }
+
     if (dupBlockCount.get() == 0) {
       dupBlockCount.set(new Random().nextInt(10));
     } else {

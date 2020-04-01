@@ -1358,7 +1358,6 @@ public class TransferAssetActuatorTest {
     }
   }
 
-
   @Test
   public void commonErrorCheck() {
     createAssertBeforSameTokenNameActive();
@@ -1379,7 +1378,6 @@ public class TransferAssetActuatorTest {
     actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
   }
-
   /**
    * transfer assert to smartcontract addresss after TvmSolidity059
    */
@@ -1448,5 +1446,4 @@ public class TransferAssetActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 }

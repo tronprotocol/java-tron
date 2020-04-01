@@ -1,10 +1,6 @@
 package org.tron.common.utils;
 
-import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
-import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
-
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.AccountCapsule;

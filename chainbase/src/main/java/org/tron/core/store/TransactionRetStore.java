@@ -59,4 +59,14 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
     return null;
   }
 
+  public TransactionRetCapsule getTransactionInfoByBlockNum(byte[] key) throws BadItemException {
+
+    byte[] value = revokingDB.getUnchecked(key);
+    if (Objects.isNull(value)) {
+      return null;
+    }
+
+    return new TransactionRetCapsule(value);
+  }
+
 }

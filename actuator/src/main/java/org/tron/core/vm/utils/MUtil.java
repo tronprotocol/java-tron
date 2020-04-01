@@ -1,6 +1,6 @@
 package org.tron.core.vm.utils;
 
-import org.tron.common.utils.DecodeUtil;
+import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.VMUtils;
@@ -50,7 +50,6 @@ public class MUtil {
   public static boolean isNullOrEmpty(String str) {
     return (str == null) || str.isEmpty();
   }
-
 
   public static boolean isNotNullOrEmpty(String str) {
     return !isNullOrEmpty(str);

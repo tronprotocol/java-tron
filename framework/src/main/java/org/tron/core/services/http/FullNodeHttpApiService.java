@@ -232,6 +232,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private CreateCommonTransactionServlet createCommonTransactionServlet;
   @Autowired
+  private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
+  @Autowired
   private MetricsServlet metricsServlet;
 
   private static String getParamsFile(String fileName) {
@@ -435,8 +437,12 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/wallet/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/wallet/createCommonTransaction");
-      context.addServlet(new ServletHolder(metricsServlet), "/monitor/getstatsinfo");
+      context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
+          "/wallet/gettransactioninfobyblocknum");
+
       context.addServlet(new ServletHolder(listNodesServlet), "/net/listnodes");
+
+      context.addServlet(new ServletHolder(metricsServlet), "/monitor/getstatsinfo");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/monitor/getnodeinfo");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
