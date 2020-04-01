@@ -3,13 +3,11 @@ package org.tron.core;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;
-import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -62,7 +60,10 @@ public class CreateCommonTransactionTest {
             .build());
     CrossToken.Builder crossToken = CrossToken.newBuilder();
     crossToken.setAmount(100).setTokenId(ByteString.copyFrom(ByteArray.fromString("1000001")))
-        .setTokenName(ByteString.copyFrom(ByteArray.fromString("testCross"))).setPrecision(0);
+        .setTokenName(ByteString.copyFrom(ByteArray.fromString("testCross"))).setPrecision(0)
+        .setChainId(Sha256Hash.wrap(ByteArray
+            .fromHexString("000000000000000019b59068c6058ff466ccf59f2c38a0df1c330b9b7e8dcc4c"))
+            .getByteString());
     CrossContract.Builder builder = CrossContract.newBuilder();
     builder.setOwnerAddress(owner)
         .setOwnerChainId(Sha256Hash.wrap(ByteArray
@@ -93,7 +94,10 @@ public class CreateCommonTransactionTest {
             .build());
     CrossToken.Builder crossToken = CrossToken.newBuilder();
     crossToken.setAmount(100).setTokenId(ByteString.copyFrom(ByteArray.fromString("1000001")))
-        .setTokenName(ByteString.copyFrom(ByteArray.fromString("testCross"))).setPrecision(0);
+        .setTokenName(ByteString.copyFrom(ByteArray.fromString("testCross2"))).setPrecision(0)
+        .setChainId(Sha256Hash.wrap(ByteArray
+            .fromHexString("0000000000000000bff8ab4242b00fac071a0035cb8e98d6351c87f0f1a753dd"))
+            .getByteString());
     CrossContract.Builder builder = CrossContract.newBuilder();
     builder.setOwnerAddress(owner)
         .setToChainId(Sha256Hash.wrap(ByteArray

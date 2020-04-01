@@ -52,4 +52,5 @@ message CrossToken {
   bytes token_id = 2;
   bytes token_name = 3;
   int32 precision = 4;
+  bytes chain_id = 5;
 }

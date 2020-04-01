@@ -65,15 +65,15 @@ public class CrossChainActuator extends AbstractActuator {
             CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
             long amount = crossToken.getAmount();
             String tokenId = ByteArray.toStr(crossToken.getTokenId().toByteArray());
-            Long inTokenCount = crossRevokingStore.getInTokenCount(tokenId);
+            String tokenChainId = ByteArray.toStr(crossToken.getChainId().toByteArray());
+            Long inTokenCount = crossRevokingStore.getInTokenCount(tokenChainId, tokenId);
             if (inTokenCount != null) {//
-              crossRevokingStore.saveInTokenCount(tokenId, inTokenCount - amount);
-              tokenId = crossRevokingStore.getDestTokenFromMapping(tokenId);
+              crossRevokingStore.saveInTokenCount(tokenChainId, tokenId, inTokenCount - amount);
+              tokenId = crossRevokingStore.getDestTokenFromMapping(tokenChainId, tokenId);
             } else {//source token
-              Long outTokenCount = crossRevokingStore.getOutTokenCount(tokenId);
-              crossRevokingStore
-                  .saveOutTokenCount(tokenId,
-                      outTokenCount == null ? amount : outTokenCount + amount);
+              Long outTokenCount = crossRevokingStore.getOutTokenCount(tokenChainId, tokenId);
+              crossRevokingStore.saveOutTokenCount(tokenChainId, tokenId,
+                  outTokenCount == null ? amount : outTokenCount + amount);
             }
             AccountCapsule accountCapsule = accountStore.get(ownerAddress);
             accountCapsule.reduceAssetAmountV2(ByteArray.fromString(tokenId),
@@ -95,9 +95,10 @@ public class CrossChainActuator extends AbstractActuator {
             CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
             long amount = crossToken.getAmount();
             String tokenId = ByteArray.toStr(crossToken.getTokenId().toByteArray());
-            Long outTokenCount = crossRevokingStore.getOutTokenCount(tokenId);
+            String tokenChainId = ByteArray.toStr(crossToken.getChainId().toByteArray());
+            Long outTokenCount = crossRevokingStore.getOutTokenCount(tokenChainId, tokenId);
             if (outTokenCount != null) {//source token
-              crossRevokingStore.saveOutTokenCount(tokenId, outTokenCount - amount);
+              crossRevokingStore.saveOutTokenCount(tokenChainId, tokenId, outTokenCount - amount);
               AssetIssueCapsule assetIssueCapsule = assetIssueV2Store
                   .getUnchecked(ByteArray.fromString(tokenId));
               assetIssueCapsule.setTotalSupply(assetIssueCapsule.getTotalSupply() + amount);
@@ -107,7 +108,8 @@ public class CrossChainActuator extends AbstractActuator {
               accountStore.put(ownerAddress, accountCapsule);
               assetIssueV2Store.put(ByteArray.fromString(tokenId), assetIssueCapsule);
             } else {
-              String destTokenId = crossRevokingStore.getDestTokenFromMapping(tokenId);
+              String destTokenId = crossRevokingStore
+                  .getDestTokenFromMapping(tokenChainId, tokenId);
               if (StringUtils.isNotBlank(destTokenId)) {//Exist dest token
                 AssetIssueCapsule assetIssueCapsule = assetIssueV2Store
                     .getUnchecked(ByteArray.fromString(destTokenId));
@@ -120,11 +122,12 @@ public class CrossChainActuator extends AbstractActuator {
               } else {
                 //create the asset
                 long descTokenId = createAsset(crossToken, crossContract);
-                crossRevokingStore.saveTokenMapping(tokenId, Long.toString(descTokenId));
+                crossRevokingStore
+                    .saveTokenMapping(tokenChainId, tokenId, Long.toString(descTokenId));
               }
-              Long inTokenCount = crossRevokingStore.getInTokenCount(tokenId);
-              crossRevokingStore
-                  .saveInTokenCount(tokenId, inTokenCount == null ? amount : inTokenCount + amount);
+              Long inTokenCount = crossRevokingStore.getInTokenCount(tokenChainId, tokenId);
+              crossRevokingStore.saveInTokenCount(tokenChainId, tokenId,
+                  inTokenCount == null ? amount : inTokenCount + amount);
             }
           }
           break;
@@ -166,6 +169,8 @@ public class CrossChainActuator extends AbstractActuator {
     //
     try {
       CrossContract crossContract = any.unpack(CrossContract.class);
+      String ownerChainId = ByteArray.toStr(crossContract.getOwnerChainId().toByteArray());
+      String toChainId = ByteArray.toStr(crossContract.getToChainId().toByteArray());
       if (tx.isSource()) {
         switch (crossContract.getType()) {
           case TOKEN: {
@@ -177,6 +182,14 @@ public class CrossChainActuator extends AbstractActuator {
             byte[] ownerAddress = crossContract.getOwnerAddress().toByteArray();
             byte[] assetId = crossToken.getTokenId().toByteArray();
             long amount = crossToken.getAmount();
+            String tokenChainId = ByteArray.toStr(crossToken.getChainId().toByteArray());
+
+            if (!StringUtils.equals(tokenChainId, ownerChainId) && !StringUtils
+                .equals(tokenChainId, toChainId)) {
+              logger.error("tokenChainId:{}, ownerChainId:{}, toChainId:{}", tokenChainId,
+                  ownerChainId, toChainId);
+              throw new ContractValidateException("Invalid token chainId");
+            }
 
             if (!DecodeUtil.addressValid(ownerAddress)) {
               throw new ContractValidateException("Invalid ownerAddress");
@@ -193,13 +206,14 @@ public class CrossChainActuator extends AbstractActuator {
               throw new ContractValidateException(
                   "Validate CrossChainActuator error, insufficient fee.");
             }
-            Long inToken = crossRevokingStore.getInTokenCount(ByteArray.toStr(assetId));
+            Long inToken = crossRevokingStore
+                .getInTokenCount(tokenChainId, ByteArray.toStr(assetId));
             if (inToken != null) {
               if (amount > inToken.longValue()) {
                 throw new ContractValidateException("inToken is not sufficient.");
               }
-              assetId = ByteArray
-                  .fromString(crossRevokingStore.getDestTokenFromMapping(ByteArray.toStr(assetId)));
+              assetId = ByteArray.fromString(crossRevokingStore
+                  .getDestTokenFromMapping(tokenChainId, ByteArray.toStr(assetId)));
             }
             boolean contain = assetIssueV2Store.has(assetId);
             Long assetBalance = ownerAccount.getAssetMapV2().get(ByteArray.toStr(assetId));
@@ -227,6 +241,14 @@ public class CrossChainActuator extends AbstractActuator {
             byte[] toAddress = crossContract.getToAddress().toByteArray();
             long amount = crossToken.getAmount();
             byte[] assetId = crossToken.getTokenId().toByteArray();
+            String tokenChainId = ByteArray.toStr(crossToken.getChainId().toByteArray());
+
+            if (!StringUtils.equals(tokenChainId, ownerChainId) && !StringUtils
+                .equals(tokenChainId, toChainId)) {
+              logger.error("tokenChainId:{}, ownerChainId:{}, toChainId:{}", tokenChainId,
+                  ownerChainId, toChainId);
+              throw new ContractValidateException("Invalid token chainId");
+            }
 
             if (!DecodeUtil.addressValid(toAddress)) {
               throw new ContractValidateException("Invalid toAddress");
@@ -245,7 +267,8 @@ public class CrossChainActuator extends AbstractActuator {
             } else {
               throw new ContractValidateException("Invalid toAddress");
             }
-            Long outToken = crossRevokingStore.getOutTokenCount(ByteArray.toStr(assetId));
+            Long outToken = crossRevokingStore
+                .getOutTokenCount(tokenChainId, ByteArray.toStr(assetId));
             if (outToken != null && amount > outToken.longValue()) {
               throw new ContractValidateException("outToken is not sufficient.");
             }
@@ -302,21 +325,23 @@ public class CrossChainActuator extends AbstractActuator {
       AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
       AssetIssueV2Store assetIssueV2Store = chainBaseManager.getAssetIssueV2Store();
       byte[] ownerAddress = crossContract.getOwnerAddress().toByteArray();
+      String ownerChainId = ByteArray.toStr(crossContract.getOwnerChainId().toByteArray());
+      String toChainId = ByteArray.toStr(crossContract.getToChainId().toByteArray());
       switch (crossContract.getType()) {
         case TOKEN: {
           CrossToken crossToken = CrossToken.parseFrom(crossContract.getData());
           CrossRevokingStore crossRevokingStore = chainBaseManager.getCrossRevokingStore();
           long amount = crossToken.getAmount();
           String tokenId = ByteArray.toStr(crossToken.getTokenId().toByteArray());
-          Long inTokenCount = crossRevokingStore.getInTokenCount(tokenId);
+          String tokenChainId = ByteArray.toStr(crossToken.getChainId().toByteArray());
+          Long inTokenCount = crossRevokingStore.getInTokenCount(tokenChainId, tokenId);
           if (inTokenCount != null) {//
-            crossRevokingStore.saveInTokenCount(tokenId, inTokenCount + amount);
-            tokenId = crossRevokingStore.getDestTokenFromMapping(tokenId);
+            crossRevokingStore.saveInTokenCount(tokenChainId, tokenId, inTokenCount + amount);
+            tokenId = crossRevokingStore.getDestTokenFromMapping(tokenChainId, tokenId);
           } else {//source token
-            Long outTokenCount = crossRevokingStore.getOutTokenCount(tokenId);
-            crossRevokingStore
-                .saveOutTokenCount(tokenId,
-                    outTokenCount == null ? 0 : outTokenCount - amount);
+            Long outTokenCount = crossRevokingStore.getOutTokenCount(tokenChainId, tokenId);
+            crossRevokingStore.saveOutTokenCount(tokenChainId, tokenId,
+                outTokenCount == null ? 0 : outTokenCount - amount);
           }
           AccountCapsule accountCapsule = accountStore.get(ownerAddress);
           accountCapsule.addAssetAmountV2(ByteArray.fromString(tokenId),
