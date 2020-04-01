@@ -52,10 +52,10 @@ public class ShieldedTRC20ContractStress {
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey1);
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] toAddress = ecKey1.getAddress();
-  Long amount = 2048000000L;
+  Long amount = 1000L;
   private HttpResponse response;
-  String TRC20ContractAddress = "TG3Tj3hwXMgE33zWugDTh2NWshRexU4QtN";
-  String shieldedTRC20ContractAddressStr = "TX29caJFwDPZ9tzjuQ1GB6Ci59ocxQThKN";
+  String TRC20ContractAddress = "TX2qNpGKue8dFjrvSP2EPGLeTzmEmjTNa2";
+  String shieldedTRC20ContractAddressStr = "TDZ4veBmfCnpWLRWmi6CdT2Anpb7QvuaoV";
   byte[] shieldedTRC20ContractAddress = WalletClient
             .decodeFromBase58Check(shieldedTRC20ContractAddressStr);
 
@@ -282,7 +282,6 @@ public class ShieldedTRC20ContractStress {
     private GrpcAPI.PrivateShieldedTRC20Parameters mintParams(String privKey,
                                                               long value, String contractAddr)
             throws ZksnarkException, ContractValidateException {
-        librustzcashInitZksnarkParams();
         long from_amount = value;
         SpendingKey sk = SpendingKey.decode(privKey);
         ExpandedSpendingKey expsk = sk.expandedSpendingKey();
@@ -499,6 +498,42 @@ public class ShieldedTRC20ContractStress {
         return infoById.get().getReceipt().getResult() ==
                 Protocol.Transaction.Result.contractResult.SUCCESS;
   }
+    public void setAllowance() {
+        byte[] contractAddress = WalletClient
+                .decodeFromBase58Check("TX2qNpGKue8dFjrvSP2EPGLeTzmEmjTNa2");
+        ManagedChannel channelFull;
+        WalletGrpc.WalletBlockingStub blockingStubFull = null;
+        String fullnode = "127.0.0.1:50051";
+        channelFull = ManagedChannelBuilder.forTarget(fullnode)
+                .usePlaintext(true)
+                .build();
+        blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+        String shieldedContractAddr = shieldedTRC20ContractAddressStr;
+        byte[] shieldedContractAddress = WalletClient
+                .decodeFromBase58Check(shieldedContractAddr);
+        byte[] shieldedContractAddressPadding = new byte[32];
+        System.arraycopy(shieldedContractAddress, 0, shieldedContractAddressPadding, 11, 21);
+        logger.info("shielded contract addr " + ByteArray.toHexString(shieldedContractAddressPadding));
+        byte[] valueBytes = longTo32Bytes(100_000_000_000_000L);
+        String input = Hex.toHexString(ByteUtil.merge(shieldedContractAddressPadding, valueBytes));
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+        String txid = PublicMethed.triggerContract(contractAddress,
+                "approve(address,uint256)",
+                input,
+                true,
+                0L,
+                1000000000L,
+                fromAddress,
+                testKey1,
+                blockingStubFull);
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+        Optional<Protocol.TransactionInfo> infoById = PublicMethed
+                .getTransactionInfoById(txid, blockingStubFull);
+        Assert.assertEquals(
+                Protocol.Transaction.Result.contractResult.SUCCESS, infoById.get().getReceipt().getResult());
+    }
+
 
   private boolean sendTRXTx() {
         response = HttpMethed
@@ -511,7 +546,7 @@ public class ShieldedTRC20ContractStress {
                 .decodeFromBase58Check(TRC20ContractAddress);
         byte[] toAddressPadding = new byte[32];
         System.arraycopy(toAddress, 0, toAddressPadding, 11, 21);
-        byte[] valueBytes = longTo32Bytes(100_000L);
+        byte[] valueBytes = longTo32Bytes(100L);
         String input = Hex.toHexString(ByteUtil.merge(toAddressPadding, valueBytes));
         PublicMethed.waitProduceNextBlock(blockingStubFull);
         String txid = PublicMethed.triggerContract(contractAddress,
@@ -549,7 +584,7 @@ public class ShieldedTRC20ContractStress {
   }
 
   @Test(enabled = true)
-  public void test1ShieldedTRC20Transaction() throws InterruptedException, ZksnarkException, ContractValidateException {
+  public void testShieldedTRC20Transaction() throws InterruptedException, ZksnarkException, ContractValidateException {
     int total_num = 1000;
     boolean bool;
     String mintInput,transferInput, burnInput;
@@ -564,6 +599,7 @@ public class ShieldedTRC20ContractStress {
     int burnTrue = 0;
     int burnFalse = 0;
 
+    setAllowance();
     for (int i = 0; i < total_num; i++) {
       for (int j = 0; j < 4; j++) {
         if (sendTRXTx())
@@ -594,21 +630,22 @@ public class ShieldedTRC20ContractStress {
       } else
         burnFalse ++;
 
-      if (i % 100 == 0) {
+      logger.info("..........test number: " + i + ".........");
+      if (i % 1 == 0) {
         logger.info("total transactions: ", i * 14);
-        logger.info("total true TRX transactions: ", trxTrue);
-        logger.info("total false TRX transactions: ", trxFalse);
-        logger.info("total true TRC20 transactions: ", trc20True);
-        logger.info("total false TRC20 transactions: ", trc20False);
-        logger.info("total true ShieldedTRC20 transactions: ", mintTrue + transferTrue + burnTrue);
-        logger.info("total false ShieldedTRC20 transactions: ", mintFalse + transferFalse + mintFalse);
+        logger.info("total true TRX transactions: " + trxTrue);
+        logger.info("total false TRX transactions: " + trxFalse);
+        logger.info("total true TRC20 transactions: " + trc20True);
+        logger.info("total false TRC20 transactions: " + trc20False);
+        logger.info("total true ShieldedTRC20 transactions: " + (mintTrue + transferTrue + burnTrue));
+        logger.info("total false ShieldedTRC20 transactions: " + (mintFalse + transferFalse + mintFalse));
         logger.info(".................................................");
-        logger.info("total true mint transactions: ", mintTrue);
-        logger.info("total false mint transactions: ", mintFalse);
-        logger.info("total true transfer transactions: ", transferTrue);
-        logger.info("total false transfer transactions: ", transferFalse);
-        logger.info("total true burn transactions: ", burnTrue);
-        logger.info("total false burn transactions: ", burnFalse);
+        logger.info("total true mint transactions: " + mintTrue);
+        logger.info("total false mint transactions: " + mintFalse);
+        logger.info("total true transfer transactions: " + transferTrue);
+        logger.info("total false transfer transactions: " + transferFalse);
+        logger.info("total true burn transactions: " + burnTrue);
+        logger.info("total false burn transactions: " + burnFalse);
       }
     }
   }

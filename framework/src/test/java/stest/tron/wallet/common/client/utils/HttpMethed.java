@@ -877,7 +877,7 @@ public class HttpMethed {
     }
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
+    //HttpMethed.printJsonContent(responseContent);
     return Boolean.valueOf(responseContent.getString("result")).booleanValue();
   }
 
