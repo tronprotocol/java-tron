@@ -68,7 +68,7 @@ public class WalletTestZenToken006 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -82,7 +82,7 @@ public class WalletTestZenToken006 {
     Args.setFullNodeAllowShieldedTransaction(true);
   }
 
-  @Test(enabled = false, description = "Shield note memo is one char")
+  @Test(enabled = true, description = "Shield note memo is one char")
   public void test1ShieldMemoIsOneChar() {
     shieldAddressInfo = PublicMethed.generateShieldAddress();
     shieldAddress = shieldAddressInfo.get().getAddress();
@@ -106,7 +106,7 @@ public class WalletTestZenToken006 {
     Assert.assertEquals(memo, PublicMethed.getMemo(note));
   }
 
-  @Test(enabled = false, description = "Shield note memo is 512 char")
+  @Test(enabled = true, description = "Shield note memo is 512 char")
   public void test2ShieldMemoIs512Char() {
     shieldAddressInfo = PublicMethed.generateShieldAddress();
     shieldAddress = shieldAddressInfo.get().getAddress();
@@ -144,7 +144,7 @@ public class WalletTestZenToken006 {
         zenTokenOwnerKey, blockingStubFull));
   }
 
-  @Test(enabled = false, description = "Shield note memo is 514 char")
+  @Test(enabled = true, description = "Shield note memo is 514 char")
   public void test3ShieldMemoIs513Char() {
     shieldAddressInfo = PublicMethed.generateShieldAddress();
     shieldAddress = shieldAddressInfo.get().getAddress();
@@ -177,7 +177,7 @@ public class WalletTestZenToken006 {
     Assert.assertEquals(PublicMethed.getMemo(note), memo.substring(0, 512));
   }
 
-  @Test(enabled = false, description = "Shield note memo is empty")
+  @Test(enabled = true, description = "Shield note memo is empty")
   public void test4ShieldMemoIsEmpty() {
     shieldAddressInfo = PublicMethed.generateShieldAddress();
     shieldAddress = shieldAddressInfo.get().getAddress();
@@ -216,7 +216,7 @@ public class WalletTestZenToken006 {
   }
 
 
-  @Test(enabled = false, description = "Shield note memo is empty")
+  @Test(enabled = true, description = "Shield note memo is empty")
   public void test5ShieldMemoIsEmpty() {
     shieldAddressInfo = PublicMethed.generateShieldAddress();
     shieldAddress = shieldAddressInfo.get().getAddress();
@@ -257,7 +257,7 @@ public class WalletTestZenToken006 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,

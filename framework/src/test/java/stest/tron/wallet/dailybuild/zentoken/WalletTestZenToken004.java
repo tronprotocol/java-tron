@@ -70,7 +70,7 @@ public class WalletTestZenToken004 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -84,7 +84,7 @@ public class WalletTestZenToken004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = false, description = "Shield to two shield transaction")
+  @Test(enabled = true, description = "Shield to two shield transaction")
   public void test1Shield2TwoShieldTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -145,7 +145,7 @@ public class WalletTestZenToken004 {
 
   }
 
-  @Test(enabled = false, description = "Shield to one public and one shield transaction")
+  @Test(enabled = true, description = "Shield to one public and one shield transaction")
   public void test2Shield2OneShieldAndOnePublicTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -199,7 +199,7 @@ public class WalletTestZenToken004 {
     Assert.assertEquals(afterReceiverPublicAssetBalance, sendToPublicAddressAmount);
   }
 
-  @Test(enabled = false, description = "Shield to one public and two shield transaction")
+  @Test(enabled = true, description = "Shield to one public and two shield transaction")
   public void test3Public2OneShieldAndOnePublicTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -234,6 +234,7 @@ public class WalletTestZenToken004 {
     String memo2 = "Shield to  shield address2 transaction";
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress2,
         "" + sendToShiledAddress2Amount, memo2);
+
     //When receiver public address don't active,the fee is 1000000
     ECKey ecKey3 = new ECKey(Utils.getRandom());
     byte[] notActivePublicAddress = ecKey3.getAddress();
@@ -269,13 +270,14 @@ public class WalletTestZenToken004 {
     logger.info("afterNotActivePublicAssetBalance:" + afterNotActivePublicAssetBalance);
     logger.info("sendToPublicAddressAmount:" + sendToPublicAddressAmount);
     Assert.assertEquals(afterNotActivePublicAssetBalance, sendToPublicAddressAmount);
+
   }
 
   /**
    * constructor.
    */
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
