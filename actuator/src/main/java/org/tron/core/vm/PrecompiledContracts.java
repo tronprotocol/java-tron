@@ -1082,7 +1082,7 @@ public class PrecompiledContracts {
       logger.info("mint verify " + result);
       if (result) {
         byte[][] leafValue = new byte[1][32];
-        System.arraycopy(cm, 0, leafValue[0],0,32);
+        System.arraycopy(cm, 0, leafValue[0], 0, 32);
         return insertLeaves(frontier, leafCount, leafValue);
       } else {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
@@ -1318,7 +1318,7 @@ public class PrecompiledContracts {
 
       private CountDownLatch countDownLatch;
 
-      SaplingCheckBingdingSig(CountDownLatch countDownLatch, long valueBalance,  byte[] bindingSig,
+      SaplingCheckBingdingSig(CountDownLatch countDownLatch, long valueBalance, byte[] bindingSig,
                               byte[] signHash, byte[] spendCvs, int spendCvLen,
                               byte[] receiveCvs, int receiveCvLen) {
         this.valueBalance = valueBalance;
