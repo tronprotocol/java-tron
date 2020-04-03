@@ -185,12 +185,12 @@ public class SolidityNodeHttpApiService implements Service {
       // context.addServlet(new ServletHolder(isSpendServlet),
       //     "/walletsolidity/isspend");
 
-       context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyIvkServlet),
-           "/walletsolidity/scanshieldedtrc20notesbyivk");
-       context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyOvkServlet),
-           "/walletsolidity/scanshieldedtrc20notesbyovk");
-       context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
-           "/walletsolidity/isshieldedtrc20contractnotespent");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyIvkServlet),
+          "/walletsolidity/scanshieldedtrc20notesbyivk");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyOvkServlet),
+          "/walletsolidity/scanshieldedtrc20notesbyovk");
+      context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
+          "/walletsolidity/isshieldedtrc20contractnotespent");
 
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
           "/walletsolidity/gettransactioninfobyblocknum");

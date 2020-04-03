@@ -50,7 +50,7 @@ public class ShieldedTRC20ContractTest {
   private static ManagedChannel channelSolidity = null;
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private static String fullnode = "127.0.0.1:50051";
-  private static String soliditynode = "127.0.0.1:50051";
+  private static String soliditynode = "127.0.0.1:50061";
   private String trc20ContractAddress = "TX2qNpGKue8dFjrvSP2EPGLeTzmEmjTNa2";
   private String shieldedTRC20ContractAddress = "TDZ4veBmfCnpWLRWmi6CdT2Anpb7QvuaoV";
   private String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
@@ -73,6 +73,9 @@ public class ShieldedTRC20ContractTest {
   public static void afterClass() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 
@@ -1537,7 +1540,7 @@ public class ShieldedTRC20ContractTest {
     NfBuilfer.setPosition(272);
     NfBuilfer.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     NfBuilfer.setNote(scannedNotes.getNoteTxs(1).getNote());
-    GrpcAPI.NullifierResult result1 = blockingStubFull.isShieldedTRC20ContractNoteSpent(
+    GrpcAPI.NullifierResult result1 = blockingStubSolidity.isShieldedTRC20ContractNoteSpent(
         NfBuilfer.build());
     Assert.assertTrue(result1.getIsSpent());
     GrpcAPI.NfTRC20Parameters nfParma = NfBuilfer.build();
@@ -1556,7 +1559,7 @@ public class ShieldedTRC20ContractTest {
     NfBuilfer.setPosition(274);
     NfBuilfer.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     NfBuilfer.setNote(scannedNotes.getNoteTxs(2).getNote());
-    GrpcAPI.NullifierResult result2 = blockingStubFull.isShieldedTRC20ContractNoteSpent(
+    GrpcAPI.NullifierResult result2 = blockingStubSolidity.isShieldedTRC20ContractNoteSpent(
         NfBuilfer.build());
     Assert.assertFalse(result2.getIsSpent());
   }

@@ -3202,6 +3202,5 @@ public class Wallet {
   private boolean getFullNodeAllowShieldedTRC20Transaction() {
     return Args.getInstance().isFullNodeAllowShieldedTRC20TransactionArgs();
   }
-
 }
 

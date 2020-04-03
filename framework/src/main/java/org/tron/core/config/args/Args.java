@@ -455,7 +455,7 @@ public class Args {
 
   @Getter/**/
   @Setter
-  private long allowShieldedTRC20TokenTransaction;
+  private long allowShieldedTRC20Transaction;
 
   // full node used this parameter to close shielded TRC-20 transaction
   @Getter
@@ -612,10 +612,12 @@ public class Args {
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
 //    INSTANCE.allowShieldedTransaction = 0;
+//    INSTANCE.allowShieldedTRC20Transaction = 0;
     INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.fullNodeAllowShieldedTransactionArgs = true;
+    INSTANCE.fullNodeAllowShieldedTRC20TransactionArgs = true;
     INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
@@ -1042,6 +1044,10 @@ public class Args {
 //        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
 //            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
 
+//    INSTANCE.allowShieldedTRC20ContractTransaction =
+//        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) ? config
+//            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) : 0;
+
     INSTANCE.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE) ?
             getEventPluginConfig(config) : null;
@@ -1052,6 +1058,10 @@ public class Args {
     INSTANCE.fullNodeAllowShieldedTransactionArgs =
         !config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)
             || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
+
+    INSTANCE.fullNodeAllowShieldedTRC20TransactionArgs =
+        !config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRC20_TRANSACTION)
+            || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRC20_TRANSACTION);
 
     INSTANCE.zenTokenId = config.hasPath(Constant.NODE_ZEN_TOKENID) ?
         config.getString(Constant.NODE_ZEN_TOKENID) : "000000";
@@ -1495,11 +1505,15 @@ public class Args {
     DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
     DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
 //    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
+//    DBConfig.setAllowShieldedTRC20Transaction(
+//        cfgArgs.getAllowShieldedTRC20Transaction());
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
     DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
     DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
     DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransactionArgs());
+    DBConfig.setFullNodeAllowShieldedTRC20Transaction(
+        cfgArgs.isFullNodeAllowShieldedTRC20TransactionArgs());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
     DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
     DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
@@ -1519,6 +1533,13 @@ public class Args {
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
     this.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
     DBConfig.setFullNodeAllowShieldedTransaction(fullNodeAllowShieldedTransaction);
+  }
+
+  public void setFullNodeAllowShieldedTRC20Transaction(
+      boolean fullNodeAllowShieldedTRC20Transaction) {
+    this.fullNodeAllowShieldedTRC20TransactionArgs = fullNodeAllowShieldedTRC20Transaction;
+    DBConfig
+        .setFullNodeAllowShieldedTRC20Transaction(fullNodeAllowShieldedTRC20Transaction);
   }
 
   /**

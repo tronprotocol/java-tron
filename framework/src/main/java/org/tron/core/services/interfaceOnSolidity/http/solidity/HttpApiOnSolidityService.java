@@ -8,6 +8,9 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.http.IsShieldedTRC20ContractNoteSpentServlet;
+import org.tron.core.services.http.ScanShieldedTRC20NotesbyIvkServlet;
+import org.tron.core.services.http.ScanShieldedTRC20NotesbyOvkServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidityServlet;
@@ -102,6 +105,12 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private IsSpendOnSolidityServlet isSpendOnSolidityServlet;
   @Autowired
+  private ScanShieldedTRC20NotesbyIvkServlet scanShieldedTRC20NotesbyIvkServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesbyOvkServlet scanShieldedTRC20NotesbyOvkServlet;
+  @Autowired
+  private IsShieldedTRC20ContractNoteSpentServlet isShieldedTRC20ContractNoteSpentServlet;
+  @Autowired
   private GetBrokerageOnSolidityServlet getBrokerageServlet;
   @Autowired
   private GetRewardOnSolidityServlet getRewardServlet;
@@ -172,6 +181,12 @@ public class HttpApiOnSolidityService implements Service {
       //     "/walletsolidity/scannotebyovk");
       // context.addServlet(new ServletHolder(isSpendOnSolidityServlet),
       //     "/walletsolidity/isspend");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyIvkServlet),
+          "/walletsolidity/scanshieldedtrc20notesbyivk");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyOvkServlet),
+          "/walletsolidity/scanshieldedtrc20notesbyovk");
+      context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
+          "/walletsolidity/isshieldedtrc20contractnotespent");
       context.addServlet(new ServletHolder(triggerConstantContractOnSolidityServlet),
           "/walletsolidity/triggerconstantcontract");
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumOnSolidityServlet),

@@ -79,6 +79,9 @@ public class DBConfig {
 //  private static long allowShieldedTransaction; //committee parameter
   @Getter
   @Setter
+  private static long allowShieldedTRC20Transaction;
+  @Getter
+  @Setter
   private static String Blocktimestamp;
   @Getter
   @Setter
@@ -101,6 +104,9 @@ public class DBConfig {
   @Getter
   @Setter
   private static boolean fullNodeAllowShieldedTransaction;
+  @Getter
+  @Setter
+  private static boolean fullNodeAllowShieldedTRC20Transaction;
   @Getter
   @Setter
   private static String zenTokenId;
