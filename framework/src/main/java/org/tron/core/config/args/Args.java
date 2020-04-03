@@ -432,7 +432,7 @@ public class Args extends CommonParameter {
 
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
-            : Runtime.getRuntime().availableProcessors() / 2;
+            : (Runtime.getRuntime().availableProcessors() + 1) / 2;
 
     PARAMETER.solidityThreads =
         config.hasPath(Constant.NODE_SOLIDITY_THREADS)
