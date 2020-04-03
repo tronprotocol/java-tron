@@ -18,11 +18,8 @@
 
 package org.tron.core.services.interfaceOnSolidity;
 
-import java.util.concurrent.Callable;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.db.Manager;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.services.WalletOnCursor;
 

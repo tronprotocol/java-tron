@@ -538,6 +538,12 @@ public class Args {
   @Getter
   @Setter
   protected long allowPBFT;
+  @Getter
+  @Setter
+  private int rpcOnPBFTPort;
+  @Getter
+  @Setter
+  private int pBFTHttpPort;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";

@@ -26,7 +26,6 @@ public class Chainbase implements IRevokingDB {
     PBFT
   }
 
-  protected static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
   //true:fullnode, false:soliditynode
   private ThreadLocal<Cursor> cursor = new ThreadLocal<>();
   private ThreadLocal<Long> offset = new ThreadLocal<>();

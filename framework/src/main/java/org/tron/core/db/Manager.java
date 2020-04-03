@@ -66,6 +66,7 @@ import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
+import org.tron.core.actuator.AbstractActuator;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -86,7 +87,6 @@ import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.core.ISession;
-import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -1768,7 +1768,7 @@ public class Manager {
   public void setCursor(Chainbase.Cursor cursor) {
     if (cursor == Chainbase.Cursor.PBFT) {
       long headNum = getHeadBlockNum();
-      long pbftNum = commonDataBase.getLatestPbftBlockNum();
+      long pbftNum = chainBaseManager.getCommonDataBase().getLatestPbftBlockNum();
       revokingStore.setCursor(cursor, headNum - pbftNum);
     } else {
       revokingStore.setCursor(cursor);
