@@ -28,6 +28,8 @@ public class HttpTestSendCoin001 {
       .getStringList("httpnode.ip.list").get(1);
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
   private JSONObject responseContent;
   private HttpResponse response;
 
@@ -64,17 +66,55 @@ public class HttpTestSendCoin001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get transaction info by id from solidity by http")
-  public void test3GetTransactionInfoByIdFromSolidity() {
+  @Test(enabled = true, description = "Get transaction by id from PBFT by http")
+  public void test3GetTransactionByIdFromPbft() {
     String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
         testKey002);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
 
+    response = HttpMethed.getTransactionByIdFromPbft(httpPbftNode, txid);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    String retString = responseContent.getString("ret");
+    JSONArray array = JSONArray.parseArray(retString);
+    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString(
+        "contractRet"), "SUCCESS");
+    Assert.assertTrue(responseContent.size() > 4);
+  }
+
+
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get transaction info by id from solidity by http")
+  public void test4GetTransactionInfoByIdFromSolidity() {
+    String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
+        testKey002);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getTransactionInfoByIdFromSolidity(httpSoliditynode, txid);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.size() > 4);
   }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get transaction info by id from PBFT by http")
+  public void test5GetTransactionInfoByIdFromPbft() {
+    String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
+        testKey002);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    response = HttpMethed.getTransactionInfoByIdFromPbft(httpPbftNode, txid);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.size() > 4);
+  }
+
+
 
   /**
    * constructor.
@@ -124,4 +164,3 @@ public class HttpTestSendCoin001 {
   }
 
 }
-

@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.grammar;
+package stest.tron.wallet.dailybuild.assetissue.grammar;
 
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.BAD_JUMP_DESTINATION_VALUE;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.ILLEGAL_OPERATION_VALUE;

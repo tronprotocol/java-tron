@@ -1,4 +1,4 @@
-package stest.tron.wallet.exchangeandtoken;
+package stest.tron.wallet.dailybuild.assetissue;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -11,6 +11,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -46,9 +47,21 @@ public class WalletTestAssetIssue020 {
   byte[] asset020SecondAddress = ecKey2.getAddress();
   String asset020SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
+  private ManagedChannel channelSolidity = null;
+  private ManagedChannel channelSoliInFull = null;
+  private ManagedChannel channelPbft = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSoliInFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
+  private String soliInFullnode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
+  private String soliInPbft = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(2);
 
   @BeforeSuite
   public void beforeSuite() {
@@ -66,10 +79,25 @@ public class WalletTestAssetIssue020 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    channelSoliInFull = ManagedChannelBuilder.forTarget(soliInFullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSoliInFull = WalletSolidityGrpc.newBlockingStub(channelSoliInFull);
+
+    channelPbft = ManagedChannelBuilder.forTarget(soliInPbft)
+        .usePlaintext(true)
+        .build();
+    blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
   }
 
-  @Test(enabled = true)
-  public void testAssetIssueSupportPrecision() {
+  @Test(enabled = true, description = "Asset issue support precision")
+  public void test01AssetIssueSupportPrecision() {
     //get account
     ecKey1 = new ECKey(Utils.getRandom());
     asset020Address = ecKey1.getAddress();
@@ -107,6 +135,7 @@ public class WalletTestAssetIssue020 {
         name, totalSupply, 1, 1, 6, start, end, 1, description, url,
         2000L, 2000L, 1L, 1L, asset020Key, blockingStubFull));
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(asset020Address, blockingStubFull);
     assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
@@ -141,20 +170,62 @@ public class WalletTestAssetIssue020 {
     Assert.assertTrue(PublicMethed.createAssetIssue(asset020SecondAddress,
         name, totalSupply, 1, 1, 1, start, end, 1, description, url,
         2000L, 2000L, 1L, 1L, asset020SecondKey, blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     assetIssueInfo = PublicMethed.getAssetIssueByName(name, blockingStubFull);
     Assert.assertTrue(assetIssueInfo.getName().isEmpty());
 
   }
 
+  @Test(enabled = true, description = "Get asset issue by id from Solidity")
+  public void test02GetAssetIssueByidFromSolidity() {
+    Assert.assertEquals(PublicMethed.getAssetIssueById(ByteArray.toStr(assetAccountId
+            .toByteArray()), blockingStubFull),
+        PublicMethed.getAssetIssueByIdFromSolidity(ByteArray.toStr(assetAccountId
+            .toByteArray()), blockingStubSolidity));
+    Assert.assertEquals(PublicMethed.getAssetIssueById(ByteArray.toStr(assetAccountId
+            .toByteArray()), blockingStubFull),
+        PublicMethed.getAssetIssueByIdFromSolidity(ByteArray.toStr(assetAccountId
+            .toByteArray()), blockingStubSoliInFull));
+  }
+
+  @Test(enabled = true, description = "Get asset issue by id from PBFT")
+  public void test03GetAssetIssueByIdFromPbft() {
+    Assert.assertEquals(PublicMethed.getAssetIssueById(ByteArray.toStr(assetAccountId
+            .toByteArray()), blockingStubFull),
+        PublicMethed.getAssetIssueByIdFromSolidity(ByteArray.toStr(assetAccountId
+            .toByteArray()), blockingStubPbft));
+  }
+
+  @Test(enabled = true, description = "Get asset issue list by name from Solidity")
+  public void test04GetAssetIssueListByNameFromSolidity() {
+    Assert.assertEquals(PublicMethed.getAssetIssueListByNameFromSolidity(name,
+        blockingStubSolidity).get().getAssetIssueList().get(0).getTotalSupply(),totalSupply);
+  }
+
+  @Test(enabled = true, description = "Get asset issue list by name from PBFT")
+  public void test05GetAssetIssueListByNameFromPbft() {
+    Assert.assertEquals(PublicMethed.getAssetIssueListByNameFromSolidity(name,
+        blockingStubPbft).get().getAssetIssue(0).getTotalSupply(),totalSupply);
+  }
+
+
+
   /**
    * constructor.
    */
-
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelPbft != null) {
+      channelPbft.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSoliInFull != null) {
+      channelSoliInFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 }

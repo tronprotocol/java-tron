@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +15,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -23,18 +25,29 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestBlock002 {
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
+  private ManagedChannel channelSoliInFull = null;
+  private ManagedChannel channelPbft = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSoliInFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
+  private String soliInFullnode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
+  private String soliInPbft = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(2);
 
   public static String loadPubKey() {
     char[] buf = new char[0x100];
@@ -62,13 +75,23 @@ public class WalletTestBlock002 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    channelSoliInFull = ManagedChannelBuilder.forTarget(soliInFullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSoliInFull = WalletSolidityGrpc.newBlockingStub(channelSoliInFull);
+
+    channelPbft = ManagedChannelBuilder.forTarget(soliInPbft)
+        .usePlaintext(true)
+        .build();
+    blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
   }
 
   /**
    * constructor.
    */
   @Test(enabled = true, description = "GetBlockByNum from fullnode")
-  public void testGetBlockByNum() {
+  public void test01GetBlockByNum() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     Assert.assertFalse(currentBlockNum < 0);
@@ -111,7 +134,7 @@ public class WalletTestBlock002 {
   }
 
   @Test(enabled = true, description = "GetBlockByNum from solidity")
-  public void testGetBlockByNumFromSolidity() {
+  public void test02GetBlockByNumFromSolidity() {
     Block currentBlock = blockingStubSolidity
         .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
@@ -156,8 +179,8 @@ public class WalletTestBlock002 {
     logger.info("Last second test from solidity succesfully");
   }
 
-  @Test(enabled = true, description = "get block by id")
-  public void testGetBlockById() {
+  @Test(enabled = true, description = "Get block by id")
+  public void test03GetBlockById() {
 
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     ByteString currentHash = currentBlock.getBlockHeader().getRawData().getParentHash();
@@ -177,6 +200,97 @@ public class WalletTestBlock002 {
     logger.info("By ID test succesfully");
   }
 
+
+  @Test(enabled = true, description = "Get transaction count by block num")
+  public void test04GetTransactionCountByBlockNum() {
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    builder.setNum(0);
+
+    Assert.assertTrue(blockingStubFull.getTransactionCountByBlockNum(builder.build())
+        .getNum() > 3);
+  }
+
+  @Test(enabled = true, description = "Get transaction count by block num from solidity")
+  public void test05GetTransactionCountByBlockNumFromSolidity() {
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    builder.setNum(0);
+
+    Assert.assertTrue(blockingStubSolidity.getTransactionCountByBlockNum(builder.build())
+        .getNum() > 3);
+    Assert.assertTrue(blockingStubSoliInFull.getTransactionCountByBlockNum(builder.build())
+        .getNum() > 3);
+  }
+
+  @Test(enabled = true, description = "Get transaction count by block num from PBFT")
+  public void test06GetTransactionCountByBlockNumFromPbft() {
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    builder.setNum(0);
+
+    Assert.assertTrue(blockingStubPbft.getTransactionCountByBlockNum(builder.build())
+        .getNum() > 3);
+  }
+
+  @Test(enabled = true, description = "Get now block from PBFT")
+  public void test07GetNowBlockFromPbft() {
+    Block nowBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long nowBlockNum = nowBlock.getBlockHeader().getRawData().getNumber();
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubPbft);
+    Block pbftNowBlock = blockingStubPbft.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long nowPbftBlockNum = pbftNowBlock.getBlockHeader().getRawData().getNumber();
+    logger.info("nowBlockNum:" + nowBlockNum + " , nowPbftBlockNum:" + nowPbftBlockNum);
+
+    Assert.assertTrue(nowPbftBlockNum >= nowBlockNum);
+  }
+
+
+  @Test(enabled = true, description = "Get block by num from PBFT")
+  public void test08GetBlockByNumFromPbft() {
+    Block currentBlock = blockingStubPbft
+        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Assert.assertFalse(currentBlockNum < 0);
+    if (currentBlockNum == 1) {
+      logger.info("Now has very little block, Please test this case by manual");
+      Assert.assertTrue(currentBlockNum == 1);
+    }
+
+    //The number is large than the currently number, there is no exception when query this number.
+    Long outOfCurrentBlockNum = currentBlockNum + 10000L;
+    NumberMessage.Builder builder1 = NumberMessage.newBuilder();
+    builder1.setNum(outOfCurrentBlockNum);
+    Block outOfCurrentBlock = blockingStubPbft.getBlockByNum(builder1.build());
+    Assert.assertFalse(outOfCurrentBlock.hasBlockHeader());
+
+    //Query the first block.
+    NumberMessage.Builder builder2 = NumberMessage.newBuilder();
+    builder2.setNum(1);
+    Block firstBlock = blockingStubPbft.getBlockByNum(builder2.build());
+    Assert.assertTrue(firstBlock.hasBlockHeader());
+    Assert.assertFalse(firstBlock.getBlockHeader().getWitnessSignature().isEmpty());
+    Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getTimestamp() > 0);
+    Assert.assertFalse(firstBlock.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+    Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getNumber() == 1);
+    Assert.assertFalse(firstBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
+    Assert.assertTrue(firstBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+    logger.info("firstblock test from solidity succesfully");
+
+    //Query the second latest block.
+    NumberMessage.Builder builder3 = NumberMessage.newBuilder();
+    builder3.setNum(currentBlockNum - 1);
+    Block lastSecondBlock = blockingStubPbft.getBlockByNum(builder3.build());
+    Assert.assertTrue(lastSecondBlock.hasBlockHeader());
+    Assert.assertFalse(lastSecondBlock.getBlockHeader().getWitnessSignature().isEmpty());
+    Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getTimestamp() > 0);
+    Assert.assertFalse(lastSecondBlock.getBlockHeader().getRawData().getWitnessAddress().isEmpty());
+    Assert.assertTrue(
+        lastSecondBlock.getBlockHeader().getRawData().getNumber() + 1 == currentBlockNum);
+    Assert.assertFalse(lastSecondBlock.getBlockHeader().getRawData().getParentHash().isEmpty());
+    Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
+    logger.info("Last second test from solidity succesfully");
+
+  }
+
+
   /**
    * constructor.
    */
@@ -189,6 +303,13 @@ public class WalletTestBlock002 {
     if (channelSolidity != null) {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
+    if (channelPbft != null) {
+      channelPbft.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSoliInFull != null) {
+      channelSoliInFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+
   }
 
   /**
@@ -243,5 +364,3 @@ public class WalletTestBlock002 {
 
   }
 }
-
-

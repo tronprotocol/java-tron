@@ -41,6 +41,8 @@ public class HttpTestZenToken005 {
       .getStringList("httpnode.ip.list").get(0);
   private String httpSolidityNode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
   private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.zenTokenOwnerKey");
   byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
@@ -55,7 +57,7 @@ public class HttpTestZenToken005 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -84,7 +86,7 @@ public class HttpTestZenToken005 {
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
   }
 
-  @Test(enabled = false, description = "Shield to shield transaction without ask by http")
+  @Test(enabled = true, description = "Shield to shield transaction without ask by http")
   public void test01ShieldToShieldWithoutAskTransaction() {
     receiverShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     receiverShieldAddress = receiverShieldAddressInfo.get().getAddress();
@@ -96,7 +98,7 @@ public class HttpTestZenToken005 {
 
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, null, 0, sendShieldAddressInfo.get(),
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, httpPbftNode,null, 0, sendShieldAddressInfo.get(),
             sendNote, shieldOutList, null, 0, null);
     org.junit.Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     logger.info("response:" + response);
@@ -114,7 +116,7 @@ public class HttpTestZenToken005 {
     Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
   }
 
-  @Test(enabled = false, description = "Get merkle tree voucher info by http")
+  @Test(enabled = true, description = "Get merkle tree voucher info by http")
   public void test02GetMerkleTreeVoucherInfo() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed
@@ -133,7 +135,7 @@ public class HttpTestZenToken005 {
         "synBlockNum is too large, cmBlockNum plus synBlockNum must be <= latestBlockNumber"));
   }
 
-  @Test(enabled = false, description = "Get merkle tree voucher info by http from solidity")
+  @Test(enabled = true, description = "Get merkle tree voucher info by http from solidity")
   public void test03GetMerkleTreeVoucherInfoFromSolidity() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed
@@ -158,7 +160,7 @@ public class HttpTestZenToken005 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     response = HttpMethed.getAccount(httpnode, foundationZenTokenAddress);
     responseContent = HttpMethed.parseResponseContent(response);

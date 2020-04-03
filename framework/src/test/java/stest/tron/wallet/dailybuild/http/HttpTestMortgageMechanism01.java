@@ -32,6 +32,8 @@ public class HttpTestMortgageMechanism01 {
       .get(1);
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
 
   /**
    * constructor.
@@ -59,8 +61,23 @@ public class HttpTestMortgageMechanism01 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "GetBrokerage from PBFT by http")
+  public void test03GetBrokerageFromPbft() {
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    response = HttpMethed.getBrokerageFromPbft(httpPbftNode, witnessAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals("20", responseContent.getString("brokerage"));
+  }
+
+
+
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "UpdateBrokerage by http")
-  public void test03UpdateBrokerage() {
+  public void test04UpdateBrokerage() {
     response = HttpMethed.sendCoin(httpnode, fromAddress, witnessAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -75,7 +92,7 @@ public class HttpTestMortgageMechanism01 {
    * constructor.
    */
   @Test(enabled = true, description = "GetReward by http")
-  public void test04GetReward() {
+  public void test05GetReward() {
     response = HttpMethed.getReward(httpnode, witnessAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -89,7 +106,7 @@ public class HttpTestMortgageMechanism01 {
    * constructor.
    */
   @Test(enabled = true, description = "GetReward from solidity by http")
-  public void test05GetRewardFromSolidity() {
+  public void test06GetRewardFromSolidity() {
     response = HttpMethed.getRewardFromSolidity(httpSoliditynode, witnessAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -102,8 +119,25 @@ public class HttpTestMortgageMechanism01 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "GetReward from PBFT by http")
+  public void test07GetRewardFromPbft() {
+    response = HttpMethed.getRewardFromPbft(httpPbftNode, witnessAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue((
+        new BigInteger(responseContent.getString("reward")).compareTo(new BigInteger("0")) == 0)
+        || (new BigInteger(responseContent.getString("reward"))
+        .compareTo(new BigInteger("0"))) == 1);
+  }
+
+
+
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    //update brokerage
     HttpMethed.freedResource(httpnode, witnessAddress, fromAddress, witnessKey);
     HttpMethed.disConnect();
   }

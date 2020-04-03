@@ -1,4 +1,4 @@
-package stest.tron.wallet.exchangeandtoken;
+package stest.tron.wallet.dailybuild.assetissue.exchangeandtoken;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;

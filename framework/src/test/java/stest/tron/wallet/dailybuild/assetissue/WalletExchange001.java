@@ -1,4 +1,4 @@
-package stest.tron.wallet.exchangeandtoken;
+package stest.tron.wallet.dailybuild.assetissue;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -58,12 +58,16 @@ public class WalletExchange001 {
   Long secondTokenInitialBalance = firstTokenInitialBalance * exchangeRate;
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
+  private ManagedChannel channelPbft = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(1);
+  private String soliInPbft = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(2);
 
   @BeforeSuite
   public void beforeSuite() {
@@ -86,6 +90,11 @@ public class WalletExchange001 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    channelPbft = ManagedChannelBuilder.forTarget(soliInPbft)
+        .usePlaintext(true)
+        .build();
+    blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
   }
 
   @Test(enabled = true)
@@ -150,6 +159,7 @@ public class WalletExchange001 {
             assetAccountId2.toByteArray(), secondTokenInitialBalance, exchange001Address,
             exchange001Key,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
     Integer afterCreateExchangeNum = listExchange.get().getExchangesCount();
     Assert.assertTrue(afterCreateExchangeNum - beforeCreateExchangeNum == 1);
@@ -193,6 +203,7 @@ public class WalletExchange001 {
     Assert.assertTrue(
         PublicMethed.injectExchange(exchangeId, assetAccountId1.toByteArray(), injectBalance,
             exchange001Address, exchange001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long afterToken1Balance = 0L;
     Long afterToken2Balance = 0L;
@@ -244,6 +255,7 @@ public class WalletExchange001 {
     Assert.assertTrue(
         PublicMethed.exchangeWithdraw(exchangeId, assetAccountId1.toByteArray(), withdrawNum,
             exchange001Address, exchange001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long afterToken1Balance = 0L;
     Long afterToken2Balance = 0L;
@@ -300,6 +312,7 @@ public class WalletExchange001 {
         PublicMethed
             .exchangeTransaction(exchangeId, assetAccountId1.toByteArray(), transactionNum, 1,
                 exchange001Address, exchange001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long afterToken1Balance = 0L;
     Long afterToken2Balance = 0L;
@@ -348,7 +361,28 @@ public class WalletExchange001 {
   /**
    * constructor.
    */
+  @Test(enabled = true)
+  public void test8GetExchangeListFromPbft() {
+    //Pbft support listexchange
+    listExchange = PublicMethed.getExchangeList(blockingStubPbft);
+    Assert.assertTrue(listExchange.get().getExchangesCount() > 0);
+  }
 
+  /**
+   * constructor.
+   */
+  @Test(enabled = true)
+  public void test9GetExchangeByIdFromPbft() {
+    Assert.assertEquals(PublicMethed.getExchange(exchangeId.toString(),blockingStubPbft),
+        PublicMethed.getExchange(exchangeId.toString(),blockingStubSolidity));
+  }
+
+
+
+
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
@@ -357,7 +391,8 @@ public class WalletExchange001 {
     if (channelSolidity != null) {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
+    if (channelPbft != null) {
+      channelPbft.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
   }
 }
-
-

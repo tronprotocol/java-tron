@@ -1,4 +1,4 @@
-package stest.tron.wallet.account;
+package stest.tron.wallet.dailybuild.manual;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -52,9 +53,23 @@ public class WalletTestAccount013 {
   byte[] accountForAssetIssueAddress;
   String accountForAssetIssueKey;
   private ManagedChannel channelFull = null;
+  private ManagedChannel channelSolidity = null;
+  private ManagedChannel channelSoliInFull = null;
+  private ManagedChannel channelPbft = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSoliInFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
+  private Long maxFeeLimit = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.maxFeeLimit");
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(1);
+      .get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
+  private String soliInFullnode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
+  private String soliInPbft = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(2);
 
   /**
    * constructor.
@@ -71,21 +86,39 @@ public class WalletTestAccount013 {
    */
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(testKey002);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+        .usePlaintext(true)
+        .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    channelSoliInFull = ManagedChannelBuilder.forTarget(soliInFullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSoliInFull = WalletSolidityGrpc.newBlockingStub(channelSoliInFull);
+
+    channelPbft = ManagedChannelBuilder.forTarget(soliInPbft)
+        .usePlaintext(true)
+        .build();
+    blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Delegate resource for bandwidth and energy")
   public void test1DelegateResourceForBandwidthAndEnergy() {
     //Create account013
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     account013Address = ecKey1.getAddress();
     testKeyForAccount013 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    PublicMethed.printAddress(testKeyForAccount013);
     //Create receiver
     ECKey ecKey2 = new ECKey(Utils.getRandom());
     receiverDelegateAddress = ecKey2.getAddress();
     receiverDelegateKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+    PublicMethed.printAddress(receiverDelegateKey);
     //Create Empty account
     ECKey ecKey3 = new ECKey(Utils.getRandom());
     emptyAddress = ecKey3.getAddress();
@@ -192,7 +225,7 @@ public class WalletTestAccount013 {
     logger.info("After receiver net limit is " + receiverResource.getNetLimit());
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Get delegate resource  index")
   public void test2getDelegatedResourceAndDelegateResourceAccountIndex() {
     //Create Account4
     ECKey ecKey4 = new ECKey(Utils.getRandom());
@@ -212,11 +245,12 @@ public class WalletTestAccount013 {
     Assert.assertTrue(PublicMethed
         .sendcoin(account5DelegatedResourceAddress, 20000000000L, toAddress, testKey003,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Protocol.Account account4infoBefore = PublicMethed
         .queryAccount(account4DelegatedResourceAddress, blockingStubFull);
     //Balance of Account4 before DelegateResource
-    long account4BeforeBalance = account4infoBefore.getBalance();
+    final long account4BeforeBalance = account4infoBefore.getBalance();
     //account013 DelegateResource of bandwidth to Account4
     Assert.assertTrue(PublicMethed
         .freezeBalanceForReceiver(account013Address, freezeAmount, freezeDuration, 0,
@@ -227,6 +261,7 @@ public class WalletTestAccount013 {
         .freezeBalanceForReceiver(account4DelegatedResourceAddress, freezeAmount, freezeDuration, 1,
             ByteString.copyFrom(account5DelegatedResourceAddress), account4DelegatedResourceKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //check DelegatedResourceList，from:account013 to:Account4
     Optional<GrpcAPI.DelegatedResourceList> delegatedResourceResult1 = PublicMethed
         .getDelegatedResource(account013Address, account4DelegatedResourceAddress,
@@ -257,6 +292,7 @@ public class WalletTestAccount013 {
     //unfreezebalance of bandwidth from Account013 to Account4
     Assert.assertTrue(PublicMethed.unFreezeBalance(account013Address, testKeyForAccount013, 0,
         account4DelegatedResourceAddress, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //check DelegatedResourceAccountIndex of Account4
     Optional<Protocol.DelegatedResourceAccountIndex> delegatedResourceIndexResult1AfterUnfreeze =
         PublicMethed
@@ -279,6 +315,7 @@ public class WalletTestAccount013 {
     Assert.assertTrue(PublicMethed
         .unFreezeBalance(account4DelegatedResourceAddress, account4DelegatedResourceKey, 1,
             account5DelegatedResourceAddress, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Protocol.Account account4infoAfterUnfreezeEnergy = PublicMethed
         .queryAccount(account4DelegatedResourceAddress, blockingStubFull);
     //balance of Account4 after unfreezebalance
@@ -296,7 +333,7 @@ public class WalletTestAccount013 {
             account5DelegatedResourceAddress, blockingStubFull));
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Prepare delegate resource token")
   public void test3PrepareToken() {
     //Create Account7
     ECKey ecKey7 = new ECKey(Utils.getRandom());
@@ -311,6 +348,7 @@ public class WalletTestAccount013 {
         .freezeBalanceForReceiver(account013Address, 1000000000L, freezeDuration, 0,
             ByteString.copyFrom(accountForAssetIssueAddress), testKeyForAccount013,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //accountForAssetIssue AssetIssue
     long now = System.currentTimeMillis();
     String name = "testAccount013_" + Long.toString(now);
@@ -324,7 +362,7 @@ public class WalletTestAccount013 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Delegate resource about transfer asset")
   public void test4DelegateResourceAboutTransferAsset() {
     //Wait for 3s
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -337,6 +375,7 @@ public class WalletTestAccount013 {
     Assert.assertTrue(PublicMethed
         .participateAssetIssue(accountForAssetIssueAddress, assetAccountId.toByteArray(), 1000000,
             account5DelegatedResourceAddress, account5DelegatedResourceKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //get account013，accountForAssetIssue，Account5 account resources before transferAssets
     final long account013CurrentBandwidth = PublicMethed
         .getAccountResource(account013Address, blockingStubFull).getNetUsed();
@@ -348,7 +387,7 @@ public class WalletTestAccount013 {
     Assert.assertTrue(PublicMethed
         .transferAsset(receiverDelegateAddress, assetAccountId.toByteArray(), 100000,
             account5DelegatedResourceAddress, account5DelegatedResourceKey, blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.printAddress(accountForAssetIssueKey);
     PublicMethed.printAddress(account5DelegatedResourceKey);
 
@@ -382,7 +421,7 @@ public class WalletTestAccount013 {
     Assert.assertTrue(account5CurrentBandwidth == account5CurrentBandwidthAfterTrans);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Can't delegate resource for contract")
   public void test5CanNotDelegateResourceToContract() {
     //Create Account6
     ECKey ecKey6 = new ECKey(Utils.getRandom());
@@ -414,67 +453,74 @@ public class WalletTestAccount013 {
     Assert.assertFalse(PublicMethed
         .freezeBalanceForReceiver(account4DelegatedResourceAddress, freezeAmount, freezeDuration, 1,
             ByteString.copyFrom(contractAddress), account4DelegatedResourceKey, blockingStubFull));
-
-    //Account4 DelegatedResource Energy to deploy
-    //    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(
-    //        account4DelegatedResourceAddress, freezeAmount, freezeDuration, 1,
-    //        ByteString.copyFrom(accountForDeployAddress),
-    //        account4DelegatedResourceKey, blockingStubFull));
-    //
-    //    //get Energy of Account013，Account4，Contract before trigger contract
-    //    final long account013CurrentEnergyUsed = PublicMethed.getAccountResource(
-    //        account013Address, blockingStubFull).getEnergyUsed();
-    //    final long account013CurrentBandwidthUsed = PublicMethed.getAccountResource(
-    //        account013Address, blockingStubFull).getFreeNetUsed();
-    //    final long account4CurrentEnergyUsed = PublicMethed.getAccountResource(
-    //        account4DelegatedResourceAddress, blockingStubFull).getEnergyUsed();
-    //    final long contractCurrentEnergyUsed = PublicMethed.getAccountResource(
-    //        contractAddress, blockingStubFull).getEnergyUsed();
-    //    final long deployCurrentEnergyUsed = PublicMethed.getAccountResource(
-    //        accountForDeployAddress, blockingStubFull).getEnergyUsed();
-    //
-    //    //Account013 trigger contract
-    //    String txid = PublicMethed.triggerContract(contractAddress,
-    //        "add2(uint256)", "1", false,
-    //        0, 1000000000L, "0", 0, account013Address, testKeyForAccount013, blockingStubFull);
-    //    logger.info(txid);
-    //    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    //    logger.info(String.valueOf(infoById.get().getResultValue()));
-    //    Assert.assertTrue(infoById.get().getResultValue() == 0);
-    //    //get transaction info of Energy used and Bandwidth used
-    //    final long contractTriggerEnergyUsed = infoById.get().getReceipt().getOriginEnergyUsage();
-    //    final long contractTriggerBandwidthUsed = infoById.get().getReceipt().getNetUsage();
-    //
-    //    //get Energy of Account013，Account4，Contract after trigger contract
-    //    final long account013CurrentEnergyUsedAfterTrig = PublicMethed.getAccountResource(
-    //        account013Address, blockingStubFull).getEnergyUsed();
-    //    final long account013CurrentBandwidthUsedAfterTrig = PublicMethed.getAccountResource(
-    //        account013Address, blockingStubFull).getFreeNetUsed();
-    //    final long account4CurrentEnergyUsedAfterTrig = PublicMethed.getAccountResource(
-    //        account4DelegatedResourceAddress, blockingStubFull).getEnergyUsed();
-    //    final long contractCurrentEnergyUsedAfterTrig = PublicMethed.getAccountResource(
-    //        contractAddress, blockingStubFull).getEnergyUsed();
-    //    final long deployCurrentEnergyUsedAfterTrig = PublicMethed.getAccountResource(
-    //        accountForDeployAddress, blockingStubFull).getEnergyUsed();
-    //    //compare energy changed
-    //    Assert.assertTrue(account013CurrentEnergyUsed == account013CurrentEnergyUsedAfterTrig);
-    //    Assert.assertTrue(account4CurrentEnergyUsed == account4CurrentEnergyUsedAfterTrig);
-    //    Assert.assertTrue(contractCurrentEnergyUsed == contractCurrentEnergyUsedAfterTrig);
-    //    Assert.assertTrue(deployCurrentEnergyUsed
-    //        == deployCurrentEnergyUsedAfterTrig - contractTriggerEnergyUsed);
-    //    //compare bandwidth of Account013 before and after trigger contract
-    //    Assert.assertTrue(account013CurrentBandwidthUsed
-    //        == account013CurrentBandwidthUsedAfterTrig - contractTriggerBandwidthUsed);
-
   }
+
+
+  @Test(enabled = true,description = "Get delegate resource from solidity")
+  public void test6GetDelegateResourceFromSolidity() {
+    Optional<GrpcAPI.DelegatedResourceList> delegateResource = PublicMethed
+        .getDelegatedResourceFromSolidity(account013Address, receiverDelegateAddress,
+            blockingStubSolidity);
+    Assert.assertTrue(delegateResource.get().getDelegatedResource(0)
+        .getFrozenBalanceForEnergy() == 10000000);
+    Assert.assertTrue(delegateResource.get().getDelegatedResource(0)
+        .getFrozenBalanceForBandwidth() == 10000000);
+  }
+
+  @Test(enabled = true,description = "Get delegate resource from PBFT")
+  public void test7GetDelegateResourceFromPbft() {
+    Optional<GrpcAPI.DelegatedResourceList> delegateResource = PublicMethed
+        .getDelegatedResourceFromSolidity(account013Address, receiverDelegateAddress,
+            blockingStubPbft);
+    Assert.assertTrue(delegateResource.get().getDelegatedResource(0)
+        .getFrozenBalanceForEnergy() == 10000000);
+    Assert.assertTrue(delegateResource.get().getDelegatedResource(0)
+        .getFrozenBalanceForBandwidth() == 10000000);
+  }
+
+  @Test(enabled = true,description = "Get delegate resource index from solidity")
+  public void test8GetDelegateResourceIndexFromSolidity() {
+    Optional<Protocol.DelegatedResourceAccountIndex>  delegateResourceIndex = PublicMethed
+        .getDelegatedResourceAccountIndexFromSolidity(account013Address,
+            blockingStubSolidity);
+    Assert.assertTrue(delegateResourceIndex.get().getToAccountsCount() == 2);
+  }
+
+  @Test(enabled = true,description = "Get delegate resource index from PBFT")
+  public void test9GetDelegateResourceIndexFromPbft() {
+    Optional<Protocol.DelegatedResourceAccountIndex>  delegateResourceIndex = PublicMethed
+        .getDelegatedResourceAccountIndexFromSolidity(account013Address,
+            blockingStubSolidity);
+    Assert.assertTrue(delegateResourceIndex.get().getToAccountsCount() == 2);
+  }
+
+
+
 
   /**
    * constructor.
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(account013Address, testKeyForAccount013,
+        fromAddress, blockingStubFull);
+    PublicMethed.freedResource(receiverDelegateAddress, receiverDelegateKey, fromAddress,
+        blockingStubFull);
+    PublicMethed.freedResource(account4DelegatedResourceAddress, account4DelegatedResourceKey,
+        fromAddress, blockingStubFull);
+    PublicMethed.freedResource(account5DelegatedResourceAddress, account5DelegatedResourceKey,
+        fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelPbft != null) {
+      channelPbft.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSoliInFull != null) {
+      channelSoliInFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 }
