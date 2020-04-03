@@ -112,6 +112,16 @@ public class TransferActuatorTest {
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
+  private Any getContract(long count, byte[] address) {
+    long nowTime = new Date().getTime();
+    return Any.pack(
+        TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(address))
+            .setAmount(count)
+            .build());
+  }
+
   private Any getContract(long count) {
     return Any.pack(
         TransferContract.newBuilder()
@@ -539,13 +549,4 @@ public class TransferActuatorTest {
     }
   }
 
-  private Any getContract(long count, byte[] address) {
-    long nowTime = new Date().getTime();
-    return Any.pack(
-        TransferContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setToAddress(ByteString.copyFrom(address))
-            .setAmount(count)
-            .build());
-  }
 }

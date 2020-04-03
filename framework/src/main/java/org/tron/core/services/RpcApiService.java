@@ -86,7 +86,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.ChainBaseManager;
-import org.tron.common.utils.*;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -2285,9 +2284,10 @@ public class RpcApiService implements Service {
   }
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
+
     @Override
     public void getStatsInfo(EmptyMessage request,
-                        StreamObserver<Protocol.MetricsInfo> responseObserver) {
+        StreamObserver<Protocol.MetricsInfo> responseObserver) {
       responseObserver.onNext(metricsApiService.getMetricProtoInfo());
       responseObserver.onCompleted();
     }

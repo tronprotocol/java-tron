@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
-import javax.servlet.http.HttpServletResponse;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -444,20 +443,20 @@ public class Util {
   }
 
   public static byte[] getAddress(HttpServletRequest request)
-          throws Exception {
+      throws Exception {
     byte[] address = null;
     String addressParam = "address";
     String addressStr = request.getParameter(addressParam);
     if (StringUtils.isBlank(addressStr)) {
       String input = request.getReader().lines()
-              .collect(Collectors.joining(System.lineSeparator()));
+          .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
       addressStr = jsonObject.getString(addressParam);
     }
     if (StringUtils.isNotBlank(addressStr)) {
       if (StringUtils.startsWith(addressStr,
-              Constant.ADD_PRE_FIX_STRING_MAINNET)) {
+          Constant.ADD_PRE_FIX_STRING_MAINNET)) {
         address = Hex.decode(addressStr);
       } else {
         address = decodeFromBase58Check(addressStr);

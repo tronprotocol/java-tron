@@ -1,5 +1,7 @@
 package org.tron.core;
 
+import static stest.tron.wallet.common.client.WalletClient.decodeFromBase58Check;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;
@@ -11,8 +13,6 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
-
-import static stest.tron.wallet.common.client.WalletClient.decodeFromBase58Check;
 
 public class CreateCommonTransactionTest {
 

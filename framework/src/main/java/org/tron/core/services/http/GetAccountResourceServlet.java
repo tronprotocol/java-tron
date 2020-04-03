@@ -11,7 +11,6 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
-
 @Component
 @Slf4j(topic = "API")
 public class GetAccountResourceServlet extends RateLimiterServlet {
@@ -40,7 +39,8 @@ public class GetAccountResourceServlet extends RateLimiterServlet {
       if (params.isVisible()) {
         address = Util.getHexAddress(address);
       }
-      fillResponse(params.isVisible(), ByteString.copyFrom(ByteArray.fromHexString(address)), response);
+      fillResponse(params.isVisible(), ByteString.copyFrom(ByteArray.fromHexString(address)),
+          response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
