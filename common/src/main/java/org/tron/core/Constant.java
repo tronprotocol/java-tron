@@ -229,4 +229,6 @@ public class Constant {
   public static final String STORAGE_BACKUP_PROP_PATH = "storage.backup.propPath";
 
   public static final String ACTUATOR_WHITELIST = "actuator.whitelist";
+
+  public static final String COMMITTEE_ALLOW_PBFT = "committee.allowPBFT";
 }

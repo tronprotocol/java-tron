@@ -11,6 +11,7 @@ public class Parameter {
     VERSION_3_6(8),
     VERSION_3_6_5(9),
     VERSION_3_6_6(10),
+    VERSION_3_8(12),
     VERSION_4_0(15);
 
     @Getter

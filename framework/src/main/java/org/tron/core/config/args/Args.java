@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.consensus.base.Constant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -530,6 +531,14 @@ public class Args {
   @Setter
   public boolean isEckey=true;
 
+  @Getter
+  @Setter
+  protected int agreeNodeCount;
+
+  @Getter
+  @Setter
+  protected long allowPBFT;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -616,6 +625,8 @@ public class Args {
     INSTANCE.fullNodeHttpEnable = true;
     INSTANCE.solidityNodeHttpEnable = true;
     INSTANCE.isEckey = true;
+    INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    INSTANCE.allowPBFT = 0;
   }
 
   /**
@@ -1081,6 +1092,18 @@ public class Args {
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
             .getInt(Constant.COMMITTEE_CHANGED_DELEGATION) : 0;
 
+    INSTANCE.allowPBFT =
+        config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
+            .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
+
+    INSTANCE.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
+        .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    INSTANCE.agreeNodeCount = INSTANCE.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
+        ? MAX_ACTIVE_WITNESS_NUM : INSTANCE.agreeNodeCount;
+    if (INSTANCE.isWitness()) {
+//      INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    }
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
@@ -1505,6 +1528,7 @@ public class Args {
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
 //    DBConfig.setECKeyCryptoEngine(cfgArgs.isECKeyCryptoEngine());
     DBConfig.setECKeyCryptoEngine(cfgArgs.isEckey());
+    DBConfig.setAllowPBFT(cfgArgs.getAllowPBFT());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

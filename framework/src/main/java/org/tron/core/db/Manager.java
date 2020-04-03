@@ -973,7 +973,7 @@ public class Manager {
         Exception exception = null;
         // todo  process the exception carefully later
         try (ISession tmpSession = revokingStore.buildSession()) {
-          applyBlock(item.getBlk());
+          applyBlock(item.getBlk().setSwitch(true));
           tmpSession.commit();
         } catch (AccountResourceInsufficientException
             | ValidateSignatureException
@@ -1011,7 +1011,7 @@ public class Manager {
             for (KhaosBlock khaosBlock : second) {
               // todo  process the exception carefully later
               try (ISession tmpSession = revokingStore.buildSession()) {
-                applyBlock(khaosBlock.getBlk());
+                applyBlock(khaosBlock.getBlk().setSwitch(true));
                 tmpSession.commit();
               } catch (AccountResourceInsufficientException
                   | ValidateSignatureException
@@ -1691,6 +1691,8 @@ public class Manager {
     closeOneStore(nullifierStore);
     closeOneStore(merkleTreeStore);
     closeOneStore(transactionRetStore);
+    closeOneStore(chainBaseManager.getCommonDataBase());
+    closeOneStore(chainBaseManager.getPbftSignDataStore());
     logger.info("******** end to close db ********");
   }
 

@@ -301,6 +301,17 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_PBFT: {
+        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_8)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_PBFT]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_PBFT] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -342,7 +353,8 @@ public class ProposalUtil {
     ALLOW_TVM_SOLIDITY_059(32), // 1, 32
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, 33
 //    SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34); // 34
-    FORBID_TRANSFER_TO_CONTRACT(35); // 1, 35
+    FORBID_TRANSFER_TO_CONTRACT(35), // 1, 35
+    ALLOW_PBFT(40);// 1,40
 
     private long code;
 

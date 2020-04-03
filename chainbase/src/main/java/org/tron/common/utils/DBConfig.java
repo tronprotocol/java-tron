@@ -140,6 +140,10 @@ public class DBConfig {
   @Setter
   private static boolean isECKeyCryptoEngine = true;
 
+  @Getter
+  @Setter
+  private static long allowPBFT;
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
