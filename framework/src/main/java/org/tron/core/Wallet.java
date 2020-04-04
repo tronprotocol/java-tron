@@ -80,8 +80,6 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
-import org.tron.api.GrpcAPI.TransactionSignWeight;
-import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
@@ -89,7 +87,6 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -245,23 +242,23 @@ public class Wallet {
     DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
 
-//  public ShieldAddress generateShieldAddress() {
-//    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
-//    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
-//
-//    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
-//    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
-//
-//    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
-//    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
-//
-//    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
-//    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
-//
-//    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
-//    builder.setPublicAddress(ByteString.copyFrom(addPublic));
-//    return builder.build();
-//  }
+  //  public ShieldAddress generateShieldAddress() {
+  //    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
+  //    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
+  //
+  //    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
+  //    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
+  //
+  //    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
+  //    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
+  //
+  //    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
+  //    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
+  //
+  //    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
+  //    builder.setPublicAddress(ByteString.copyFrom(addPublic));
+  //    return builder.build();
+  //  }
 
   public byte[] getAddress() {
     return cryptoEngine.getAddress();
@@ -1745,19 +1742,19 @@ public class Wallet {
     return transactionCapsule;
 
   }
-  
+
   private void shieldedOutput(List<ReceiveNote> shieldedReceives,
-                                          ZenTransactionBuilder builder,
-                                          byte[] ovk) throws ZksnarkException {
+      ZenTransactionBuilder builder,
+      byte[] ovk) throws ZksnarkException {
     for (ReceiveNote receiveNote : shieldedReceives) {
       PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
-              receiveNote.getNote().getPaymentAddress());
+          receiveNote.getNote().getPaymentAddress());
       if (paymentAddress == null) {
         throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
       }
       builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
-              receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
-              receiveNote.getNote().getMemo().toByteArray());
+          receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
+          receiveNote.getNote().getMemo().toByteArray());
     }
   }
 

@@ -485,7 +485,8 @@ public class TransactionCapsuleTest {
       Assert.assertFalse(true);
     } catch (PermissionException e) {
       Assert.assertEquals(e.getMessage(),
-          KEY_11 + "'s address is " + WalletUtil.encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11))
+          KEY_11 + "'s address is " + WalletUtil
+          .encode58Check(ByteArray.fromHexString(KEY_ADDRESS_11))
               + " but it is not contained of permission.");
     } catch (SignatureException e) {
       Assert.assertFalse(true);
