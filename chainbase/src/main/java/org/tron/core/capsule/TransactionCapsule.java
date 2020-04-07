@@ -617,7 +617,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public boolean validateSignature(AccountStore accountStore,
       DynamicPropertiesStore dynamicPropertiesStore) throws ValidateSignatureException {
-    if (isVerified == true) {
+    if (isVerified) {
       return true;
     }
     //Do not support multi contracts in one transaction

@@ -220,8 +220,7 @@ public class DBConvert {
     }
 
     FileUtil.createDirIfNotExists(dstDir);
-    RocksDB rocks = null;
-    rocks = newRocksDb(dstDbPath);
+    RocksDB rocks = newRocksDb(dstDbPath);
 
     return convertLevelToRocks(level, rocks) && createEngine(dstDbPath.toString());
   }
