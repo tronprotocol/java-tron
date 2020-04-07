@@ -11,11 +11,9 @@ import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.PrecompiledContracts.BatchValidateSign;
-import org.tron.core.vm.utils.MUtil;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
@@ -50,7 +48,8 @@ public class BatchValidateSignContractTest {
         signatures.add(Hex.toHexString(sign));
       }
       if (i == 13) {
-        addresses.add(StringUtil.encode58Check(TransactionTrace.convertToTronAddress(new byte[20])));
+        addresses
+            .add(StringUtil.encode58Check(TransactionTrace.convertToTronAddress(new byte[20])));
       } else {
         addresses.add(StringUtil.encode58Check(key.getAddress()));
       }

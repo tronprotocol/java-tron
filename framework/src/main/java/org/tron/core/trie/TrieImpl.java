@@ -441,7 +441,8 @@ public class TrieImpl implements Trie<byte[]> {
           if (cNode.hash == null) {
             byte[] childrenHash = childrenHash(cNode, cpList, level + 1, false);
             cp.children[i] =
-                childrenHash.length < 32 && !forceHash ? childrenHash : Hash.encodeElement(childrenHash);
+                childrenHash.length < 32 && !forceHash ? childrenHash
+                    : Hash.encodeElement(childrenHash);
           } else {
             cp.children[i] = Hash.encodeElement(cNode.hash);
           }
@@ -460,7 +461,8 @@ public class TrieImpl implements Trie<byte[]> {
       if (cNode.hash == null) {
         byte[] childrenHash = childrenHash(cNode, cpList, level + 1, false);
         cp.children[1] =
-            childrenHash.length < 32 && !forceHash ? childrenHash : Hash.encodeElement(childrenHash);
+            childrenHash.length < 32 && !forceHash ? childrenHash
+                : Hash.encodeElement(childrenHash);
       } else {
         cp.children[1] = Hash.encodeElement(cNode.hash);
       }
@@ -493,7 +495,8 @@ public class TrieImpl implements Trie<byte[]> {
     byte[] beforeNode = new byte[0];
     for (Entry<byte[], Node> entry : nodeMap.entrySet()) {
       if (i > 0) {
-        byte[] hash = (beforeNode.length < 32) ? entry.getKey() : Hash.encodeElement(entry.getKey());
+        byte[] hash =
+            (beforeNode.length < 32) ? entry.getKey() : Hash.encodeElement(entry.getKey());
         if (!Arrays.equals(beforeNode, hash)) {
           return false;
         }

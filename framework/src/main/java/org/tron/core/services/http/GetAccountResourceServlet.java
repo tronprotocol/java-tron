@@ -11,7 +11,6 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
-
 @Component
 @Slf4j(topic = "API")
 public class GetAccountResourceServlet extends RateLimiterServlet {

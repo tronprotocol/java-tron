@@ -23,8 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,7 +35,6 @@ import org.tron.common.args.Account;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
 import org.tron.common.config.DbBackupConfig;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
@@ -55,7 +52,6 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.store.AccountStore;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -432,7 +428,7 @@ public class Args extends CommonParameter {
 
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
-            : Runtime.getRuntime().availableProcessors() / 2;
+            : (Runtime.getRuntime().availableProcessors() + 1) / 2;
 
     PARAMETER.solidityThreads =
         config.hasPath(Constant.NODE_SOLIDITY_THREADS)
@@ -598,7 +594,6 @@ public class Args extends CommonParameter {
     PARAMETER.allowShieldedTransaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
-
 
     PARAMETER.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)
@@ -999,6 +994,7 @@ public class Args extends CommonParameter {
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
     PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
   }
+
   /**
    * get output directory.
    */
