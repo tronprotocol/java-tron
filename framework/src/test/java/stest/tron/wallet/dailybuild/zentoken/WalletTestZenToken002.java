@@ -91,7 +91,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -131,7 +131,7 @@ public class WalletTestZenToken002 {
     sendNote = notes.getNoteTxs(0).getNote();
   }
 
-  @Test(enabled = true, description = "Get merkle tree voucher info")
+  @Test(enabled = false, description = "Get merkle tree voucher info")
   public void test01GetMerkleTreeVoucherInfo() {
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     sendNote = notes.getNoteTxs(0).getNote();
@@ -147,7 +147,7 @@ public class WalletTestZenToken002 {
   }
 
 
-  @Test(enabled = true, description = "Shield to shield transaction")
+  @Test(enabled = false, description = "Shield to shield transaction")
   public void test02Shield2ShieldTransaction() {
     receiverShieldAddressInfo = PublicMethed.generateShieldAddress();
     receiverShieldAddress = receiverShieldAddressInfo.get().getAddress();
@@ -175,7 +175,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on FullNode")
+  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on FullNode")
   public void test03ScanNoteByIvkAndOvk() {
     //Scan sender note by ovk equals scan receiver note by ivk on FullNode
     Note scanNoteByIvk = PublicMethed
@@ -191,7 +191,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on solidity")
+  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on solidity")
   public void test04ScanNoteByIvkAndOvkOnSolidityServer() {
 
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
@@ -211,7 +211,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on Pbft")
+  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on Pbft")
   public void test05ScanNoteByIvkAndOvkOnPbftServer() {
 
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
@@ -233,7 +233,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on solidity")
+  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on solidity")
   public void test06ScanNoteByIvkAndOvkOnSolidityServer() {
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
     PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity1);
@@ -253,7 +253,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Query whether note is spend on solidity")
+  @Test(enabled = false, description = "Query whether note is spend on solidity")
   public void test07QueryNoteIsSpendOnSolidity() {
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
@@ -268,7 +268,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Query whether note is spend on PBFT")
+  @Test(enabled = false, description = "Query whether note is spend on PBFT")
   public void test08QueryNoteIsSpendOnPbft() {
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
@@ -283,7 +283,7 @@ public class WalletTestZenToken002 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Query note and spend status on fullnode and solidity")
+  @Test(enabled = false, description = "Query note and spend status on fullnode and solidity")
   public void test09QueryNoteAndSpendStatusOnFullnode() {
     Assert.assertFalse(
         PublicMethed.getShieldNotesAndMarkByIvk(receiverShieldAddressInfo, blockingStubFull)
@@ -331,7 +331,7 @@ public class WalletTestZenToken002 {
         .getNoteTxs(0).getIsSpend());
   }
 
-  @Test(enabled = true, description = "Get merkle tree voucher info")
+  @Test(enabled = false, description = "Get merkle tree voucher info")
   public void test10GetMerkleTreeVoucherInfo() {
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     sendNote = notes.getNoteTxs(0).getNote();
@@ -348,7 +348,7 @@ public class WalletTestZenToken002 {
     Assert.assertEquals(firstMerkleVoucherInfo, secondMerkleVoucherInfo);
   }
 
-  @Test(enabled = true, description = "Get merkle tree voucher info from Solidity")
+  @Test(enabled = false, description = "Get merkle tree voucher info from Solidity")
   public void test11GetMerkleTreeVoucherInfoFromSolidity() {
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     sendNote = notes.getNoteTxs(0).getNote();
@@ -365,7 +365,7 @@ public class WalletTestZenToken002 {
     Assert.assertEquals(firstMerkleVoucherInfo, secondMerkleVoucherInfo);
   }
 
-  @Test(enabled = true, description = "Get merkle tree voucher info from Pbft")
+  @Test(enabled = false, description = "Get merkle tree voucher info from Pbft")
   public void test12GetMerkleTreeVoucherInfoFromPbft() {
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     sendNote = notes.getNoteTxs(0).getNote();
@@ -390,7 +390,7 @@ public class WalletTestZenToken002 {
    * constructor.
    */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
