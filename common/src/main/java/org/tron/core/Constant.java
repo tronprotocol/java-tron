@@ -92,10 +92,12 @@ public class Constant {
   public static final String NODE_P2P_VERSION = "node.p2p.version";
   public static final String NODE_RPC_PORT = "node.rpc.port";
   public static final String NODE_RPC_SOLIDITY_PORT = "node.rpc.solidityPort";
+  public static final String NODE_RPC_PBFT_PORT = "node.rpc.PBFTPort";
   public static final String NODE_HTTP_FULLNODE_PORT = "node.http.fullNodePort";
   public static final String NODE_HTTP_SOLIDITY_PORT = "node.http.solidityPort";
   public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
+  public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
 
   public static final String NODE_RPC_THREAD = "node.rpc.thread";
   public static final String NODE_SOLIDITY_THREADS = "node.solidity.threads";

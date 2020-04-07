@@ -87,6 +87,7 @@ import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.core.ISession;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -1764,8 +1765,18 @@ public class Manager {
     }
   }
 
-  public void setMode(boolean mode) {
-    revokingStore.setMode(mode);
+  public void setCursor(Chainbase.Cursor cursor) {
+    if (cursor == Chainbase.Cursor.PBFT) {
+      long headNum = getHeadBlockNum();
+      long pbftNum = chainBaseManager.getCommonDataBase().getLatestPbftBlockNum();
+      revokingStore.setCursor(cursor, headNum - pbftNum);
+    } else {
+      revokingStore.setCursor(cursor);
+    }
+  }
+
+  public void resetCursor() {
+    revokingStore.setCursor(Chainbase.Cursor.HEAD, 0L);
   }
 
   private void startEventSubscribing() {

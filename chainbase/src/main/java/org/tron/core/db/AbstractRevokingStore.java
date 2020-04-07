@@ -30,6 +30,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.db.common.SourceInter;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.core.ISession;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
@@ -73,7 +74,12 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   }
 
   @Override
-  public void setMode(boolean mode) {
+  public void setCursor(Chainbase.Cursor cursor) {
+
+  }
+
+  @Override
+  public void setCursor(Chainbase.Cursor cursor, long offset) {
 
   }
 
