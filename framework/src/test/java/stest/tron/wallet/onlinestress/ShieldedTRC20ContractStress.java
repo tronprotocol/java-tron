@@ -47,26 +47,25 @@ public class ShieldedTRC20ContractStress {
   private AtomicLong[] errorCount = new AtomicLong[5];//[trx, trx20, mint, transfer, burn]
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  // private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip" +
-  //     ".list").get(0);
-  private String fullnode = "127.0.0.1:50051";
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList(
+      "fullnode.ip.list").get(0);
   // private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip" +
   //     ".list").get(0);
-  private String httpnode = "127.0.0.1:16667";
-  // private final String testKey1 = Configuration.getByPath("testng.conf")
-  //           .getString("foundationAccount.key1");
-  private final String testKey1 =
-      "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
+  private final String testKey1 = Configuration.getByPath("testng.conf")
+            .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey1);
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] toAddress = ecKey1.getAddress();
-  Long amount = 100L;
-  private HttpResponse response;
-  private String trc20ContractAddress = "TXuPxVrf4K7DFbfnJkYeCbbhqWPXzLMYBH";
-  private String shieldedTRC20ContractAddressStr = "TTHSMTCwdcPKpJBFbBThuKPmeyW4tLa85m";
-  byte[] shieldedTRC20ContractAddress = WalletClient
+  private ECKey ecKey1 = new ECKey(Utils.getRandom());
+  private byte[] toAddress = ecKey1.getAddress();
+  // private HttpResponse response;
+  private String trc20ContractAddressStr = "TD7xDWSCuFXsqnh1gn7K7SnHgdhQfYGTVn";
+  private byte[] trc20ContractAddress = WalletClient
+      .decodeFromBase58Check(trc20ContractAddressStr);
+  private String shieldedTRC20ContractAddressStr = "TGAmX5AqVUoXCf8MoHxbuhQPmhGfWTnEgA";
+  private byte[] shieldedTRC20ContractAddress = WalletClient
             .decodeFromBase58Check(shieldedTRC20ContractAddressStr);
-
+  private String[] errorMessage = {"Mint", "Transfer", "Burn"};
+  private final int TRC10_TRC20_NUM = 30;
+  private final int SHIELDED_CONTRACT_NUM = 10;
 
   /**
    * constructor
@@ -146,7 +145,7 @@ public class ShieldedTRC20ContractStress {
   }
 
 
-  private boolean triggerMint(WalletGrpc.WalletBlockingStub blockingStubFull,
+  private String triggerMint(WalletGrpc.WalletBlockingStub blockingStubFull,
       byte[] contractAddress,
       byte[] callerAddress, String privateKey, String input) {
     // PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -157,17 +156,7 @@ public class ShieldedTRC20ContractStress {
         0L, 1000000000L,
         callerAddress, privateKey,
         blockingStubFull);
-    // logger.info(txid);
-    // PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(txid, blockingStubFull);
-    // logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
-
-    if (infoById.isPresent()) {
-      return (infoById.get().getResultValue() == 0);
-    } else {
-      return false;
-    }
+    return txid;
   }
 
   private String triggerMintGetTxID(WalletGrpc.WalletBlockingStub blockingStubFull,
@@ -191,7 +180,6 @@ public class ShieldedTRC20ContractStress {
         infoById.get().getReceipt().getResult());
     return txid;
   }
-
 
   public String getShieldedTRC20TransferInput()
       throws ZksnarkException, ContractValidateException {
@@ -408,7 +396,7 @@ public class ShieldedTRC20ContractStress {
     return txid;
   }
 
-  private boolean triggerTransfer(WalletGrpc.WalletBlockingStub blockingStubFull,
+  private String triggerTransfer(WalletGrpc.WalletBlockingStub blockingStubFull,
       byte[] contractAddress,
       byte[] callerAddress, String privateKey, String input) {
     // PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -419,16 +407,7 @@ public class ShieldedTRC20ContractStress {
         0L, 1000000000L,
         callerAddress, privateKey,
         blockingStubFull);
-    //  logger.info(txid);
-    // PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(txid, blockingStubFull);
-    // logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
-    if (infoById.isPresent()) {
-      return (infoById.get().getResultValue() == 0);
-    } else {
-      return false;
-    }
+    return txid;
   }
 
   private String getShieldedTRC20BurnInput() throws ZksnarkException, ContractValidateException {
@@ -498,7 +477,7 @@ public class ShieldedTRC20ContractStress {
   }
 
   @SuppressWarnings("checkstyle:OperatorWrap")
-  private boolean triggerBurn(WalletGrpc.WalletBlockingStub blockingStubFull,
+  private String triggerBurn(WalletGrpc.WalletBlockingStub blockingStubFull,
                               byte[] contractAddress, byte[] callerAddress, String privateKey,
                               String input) {
     // PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -509,28 +488,16 @@ public class ShieldedTRC20ContractStress {
         0L, 1000000000L,
         callerAddress, privateKey,
         blockingStubFull);
-    // logger.info(txid);
-    // PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(txid, blockingStubFull);
-
-    if (infoById.isPresent()) {
-      return (infoById.get().getResultValue() == 0);
-    } else {
-      return false;
-    }
+    return txid;
   }
 
   public void setAllowance() {
-    byte[] contractAddress = WalletClient.decodeFromBase58Check(trc20ContractAddress);
-    byte[] shieldedContractAddress =
-        WalletClient.decodeFromBase58Check(shieldedTRC20ContractAddressStr);
     byte[] shieldedContractAddressPadding = new byte[32];
-    System.arraycopy(shieldedContractAddress, 0, shieldedContractAddressPadding, 11, 21);
+    System.arraycopy(shieldedTRC20ContractAddress, 0, shieldedContractAddressPadding, 11, 21);
     byte[] valueBytes = longTo32Bytes(100_000_000_000_000L);
     String input = Hex.toHexString(ByteUtil.merge(shieldedContractAddressPadding, valueBytes));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String txid = PublicMethed.triggerContract(contractAddress,
+    String txid = PublicMethed.triggerContract(trc20ContractAddress,
         "approve(address,uint256)",
         input,
         true,
@@ -547,21 +514,18 @@ public class ShieldedTRC20ContractStress {
         infoById.get().getReceipt().getResult());
   }
 
-  private boolean sendTRXTx() {
-    response = HttpMethed
-        .sendCoin(httpnode, fromAddress, toAddress, amount, testKey1);
-    return HttpMethed.verificationResult(response);
+  private String sendCoinTx() {
+    return PublicMethed.sendcoinGetTransactionId(toAddress, 100L, fromAddress, testKey1,
+        blockingStubFull);
   }
 
-  private boolean sendTRC20Tx() {
-    byte[] contractAddress = WalletClient
-        .decodeFromBase58Check(trc20ContractAddress);
+  private String sendTRC20Tx() {
     byte[] toAddressPadding = new byte[32];
     System.arraycopy(toAddress, 0, toAddressPadding, 11, 21);
     byte[] valueBytes = longTo32Bytes(100L);
     String input = Hex.toHexString(ByteUtil.merge(toAddressPadding, valueBytes));
     // PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String txid = PublicMethed.triggerContract(contractAddress,
+    String txid = PublicMethed.triggerContract(trc20ContractAddress,
         "transfer(address,uint256)",
         input,
         true,
@@ -570,40 +534,56 @@ public class ShieldedTRC20ContractStress {
         fromAddress,
         testKey1,
         blockingStubFull);
-    // PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(txid, blockingStubFull);
-
-    if (infoById.isPresent()) {
-      return (infoById.get().getResultValue() == 0);
-    } else {
-      return false;
-    }
+    return txid;
   }
 
-  private boolean sendShieldedTRC20MintTx(String mintInput)
+  private String sendShieldedTRC20MintTx(String mintInput)
       throws ZksnarkException {
     return triggerMint(blockingStubFull, shieldedTRC20ContractAddress,
         fromAddress, testKey1, mintInput);
   }
 
-  private boolean sendShieldedTRC20TransferTx(String transferInput) {
+  private String sendShieldedTRC20TransferTx(String transferInput) {
     return triggerTransfer(
         blockingStubFull, shieldedTRC20ContractAddress, fromAddress, testKey1, transferInput);
   }
 
-  private boolean sendShieldedTRC20BurnTx(String burnInput) {
+  private String sendShieldedTRC20BurnTx(String burnInput) {
     return triggerBurn(
         blockingStubFull, shieldedTRC20ContractAddress, fromAddress, testKey1, burnInput);
   }
 
+  private boolean executeResult(String txid) {
+    Optional<Protocol.TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+
+    if (txid == null || !infoById.isPresent()) {
+      return false;
+    } else {
+      return (infoById.get().getReceipt().getResultValue() == 1);
+    }
+  }
+
+  private boolean sendCointResult(String txid) {
+    Optional<Protocol.Transaction> infoById = PublicMethed
+        .getTransactionById(txid, blockingStubFull);
+
+    if (txid == null || !infoById.isPresent()) {
+      return false;
+    } else {
+      return (infoById.get().getRet(0).getContractRetValue() == 1);
+    }
+  }
+
   @SuppressWarnings("checkstyle:MultipleVariableDeclarations")
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testShieldedTRC20Transaction()
       throws ZksnarkException, ContractValidateException {
     String mintInput;
     String transferInput;
     String burnInput;
+    String[][] trcTxIds = new String[2][TRC10_TRC20_NUM];
+    String[][] shieldedContractTxIds = new String[3][SHIELDED_CONTRACT_NUM];
 
     setAllowance();
     mintInput = getMintInput();
@@ -616,49 +596,59 @@ public class ShieldedTRC20ContractStress {
     }
 
     int num = 0;
-    while (true) {
+    while (num++ < 1000) {
       for (int j = 0; j < 2; j++) {
-        count[j].getAndAdd(4);
+        count[j].getAndAdd(TRC10_TRC20_NUM);
       }
       for (int j = 2; j < 5; j++) {
-        count[j].incrementAndGet();
+        count[j].getAndAdd(SHIELDED_CONTRACT_NUM);
       }
 
-      for (int j = 0; j < 4; j++) {
-        if (!sendTRXTx()) {
+      for (int j = 0; j < TRC10_TRC20_NUM; j++) {
+        trcTxIds[0][j] = sendCoinTx();
+        trcTxIds[1][j] = sendTRC20Tx();
+      }
+      for (int j = 0; j < SHIELDED_CONTRACT_NUM; j++) {
+        shieldedContractTxIds[0][j] = sendShieldedTRC20MintTx(mintInput);
+        shieldedContractTxIds[1][j] = sendShieldedTRC20TransferTx(transferInput);
+        shieldedContractTxIds[2][j] = sendShieldedTRC20BurnTx(burnInput);
+      }
+
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+      for (int k = 0; k < TRC10_TRC20_NUM; k++) {
+        if (!sendCointResult(trcTxIds[0][k])) {
+          logger.info("sendCoinTx error id " + trcTxIds[0][k]);
           errorCount[0].incrementAndGet();
         }
-        if (!sendTRC20Tx()) {
+        if (!executeResult(trcTxIds[1][k])) {
+          logger.info("sendTRC20Tx error id " + trcTxIds[1][k]);
           errorCount[1].incrementAndGet();
         }
       }
 
-      if (!sendShieldedTRC20MintTx(mintInput)) {
-        errorCount[2].incrementAndGet();
+      for (int j = 0; j < 3; j++) {
+        for (int k = 0; k < SHIELDED_CONTRACT_NUM; k++) {
+          if (!executeResult(shieldedContractTxIds[j][k])) {
+            logger.info(errorMessage[j] + " error id " + shieldedContractTxIds[j][k]);
+            errorCount[j + 2].incrementAndGet();
+          }
+        }
       }
 
-      if (!sendShieldedTRC20TransferTx(transferInput)) {
-        errorCount[3].incrementAndGet();
-      }
-
-      if (!sendShieldedTRC20BurnTx(burnInput)) {
-        errorCount[4].incrementAndGet();
-      }
-
-      num++;
       logger.info("..........test number: " + num + ".........");
-      if (num % 100 == 0) {
-        // logger.info("total transactions: " + num * 11);
+      if (num % 10 == 0) {
+        // logger.info("total transactions: " + num * 90);
         logger.info("total TRX transactions: " + count[0].get());
-        logger.info("total error TRX transactions: " + errorCount[0]);
+        logger.info("total error TRX transactions: " + errorCount[0].get());
         logger.info("total TRC20 transactions: " + count[1].get());
-        logger.info("total error TRC20 transactions: " + errorCount[1]);
+        logger.info("total error TRC20 transactions: " + errorCount[1].get());
         logger.info("total mint transactions: " + count[2].get());
-        logger.info("total error mint transactions: " + errorCount[2]);
+        logger.info("total error mint transactions: " + errorCount[2].get());
         logger.info("total transfer transactions: " + count[3].get());
-        logger.info("total error transfer transactions: " + errorCount[3]);
+        logger.info("total error transfer transactions: " + errorCount[3].get());
         logger.info("total burn transactions: " + count[4].get());
-        logger.info("total error burn transactions: " + errorCount[4]);
+        logger.info("total error burn transactions: " + errorCount[4].get());
       }
     }
   }
