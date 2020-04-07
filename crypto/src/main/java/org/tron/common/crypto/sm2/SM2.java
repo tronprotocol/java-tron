@@ -1,5 +1,20 @@
 package org.tron.common.crypto.sm2;
 
+import static org.tron.common.utils.BIUtil.isLessThan;
+import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
+import java.security.SignatureException;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.asn1.ASN1InputStream;
 import org.spongycastle.asn1.ASN1Integer;
@@ -7,11 +22,19 @@ import org.spongycastle.asn1.DLSequence;
 import org.spongycastle.asn1.x9.X9IntegerConverter;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 import org.spongycastle.crypto.generators.ECKeyPairGenerator;
-import org.spongycastle.crypto.params.*;
 import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.spongycastle.jce.spec.ECParameterSpec;
 import org.spongycastle.jce.spec.ECPrivateKeySpec;
-import org.spongycastle.math.ec.*;
+import org.spongycastle.crypto.params.ECDomainParameters;
+import org.spongycastle.crypto.params.ECKeyGenerationParameters;
+import org.spongycastle.crypto.params.ECPrivateKeyParameters;
+import org.spongycastle.crypto.params.ECPublicKeyParameters;
+import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
+import org.spongycastle.jce.spec.ECParameterSpec;
+import org.spongycastle.jce.spec.ECPrivateKeySpec;
+import org.spongycastle.math.ec.ECAlgorithms;
+import org.spongycastle.math.ec.ECCurve;
+import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
@@ -20,22 +43,7 @@ import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.ByteUtil;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.Serializable;
-import java.math.BigInteger;
-import java.nio.charset.Charset;
-import java.security.*;
-import java.security.interfaces.ECPrivateKey;
-import java.security.interfaces.ECPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
-
-import static org.tron.common.utils.BIUtil.isLessThan;
-import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
 import static org.tron.common.crypto.Hash.computeAddress;
-
 /**
  * Implement Chinese Commercial Cryptographic Standard of SM2
  *
@@ -533,7 +541,56 @@ public class SM2 implements Serializable, SignInterface {
         return ByteUtil.appendByte(temp,first);
     }
 
+    /**
+     * Takes the message of data and returns the SM2 signature
+     *
+     * @param message -
+     * @param userID
+     * @return -
+     * @throws IllegalStateException if this ECKey does not have the private part.
+     */
+    public SM2Signature signMessage(byte[] message, @Nullable String userID) {
+        SM2Signature sig = signMsg(message, userID);
+        // Now we have to work backwards to figure out the recId needed to
+        // recover the signature.
+        int recId = -1;
+        byte[] thisKey = this.pub.getEncoded(/* compressed */ false);
 
+        SM2Signer signer = getSigner();
+        byte[] messageHash = signer.generateSM3Hash(message);
+        for (int i = 0; i < 4; i++) {
+            byte[] k = recoverPubBytesFromSignature(i, sig, messageHash);
+            if (k != null && Arrays.equals(k, thisKey)) {
+                recId = i;
+                break;
+            }
+        }
+        if (recId == -1) {
+            throw new RuntimeException("Could not construct a recoverable key" +
+                    ". This should never happen.");
+        }
+        sig.v = (byte) (recId + 27);
+        return sig;
+    }
+
+    /**
+     * Signs the given hash and returns the R and S components as BigIntegers and putData them in
+     * SM2Signature
+     *
+     * @param msg to sign
+     * @param userID
+     * @return SM2Signature signature that contains the R and S components
+     */
+    public SM2Signature signMsg(byte[] msg,@Nullable String userID) {
+        if (null == msg) {
+            throw new IllegalArgumentException("Expected signature message of " +
+                    "SM2 is null");
+        }
+        // No decryption of private key required.
+        SM2Signer signer = getSigner();
+        BigInteger[] componets =  signer.generateSignature(msg);
+        return new SM2Signature(componets[0], componets[1]);
+    }
 
     private SM2Signer getSigner() {
         SM2Signer signer = new SM2Signer();
@@ -643,6 +700,84 @@ public class SM2 implements Serializable, SignInterface {
         if (!test) {
             throw new IllegalArgumentException(message);
         }
+    }
+
+    /**
+     * <p>Verifies the given SM2 signature against the message bytes using the public key bytes.</p>
+     * <p> <p>When using native SM2 verification, data must be 32 bytes, and no element may be
+     * larger than 520 bytes.</p>
+     *
+     * @param data Hash of the data to verify.
+     * @param signature signature.
+     * @param pub The public key bytes to use.
+     * @return -
+     */
+    public static boolean verify(byte[] data, SM2Signature signature,
+                                 byte[] pub) {
+        SM2Signer signer = new SM2Signer();
+        ECPublicKeyParameters params = new ECPublicKeyParameters(ecc_param
+                .getCurve().decodePoint(pub),ecc_param);
+        signer.init(false, params);
+        try {
+            return signer.verifyHashSignature(data, signature.r, signature.s);
+        } catch (NullPointerException npe) {
+            // Bouncy Castle contains a bug that can cause NPEs given
+            // specially crafted signatures.
+            // Those signatures are inherently invalid/attack sigs so we just
+            // fail them here rather than crash the thread.
+            logger.error("Caught NPE inside bouncy castle", npe);
+            return false;
+        }
+    }
+
+    /**
+     * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.
+     *
+     * @param data Hash of the data to verify.
+     * @param signature signature.
+     * @param pub The public key bytes to use.
+     * @return -
+     */
+    public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
+        return verify(data, SM2Signature.decodeFromDER(signature), pub);
+    }
+
+    /**
+     * <p>Verifies the given SM2 signature against the message bytes using the public key bytes.
+     *
+     * @param msg the message data to verify.
+     * @param signature signature.
+     * @param pub The public key bytes to use.
+     * @return -
+     */
+    public static boolean verifyMessage(byte[] msg, SM2Signature signature,
+                                 byte[] pub, @Nullable String userID) {
+        SM2Signer signer = new SM2Signer();
+        ECPublicKeyParameters params = new ECPublicKeyParameters(ecc_param
+                .getCurve().decodePoint(pub),ecc_param);
+        signer.init(false, params);
+        try {
+            return signer.verifySignature(msg, signature.r, signature.s, userID);
+        } catch (NullPointerException npe) {
+            // Bouncy Castle contains a bug that can cause NPEs given
+            // specially crafted signatures.
+            // Those signatures are inherently invalid/attack sigs so we just
+            // fail them here rather than crash the thread.
+            logger.error("Caught NPE inside bouncy castle", npe);
+            return false;
+        }
+    }
+
+    /**
+     * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.
+     *
+     * @param msg the message data to verify.
+     * @param signature signature.
+     * @param pub The public key bytes to use.
+     * @return -
+     */
+    public static boolean verifyMessage(byte[] msg, byte[] signature, byte[] pub, @Nullable String userID) {
+        return verifyMessage(msg, SM2Signature.decodeFromDER(signature), pub, userID);
     }
 
 
@@ -821,7 +956,27 @@ public class SM2 implements Serializable, SignInterface {
         return b.toString();
     }
 
+    /**
+     * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.
+     *
+     * @param data Hash of the data to verify.
+     * @param signature signature.
+     * @return -
+     */
+    public boolean verify(byte[] data, byte[] signature) {
+        return SM2.verify(data, signature, getPubKey());
+    }
 
+    /**
+     * Verifies the given R/S pair (signature) against a hash using the public key.
+     *
+     * @param sigHash -
+     * @param signature -
+     * @return -
+     */
+    public boolean verify(byte[] sigHash, SM2Signature signature) {
+        return SM2.verify(sigHash, signature, getPubKey());
+    }
 
     /**
      * Returns true if this pubkey is canonical, i.e. the correct length taking into account
@@ -943,7 +1098,40 @@ public class SM2 implements Serializable, SignInterface {
             return isLessThan(s, SM2.SM2_N);
         }
 
+        public static SM2Signature decodeFromDER(byte[] bytes) {
+            ASN1InputStream decoder = null;
+            try {
+                decoder = new ASN1InputStream(bytes);
+                DLSequence seq = (DLSequence) decoder.readObject();
+                if (seq == null) {
+                    throw new RuntimeException("Reached past end of ASN.1 " +
+                            "stream.");
+                }
+                ASN1Integer r, s;
+                try {
+                    r = (ASN1Integer) seq.getObjectAt(0);
+                    s = (ASN1Integer) seq.getObjectAt(1);
+                } catch (ClassCastException e) {
+                    throw new IllegalArgumentException(e);
+                }
+                // OpenSSL deviates from the DER spec by interpreting these
+                // values as unsigned, though they should not be
+                // Thus, we always use the positive versions. See:
+                // http://r6.ca/blog/20111119T211504Z.html
+                return new SM2Signature(r.getPositiveValue(), s
+                        .getPositiveValue());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                if (decoder != null) {
+                    try {
+                        decoder.close();
+                    } catch (IOException x) {
 
+                    }
+                }
+            }
+        }
 
         public boolean validateComponents() {
             return validateComponents(r, s, v);

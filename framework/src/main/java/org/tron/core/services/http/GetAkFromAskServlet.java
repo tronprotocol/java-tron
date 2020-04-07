@@ -28,7 +28,6 @@ public class GetAkFromAskServlet extends RateLimiterServlet {
       String base58check = StringUtil.encode58Check(reply.toByteArray());
       String hexString = ByteArray.toHexString(reply.toByteArray());
       System.out.println("b58 is: " + base58check + ", hex is: " + hexString);
-
       response.getWriter().println(JsonFormat.printToString(reply, visible));
     } catch (Exception e) {
       Util.processError(e, response);

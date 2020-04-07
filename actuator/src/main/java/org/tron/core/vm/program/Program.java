@@ -49,6 +49,7 @@ import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.crypto.Hash;
+import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -145,7 +146,7 @@ public class Program {
   static String formatBinData(byte[] binData, int startPC) {
     StringBuilder ret = new StringBuilder();
     for (int i = 0; i < binData.length; i += 16) {
-      ret.append(VMUtils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
+      ret.append(Utils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
       ret.append(Hex.toHexString(binData, i, min(16, binData.length - i))).append('\n');
     }
     return ret.toString();
@@ -182,7 +183,7 @@ public class Program {
         }
       }
 
-      sb.append(VMUtils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
+      sb.append(Utils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
 
       if (op == null) {
         sb.append("<UNKNOWN>: ").append(0xFF & opCode).append("\n");

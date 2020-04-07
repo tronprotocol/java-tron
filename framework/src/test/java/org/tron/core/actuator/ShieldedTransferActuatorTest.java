@@ -1340,7 +1340,6 @@ public class ShieldedTransferActuatorTest {
       Assert.assertTrue(false);
     }
   }
-
   /**
    * success
    */
@@ -1388,3 +1387,4 @@ public class ShieldedTransferActuatorTest {
     }
   }
 }
+

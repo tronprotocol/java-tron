@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,6 +37,7 @@ import org.tron.common.args.Account;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
 import org.tron.common.config.DbBackupConfig;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
@@ -215,7 +218,6 @@ public class Args extends CommonParameter {
         }
       }
       localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
-
       logger.debug("Got privateKey from config.conf");
     } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
       localWitnesses = new LocalWitnesses();
@@ -596,6 +598,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowShieldedTransaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
+
 
     PARAMETER.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE)
@@ -996,7 +999,6 @@ public class Args extends CommonParameter {
   public static void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
     PARAMETER.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
   }
-
   /**
    * get output directory.
    */
@@ -1007,4 +1009,3 @@ public class Args extends CommonParameter {
     return this.outputDirectory;
   }
 }
-

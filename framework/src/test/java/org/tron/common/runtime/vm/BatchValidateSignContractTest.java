@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Wallet;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.PrecompiledContracts.BatchValidateSign;

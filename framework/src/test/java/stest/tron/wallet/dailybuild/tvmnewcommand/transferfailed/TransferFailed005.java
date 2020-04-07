@@ -462,10 +462,10 @@ public class TransferFailed005 {
         "testTransferTrxInsufficientBalance(uint256)", "1", false, 0L, 1000000000, "0", 0L,
         accountExcAddress, accountExcKey, blockingStubFull);
     Assert.assertEquals(response_code.SUCCESS, return1.getResult().getCode());
-    //Assert.assertEquals(
-    //    "class org.tron.core.vm.program.Program$StaticCallModificationException "
-    //        + ": Attempt to call a state modifying opcode inside STATICCALL",
-    //    return1.getResult().getMessage().toStringUtf8());
+    /*Assert.assertEquals(
+        "class org.tron.core.vm.program.Program$StaticCallModificationException "
+            + ": Attempt to call a state modifying opcode inside STATICCALL",
+        return1.getResult().getMessage().toStringUtf8());*/
 
     logger.info("return1: " + return1);
 

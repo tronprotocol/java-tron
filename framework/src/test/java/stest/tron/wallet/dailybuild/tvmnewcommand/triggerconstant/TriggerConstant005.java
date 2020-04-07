@@ -116,8 +116,8 @@ public class TriggerConstant005 {
 
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("SUCCESS"));
-    //Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
-    //    containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+    /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+        containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
 
   }
 

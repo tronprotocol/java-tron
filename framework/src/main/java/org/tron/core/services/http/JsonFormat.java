@@ -54,7 +54,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 
-
 /**
  * Provide ascii text parsing and formatting support for proto2 instances. The implementation
  * largely follows google/protobuf/text_format.cc.

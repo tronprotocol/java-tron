@@ -130,16 +130,6 @@ public class TransferActuatorTest {
             .build());
   }
 
-  private Any getContract(long count, byte[] address) {
-    long nowTime = new Date().getTime();
-    return Any.pack(
-        TransferContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setToAddress(ByteString.copyFrom(address))
-            .setAmount(count)
-            .build());
-  }
-
   @Test
   public void rightTransfer() {
     TransferActuator actuator = new TransferActuator();
@@ -483,7 +473,6 @@ public class TransferActuatorTest {
     }
   }
 
-
   @Test
   public void commonErrorCheck() {
     TransferActuator actuator = new TransferActuator();
@@ -550,5 +539,13 @@ public class TransferActuatorTest {
     }
   }
 
-
+  private Any getContract(long count, byte[] address) {
+    long nowTime = new Date().getTime();
+    return Any.pack(
+        TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setToAddress(ByteString.copyFrom(address))
+            .setAmount(count)
+            .build());
+  }
 }

@@ -10,7 +10,6 @@ import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Wallet;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.vm.utils.MUtil;
 

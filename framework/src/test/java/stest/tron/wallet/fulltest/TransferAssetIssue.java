@@ -305,6 +305,7 @@ public class TransferAssetIssue {
       Long currentNum = currentBlock.getBlockHeader().getRawData().getNumber();
       for (Integer m = 0; m < currentBlock.getTransactionsCount(); m++) {
         logger.info(currentBlock.getTransactions(m).getRetList().toString());
+
         String txId = ByteArray.toHexString(Sha256Hash.hash(CommonParameter.getInstance()
             .isECKeyCryptoEngine(), currentBlock.getTransactions(m)
             .getRawData().toByteArray()));

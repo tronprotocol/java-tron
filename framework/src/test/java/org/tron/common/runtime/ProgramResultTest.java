@@ -1,6 +1,7 @@
 package org.tron.common.runtime;
 
 import static org.tron.core.capsule.utils.TransactionUtil.buildTransactionInfoInstance;
+import static org.tron.core.utils.TransactionUtil.generateContractAddress;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -338,8 +340,9 @@ public class ProgramResultTest {
     TransactionTrace traceFailed = TvmTestUtils
         .processTransactionAndReturnTrace(trx2, deposit, null);
     runtime = traceFailed.getRuntime();
-    byte[] bContract2 = TransactionUtil
-        .generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
+
+    byte[] bContract2 =
+        generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
     List<InternalTransaction> internalTransactionsListFail = runtime.getResult()
         .getInternalTransactions();
     Assert.assertEquals(internalTransactionsListFail.get(0).getValue(), 10);
