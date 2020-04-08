@@ -111,7 +111,7 @@ public class TransactionUtil {
   }
 
   private static boolean validBytes(byte[] bytes) {
-    // b must be readable.
+    // b must be readable
     for (byte b : bytes) {
       if (b < 0x21) {
         return false; // 0x21 = '!'
