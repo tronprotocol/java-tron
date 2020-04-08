@@ -22,6 +22,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
@@ -192,7 +193,6 @@ public class TestValidatemultisign002 {
     byte[] merged = ByteUtil.merge(ownerAddress, ByteArray.fromInt(permissionId), hash);
     byte[] tosign = Sha256Hash.hash(CommonParameter.getInstance()
         .isECKeyCryptoEngine(), merged);
-
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
 
     // Trigger with one signature

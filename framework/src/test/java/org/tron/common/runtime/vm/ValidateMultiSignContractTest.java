@@ -68,8 +68,6 @@ public class ValidateMultiSignContractTest {
     Assert.assertEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), 1, hash, signs)
             .getValue(), DataWord.ZERO().getData());
-
-
   }
 
   @Test
@@ -143,6 +141,7 @@ public class ValidateMultiSignContractTest {
     Assert.assertEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), permissionId, data, signs)
             .getValue(), DataWord.ZERO().getData());
+
     signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     signs.add(Hex.toHexString(new ECKey().sign(toSign).toByteArray()));

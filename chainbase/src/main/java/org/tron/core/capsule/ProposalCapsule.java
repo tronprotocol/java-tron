@@ -1,6 +1,7 @@
 package org.tron.core.capsule;
 
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+import static org.tron.common.utils.WalletUtil.getAddressStringList;
 
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
@@ -159,7 +160,7 @@ public class ProposalCapsule implements ProtoCapsule<Proposal> {
     if (count != this.proposal.getApprovalsCount()) {
       List<ByteString> InvalidApprovalList = this.proposal.getApprovalsList().stream()
           .filter(witness -> !activeWitnesses.contains(witness)).collect(Collectors.toList());
-      logger.info("InvalidApprovalList:" + StringUtil.getAddressStringList(InvalidApprovalList));
+      logger.info("InvalidApprovalList:" + getAddressStringList(InvalidApprovalList));
     }
     if (activeWitnesses.size() != MAX_ACTIVE_WITNESS_NUM) {
       logger.info("activeWitnesses size = {}", activeWitnesses.size());

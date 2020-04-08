@@ -76,8 +76,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               transactionLogTrigger.setAssetName("trx");
 
               if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
-                transactionLogTrigger.setFromAddress(
-                    StringUtil.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+                transactionLogTrigger.setFromAddress(StringUtil
+                    .encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
               }
 
               if (Objects.nonNull(contractTransfer.getToAddress())) {
@@ -103,8 +103,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               }
 
               if (Objects.nonNull(contractTransfer.getToAddress())) {
-                transactionLogTrigger.setToAddress(
-                    StringUtil.encode58Check(contractTransfer.getToAddress().toByteArray()));
+                transactionLogTrigger.setToAddress(StringUtil
+                    .encode58Check(contractTransfer.getToAddress().toByteArray()));
               }
               transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
             }

@@ -1557,6 +1557,36 @@ public class HttpMethed {
     return response;
   }
 
+  public static HttpResponse getTransactionInfoByBlocknum(String httpNode, long blocknum) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/gettransactioninfobyblocknum";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("num", blocknum);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  public static HttpResponse getTransactionInfoByBlocknumFromSolidity(String httpSolidityNode,
+      long blocknum) {
+    try {
+      String requestUrl =
+          "http://" + httpSolidityNode + "/walletsolidity/gettransactioninfobyblocknum";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("num", blocknum);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
   /**
    * constructor.
    */
@@ -2511,6 +2541,26 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static List<JSONObject> parseResponseContentArray(HttpResponse response) {
+    try {
+      String result = EntityUtils.toString(response.getEntity());
+      StringEntity entity = new StringEntity(result, Charset.forName("UTF-8"));
+      response.setEntity(entity);
+      List<JSONObject> list = new ArrayList<JSONObject>();
+      JSONArray objects = JSONArray.parseArray(result);
+      for (int i = 0; i < objects.size(); i++) {
+        list.add(objects.getJSONObject(i));
+      }
+      return list;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
   public static JSONObject parseStringContent(String content) {
     try {
       JSONObject obj = JSONObject.parseObject(content);
@@ -2875,7 +2925,7 @@ public class HttpMethed {
       List<GrpcAPI.Note> shieldOutputList, byte[] publicZenTokenToAddress, long toAmount,
       String zenTokenOwnerKey) {
     try {
-      String requestUrl = "http://" + httpNode + "/wallet/createshieldedtransaction";
+      final String requestUrl = "http://" + httpNode + "/wallet/createshieldedtransaction";
 
       Map<String, Object> map = new HashMap<String, Object>();
       if (!ByteUtil.isNullOrZeroArray(publicZenTokenOwnerAddress)) {
@@ -2919,13 +2969,13 @@ public class HttpMethed {
       if (shieldOutputList.size() > 0) {
         ArrayList<Object> noteList = new ArrayList<>();
         for (int i = 0; i < shieldOutputList.size(); ++i) {
-          Map<String, Object> note = new HashMap<String, Object>();
           Map<String, Object> noteInfo = new HashMap<String, Object>();
           noteInfo.put("value", shieldOutputList.get(i).getValue());
           noteInfo.put("payment_address", shieldOutputList.get(i).getPaymentAddress());
           noteInfo.put("rcm", shieldOutputList.get(i).getRcm().toStringUtf8());
           noteInfo.put("memo",
               ByteArray.toHexString(shieldOutputList.get(i).getMemo().toStringUtf8().getBytes()));
+          Map<String, Object> note = new HashMap<String, Object>();
           note.put("note", noteInfo);
           noteList.add(note);
         }
@@ -2959,18 +3009,18 @@ public class HttpMethed {
   public static Boolean getSpendResult(String httpNode, ShieldAddressInfo shieldAddressInfo,
       ShieldNoteInfo noteTx) {
     try {
-      String requestUrl = "http://" + httpNode + "/wallet/isspend";
-      JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
+      final String requestUrl = "http://" + httpNode + "/wallet/isspend";
 
       response = HttpMethed
           .getExpandedSpendingKey(httpNode, ByteArray.toHexString(shieldAddressInfo.sk));
       responseContent = HttpMethed.parseResponseContent(response);
       String ask = responseContent.getString("ask");
-      String nsk = responseContent.getString("nsk");
       response = HttpMethed.getAkFromAsk(httpNode, ask);
       responseContent = HttpMethed.parseResponseContent(response);
+      JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
       jsonObjectWarp.put("ak", responseContent.getString("value"));
 
+      String nsk = responseContent.getString("nsk");
       response = HttpMethed.getNkFromNsk(httpNode, nsk);
       responseContent = HttpMethed.parseResponseContent(response);
       jsonObjectWarp.put("nk", responseContent.getString("value"));
@@ -3007,18 +3057,18 @@ public class HttpMethed {
   public static Boolean getSpendResultFromSolidity(String httpNode, String httpSolidityNode,
       ShieldAddressInfo shieldAddressInfo, ShieldNoteInfo noteTx) {
     try {
-      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/isspend";
-      JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
+      final String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/isspend";
 
       response = HttpMethed
           .getExpandedSpendingKey(httpNode, ByteArray.toHexString(shieldAddressInfo.sk));
       responseContent = HttpMethed.parseResponseContent(response);
       String ask = responseContent.getString("ask");
-      String nsk = responseContent.getString("nsk");
       response = HttpMethed.getAkFromAsk(httpNode, ask);
       responseContent = HttpMethed.parseResponseContent(response);
+      JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
       jsonObjectWarp.put("ak", responseContent.getString("value"));
 
+      String nsk = responseContent.getString("nsk");
       response = HttpMethed.getNkFromNsk(httpNode, nsk);
       responseContent = HttpMethed.parseResponseContent(response);
       jsonObjectWarp.put("nk", responseContent.getString("value"));
@@ -3067,7 +3117,7 @@ public class HttpMethed {
         startBlockNum = currentBlockNum - 100;
       }
 
-      String requestUrl = "http://" + httpNode + "/wallet/scannotebyivk";
+      final String requestUrl = "http://" + httpNode + "/wallet/scannotebyivk";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("start_block_index", startBlockNum);
       userBaseObj2.addProperty("end_block_index", currentBlockNum);
@@ -3122,7 +3172,7 @@ public class HttpMethed {
         startBlockNum = currentBlockNum - 100;
       }
 
-      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/scannotebyivk";
+      final String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/scannotebyivk";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("start_block_index", startBlockNum);
       userBaseObj2.addProperty("end_block_index", currentBlockNum);
@@ -3170,11 +3220,11 @@ public class HttpMethed {
       String nsk = responseContent.getString("nsk");
       response = HttpMethed.getAkFromAsk(httpNode, ask);
       responseContent = HttpMethed.parseResponseContent(response);
-      String ak = responseContent.getString("value");
+      final String ak = responseContent.getString("value");
 
       response = HttpMethed.getNkFromNsk(httpNode, nsk);
       responseContent = HttpMethed.parseResponseContent(response);
-      String nk = responseContent.getString("value");
+      final String nk = responseContent.getString("value");
 
       response = HttpMethed.getNowBlock(httpNode);
       responseContent = HttpMethed.parseResponseContent(response);
@@ -3188,7 +3238,7 @@ public class HttpMethed {
         startBlockNum = currentBlockNum - 100;
       }
 
-      String requestUrl = "http://" + httpNode + "/wallet/scanandmarknotebyivk";
+      final String requestUrl = "http://" + httpNode + "/wallet/scanandmarknotebyivk";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("start_block_index", startBlockNum);
       userBaseObj2.addProperty("end_block_index", currentBlockNum);
@@ -3240,11 +3290,11 @@ public class HttpMethed {
       String nsk = responseContent.getString("nsk");
       response = HttpMethed.getAkFromAsk(httpNode, ask);
       responseContent = HttpMethed.parseResponseContent(response);
-      String ak = responseContent.getString("value");
+      final String ak = responseContent.getString("value");
 
       response = HttpMethed.getNkFromNsk(httpNode, nsk);
       responseContent = HttpMethed.parseResponseContent(response);
-      String nk = responseContent.getString("value");
+      final String nk = responseContent.getString("value");
 
       response = HttpMethed.getNowBlock(httpNode);
       responseContent = HttpMethed.parseResponseContent(response);
@@ -3258,7 +3308,8 @@ public class HttpMethed {
         startBlockNum = currentBlockNum - 100;
       }
 
-      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/scanandmarknotebyivk";
+      final String requestUrl =
+          "http://" + httpSolidityNode + "/walletsolidity/scanandmarknotebyivk";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("start_block_index", startBlockNum);
       userBaseObj2.addProperty("end_block_index", currentBlockNum);
@@ -3315,7 +3366,7 @@ public class HttpMethed {
         startBlockNum = currentBlockNum - 100;
       }
 
-      String requestUrl = "http://" + httpNode + "/wallet/scannotebyovk";
+      final String requestUrl = "http://" + httpNode + "/wallet/scannotebyovk";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("start_block_index", startBlockNum);
       userBaseObj2.addProperty("end_block_index", currentBlockNum);
@@ -3368,7 +3419,7 @@ public class HttpMethed {
         startBlockNum = currentBlockNum - 100;
       }
 
-      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/scannotebyovk";
+      final String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/scannotebyovk";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("start_block_index", startBlockNum);
       userBaseObj2.addProperty("end_block_index", currentBlockNum);
@@ -3411,7 +3462,7 @@ public class HttpMethed {
       ShieldNoteInfo noteTx, List<GrpcAPI.Note> shieldOutputList, byte[] publicZenTokenToAddress,
       long toAmount, String zenTokenOwnerKey) {
     try {
-      String requestUrl =
+      final String requestUrl =
           "http://" + httpNode + "/wallet/createshieldedtransactionwithoutspendauthsig";
 
       Map<String, Object> map = new HashMap<String, Object>();
@@ -3465,13 +3516,13 @@ public class HttpMethed {
       if (shieldOutputList.size() > 0) {
         ArrayList<Object> noteList = new ArrayList<>();
         for (int i = 0; i < shieldOutputList.size(); ++i) {
-          Map<String, Object> note = new HashMap<String, Object>();
           Map<String, Object> noteInfo = new HashMap<String, Object>();
           noteInfo.put("value", shieldOutputList.get(i).getValue());
           noteInfo.put("payment_address", shieldOutputList.get(i).getPaymentAddress());
           noteInfo.put("rcm", shieldOutputList.get(i).getRcm().toStringUtf8());
           noteInfo.put("memo",
               ByteArray.toHexString(shieldOutputList.get(i).getMemo().toStringUtf8().getBytes()));
+          Map<String, Object> note = new HashMap<String, Object>();
           note.put("note", noteInfo);
           noteList.add(note);
         }

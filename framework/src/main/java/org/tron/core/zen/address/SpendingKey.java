@@ -34,8 +34,7 @@ public class SpendingKey {
   }
 
   public static SpendingKey decode(String hex) {
-    SpendingKey sk = new SpendingKey(ByteArray.fromHexString(hex));
-    return sk;
+    return new SpendingKey(ByteArray.fromHexString(hex));
   }
 
   private static byte[] randomUint256() {

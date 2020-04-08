@@ -28,8 +28,7 @@ import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
 import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
-
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;

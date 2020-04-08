@@ -52,7 +52,6 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.store.AccountStore;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -152,6 +151,7 @@ public class Args extends CommonParameter {
     PARAMETER.changedDelegation = 0;
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
+    PARAMETER.nodeMetricsEnable = true;
   }
 
   /**
@@ -214,7 +214,6 @@ public class Args extends CommonParameter {
         }
       }
       localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
-
       logger.debug("Got privateKey from config.conf");
     } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
       localWitnesses = new LocalWitnesses();
@@ -429,7 +428,7 @@ public class Args extends CommonParameter {
 
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
-            : Runtime.getRuntime().availableProcessors() / 2;
+            : (Runtime.getRuntime().availableProcessors() + 1) / 2;
 
     PARAMETER.solidityThreads =
         config.hasPath(Constant.NODE_SOLIDITY_THREADS)
@@ -656,6 +655,9 @@ public class Args extends CommonParameter {
             ? new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
             : Collections.emptySet();
 
+    if (config.hasPath(Constant.NODE_METRICS_ENABLE)) {
+      PARAMETER.nodeMetricsEnable = config.getBoolean(Constant.NODE_METRICS_ENABLE);
+    }
     logConfig();
   }
 
@@ -1003,4 +1005,3 @@ public class Args extends CommonParameter {
     return this.outputDirectory;
   }
 }
-

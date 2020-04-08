@@ -2,9 +2,8 @@ package org.tron.common.crypto.sm2;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
-
 import org.spongycastle.crypto.CipherParameters;
-import org.spongycastle.crypto.DSA;
+import javax.annotation.Nullable;
 import org.spongycastle.crypto.Digest;
 import org.spongycastle.crypto.digests.SM3Digest;
 import org.spongycastle.crypto.params.ECDomainParameters;
@@ -21,9 +20,6 @@ import org.spongycastle.math.ec.ECMultiplier;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.math.ec.FixedPointCombMultiplier;
 import org.spongycastle.util.BigIntegers;
-import org.tron.common.crypto.SignInterface;
-
-import javax.annotation.Nullable;
 
 public class SM2Signer
         implements  ECConstants

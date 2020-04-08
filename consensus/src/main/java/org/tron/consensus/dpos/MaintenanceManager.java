@@ -1,7 +1,6 @@
 package org.tron.consensus.dpos;
 
-import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
-
+import static org.tron.common.utils.WalletUtil.getAddressStringList;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -82,14 +81,7 @@ public class MaintenanceManager {
             witnessCapsule.getVoteCount());
       });
 
-      dposService.sortWitness(newWitnessAddressList);
-
-      if (newWitnessAddressList.size() > MAX_ACTIVE_WITNESS_NUM) {
-        consensusDelegate
-            .saveActiveWitnesses(newWitnessAddressList.subList(0, MAX_ACTIVE_WITNESS_NUM));
-      } else {
-        consensusDelegate.saveActiveWitnesses(newWitnessAddressList);
-      }
+      dposService.updateWitness(newWitnessAddressList);
 
       incentiveManager.reward(newWitnessAddressList);
 
@@ -108,8 +100,8 @@ public class MaintenanceManager {
       }
 
       logger.info("Update witness success. \nbefore: {} \nafter: {}",
-          StringUtil.getAddressStringList(currentWits),
-          StringUtil.getAddressStringList(newWits));
+          getAddressStringList(currentWits),
+          getAddressStringList(newWits));
     }
 
     DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();
