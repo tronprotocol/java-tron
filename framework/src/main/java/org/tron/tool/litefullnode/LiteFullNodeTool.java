@@ -20,6 +20,7 @@ import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.RocksDBException;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
@@ -494,6 +495,7 @@ public class LiteFullNodeTool {
    */
   public static void main(String[] args) {
     Args argv = new Args();
+    CommonParameter.getInstance().setValidContractProtoThreadNum(1);
     LiteFullNodeTool tool = new LiteFullNodeTool();
     JCommander jct = JCommander.newBuilder()
             .addObject(argv)
