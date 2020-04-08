@@ -522,7 +522,9 @@ public class Manager {
                 .forEach(e -> transactionCache
                     .put(e.getKey(), new BytesCapsule(e.getValue())));
           } catch (ItemNotFoundException e) {
-            logger.warn("block is null, maybe this is a lite fullnode. num: {}", blockNum);
+            if (!CommonParameter.getInstance().isLiteFullNode) {
+              logger.warn("block not found. num: {}", blockNum);
+            }
           } catch (BadItemException e) {
             throw new IllegalStateException("init txs cache error.", e);
           }
