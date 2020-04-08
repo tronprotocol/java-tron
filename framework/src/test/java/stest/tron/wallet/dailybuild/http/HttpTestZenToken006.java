@@ -64,7 +64,7 @@ public class HttpTestZenToken006 {
     PublicMethed.printAddress(zenTokenOwnerKey);
   }
 
-  @Test(enabled = true, description = "Get new shielded address by http")
+  @Test(enabled = false, description = "Get new shielded address by http")
   public void test01GetNewShieldedAddress() {
     response = HttpMethed.getNewShieldedAddress(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -93,7 +93,7 @@ public class HttpTestZenToken006 {
     paymentAddress1 = responseContent.getString("payment_address");
   }
 
-  @Test(enabled = true, description = "Get expanded spending key by http")
+  @Test(enabled = false, description = "Get expanded spending key by http")
   public void test02GetExpandedSpendingKey() {
     response = HttpMethed.getExpandedSpendingKey(httpnode, sk);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -108,7 +108,7 @@ public class HttpTestZenToken006 {
   }
 
 
-  @Test(enabled = true, description = "Get rcm by http")
+  @Test(enabled = false, description = "Get rcm by http")
   public void test03GetRcm() {
     response = HttpMethed.getRcm(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -117,7 +117,8 @@ public class HttpTestZenToken006 {
     logger.info("rcm: " + rcm);
   }
 
-  @Test(enabled = true, description = "Public to shield transaction withoutask by http")
+  @Test(enabled = false,
+      description = "Public to shield transaction withoutask by http")
   public void test04PublicToShieldTransactionWithoutAsk() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, tokenId,
