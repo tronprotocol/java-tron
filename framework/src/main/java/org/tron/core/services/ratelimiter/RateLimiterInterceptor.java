@@ -138,8 +138,8 @@ public class RateLimiterInterceptor implements ServerInterceptor {
     } catch (Exception e) {
       String grpcFailMeterName = MetricsKey.NET_API_DETAIL_FAIL_QPS
           + call.getMethodDescriptor().getFullMethodName();
-      MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS, 1);
-      MetricsUtil.meterMark(grpcFailMeterName, 1);
+      MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
+      MetricsUtil.meterMark(grpcFailMeterName);
       logger.error("Rpc Api Error: {}", e.getMessage());
     }
 
