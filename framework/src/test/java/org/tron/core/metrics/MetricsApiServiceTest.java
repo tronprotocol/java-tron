@@ -98,14 +98,6 @@ public class MetricsApiServiceTest {
     Assert.assertEquals(m1.getNet().getConnectionCount(), m2.getNet().getConnectionCount());
     Assert.assertEquals(m1.getNet().getDisconnectionCount(), m2.getNet().getDisconnectionCount());
     Assert.assertEquals(m1.getNet().getErrorProtoCount(), m2.getNet().getErrorProtoCount());
-    Assert.assertEquals(m1.getNet().getTcpInTraffic().getCount(),
-        m2.getNet().getTcpInTraffic().getCount());
-    Assert.assertEquals(m1.getNet().getTcpOutTraffic().getCount(),
-        m2.getNet().getTcpOutTraffic().getCount());
-    Assert.assertEquals(m1.getNet().getUdpInTraffic().getCount(),
-        m2.getNet().getUdpInTraffic().getCount());
-    Assert.assertEquals(m1.getNet().getUdpOutTraffic().getCount(),
-        m2.getNet().getUdpOutTraffic().getCount());
     Assert
         .assertEquals(m1.getNet().getValidConnectionCount(), m2.getNet().getValidConnectionCount());
   }
