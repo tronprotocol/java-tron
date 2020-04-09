@@ -1,73 +1,110 @@
 package org.tron.core.metrics;
 
-import java.util.concurrent.TimeUnit;
+import java.io.File;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.FileUtil;
+import org.tron.core.Constant;
+import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.args.Args;
+import org.tron.core.services.RpcApiService;
+import org.tron.program.Version;
+import org.tron.protos.Protocol;
 
 @Slf4j
 public class MetricsApiServiceTest {
 
-  @Test
-  public void metricMeterTest() throws InterruptedException {
-    String key = "testMeter";
-    MetricsUtil.meterMark(key, 10);
-    Assert.assertEquals(10, MetricsUtil.getMeter(key).getCount());
-    MetricsUtil.meterMark(key, 20);
-    Assert.assertEquals(30,
-        MetricsUtil.getMeter(key).getCount());
-    MetricsUtil.meterMark(key, 20);
-    Thread.sleep(59000);
-    // TimeUnit.SECONDS.sleep(59);
-    // meanRate
-    MetricsUtil.meterMark(key, 10);
-    Assert.assertEquals(1.0,
-        MetricsUtil.getMeter(key).getMeanRate(), 0.1);
-    // One minute exponentially moving average rate
-    double expWRate =
-        (10 - MetricsUtil.getMeter(key).getMeanRate())
-            * ((double) 2 / (4 + 1))
-            + MetricsUtil.getMeter(key).getMeanRate();
-    // compare with estimate exp rate
-    Assert.assertNotEquals(1.0, MetricsUtil.getMeter(key).getOneMinuteRate(), 1);
-    Assert.assertTrue(MetricsUtil.getMeter(key).getOneMinuteRate() < 5.0);
-    Assert.assertTrue(MetricsUtil.getMeter(key).getOneMinuteRate() > 3.0);
-    // Assert.assertEquals(expWRate,
-    //    MetricsUtil.getMeter(key).getOneMinuteRate(), 1);
+  private static String dbPath = "output-metrics";
+  private static String dbDirectory = "metrics-database";
+  private static String indexDirectory = "metrics-index";
+  private static int port = 10001;
+  private TronApplicationContext context;
+  private MetricsApiService metricsApiService;
+  private RpcApiService rpcApiService;
+  private Application appT;
+
+
+  @Before
+  public void init() {
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
+        Constant.TEST_CONF);
+    Args.setParam(
+        new String[]{
+            "--output-directory", dbPath,
+            "--storage-db-directory", dbDirectory,
+            "--storage-index-directory", indexDirectory
+        },
+        "config.conf"
+    );
+    CommonParameter parameter = Args.getInstance();
+    parameter.setNodeListenPort(port);
+    parameter.getSeedNode().getIpList().clear();
+    parameter.setNodeExternalIp("127.0.0.1");
+    context = new TronApplicationContext(DefaultConfig.class);
+    appT = ApplicationFactory.create(context);
+    rpcApiService = context.getBean(RpcApiService.class);
+    metricsApiService = context.getBean(MetricsApiService.class);
+    appT.addService(rpcApiService);
+    appT.initServices(parameter);
+    appT.startServices();
+    appT.startup();
   }
 
   @Test
-  public void metricCounterTest() {
-    String key = "testCounter";
-    MetricsUtil.getCounter(key);
-    MetricsUtil.counterInc(key);
-    MetricsUtil.counterInc(key);
-    Assert.assertEquals(2.0, MetricsUtil.getCounter(key).getCount(), 0.1);
+  public void testProcessMessage() {
+
+    MetricsInfo m1 = metricsApiService.getMetricsInfo();
+
+    Protocol.MetricsInfo m2 = metricsApiService.getMetricProtoInfo();
+
+    Assert.assertEquals(m1.getNode().getBackupStatus(), m2.getNode().getBackupStatus());
+    Assert.assertEquals(m1.getNode().getIp(), m2.getNode().getIp());
+    Assert.assertEquals(m1.getNode().getNodeType(), m2.getNode().getNodeType());
+    Assert.assertEquals(m1.getNode().getVersion(), m2.getNode().getVersion());
+    Assert.assertEquals(m1.getNode().getVersion(), Version.getVersion());
+
+    Assert.assertEquals(m1.getBlockchain().getBlockProcessTime().getCount(),
+        m2.getBlockchain().getBlockProcessTime().getCount());
+    Assert
+        .assertEquals(m1.getBlockchain().getFailForkCount(), m2.getBlockchain().getFailForkCount());
+    Assert.assertEquals(m1.getBlockchain().getFailProcessBlockNum(),
+        m2.getBlockchain().getFailProcessBlockNum());
+    Assert.assertEquals(m1.getBlockchain().getForkCount(), m2.getBlockchain().getForkCount());
+    Assert.assertEquals(m1.getBlockchain().getFailProcessBlockReason(),
+        m2.getBlockchain().getFailProcessBlockReason());
+    Assert
+        .assertEquals(m1.getBlockchain().getHeadBlockHash(), m2.getBlockchain().getHeadBlockHash());
+    Assert.assertEquals(m1.getBlockchain().getHeadBlockNum(), m2.getBlockchain().getHeadBlockNum());
+    Assert.assertEquals(m1.getBlockchain().getHeadBlockTimestamp(),
+        m2.getBlockchain().getHeadBlockTimestamp());
+    Assert.assertEquals(m1.getBlockchain().getMissedTransaction().getCount(),
+        m2.getBlockchain().getMissedTransaction().getCount());
+    Assert.assertEquals(m1.getBlockchain().getTps().getCount(),
+        m2.getBlockchain().getTps().getCount());
+
+    Assert.assertEquals(m1.getNet().getApi().getQps().getCount(),
+        m2.getNet().getApi().getQps().getCount());
+    Assert.assertEquals(m1.getNet().getApi().getFailQps().getCount(),
+        m2.getNet().getApi().getFailQps().getCount());
+    Assert.assertEquals(m1.getNet().getApi().getOutTraffic().getCount(),
+        m2.getNet().getApi().getOutTraffic().getCount());
+    Assert.assertEquals(m1.getNet().getConnectionCount(), m2.getNet().getConnectionCount());
+    Assert.assertEquals(m1.getNet().getDisconnectionCount(), m2.getNet().getDisconnectionCount());
+    Assert.assertEquals(m1.getNet().getErrorProtoCount(), m2.getNet().getErrorProtoCount());
+    Assert
+        .assertEquals(m1.getNet().getValidConnectionCount(), m2.getNet().getValidConnectionCount());
   }
 
-  @Test
-  public void metricHistogram() {
-    String key = "testHistogram";
-    MetricsUtil.getHistogram(key);
-    for (int i = 0; i < 100; i++) {
-      MetricsUtil.histogramUpdate(key, 100 - i);
-    }
-    // sort array [1,2,3,4,5,.....,100]
-    Assert.assertEquals(99.0,
-        MetricsUtil.getHistogram(key).getSnapshot().get99thPercentile(),
-        0.1);
-    Assert.assertEquals(75.0,
-        MetricsUtil.getHistogram(key).getSnapshot().get75thPercentile(),
-        0.1);
-    Assert.assertEquals(98.0,
-        MetricsUtil.getHistogram(key).getSnapshot().get98thPercentile(),
-        0.1);
-    Assert.assertEquals(75.0, MetricsUtil.getHistogram(key).getSnapshot().get75thPercentile(),
-        0.1);
-    Assert.assertEquals(100, MetricsUtil.getHistogram(key).getCount(),
-        0.1);
+  @After
+  public void destroy() {
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
   }
-
-
-
 }
