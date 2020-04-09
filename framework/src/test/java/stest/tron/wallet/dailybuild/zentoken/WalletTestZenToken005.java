@@ -82,7 +82,8 @@ public class WalletTestZenToken005 {
     Args.setFullNodeAllowShieldedTransaction(true);
   }
 
-  @Test(enabled = true, description = "The receiver shield address can't more then 2")
+  @Test(enabled = false,
+      description = "The receiver shield address can't more then 2")
   public void test1ReceiverShieldAddressCanNotMoreThenTwo() {
     Optional<ShieldAddressInfo> shieldAddressInfo1 = PublicMethed.generateShieldAddress();
     String shieldAddress1 = shieldAddressInfo1.get().getAddress();
@@ -116,7 +117,8 @@ public class WalletTestZenToken005 {
         zenTokenOwnerKey, blockingStubFull));
   }
 
-  @Test(enabled = true, description = "The receiver can't only one public address")
+  @Test(enabled = false,
+      description = "The receiver can't only one public address")
   public void test2ReceiverPublicCanNotOnlyOnePublic() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -131,7 +133,8 @@ public class WalletTestZenToken005 {
         zenTokenOwnerKey, blockingStubFull));
   }
 
-  @Test(enabled = true, description = "Public send amount must equal receiver amount + shieldFee")
+  @Test(enabled = false,
+      description = "Public send amount must equal receiver amount + shieldFee")
   public void test3SendAmountMustEqualReceiverAmountPlusShieldFee() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));

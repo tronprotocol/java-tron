@@ -114,7 +114,7 @@ public class WalletTestZenToken011 {
 
   }
 
-  @Test(enabled = true, description = "Test get new shield address ")
+  @Test(enabled = false, description = "Test get new shield address ")
   public void test1Shield2ShieldTransaction() {
     sendShieldAddress = blockingStubFull.getNewShieldedAddress(GrpcAPI.EmptyMessage.newBuilder()
         .build()).getPaymentAddress();
