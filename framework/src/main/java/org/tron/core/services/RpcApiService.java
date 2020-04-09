@@ -82,12 +82,16 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.utils.*;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.Utils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -95,7 +99,14 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.*;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.NonUniqueObjectException;
+import org.tron.core.exception.StoreException;
+import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -751,6 +762,7 @@ public class RpcApiService implements Service {
       byte[] ak = request.getAk().toByteArray();
       byte[] nk = request.getNk().toByteArray();
       try {
+        checkSupportShieldedTRC20ContractTransaction();
         responseObserver.onNext(
             wallet.scanShieldedTRC20NotesbyIvk(startNum, endNum, contractAddress, ivk, ak, nk));
       } catch (Exception e) {
@@ -767,6 +779,7 @@ public class RpcApiService implements Service {
       byte[] contractAddress = request.getShieldedTRC20ContractAddress().toByteArray();
       byte[] ovk = request.getOvk().toByteArray();
       try {
+        checkSupportShieldedTRC20ContractTransaction();
         responseObserver
             .onNext(wallet.scanShieldedTRC20NotesbyOvk(startNum, endNum, ovk, contractAddress));
       } catch (Exception e) {
@@ -779,6 +792,7 @@ public class RpcApiService implements Service {
     public void isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request,
         StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
       try {
+        checkSupportShieldedTRC20ContractTransaction();
         responseObserver.onNext(wallet.isShieldedTRC20ContractNoteSpent(request));
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));

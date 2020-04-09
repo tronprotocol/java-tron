@@ -2931,7 +2931,6 @@ public class Wallet {
       topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
     }
     byte[] logData = log.getData().toByteArray();
-    logger.info(String.valueOf(Hex.toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS)));
     if (Hex.toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS)
         && !ArrayUtils.isEmpty(logData)) {
       //Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
