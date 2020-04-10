@@ -1845,7 +1845,7 @@ public class Wallet {
       throw new BadItemException("ask is null");
     }
     if (ByteArray.toHexString(ask.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of ask's hex string should be 64");
+      throw new BadItemException("the length of ask's hextring should be 64");
     }
 
     byte[] ak = ExpandedSpendingKey.getAkFromAsk(ask.toByteArray());
@@ -1861,7 +1861,7 @@ public class Wallet {
       throw new BadItemException("nsk is null");
     }
     if (ByteArray.toHexString(nsk.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of nsk's hex string should be 64");
+      throw new BadItemException("the length of nsk's hexString should be 64");
     }
 
     byte[] nk = ExpandedSpendingKey.getNkFromNsk(nsk.toByteArray());
