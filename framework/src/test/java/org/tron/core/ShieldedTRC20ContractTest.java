@@ -7,8 +7,10 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -18,6 +20,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Hash;
@@ -26,6 +29,8 @@ import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.vm.PrecompiledContracts;
+import org.tron.core.vm.PrecompiledContracts.PrecompiledContract;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -56,6 +61,19 @@ public class ShieldedTRC20ContractTest {
   private String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
   private String pubAddress = "TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ";
 
+  private static final DataWord verifyMintProofAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000000000b");
+  private static final DataWord verifyTransferProofAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000000000c");
+  private static final DataWord verifyBurnProofAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000000000d");
+  private static final DataWord merkleHashAddr = new DataWord(
+      "000000000000000000000000000000000000000000000000000000000000000e");
+  private static PrecompiledContract mintContract;
+  private static PrecompiledContract transferContract;
+  private static PrecompiledContract burnContract;
+  private static PrecompiledContract hashContract;
+
   @BeforeClass
   public static void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
@@ -67,6 +85,11 @@ public class ShieldedTRC20ContractTest {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     Args.getInstance().setFullNodeAllowShieldedTRC20TransactionArgs(true);
     Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+
+    mintContract = PrecompiledContracts.getContractForAddress(verifyMintProofAddr);
+    transferContract = PrecompiledContracts.getContractForAddress(verifyTransferProofAddr);
+    burnContract = PrecompiledContracts.getContractForAddress(verifyBurnProofAddr);
+    hashContract = PrecompiledContracts.getContractForAddress(merkleHashAddr);
   }
 
   @AfterClass
@@ -1564,6 +1587,55 @@ public class ShieldedTRC20ContractTest {
     Assert.assertFalse(result2.getIsSpent());
   }
 
+  //  @Ignore
+  @Test
+  public void testPrecompiledContractForMint()
+      throws ZksnarkException {
+    librustzcashInitZksnarkParams();
+    long fromAmount = 50;
+    SpendingKey sk = SpendingKey.random();
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    byte[] ovk = expsk.getOvk();
+
+    //ReceiveNote
+    GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
+    SpendingKey spendingKey = SpendingKey.decode(privateKey);
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+    long revValue = 50;
+    byte[] memo = new byte[512];
+    byte[] rcm = Note.generateR();
+    String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
+    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
+    revNoteBuilder.setNote(revNote);
+
+    byte[] contractAddress = WalletClient.decodeFromBase58Check(shieldedTRC20ContractAddress);
+    GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
+        .PrivateShieldedTRC20Parameters.newBuilder();
+    paramBuilder.setOvk(ByteString.copyFrom(ovk));
+    paramBuilder.setFromAmount(fromAmount);
+    paramBuilder.addShieldedReceives(revNoteBuilder.build());
+    paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
+
+    GrpcAPI.ShieldedTRC20Parameters trc20MintParams = blockingStubFull
+        .createShieldedContractParameters(paramBuilder.build());
+    GrpcAPI.PrivateShieldedTRC20Parameters trc20Params = paramBuilder.build();
+    logger.info(Hex.toHexString(trc20Params.getOvk().toByteArray()));
+    logger.info(String.valueOf(trc20Params.getFromAmount()));
+    logger.info(String.valueOf(trc20Params.getShieldedReceives(0).getNote().getValue()));
+    logger.info(trc20Params.getShieldedReceives(0).getNote().getPaymentAddress());
+    logger.info(Hex.toHexString(
+        trc20Params.getShieldedReceives(0).getNote().getRcm().toByteArray()));
+    logger.info(Hex.toHexString(trc20Params.getShieldedTRC20ContractAddress().toByteArray()));
+
+    byte[] inputData = mintParamsToPrecompiledContractInput(trc20MintParams, revValue);
+    Pair<Boolean, byte[]> result = mintContract.execute(inputData);
+    logger.info(String.valueOf(result.getLeft()));
+    logger.info(Hex.toHexString(result.getRight()));
+
+  }
+
 
   private GrpcAPI.Note getNote(long value, String paymentAddress, byte[] rcm, byte[] memo) {
     GrpcAPI.Note.Builder noteBuilder = GrpcAPI.Note.newBuilder();
@@ -1590,6 +1662,29 @@ public class ShieldedTRC20ContractTest {
     );
     return Hex.toHexString(mergedBytes);
   }
+
+  private byte[] mintParamsToPrecompiledContractInput(GrpcAPI.ShieldedTRC20Parameters mintParams,
+      long value) {
+    byte[] mergedBytes;
+    byte[] frontier = new byte[1056]; //
+    new Random().nextBytes(frontier);
+    long leafCount = 100;
+
+    ShieldContract.ReceiveDescription revDesc = mintParams.getReceiveDescription(0);
+    mergedBytes = ByteUtil.merge(
+        revDesc.getNoteCommitment().toByteArray(),
+        revDesc.getValueCommitment().toByteArray(),
+        revDesc.getEpk().toByteArray(),
+        revDesc.getZkproof().toByteArray(),
+        mintParams.getBindingSignature().toByteArray(),
+        longTo32Bytes(value),
+        mintParams.getMessageHash().toByteArray(),
+        frontier,
+        longTo32Bytes(leafCount)
+    );
+    return mergedBytes;
+  }
+
 
   private String triggerMint(WalletGrpc.WalletBlockingStub blockingStubFull, byte[] contractAddress,
       byte[] callerAddress, String privateKey, String input) {
