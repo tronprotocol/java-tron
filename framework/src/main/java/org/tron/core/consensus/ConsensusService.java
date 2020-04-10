@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.parameter.CommonParameter;
 
 public class SafeMessageMap {
 
@@ -29,7 +30,8 @@ public class SafeMessageMap {
   }
 
   public void put(Message msg) {
-    put(Sha256Hash.of(DBConfig.isECKeyCryptoEngine(), msg.getData()), msg);
+    put(Sha256Hash.of(CommonParameter.getInstance()
+        .isECKeyCryptoEngine(), msg.getData()), msg);
   }
 
   public Message get(Sha256Hash msgId) {
