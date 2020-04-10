@@ -70,7 +70,7 @@ public class HttpTestZenToken004 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     Args.setFullNodeAllowShieldedTransaction(true);
@@ -287,7 +287,7 @@ public class HttpTestZenToken004 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     final Long assetBalance = HttpMethed
         .getAssetIssueValue(httpnode, receiverPublicAddress, assetIssueId);
