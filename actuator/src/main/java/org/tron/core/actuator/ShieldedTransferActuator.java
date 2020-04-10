@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.capsule.TransactionCapsule.getShieldTransactionHashIgnoreTypeException;
 import static org.tron.core.utils.ZenChainParams.ZC_ENCCIPHERTEXT_SIZE;
 import static org.tron.core.utils.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
 
@@ -23,7 +24,6 @@ import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -285,8 +285,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         throw new ZkProofValidateException("record is fail, skip proof", false);
       }
     }
-    byte[] signHash = TransactionCapsule
-        .getShieldTransactionHashIgnoreTypeException(tx.getInstance());
+
+
+    byte[] signHash = getShieldTransactionHashIgnoreTypeException(tx.getInstance());
 
     if (CollectionUtils.isNotEmpty(spendDescriptions)
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
@@ -390,7 +391,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
   }
 
-  private void validateTransparent(ShieldedTransferContract shieldedTransferContract,long fee)
+  private void validateTransparent(ShieldedTransferContract shieldedTransferContract, long fee)
       throws ContractValidateException {
     boolean hasTransparentFrom;
     boolean hasTransparentTo;

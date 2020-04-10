@@ -14,6 +14,8 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 
+import static stest.tron.wallet.common.client.WalletClient.decodeFromBase58Check;
+
 public class CreateCommonTransactionTest {
 
   private static String fullnode = "127.0.0.1:50051";

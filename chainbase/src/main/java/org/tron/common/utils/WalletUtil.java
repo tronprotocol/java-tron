@@ -1,8 +1,5 @@
 package org.tron.common.utils;
 
-
-import static org.tron.common.utils.StringUtil.encode58Check;
-
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
@@ -24,7 +21,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
-public class WalletUtil {
+  public class WalletUtil {
 
   public static boolean checkPermissionOperations(Permission permission, Contract contract)
       throws PermissionException {
@@ -37,7 +34,7 @@ public class WalletUtil {
     return b;
   }
 
-  public static byte[] generateContractAddress(Transaction trx) {
+    public static byte[] generateContractAddress(Transaction trx) {
 
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
@@ -57,6 +54,26 @@ public class WalletUtil {
   public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
     byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
     return Hash.sha3omit12(mergedData);
+  }
+
+  // for `CREATE`
+  public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
+    byte[] nonceBytes = Longs.toByteArray(nonce);
+    byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
+    System.arraycopy(transactionRootId, 0, combined, 0, transactionRootId.length);
+    System.arraycopy(nonceBytes, 0, combined, transactionRootId.length, nonceBytes.length);
+
+    return Hash.sha3omit12(combined);
+  }
+
+
+  public static String encode58Check(byte[] input) {
+    byte[] hash0 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), input);
+    byte[] hash1 = Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(), hash0);
+    byte[] inputCheck = new byte[input.length + 4];
+    System.arraycopy(input, 0, inputCheck, 0, input.length);
+    System.arraycopy(hash1, 0, inputCheck, input.length, 4);
+    return Base58.encode(inputCheck);
   }
 
   public static boolean isConstant(ABI abi, TriggerSmartContract triggerSmartContract)

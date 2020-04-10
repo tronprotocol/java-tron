@@ -1,5 +1,6 @@
 package org.tron.core.capsule;
 
+
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;

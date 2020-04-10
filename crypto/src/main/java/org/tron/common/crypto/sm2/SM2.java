@@ -2,6 +2,7 @@ package org.tron.common.crypto.sm2;
 
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
+import static org.tron.common.utils.Hash.computeAddress;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -29,9 +30,6 @@ import org.spongycastle.crypto.params.ECDomainParameters;
 import org.spongycastle.crypto.params.ECKeyGenerationParameters;
 import org.spongycastle.crypto.params.ECPrivateKeyParameters;
 import org.spongycastle.crypto.params.ECPublicKeyParameters;
-import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
-import org.spongycastle.jce.spec.ECParameterSpec;
-import org.spongycastle.jce.spec.ECPrivateKeySpec;
 import org.spongycastle.math.ec.ECAlgorithms;
 import org.spongycastle.math.ec.ECCurve;
 import org.spongycastle.math.ec.ECPoint;
@@ -43,7 +41,7 @@ import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.ByteUtil;
-import static org.tron.common.crypto.Hash.computeAddress;
+
 /**
  * Implement Chinese Commercial Cryptographic Standard of SM2
  *
@@ -502,7 +500,6 @@ public class SM2 implements Serializable, SignInterface {
         // No decryption of private key required.
         SM2Signer signer = getSigner();
         BigInteger[] componets =  signer.generateHashSignature(messageHash);
-
         SM2Signature sig = new SM2.SM2Signature(componets[0], componets[1]);
         // Now we have to work backwards to figure out the recId needed to
         // recover the signature.

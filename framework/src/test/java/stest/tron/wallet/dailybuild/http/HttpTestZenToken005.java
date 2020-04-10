@@ -55,7 +55,7 @@ public class HttpTestZenToken005 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -161,7 +161,7 @@ public class HttpTestZenToken005 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     response = HttpMethed.getAccount(httpnode, foundationZenTokenAddress);
     responseContent = HttpMethed.parseResponseContent(response);

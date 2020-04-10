@@ -38,5 +38,4 @@ public class GetBrokerageServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     doGet(request, response);
   }
-
 }

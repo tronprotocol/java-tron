@@ -308,6 +308,14 @@ public class Wallet {
         chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
+    long genesisTimeStamp = chainBaseManager.getGenesisBlock().getTimeStamp();
+    accountCapsule.setLatestConsumeTime(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTime());
+    accountCapsule.setLatestConsumeFreeTime(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeFreeTime());
+    accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
+
     return accountCapsule.getInstance();
   }
 
@@ -792,26 +800,31 @@ public class Wallet {
         .build());
 
     // ALLOW_ZKSNARK_TRANSACTION
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowShieldedTransaction")
-            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
-            .build());
+//    builder.addChainParameter(
+//        Protocol.ChainParameters.ChainParameter.newBuilder()
+//            .setKey("getAllowShieldedTransaction")
+//            .setValue(dbManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
+//            .build());
+//
+//    // SHIELDED_TRANSACTION_FEE
+//    builder.addChainParameter(
+//        Protocol.ChainParameters.ChainParameter.newBuilder()
+//            .setKey("getShieldedTransactionFee")
+//            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
+//            .build());
+//
+//    // ShieldedTransactionCreateAccountFee
+//    builder.addChainParameter(
+//        Protocol.ChainParameters.ChainParameter.newBuilder()
+//            .setKey("getShieldedTransactionCreateAccountFee")
+//            .setValue(
+//                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
+//            .build());
 
-    // SHIELDED_TRANSACTION_FEE
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getShieldedTransactionFee")
-            .setValue(chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee())
-            .build());
-    // ShieldedTransactionCreateAccountFee
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getShieldedTransactionCreateAccountFee")
-            .setValue(
-                chainBaseManager.getDynamicPropertiesStore()
-                    .getShieldedTransactionCreateAccountFee())
-            .build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getForbidTransferToContract")
+        .setValue(dbManager.getDynamicPropertiesStore().getForbidTransferToContract())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getForbidTransferToContract")
@@ -1837,7 +1850,7 @@ public class Wallet {
       throw new BadItemException("ask is null");
     }
     if (ByteArray.toHexString(ask.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of ask's hexString should be 64");
+      throw new BadItemException("the length of ask's hex string should be 64");
     }
 
     byte[] ak = ExpandedSpendingKey.getAkFromAsk(ask.toByteArray());
@@ -1853,7 +1866,7 @@ public class Wallet {
       throw new BadItemException("nsk is null");
     }
     if (ByteArray.toHexString(nsk.toByteArray()).length() != 64) {
-      throw new BadItemException("the length of nsk's hexString should be 64");
+      throw new BadItemException("the length of nsk's hex string should be 64");
     }
 
     byte[] nk = ExpandedSpendingKey.getNkFromNsk(nsk.toByteArray());

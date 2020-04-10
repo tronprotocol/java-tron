@@ -76,7 +76,7 @@ public class WalletTestZenToken003 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -396,7 +396,6 @@ public class WalletTestZenToken003 {
     Assert.assertEquals(afterReceiverPublicAssetBalance, sendToPublicAddressAmount);
   }
 
-
   @Test(enabled = false,
       description = "Public to two same shield address")
   public void test5Public2TwoSameShieldAddress() {
@@ -466,7 +465,7 @@ public class WalletTestZenToken003 {
    * constructor.
    */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,

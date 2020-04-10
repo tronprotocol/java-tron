@@ -72,6 +72,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Hash;
 import org.tron.core.Wallet;
 import org.tron.core.zen.address.DiversifierT;
