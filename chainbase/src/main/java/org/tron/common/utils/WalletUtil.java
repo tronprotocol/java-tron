@@ -21,7 +21,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
-  public class WalletUtil {
+public class WalletUtil {
 
   public static boolean checkPermissionOperations(Permission permission, Contract contract)
       throws PermissionException {
@@ -34,7 +34,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
     return b;
   }
 
-    public static byte[] generateContractAddress(Transaction trx) {
+  public static byte[] generateContractAddress(Transaction trx) {
 
     CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
