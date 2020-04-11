@@ -396,7 +396,6 @@ public class WalletTestZenToken003 {
     Assert.assertEquals(afterReceiverPublicAssetBalance, sendToPublicAddressAmount);
   }
 
-
   @Test(enabled = false,
       description = "Public to two same shield address")
   public void test5Public2TwoSameShieldAddress() {

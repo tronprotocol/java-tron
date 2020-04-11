@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
+import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
 
 import java.util.Objects;
 import lombok.Getter;

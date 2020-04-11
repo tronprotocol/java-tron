@@ -19,7 +19,6 @@ public class PendingManager implements AutoCloseable {
 
   public PendingManager(Manager db) {
     this.dbManager = db;
-
     db.getPendingTransactions().forEach(transactionCapsule -> {
       if (System.currentTimeMillis() - transactionCapsule.getTime() < timeout) {
         tmpTransactions.add(transactionCapsule);

@@ -21,3 +21,4 @@ public class SolidityTrigger extends Trigger {
         .append(latestSolidifiedBlockNumber).toString();
   }
 }
+

@@ -103,4 +103,3 @@ public class FullNode {
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
   }
 }
-

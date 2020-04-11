@@ -308,6 +308,14 @@ public class Wallet {
         chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
+    long genesisTimeStamp = chainBaseManager.getGenesisBlock().getTimeStamp();
+    accountCapsule.setLatestConsumeTime(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTime());
+    accountCapsule.setLatestConsumeFreeTime(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeFreeTime());
+    accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
+
     return accountCapsule.getInstance();
   }
 
@@ -792,30 +800,30 @@ public class Wallet {
         .build());
 
     // ALLOW_ZKSNARK_TRANSACTION
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowShieldedTransaction")
-            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
-            .build());
-
-    // SHIELDED_TRANSACTION_FEE
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getShieldedTransactionFee")
-            .setValue(chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee())
-            .build());
-    // ShieldedTransactionCreateAccountFee
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getShieldedTransactionCreateAccountFee")
-            .setValue(
-                chainBaseManager.getDynamicPropertiesStore()
-                    .getShieldedTransactionCreateAccountFee())
-            .build());
+//    builder.addChainParameter(
+//        Protocol.ChainParameters.ChainParameter.newBuilder()
+//            .setKey("getAllowShieldedTransaction")
+//            .setValue(dbManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
+//            .build());
+//
+//    // SHIELDED_TRANSACTION_FEE
+//    builder.addChainParameter(
+//        Protocol.ChainParameters.ChainParameter.newBuilder()
+//            .setKey("getShieldedTransactionFee")
+//            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
+//            .build());
+//
+//    // ShieldedTransactionCreateAccountFee
+//    builder.addChainParameter(
+//        Protocol.ChainParameters.ChainParameter.newBuilder()
+//            .setKey("getShieldedTransactionCreateAccountFee")
+//            .setValue(
+//                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
+//            .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getForbidTransferToContract")
-        .setValue(chainBaseManager.getDynamicPropertiesStore().getForbidTransferToContract())
+        .setValue(dbManager.getDynamicPropertiesStore().getForbidTransferToContract())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()

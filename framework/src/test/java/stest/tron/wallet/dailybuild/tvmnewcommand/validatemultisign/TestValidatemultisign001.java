@@ -276,7 +276,6 @@ public class TestValidatemultisign001 {
     tosign = Sha256Hash.hash(CommonParameter.getInstance()
         .isECKeyCryptoEngine(), merged);
 
-
     signatures.clear();
     signatures.add(Hex.toHexString(ecKey003.sign(tosign).toByteArray()));
     signatures.add(Hex.toHexString(ecKey001.sign(tosign).toByteArray()));

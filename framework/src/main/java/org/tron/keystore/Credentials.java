@@ -3,6 +3,7 @@ package org.tron.keystore;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.utils.StringUtil;
+import static org.tron.common.utils.WalletUtil.encode58Check;
 
 /**
  * Credentials wrapper.
