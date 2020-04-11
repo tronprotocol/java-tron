@@ -1,9 +1,5 @@
 package org.tron.core.vm.utils;
 
-import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
-
-import org.tron.common.utils.Base58;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.VMUtils;
