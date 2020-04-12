@@ -303,8 +303,8 @@ public class PrecompiledContracts {
       return ret;
     }
 
-    protected byte[] dataBoolean(boolean resulut) {
-      if (resulut) {
+    protected byte[] dataBoolean(boolean result) {
+      if (result) {
         return DataWord.ONE().getData();
       }
       return DataWord.ZERO().getData();
@@ -1427,7 +1427,7 @@ public class PrecompiledContracts {
       byte[] hash = new byte[32];
       boolean res = true;
       try {
-        int level = parseInt(data, 0);
+        int level = parseInt(data);
         System.arraycopy(data, 32, left, 0, 32);
         System.arraycopy(data, 64, right, 0, 32);
         JLibrustzcash.librustzcashMerkleHash(
@@ -1443,7 +1443,7 @@ public class PrecompiledContracts {
       }
     }
 
-    private int parseInt(byte[] data, int idx) {
+    private int parseInt(byte[] data) {
       byte[] bytes = parseBytes(data, 0, 32);
       return new DataWord(bytes).intValueSafe();
     }
