@@ -1,6 +1,6 @@
 package org.tron.core.db.accountstate;
 
-import static org.tron.common.utils.WalletUtil.encode58Check;
+import static org.tron.common.utils.StringUtil.encode58Check;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.protos.Protocol.Account;
