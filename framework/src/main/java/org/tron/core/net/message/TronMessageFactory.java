@@ -3,23 +3,34 @@ package org.tron.core.net.message;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.overlay.message.MessageFactory;
 import org.tron.core.exception.P2pException;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 
 /**
  * msg factory.
  */
 public class TronMessageFactory extends MessageFactory {
 
+  private static final String DATA_LEN = ", len=";
+
   @Override
   public TronMessage create(byte[] data) throws Exception {
+    boolean isException = false;
     try {
       byte type = data[0];
       byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
       return create(type, rawData);
     } catch (final P2pException e) {
+      isException = true;
       throw e;
     } catch (final Exception e) {
+      isException = true;
       throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED,
-          "type=" + data[0] + ", len=" + data.length + ", error msg: " + e.getMessage());
+          "type=" + data[0] + DATA_LEN + data.length + ", error msg: " + e.getMessage());
+    } finally {
+      if (isException) {
+        MetricsUtil.counterInc(MetricsKey.NET_ERROR_PROTO_COUNT);
+      }
     }
   }
 
@@ -27,7 +38,7 @@ public class TronMessageFactory extends MessageFactory {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     if (receivedTypes == null) {
       throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
-          "type=" + type + ", len=" + packed.length);
+          "type=" + type + DATA_LEN + packed.length);
     }
     switch (receivedTypes) {
       case TRX:
@@ -54,7 +65,7 @@ public class TronMessageFactory extends MessageFactory {
         return new TransactionInventoryMessage(packed);
       default:
         throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
-            receivedTypes.toString() + ", len=" + packed.length);
+            receivedTypes.toString() + DATA_LEN + packed.length);
     }
   }
 }

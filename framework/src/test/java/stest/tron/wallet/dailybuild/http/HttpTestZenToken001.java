@@ -81,7 +81,7 @@ public class HttpTestZenToken001 {
    */
   @BeforeClass(enabled = false)
   public void beforeClass() {
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
   }
@@ -211,7 +211,8 @@ public class HttpTestZenToken001 {
     logger.info("rcm: " + rcm);
   }
 
-  @Test(enabled = false, description = "Public to shield transaction withoutask by http")
+  @Test(enabled = false,
+      description = "Public to shield transaction withoutask by http")
   public void test09PublicToShieldTransactionWithoutAsk() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, tokenId,
@@ -298,7 +299,8 @@ public class HttpTestZenToken001 {
     Assert.assertFalse(shieldNoteInfoByMarkList.get(2).getIsSpend());
   }
 
-  @Test(enabled = false, description = "Shield to shield transaction withoutask by http")
+  @Test(enabled = false,
+      description = "Shield to shield transaction withoutask by http")
   public void test10ShieldToShieldTransactionWithoutAsk() {
     Optional<ShieldAddressInfo> receiverShieldAddressInfo1 = HttpMethed
         .generateShieldAddress(httpnode);
@@ -373,7 +375,7 @@ public class HttpTestZenToken001 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     final Long assetBalance = HttpMethed
         .getAssetIssueValue(httpnode, zenTokenOwnerAddress, assetIssueId);

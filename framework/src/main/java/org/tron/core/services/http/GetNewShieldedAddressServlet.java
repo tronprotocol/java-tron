@@ -33,7 +33,6 @@ public class GetNewShieldedAddressServlet extends RateLimiterServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
-
       ShieldedAddressInfo reply = wallet.getNewShieldedAddress();
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));

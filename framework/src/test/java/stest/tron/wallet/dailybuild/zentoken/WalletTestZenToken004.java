@@ -70,7 +70,7 @@ public class WalletTestZenToken004 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -78,7 +78,7 @@ public class WalletTestZenToken004 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     Assert.assertTrue(PublicMethed.sendcoin(receiverPublicAddress, 1000000L,
         fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -145,7 +145,8 @@ public class WalletTestZenToken004 {
 
   }
 
-  @Test(enabled = false, description = "Shield to one public and one shield transaction")
+  @Test(enabled = false,
+      description = "Shield to one public and one shield transaction")
   public void test2Shield2OneShieldAndOnePublicTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -199,7 +200,8 @@ public class WalletTestZenToken004 {
     Assert.assertEquals(afterReceiverPublicAssetBalance, sendToPublicAddressAmount);
   }
 
-  @Test(enabled = false, description = "Shield to one public and two shield transaction")
+  @Test(enabled = false,
+      description = "Shield to one public and two shield transaction")
   public void test3Public2OneShieldAndOnePublicTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -268,14 +270,14 @@ public class WalletTestZenToken004 {
             blockingStubFull);
     logger.info("afterNotActivePublicAssetBalance:" + afterNotActivePublicAssetBalance);
     logger.info("sendToPublicAddressAmount:" + sendToPublicAddressAmount);
-    Assert.assertEquals(afterNotActivePublicAssetBalance,sendToPublicAddressAmount);
+    Assert.assertEquals(afterNotActivePublicAssetBalance, sendToPublicAddressAmount);
   }
 
   /**
    * constructor.
    */
 
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,

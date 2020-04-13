@@ -4,19 +4,25 @@ import com.google.protobuf.ByteString;
 import java.io.File;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.testng.collections.Lists;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Pair;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadNumberBlockException;
+import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
@@ -72,7 +78,7 @@ public class KhaosDatabaseTest {
     try {
       khaosDatabase.push(blockCapsule2);
     } catch (UnLinkedBlockException | BadNumberBlockException e) {
-
+      System.out.println(e.getMessage());
     }
 
     Assert.assertEquals(blockCapsule2, khaosDatabase.getBlock(blockCapsule2.getBlockId()));
@@ -110,5 +116,64 @@ public class KhaosDatabaseTest {
     logger.info("***** object ref:" + objectReference.get());
     Assert.assertNull(objectReference.get());
     Assert.assertNull(khaosDatabase.getParentBlock(blockCapsule2.getBlockId()));
+  }
+
+  @Test
+  public void testGetBranch() {
+    final String mockedHash = "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b82";
+    // common parent block
+    BlockCapsule parentBlock = new BlockCapsule(Block.newBuilder().setBlockHeader(
+        BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
+            ByteArray.fromHexString(mockedHash)))
+            .setNumber(0))).build());
+    // fork-chain-A
+    // longer than chainB, share the common parent block with fork-chain-B
+    BlockCapsule block1OnforkA = new BlockCapsule(
+        1, parentBlock.getBlockId(), 0, ByteString.EMPTY);
+    BlockCapsule block2OnforkA = new BlockCapsule(
+        2, block1OnforkA.getBlockId(), 0, ByteString.EMPTY);
+    List<KhaosDatabase.KhaosBlock> forkA = Lists.newLinkedList();
+    forkA.add(new KhaosDatabase.KhaosBlock(block2OnforkA));
+    forkA.add(new KhaosDatabase.KhaosBlock(block1OnforkA));
+    forkA.add(new KhaosDatabase.KhaosBlock(parentBlock));
+    // fork-chain-B
+    BlockCapsule block1OnforkB = new BlockCapsule(
+        1, parentBlock.getBlockId(), 0, ByteString.EMPTY);
+    List<KhaosDatabase.KhaosBlock> forkB = Lists.newLinkedList();
+    forkA.add(new KhaosDatabase.KhaosBlock(block1OnforkB));
+    forkA.add(new KhaosDatabase.KhaosBlock(parentBlock));
+
+    khaosDatabase.start(parentBlock);
+    try {
+      khaosDatabase.push(block1OnforkA);
+      khaosDatabase.push(block2OnforkA);
+      khaosDatabase.push(block1OnforkB);
+      // case: block num of param1 > block num of param2
+      Pair result1 = khaosDatabase.getBranch(
+          Sha256Hash.of(
+              CommonParameter
+                  .getInstance().isECKeyCryptoEngine(),
+              block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()),
+          Sha256Hash.of(
+              CommonParameter
+                  .getInstance().isECKeyCryptoEngine(),
+              block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()));
+      Assert.assertEquals(forkA, result1.getKey());
+      Assert.assertEquals(forkB, result1.getValue());
+      // case: block num of param2 > block num of param1
+      Pair result2 = khaosDatabase.getBranch(
+          Sha256Hash.of(
+              CommonParameter
+                  .getInstance().isECKeyCryptoEngine(),
+              block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()),
+          Sha256Hash.of(
+              CommonParameter
+                  .getInstance().isECKeyCryptoEngine(),
+              block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()));
+      Assert.assertEquals(forkB, result2.getKey());
+      Assert.assertEquals(forkA, result2.getValue());
+    } catch (UnLinkedBlockException | BadNumberBlockException | NonCommonBlockException e) {
+      System.out.println(e.getMessage());
+    }
   }
 }

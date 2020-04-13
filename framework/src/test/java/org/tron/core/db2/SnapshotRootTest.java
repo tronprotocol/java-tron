@@ -21,7 +21,6 @@ import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
-import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.db2.core.SnapshotRoot;
@@ -43,8 +42,6 @@ public class SnapshotRootTest {
   @After
   public void removeDb() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File("output_revokingStore_test"));
   }

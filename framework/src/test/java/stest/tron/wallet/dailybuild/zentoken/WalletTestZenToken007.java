@@ -125,7 +125,7 @@ public class WalletTestZenToken007 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey1);
@@ -155,7 +155,7 @@ public class WalletTestZenToken007 {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress4, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     sendShieldAddressInfo1 = PublicMethed.generateShieldAddress();
     sendShieldAddressInfo2 = PublicMethed.generateShieldAddress();
     sendShieldAddressInfo3 = PublicMethed.generateShieldAddress();
@@ -380,7 +380,8 @@ public class WalletTestZenToken007 {
     Assert.assertTrue(receiverNote3.getValue() == sendNote3.getValue() - zenTokenFee);
   }
 
-  @Test(enabled = false, description = "Shield to shield transaction without ask")
+  @Test(enabled = false,
+      description = "Shield to shield transaction without ask")
   public void test09Shield2ShieldTransactionWithoutAsk() {
     //Same sk and different d can produce different shield address,
     // the notes can use by scan from same ovk.
@@ -467,7 +468,8 @@ public class WalletTestZenToken007 {
         notes.getNoteTxs(0), blockingStubFull).getResult());
   }
 
-  @Test(enabled = false, description = "Same sk transfer shield address note is spent")
+  @Test(enabled = false,
+      description = "Same sk transfer shield address note is spent")
   public void test11SameSkTransferShieldAddressNoteCanSpent() {
     notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2, blockingStubFull);
 
@@ -614,7 +616,7 @@ public class WalletTestZenToken007 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress1,

@@ -18,13 +18,12 @@ import org.spongycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.crypto.generators.PKCS5S2ParametersGenerator;
 import org.spongycastle.crypto.generators.SCrypt;
 import org.spongycastle.crypto.params.KeyParameter;
-import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.config.args.Args;
-import org.tron.common.utils.WalletUtil;
 
 /**
  * <p>Ethereum wallet file management. For reference, refer to <a href="https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition">
@@ -93,16 +92,16 @@ public class Wallet {
       int n, int p) {
 
     WalletFile walletFile = new WalletFile();
-    walletFile.setAddress(WalletUtil.encode58Check(ecKeyPair.getAddress()));
+    walletFile.setAddress(StringUtil.encode58Check(ecKeyPair.getAddress()));
 
     WalletFile.Crypto crypto = new WalletFile.Crypto();
     crypto.setCipher(CIPHER);
-    crypto.setCiphertext(ByteArray.toHexString(cipherText));
+    crypto.setCipherText(ByteArray.toHexString(cipherText));
     walletFile.setCrypto(crypto);
 
     WalletFile.CipherParams cipherParams = new WalletFile.CipherParams();
     cipherParams.setIv(ByteArray.toHexString(iv));
-    crypto.setCipherparams(cipherParams);
+    crypto.setCipherParams(cipherParams);
 
     crypto.setKdf(SCRYPT);
     WalletFile.ScryptKdfParams kdfParams = new WalletFile.ScryptKdfParams();
@@ -111,7 +110,7 @@ public class Wallet {
     kdfParams.setP(p);
     kdfParams.setR(R);
     kdfParams.setSalt(ByteArray.toHexString(salt));
-    crypto.setKdfparams(kdfParams);
+    crypto.setKdfParams(kdfParams);
 
     crypto.setMac(ByteArray.toHexString(mac));
     walletFile.setCrypto(crypto);
@@ -175,15 +174,15 @@ public class Wallet {
     WalletFile.Crypto crypto = walletFile.getCrypto();
 
     byte[] mac = ByteArray.fromHexString(crypto.getMac());
-    byte[] iv = ByteArray.fromHexString(crypto.getCipherparams().getIv());
-    byte[] cipherText = ByteArray.fromHexString(crypto.getCiphertext());
+    byte[] iv = ByteArray.fromHexString(crypto.getCipherParams().getIv());
+    byte[] cipherText = ByteArray.fromHexString(crypto.getCipherText());
 
     byte[] derivedKey;
 
-    WalletFile.KdfParams kdfParams = crypto.getKdfparams();
+    WalletFile.KdfParams kdfParams = crypto.getKdfParams();
     if (kdfParams instanceof WalletFile.ScryptKdfParams) {
       WalletFile.ScryptKdfParams scryptKdfParams =
-          (WalletFile.ScryptKdfParams) crypto.getKdfparams();
+          (WalletFile.ScryptKdfParams) crypto.getKdfParams();
       int dklen = scryptKdfParams.getDklen();
       int n = scryptKdfParams.getN();
       int p = scryptKdfParams.getP();
@@ -192,7 +191,7 @@ public class Wallet {
       derivedKey = generateDerivedScryptKey(password.getBytes(UTF_8), salt, n, r, p, dklen);
     } else if (kdfParams instanceof WalletFile.Aes128CtrKdfParams) {
       WalletFile.Aes128CtrKdfParams aes128CtrKdfParams =
-          (WalletFile.Aes128CtrKdfParams) crypto.getKdfparams();
+          (WalletFile.Aes128CtrKdfParams) crypto.getKdfParams();
       int c = aes128CtrKdfParams.getC();
       String prf = aes128CtrKdfParams.getPrf();
       byte[] salt = ByteArray.fromHexString(aes128CtrKdfParams.getSalt());
@@ -212,7 +211,6 @@ public class Wallet {
     byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
 
     return SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
-
   }
 
   static void validate(WalletFile walletFile) throws CipherException {

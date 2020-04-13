@@ -302,12 +302,14 @@ public class AccountCapsuleTest {
     Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString(String.valueOf(id)),
         500, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore()));
     // 1000-999 +500
-    Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id)).longValue(), 501L);
+    Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id)).longValue(),
+        501L);
     //abc
     Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString(String.valueOf(id + 1)),
         500, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore()));
     Assert
-        .assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id + 1)).longValue(), 500L);
+        .assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id + 1)).longValue(),
+            500L);
   }
 
   @Test
@@ -325,12 +327,10 @@ public class AccountCapsuleTest {
 
     String witnessPermissionAddress =
         Wallet.getAddressPreFixString() + "cc6a17a49648a8ad32055c06f60fa14ae46df912cc";
-    accountCapsule = new AccountCapsule(accountCapsule.getInstance().toBuilder().
-        setWitnessPermission(Permission.newBuilder().addKeys(
-            Key.newBuilder()
-                .setAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessPermissionAddress)))
-                .build()).
-            build()).build());
+    accountCapsule = new AccountCapsule(accountCapsule.getInstance().toBuilder()
+        .setWitnessPermission(Permission.newBuilder().addKeys(Key.newBuilder()
+            .setAddress(ByteString.copyFrom(ByteArray.fromHexString(witnessPermissionAddress)))
+            .build()).build()).build());
 
     Assert.assertTrue(
         Arrays.equals(ByteArray.fromHexString(witnessPermissionAddress),

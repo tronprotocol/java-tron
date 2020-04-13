@@ -63,7 +63,7 @@ public enum MessageTypes {
 
   private final int type;
 
-  private MessageTypes(int type) {
+  MessageTypes(int type) {
     this.type = type;
   }
 

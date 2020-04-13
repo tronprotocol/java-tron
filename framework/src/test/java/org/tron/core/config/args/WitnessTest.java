@@ -18,6 +18,7 @@ package org.tron.core.config.args;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.args.Witness;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 

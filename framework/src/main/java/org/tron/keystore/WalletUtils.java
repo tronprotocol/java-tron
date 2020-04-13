@@ -14,7 +14,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.Utils;
@@ -75,62 +74,11 @@ public class WalletUtils {
     return fileName;
   }
 
-//  public static void updateWalletFile(
-//      String password, ECKey ecKeyPair, File source, boolean useFullScrypt)
-//      throws CipherException, IOException {
-//
-//    WalletFile walletFile = objectMapper.readValue(source, WalletFile.class);
-//    if (useFullScrypt) {
-//      walletFile = Wallet.createStandard(password, ecKeyPair);
-//    } else {
-//      walletFile = Wallet.createLight(password, ecKeyPair);
-//    }
-//
-//    objectMapper.writeValue(source, walletFile);
-//  }
-
-  //    /**
-//     * Generates a BIP-39 compatible Ethereum wallet. The private key for the wallet can
-//     * be calculated using following algorithm:
-//     * <pre>
-//     *     Key = SHA-256(BIP_39_SEED(mnemonic, password))
-//     * </pre>
-//     *
-//     * @param password Will be used for both wallet encryption and passphrase for BIP-39 seed
-//     * @param destinationDirectory The directory containing the wallet
-//     * @return A BIP-39 compatible Ethereum wallet
-//     * @throws CipherException if the underlying cipher is not available
-//     * @throws IOException if the destination cannot be written to
-//     */
-//    public static Bip39Wallet generateBip39Wallet(String password, File destinationDirectory)
-//            throws CipherException, IOException {
-//        byte[] initialEntropy = new byte[16];
-//        secureRandom.nextBytes(initialEntropy);
-//
-//        String mnemonic = MnemonicUtils.generateMnemonic(initialEntropy);
-//        byte[] seed = MnemonicUtils.generateSeed(mnemonic, password);
-//        ECKeyPair privateKey = ECKeyPair.create(sha256(seed));
-//
-//        String walletFile = generateWalletFile(password, privateKey, destinationDirectory, false);
-//
-//        return new Bip39Wallet(walletFile, mnemonic);
-//    }
-//
-//    public static Credentials loadCredentials(String password, String source)
-//            throws IOException, CipherException {
-//        return loadCredentials(password, new File(source));
-//    }
-//
   public static Credentials loadCredentials(String password, File source)
       throws IOException, CipherException {
     WalletFile walletFile = objectMapper.readValue(source, WalletFile.class);
     return Credentials.create(Wallet.decrypt(password, walletFile));
   }
-//
-//    public static Credentials loadBip39Credentials(String password, String mnemonic) {
-//        byte[] seed = MnemonicUtils.generateSeed(mnemonic, password);
-//        return Credentials.create(ECKeyPair.create(sha256(seed)));
-//    }
 
   private static String getWalletFileName(WalletFile walletFile) {
     DateTimeFormatter format = DateTimeFormatter.ofPattern(
@@ -167,22 +115,6 @@ public class WalletUtils {
     return String.format("%s%skeystore", getDefaultKeyDirectory(), File.separator);
   }
 
-  //    public static boolean isValidPrivateKey(String privateKey) {
-//        String cleanPrivateKey = Numeric.cleanHexPrefix(privateKey);
-//        return cleanPrivateKey.length() == PRIVATE_KEY_LENGTH_IN_HEX;
-//    }
-//
-//    public static boolean isValidAddress(String input) {
-//        String cleanInput = Numeric.cleanHexPrefix(input);
-//
-//        try {
-//            Numeric.toBigIntNoPrefix(cleanInput);
-//        } catch (NumberFormatException e) {
-//            return false;
-//        }
-//
-//        return cleanInput.length() == ADDRESS_LENGTH_IN_HEX;
-//    }
   public static boolean passwordValid(String password) {
     if (StringUtils.isEmpty(password)) {
       return false;
@@ -226,7 +158,7 @@ public class WalletUtils {
       if (password0.equals(password1)) {
         break;
       }
-      System.out.println("The passwords do not match, please input again.");
+      System.out.println("Two passwords do not match, please input again.");
     }
     return password0;
   }

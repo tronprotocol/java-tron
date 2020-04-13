@@ -19,8 +19,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -36,7 +39,7 @@ public class ChannelManager {
   private SyncPool syncPool;
   @Autowired
   private FastForward fastForward;
-  private Args args = Args.getInstance();
+  private CommonParameter parameter = CommonParameter.getInstance();
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
@@ -52,29 +55,29 @@ public class ChannelManager {
   @Getter
   private Map<InetAddress, Node> fastForwardNodes = new ConcurrentHashMap();
 
-  private int maxActivePeers = args.getNodeMaxActiveNodes();
+  private int maxActivePeers = parameter.getNodeMaxActiveNodes();
 
-  private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
+  private int getMaxActivePeersWithSameIp = parameter.getNodeMaxActiveNodesWithSameIp();
 
   public void init() {
-    if (this.args.getNodeListenPort() > 0) {
+    if (this.parameter.getNodeListenPort() > 0) {
       new Thread(() -> peerServer.start(Args.getInstance().getNodeListenPort()),
           "PeerServerThread").start();
     }
 
     InetAddress address;
-    for (Node node : args.getPassiveNodes()) {
+    for (Node node : parameter.getPassiveNodes()) {
       address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
       trustNodes.put(address, node);
     }
 
-    for (Node node : args.getActiveNodes()) {
+    for (Node node : parameter.getActiveNodes()) {
       address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
       trustNodes.put(address, node);
       activeNodes.put(address, node);
     }
 
-    for (Node node : args.getFastForwardNodes()) {
+    for (Node node : parameter.getFastForwardNodes()) {
       address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
       trustNodes.put(address, node);
       fastForwardNodes.put(address, node);
@@ -102,6 +105,8 @@ public class ChannelManager {
         recentlyDisconnected.put(channel.getInetAddress(), reason);
         break;
     }
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_COUNT);
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_DETAIL + reason);
   }
 
   public void notifyDisconnect(Channel channel) {

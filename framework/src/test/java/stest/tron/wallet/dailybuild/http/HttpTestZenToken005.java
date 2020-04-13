@@ -57,7 +57,7 @@ public class HttpTestZenToken005 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
@@ -66,7 +66,7 @@ public class HttpTestZenToken005 {
             sendTokenAmount, foundationZenTokenKey);
     org.junit.Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
     logger.info("sendShieldAddress:" + sendShieldAddress);
@@ -86,7 +86,8 @@ public class HttpTestZenToken005 {
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
   }
 
-  @Test(enabled = false, description = "Shield to shield transaction without ask by http")
+  @Test(enabled = false,
+      description = "Shield to shield transaction without ask by http")
   public void test01ShieldToShieldWithoutAskTransaction() {
     receiverShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     receiverShieldAddress = receiverShieldAddressInfo.get().getAddress();
@@ -116,7 +117,8 @@ public class HttpTestZenToken005 {
     Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
   }
 
-  @Test(enabled = false, description = "Get merkle tree voucher info by http")
+  @Test(enabled = false,
+      description = "Get merkle tree voucher info by http")
   public void test02GetMerkleTreeVoucherInfo() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed
@@ -135,7 +137,8 @@ public class HttpTestZenToken005 {
         "synBlockNum is too large, cmBlockNum plus synBlockNum must be <= latestBlockNumber"));
   }
 
-  @Test(enabled = false, description = "Get merkle tree voucher info by http from solidity")
+  @Test(enabled = false,
+      description = "Get merkle tree voucher info by http from solidity")
   public void test03GetMerkleTreeVoucherInfoFromSolidity() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed
@@ -160,7 +163,7 @@ public class HttpTestZenToken005 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     response = HttpMethed.getAccount(httpnode, foundationZenTokenAddress);
     responseContent = HttpMethed.parseResponseContent(response);

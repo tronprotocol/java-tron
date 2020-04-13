@@ -187,14 +187,15 @@ public class HttpTestMutiSign001 {
     String transactionHex = PublicMethed
         .sendcoinGetTransactionHex(hexTestAddress, 1000L, fromAddress, testKey002,
             blockingStubFull);
-    String wrongTransactionHex = transactionHex + "wrong";
-    response = HttpMethed.broadcasthex(httpnode, wrongTransactionHex);
-    logger.info("transaction wrong:");
-    Assert.assertFalse(HttpMethed.verificationResult(response));
 
     //Wrong type of hex
     response = HttpMethed.broadcasthex(httpnode, transactionHex);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+
+    String wrongTransactionHex = transactionHex + "wrong";
+    response = HttpMethed.broadcasthex(httpnode, wrongTransactionHex);
+    logger.info("transaction wrong:");
+    Assert.assertFalse(HttpMethed.verificationResult(response));
 
     //SingleSign for broadcastHex
     response = HttpMethed.broadcasthex(httpnode, transactionHex);

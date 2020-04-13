@@ -110,6 +110,9 @@ public class TriggerConstant001 {
           .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100, null, contractExcKey,
               contractExcAddress, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
       SmartContract smartContract2 = PublicMethed
           .getContract(contractAddressWithAbi, blockingStubFull);
       Assert.assertFalse(smartContract2.getAbi().toString().isEmpty());
@@ -344,7 +347,6 @@ public class TriggerConstant001 {
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-
   }
 
   @Test(enabled = true, description = "TriggerConstantContract a payable function"
@@ -393,7 +395,6 @@ public class TriggerConstant001 {
     /*Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));*/
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
 
   }
 

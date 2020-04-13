@@ -41,9 +41,9 @@ public class SignUtils {
   public static SignatureInterface fromComponents(
       byte[] r, byte[] s, byte v, boolean isECKeyCryptoEngine) {
     if (isECKeyCryptoEngine) {
-      return ECDSASignature.fromComponents(r, s, v);
+      return ECKey.ECDSASignature.fromComponents(r, s, v);
     }
-    return SM2Signature.fromComponents(r, s, v);
+    return SM2.SM2Signature.fromComponents(r, s, v);
   }
 
   public static byte[] signatureToAddress(

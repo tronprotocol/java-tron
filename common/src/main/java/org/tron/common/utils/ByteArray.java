@@ -1,5 +1,7 @@
 package org.tron.common.utils;
 
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import java.io.ByteArrayOutputStream;
@@ -32,8 +34,6 @@ import org.spongycastle.util.encoders.Hex;
  */
 @Slf4j(topic = "utils")
 public class ByteArray {
-
-  public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
   public static String toHexString(byte[] data) {
     return data == null ? "" : Hex.toHexString(data);

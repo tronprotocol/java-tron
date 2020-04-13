@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.DefaultConfig;
@@ -85,15 +86,15 @@ public abstract class BaseNet {
             },
             "config.conf"
         );
-        Args cfgArgs = Args.getInstance();
-        cfgArgs.setNodeListenPort(port);
-        cfgArgs.getSeedNode().getIpList().clear();
-        cfgArgs.setNodeExternalIp("127.0.0.1");
+        CommonParameter parameter = Args.getInstance();
+        parameter.setNodeListenPort(port);
+        parameter.getSeedNode().getIpList().clear();
+        parameter.setNodeExternalIp("127.0.0.1");
         context = new TronApplicationContext(DefaultConfig.class);
         appT = ApplicationFactory.create(context);
         rpcApiService = context.getBean(RpcApiService.class);
         appT.addService(rpcApiService);
-        appT.initServices(cfgArgs);
+        appT.initServices(parameter);
         appT.startServices();
         appT.startup();
         tronNetDelegate = context.getBean(TronNetDelegate.class);

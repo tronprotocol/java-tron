@@ -70,10 +70,10 @@ public class HttpTestZenToken004 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
   }
 
   @Test(enabled = false, description = "Shield to two shield transaction by http")
@@ -130,7 +130,8 @@ public class HttpTestZenToken004 {
     Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
   }
 
-  @Test(enabled = false, description = "Shield to one public and one shield transaction by http")
+  @Test(enabled = false,
+      description = "Shield to one public and one shield transaction by http")
   public void test02ShieldToOnePublicAndOneShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -165,7 +166,8 @@ public class HttpTestZenToken004 {
 
     shieldOutList.clear();
     Long sendToPublicAddressAmount = 1 * zenTokenFee;
-    Long sendToShiledAddressAmount = sendTokenAmount - sendToPublicAddressAmount - zenTokenWhenCreateNewAddress;
+    Long sendToShiledAddressAmount = sendTokenAmount - sendToPublicAddressAmount
+        - zenTokenWhenCreateNewAddress;
     memo3 = "Send shield to receiver shield memo in" + System.currentTimeMillis();
     shieldOutList = HttpMethed.addShieldOutputList(httpnode, shieldOutList, receiverShieldAddress3,
         "" + sendToShiledAddressAmount, memo3);
@@ -210,7 +212,8 @@ public class HttpTestZenToken004 {
         .get(0).getIsSpend());
   }
 
-  @Test(enabled = false, description = "Shield to one public and two shield transaction by http")
+  @Test(enabled = false,
+      description = "Shield to one public and two shield transaction by http")
   public void test03ShieldToOnePublicAndTwoShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -284,7 +287,7 @@ public class HttpTestZenToken004 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     final Long assetBalance = HttpMethed
         .getAssetIssueValue(httpnode, receiverPublicAddress, assetIssueId);

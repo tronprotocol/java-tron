@@ -68,7 +68,7 @@ public class HttpTestZenToken002 {
             sendTokenAmount, foundationZenTokenKey);
     org.junit.Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    Args.setFullNodeAllowShieldedTransaction(true);
 
   }
 
@@ -151,7 +151,8 @@ public class HttpTestZenToken002 {
         HttpMethed.getSpendResult(httpnode, receiverShieldAddressInfo.get(), receiverNote));
   }
 
-  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on FullNode by http")
+  @Test(enabled = false,
+      description = "Scan note by ivk and scan not by ivk on FullNode by http")
   public void test03ScanNoteByIvkAndOvk() {
     //Scan sender note by ovk equals scan receiver note by ivk on FullNode
     noteByOvk = HttpMethed.scanNoteByOvk(httpnode, sendShieldAddressInfo.get()).get(0);
@@ -162,7 +163,8 @@ public class HttpTestZenToken002 {
     Assert.assertEquals(noteByIvk.getPaymentAddress(), noteByOvk.getPaymentAddress());
   }
 
-  @Test(enabled = false, description = "Scan note by ivk and scan not by ivk on Solidity by http")
+  @Test(enabled = false,
+      description = "Scan note by ivk and scan not by ivk on Solidity by http")
   public void test04ScanNoteByIvkAndOvkFromSolidity() {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     //Scan sender note by ovk equals scan receiver note by ivk on Solidity
@@ -332,7 +334,7 @@ public class HttpTestZenToken002 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     final Long assetBalance = HttpMethed
         .getAssetIssueValue(httpnode, zenTokenOwnerAddress, assetIssueId);

@@ -17,16 +17,15 @@
  */
 package org.tron.core.vm.config;
 
-import static org.tron.common.utils.DBConfig.ENERGY_LIMIT_HARD_FORK;
 
+import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.parameter.CommonParameter;
 
 /**
  * For developer only
  */
 public class VMConfig {
-
-  public static final int MAX_CODE_LENGTH = 1024 * 1024;
 
   public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
 
@@ -64,7 +63,7 @@ public class VMConfig {
   }
 
   public static void initVmHardFork(boolean pass) {
-    ENERGY_LIMIT_HARD_FORK = pass;
+    CommonParameter.ENERGY_LIMIT_HARD_FORK = pass;
   }
 
   public static void initAllowMultiSign(long allow) {
@@ -81,10 +80,6 @@ public class VMConfig {
 
   public static void initAllowTvmSolidity059(long allow) {
     ALLOW_TVM_SOLIDITY_059 = allow == 1;
-  }
-
-  public static boolean getEnergyLimitHardFork() {
-    return ENERGY_LIMIT_HARD_FORK;
   }
 
   public static boolean allowTvmTransferTrc10() {
@@ -104,8 +99,6 @@ public class VMConfig {
   }
 
   private static class SystemPropertiesInstance {
-
     private static final VMConfig INSTANCE = new VMConfig();
   }
-
 }

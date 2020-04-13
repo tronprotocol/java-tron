@@ -1,6 +1,6 @@
 package org.tron.common.runtime;
 
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +24,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.DataWord;
@@ -68,8 +69,6 @@ public class RuntimeTransferComplexTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    appT.shutdownServices();
-    appT.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

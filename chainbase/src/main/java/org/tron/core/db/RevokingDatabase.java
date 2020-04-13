@@ -1,7 +1,7 @@
 package org.tron.core.db;
 
+import org.tron.core.db2.ISession;
 import org.tron.core.db2.common.IRevokingDB;
-import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 

@@ -12,8 +12,8 @@
 
 
 <p align="center">
-  <a href="https://discord.gg/GsRgsTD">
-    <img src="https://img.shields.io/badge/chat-on%20discord-brightgreen.svg">
+  <a href="https://gitter.im/tronprotocol/allcoredev">
+    <img src="https://camo.githubusercontent.com/da2edb525cde1455a622c58c0effc3a90b9a181c/68747470733a2f2f6261646765732e6769747465722e696d2f4a6f696e253230436861742e737667">
   </a>
     
   <a href="https://travis-ci.org/tronprotocol/java-tron">
@@ -44,11 +44,10 @@
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
   <a href="#deploy">Deploy</a> •
-  <a href="#developer-community">Developer Community</a> •
-  <a href="http://developers.tron.network">Documentation</a> •
-  <a href="#contributing">Contributing</a> •
-  <a href="#projects">Projects</a> •
-  <a href="#resource">Resource</a>
+  <a href="#Deployment">Deployment</a> •
+  <a href="#Channel">Channel</a> •
+  <a href="#Contribution">Contribution</a> •
+  <a href="#Resources">Resources</a>
 </p>
 
 ## What's TRON?
@@ -63,40 +62,38 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
 # Quick Start
-
-* [Quick Start](./quickstart.md) TRON Quickstart image setup
+This guide walks the user through the TRON Quickstart (v2.0.0) image setup.    
+[TRON Quick Start](./quickstart.md)
 
 # Deploy
 * [Build](./build.md) Please build java-tron after cloning the project  
-* [Run](./run.md) Run java-tron
+* [Run](./run.md) Run java-tron  
 
-# Developer Community
+# Deployment
+This guide walks the user through how to deploy a Fullnode, Solidity node and SR node.
+[https://tronprotocol.github.io/documentation-en/developers/deployment/](https://tronprotocol.github.io/documentation-en/developers/deployment/)  
 
-* [Discord](https://discord.gg/GsRgsTD) Please join our Developer Discord
-* [Gitter](https://gitter.im/tronprotocol/allcoredev) the core dev gitter
+# Channel
+This is java-tron's official Gitter channel, if you have any question, please join this channel.   
+[Core Devs Gitter](https://gitter.im/tronprotocol/allcoredev)   
 
-# Projects
-* [TRON Protocol](https://github.com/tronprotocol/protocol)
-* [Wallet Client](https://github.com/tronprotocol/wallet-cli)
-* [Wallet Web](https://github.com/tronprotocol/wallet-web)
+A telegram channel for java-tron community developers, if you want to contribute to java-tron, please join this channel.
+[Core Devs Community telegram](https://t.me/troncoredevscommunity)
 
-# Resource
-* [Website](https://tron.network/)
-* [Documentation](http://developers.tron.network)
-* [Blog](https://tronprotocol.github.io/tron-blog/)
-* [Tronscan](https://tronscan.org/)
-* [Trxplorer](https://www.trxplorer.io/)
-* [White Paper](https://tron.network/resources?lng=&name=1)
-* [TRON Quickstart](https://developers.tron.network/docs/getting-started-1)
-* [About](https://tron.network/about)
-* [FAQ](https://tron.network/faq)
+# Contribution
+If you'd like to contribute to java-tron, please follow below.  
+[Contribution](./CONTRIBUTING.md)
+[Community Developers Incentives Programme](./CONTRIBUTING.md#community-developers-incentives-programme)
 
-# Contributing
-Thank you for all of [our contributors](https://github.com/tronprotocol/java-tron/graphs/contributors); this project wouldn’t be what it is without you! If you want to help out, please see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-If you'd like to contribute to java-tron, please fork, fix, commit and send a pull request for the maintainers to review and merge into the main code base.   
-If you wish to submit more complex changes though, please check up with the core devs first on [our gitter channel](https://gitter.im/tronprotocol/allcoredev) to ensure those changes are 
-in line with the general philosophy of the project and/or get some early feedback which can make both your efforts much lighter as well as our review and merge procedures quick and simple.
+# Resources
+* [Medium](https://medium.com/@coredevs)  java-tron's official technical articles are published there.    
+* [Documentation](https://tronprotocol.github.io/documentation-en/introduction/)  java-tron's official technical documentation website.  
+* [Test network](http://nileex.io/) A stable test network of TRON contributed by TRON community.
+* [Tronscan](https://tronscan.org/#/) TRON network blockchain browser.    
+* [Wallet-cli](https://github.com/tronprotocol/wallet-cli) TRON network wallet using command line.
+* [TIP](https://github.com/tronprotocol/tips) TRON Improvement Proposal (TIP) describes standards for the TRON network.  
+* [TP](https://github.com/tronprotocol/tips/tree/master/tp) TRON Protocol (TP) describes standards already implemented in TRON network but not published as a TIP. 
+* [White Paper](https://tron.network/resources?lng=&name=1) White paper of TRON network. 
 
 # License
-* [MIT](https://github.com/tronprotocol/java-tron/blob/master/LICENSE)
+java-tron is released under the [LGPL-V3 license](https://github.com/tronprotocol/java-tron/blob/master/LICENSE).

@@ -2,8 +2,8 @@ package org.tron.common.crypto.sm2;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import javax.annotation.Nullable;
 import org.spongycastle.crypto.CipherParameters;
+import javax.annotation.Nullable;
 import org.spongycastle.crypto.Digest;
 import org.spongycastle.crypto.digests.SM3Digest;
 import org.spongycastle.crypto.params.ECDomainParameters;
