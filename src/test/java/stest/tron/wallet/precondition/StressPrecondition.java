@@ -167,11 +167,6 @@ public class StressPrecondition {
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(24L, 1L);
       }*/
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTvmSolidity059") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
-        logger.info(getChainParameters.get().getChainParameter(i).getKey());
-        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(32L, 1L);
-      }
       if(getChainParameters.get().getChainParameter(i).getKey().equals("getAdaptiveResourceLimitTargetRatio") && getChainParameters.get().getChainParameter(i).getValue() == 10) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
@@ -182,11 +177,12 @@ public class StressPrecondition {
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
         proposalMap.put(29L, 20L);
       }
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getChangeDelegation") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowPBFT") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
         logger.info(getChainParameters.get().getChainParameter(i).getKey());
         logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-        proposalMap.put(30L, 1L);
+        proposalMap.put(40L, 1L);
       }
+
     }
 
     if (proposalMap.size() >= 1) {
