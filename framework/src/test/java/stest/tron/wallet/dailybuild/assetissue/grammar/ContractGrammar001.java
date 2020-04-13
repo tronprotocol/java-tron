@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.grammar;
+package stest.tron.wallet.dailybuild.assetissue.grammar;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

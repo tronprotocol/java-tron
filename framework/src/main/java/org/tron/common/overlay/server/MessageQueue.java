@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.message.PingMessage;
 import org.tron.common.overlay.message.PongMessage;
+import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.message.InventoryMessage;
@@ -149,7 +150,8 @@ public class MessageQueue {
   private boolean needToLog(Message msg) {
     if (msg instanceof PingMessage
         || msg instanceof PongMessage
-        || msg instanceof TransactionsMessage) {
+        || msg instanceof TransactionsMessage
+        || msg instanceof PbftBaseMessage) {
       return false;
     }
 

@@ -145,8 +145,8 @@ public class HttpTestZenToken006 {
             "" + sendSheldAddressAmount1, memo1);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, zenTokenOwnerAddress, sendAmount,
-            null, null, shieldOutList, null, 0, zenTokenOwnerKey);
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, httpnode, zenTokenOwnerAddress,
+            sendAmount, null, null, shieldOutList, null, 0, zenTokenOwnerKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 

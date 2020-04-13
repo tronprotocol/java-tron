@@ -61,6 +61,8 @@ public class HttpTestZenToken001 {
       .getStringList("httpnode.ip.list").get(0);
   private String httpSolidityNode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
   private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.zenTokenOwnerKey");
   byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
@@ -242,7 +244,7 @@ public class HttpTestZenToken001 {
             "" + sendSheldAddressAmount2, memo2);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, zenTokenOwnerAddress, sendAmount,
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, httpPbftNode,zenTokenOwnerAddress, sendAmount,
             null, null, shieldOutList, null, 0, zenTokenOwnerKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -266,15 +268,18 @@ public class HttpTestZenToken001 {
             "" + sendSheldAddressAmount3, memo3);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, zenTokenOwnerAddress,
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, httpPbftNode,zenTokenOwnerAddress,
             sendSheldAddressAmount3 + zenTokenFee, null, null, shieldOutList, null, 0,
             zenTokenOwnerKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     HttpMethed.waitToProduceOneBlock(httpnode);
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    HttpMethed.waitToProduceOneBlock(httpnode);
 
     List<ShieldNoteInfo> shieldNoteInfoByIvkList = HttpMethed
         .scanNoteByIvk(httpnode, shieldAddressOptionalInfo1.get());
+    logger.info("size are:" + shieldNoteInfoByIvkList.size());
     Assert.assertTrue(shieldNoteInfoByIvkList.size() == 3);
     List<ShieldNoteInfo> shieldNoteInfoByMarkList = HttpMethed
         .scanAndMarkNoteByIvk(httpnode, shieldAddressOptionalInfo2.get());
@@ -317,7 +322,7 @@ public class HttpTestZenToken001 {
             "" + (shieldNote1.getValue() - zenTokenFee), receiverMemo1);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, null, 0,
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, httpPbftNode,null, 0,
             shieldAddressOptionalInfo1.get(), shieldNote1, shieldOutList, null, 0, null);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -339,7 +344,7 @@ public class HttpTestZenToken001 {
             "" + (shieldNote3.getValue() - zenTokenFee), receiverMemo3);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, null, 0,
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, httpPbftNode,null, 0,
             shieldAddressOptionalInfo3.get(), shieldNote3, shieldOutList, null, 0, null);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);

@@ -93,7 +93,12 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   }
 
   @Override
-  public void setMode(boolean mode) {
+  public void setCursor(Chainbase.Cursor cursor) {
+  }
+
+  @Override
+  public void setCursor(Chainbase.Cursor cursor, long offset) {
+
   }
 
   /**

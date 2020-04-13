@@ -49,6 +49,8 @@ public class HttpTestAccount003 {
       .get(0);
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
 
   /**
    * constructor.
@@ -131,8 +133,22 @@ public class HttpTestAccount003 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "List witnesses from PBFT by http")
+  public void test5ListWitnessFromPbft() {
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    response = HttpMethed.listwitnessesFromPbft(httpPbftNode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("witnesses"));
+    Assert.assertTrue(jsonArray.size() >= 2);
+  }
+
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "Update witness by http")
-  public void test5UpdateWitness() {
+  public void test6UpdateWitness() {
     response = HttpMethed.updateWitness(httpnode, witness1Address, updateUrl, witnessKey001);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -148,7 +164,7 @@ public class HttpTestAccount003 {
    * constructor.
    */
   @Test(enabled = true, description = "Create account by http")
-  public void test6CreateAccount() {
+  public void test7CreateAccount() {
     PublicMethed.printAddress(newAccountKey);
     response = HttpMethed.createAccount(httpnode, fromAddress, newAccountAddress, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
@@ -163,7 +179,7 @@ public class HttpTestAccount003 {
    * constructor.
    */
   @Test(enabled = true, description = "Create witness by http")
-  public void test7CreateWitness() {
+  public void test8CreateWitness() {
     response = HttpMethed.sendCoin(httpnode, fromAddress, newAccountAddress, createWitnessAmount,
         testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
@@ -180,7 +196,7 @@ public class HttpTestAccount003 {
    * constructor.
    */
   @Test(enabled = true, description = "Withdraw by http")
-  public void test8Withdraw() {
+  public void test9Withdraw() {
     response = HttpMethed.withdrawBalance(httpnode, witness1Address);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);

@@ -847,6 +847,11 @@ public class Wallet {
         .setValue(chainBaseManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowPBFT")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowPBFT())
+        .build());
+
     return builder.build();
   }
 

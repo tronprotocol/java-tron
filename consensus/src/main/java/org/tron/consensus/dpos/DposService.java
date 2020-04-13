@@ -93,7 +93,7 @@ public class DposService implements ConsensusInterface {
         consensusDelegate.saveWitness(witnessCapsule);
       });
     }
-
+    maintenanceManager.init();
     dposTask.init();
   }
 
