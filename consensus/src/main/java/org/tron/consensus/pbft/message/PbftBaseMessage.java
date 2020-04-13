@@ -10,7 +10,6 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.P2pException;
 import org.tron.protos.Protocol.PBFTMessage;
