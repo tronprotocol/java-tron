@@ -175,6 +175,7 @@ public class Channel {
     } else if (baseThrowable instanceof P2pException) {
       logger.error("type: {}, info: {}, {}", ((P2pException) baseThrowable).getType(),
           baseThrowable.getMessage(), address);
+      logger.info(baseThrowable.toString());
     } else if (errMsg != null && errMsg.contains("Connection reset by peer")) {
       logger.error("{}, {}", errMsg, address);
     } else {

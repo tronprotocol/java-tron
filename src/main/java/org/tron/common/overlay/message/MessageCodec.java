@@ -19,13 +19,19 @@ public class MessageCodec extends ByteToMessageDecoder {
   private P2pMessageFactory p2pMessageFactory = new P2pMessageFactory();
   private TronMessageFactory tronMessageFactory = new TronMessageFactory();
 
+
   @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) throws Exception {
     int length = buffer.readableBytes();
     byte[] encoded = new byte[length];
     buffer.readBytes(encoded);
+    byte type = encoded[0];
+    if (MessageTypes.inPbftRange(type)) {
+      return;
+    }
     try {
       Message msg = createMessage(encoded);
+
       channel.getNodeStatistics().tcpFlow.add(length);
       out.add(msg);
     } catch (Exception e) {
@@ -45,6 +51,9 @@ public class MessageCodec extends ByteToMessageDecoder {
     if (MessageTypes.inTronRange(type)) {
       return tronMessageFactory.create(encoded);
     }
+
+
+
     throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + encoded[0]);
   }
 

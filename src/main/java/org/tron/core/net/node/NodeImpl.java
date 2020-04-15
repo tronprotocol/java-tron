@@ -323,6 +323,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       case INVENTORY:
         //onHandleInventoryMessage(peer, (InventoryMessage) msg);
         break;
+      case PBFT_MSG:
+        break;
       default:
         throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, "msg type: " + msg.getType());
     }
@@ -576,32 +578,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         if (advObjToSpread.size()  < spread.size()) {
           logger.info("Stress task end.");
           System.exit(0);
-
-/*          ManagedChannel channelFull = null;
-          WalletGrpc.WalletBlockingStub blockingStubFull = null;
-          String fullnode = "47.94.239.172:50051";
-          channelFull = ManagedChannelBuilder.forTarget(fullnode)
-                  .usePlaintext(true)
-                  .build();
-          blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-          Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-          endblockNum = nowblock.getBlockHeader().getRawData().getNumber();
-          long endtime = nowblock.getBlockHeader().getRawData().getTimestamp();
-          endblockNum = endblockNum + 1L;
-          logger.info("endblockNum is {}", endblockNum);
-          logger.info("endtime is {}", endtime);
-          if (channelFull != null) {
-            channelFull.shutdown();
-          }
-          //20s后关闭
-          if (endblockNum != startblockNum) {
-            try {
-              Thread.sleep(20000);
-              System.exit(0);
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
-          }*/
         }
 
       InvToSend sendPackage = new InvToSend();
