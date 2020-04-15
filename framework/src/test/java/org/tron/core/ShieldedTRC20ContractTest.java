@@ -22,7 +22,6 @@ import org.tron.api.GrpcAPI.ShieldedTRC20TriggerContractParameters;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Hash;
@@ -62,9 +61,6 @@ public class ShieldedTRC20ContractTest {
   private String shieldedTRC20ContractAddress = "TB8MuSWh979b4donqWUZtFJ4aYAemZ1R6U";
   private String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
   private String pubAddress = "TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ";
-  private static TronApplicationContext context;
-  private static Wallet wallet;
-
 
   @BeforeClass
   public static void beforeClass() {
@@ -487,7 +483,7 @@ public class ShieldedTRC20ContractTest {
     logger.info("..............end..............");
   }
 
-  //  @Ignore
+  @Ignore
   @Test
   public void testCreateShieldedContractParametersForTransfer2v2()
       throws ZksnarkException, ContractValidateException {
@@ -602,7 +598,7 @@ public class ShieldedTRC20ContractTest {
     logger.info("..............end..............");
   }
 
-  //  @Ignore
+  @Ignore
   @Test
   public void testCreateShieldedContractParametersForBurn()
       throws ZksnarkException, ContractValidateException, BadItemException, ItemNotFoundException {
@@ -652,7 +648,7 @@ public class ShieldedTRC20ContractTest {
     privateTRC20Builder.setToAmount(60);
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-    GrpcAPI.ShieldedTRC20Parameters burnParam = wallet
+    GrpcAPI.ShieldedTRC20Parameters burnParam = blockingStubFull
         .createShieldedContractParameters(privateTRC20Builder.build());
 
     GrpcAPI.PrivateShieldedTRC20Parameters privateTrc20Params = privateTRC20Builder.build();
@@ -800,7 +796,7 @@ public class ShieldedTRC20ContractTest {
             .newBuilder();
     triggerParam.setShieldedTRC20Parameters(trc20MintParams);
     triggerParam.setAmount(revValue);
-    BytesMessage triggerInput = wallet
+    BytesMessage triggerInput = blockingStubFull
         .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
     Assert.assertArrayEquals(triggerInput.getValue().toByteArray(),
         Hex.decode(trc20MintParams.getTriggerContractInput()));
@@ -893,7 +889,7 @@ public class ShieldedTRC20ContractTest {
             .newBuilder();
     triggerParam.setShieldedTRC20Parameters(transferParam);
     triggerParam.addSpendAuthoritySignature(signMsg);
-    BytesMessage triggerInput = wallet
+    BytesMessage triggerInput = blockingStubFull
         .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
     String txid = triggerTransfer(
         blockingStubFull, contractAddress, callerAddress, privateKey,

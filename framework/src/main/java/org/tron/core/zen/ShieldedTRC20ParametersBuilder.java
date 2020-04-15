@@ -22,8 +22,6 @@ import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -226,7 +224,7 @@ public class ShieldedTRC20ParametersBuilder {
   }
 
   public ShieldedTRC20Parameters build(boolean withAsk)
-      throws ZksnarkException, BadItemException, ItemNotFoundException {
+      throws ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
     // Empty output script
     byte[] mergedBytes;
@@ -313,8 +311,7 @@ public class ShieldedTRC20ParametersBuilder {
 
   public String getTriggerContractInput(ShieldedTRC20Parameters shieldedTRC20Parameters,
       List<BytesMessage> spendAuthoritySignature,
-      long value, boolean withAsk, byte[] transparentToAddress)
-      throws BadItemException, ItemNotFoundException {
+      long value, boolean withAsk, byte[] transparentToAddress) {
     switch (shieldedTRC20ParametersType) {
       case MINT:
         return mintParamsToHexString(shieldedTRC20Parameters, value);
