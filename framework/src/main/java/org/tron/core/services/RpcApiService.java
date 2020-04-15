@@ -68,6 +68,7 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
+import org.tron.api.GrpcAPI.ShieldedTRC20TriggerContractParameters;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -2336,7 +2337,7 @@ public class RpcApiService implements Service {
     public void createSpendAuthSig(SpendAuthSigParameters request,
         StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
       try {
-        checkSupportShieldedTransaction();
+        //checkSupportShieldedTransaction();
 
         BytesMessage spendAuthSig = wallet.createSpendAuthSig(request);
         responseObserver.onNext(spendAuthSig);
@@ -2441,6 +2442,24 @@ public class RpcApiService implements Service {
         responseObserver.onNext(nf);
       } catch (ZksnarkException | ContractExeException e) {
         responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTriggerInputForShieldedTRC20Contract(
+        ShieldedTRC20TriggerContractParameters request,
+        io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BytesMessage> responseObserver) {
+      try {
+        checkSupportShieldedTRC20ContractTransaction();
+        BytesMessage bytesMessage = wallet.getTriggerInputForShieldedTRC20Contract(request);
+        responseObserver.onNext(bytesMessage);
+      } catch (ZksnarkException e) {
+        responseObserver.onError(e);
+      } catch (BadItemException e) {
+        e.printStackTrace();
+      } catch (ItemNotFoundException e) {
+        e.printStackTrace();
       }
       responseObserver.onCompleted();
     }

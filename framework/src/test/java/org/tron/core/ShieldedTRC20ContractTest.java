@@ -7,10 +7,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -18,19 +16,23 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk;
+import org.tron.api.GrpcAPI.ShieldedTRC20TriggerContractParameters;
+import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
-import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.vm.PrecompiledContracts;
-import org.tron.core.vm.PrecompiledContracts.PrecompiledContract;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -56,23 +58,13 @@ public class ShieldedTRC20ContractTest {
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private static String fullnode = "127.0.0.1:50051";
   private static String soliditynode = "127.0.0.1:50061";
-  private String trc20ContractAddress = "TX2qNpGKue8dFjrvSP2EPGLeTzmEmjTNa2";
-  private String shieldedTRC20ContractAddress = "TDZ4veBmfCnpWLRWmi6CdT2Anpb7QvuaoV";
+  private String trc20ContractAddress = "TX89RWqH3gX3m5wvZvSDaedyLBF4SzZqy5";
+  private String shieldedTRC20ContractAddress = "TB8MuSWh979b4donqWUZtFJ4aYAemZ1R6U";
   private String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
   private String pubAddress = "TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ";
+  private static TronApplicationContext context;
+  private static Wallet wallet;
 
-  private static final DataWord verifyMintProofAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000000000b");
-  private static final DataWord verifyTransferProofAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000000000c");
-  private static final DataWord verifyBurnProofAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000000000d");
-  private static final DataWord merkleHashAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000000000e");
-  private static PrecompiledContract mintContract;
-  private static PrecompiledContract transferContract;
-  private static PrecompiledContract burnContract;
-  private static PrecompiledContract hashContract;
 
   @BeforeClass
   public static void beforeClass() {
@@ -86,10 +78,6 @@ public class ShieldedTRC20ContractTest {
     Args.getInstance().setFullNodeAllowShieldedTRC20TransactionArgs(true);
     Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
 
-    mintContract = PrecompiledContracts.getContractForAddress(verifyMintProofAddr);
-    transferContract = PrecompiledContracts.getContractForAddress(verifyTransferProofAddr);
-    burnContract = PrecompiledContracts.getContractForAddress(verifyBurnProofAddr);
-    hashContract = PrecompiledContracts.getContractForAddress(merkleHashAddr);
   }
 
   @AfterClass
@@ -100,6 +88,12 @@ public class ShieldedTRC20ContractTest {
     if (channelSolidity != null) {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
+  }
+
+  @Ignore
+  @Test
+  public void printTRC20Address() {
+    logger.info(Hex.toHexString(WalletClient.decodeFromBase58Check(trc20ContractAddress)));
   }
 
   @Ignore
@@ -229,9 +223,8 @@ public class ShieldedTRC20ContractTest {
     }
     Assert.assertTrue(result);
     byte[] callerAddress = WalletClient.decodeFromBase58Check(pubAddress);
-    String mintInput = mintParamsToHexString(trc20MintParams, revValue);
     String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey,
-        mintInput);
+        trc20MintParams.getTriggerContractInput());
     logger.info("..............result...........");
     logger.info(txid1);
     logger.info("..............end..............");
@@ -300,9 +293,9 @@ public class ShieldedTRC20ContractTest {
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull
         .createShieldedContractParameters(privateTRC20Builder.build());
-    String transferInput = transferParamsToHexString(transferParam);
     String txid = triggerTransfer(
-        blockingStubFull, contractAddress, callerAddress, privateKey, transferInput);
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        transferParam.getTriggerContractInput());
     logger.info("..............transfer result...........");
     logger.info(txid);
     logger.info("..............end..............");
@@ -385,9 +378,9 @@ public class ShieldedTRC20ContractTest {
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull
         .createShieldedContractParameters(privateTRC20Builder.build());
-    String transferInput = transferParamsToHexString(transferParam);
     String txid = triggerTransfer(
-        blockingStubFull, contractAddress, callerAddress, privateKey, transferInput);
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        transferParam.getTriggerContractInput());
     logger.info("..............transfer result...........");
     logger.info(txid);
     logger.info("..............end..............");
@@ -486,15 +479,15 @@ public class ShieldedTRC20ContractTest {
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull
         .createShieldedContractParameters(privateTRC20Builder.build());
-    String transferInput = transferParamsToHexString(transferParam);
     String txid = triggerTransfer(
-        blockingStubFull, contractAddress, callerAddress, privateKey, transferInput);
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        transferParam.getTriggerContractInput());
     logger.info("..............transfer result...........");
     logger.info(txid);
     logger.info("..............end..............");
   }
 
-  @Ignore
+  //  @Ignore
   @Test
   public void testCreateShieldedContractParametersForTransfer2v2()
       throws ZksnarkException, ContractValidateException {
@@ -572,7 +565,7 @@ public class ShieldedTRC20ContractTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
-    long revValue = 30;
+    long revValue = 31;
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
@@ -584,7 +577,7 @@ public class ShieldedTRC20ContractTest {
     FullViewingKey fullViewingKey2 = sk.fullViewingKey();
     IncomingViewingKey incomingViewingKey2 = fullViewingKey2.inViewingKey();
     PaymentAddress paymentAddress2 = incomingViewingKey2.address(DiversifierT.random()).get();
-    long revValue2 = 70;
+    long revValue2 = 69;
     byte[] memo2 = new byte[512];
     byte[] rcm2 = Note.generateR();
     String paymentAddressStr2 = KeyIo.encodePaymentAddress(paymentAddress2);
@@ -601,18 +594,18 @@ public class ShieldedTRC20ContractTest {
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull
         .createShieldedContractParameters(
             privateTRC20Builder.build());
-    String transferInput = transferParamsToHexString(transferParam);
     String txid = triggerTransfer(
-        blockingStubFull, contractAddress, callerAddress, privateKey, transferInput);
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        transferParam.getTriggerContractInput());
     logger.info("..............transfer result...........");
     logger.info(txid);
     logger.info("..............end..............");
   }
 
-  @Ignore
+  //  @Ignore
   @Test
   public void testCreateShieldedContractParametersForBurn()
-      throws ZksnarkException, ContractValidateException {
+      throws ZksnarkException, ContractValidateException, BadItemException, ItemNotFoundException {
     librustzcashInitZksnarkParams();
     byte[] contractAddress = WalletClient
         .decodeFromBase58Check(shieldedTRC20ContractAddress);
@@ -659,7 +652,7 @@ public class ShieldedTRC20ContractTest {
     privateTRC20Builder.setToAmount(60);
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-    GrpcAPI.ShieldedTRC20Parameters burnParam = blockingStubFull
+    GrpcAPI.ShieldedTRC20Parameters burnParam = wallet
         .createShieldedContractParameters(privateTRC20Builder.build());
 
     GrpcAPI.PrivateShieldedTRC20Parameters privateTrc20Params = privateTRC20Builder.build();
@@ -713,9 +706,9 @@ public class ShieldedTRC20ContractTest {
       JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
     }
     Assert.assertTrue(result);
-    String burnInput = burnParamsToHexString(burnParam, value, callerAddress);
     String txid2 = triggerBurn(
-        blockingStubFull, contractAddress, callerAddress, privateKey, burnInput);
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        burnParam.getTriggerContractInput());
     byte[] nf = burnParam.getSpendDescription(0).getNullifier().toByteArray();
     logger.info("..............burn result...........");
     logger.info(txid2);
@@ -727,6 +720,7 @@ public class ShieldedTRC20ContractTest {
   @Test
   public void testCreateShieldedContractParametersForMintWithoutAsk() throws Exception {
     librustzcashInitZksnarkParams();
+    byte[] callerAddress = WalletClient.decodeFromBase58Check(pubAddress);
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     byte[] ovk = expsk.getOvk();
@@ -800,6 +794,22 @@ public class ShieldedTRC20ContractTest {
       JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
     }
     Assert.assertTrue(result);
+
+    ShieldedTRC20TriggerContractParameters.Builder triggerParam =
+        ShieldedTRC20TriggerContractParameters
+            .newBuilder();
+    triggerParam.setShieldedTRC20Parameters(trc20MintParams);
+    triggerParam.setAmount(revValue);
+    BytesMessage triggerInput = wallet
+        .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+    Assert.assertArrayEquals(triggerInput.getValue().toByteArray(),
+        Hex.decode(trc20MintParams.getTriggerContractInput()));
+    String txid = triggerMint(
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        Hex.toHexString(triggerInput.getValue().toByteArray()));
+    logger.info("..............transfer result...........");
+    logger.info(txid);
+    logger.info("..............end..............");
   }
 
   @Ignore
@@ -849,7 +859,7 @@ public class ShieldedTRC20ContractTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
-    long revValue = 100;
+    long revValue = 60;
     byte[] memo = new byte[512];
     byte[] rcm = Note.generateR();
     String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
@@ -863,9 +873,35 @@ public class ShieldedTRC20ContractTest {
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
     privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
+    PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk = privateTRC20Builder
+        .build();
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull
-        .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
+        .createShieldedContractParametersWithoutAsk(shieldedTRC20ParametersWithoutAsk);
+
     logger.info(transferParam.toString());
+
+    SpendAuthSigParameters.Builder signParamerters = SpendAuthSigParameters.newBuilder();
+    signParamerters.setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+    signParamerters.setAsk(ByteString.copyFrom(expsk.getAsk()));
+    signParamerters.setTxHash(transferParam.getMessageHash());
+    BytesMessage signMsg = blockingStubFull.createSpendAuthSig(signParamerters.build());
+    logger.info("...........spend authority signature...........");
+    logger.info(String.valueOf(signMsg.getValue().size()));
+    logger.info(Hex.toHexString(signMsg.getValue().toByteArray()));
+    ShieldedTRC20TriggerContractParameters.Builder triggerParam =
+        ShieldedTRC20TriggerContractParameters
+            .newBuilder();
+    triggerParam.setShieldedTRC20Parameters(transferParam);
+    triggerParam.addSpendAuthoritySignature(signMsg);
+    BytesMessage triggerInput = wallet
+        .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+    String txid = triggerTransfer(
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        Hex.toHexString(triggerInput.getValue().toByteArray()));
+    logger.info("..............transfer result...........");
+    logger.info(txid);
+    logger.info("..............end..............");
+
   }
 
   @Ignore
@@ -945,6 +981,29 @@ public class ShieldedTRC20ContractTest {
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull
         .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
     logger.info(transferParam.toString());
+
+    //trigger the contract
+    PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk = privateTRC20Builder
+        .build();
+    SpendAuthSigParameters.Builder signParamerters = SpendAuthSigParameters.newBuilder();
+    signParamerters.setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+    signParamerters.setAsk(ByteString.copyFrom(expsk.getAsk()));
+    signParamerters.setTxHash(transferParam.getMessageHash());
+    BytesMessage signMsg = blockingStubFull.createSpendAuthSig(signParamerters.build());
+
+    ShieldedTRC20TriggerContractParameters.Builder triggerParam =
+        ShieldedTRC20TriggerContractParameters
+            .newBuilder();
+    triggerParam.setShieldedTRC20Parameters(transferParam);
+    triggerParam.addSpendAuthoritySignature(signMsg);
+    BytesMessage triggerInput = blockingStubFull
+        .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+    String txid = triggerTransfer(
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        Hex.toHexString(triggerInput.getValue().toByteArray()));
+    logger.info("..............transfer result...........");
+    logger.info(txid);
+    logger.info("..............end..............");
   }
 
   @Ignore
@@ -1041,6 +1100,36 @@ public class ShieldedTRC20ContractTest {
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull
         .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
     logger.info(transferParam.toString());
+
+    //trigger the contract
+    PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk = privateTRC20Builder
+        .build();
+    SpendAuthSigParameters.Builder signParamerters1 = SpendAuthSigParameters.newBuilder();
+    signParamerters1.setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+    signParamerters1.setAsk(ByteString.copyFrom(expsk.getAsk()));
+    signParamerters1.setTxHash(transferParam.getMessageHash());
+    BytesMessage signMsg1 = blockingStubFull.createSpendAuthSig(signParamerters1.build());
+
+    SpendAuthSigParameters.Builder signParamerters2 = SpendAuthSigParameters.newBuilder();
+    signParamerters2.setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(1).getAlpha());
+    signParamerters2.setAsk(ByteString.copyFrom(expsk.getAsk()));
+    signParamerters2.setTxHash(transferParam.getMessageHash());
+    BytesMessage signMsg2 = blockingStubFull.createSpendAuthSig(signParamerters2.build());
+
+    ShieldedTRC20TriggerContractParameters.Builder triggerParam =
+        ShieldedTRC20TriggerContractParameters
+            .newBuilder();
+    triggerParam.setShieldedTRC20Parameters(transferParam);
+    triggerParam.addSpendAuthoritySignature(signMsg1);
+    triggerParam.addSpendAuthoritySignature(signMsg2);
+    BytesMessage triggerInput = blockingStubFull
+        .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+    String txid = triggerTransfer(
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        Hex.toHexString(triggerInput.getValue().toByteArray()));
+    logger.info("..............transfer result...........");
+    logger.info(txid);
+    logger.info("..............end..............");
   }
 
   @Ignore
@@ -1149,7 +1238,6 @@ public class ShieldedTRC20ContractTest {
     privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
 
-    //logger.info(privateTRC20Builder.build().toString());
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull
         .createShieldedContractParametersWithoutAsk(privateTRC20Builder.build());
     logger.info(transferParam.toString());
@@ -1177,6 +1265,40 @@ public class ShieldedTRC20ContractTest {
       logger.info(Hex.toHexString(note.getRcm().toByteArray()));
     }
     logger.info(Hex.toHexString(privateParams.getShieldedTRC20ContractAddress().toByteArray()));
+
+    //trigger the contract
+    PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk = privateTRC20Builder
+        .build();
+    SpendAuthSigParameters.Builder signParamerters1 = SpendAuthSigParameters.newBuilder();
+    signParamerters1.setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+    signParamerters1.setAsk(ByteString.copyFrom(expsk.getAsk()));
+    signParamerters1.setTxHash(transferParam.getMessageHash());
+    BytesMessage signMsg1 = blockingStubFull.createSpendAuthSig(signParamerters1.build());
+
+    SpendAuthSigParameters.Builder signParamerters2 = SpendAuthSigParameters.newBuilder();
+    signParamerters2.setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(1).getAlpha());
+    signParamerters2.setAsk(ByteString.copyFrom(expsk.getAsk()));
+    signParamerters2.setTxHash(transferParam.getMessageHash());
+    BytesMessage signMsg2 = blockingStubFull.createSpendAuthSig(signParamerters2.build());
+
+    ShieldedTRC20TriggerContractParameters.Builder triggerParam =
+        ShieldedTRC20TriggerContractParameters
+            .newBuilder();
+    triggerParam.setShieldedTRC20Parameters(transferParam);
+    triggerParam.addSpendAuthoritySignature(signMsg1);
+    triggerParam.addSpendAuthoritySignature(signMsg2);
+    logger.info("print the spend authority signature");
+    logger.info(Hex.toHexString(signMsg1.getValue().toByteArray()));
+    logger.info(Hex.toHexString(signMsg2.getValue().toByteArray()));
+
+    BytesMessage triggerInput = blockingStubFull
+        .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+    String txid = triggerTransfer(
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        Hex.toHexString(triggerInput.getValue().toByteArray()));
+    logger.info("..............transfer result...........");
+    logger.info(txid);
+    logger.info("..............end..............");
   }
 
   @Ignore
@@ -1254,6 +1376,36 @@ public class ShieldedTRC20ContractTest {
     logger.info(String.valueOf(privateParams.getToAmount()));
     logger.info(Hex.toHexString(privateParams.getTransparentToAddress().toByteArray()));
     logger.info(Hex.toHexString(privateParams.getShieldedTRC20ContractAddress().toByteArray()));
+
+    //trigger the contract
+    PrivateShieldedTRC20ParametersWithoutAsk shieldedTRC20ParametersWithoutAsk = privateTRC20Builder
+        .build();
+    SpendAuthSigParameters.Builder signParamerters = SpendAuthSigParameters.newBuilder();
+    signParamerters.setAlpha(shieldedTRC20ParametersWithoutAsk.getShieldedSpends(0).getAlpha());
+    signParamerters.setAsk(ByteString.copyFrom(expsk.getAsk()));
+    signParamerters.setTxHash(transferParam.getMessageHash());
+    BytesMessage signMsg = blockingStubFull.createSpendAuthSig(signParamerters.build());
+
+    ShieldedTRC20TriggerContractParameters.Builder triggerParam =
+        ShieldedTRC20TriggerContractParameters
+            .newBuilder();
+    triggerParam.setShieldedTRC20Parameters(transferParam);
+    triggerParam.addSpendAuthoritySignature(signMsg);
+    triggerParam.setAmount(value);
+    triggerParam.setTransparentToAddress(ByteString.copyFrom(callerAddress));
+    BytesMessage triggerInput = blockingStubFull
+        .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
+    logger.info("print the trigger params");
+    logger.info(Hex.toHexString(signMsg.getValue().toByteArray()));
+    logger.info(String.valueOf(value));
+    logger.info(Hex.toHexString(callerAddress));
+
+    String txid = triggerBurn(
+        blockingStubFull, contractAddress, callerAddress, privateKey,
+        Hex.toHexString(triggerInput.getValue().toByteArray()));
+    logger.info("..............transfer result...........");
+    logger.info(txid);
+    logger.info("..............end..............");
   }
 
   @Ignore
@@ -1587,55 +1739,6 @@ public class ShieldedTRC20ContractTest {
     Assert.assertFalse(result2.getIsSpent());
   }
 
-  //  @Ignore
-  @Test
-  public void testPrecompiledContractForMint()
-      throws ZksnarkException {
-    librustzcashInitZksnarkParams();
-    long fromAmount = 50;
-    SpendingKey sk = SpendingKey.random();
-    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-    byte[] ovk = expsk.getOvk();
-
-    //ReceiveNote
-    GrpcAPI.ReceiveNote.Builder revNoteBuilder = GrpcAPI.ReceiveNote.newBuilder();
-    SpendingKey spendingKey = SpendingKey.decode(privateKey);
-    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
-    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
-    long revValue = 50;
-    byte[] memo = new byte[512];
-    byte[] rcm = Note.generateR();
-    String paymentAddressStr = KeyIo.encodePaymentAddress(paymentAddress);
-    GrpcAPI.Note revNote = getNote(revValue, paymentAddressStr, rcm, memo);
-    revNoteBuilder.setNote(revNote);
-
-    byte[] contractAddress = WalletClient.decodeFromBase58Check(shieldedTRC20ContractAddress);
-    GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
-        .PrivateShieldedTRC20Parameters.newBuilder();
-    paramBuilder.setOvk(ByteString.copyFrom(ovk));
-    paramBuilder.setFromAmount(fromAmount);
-    paramBuilder.addShieldedReceives(revNoteBuilder.build());
-    paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
-
-    GrpcAPI.ShieldedTRC20Parameters trc20MintParams = blockingStubFull
-        .createShieldedContractParameters(paramBuilder.build());
-    GrpcAPI.PrivateShieldedTRC20Parameters trc20Params = paramBuilder.build();
-    logger.info(Hex.toHexString(trc20Params.getOvk().toByteArray()));
-    logger.info(String.valueOf(trc20Params.getFromAmount()));
-    logger.info(String.valueOf(trc20Params.getShieldedReceives(0).getNote().getValue()));
-    logger.info(trc20Params.getShieldedReceives(0).getNote().getPaymentAddress());
-    logger.info(Hex.toHexString(
-        trc20Params.getShieldedReceives(0).getNote().getRcm().toByteArray()));
-    logger.info(Hex.toHexString(trc20Params.getShieldedTRC20ContractAddress().toByteArray()));
-
-    byte[] inputData = mintParamsToPrecompiledContractInput(trc20MintParams, revValue);
-    Pair<Boolean, byte[]> result = mintContract.execute(inputData);
-    logger.info(String.valueOf(result.getLeft()));
-    logger.info(Hex.toHexString(result.getRight()));
-
-  }
-
 
   private GrpcAPI.Note getNote(long value, String paymentAddress, byte[] rcm, byte[] memo) {
     GrpcAPI.Note.Builder noteBuilder = GrpcAPI.Note.newBuilder();
@@ -1662,29 +1765,6 @@ public class ShieldedTRC20ContractTest {
     );
     return Hex.toHexString(mergedBytes);
   }
-
-  private byte[] mintParamsToPrecompiledContractInput(GrpcAPI.ShieldedTRC20Parameters mintParams,
-      long value) {
-    byte[] mergedBytes;
-    byte[] frontier = new byte[1056]; //
-    new Random().nextBytes(frontier);
-    long leafCount = 100;
-
-    ShieldContract.ReceiveDescription revDesc = mintParams.getReceiveDescription(0);
-    mergedBytes = ByteUtil.merge(
-        revDesc.getNoteCommitment().toByteArray(),
-        revDesc.getValueCommitment().toByteArray(),
-        revDesc.getEpk().toByteArray(),
-        revDesc.getZkproof().toByteArray(),
-        mintParams.getBindingSignature().toByteArray(),
-        longTo32Bytes(value),
-        mintParams.getMessageHash().toByteArray(),
-        frontier,
-        longTo32Bytes(leafCount)
-    );
-    return mergedBytes;
-  }
-
 
   private String triggerMint(WalletGrpc.WalletBlockingStub blockingStubFull, byte[] contractAddress,
       byte[] callerAddress, String privateKey, String input) {

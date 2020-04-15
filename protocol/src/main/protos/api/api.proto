@@ -721,6 +721,9 @@ service Wallet {
 
   rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
   };
+
+  rpc GetTriggerInputForShieldedTRC20Contract (ShieldedTRC20TriggerContractParameters) returns (BytesMessage) {
+  };
   // end for shiededTransaction
 
   rpc CreateCommonTransaction (Transaction) returns (TransactionExtention) {
@@ -1375,6 +1378,8 @@ message ShieldedTRC20Parameters {
   repeated ReceiveDescription receive_description = 2;
   bytes binding_signature = 3;
   bytes message_hash = 4;
+  string trigger_contract_input = 5;
+  string parameter_type = 6;
 }
 
 message IvkDecryptTRC20Parameters {
@@ -1414,4 +1419,11 @@ message NfTRC20Parameters {
 
 message NullifierResult {
   bool isSpent = 1;
+}
+
+message ShieldedTRC20TriggerContractParameters {
+  ShieldedTRC20Parameters shielded_TRC20_Parameters = 1;
+  repeated BytesMessage spend_authority_signature = 2;
+  int64 amount = 3;
+  bytes transparent_to_address = 4;
 }
