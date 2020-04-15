@@ -34,6 +34,7 @@ import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -1070,7 +1071,7 @@ public class PrecompiledContracts {
       }
       long leafCount = parseLong(data, 1472);
       if (leafCount >= TREE_WIDTH) {
-        return Pair.of(false, EMPTY_BYTE_ARRAY);
+        return Pair.of(false, DataWord.ZERO().getData());
       }
 
       boolean result;
@@ -1080,7 +1081,7 @@ public class PrecompiledContracts {
         result = JLibrustzcash.librustzcashSaplingCheckOutput(
             new LibrustzcashParam.CheckOutputParams(ctx, cv, cm, epk, proof));
         long valueBalance = -value;
-        result &= JLibrustzcash.librustzcashSaplingFinalCheck(
+        result = result && JLibrustzcash.librustzcashSaplingFinalCheck(
             new LibrustzcashParam.FinalCheckParams(ctx, valueBalance, bindingSig, signHash));
       } catch (Throwable any) {
         result = false;
@@ -1183,6 +1184,22 @@ public class PrecompiledContracts {
       for (int i = 0; i < receiveCount; i++) {
         System.arraycopy(receiveCv[i], 0, receiveCvs, 32 * i, 32);
       }
+      //check duplicate nullifiers
+      HashSet<String> nfSet = new HashSet<>();
+      for (byte[] nf : nullifier) {
+        if (nfSet.contains(ByteArray.toHexString(nf))) {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+        nfSet.add(ByteArray.toHexString(nf));
+      }
+      //check duplicate output note
+      HashSet<String> cmSet = new HashSet<>();
+      for (byte[] cm : receiveCm) {
+        if (cmSet.contains(ByteArray.toHexString(cm))) {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+        cmSet.add(ByteArray.toHexString(cm));
+      }
 
       int threadCount = spendCount + receiveCount + 1;
       CountDownLatch countDownLatch = new CountDownLatch(threadCount);
@@ -1219,7 +1236,7 @@ public class PrecompiledContracts {
         countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
         for (Future<Boolean> future : futures) {
           boolean eachTaskResult = future.get();
-          checkResult &= eachTaskResult;
+          checkResult = checkResult && eachTaskResult;
         }
       } catch (Throwable any) {
         checkResult = false;
@@ -1396,7 +1413,7 @@ public class PrecompiledContracts {
         result = JLibrustzcash.librustzcashSaplingCheckSpend(
             new LibrustzcashParam.CheckSpendParams(
                 ctx, cv, anchor, nullifier, rk, proof, spendAuthSig, signHash));
-        result &= JLibrustzcash.librustzcashSaplingFinalCheck(
+        result = result && JLibrustzcash.librustzcashSaplingFinalCheck(
             new LibrustzcashParam.FinalCheckParams(ctx, value, bindingSig, signHash));
       } catch (Throwable any) {
         result = false;
