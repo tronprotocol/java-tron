@@ -247,7 +247,7 @@ public class TransactionUtil {
     return sha3omit12(combined);
   }
 
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+  public static boolean checkPermissionOperations(Permission permission, Contract contract)
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
@@ -306,7 +306,7 @@ public class TransactionUtil {
           throw new PermissionException("Permission type is wrong!");
         }
         //check operations
-        if (!checkPermissionOprations(permission, contract)) {
+        if (!checkPermissionOperations(permission, contract)) {
           throw new PermissionException("Permission denied!");
         }
       }
