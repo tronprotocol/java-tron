@@ -1,5 +1,6 @@
 package stest.tron.wallet.dailybuild.manual;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -29,19 +31,32 @@ public class ContractScenario002 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
+  private String txid;
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contract002Address = ecKey1.getAddress();
   String contract002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
+  private ManagedChannel channelSolidity = null;
+  private ManagedChannel channelSoliInFull = null;
+  private ManagedChannel channelPbft = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSoliInFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
-  private String fullnode1 = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(1);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(1);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
+  private String soliInFullnode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
+  private String soliInPbft = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(2);
 
   @BeforeSuite
   public void beforeSuite() {
@@ -60,6 +75,22 @@ public class ContractScenario002 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    channelSoliInFull = ManagedChannelBuilder.forTarget(soliInFullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSoliInFull = WalletSolidityGrpc.newBlockingStub(channelSoliInFull);
+
+    channelPbft = ManagedChannelBuilder.forTarget(soliInPbft)
+        .usePlaintext(true)
+        .build();
+    blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
+
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
         .usePlaintext(true)
         .build();
@@ -68,7 +99,7 @@ public class ContractScenario002 {
   }
 
   @Test(enabled = true, description = "Deploy contract with java-tron support interface")
-  public void deployTronNative() {
+  public void test01DeployTronNative() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] contract002Address = ecKey1.getAddress();
     String contract002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -96,7 +127,7 @@ public class ContractScenario002 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
+    txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
         maxFeeLimit, 0L, 100, null, contract002Key, contract002Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
 
@@ -127,13 +158,70 @@ public class ContractScenario002 {
 
   }
 
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "Get smart contract with invalid address")
-  public void getContractWithInvalidAddress() {
+  public void test02GetContractWithInvalidAddress() {
     byte[] contractAddress = contract002Address;
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     logger.info(smartContract.getAbi().toString());
     Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
   }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get transaction by id from solidity")
+  public void test03GetTransactionByIdFromSolidity() {
+    Assert.assertFalse(PublicMethed.getTransactionById(txid,blockingStubSolidity)
+        .get().getSignature(0).isEmpty());
+    Assert.assertEquals(PublicMethed.getTransactionById(txid,blockingStubFull),
+        PublicMethed.getTransactionById(txid,blockingStubSolidity));
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get transaction by id from PBFT")
+  public void test04GetTransactionByIdFromPbft() {
+    Assert.assertFalse(PublicMethed.getTransactionById(txid,blockingStubPbft)
+        .get().getSignature(0).isEmpty());
+    Assert.assertEquals(PublicMethed.getTransactionById(txid,blockingStubSoliInFull),
+        PublicMethed.getTransactionById(txid,blockingStubPbft));
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get transaction by id from Solidity")
+  public void test05GetTransactionInfoByIdFromSolidity() throws Exception {
+    long netUsage = PublicMethed.getTransactionInfoById(txid,blockingStubFull).get().getReceipt()
+        .getNetUsage();
+
+
+    Assert.assertEquals(PublicMethed.getTransactionInfoByIdFromSolidity(txid,blockingStubSolidity)
+        .get().getReceipt().getNetUsage(),netUsage);
+
+    Assert.assertEquals(PublicMethed.getTransactionInfoByIdFromSolidity(txid,blockingStubSoliInFull)
+        .get().getReceipt().getNetUsage(),netUsage);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get transaction by id from PBFT")
+  public void test06GetTransactionInfoByIdFromPbft() {
+    long energyUsage = PublicMethed.getTransactionInfoById(txid,blockingStubFull).get().getReceipt()
+        .getEnergyUsage();
+
+    Assert.assertEquals(PublicMethed.getTransactionInfoByIdFromSolidity(txid,blockingStubPbft)
+        .get().getReceipt().getEnergyUsage(),energyUsage);
+  }
+
+
+
+
 
   /**
    * constructor.
@@ -145,7 +233,14 @@ public class ContractScenario002 {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelPbft != null) {
+      channelPbft.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSoliInFull != null) {
+      channelSoliInFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
   }
 }
-
-

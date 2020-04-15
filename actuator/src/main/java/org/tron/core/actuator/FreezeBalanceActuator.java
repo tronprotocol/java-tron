@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -114,10 +114,10 @@ public class FreezeBalanceActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
@@ -171,7 +171,8 @@ public class FreezeBalanceActuator extends AbstractActuator {
     long minFrozenTime = dynamicStore.getMinFrozenTime();
     long maxFrozenTime = dynamicStore.getMaxFrozenTime();
 
-    boolean needCheckFrozeTime = VMConfig.getCheckFrozenTime() == 1;//for test
+    boolean needCheckFrozeTime = CommonParameter.getInstance()
+        .getCheckFrozenTime() == 1;//for test
     if (needCheckFrozeTime && !(frozenDuration >= minFrozenTime
         && frozenDuration <= maxFrozenTime)) {
       throw new ContractValidateException(

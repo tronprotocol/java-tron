@@ -30,22 +30,26 @@ public class ConsensusService {
   @Autowired
   private BlockHandleImpl blockHandle;
 
+  @Autowired
+  private PbftBaseImpl pbftBaseImpl;
+
   private CommonParameter parameter = Args.getInstance();
 
   public void start() {
-    Param param = new Param();
+    Param param = Param.getInstance();
     param.setEnable(parameter.isWitness());
     param.setGenesisBlock(parameter.getGenesisBlock());
     param.setMinParticipationRate(parameter.getMinParticipationRate());
     param.setBlockProduceTimeoutPercent(Args.getInstance().getBlockProducedTimeOut());
     param.setNeedSyncCheck(parameter.isNeedSyncCheck());
+    param.setAgreeNodeCount(parameter.getAgreeNodeCount());
     List<Miner> miners = new ArrayList<>();
     byte[] privateKey = ByteArray
         .fromHexString(Args.getLocalWitnesses().getPrivateKey());
     byte[] privateKeyAddress = SignUtils.fromPrivate(privateKey,
         Args.getInstance().isECKeyCryptoEngine()).getAddress();
     byte[] witnessAddress = Args.getLocalWitnesses().getWitnessAccountAddress(Args
-            .getInstance().isECKeyCryptoEngine());
+        .getInstance().isECKeyCryptoEngine());
     WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
     if (null == witnessCapsule) {
       logger.warn("Witness {} is not in witnessStore.", Hex.encodeHexString(witnessAddress));
@@ -56,7 +60,9 @@ public class ConsensusService {
     }
     param.setMiners(miners);
     param.setBlockHandle(blockHandle);
+    param.setPbftInterface(pbftBaseImpl);
     consensus.start(param);
+    logger.info("consensus service start success");
   }
 
   public void stop() {

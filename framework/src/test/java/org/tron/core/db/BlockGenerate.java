@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.parameter.CommonParameter;
@@ -34,7 +33,7 @@ public class BlockGenerate {
         blockTime = chainBaseManager.getHeadBlockTimeStamp() + 3000;
       }
     }
-    Param param = new Param();
+    Param param = Param.getInstance();
     Miner miner = param.new Miner(privateKey, witness, witness);
     BlockCapsule blockCapsule = manager
         .generateBlock(miner, time, System.currentTimeMillis() + 1000);

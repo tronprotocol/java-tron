@@ -18,6 +18,8 @@
 
 package org.tron.core;
 
+import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
+import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
@@ -76,6 +78,7 @@ import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
@@ -84,11 +87,11 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.common.utils.WalletUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -115,6 +118,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
@@ -238,14 +242,23 @@ public class Wallet {
     DecodeUtil.addressPreFixByte = addressPreFixByte;
   }
 
-  public static String encode58Check(byte[] input) {
-    byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), input);
-    byte[] hash1 = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), hash0);
-    byte[] inputCheck = new byte[input.length + 4];
-    System.arraycopy(input, 0, inputCheck, 0, input.length);
-    System.arraycopy(hash1, 0, inputCheck, input.length, 4);
-    return Base58.encode(inputCheck);
-  }
+  //  public ShieldAddress generateShieldAddress() {
+  //    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
+  //    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
+  //
+  //    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
+  //    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
+  //
+  //    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
+  //    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
+  //
+  //    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
+  //    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
+  //
+  //    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
+  //    builder.setPublicAddress(ByteString.copyFrom(addPublic));
+  //    return builder.build();
+  //  }
 
   public byte[] getAddress() {
     return cryptoEngine.getAddress();
@@ -265,7 +278,7 @@ public class Wallet {
         chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
-    long genesisTimeStamp = dbManager.getGenesisBlock().getTimeStamp();
+    long genesisTimeStamp = chainBaseManager.getGenesisBlock().getTimeStamp();
     accountCapsule.setLatestConsumeTime(genesisTimeStamp
         + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTime());
     accountCapsule.setLatestConsumeFreeTime(genesisTimeStamp
@@ -295,6 +308,14 @@ public class Wallet {
         chainBaseManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
+    long genesisTimeStamp = chainBaseManager.getGenesisBlock().getTimeStamp();
+    accountCapsule.setLatestConsumeTime(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTime());
+    accountCapsule.setLatestConsumeFreeTime(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeFreeTime());
+    accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
+        + BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
+
     return accountCapsule.getInstance();
   }
 
@@ -311,7 +332,7 @@ public class Wallet {
     try {
       BlockId blockId = chainBaseManager.getHeadBlockId();
       if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
-        blockId = dbManager.getSolidBlockId();
+        blockId = chainBaseManager.getSolidBlockId();
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
       long expiration = chainBaseManager.getHeadBlockTimeStamp() + Args.getInstance()
@@ -361,6 +382,7 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signedTransaction);
+    trx.setTime(System.currentTimeMillis());
     try {
       Message message = new TransactionMessage(signedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
@@ -528,7 +550,7 @@ public class Wallet {
 
   public Block getBlockByNum(long blockNum) {
     try {
-      return dbManager.getBlockByNum(blockNum).getInstance();
+      return chainBaseManager.getBlockByNum(blockNum).getInstance();
     } catch (StoreException e) {
       logger.info(e.getMessage());
       return null;
@@ -539,7 +561,7 @@ public class Wallet {
     long count = 0;
 
     try {
-      Block block = dbManager.getBlockByNum(blockNum).getInstance();
+      Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
       count = block.getTransactionsCount();
     } catch (StoreException e) {
       logger.error(e.getMessage());
@@ -589,7 +611,10 @@ public class Wallet {
 
   public ExchangeList getExchangeList() {
     ExchangeList.Builder builder = ExchangeList.newBuilder();
-    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStoreFinal().getAllExchanges();
+    List<ExchangeCapsule> exchangeCapsuleList =
+        getExchangeStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getExchangeStore(),
+            chainBaseManager.getExchangeV2Store()).getAllExchanges();
 
     exchangeCapsuleList
         .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
@@ -775,25 +800,31 @@ public class Wallet {
         .build());
 
     // ALLOW_ZKSNARK_TRANSACTION
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowShieldedTransaction")
-            .setValue(chainBaseManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
-            .build());
+//    builder.addChainParameter(
+//        Protocol.ChainParameters.ChainParameter.newBuilder()
+//            .setKey("getAllowShieldedTransaction")
+//            .setValue(dbManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
+//            .build());
+//
+//    // SHIELDED_TRANSACTION_FEE
+//    builder.addChainParameter(
+//        Protocol.ChainParameters.ChainParameter.newBuilder()
+//            .setKey("getShieldedTransactionFee")
+//            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
+//            .build());
+//
+//    // ShieldedTransactionCreateAccountFee
+//    builder.addChainParameter(
+//        Protocol.ChainParameters.ChainParameter.newBuilder()
+//            .setKey("getShieldedTransactionCreateAccountFee")
+//            .setValue(
+//                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
+//            .build());
 
-    // SHIELDED_TRANSACTION_FEE
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getShieldedTransactionFee")
-            .setValue(chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee())
-            .build());
-    // ShieldedTransactionCreateAccountFee
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getShieldedTransactionCreateAccountFee")
-            .setValue(
-                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
-            .build());
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getForbidTransferToContract")
+        .setValue(dbManager.getDynamicPropertiesStore().getForbidTransferToContract())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAdaptiveResourceLimitTargetRatio")
@@ -816,13 +847,20 @@ public class Wallet {
         .setValue(chainBaseManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowPBFT")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowPBFT())
+        .build());
+
     return builder.build();
   }
 
   public AssetIssueList getAssetIssueList() {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
-    dbManager.getAssetIssueStoreFinal().getAllAssetIssues()
+    getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+        chainBaseManager.getAssetIssueStore(),
+        chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues()
         .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
     return builder.build();
@@ -832,7 +870,9 @@ public class Wallet {
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
 
     List<AssetIssueCapsule> assetIssueList =
-        dbManager.getAssetIssueStoreFinal().getAssetIssuesPaginated(offset, limit);
+        getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getAssetIssueStore(),
+            chainBaseManager.getAssetIssueV2Store()).getAssetIssuesPaginated(offset, limit);
 
     if (CollectionUtils.isEmpty(assetIssueList)) {
       return null;
@@ -848,7 +888,9 @@ public class Wallet {
     }
 
     List<AssetIssueCapsule> assetIssueCapsuleList =
-        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
+        getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getAssetIssueStore(),
+            chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues();
 
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
@@ -861,19 +903,19 @@ public class Wallet {
   private Map<String, Long> setAssetNetLimit(Map<String, Long> assetNetLimitMap,
       AccountCapsule accountCapsule) {
     Map<String, Long> allFreeAssetNetUsage;
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+    if (chainBaseManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+            .put(asset, chainBaseManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
       });
     } else {
       allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
       allFreeAssetNetUsage.keySet().forEach(asset -> {
         byte[] key = ByteArray.fromString(asset);
         assetNetLimitMap
-            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+            .put(asset, chainBaseManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
       });
     }
     return allFreeAssetNetUsage;
@@ -1029,7 +1071,9 @@ public class Wallet {
     }
 
     List<AssetIssueCapsule> assetIssueCapsuleList =
-        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
+        getAssetIssueStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getAssetIssueStore(),
+            chainBaseManager.getAssetIssueV2Store()).getAllAssetIssues();
 
     AssetIssueList.Builder builder = AssetIssueList.newBuilder();
     assetIssueCapsuleList.stream()
@@ -1050,7 +1094,7 @@ public class Wallet {
 
   public NumberMessage totalTransaction() {
     NumberMessage.Builder builder = NumberMessage.newBuilder()
-        .setNum(dbManager.getTransactionStore().getTotalTransactions());
+        .setNum(chainBaseManager.getTransactionStore().getTotalTransactions());
     return builder.build();
   }
 
@@ -1096,7 +1140,7 @@ public class Wallet {
     }
     TransactionCapsule transactionCapsule = null;
     try {
-      transactionCapsule = dbManager.getTransactionStore()
+      transactionCapsule = chainBaseManager.getTransactionStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
@@ -1113,7 +1157,7 @@ public class Wallet {
     }
     TransactionInfoCapsule transactionInfoCapsule;
     try {
-      transactionInfoCapsule = dbManager.getTransactionHistoryStore()
+      transactionInfoCapsule = chainBaseManager.getTransactionHistoryStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
       return null;
@@ -1122,7 +1166,7 @@ public class Wallet {
       return transactionInfoCapsule.getInstance();
     }
     try {
-      transactionInfoCapsule = dbManager.getTransactionRetStore()
+      transactionInfoCapsule = chainBaseManager.getTransactionRetStore()
           .getTransactionInfo(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
@@ -1152,9 +1196,11 @@ public class Wallet {
     if (Objects.isNull(exchangeId)) {
       return null;
     }
-    ExchangeCapsule exchangeCapsule = null;
+    ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
+      exchangeCapsule = getExchangeStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+          chainBaseManager.getExchangeStore(),
+          chainBaseManager.getExchangeV2Store()).get(exchangeId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -1188,7 +1234,7 @@ public class Wallet {
     }
     ByteString txId = outPoint.getHash();
 
-    long blockNum = dbManager.getTransactionStore().getBlockNumber(txId.toByteArray());
+    long blockNum = chainBaseManager.getTransactionStore().getBlockNumber(txId.toByteArray());
     if (blockNum <= 0) {
       throw new RuntimeException("tx is not found:" + ByteArray.toHexString(txId.toByteArray()));
     }
@@ -1225,7 +1271,7 @@ public class Wallet {
     IncrementalMerkleTreeContainer tree = treeCapsule.toMerkleTreeContainer();
 
     //Get the block of blockNum
-    BlockCapsule block = dbManager.getBlockByNum(blockNumber);
+    BlockCapsule block = chainBaseManager.getBlockByNum(blockNumber);
 
     IncrementalMerkleVoucherContainer witness = null;
 
@@ -1313,7 +1359,7 @@ public class Wallet {
     }
 
     for (long n = start; n <= end; n++) {
-      BlockCapsule block = dbManager.getBlockByNum(n);
+      BlockCapsule block = chainBaseManager.getBlockByNum(n);
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
         Contract contract1 = transaction1.getRawData().getContract(0);
@@ -1351,7 +1397,7 @@ public class Wallet {
     }
 
     for (long n = start; n <= end; n++) {
-      BlockCapsule block = dbManager.getBlockByNum(n);
+      BlockCapsule block = chainBaseManager.getBlockByNum(n);
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
         Contract contract1 = transaction1.getRawData().getContract(0);
@@ -1379,11 +1425,11 @@ public class Wallet {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
     if (request.getBlockNum() < 0 || request.getBlockNum() > 1000) {
-      throw new BadItemException("request.BlockNum must be specified with range in【0，1000】");
+      throw new BadItemException("request.BlockNum must be specified with range in [0, 1000]");
     }
 
     if (request.getOutPointsCount() < 1 || request.getOutPointsCount() > 10) {
-      throw new BadItemException("request.OutPointsCount must be speccified with range in【1，10】");
+      throw new BadItemException("request.OutPointsCount must be speccified with range in [1, 10]");
     }
 
     for (OutputPoint outputPoint : request.getOutPointsList()) {
@@ -1599,16 +1645,7 @@ public class Wallet {
     }
 
     // output
-    for (ReceiveNote receiveNote : shieldedReceives) {
-      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
-          receiveNote.getNote().getPaymentAddress());
-      if (paymentAddress == null) {
-        throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
-      }
-      builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
-          receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
-          receiveNote.getNote().getMemo().toByteArray());
-    }
+    shieldedOutput(shieldedReceives, builder, ovk);
 
     TransactionCapsule transactionCapsule = null;
     try {
@@ -1706,16 +1743,7 @@ public class Wallet {
     }
 
     // output
-    for (ReceiveNote receiveNote : shieldedReceives) {
-      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
-          receiveNote.getNote().getPaymentAddress());
-      if (paymentAddress == null) {
-        throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
-      }
-      builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
-          receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
-          receiveNote.getNote().getMemo().toByteArray());
-    }
+    shieldedOutput(shieldedReceives, builder, ovk);
 
     TransactionCapsule transactionCapsule = null;
     try {
@@ -1726,6 +1754,21 @@ public class Wallet {
     }
     return transactionCapsule;
 
+  }
+
+  private void shieldedOutput(List<ReceiveNote> shieldedReceives,
+      ZenTransactionBuilder builder,
+      byte[] ovk) throws ZksnarkException {
+    for (ReceiveNote receiveNote : shieldedReceives) {
+      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
+          receiveNote.getNote().getPaymentAddress());
+      if (paymentAddress == null) {
+        throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
+      }
+      builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
+          receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
+          receiveNote.getNote().getMemo().toByteArray());
+    }
   }
 
 
@@ -1763,7 +1806,6 @@ public class Wallet {
     return addressInfo.build();
 
   }
-
 
   public BytesMessage getSpendingKey() throws ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
@@ -2022,6 +2064,37 @@ public class Wallet {
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(transactionHash)).build();
   }
 
+  public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) {
+    TransactionInfoList.Builder transactionInfoList = TransactionInfoList.newBuilder();
+
+    try {
+      TransactionRetCapsule result = dbManager.getTransactionRetStore()
+          .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
+
+      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+        result.getInstance().getTransactioninfoList().forEach(
+            transactionInfo -> transactionInfoList.addTransactionInfo(transactionInfo)
+        );
+      } else {
+        Block block = chainBaseManager.getBlockByNum(blockNum).getInstance();
+
+        if (block != null) {
+          List<Transaction> listTransaction = block.getTransactionsList();
+          for (Transaction transaction : listTransaction) {
+            TransactionInfoCapsule transactionInfoCapsule = dbManager.getTransactionHistoryStore()
+                .get(Sha256Hash.hash(CommonParameter.getInstance()
+                    .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
+            transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
+          }
+        }
+      }
+    } catch (BadItemException | ItemNotFoundException e) {
+      logger.error(e.getMessage());
+    }
+
+    return transactionInfoList.build();
+  }
+
   public NodeList listNodes() {
     List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
 
@@ -2069,7 +2142,7 @@ public class Wallet {
           "No contract or not a valid smart contract");
     }
 
-    byte[] selector = TransactionUtil.getSelector(
+    byte[] selector = WalletUtil.getSelector(
         triggerSmartContract.getData().toByteArray());
 
     if (TransactionUtil.isConstant(abi, selector)) {
@@ -2232,7 +2305,9 @@ public class Wallet {
         .asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
       try {
-        return dbManager.getExchangeStoreFinal().get(key);
+        return getExchangeStoreFinal(chainBaseManager.getDynamicPropertiesStore(),
+            chainBaseManager.getExchangeStore(),
+            chainBaseManager.getExchangeV2Store()).get(key);
       } catch (Exception ex) {
         return null;
       }
@@ -2401,7 +2476,7 @@ public class Wallet {
         if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
           continue;
         }
-        ShieldedTransferContract stContract = null;
+        ShieldedTransferContract stContract;
         try {
           stContract = c.getParameter().unpack(
               ShieldedTransferContract.class);

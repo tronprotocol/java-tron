@@ -1,10 +1,6 @@
 package org.tron.common.utils;
 
-import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
-import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
-
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.AccountCapsule;
@@ -21,12 +17,6 @@ import org.tron.core.store.ExchangeV2Store;
 public class Commons {
 
   public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
-
-  public static byte[] clone(byte[] value) {
-    byte[] clone = new byte[value.length];
-    System.arraycopy(value, 0, clone, 0, value.length);
-    return clone;
-  }
 
   private static byte[] decode58Check(String input) {
     byte[] decodeCheck = Base58.decode(input);

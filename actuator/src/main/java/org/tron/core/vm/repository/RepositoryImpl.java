@@ -8,10 +8,10 @@ import java.util.HashMap;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StorageUtils;
@@ -27,6 +27,7 @@ import org.tron.core.config.Parameter;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
@@ -304,7 +305,7 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public void putStorageValue(byte[] address, DataWord key, DataWord value) {
-    address = MUtil.convertToTronAddress(address);
+    address = TransactionTrace.convertToTronAddress(address);
     if (getAccount(address) == null) {
       return;
     }
@@ -321,7 +322,7 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public DataWord getStorageValue(byte[] address, DataWord key) {
-    address = MUtil.convertToTronAddress(address);
+    address = TransactionTrace.convertToTronAddress(address);
     if (getAccount(address) == null) {
       return null;
     }
@@ -544,7 +545,8 @@ public class RepositoryImpl implements Repository {
 
   public long getHeadSlot() {
     return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() -
-        Long.parseLong(DBConfig.getGenesisBlock().getTimestamp()))
+        Long.parseLong(CommonParameter.getInstance()
+            .getGenesisBlock().getTimestamp()))
         / BLOCK_PRODUCED_INTERVAL;
   }
 

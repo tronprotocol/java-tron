@@ -138,17 +138,6 @@ public final class VMUtils {
     return compress(content.getBytes("UTF-8"));
   }
 
-  public static byte[] decompress(byte[] data) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-
-    ByteArrayInputStream in = new ByteArrayInputStream(data);
-    InflaterOutputStream out = new InflaterOutputStream(baos, new Inflater(), BUF_SIZE);
-
-    write(in, out, BUF_SIZE);
-
-    return baos.toByteArray();
-  }
-
   public static String zipAndEncode(String content) {
     try {
       return encodeBase64String(compress(content));
@@ -281,29 +270,4 @@ public final class VMUtils {
 
     return true;
   }
-
-  public static String align(String s, char fillChar, int targetLen, boolean alignRight) {
-    if (targetLen <= s.length()) {
-      return s;
-    }
-    String alignString = repeat("" + fillChar, targetLen - s.length());
-    return alignRight ? alignString + s : s + alignString;
-
-  }
-
-  static String repeat(String s, int n) {
-    if (s.length() == 1) {
-      byte[] bb = new byte[n];
-      Arrays.fill(bb, s.getBytes()[0]);
-      return new String(bb);
-    } else {
-      StringBuilder ret = new StringBuilder();
-      for (int i = 0; i < n; i++) {
-        ret.append(s);
-      }
-      return ret.toString();
-    }
-  }
-
-
 }

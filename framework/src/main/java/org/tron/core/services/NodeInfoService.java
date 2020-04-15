@@ -195,7 +195,7 @@ public class NodeInfoService {
   protected void setBlockInfo(NodeInfo nodeInfo) {
     nodeInfo.setBeginSyncNum(dbManager.getSyncBeginNumber());
     nodeInfo.setBlock(chainBaseManager.getHeadBlockId().getString());
-    nodeInfo.setSolidityBlock(dbManager.getSolidBlockId().getString());
+    nodeInfo.setSolidityBlock(chainBaseManager.getSolidBlockId().getString());
   }
 
   protected void setCheatWitnessInfo(NodeInfo nodeInfo) {

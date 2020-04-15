@@ -18,16 +18,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.StorageUtils;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -156,8 +158,8 @@ public class VMActuator implements Actuator2 {
     ProgramResult result = context.getProgramResult();
     try {
       if (vm != null) {
-        if (null != blockCap && blockCap.generatedByMyself && null != TransactionUtil
-            .getContractRet(trx)
+        if (null != blockCap && blockCap.generatedByMyself && blockCap.hasWitnessSignature()
+            && null != TransactionUtil.getContractRet(trx)
             && contractResult.OUT_OF_TIME == TransactionUtil.getContractRet(trx)) {
           result = program.getResult();
           program.spendAllEnergy();
@@ -172,7 +174,7 @@ public class VMActuator implements Actuator2 {
         result = program.getResult();
 
         if (isConstanCall) {
-          long callValue = TransactionUtil.getCallValue(trx.getRawData().getContract(0));
+          long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           long callTokenValue = TransactionUtil
               .getCallTokenValue(trx.getRawData().getContract(0));
           if (callValue > 0 || callTokenValue > 0) {
@@ -312,7 +314,7 @@ public class VMActuator implements Actuator2 {
     // insure the new contract address haven't exist
     if (repository.getAccount(contractAddress) != null) {
       throw new ContractValidateException(
-          "Trying to create a contract with existing contract address: " + MUtil
+          "Trying to create a contract with existing contract address: " + StringUtil
               .encode58Check(contractAddress));
     }
 
@@ -396,11 +398,9 @@ public class VMActuator implements Actuator2 {
     if (callValue > 0) {
       transfer(this.repository, callerAddress, contractAddress, callValue);
     }
-    if (VMConfig.allowTvmTransferTrc10()) {
-      if (tokenValue > 0) {
-        transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
-            tokenValue);
-      }
+    if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
+      transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
+          tokenValue);
     }
 
   }
@@ -504,11 +504,9 @@ public class VMActuator implements Actuator2 {
     if (callValue > 0) {
       transfer(this.repository, callerAddress, contractAddress, callValue);
     }
-    if (VMConfig.allowTvmTransferTrc10()) {
-      if (tokenValue > 0) {
-        transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
-            tokenValue);
-      }
+    if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
+      transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
+          tokenValue);
     }
 
   }
@@ -586,19 +584,17 @@ public class VMActuator implements Actuator2 {
 
 
   public void checkTokenValueAndId(long tokenValue, long tokenId) throws ContractValidateException {
-    if (VMConfig.allowTvmTransferTrc10()) {
-      if (VMConfig.allowMultiSign()) { //allowMultiSigns
-        // tokenid can only be 0
-        // or (MIN_TOKEN_ID, Long.Max]
-        if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
-          throw new ContractValidateException("tokenId must be > " + VMConstant.MIN_TOKEN_ID);
-        }
-        // tokenid can only be 0 when tokenvalue = 0,
-        // or (MIN_TOKEN_ID, Long.Max]
-        if (tokenValue > 0 && tokenId == 0) {
-          throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
-              ", tokenId = " + tokenId);
-        }
+    if (VMConfig.allowTvmTransferTrc10() && VMConfig.allowMultiSign()) {
+      // tokenid can only be 0
+      // or (MIN_TOKEN_ID, Long.Max]
+      if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
+        throw new ContractValidateException("tokenId must be > " + VMConstant.MIN_TOKEN_ID);
+      }
+      // tokenid can only be 0 when tokenvalue = 0,
+      // or (MIN_TOKEN_ID, Long.Max]
+      if (tokenValue > 0 && tokenId == 0) {
+        throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
+            ", tokenId = " + tokenId);
       }
     }
   }
@@ -611,14 +607,14 @@ public class VMActuator implements Actuator2 {
     if (ExecutorType.ET_NORMAL_TYPE == executorType) {
       // self witness generates block
       if (this.blockCap != null && blockCap.generatedByMyself &&
-          this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
+          !this.blockCap.hasWitnessSignature()) {
         cpuLimitRatio = 1.0;
       } else {
         // self witness or other witness or fullnode verifies block
         if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
-          cpuLimitRatio = VMConfig.getMinTimeRatio();
+          cpuLimitRatio = CommonParameter.getInstance().getMinTimeRatio();
         } else {
-          cpuLimitRatio = VMConfig.getMaxTimeRatio();
+          cpuLimitRatio = CommonParameter.getInstance().getMaxTimeRatio();
         }
       }
     } else {

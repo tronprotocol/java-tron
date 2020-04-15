@@ -1,6 +1,6 @@
 package org.tron.common.utils;
 
-import static org.tron.common.utils.WalletUtil.encode58Check;
+import static org.tron.common.utils.StringUtil.encode58Check;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;

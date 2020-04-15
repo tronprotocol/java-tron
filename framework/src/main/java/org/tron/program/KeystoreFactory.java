@@ -36,11 +36,11 @@ public class KeystoreFactory {
 
   private boolean priKeyValid(String priKey) {
     if (StringUtils.isEmpty(priKey)) {
-      logger.warn("Warning: PrivateKey is empty !!");
+      logger.warn("Warning: PrivateKey is empty!");
       return false;
     }
     if (priKey.length() != 64) {
-      logger.warn("Warning: PrivateKey length needs to be 64, but " + priKey.length() + " !!");
+      logger.warn("Warning: PrivateKey length needs to be 64, but " + priKey.length() + "!");
       return false;
     }
     //Other rule;
@@ -64,6 +64,7 @@ public class KeystoreFactory {
       }
     }
   }
+
 
   private void genKeystore() throws CipherException, IOException {
     String password = WalletUtils.inputPassword2Twice();

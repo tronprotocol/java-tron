@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
@@ -28,7 +27,7 @@ public class TransactionHistoryStore extends TronStoreWithRevoking<TransactionIn
   @Override
   public void put(byte[] key, TransactionInfoCapsule item) {
     if (BooleanUtils.toBoolean(CommonParameter.getInstance()
-        .getStorage().getTransactionHistoreSwitch())) {
+        .getStorage().getTransactionHistorySwitch())) {
       super.put(key, item);
     }
   }

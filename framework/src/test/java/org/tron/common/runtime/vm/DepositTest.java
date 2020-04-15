@@ -11,13 +11,14 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
@@ -105,7 +106,8 @@ public class DepositTest {
     this.manager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     this.manager.getDynamicPropertiesStore()
-        .saveLatestBlockHeaderNumber(DBConfig.getBlockNumForEneryLimit() + 1);
+        .saveLatestBlockHeaderNumber(CommonParameter.getInstance()
+            .getBlockNumForEneryLimit() + 1);
 
     String contractA = "A";
     String contractB = "B";
@@ -190,8 +192,8 @@ public class DepositTest {
         .processTransactionAndReturnRuntime(bTrx, DepositImpl.createRoot(manager), null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    byte[] aAddress = TransactionUtil.generateContractAddress(aTrx);
-    byte[] bAddress = TransactionUtil.generateContractAddress(bTrx);
+    byte[] aAddress = WalletUtil.generateContractAddress(aTrx);
+    byte[] bAddress = WalletUtil.generateContractAddress(bTrx);
 
     // trigger contractA
     // callBcallA(address,uint256,uint256)
@@ -253,7 +255,7 @@ public class DepositTest {
     Assert
         .assertEquals(checkN2.getRuntime().getResult().getHReturn(),
             new DataWord(1000).getData());
-    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
+    CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   @Test
@@ -346,8 +348,8 @@ public class DepositTest {
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(bTrx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
-    byte[] aAddress = TransactionUtil.generateContractAddress(aTrx);
-    byte[] bAddress = TransactionUtil.generateContractAddress(bTrx);
+    byte[] aAddress = WalletUtil.generateContractAddress(aTrx);
+    byte[] bAddress = WalletUtil.generateContractAddress(bTrx);
 
     // trigger contractA
     // callBcallA(address,uint256,uint256)
@@ -408,15 +410,13 @@ public class DepositTest {
     Assert
         .assertEquals(checkN2.getRuntime().getResult().getHReturn(),
             new DataWord(1000).getData());
-    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
+    CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
   }
 
 
   @After
   public void destroy() {
     Args.clearParam();
-    ApplicationFactory.create(context).shutdown();
-    ApplicationFactory.create(context).shutdownServices();
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");

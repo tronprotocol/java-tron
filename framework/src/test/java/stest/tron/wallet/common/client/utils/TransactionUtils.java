@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Transaction;
@@ -50,7 +49,6 @@ public class TransactionUtils {
   public static byte[] getHash(Transaction transaction) {
     Transaction.Builder tmp = transaction.toBuilder();
     //tmp.clearId();
-
     return Sha256Hash.hash(CommonParameter
         .getInstance().isECKeyCryptoEngine(), tmp.build().toByteArray());
   }

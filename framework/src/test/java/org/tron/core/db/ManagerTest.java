@@ -1,5 +1,10 @@
 package org.tron.core.db;
 
+import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
+import static org.tron.common.utils.Commons.adjustBalance;
+import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
+import static org.tron.common.utils.Commons.getExchangeStoreFinal;
+
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -26,7 +31,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -65,7 +69,6 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract;
-
 
 
 @Slf4j
@@ -131,7 +134,7 @@ public class ManagerTest extends BlockGenerate {
     BlockCapsule blockCapsule =
         new BlockCapsule(
             1,
-            Sha256Hash.wrap(dbManager.getGenesisBlockId().getByteString()),
+            Sha256Hash.wrap(chainManager.getGenesisBlockId().getByteString()),
             1,
             ByteString.copyFrom(
                 ECKey.fromPrivate(
@@ -153,7 +156,7 @@ public class ManagerTest extends BlockGenerate {
       dbManager.pushBlock(blockCapsule);
       Assert.assertEquals(1,
           chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-      dbManager.setBlockReference(trx);
+      chainManager.setBlockReference(trx);
       Assert.assertEquals(1,
           ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
     }
@@ -165,7 +168,7 @@ public class ManagerTest extends BlockGenerate {
     dbManager.pushBlock(blockCapsule);
     Assert.assertEquals(1,
         chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-    dbManager.setBlockReference(trx);
+    chainManager.setBlockReference(trx);
     Assert.assertEquals(1,
         ByteArray.toInt(trx.getInstance().getRawData().getRefBlockBytes().toByteArray()));
   }
@@ -183,25 +186,25 @@ public class ManagerTest extends BlockGenerate {
 
     if (isUnlinked) {
       Assert.assertEquals("getBlockIdByNum is error",
-              0, chainManager.getHeadBlockNum());
+          0, chainManager.getHeadBlockNum());
     } else {
       try {
         Assert.assertEquals(
             "getBlockIdByNum is error",
             blockCapsule2.getBlockId().toString(),
-            dbManager.getBlockIdByNum(1).toString());
+            chainManager.getBlockIdByNum(1).toString());
       } catch (ItemNotFoundException e) {
         e.printStackTrace();
       }
     }
 
-    Assert.assertTrue("hasBlocks is error", dbManager.hasBlocks());
+    Assert.assertTrue("hasBlocks is error", chainManager.hasBlocks());
   }
 
   @Test
   public void GetterInstanceTest() {
 
-    Assert.assertTrue(dbManager.getTransactionStore() instanceof TransactionStore);
+    Assert.assertTrue(chainManager.getTransactionStore() instanceof TransactionStore);
     Assert.assertTrue(chainManager.getDynamicPropertiesStore() instanceof DynamicPropertiesStore);
     Assert.assertTrue(chainManager.getMerkleTreeStore() instanceof IncrementalMerkleTreeStore);
     Assert.assertTrue(chainManager.getBlockIndexStore() instanceof BlockIndexStore);
@@ -210,10 +213,14 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertTrue(chainManager.getBlockIndexStore() instanceof BlockIndexStore);
     Assert.assertTrue(chainManager.getExchangeV2Store() instanceof ExchangeV2Store);
     Assert.assertTrue(chainManager.getExchangeStore() instanceof ExchangeStore);
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    Assert.assertTrue(dbManager.getExchangeStoreFinal() instanceof ExchangeStore);
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    Assert.assertTrue(dbManager.getExchangeStoreFinal() instanceof ExchangeV2Store);
+    chainManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    Assert.assertTrue(getExchangeStoreFinal(chainManager.getDynamicPropertiesStore(),
+        chainManager.getExchangeStore(),
+        chainManager.getExchangeV2Store()) instanceof ExchangeStore);
+    chainManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    Assert.assertTrue(getExchangeStoreFinal(chainManager.getDynamicPropertiesStore(),
+        chainManager.getExchangeStore(),
+        chainManager.getExchangeV2Store()) instanceof ExchangeV2Store);
 
   }
 
@@ -266,19 +273,18 @@ public class ManagerTest extends BlockGenerate {
             .build());
     chainManager.getAccountStore().put(account.createDbKey(), account);
     try {
-      dbManager.adjustBalance(accountAddress.getBytes(), 0);
-      AccountCapsule copyAccount = dbManager.getAccountStore().get(ownerAddress);
+      adjustBalance(chainManager.getAccountStore(), accountAddress.getBytes(), 0);
+      AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getBalance(), account.getBalance());
       Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
     } catch (BalanceInsufficientException e) {
       Assert.assertFalse(e instanceof BalanceInsufficientException);
     }
 
-
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
-      dbManager.adjustBalance(accountAddress.getBytes(), -40);
+      adjustBalance(chainManager.getAccountStore(), accountAddress.getBytes(), -40);
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertEquals(
@@ -286,11 +292,10 @@ public class ManagerTest extends BlockGenerate {
           e.getMessage());
     }
 
-
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
-      dbManager.adjustBalance(accountAddress.getBytes(), -10);
+      adjustBalance(chainManager.getAccountStore(), accountAddress.getBytes(), -10);
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getBalance(), account.getBalance() - 10);
       Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
@@ -301,7 +306,7 @@ public class ManagerTest extends BlockGenerate {
     account.setBalance(30);
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
     try {
-      dbManager.adjustBalance(accountAddress.getBytes(), 10);
+      adjustBalance(chainManager.getAccountStore(), accountAddress.getBytes(), 10);
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getBalance(), account.getBalance() + 10);
       Assert.assertEquals(copyAccount.getAccountName(), account.getAccountName());
@@ -332,7 +337,9 @@ public class ManagerTest extends BlockGenerate {
             .build());
     chainManager.getAssetIssueStore().put(assetID.getBytes(), assetIssue);
     try {
-      dbManager.adjustAssetBalanceV2(accountAddress.getBytes(), assetID, -20);
+      adjustAssetBalanceV2(accountAddress.getBytes(), assetID, -20,
+          chainManager.getAccountStore(), chainManager.getAssetIssueStore(),
+          chainManager.getDynamicPropertiesStore());
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
@@ -344,7 +351,9 @@ public class ManagerTest extends BlockGenerate {
     chainManager.getAccountStore().put(account.createDbKey(), account); // update balance
 
     try {
-      dbManager.adjustAssetBalanceV2(accountAddress.getBytes(), assetID, 10);
+      adjustAssetBalanceV2(accountAddress.getBytes(), assetID, 10,
+          chainManager.getAccountStore(), chainManager.getAssetIssueStore(),
+          chainManager.getDynamicPropertiesStore());
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
       Assert.assertEquals(copyAccount.getAssetMap().size(), 1);
       copyAccount.getAssetMap().forEach((k, v) -> {
@@ -380,7 +389,7 @@ public class ManagerTest extends BlockGenerate {
   public void adjustTotalShieldPoolValueTest() {
     long valueBalance = chainManager.getDynamicPropertiesStore().getTotalShieldedPoolValue() + 1;
     try {
-      dbManager.adjustTotalShieldedPoolValue(valueBalance);
+      adjustTotalShieldedPoolValue(valueBalance, chainManager.getDynamicPropertiesStore());
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
@@ -391,7 +400,7 @@ public class ManagerTest extends BlockGenerate {
         .getTotalShieldedPoolValue();
     valueBalance = beforeTotalShieldValue - 1;
     try {
-      dbManager.adjustTotalShieldedPoolValue(valueBalance);
+      adjustTotalShieldedPoolValue(valueBalance, chainManager.getDynamicPropertiesStore());
       long expectValue = beforeTotalShieldValue - valueBalance;
       Assert.assertEquals(chainManager.getDynamicPropertiesStore().getTotalShieldedPoolValue(),
           expectValue);
@@ -463,7 +472,6 @@ public class ManagerTest extends BlockGenerate {
             num + 1,
             latestHeadHash,
             addressToProvateKeys);
-
 
     dbManager.pushBlock(blockCapsule1);
 
@@ -547,7 +555,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
-    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
@@ -600,10 +608,10 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertEquals(chainManager.getBlockStore().size(), size + 3);
 
     Assert.assertEquals(
-        dbManager.getBlockIdByNum(chainManager.getHead().getNum() - 1),
+        chainManager.getBlockIdByNum(chainManager.getHead().getNum() - 1),
         blockCapsule1.getBlockId());
     Assert.assertEquals(
-        dbManager.getBlockIdByNum(chainManager.getHead().getNum() - 2),
+        chainManager.getBlockIdByNum(chainManager.getHead().getNum() - 2),
         blockCapsule1.getParentHash());
 
     Assert.assertEquals(
@@ -661,7 +669,7 @@ public class ManagerTest extends BlockGenerate {
 
     dbManager.pushBlock(blockCapsule0);
     dbManager.pushBlock(blockCapsule1);
-    context.getBean(KhaosDatabase.class).removeBlk(dbManager.getBlockIdByNum(num));
+    context.getBean(KhaosDatabase.class).removeBlk(chainManager.getBlockIdByNum(num));
     Exception exception = null;
 
     BlockCapsule blockCapsule2 =
@@ -727,7 +735,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException {
-    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";

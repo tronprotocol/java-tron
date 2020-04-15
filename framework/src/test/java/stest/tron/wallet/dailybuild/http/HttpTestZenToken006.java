@@ -3,7 +3,6 @@ package stest.tron.wallet.dailybuild.http;
 import com.alibaba.fastjson.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.testng.Assert;
@@ -15,12 +14,9 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
-import org.tron.core.zen.address.DiversifierT;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
-import stest.tron.wallet.common.client.utils.ShieldNoteInfo;
 
 @Slf4j
 public class HttpTestZenToken006 {
@@ -68,7 +64,7 @@ public class HttpTestZenToken006 {
     PublicMethed.printAddress(zenTokenOwnerKey);
   }
 
-  @Test(enabled = true, description = "Get new shielded address by http")
+  @Test(enabled = false, description = "Get new shielded address by http")
   public void test01GetNewShieldedAddress() {
     response = HttpMethed.getNewShieldedAddress(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -97,7 +93,7 @@ public class HttpTestZenToken006 {
     paymentAddress1 = responseContent.getString("payment_address");
   }
 
-  @Test(enabled = true, description = "Get expanded spending key by http")
+  @Test(enabled = false, description = "Get expanded spending key by http")
   public void test02GetExpandedSpendingKey() {
     response = HttpMethed.getExpandedSpendingKey(httpnode, sk);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -105,15 +101,14 @@ public class HttpTestZenToken006 {
     String askFromSk = responseContent.getString("ask");
     String nskFromSk = responseContent.getString("nsk");
     String ovkFromSk = responseContent.getString("ovk");
-    Assert.assertEquals(ask,askFromSk);
-    Assert.assertEquals(nsk,nskFromSk);
-    Assert.assertEquals(ovk,ovkFromSk);
+    Assert.assertEquals(ask, askFromSk);
+    Assert.assertEquals(nsk, nskFromSk);
+    Assert.assertEquals(ovk, ovkFromSk);
 
   }
 
 
-
-  @Test(enabled = true, description = "Get rcm by http")
+  @Test(enabled = false, description = "Get rcm by http")
   public void test03GetRcm() {
     response = HttpMethed.getRcm(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -122,7 +117,8 @@ public class HttpTestZenToken006 {
     logger.info("rcm: " + rcm);
   }
 
-  @Test(enabled = true, description = "Public to shield transaction withoutask by http")
+  @Test(enabled = false,
+      description = "Public to shield transaction withoutask by http")
   public void test04PublicToShieldTransactionWithoutAsk() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, tokenId,
@@ -149,8 +145,8 @@ public class HttpTestZenToken006 {
             "" + sendSheldAddressAmount1, memo1);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, zenTokenOwnerAddress, sendAmount,
-            null, null, shieldOutList, null, 0, zenTokenOwnerKey);
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, httpnode, zenTokenOwnerAddress,
+            sendAmount, null, null, shieldOutList, null, 0, zenTokenOwnerKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 

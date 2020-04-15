@@ -6,12 +6,12 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.DBConfig;
-import org.tron.core.Wallet;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -128,7 +128,7 @@ public class StorageTest extends VMTestBase {
     // deploy contract
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, code, value, fee, consumeUserResourcePercent, null);
-    byte[] contractAddress = TransactionUtil.generateContractAddress(trx);
+    byte[] contractAddress = WalletUtil.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
@@ -261,7 +261,7 @@ public class StorageTest extends VMTestBase {
         parentChangedVal);
     Assert
         .assertNull(DepositImpl.createRoot(manager).getStorageValue(address, storageParentZeroKey));
-    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
+    CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   @Test
@@ -351,6 +351,6 @@ public class StorageTest extends VMTestBase {
         parentChangedVal);
     Assert
         .assertNull(DepositImpl.createRoot(manager).getStorageValue(address, storageParentZeroKey));
-    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
+    CommonParameter.setENERGY_LIMIT_HARD_FORK(false);
   }
 }

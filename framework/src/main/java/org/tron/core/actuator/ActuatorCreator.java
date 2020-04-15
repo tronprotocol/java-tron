@@ -7,7 +7,6 @@ import org.tron.common.utils.ForkController;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -42,7 +41,7 @@ public class ActuatorCreator {
       throws ContractValidateException {
     List<Actuator> actuatorList = Lists.newArrayList();
     if (null == transactionCapsule || null == transactionCapsule.getInstance()) {
-      logger.info("transactionCapsule or Transaction is null");
+      logger.info("TransactionCapsule or Transaction is null");
       return actuatorList;
     }
 

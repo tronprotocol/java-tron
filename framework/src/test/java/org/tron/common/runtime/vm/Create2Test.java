@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import static org.tron.common.utils.WalletUtil.generateContractAddress2;
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -10,7 +11,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.core.Wallet;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -142,7 +143,7 @@ public class Create2Test extends VMTestBase {
     Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent,
         null);
-    byte[] factoryAddress = TransactionUtil.generateContractAddress(trx);
+    byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
@@ -155,7 +156,7 @@ public class Create2Test extends VMTestBase {
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
-    byte[] actualContract = MUtil.convertToTronAddress(Arrays.copyOfRange(returnValue,
+    byte[] actualContract = convertToTronAddress(Arrays.copyOfRange(returnValue,
         12, 32));
     byte[] expectedContract =
         generateContractAddress2(address, new DataWord(salt).getData(), Hex.decode(testCode));

@@ -31,6 +31,12 @@ public class HttpTestAccount004 {
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
 
+
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
+
+
+
   /**
    * constructor.
    */
@@ -82,6 +88,20 @@ public class HttpTestAccount004 {
     Assert.assertEquals(responseContent.get("account_id"), accountId);
     Assert.assertTrue(responseContent.size() >= 10);
   }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get account by id via PBFT http")
+  public void test4getAccountIdFromPbft() {
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    response = HttpMethed.getAccountByIdFromPbft(httpPbftNode, accountId, true);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals(responseContent.get("account_id"), accountId);
+    Assert.assertTrue(responseContent.size() >= 10);
+  }
+
 
 
   /**

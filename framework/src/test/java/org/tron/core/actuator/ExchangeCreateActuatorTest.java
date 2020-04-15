@@ -128,8 +128,8 @@ public class ExchangeCreateActuatorTest {
   }
 
   /**
-   * SameTokenName close,first createExchange,result is success.
-   *  1024000000 is calcFee, caculated by calcFee()
+   * SameTokenName close,first createExchange,result is success. 1024000000 is calcFee, caculated by
+   * calcFee()
    */
   @Test
   public void sameTokenNameCloseSuccessExchangeCreate() {
@@ -1431,7 +1431,7 @@ public class ExchangeCreateActuatorTest {
         OWNER_ADDRESS_FIRST, firstTokenId, firstTokenBalance, secondTokenId, secondTokenBalance));
     actuatorTest.nullTransationResult();
 
-    actuatorTest.setNullDBManagerMsg("No account store or dynamicStore store!");
+    actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
 
   }

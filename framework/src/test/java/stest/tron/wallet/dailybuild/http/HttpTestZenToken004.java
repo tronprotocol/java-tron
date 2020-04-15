@@ -24,18 +24,6 @@ import stest.tron.wallet.common.client.utils.ShieldNoteInfo;
 @Slf4j
 public class HttpTestZenToken004 {
 
-  private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(0);
-  private String httpSolidityNode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(2);
-  private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.zenTokenOwnerKey");
-  byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
-  private Long zenTokenFee = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.zenTokenFee");
-  private Long zenTokenWhenCreateNewAddress = Configuration.getByPath("testng.conf")
-      .getLong("defaultParameter.zenTokenWhenCreateNewAddress");
-
   Optional<ShieldAddressInfo> sendShieldAddressInfo;
   Optional<ShieldAddressInfo> receiverShieldAddressInfo1;
   Optional<ShieldAddressInfo> receiverShieldAddressInfo2;
@@ -61,14 +49,23 @@ public class HttpTestZenToken004 {
   ShieldNoteInfo receiverNote4;
   ShieldNoteInfo receiverNote5;
   String assetIssueId;
-
-  private Long sendTokenAmount = 18 * zenTokenFee;
-  private JSONObject responseContent;
-  private HttpResponse response;
-
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] receiverPublicAddress = ecKey1.getAddress();
   String receiverPublicKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  private String httpnode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(0);
+  private String httpSolidityNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
+  private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.zenTokenOwnerKey");
+  byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
+  private Long zenTokenFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.zenTokenFee");
+  private Long zenTokenWhenCreateNewAddress = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.zenTokenWhenCreateNewAddress");
+  private Long sendTokenAmount = 18 * zenTokenFee;
+  private JSONObject responseContent;
+  private HttpResponse response;
 
   /**
    * constructor.
@@ -79,7 +76,7 @@ public class HttpTestZenToken004 {
     Args.setFullNodeAllowShieldedTransaction(true);
   }
 
-  @Test(enabled = true, description = "Shield to two shield transaction by http")
+  @Test(enabled = false, description = "Shield to two shield transaction by http")
   public void test01ShieldToTwoShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -133,7 +130,8 @@ public class HttpTestZenToken004 {
     Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
   }
 
-  @Test(enabled = true, description = "Shield to one public and one shield transaction by http")
+  @Test(enabled = false,
+      description = "Shield to one public and one shield transaction by http")
   public void test02ShieldToOnePublicAndOneShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -214,7 +212,8 @@ public class HttpTestZenToken004 {
         .get(0).getIsSpend());
   }
 
-  @Test(enabled = true, description = "Shield to one public and two shield transaction by http")
+  @Test(enabled = false,
+      description = "Shield to one public and two shield transaction by http")
   public void test03ShieldToOnePublicAndTwoShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();

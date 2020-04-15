@@ -34,7 +34,14 @@ public class WalletTestZenToken004 {
   List<Note> shieldOutList = new ArrayList<>();
   DecryptNotes notes;
   Note note;
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] receiverPublicAddress = ecKey2.getAddress();
+  String receiverPublicKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+  Optional<ShieldAddressInfo> sendShieldAddressInfo;
+  String sendshieldAddress;
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -50,17 +57,6 @@ public class WalletTestZenToken004 {
   private Long costTokenAmount = 20 * zenTokenFee;
   private Long zenTokenWhenCreateNewAddress = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenWhenCreateNewAddress");
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] receiverPublicAddress = ecKey2.getAddress();
-  String receiverPublicKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-  Optional<ShieldAddressInfo> sendShieldAddressInfo;
-  String sendshieldAddress;
 
   /**
    * constructor.
@@ -88,7 +84,7 @@ public class WalletTestZenToken004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Shield to two shield transaction")
+  @Test(enabled = false, description = "Shield to two shield transaction")
   public void test1Shield2TwoShieldTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -149,7 +145,8 @@ public class WalletTestZenToken004 {
 
   }
 
-  @Test(enabled = true, description = "Shield to one public and one shield transaction")
+  @Test(enabled = false,
+      description = "Shield to one public and one shield transaction")
   public void test2Shield2OneShieldAndOnePublicTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -203,7 +200,8 @@ public class WalletTestZenToken004 {
     Assert.assertEquals(afterReceiverPublicAssetBalance, sendToPublicAddressAmount);
   }
 
-  @Test(enabled = true, description = "Shield to one public and two shield transaction")
+  @Test(enabled = false,
+      description = "Shield to one public and two shield transaction")
   public void test3Public2OneShieldAndOnePublicTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendshieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -238,11 +236,9 @@ public class WalletTestZenToken004 {
     String memo2 = "Shield to  shield address2 transaction";
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress2,
         "" + sendToShiledAddress2Amount, memo2);
-
     //When receiver public address don't active,the fee is 1000000
     ECKey ecKey3 = new ECKey(Utils.getRandom());
     byte[] notActivePublicAddress = ecKey3.getAddress();
-
 
     Assert.assertTrue(PublicMethed.sendShieldCoin(
         null, 0,
@@ -274,8 +270,7 @@ public class WalletTestZenToken004 {
             blockingStubFull);
     logger.info("afterNotActivePublicAssetBalance:" + afterNotActivePublicAssetBalance);
     logger.info("sendToPublicAddressAmount:" + sendToPublicAddressAmount);
-    Assert.assertEquals(afterNotActivePublicAssetBalance,sendToPublicAddressAmount);
-
+    Assert.assertEquals(afterNotActivePublicAssetBalance, sendToPublicAddressAmount);
   }
 
   /**

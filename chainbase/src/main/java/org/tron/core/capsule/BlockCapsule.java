@@ -36,7 +36,6 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
@@ -61,6 +60,16 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   private Block block;
   private List<TransactionCapsule> transactions = new ArrayList<>();
   private StringBuilder toStringBuff = new StringBuilder();
+  private boolean isSwitch;
+
+  public boolean isSwitch() {
+    return isSwitch;
+  }
+
+  public BlockCapsule setSwitch(boolean aSwitch) {
+    isSwitch = aSwitch;
+    return this;
+  }
 
   public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
     // blockheader raw
@@ -150,7 +159,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
     ByteString sig = ByteString.copyFrom(ecKeyEngine.Base64toBytes(ecKeyEngine.signHash(getRawHash()
             .getBytes())));
-
     BlockHeader blockHeader = this.block.getBlockHeader().toBuilder().setWitnessSignature(sig)
             .build();
 
@@ -282,6 +290,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public long getTimeStamp() {
     return this.block.getBlockHeader().getRawData().getTimestamp();
+  }
+
+  public boolean hasWitnessSignature() {
+    return !getInstance().getBlockHeader().getWitnessSignature().isEmpty();
   }
 
   @Override

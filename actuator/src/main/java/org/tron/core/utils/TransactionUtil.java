@@ -39,7 +39,6 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
@@ -174,26 +173,6 @@ public class TransactionUtil {
     return transaction.getRet(0).getContractRet();
   }
 
-
-  public static long getCallValue(Transaction.Contract contract) {
-    try {
-      Any contractParameter = contract.getParameter();
-      switch (contract.getType()) {
-        case TriggerSmartContract:
-          return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
-
-        case CreateSmartContract:
-          return contractParameter.unpack(CreateSmartContract.class).getNewContract()
-              .getCallValue();
-        default:
-          return 0L;
-      }
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
-      return 0L;
-    }
-  }
-
   public static long getCallTokenValue(Transaction.Contract contract) {
     try {
       Any contractParameter = contract.getParameter();
@@ -248,21 +227,6 @@ public class TransactionUtil {
     return false;
   }
 
-  public static byte[] generateContractAddress(Transaction trx) {
-
-    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-    TransactionCapsule trxCap = new TransactionCapsule(trx);
-    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
-
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return sha3omit12(combined);
-
-  }
-
   public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
 
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
@@ -297,17 +261,6 @@ public class TransactionUtil {
   public static String makeUpperCamelMethod(String originName) {
     return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)
         .replace("_", "");
-  }
-
-  public static byte[] getSelector(byte[] data) {
-    if (data == null
-        || data.length < 4) {
-      return null;
-    }
-
-    byte[] ret = new byte[4];
-    System.arraycopy(data, 0, ret, 0, 4);
-    return ret;
   }
 
   public static TransactionCapsule getTransactionSign(TransactionSign transactionSign) {

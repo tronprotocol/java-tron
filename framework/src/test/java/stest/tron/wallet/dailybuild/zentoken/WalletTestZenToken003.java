@@ -37,7 +37,12 @@ public class WalletTestZenToken003 {
   List<Note> shieldOutList = new ArrayList<>();
   DecryptNotes notes;
   Note note;
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
+  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] receiverPublicAddress = ecKey2.getAddress();
+  String receiverPublicKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -58,14 +63,6 @@ public class WalletTestZenToken003 {
   private Optional<Transaction> byId;
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] zenTokenOwnerAddress = ecKey1.getAddress();
-  String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] receiverPublicAddress = ecKey2.getAddress();
-  String receiverPublicKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
   /**
    * constructor.
@@ -93,7 +90,8 @@ public class WalletTestZenToken003 {
     Args.setFullNodeAllowShieldedTransaction(true);
   }
 
-  @Test(enabled = true, description = "Public to two shield transaction")
+  @Test(enabled = false,
+      description = "Public to two shield transaction")
   public void test1Public2ShieldTransaction() {
     Optional<ShieldAddressInfo> shieldAddressInfo1 = PublicMethed.generateShieldAddress();
     String shieldAddress1 = shieldAddressInfo1.get().getAddress();
@@ -153,7 +151,8 @@ public class WalletTestZenToken003 {
 
   }
 
-  @Test(enabled = true, description = "Public to one public and one shield transaction")
+  @Test(enabled = false,
+      description = "Public to one public and one shield transaction")
   public void test2Public2OneShieldAndOnePublicTransaction() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -170,7 +169,7 @@ public class WalletTestZenToken003 {
         .getAccountResource(zenTokenOwnerAddress, blockingStubFull).getFreeNetUsed();
 
     final Long beforeBalance = PublicMethed
-        .queryAccount(receiverPublicAddress,blockingStubFull).getBalance();
+        .queryAccount(receiverPublicAddress, blockingStubFull).getBalance();
     Long sendToShiledAddress1Amount = 1 * zenTokenFee;
     //When receiver public address don't active,the fee is 1000000
     Long sendToPublicAddressAmount = costTokenAmount
@@ -196,7 +195,6 @@ public class WalletTestZenToken003 {
     byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     Assert.assertTrue(byId.get().getSignatureCount() == 1);
 
-
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
         PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
         blockingStubFull);
@@ -204,7 +202,7 @@ public class WalletTestZenToken003 {
         .getAccountResource(zenTokenOwnerAddress, blockingStubFull)
         .getFreeNetUsed();
     final Long afterBalance = PublicMethed
-        .queryAccount(receiverPublicAddress,blockingStubFull).getBalance();
+        .queryAccount(receiverPublicAddress, blockingStubFull).getBalance();
     logger.info("beforeAssetBalance:" + beforeAssetBalance);
     logger.info("afterAssetBalance:" + afterAssetBalance);
     Assert.assertTrue(beforeAssetBalance - afterAssetBalance == costTokenAmount);
@@ -225,7 +223,8 @@ public class WalletTestZenToken003 {
     Assert.assertEquals(afterReceiverPublicAssetBalance, sendToPublicAddressAmount);
   }
 
-  @Test(enabled = true, description = "Public to one public and two shield transaction")
+  @Test(enabled = false,
+      description = "Public to one public and two shield transaction")
   public void test3Public2OneShieldAndOnePublicTransaction() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -302,7 +301,8 @@ public class WalletTestZenToken003 {
         - beforeReceiverPublicAssetBalance == sendToPublicAddressAmount);
   }
 
-  @Test(enabled = true, description = "Public to one smart contract and one shield transaction")
+  @Test(enabled = false,
+      description = "Public to one smart contract and one shield transaction")
   public void test4Public2OneShieldAndOneSmartContractAddressTransaction() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -319,7 +319,7 @@ public class WalletTestZenToken003 {
         .getAccountResource(zenTokenOwnerAddress, blockingStubFull).getFreeNetUsed();
 
     final Long beforeBalance = PublicMethed
-        .queryAccount(receiverPublicAddress,blockingStubFull).getBalance();
+        .queryAccount(receiverPublicAddress, blockingStubFull).getBalance();
     Long sendToShiledAddress1Amount = 1 * zenTokenFee;
 
     shieldOutList.clear();
@@ -367,7 +367,6 @@ public class WalletTestZenToken003 {
     byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     Assert.assertTrue(byId.get().getSignatureCount() == 1);
 
-
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
         PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
         blockingStubFull);
@@ -375,7 +374,7 @@ public class WalletTestZenToken003 {
         .getAccountResource(zenTokenOwnerAddress, blockingStubFull)
         .getFreeNetUsed();
     final Long afterBalance = PublicMethed
-        .queryAccount(receiverPublicAddress,blockingStubFull).getBalance();
+        .queryAccount(receiverPublicAddress, blockingStubFull).getBalance();
     logger.info("beforeAssetBalance:" + beforeAssetBalance);
     logger.info("afterAssetBalance:" + afterAssetBalance);
     Assert.assertTrue(beforeAssetBalance - afterAssetBalance == costTokenAmount);
@@ -392,13 +391,13 @@ public class WalletTestZenToken003 {
 
     Long afterReceiverPublicAssetBalance = PublicMethed
         .getAssetIssueValue(contractAddress.toByteArray(),
-        PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
-        blockingStubFull);
+            PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
+            blockingStubFull);
     Assert.assertEquals(afterReceiverPublicAssetBalance, sendToPublicAddressAmount);
   }
 
-
-  @Test(enabled = true, description = "Public to two same shield address")
+  @Test(enabled = false,
+      description = "Public to two same shield address")
   public void test5Public2TwoSameShieldAddress() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -460,8 +459,6 @@ public class WalletTestZenToken003 {
     Assert.assertEquals(memo2, PublicMethed.getMemo(note));
 
   }
-
-
 
 
   /**

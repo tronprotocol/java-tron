@@ -35,8 +35,8 @@ public class Sha256HashTest {
       Thread thread =
           new Thread(() -> {
             for (int i = 0; i < 10000; i++) {
-              byte[] hash0 = Sha256Hash.hash(CommonParameter
-                  .getInstance().isECKeyCryptoEngine(), input);
+              byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance()
+                  .isECKeyCryptoEngine(),input);
               countAll.incrementAndGet();
               if (!Arrays.equals(hash, hash0)) {
                 countFailed.incrementAndGet();
