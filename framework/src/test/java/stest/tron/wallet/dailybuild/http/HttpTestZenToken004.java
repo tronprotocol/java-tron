@@ -61,7 +61,9 @@ public class HttpTestZenToken004 {
   byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
-  private Long sendTokenAmount = 8 * zenTokenFee;
+  private Long zenTokenWhenCreateNewAddress = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.zenTokenWhenCreateNewAddress");
+  private Long sendTokenAmount = 18 * zenTokenFee;
   private JSONObject responseContent;
   private HttpResponse response;
 
@@ -74,7 +76,7 @@ public class HttpTestZenToken004 {
     Args.setFullNodeAllowShieldedTransaction(true);
   }
 
-  @Test(enabled = true, description = "Shield to two shield transaction by http")
+  @Test(enabled = false, description = "Shield to two shield transaction by http")
   public void test01ShieldToTwoShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -89,7 +91,6 @@ public class HttpTestZenToken004 {
             null, 0, foundationZenTokenKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 
@@ -118,7 +119,6 @@ public class HttpTestZenToken004 {
     HttpMethed.printJsonContent(responseContent);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
-    HttpMethed.waitToProduceOneBlock(httpnode);
 
     receiverNote1 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo1.get()).get(0);
     receiverNote2 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo2.get()).get(0);
@@ -130,7 +130,8 @@ public class HttpTestZenToken004 {
     Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
   }
 
-  @Test(enabled = true, description = "Shield to one public and one shield transaction by http")
+  @Test(enabled = false,
+      description = "Shield to one public and one shield transaction by http")
   public void test02ShieldToOnePublicAndOneShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -146,7 +147,6 @@ public class HttpTestZenToken004 {
             null, 0, foundationZenTokenKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 
@@ -166,7 +166,8 @@ public class HttpTestZenToken004 {
 
     shieldOutList.clear();
     Long sendToPublicAddressAmount = 1 * zenTokenFee;
-    Long sendToShiledAddressAmount = sendTokenAmount - sendToPublicAddressAmount - zenTokenFee;
+    Long sendToShiledAddressAmount = sendTokenAmount - sendToPublicAddressAmount
+        - zenTokenWhenCreateNewAddress;
     memo3 = "Send shield to receiver shield memo in" + System.currentTimeMillis();
     shieldOutList = HttpMethed.addShieldOutputList(httpnode, shieldOutList, receiverShieldAddress3,
         "" + sendToShiledAddressAmount, memo3);
@@ -211,7 +212,8 @@ public class HttpTestZenToken004 {
         .get(0).getIsSpend());
   }
 
-  @Test(enabled = true, description = "Shield to one public and two shield transaction by http")
+  @Test(enabled = false,
+      description = "Shield to one public and two shield transaction by http")
   public void test03ShieldToOnePublicAndTwoShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -227,7 +229,6 @@ public class HttpTestZenToken004 {
             null, 0, foundationZenTokenKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
     sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 

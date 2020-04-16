@@ -305,8 +305,6 @@ public class EnergyWhenSendAndTransferTest {
    */
   @After
   public void destroy() {
-    AppT.shutdownServices();
-    AppT.shutdown();
     context.destroy();
     Args.clearParam();
     if (FileUtil.deleteDir(new File(dbPath))) {

@@ -7,8 +7,8 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionSign;
 
@@ -18,7 +18,7 @@ import org.tron.protos.Protocol.TransactionSign;
 public class AddTransactionSignServlet extends RateLimiterServlet {
 
   @Autowired
-  private Wallet wallet;
+  private TransactionUtil transactionUtil;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
 
@@ -38,7 +38,7 @@ public class AddTransactionSignServlet extends RateLimiterServlet {
       input.put("transaction", jsonTransaction);
       TransactionSign.Builder build = TransactionSign.newBuilder();
       JsonFormat.merge(input.toJSONString(), build, visible);
-      TransactionCapsule reply = wallet.addSign(build.build());
+      TransactionCapsule reply = transactionUtil.addSign(build.build());
       if (reply != null) {
         response.getWriter().println(Util.printCreateTransaction(reply.getInstance(), visible));
       } else {

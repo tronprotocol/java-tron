@@ -24,6 +24,7 @@ import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.exception.P2pException;
+import org.tron.core.net.PbftHandler;
 import org.tron.core.net.TronNetHandler;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -49,6 +50,8 @@ public class Channel {
   private P2pHandler p2pHandler;
   @Autowired
   private TronNetHandler tronNetHandler;
+  @Autowired
+  private PbftHandler pbftHandler;
   private ChannelManager channelManager;
   private ChannelHandlerContext ctx;
   private InetSocketAddress inetSocketAddress;
@@ -86,9 +89,11 @@ public class Channel {
     handshakeHandler.setChannel(this, remoteId);
     p2pHandler.setChannel(this);
     tronNetHandler.setChannel(this);
+    pbftHandler.setChannel(this);
 
     p2pHandler.setMsgQueue(msgQueue);
     tronNetHandler.setMsgQueue(msgQueue);
+    pbftHandler.setMsgQueue(msgQueue);
   }
 
   public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
@@ -99,6 +104,7 @@ public class Channel {
     ctx.pipeline().addLast("messageCodec", messageCodec);
     ctx.pipeline().addLast("p2p", p2pHandler);
     ctx.pipeline().addLast("data", tronNetHandler);
+    ctx.pipeline().addLast("pbft", pbftHandler);
     setStartTime(msg.getTimestamp());
     setTronState(TronState.HANDSHAKE_FINISHED);
     getNodeStatistics().p2pHandShake.add();

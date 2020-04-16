@@ -48,6 +48,9 @@ public class HttpTestAsset001 {
       .get(1);
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
+  private String httpPbftNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(4);
+
 
   /**
    * constructor.
@@ -103,8 +106,22 @@ public class HttpTestAsset001 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "GetAssetIssueById from PBFT by http")
+  public void test04GetAssetIssueByIdFromPbft() {
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    response = HttpMethed.getAssetIssueByIdFromPbft(httpPbftNode, assetIssueId);
+    getAssetIssueByIdContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(getAssetIssueByIdContent);
+    Assert.assertTrue(totalSupply == getAssetIssueByIdContent.getLong("total_supply"));
+  }
+
+
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "GetAssetIssueByName by http")
-  public void test04GetAssetIssueByName() {
+  public void test05GetAssetIssueByName() {
     response = HttpMethed.getAssetIssueByName(httpnode, name);
     getAssetIssueByNameContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getAssetIssueByNameContent);
@@ -115,7 +132,7 @@ public class HttpTestAsset001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetAssetIssueByName from solidity by http")
-  public void test05GetAssetIssueByNameFromSolidity() {
+  public void test06GetAssetIssueByNameFromSolidity() {
     response = HttpMethed.getAssetIssueByNameFromSolidity(httpSoliditynode, name);
     getAssetIssueByNameContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getAssetIssueByNameContent);
@@ -125,8 +142,21 @@ public class HttpTestAsset001 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "GetAssetIssueByName from PBFT by http")
+  public void test07GetAssetIssueByNameFromPbft() {
+    response = HttpMethed.getAssetIssueByNameFromPbft(httpPbftNode, name);
+    getAssetIssueByNameContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(getAssetIssueByNameContent);
+    Assert.assertTrue(totalSupply == getAssetIssueByNameContent.getLong("total_supply"));
+  }
+
+
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "TransferAsset by http")
-  public void test06TransferAsset() {
+  public void test08TransferAsset() {
     logger.info("Transfer asset.");
     response = HttpMethed.transferAsset(httpnode, assetAddress, participateAddress, assetIssueId,
         100L, assetKey);
@@ -144,7 +174,7 @@ public class HttpTestAsset001 {
    * constructor.
    */
   @Test(enabled = true, description = "Participate asset issue by http")
-  public void test07ParticipateAssetIssue() {
+  public void test09ParticipateAssetIssue() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.participateAssetIssue(httpnode, assetAddress, participateAddress,
         assetIssueId, 1000L, participateKey);
@@ -160,7 +190,7 @@ public class HttpTestAsset001 {
    * constructor.
    */
   @Test(enabled = true, description = "Update asset issue by http")
-  public void test08UpdateAssetIssue() {
+  public void test10UpdateAssetIssue() {
     response = HttpMethed.updateAssetIssue(httpnode, assetAddress, updateDescription, updateUrl,
         290L, 390L, assetKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
@@ -184,7 +214,7 @@ public class HttpTestAsset001 {
    * * constructor. *
    */
   @Test(enabled = true, description = "Get asset issue list by http")
-  public void test09GetAssetissueList() {
+  public void test11GetAssetissueList() {
 
     response = HttpMethed.getAssetissueList(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -200,7 +230,7 @@ public class HttpTestAsset001 {
    * * constructor. *
    */
   @Test(enabled = true, description = "Get asset issue list from solidity by http")
-  public void test10GetAssetissueListFromSolidity() {
+  public void test12GetAssetissueListFromSolidity() {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getAssetIssueListFromSolidity(httpSoliditynode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -211,12 +241,29 @@ public class HttpTestAsset001 {
     Assert.assertTrue(jsonArray.size() >= 1);
   }
 
+  /**
+   * * constructor. *
+   */
+  @Test(enabled = true, description = "Get asset issue list from PBFT by http")
+  public void test13GetAssetissueListFromPbft() {
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+    response = HttpMethed.getAssetIssueListFromPbft(httpPbftNode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("assetIssue"));
+    Assert.assertTrue(jsonArray.size() >= 1);
+  }
+
+
+
 
   /**
    * * constructor. *
    */
   @Test(enabled = true, description = "Get paginated asset issue list by http")
-  public void test11GetPaginatedAssetissueList() {
+  public void test14GetPaginatedAssetissueList() {
     response = HttpMethed.getPaginatedAssetissueList(httpnode, 0, 1);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -231,7 +278,7 @@ public class HttpTestAsset001 {
    * * constructor. *
    */
   @Test(enabled = true, description = "Get paginated asset issue list from solidity by http")
-  public void test12GetPaginatedAssetissueListFromSolidity() {
+  public void test15GetPaginatedAssetissueListFromSolidity() {
     response = HttpMethed.getPaginatedAssetissueListFromSolidity(httpSoliditynode, 0, 1);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -240,6 +287,22 @@ public class HttpTestAsset001 {
     JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("assetIssue"));
     Assert.assertTrue(jsonArray.size() == 1);
   }
+
+
+  /**
+   * * constructor. *
+   */
+  @Test(enabled = true, description = "Get paginated asset issue list from PBFT by http")
+  public void test16GetPaginatedAssetissueListFromPbft() {
+    response = HttpMethed.getPaginatedAssetissueListFromPbft(httpPbftNode, 0, 1);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("assetIssue"));
+    Assert.assertTrue(jsonArray.size() == 1);
+  }
+
 
 
   /**

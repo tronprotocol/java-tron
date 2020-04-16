@@ -14,6 +14,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -21,6 +22,7 @@ import org.tron.core.db.Manager;
 
 
 public class NodeHandlerTest {
+
   private static final Logger logger = LoggerFactory.getLogger("Test");
   private Manager dbManager;
   private TronApplicationContext context;
@@ -55,8 +57,6 @@ public class NodeHandlerTest {
   @After
   public void destroy() {
     Args.clearParam();
-    appTest.shutdownServices();
-    appTest.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File("output-directory"))) {
       logger.info("Release resources successful.");
@@ -71,16 +71,16 @@ public class NodeHandlerTest {
   @Before
   public void initNodes() {
     dbManager = context.getBean(Manager.class);
-    nodeManager = new NodeManager(dbManager);
+    nodeManager = new NodeManager(context.getBean(ChainBaseManager.class));
     String currNodeId = "74c11ffad1d59d7b1a56691a0b84a53f0791c92361357364f1d2537"
-            + "898407ef0249bbbf5a4ce8cff9e34e2fdf8bac883540e026d1e5d6ebf536414bdde81198e";
+        + "898407ef0249bbbf5a4ce8cff9e34e2fdf8bac883540e026d1e5d6ebf536414bdde81198e";
     String oldNodeId = "74c11ffad1d59d7b2c56691a0b84a53f0791c92361357364f1d2537898407e"
-            + "f0249bbbf5a4ce8cff9e34e2fdf8bac883540e026d1e5d6ebf536414bdde81198e";
+        + "f0249bbbf5a4ce8cff9e34e2fdf8bac883540e026d1e5d6ebf536414bdde81198e";
     String replaceNodeId = "74c11ffad1d59d7b1a56691a0b84a53f0791c92361357364f1d2537"
-            + "837407ef0249bbbf5a4ce8cff9e34e2fdf8bac883540e026d1e5d6ebf536414bdde81198e";
-    currNode = new Node(currNodeId.getBytes(),"47.95.206.44",18885,18888);
-    oldNode = new Node(oldNodeId.getBytes(),"36.95.165.44",18885,18888);
-    replaceNode = new Node(replaceNodeId.getBytes(), "47.29.177.44", 18885,18888);
+        + "837407ef0249bbbf5a4ce8cff9e34e2fdf8bac883540e026d1e5d6ebf536414bdde81198e";
+    currNode = new Node(currNodeId.getBytes(), "47.95.206.44", 18885, 18888);
+    oldNode = new Node(oldNodeId.getBytes(), "36.95.165.44", 18885, 18888);
+    replaceNode = new Node(replaceNodeId.getBytes(), "47.29.177.44", 18885, 18888);
     currHandler = new NodeHandler(currNode, nodeManager);
     oldHandler = new NodeHandler(oldNode, nodeManager);
     replaceHandler = new NodeHandler(replaceNode, nodeManager);
@@ -90,7 +90,7 @@ public class NodeHandlerTest {
   public void stateNonActiveTest() throws Exception {
     Class clazz = NodeHandler.class;
     Constructor<NodeHandler> cn = clazz.getDeclaredConstructor(Node.class, NodeManager.class);
-    NodeHandler nh = cn.newInstance(oldNode,nodeManager);
+    NodeHandler nh = cn.newInstance(oldNode, nodeManager);
     Field declaredField = clazz.getDeclaredField("replaceCandidate");
     declaredField.setAccessible(true);
     declaredField.set(nh, replaceHandler);

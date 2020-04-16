@@ -3,8 +3,10 @@ package stest.tron.wallet.account;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
@@ -23,16 +25,22 @@ public class BrokerageTest001 {
       .getString("witness.key1");
   private byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
 
-  private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(0);
   private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
-  private String solidytnode = Configuration.getByPath("testng.conf")
-      .getStringList("solidityNode.ip.list").get(0);
-
-  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidyty = null;
   private ManagedChannel channelSolidity = null;
+  private ManagedChannel channelSoliInFull = null;
+  private ManagedChannel channelPbft = null;
+  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSoliInFull = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubPbft = null;
+  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
+      .get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
+  private String soliInFullnode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
+  private String soliInPbft = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(2);
 
   private String dev001Key = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
@@ -49,10 +57,20 @@ public class BrokerageTest001 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-    channelSolidity = ManagedChannelBuilder.forTarget(solidytnode)
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
         .usePlaintext(true)
         .build();
-    blockingStubSolidyty = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    channelSoliInFull = ManagedChannelBuilder.forTarget(soliInFullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSoliInFull = WalletSolidityGrpc.newBlockingStub(channelSoliInFull);
+
+    channelPbft = ManagedChannelBuilder.forTarget(soliInPbft)
+        .usePlaintext(true)
+        .build();
+    blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
 
     PublicMethed.printAddress(dev001Key);
   }
@@ -81,7 +99,9 @@ public class BrokerageTest001 {
     Assert.assertEquals(20, blockingStubFull.getBrokerageInfo(bytesMessage).getNum());
 
     // getBrokerageInfo from solidity node
-    Assert.assertEquals(20, blockingStubSolidyty.getBrokerageInfo(bytesMessage).getNum());
+    Assert.assertEquals(20, blockingStubSolidity.getBrokerageInfo(bytesMessage).getNum());
+    Assert.assertEquals(20, blockingStubSoliInFull.getBrokerageInfo(bytesMessage).getNum());
+    Assert.assertEquals(20, blockingStubPbft.getBrokerageInfo(bytesMessage).getNum());
   }
 
   @Test
@@ -92,8 +112,34 @@ public class BrokerageTest001 {
     Assert.assertTrue(blockingStubFull.getRewardInfo(bytesMessage) != null);
 
     // getRewardInfo from solidity node
-    Assert.assertTrue(blockingStubSolidyty.getRewardInfo(bytesMessage) != null);
+    Assert.assertTrue(blockingStubSolidity.getRewardInfo(bytesMessage) != null);
+    Assert.assertTrue(blockingStubPbft.getRewardInfo(bytesMessage) != null);
+    Assert.assertTrue(blockingStubSoliInFull.getRewardInfo(bytesMessage) != null);
   }
+
+
+
+
+  /**
+   * constructor.
+   */
+  @AfterClass(enabled = true)
+  public void shutdown() throws InterruptedException {
+    if (channelFull != null) {
+      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelPbft != null) {
+      channelPbft.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSoliInFull != null) {
+      channelSoliInFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+  }
+
+
 
   boolean updateBrokerage(byte[] owner, int brokerage,
       WalletGrpc.WalletBlockingStub blockingStubFull) {

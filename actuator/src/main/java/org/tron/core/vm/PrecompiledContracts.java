@@ -28,8 +28,7 @@ import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
 import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
-
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,12 +47,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
+import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
 import org.tron.common.crypto.zksnark.BN128G1;
 import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
@@ -66,6 +68,7 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol.Permission;
+import org.tron.common.crypto.SignatureInterface;
 
 /**
  * @author Roman Mandeleil
@@ -177,9 +180,12 @@ public class PrecompiledContracts {
       if (v < 27) {
         v += 27;
       }
-      ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
+
+      SignatureInterface signature = SignUtils.fromComponents(r, s, v,
+          CommonParameter.getInstance().isECKeyCryptoEngine());
       if (signature.validateComponents()) {
-        out = ECKey.signatureToAddress(hash, signature);
+        out = SignUtils.signatureToAddress(hash, signature,
+            CommonParameter.getInstance().isECKeyCryptoEngine());
       }
     } catch (Throwable any) {
       logger.info("ECRecover error", any.getMessage());
@@ -313,9 +319,11 @@ public class PrecompiledContracts {
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
       if (data == null) {
-        return Pair.of(true, Sha256Hash.hash(EMPTY_BYTE_ARRAY));
+        return Pair.of(true, Sha256Hash.hash(CommonParameter
+            .getInstance().isECKeyCryptoEngine(), EMPTY_BYTE_ARRAY));
       }
-      return Pair.of(true, Sha256Hash.hash(data));
+      return Pair.of(true, Sha256Hash.hash(CommonParameter
+          .getInstance().isECKeyCryptoEngine(), data));
     }
   }
 
@@ -340,9 +348,12 @@ public class PrecompiledContracts {
       if (data == null) {
         data = EMPTY_BYTE_ARRAY;
       }
-      byte[] orig = Sha256Hash.hash(data);
+
+      byte[] orig = Sha256Hash.hash(CommonParameter.getInstance()
+          .isECKeyCryptoEngine(), data);
       System.arraycopy(orig, 0, target, 0, 20);
-      return Pair.of(true, Sha256Hash.hash(target));
+      return Pair.of(true, Sha256Hash.hash(CommonParameter.getInstance()
+          .isECKeyCryptoEngine(), target));
     }
   }
 
@@ -380,9 +391,11 @@ public class PrecompiledContracts {
         int sLength = data.length < 128 ? data.length - 96 : 32;
         System.arraycopy(data, 96, s, 0, sLength);
 
-        ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v[31]);
+        SignatureInterface signature = SignUtils.fromComponents(r, s, v[31]
+            , CommonParameter.getInstance().isECKeyCryptoEngine());
         if (validateV(v) && signature.validateComponents()) {
-          out = new DataWord(ECKey.signatureToAddress(h, signature));
+          out = new DataWord(SignUtils.signatureToAddress(h, signature
+              , CommonParameter.getInstance().isECKeyCryptoEngine()));
         }
       } catch (Throwable any) {
       }
@@ -397,11 +410,11 @@ public class PrecompiledContracts {
 
   /**
    * Computes modular exponentiation on big numbers
-   *
+   * <p>
    * format of data[] array: [length_of_BASE] [length_of_EXPONENT] [length_of_MODULUS] [BASE]
    * [EXPONENT] [MODULUS] where every length is a 32-byte left-padded integer representing the
    * number of bytes. Call data is assumed to be infinitely right-padded with zero bytes.
-   *
+   * <p>
    * Returns an output as a byte array with the same length as the modulus
    */
   public static class ModExp extends PrecompiledContract {
@@ -514,11 +527,11 @@ public class PrecompiledContracts {
 
   /**
    * Computes point addition on Barreto–Naehrig curve. See {@link BN128Fp} for details<br/> <br/>
-   *
+   * <p>
    * input data[]:<br/> two points encoded as (x, y), where x and y are 32-byte left-padded
    * integers,<br/> if input is shorter than expected, it's assumed to be right-padded with zero
    * bytes<br/> <br/>
-   *
+   * <p>
    * output:<br/> resulting point (x', y'), where x and y encoded as 32-byte left-padded
    * integers<br/>
    */
@@ -561,11 +574,11 @@ public class PrecompiledContracts {
   /**
    * Computes multiplication of scalar value on a point belonging to Barreto–Naehrig curve. See
    * {@link BN128Fp} for details<br/> <br/>
-   *
+   * <p>
    * input data[]:<br/> point encoded as (x, y) is followed by scalar s, where x, y and s are
    * 32-byte left-padded integers,<br/> if input is shorter than expected, it's assumed to be
    * right-padded with zero bytes<br/> <br/>
-   *
+   * <p>
    * output:<br/> resulting point (x', y'), where x and y encoded as 32-byte left-padded
    * integers<br/>
    */
@@ -601,7 +614,7 @@ public class PrecompiledContracts {
 
   /**
    * Computes pairing check. <br/> See {@link PairingCheck} for details.<br/> <br/>
-   *
+   * <p>
    * Input data[]: <br/> an array of points (a1, b1, ... , ak, bk), <br/> where "ai" is a point of
    * {@link BN128Fp} curve and encoded as two 32-byte left-padded integers (x; y) <br/> "bi" is a
    * point of {@link BN128G2} curve and encoded as four 32-byte left-padded integers {@code (ai + b;
@@ -609,7 +622,7 @@ public class PrecompiledContracts {
    * {@code a} in the encoding: {@code (b, a; d, c)} <br/> thus each pair (ai, bi) has 192 bytes
    * length, if 192 is not a multiple of {@code data.length} then execution fails <br/> the number
    * of pairs is derived from input length by dividing it by 192 (the length of a pair) <br/> <br/>
-   *
+   * <p>
    * output: <br/> pairing product which is either 0 or 1, encoded as 32-byte left-padded integer
    * <br/>
    */
@@ -713,7 +726,8 @@ public class PrecompiledContracts {
 
       byte[] combine = ByteUtil
           .merge(convertToTronAddress(addr), ByteArray.fromInt(permissionId), data);
-      byte[] hash = Sha256Hash.hash(combine);
+      byte[] hash = Sha256Hash.hash(CommonParameter
+          .getInstance().isECKeyCryptoEngine(), combine);
 
       byte[][] signatures = extractBytesArray(
           words, words[3].intValueSafe() / WORD_SIZE, rawData);
@@ -796,7 +810,7 @@ public class PrecompiledContracts {
       }
       byte[] res = new byte[WORD_SIZE];
       if (isConstantCall()) {
-        //for static call not use thread pool to avoid potential effect
+        //for constant call not use thread pool to avoid potential effect
         for (int i = 0; i < cnt; i++) {
           if (DataWord
               .equalAddressByteArray(addresses[i], recoverAddrBySign(signatures[i], hash))) {

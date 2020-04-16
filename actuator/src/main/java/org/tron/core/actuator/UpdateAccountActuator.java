@@ -26,7 +26,7 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     final AccountUpdateContract accountUpdateContract;
@@ -54,15 +54,15 @@ public class UpdateAccountActuator extends AbstractActuator {
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
 
     if (!this.any.is(AccountUpdateContract.class)) {
       throw new ContractValidateException(
-          "contract type error, expected type [AccountUpdateContract], real type[" + contract
+          "contract type error, expected type [AccountUpdateContract], real type[" + any
               .getClass() + "]");
     }
     final AccountUpdateContract accountUpdateContract;

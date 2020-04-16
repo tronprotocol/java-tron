@@ -11,7 +11,7 @@ import org.tron.common.overlay.discover.node.statistics.MessageCount;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
@@ -101,8 +101,9 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
           .getCount(10);
       int maxCount = advService.getTrxCount().getCount(60);
       if (fetchCount > maxCount) {
-        throw new P2pException(TypeEnum.BAD_MESSAGE,
-            "maxCount: " + maxCount + ", fetchCount: " + fetchCount);
+        logger.error("maxCount: " + maxCount + ", fetchCount: " + fetchCount);
+        //        throw new P2pException(TypeEnum.BAD_MESSAGE,
+        //            "maxCount: " + maxCount + ", fetchCount: " + fetchCount);
       }
     } else {
       boolean isAdv = true;
@@ -118,8 +119,11 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         int outBlockCountIn1min = tronOutAdvBlock.getCount(60);
         int producedBlockIn2min = 120_000 / BLOCK_PRODUCED_INTERVAL;
         if (outBlockCountIn1min > producedBlockIn2min) {
-          throw new P2pException(TypeEnum.BAD_MESSAGE, "producedBlockIn2min: " + producedBlockIn2min
-              + ", outBlockCountIn1min: " + outBlockCountIn1min);
+          logger.error("producedBlockIn2min: " + producedBlockIn2min + ", outBlockCountIn1min: "
+              + outBlockCountIn1min);
+          //throw new P2pException(TypeEnum.BAD_MESSAGE, "producedBlockIn2min: "
+          // + producedBlockIn2min
+          //  + ", outBlockCountIn1min: " + outBlockCountIn1min);
         }
       } else {
         if (!peer.isNeedSyncFromUs()) {
@@ -128,7 +132,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
           long blockNum = new BlockId(hash).getNum();
           long minBlockNum =
-              peer.getLastSyncBlockId().getNum() - 2 * NodeConstant.SYNC_FETCH_BATCH_NUM;
+              peer.getLastSyncBlockId().getNum() - 2 * NetConstants.SYNC_FETCH_BATCH_NUM;
           if (blockNum < minBlockNum) {
             throw new P2pException(TypeEnum.BAD_MESSAGE,
                 "minBlockNum: " + minBlockNum + ", blockNum: " + blockNum);

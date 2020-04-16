@@ -60,7 +60,7 @@ public class ContractEventParserAbi extends ContractEventParser {
     if (ArrayUtils.isEmpty(data)) {
       return map;
     }
-    // in case indexed topics doesn't match
+    // in case indexed topics do not match
     if (!topicsMatched(topicList, entry)) {
       map.put("" + (topicList.size() - 1), Hex.toHexString(data));
       return map;

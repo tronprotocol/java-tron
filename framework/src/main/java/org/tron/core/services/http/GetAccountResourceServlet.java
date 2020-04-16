@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-
 
 @Component
 @Slf4j(topic = "API")
@@ -27,13 +25,7 @@ public class GetAccountResourceServlet extends RateLimiterServlet {
       if (visible) {
         address = Util.getHexAddress(address);
       }
-      AccountResourceMessage reply = wallet
-          .getAccountResource(ByteString.copyFrom(ByteArray.fromHexString(address)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(address)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -41,24 +33,26 @@ public class GetAccountResourceServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
+      PostParams params = PostParams.getPostParams(request);
+      JSONObject jsonObject = JSONObject.parseObject(params.getParams());
       String address = jsonObject.getString("address");
-      if (visible) {
+      if (params.isVisible()) {
         address = Util.getHexAddress(address);
       }
-      AccountResourceMessage reply = wallet
-          .getAccountResource(ByteString.copyFrom(ByteArray.fromHexString(address)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(params.isVisible(), ByteString.copyFrom(ByteArray.fromHexString(address)),
+          response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(boolean visible, ByteString address, HttpServletResponse response)
+      throws Exception {
+    AccountResourceMessage reply = wallet.getAccountResource(address);
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }

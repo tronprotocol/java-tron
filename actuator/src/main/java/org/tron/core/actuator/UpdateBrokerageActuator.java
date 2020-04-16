@@ -30,7 +30,7 @@ public class UpdateBrokerageActuator extends AbstractActuator {
   public boolean execute(Object result) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) result;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     final UpdateBrokerageContract updateBrokerageContract;
@@ -57,11 +57,11 @@ public class UpdateBrokerageActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (this.contract == null) {
-      throw new ContractValidateException("No contract!");
+    if (this.any == null) {
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     AccountStore accountStore = chainBaseManager.getAccountStore();

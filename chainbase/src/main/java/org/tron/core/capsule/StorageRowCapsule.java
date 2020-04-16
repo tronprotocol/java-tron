@@ -19,6 +19,7 @@ import java.util.Arrays;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 
 
@@ -55,7 +56,8 @@ public class StorageRowCapsule implements ProtoCapsule<byte[]> {
   }
 
   public Sha256Hash getHash() {
-    return Sha256Hash.of(this.rowValue);
+    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+        this.rowValue);
   }
 
   public byte[] getValue() {

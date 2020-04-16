@@ -1,6 +1,6 @@
 allprojects {
     version = "1.0.0"
-    apply plugin: "java"    
+    apply plugin: "java"
 }
 
 subprojects {
@@ -29,7 +29,7 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url 'http://repo.spring.io/plugins-release' }
+        maven { url 'https://repo.spring.io/plugins-release' }
         maven { url 'https://jitpack.io' }
     }
 
@@ -59,6 +59,11 @@ subprojects {
 //        archives jar
         archives sourcesJar
     }
+
+    tasks.withType(AbstractArchiveTask) {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
 }
 
 task copyToParent(type: Copy) {
@@ -68,4 +73,5 @@ task copyToParent(type: Copy) {
     }
 }
 
-build.finalizedBy(copyToParent) 
+build.finalizedBy(copyToParent)
+

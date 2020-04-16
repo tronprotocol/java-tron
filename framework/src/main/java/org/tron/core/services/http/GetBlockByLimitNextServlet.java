@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,10 +22,8 @@ public class GetBlockByLimitNextServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = Util.getVisible(request);
-      long startNum = Long.parseLong(request.getParameter("startNum"));
-      long endNum = Long.parseLong(request.getParameter("endNum"));
-      writeResponse(endNum, startNum, visible, response);
+      fillResponse(Util.getVisible(request), Long.parseLong(request.getParameter("startNum")),
+          Long.parseLong(request.getParameter("endNum")), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -38,27 +37,22 @@ public class GetBlockByLimitNextServlet extends RateLimiterServlet {
       boolean visible = Util.getVisiblePost(input);
       BlockLimit.Builder build = BlockLimit.newBuilder();
       JsonFormat.merge(input, build, visible);
-      long startNum = build.getStartNum();
-      long endNum = build.getEndNum();
-      writeResponse(endNum, startNum, visible, response);
+      fillResponse(visible, build.getStartNum(), build.getEndNum(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
-  private void writeResponse(long endNum, long startNum, boolean visible,
-                             HttpServletResponse response)
-          throws Exception {
+  private void fillResponse(boolean visible, long startNum, long endNum,
+      HttpServletResponse response)
+      throws IOException {
     if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
       BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
       if (reply != null) {
         response.getWriter().println(Util.printBlockList(reply, visible));
-      } else {
-        response.getWriter().println("{}");
+        return;
       }
-    } else {
-      response.getWriter().println("{}");
     }
+    response.getWriter().println("{}");
   }
-
 }

@@ -61,7 +61,9 @@ public class HttpTestZenToken003 {
       .getString("defaultParameter.zenTokenId");
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
-  private Long sendTokenAmount = 8 * zenTokenFee;
+  private Long zenTokenWhenCreateNewAddress = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.zenTokenWhenCreateNewAddress");
+  private Long sendTokenAmount = 18 * zenTokenFee;
   private JSONObject responseContent;
   private HttpResponse response;
 
@@ -76,7 +78,8 @@ public class HttpTestZenToken003 {
 
   }
 
-  @Test(enabled = true, description = "Public to two shield transaction by http")
+  @Test(enabled = false,
+      description = "Public to two shield transaction by http")
   public void test01PublicToTwoShieldTransaction() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, zenTokenId,
@@ -134,7 +137,8 @@ public class HttpTestZenToken003 {
     Assert.assertEquals(memo2.getBytes(), receiverNote2.getMemo());
   }
 
-  @Test(enabled = true, description = "Public to one public and one shield transaction by http")
+  @Test(enabled = false,
+      description = "Public to one public and one shield transaction by http")
   public void test02ShieldToOneShieldAndOnePublicTransaction() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, zenTokenId,
@@ -161,7 +165,8 @@ public class HttpTestZenToken003 {
 
     shieldOutList.clear();
     Long sendToPublicAddressAmount = 1 * zenTokenFee;
-    Long sendToShiledAddressAmount = sendTokenAmount - sendToPublicAddressAmount - zenTokenFee;
+    Long sendToShiledAddressAmount = sendTokenAmount - sendToPublicAddressAmount
+        - zenTokenWhenCreateNewAddress;
     memo3 = "Send shield to receiver shield memo in" + System.currentTimeMillis();
     shieldOutList = HttpMethed.addShieldOutputList(httpnode, shieldOutList, receiverShieldAddress3,
         "" + sendToShiledAddressAmount, memo3);
@@ -207,7 +212,8 @@ public class HttpTestZenToken003 {
     Assert.assertEquals(memo3.getBytes(), receiverNote3.getMemo());
   }
 
-  @Test(enabled = true, description = "Public to one public and two shield transaction by http")
+  @Test(enabled = false,
+      description = "Public to one public and two shield transaction by http")
   public void test03ShieldToOneShieldAndTwoPublicTransaction() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, zenTokenId,

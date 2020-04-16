@@ -21,7 +21,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NodeConstant;
+import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.service.AdvService;
 import org.tron.core.net.service.SyncService;
@@ -75,7 +75,7 @@ public class PeerConnection extends Channel {
   private volatile long remainNum;
   @Getter
   private Cache<Sha256Hash, Long> syncBlockIdCache = CacheBuilder.newBuilder()
-      .maximumSize(2 * NodeConstant.SYNC_FETCH_BATCH_NUM).recordStats().build();
+      .maximumSize(2 * NetConstants.SYNC_FETCH_BATCH_NUM).recordStats().build();
   @Setter
   @Getter
   private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
@@ -90,10 +90,10 @@ public class PeerConnection extends Channel {
   private Set<BlockId> syncBlockInProcess = new HashSet<>();
   @Setter
   @Getter
-  private volatile boolean needSyncFromPeer;
+  private volatile boolean needSyncFromPeer = true;
   @Setter
   @Getter
-  private volatile boolean needSyncFromUs;
+  private volatile boolean needSyncFromUs = true;
 
   public void setBlockBothHave(BlockId blockId) {
     this.blockBothHave = blockId;
@@ -113,10 +113,18 @@ public class PeerConnection extends Channel {
   }
 
   public void onConnect() {
-    if (getHelloMessage().getHeadBlockId().getNum() > tronNetDelegate.getHeadBlockId().getNum()) {
+    long headBlockNum = tronNetDelegate.getHeadBlockId().getNum();
+    long peerHeadBlockNum = getHelloMessage().getHeadBlockId().getNum();
+
+    if (peerHeadBlockNum > headBlockNum) {
+      needSyncFromUs = false;
       setTronState(TronState.SYNCING);
       syncService.startSync(this);
     } else {
+      needSyncFromPeer = false;
+      if (peerHeadBlockNum == headBlockNum) {
+        needSyncFromUs = false;
+      }
       setTronState(TronState.SYNC_COMPLETED);
     }
   }

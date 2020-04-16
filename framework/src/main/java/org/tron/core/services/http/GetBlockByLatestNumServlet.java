@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,9 +22,7 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = Util.getVisible(request);
-      long getNum = Long.parseLong(request.getParameter("num"));
-      writeResponse(getNum, visible, response);
+      fillResponse(Util.getVisible(request), Long.parseLong(request.getParameter("num")), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -37,26 +36,21 @@ public class GetBlockByLatestNumServlet extends RateLimiterServlet {
       boolean visible = Util.getVisiblePost(input);
       NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
-      long getNum = build.getNum();
-      writeResponse(getNum, visible, response);
+      fillResponse(visible, build.getNum(), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
   }
 
-  private void writeResponse(long getNum, boolean visible,
-                             HttpServletResponse response)
-          throws Exception {
-    if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
-      BlockList reply = wallet.getBlockByLatestNum(getNum);
+  private void fillResponse(boolean visible, long num, HttpServletResponse response)
+      throws IOException {
+    if (num > 0 && num < BLOCK_LIMIT_NUM) {
+      BlockList reply = wallet.getBlockByLatestNum(num);
       if (reply != null) {
         response.getWriter().println(Util.printBlockList(reply, visible));
-      } else {
-        response.getWriter().println("{}");
+        return;
       }
-    } else {
-      response.getWriter().println("{}");
     }
+    response.getWriter().println("{}");
   }
-
 }

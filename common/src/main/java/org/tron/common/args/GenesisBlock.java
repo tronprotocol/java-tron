@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
-import org.tron.common.args.Witness;
-import org.tron.common.args.Account;
 
 public class GenesisBlock implements Serializable {
 

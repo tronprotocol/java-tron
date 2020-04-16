@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
-import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.runtime.LogEventWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry;

@@ -30,7 +30,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
   public boolean execute(Object object) throws ContractExeException {
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
-      throw new RuntimeException("TransactionResultCapsule is null");
+      throw new RuntimeException(ActuatorConstant.TX_RESULT_NULL);
     }
 
     long fee = calcFee();
@@ -61,18 +61,17 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
           "contract type error, unexpected type [UpdateEnergyLimitContract]");
     }
     if (this.any == null) {
-      throw new ContractValidateException("No contract!");
+      throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
-      throw new ContractValidateException("No account store or dynamic store!");
+      throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     ContractStore contractStore = chainBaseManager.getContractStore();
     if (!this.any.is(UpdateEnergyLimitContract.class)) {
       throw new ContractValidateException(
           "contract type error, expected type [UpdateEnergyLimitContract],real type["
-              + contract
-              .getClass() + "]");
+              + any.getClass() + "]");
     }
     final UpdateEnergyLimitContract contract;
     try {
