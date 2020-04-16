@@ -1,5 +1,7 @@
 package org.tron.core.db.api;
 
+import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
+
 import com.google.protobuf.ByteString;
 import java.io.File;
 import org.junit.AfterClass;
@@ -12,6 +14,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -19,7 +22,6 @@ import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -27,7 +29,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 public class AssetUpdateHelperTest {
 
-  private static Manager dbManager;
+  private static ChainBaseManager chainBaseManager;
   private static TronApplicationContext context;
   private static String dbPath = "output_AssetUpdateHelperTest_test";
   private static Application AppT;
@@ -44,12 +46,12 @@ public class AssetUpdateHelperTest {
   @BeforeClass
   public static void init() {
 
-    dbManager = context.getBean(Manager.class);
+    chainBaseManager = context.getBean(ChainBaseManager.class);
 
     AssetIssueContract contract =
         AssetIssueContract.newBuilder().setName(assetName).setNum(12581).setPrecision(5).build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(contract);
-    dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+    chainBaseManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
     BlockCapsule blockCapsule = new BlockCapsule(1,
         Sha256Hash.wrap(ByteString.copyFrom(
@@ -58,18 +60,18 @@ public class AssetUpdateHelperTest {
         1234, ByteString.copyFrom("1234567".getBytes()));
 
     blockCapsule.addTransaction(new TransactionCapsule(contract, ContractType.AssetIssueContract));
-    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1L);
-    dbManager.getBlockIndexStore().put(blockCapsule.getBlockId());
-    dbManager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(1L);
+    chainBaseManager.getBlockIndexStore().put(blockCapsule.getBlockId());
+    chainBaseManager.getBlockStore().put(blockCapsule.getBlockId().getBytes(), blockCapsule);
 
     ExchangeCapsule exchangeCapsule =
         new ExchangeCapsule(
             Exchange.newBuilder()
                 .setExchangeId(1L)
                 .setFirstTokenId(assetName)
-                .setSecondTokenId(ByteString.copyFrom("_".getBytes()))
+                .setSecondTokenId(ByteString.copyFrom(TRX_SYMBOL_BYTES))
                 .build());
-    dbManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
+    chainBaseManager.getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
 
     AccountCapsule accountCapsule =
         new AccountCapsule(
@@ -80,14 +82,13 @@ public class AssetUpdateHelperTest {
                 .putLatestAssetOperationTime("assetIssueName", 30000000)
                 .setAddress(ByteString.copyFrom(ByteArray.fromHexString("121212abc")))
                 .build());
-    dbManager.getAccountStore().put(ByteArray.fromHexString("121212abc"), accountCapsule);
+    chainBaseManager.getAccountStore().put(ByteArray.fromHexString("121212abc"),
+        accountCapsule);
   }
 
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
@@ -95,10 +96,10 @@ public class AssetUpdateHelperTest {
   @Test
   public void test() {
 
-    if (dbManager == null) {
+    if (chainBaseManager == null) {
       init();
     }
-    AssetUpdateHelper assetUpdateHelper = new AssetUpdateHelper(dbManager);
+    AssetUpdateHelper assetUpdateHelper = new AssetUpdateHelper(chainBaseManager);
     assetUpdateHelper.init();
     {
       assetUpdateHelper.updateAsset();
@@ -106,12 +107,12 @@ public class AssetUpdateHelperTest {
       String idNum = "1000001";
 
       AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(assetName.toByteArray());
+          chainBaseManager.getAssetIssueStore().get(assetName.toByteArray());
       Assert.assertEquals(idNum, assetIssueCapsule.getId());
       Assert.assertEquals(5L, assetIssueCapsule.getPrecision());
 
       AssetIssueCapsule assetIssueCapsule2 =
-          dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(idNum)));
+          chainBaseManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(idNum)));
 
       Assert.assertEquals(idNum, assetIssueCapsule2.getId());
       Assert.assertEquals(assetName, assetIssueCapsule2.getName());
@@ -123,7 +124,7 @@ public class AssetUpdateHelperTest {
 
       try {
         ExchangeCapsule exchangeCapsule =
-            dbManager.getExchangeV2Store().get(ByteArray.fromLong(1L));
+            chainBaseManager.getExchangeV2Store().get(ByteArray.fromLong(1L));
         Assert.assertEquals("1000001", ByteArray.toStr(exchangeCapsule.getFirstTokenId()));
         Assert.assertEquals("_", ByteArray.toStr(exchangeCapsule.getSecondTokenId()));
       } catch (Exception ex) {
@@ -135,7 +136,7 @@ public class AssetUpdateHelperTest {
       assetUpdateHelper.updateAccount();
 
       AccountCapsule accountCapsule =
-          dbManager.getAccountStore().get(ByteArray.fromHexString("121212abc"));
+          chainBaseManager.getAccountStore().get(ByteArray.fromHexString("121212abc"));
 
       Assert.assertEquals(
           ByteString.copyFrom(ByteArray.fromString("1000001")), accountCapsule.getAssetIssuedID());

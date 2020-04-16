@@ -1,6 +1,5 @@
 package org.tron.consensus.dpos;
 
-
 import static org.tron.common.utils.WalletUtil.getAddressStringList;
 
 import com.google.common.collect.Maps;

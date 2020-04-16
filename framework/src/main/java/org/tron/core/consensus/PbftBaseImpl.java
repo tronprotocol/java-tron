@@ -47,6 +47,6 @@ public class PbftBaseImpl implements PbftInterface {
 
   @Override
   public BlockCapsule getBlock(long blockNum) throws BadItemException, ItemNotFoundException {
-    return manager.getBlockByNum(blockNum);
+    return manager.getChainBaseManager().getBlockByNum(blockNum);
   }
 }

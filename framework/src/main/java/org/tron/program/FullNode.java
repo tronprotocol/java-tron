@@ -9,6 +9,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -44,11 +45,11 @@ public class FullNode {
   public static void main(String[] args) {
     logger.info("Full node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
-    Args cfgArgs = Args.getInstance();
+    CommonParameter parameter = Args.getInstance();
 
-    load(cfgArgs.getLogbackPath());
+    load(parameter.getLogbackPath());
 
-    if (cfgArgs.isHelp()) {
+    if (parameter.isHelp()) {
       logger.info("Here is the help message.");
       return;
     }
@@ -75,18 +76,19 @@ public class FullNode {
 
     // http api server
     FullNodeHttpApiService httpApiService = context.getBean(FullNodeHttpApiService.class);
-    if (Args.getInstance().fullNodeHttpEnable) {
+    if (CommonParameter.getInstance().fullNodeHttpEnable) {
       appT.addService(httpApiService);
     }
 
-    // fullnode and soliditynode fuse together, provide solidity rpc and http server on the fullnode.
+    // full node and solidity node fuse together
+    // provide solidity rpc and http server on the full node.
     if (Args.getInstance().getStorage().getDbVersion() == 2) {
       RpcApiServiceOnSolidity rpcApiServiceOnSolidity = context
           .getBean(RpcApiServiceOnSolidity.class);
       appT.addService(rpcApiServiceOnSolidity);
       HttpApiOnSolidityService httpApiOnSolidityService = context
           .getBean(HttpApiOnSolidityService.class);
-      if (Args.getInstance().solidityNodeHttpEnable) {
+      if (CommonParameter.getInstance().solidityNodeHttpEnable) {
         appT.addService(httpApiOnSolidityService);
       }
     }
@@ -101,7 +103,7 @@ public class FullNode {
       appT.addService(httpApiOnPBFTService);
     }
 
-    appT.initServices(cfgArgs);
+    appT.initServices(parameter);
     appT.startServices();
     appT.startup();
 

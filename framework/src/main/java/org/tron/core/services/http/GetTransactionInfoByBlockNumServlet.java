@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
@@ -14,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.TransactionInfoList;
-import org.tron.core.vm.utils.MUtil;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
@@ -43,7 +43,7 @@ public class GetTransactionInfoByBlockNumServlet extends RateLimiterServlet {
           byte[] newAddress = new byte[20];
           int start = 20 - oldAddress.length;
           System.arraycopy(oldAddress, 0, newAddress, start, oldAddress.length);
-          logBuilder.setAddress(ByteString.copyFrom(MUtil.convertToTronAddress(newAddress)));
+          logBuilder.setAddress(ByteString.copyFrom(convertToTronAddress(newAddress)));
         }
         newLogList.add(logBuilder.build());
       }

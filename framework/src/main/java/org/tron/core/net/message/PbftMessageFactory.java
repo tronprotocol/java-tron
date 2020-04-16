@@ -11,6 +11,9 @@ import org.tron.core.exception.P2pException;
  */
 public class PbftMessageFactory extends MessageFactory {
 
+  private static String LEN = ", len=";
+  private static String TYPE = "type=";
+
   @Override
   public PbftBaseMessage create(byte[] data) throws Exception {
     try {
@@ -21,7 +24,7 @@ public class PbftMessageFactory extends MessageFactory {
       throw e;
     } catch (final Exception e) {
       throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED,
-          "type=" + data[0] + ", len=" + data.length + ", error msg: " + e.getMessage());
+          TYPE + data[0] + LEN + data.length + ", error msg: " + e.getMessage());
     }
   }
 
@@ -29,14 +32,14 @@ public class PbftMessageFactory extends MessageFactory {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     if (receivedTypes == null) {
       throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
-          "type=" + type + ", len=" + packed.length);
+          TYPE + type + LEN + packed.length);
     }
     switch (receivedTypes) {
       case PBFT_MSG:
         return new PbftMessage(packed);
       default:
         throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
-            receivedTypes.toString() + ", len=" + packed.length);
+            receivedTypes.toString() + LEN + packed.length);
     }
   }
 }

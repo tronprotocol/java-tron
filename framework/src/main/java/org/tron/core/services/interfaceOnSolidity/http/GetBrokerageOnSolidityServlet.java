@@ -22,8 +22,6 @@ public class GetBrokerageOnSolidityServlet extends GetBrokerageServlet {
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    walletOnSolidity.futureGet(() -> {
-      super.doPost(request, response);
-    });
+    walletOnSolidity.futureGet(() -> super.doPost(request, response));
   }
 }

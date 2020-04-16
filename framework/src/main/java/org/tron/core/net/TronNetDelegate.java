@@ -1,6 +1,6 @@
 package org.tron.core.net;
 
-import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,6 +16,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
@@ -43,6 +44,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
@@ -64,6 +66,9 @@ public class TronNetDelegate {
   private Manager dbManager;
 
   @Autowired
+  private ChainBaseManager chainBaseManager;
+
+  @Autowired
   private WitnessScheduleStore witnessScheduleStore;
 
   @Getter
@@ -71,6 +76,9 @@ public class TronNetDelegate {
 
   @Autowired
   private BackupServer backupServer;
+
+  @Autowired
+  private MetricsService metricsService;
 
   private volatile boolean backupServerStartFlag;
 
@@ -100,46 +108,46 @@ public class TronNetDelegate {
 
   public long getBlockTime(BlockId id) throws P2pException {
     try {
-      return dbManager.getBlockById(id).getTimeStamp();
+      return chainBaseManager.getBlockById(id).getTimeStamp();
     } catch (BadItemException | ItemNotFoundException e) {
       throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND, id.getString());
     }
   }
 
   public BlockId getHeadBlockId() {
-    return dbManager.getHeadBlockId();
+    return chainBaseManager.getHeadBlockId();
   }
 
   public BlockId getSolidBlockId() {
-    return dbManager.getSolidBlockId();
+    return chainBaseManager.getSolidBlockId();
   }
 
   public BlockId getGenesisBlockId() {
-    return dbManager.getGenesisBlockId();
+    return chainBaseManager.getGenesisBlockId();
   }
 
   public BlockId getBlockIdByNum(long num) throws P2pException {
     try {
-      return dbManager.getBlockIdByNum(num);
+      return chainBaseManager.getBlockIdByNum(num);
     } catch (ItemNotFoundException e) {
       throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND, "num: " + num);
     }
   }
 
   public BlockCapsule getGenesisBlock() {
-    return dbManager.getGenesisBlock();
+    return chainBaseManager.getGenesisBlock();
   }
 
   public long getHeadBlockTimeStamp() {
-    return dbManager.getHeadBlockTimeStamp();
+    return chainBaseManager.getHeadBlockTimeStamp();
   }
 
   public boolean containBlock(BlockId id) {
-    return dbManager.containBlock(id);
+    return chainBaseManager.containBlock(id);
   }
 
   public boolean containBlockInMainChain(BlockId id) {
-    return dbManager.containBlockInMainChain(id);
+    return chainBaseManager.containBlockInMainChain(id);
   }
 
   public List<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) throws P2pException {
@@ -156,7 +164,7 @@ public class TronNetDelegate {
 
   public boolean contain(Sha256Hash hash, MessageTypes type) {
     if (type.equals(MessageTypes.BLOCK)) {
-      return dbManager.containBlock(hash);
+      return chainBaseManager.containBlock(hash);
     } else if (type.equals(MessageTypes.TRX)) {
       return dbManager.getTransactionStore().has(hash.getBytes());
     }
@@ -167,9 +175,9 @@ public class TronNetDelegate {
     try {
       switch (type) {
         case BLOCK:
-          return new BlockMessage(dbManager.getBlockById(hash));
+          return new BlockMessage(chainBaseManager.getBlockById(hash));
         case TRX:
-          TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
+          TransactionCapsule tx = chainBaseManager.getTransactionStore().get(hash.getBytes());
           if (tx != null) {
             return new TransactionMessage(tx.getInstance());
           }
@@ -183,7 +191,7 @@ public class TronNetDelegate {
     }
   }
 
-  public void processBlock(BlockCapsule block) throws P2pException {
+  public void processBlock(BlockCapsule block, boolean isSync) throws P2pException {
     BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
       try {
@@ -193,6 +201,10 @@ public class TronNetDelegate {
                 block.getBlockId().getString(),
                 Hex.toHexString(block.getWitnessAddress().toByteArray()),
                 getHeadBlockId().getString());
+          }
+          if (!isSync) {
+            //record metrics
+            metricsService.applyBlock(block);
           }
           dbManager.pushBlock(block);
           freshBlockId.add(blockId);
@@ -220,6 +232,7 @@ public class TronNetDelegate {
           | ReceiptCheckErrException
           | VMIllegalException
           | ZksnarkException e) {
+        metricsService.failProcessBlock(block.getNum(), e.getMessage());
         logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
       }

@@ -7,6 +7,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
@@ -108,7 +109,8 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
   @Autowired
-  private GetTransactionInfoByBlockNumOnSolidityServlet getTransactionInfoByBlockNumOnSolidityServlet;
+  private GetTransactionInfoByBlockNumOnSolidityServlet
+      getTransactionInfoByBlockNumOnSolidityServlet;
 
   @Override
   public void init() {
@@ -116,7 +118,7 @@ public class HttpApiOnSolidityService implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter args) {
 
   }
 
@@ -176,7 +178,6 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/triggerconstantcontract");
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumOnSolidityServlet),
           "/walletsolidity/gettransactioninfobyblocknum");
-
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),

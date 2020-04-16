@@ -23,13 +23,13 @@ import org.spongycastle.asn1.DLSequence;
 import org.spongycastle.asn1.x9.X9IntegerConverter;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 import org.spongycastle.crypto.generators.ECKeyPairGenerator;
+import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
+import org.spongycastle.jce.spec.ECParameterSpec;
+import org.spongycastle.jce.spec.ECPrivateKeySpec;
 import org.spongycastle.crypto.params.ECDomainParameters;
 import org.spongycastle.crypto.params.ECKeyGenerationParameters;
 import org.spongycastle.crypto.params.ECPrivateKeyParameters;
 import org.spongycastle.crypto.params.ECPublicKeyParameters;
-import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
-import org.spongycastle.jce.spec.ECParameterSpec;
-import org.spongycastle.jce.spec.ECPrivateKeySpec;
 import org.spongycastle.math.ec.ECAlgorithms;
 import org.spongycastle.math.ec.ECCurve;
 import org.spongycastle.math.ec.ECPoint;
@@ -500,8 +500,7 @@ public class SM2 implements Serializable, SignInterface {
         // No decryption of private key required.
         SM2Signer signer = getSigner();
         BigInteger[] componets =  signer.generateHashSignature(messageHash);
-
-        SM2Signature sig = new SM2Signature(componets[0], componets[1]);
+        SM2Signature sig = new SM2.SM2Signature(componets[0], componets[1]);
         // Now we have to work backwards to figure out the recId needed to
         // recover the signature.
         int recId = -1;
@@ -954,7 +953,6 @@ public class SM2 implements Serializable, SignInterface {
         return b.toString();
     }
 
-
     /**
      * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.
      *
@@ -1059,8 +1057,8 @@ public class SM2 implements Serializable, SignInterface {
          *
          * @return -
          */
-        private static SM2Signature fromComponents(byte[] r, byte[] s) {
-            return new SM2Signature(new BigInteger(1, r), new BigInteger(1,
+        private static SM2.SM2Signature fromComponents(byte[] r, byte[] s) {
+            return new SM2.SM2Signature(new BigInteger(1, r), new BigInteger(1,
                     s));
         }
 
@@ -1070,9 +1068,9 @@ public class SM2 implements Serializable, SignInterface {
          * @param v -
          * @return -
          */
-        public static SM2Signature fromComponents(byte[] r, byte[] s, byte
+        public static SM2.SM2Signature fromComponents(byte[] r, byte[] s, byte
                 v) {
-            SM2Signature signature = fromComponents(r, s);
+            SM2.SM2Signature signature = fromComponents(r, s);
             signature.v = v;
             return signature;
         }
@@ -1175,7 +1173,7 @@ public class SM2 implements Serializable, SignInterface {
                 return false;
             }
 
-            SM2Signature signature = (SM2Signature) o;
+            SM2.SM2Signature signature = (SM2.SM2Signature) o;
 
             if (!r.equals(signature.r)) {
                 return false;

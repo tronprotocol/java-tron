@@ -7,8 +7,9 @@ import java.util.Set;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.iq80.leveldb.WriteOptions;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.StorageUtils;
 import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingStore;
 import org.tron.core.db2.common.IRevokingDB;
@@ -26,10 +27,10 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
 
   // only for unit test
   public RevokingDBWithCachingOldValue(String dbName, AbstractRevokingStore revokingDatabase) {
-    dbSource = new LevelDbDataSourceImpl(DBConfig.getOutputDirectoryByDbName(dbName),
+    dbSource = new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName),
         dbName,
-        DBConfig.getOptionsByDbName(dbName),
-        new WriteOptions().sync(DBConfig.isDbSync()));
+        StorageUtils.getOptionsByDbName(dbName),
+        new WriteOptions().sync(CommonParameter.getInstance().getStorage().isDbSync()));
     dbSource.initDB();
     this.revokingDatabase = revokingDatabase;
   }

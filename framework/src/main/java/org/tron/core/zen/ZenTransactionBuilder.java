@@ -22,7 +22,6 @@ import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.PaymentAddress;
@@ -153,7 +152,7 @@ public class ZenTransactionBuilder {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
 
-      dataHashToBeSigned = TransactionUtil
+      dataHashToBeSigned = TransactionCapsule
           .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
 
       if (dataHashToBeSigned == null) {

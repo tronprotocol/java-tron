@@ -8,6 +8,10 @@ public class SolidityTrigger extends Trigger {
   @Setter
   private long latestSolidifiedBlockNumber;
 
+  public SolidityTrigger() {
+    setTriggerName(Trigger.SOLIDITY_TRIGGER_NAME);
+  }
+
   @Override
   public String toString() {
     return new StringBuilder().append("triggerName: ").append(getTriggerName())
@@ -16,8 +20,5 @@ public class SolidityTrigger extends Trigger {
         .append(", latestSolidifiedBlockNumber: ")
         .append(latestSolidifiedBlockNumber).toString();
   }
-
-  public SolidityTrigger() {
-    setTriggerName(Trigger.SOLIDITY_TRIGGER_NAME);
-  }
 }
+

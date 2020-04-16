@@ -48,8 +48,9 @@ public class WalletTestAccount005 {
   private ManagedChannel searchChannelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private WalletGrpc.WalletBlockingStub searchBlockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
+  private String fullnode =
+      Configuration.getByPath("testng.conf")
+          .getStringList("fullnode.ip.list").get(0);
   private String searchFullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
@@ -129,8 +130,8 @@ public class WalletTestAccount005 {
     }
     ECKey ecKey = temKey;
 
-    BalanceContract.WithdrawBalanceContract.Builder builder = BalanceContract.WithdrawBalanceContract
-        .newBuilder();
+    BalanceContract.WithdrawBalanceContract.Builder builder =
+        BalanceContract.WithdrawBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
     BalanceContract.WithdrawBalanceContract contract = builder.build();
@@ -176,8 +177,8 @@ public class WalletTestAccount005 {
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       long count = Long.parseLong(value);
-      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder = WitnessContract.VoteWitnessContract.Vote
-          .newBuilder();
+      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder =
+          WitnessContract.VoteWitnessContract.Vote.newBuilder();
       byte[] addRess = WalletClient.decodeFromBase58Check(addressBase58);
       if (addRess == null) {
         continue;

@@ -70,6 +70,7 @@ import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.ECKeyPairGenerator;
 import org.tron.common.crypto.jce.ECSignatureFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
+import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteUtil;
 
 import static org.tron.common.utils.BIUtil.isLessThan;
@@ -455,7 +456,7 @@ public class ECKey implements Serializable, SignInterface {
    */
   public static byte[] signatureToAddress(byte[] messageHash, String
       signatureBase64) throws SignatureException {
-    return computeAddress(signatureToKeyBytes(messageHash,
+    return Hash.computeAddress(signatureToKeyBytes(messageHash,
         signatureBase64));
   }
 
@@ -467,8 +468,9 @@ public class ECKey implements Serializable, SignInterface {
    * @return 20-byte address
    */
   public static byte[] signatureToAddress(byte[] messageHash,
-      ECDSASignature sig) throws SignatureException {
-    return computeAddress(signatureToKeyBytes(messageHash, sig));
+      ECDSASignature sig) throws
+      SignatureException {
+    return Hash.computeAddress(signatureToKeyBytes(messageHash, sig));
   }
 
   /**
@@ -483,59 +485,6 @@ public class ECKey implements Serializable, SignInterface {
     final byte[] keyBytes = signatureToKeyBytes(messageHash,
         signatureBase64);
     return ECKey.fromPublicOnly(keyBytes);
-  }
-
-  /**
-   * Compute the key that signed the given signature.
-   *
-   * @param messageHash 32-byte hash of message
-   * @param sig -
-   * @return ECKey
-   */
-  public static ECKey signatureToKey(byte[] messageHash, ECDSASignature
-      sig) throws SignatureException {
-    final byte[] keyBytes = signatureToKeyBytes(messageHash, sig);
-    return ECKey.fromPublicOnly(keyBytes);
-  }
-
-  /**
-   * <p>Verifies the given ECDSA signature against the message bytes using the public key bytes.</p>
-   * <p> <p>When using native ECDSA verification, data must be 32 bytes, and no element may be
-   * larger than 520 bytes.</p>
-   *
-   * @param data Hash of the data to verify.
-   * @param signature signature.
-   * @param pub The public key bytes to use.
-   * @return -
-   */
-  public static boolean verify(byte[] data, ECDSASignature signature,
-      byte[] pub) {
-    ECDSASigner signer = new ECDSASigner();
-    ECPublicKeyParameters params = new ECPublicKeyParameters(CURVE
-        .getCurve().decodePoint(pub), CURVE);
-    signer.init(false, params);
-    try {
-      return signer.verifySignature(data, signature.r, signature.s);
-    } catch (NullPointerException npe) {
-      // Bouncy Castle contains a bug that can cause NPEs given
-      // specially crafted signatures.
-      // Those signatures are inherently invalid/attack sigs so we just
-      // fail them here rather than crash the thread.
-      logger.error("Caught NPE inside bouncy castle", npe);
-      return false;
-    }
-  }
-
-  /**
-   * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
-   *
-   * @param data Hash of the data to verify.
-   * @param signature signature.
-   * @param pub The public key bytes to use.
-   * @return -
-   */
-  public static boolean verify(byte[] data, byte[] signature, byte[] pub) {
-    return verify(data, ECDSASignature.decodeFromDER(signature), pub);
   }
 
   /**
@@ -663,7 +612,7 @@ public class ECKey implements Serializable, SignInterface {
     if (pubBytes == null) {
       return null;
     } else {
-      return computeAddress(pubBytes);
+      return Hash.computeAddress(pubBytes);
     }
   }
 
@@ -761,7 +710,7 @@ public class ECKey implements Serializable, SignInterface {
    */
   public byte[] getAddress() {
     if (pubKeyHash == null) {
-      pubKeyHash = computeAddress(this.pub);
+      pubKeyHash = Hash.computeAddress(this.pub);
     }
     return pubKeyHash;
   }
@@ -780,8 +729,8 @@ public class ECKey implements Serializable, SignInterface {
 
   @Override
   public byte[] signToAddress(byte[] messageHash, String signatureBase64) throws SignatureException {
-    return computeAddress(signatureToKeyBytes(messageHash,
-        signatureBase64));
+    return Hash.computeAddress(signatureToKeyBytes(messageHash,
+            signatureBase64));
   }
 
   /**
@@ -893,17 +842,7 @@ public class ECKey implements Serializable, SignInterface {
       return new ECDSASignature(components[0], components[1])
           .toCanonicalised();
     } else {
-      try {
-        final Signature ecSig = ECSignatureFactory.getRawInstance
-            (provider);
-        ecSig.initSign(privKey);
-        ecSig.update(input);
-        final byte[] derSignature = ecSig.sign();
-        return ECDSASignature.decodeFromDER(derSignature)
-            .toCanonicalised();
-      } catch (SignatureException | InvalidKeyException ex) {
-        throw new RuntimeException("ECKey signing error", ex);
-      }
+      throw new RuntimeException("ECKey signing error" );
     }
   }
 
@@ -935,101 +874,6 @@ public class ECKey implements Serializable, SignInterface {
     return sig;
   }
 
-  public BigInteger keyAgreement(ECPoint otherParty) {
-    if (privKey == null) {
-      throw new MissingPrivateKeyException();
-    } else if (privKey instanceof BCECPrivateKey) {
-      final ECDHBasicAgreement agreement = new ECDHBasicAgreement();
-      agreement.init(new ECPrivateKeyParameters(((BCECPrivateKey)
-          privKey).getD(), CURVE));
-      return agreement.calculateAgreement(new ECPublicKeyParameters
-          (otherParty, CURVE));
-    } else {
-      try {
-        final KeyAgreement agreement = ECKeyAgreement.getInstance
-            (this.provider);
-        agreement.init(this.privKey);
-        agreement.doPhase(
-            ECKeyFactory.getInstance(this.provider)
-                .generatePublic(new ECPublicKeySpec
-                    (otherParty, CURVE_SPEC)),
-            /* lastPhase */ true);
-        return new BigInteger(1, agreement.generateSecret());
-      } catch (IllegalStateException | InvalidKeyException |
-          InvalidKeySpecException ex) {
-        throw new RuntimeException("ECDH key agreement failure", ex);
-      }
-    }
-  }
-
-  /**
-   * Decrypt cipher by AES in SIC(also know as CTR) mode
-   *
-   * @param cipher -proper cipher
-   * @return decrypted cipher, equal length to the cipher.
-   * @deprecated should not use EC private scalar value as an AES key
-   */
-  public byte[] decryptAES(byte[] cipher) {
-
-    if (privKey == null) {
-      throw new MissingPrivateKeyException();
-    }
-    if (!(privKey instanceof BCECPrivateKey)) {
-      throw new UnsupportedOperationException("Cannot use the private " +
-          "key as an AES key");
-    }
-
-    AESEngine engine = new AESEngine();
-    SICBlockCipher ctrEngine = new SICBlockCipher(engine);
-
-    KeyParameter key = new KeyParameter(BigIntegers.asUnsignedByteArray((
-        (BCECPrivateKey) privKey).getD()));
-    ParametersWithIV params = new ParametersWithIV(key, new byte[16]);
-
-    ctrEngine.init(false, params);
-
-    int i = 0;
-    byte[] out = new byte[cipher.length];
-    while (i < cipher.length) {
-      ctrEngine.processBlock(cipher, i, out, i);
-      i += engine.getBlockSize();
-      if (cipher.length - i < engine.getBlockSize()) {
-        break;
-      }
-    }
-
-    // process left bytes
-    if (cipher.length - i > 0) {
-      byte[] tmpBlock = new byte[16];
-      System.arraycopy(cipher, i, tmpBlock, 0, cipher.length - i);
-      ctrEngine.processBlock(tmpBlock, 0, tmpBlock, 0);
-      System.arraycopy(tmpBlock, 0, out, i, cipher.length - i);
-    }
-
-    return out;
-  }
-
-  /**
-   * Verifies the given ASN.1 encoded ECDSA signature against a hash using the public key.
-   *
-   * @param data Hash of the data to verify.
-   * @param signature signature.
-   * @return -
-   */
-  public boolean verify(byte[] data, byte[] signature) {
-    return ECKey.verify(data, signature, getPubKey());
-  }
-
-  /**
-   * Verifies the given R/S pair (signature) against a hash using the public key.
-   *
-   * @param sigHash -
-   * @param signature -
-   * @return -
-   */
-  public boolean verify(byte[] sigHash, ECDSASignature signature) {
-    return ECKey.verify(sigHash, signature, getPubKey());
-  }
 
   /**
    * Returns true if this pubkey is canonical, i.e. the correct length taking into account
@@ -1137,53 +981,19 @@ public class ECKey implements Serializable, SignInterface {
         return false;
       }
 
-      if (isLessThan(r, BigInteger.ONE)) {
+      if (BIUtil.isLessThan(r, BigInteger.ONE)) {
         return false;
       }
-      if (isLessThan(s, BigInteger.ONE)) {
+      if (BIUtil.isLessThan(s, BigInteger.ONE)) {
         return false;
       }
 
-      if (!isLessThan(r, SECP256K1N)) {
+      if (!BIUtil.isLessThan(r, SECP256K1N)) {
         return false;
       }
-      return isLessThan(s, SECP256K1N);
+      return BIUtil.isLessThan(s, SECP256K1N);
     }
 
-    public static ECDSASignature decodeFromDER(byte[] bytes) {
-      ASN1InputStream decoder = null;
-      try {
-        decoder = new ASN1InputStream(bytes);
-        DLSequence seq = (DLSequence) decoder.readObject();
-        if (seq == null) {
-          throw new RuntimeException("Reached past end of ASN.1 " +
-              "stream.");
-        }
-        ASN1Integer r, s;
-        try {
-          r = (ASN1Integer) seq.getObjectAt(0);
-          s = (ASN1Integer) seq.getObjectAt(1);
-        } catch (ClassCastException e) {
-          throw new IllegalArgumentException(e);
-        }
-        // OpenSSL deviates from the DER spec by interpreting these
-        // values as unsigned, though they should not be
-        // Thus, we always use the positive versions. See:
-        // http://r6.ca/blog/20111119T211504Z.html
-        return new ECDSASignature(r.getPositiveValue(), s
-            .getPositiveValue());
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      } finally {
-        if (decoder != null) {
-          try {
-            decoder.close();
-          } catch (IOException x) {
-
-          }
-        }
-      }
-    }
 
     public boolean validateComponents() {
       return validateComponents(r, s, v);

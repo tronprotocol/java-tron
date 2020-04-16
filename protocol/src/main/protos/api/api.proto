@@ -919,6 +919,18 @@ service Database {
   }
 };
 
+service Monitor {
+  rpc GetStatsInfo (EmptyMessage) returns (MetricsInfo) {
+    option (google.api.http) = {
+      post: "/monitor/getstatsinfo"
+      body: "*"
+      additional_bindings {
+        get: "/monitor/getstatsinfo"
+      }
+    };
+  }
+}
+
 message Return {
   enum response_code {
     SUCCESS = 0;

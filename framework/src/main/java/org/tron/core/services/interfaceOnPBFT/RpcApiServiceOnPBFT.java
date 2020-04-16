@@ -3,6 +3,9 @@ package org.tron.core.services.interfaceOnPBFT;
 import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
+import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +29,9 @@ import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
@@ -41,10 +45,6 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j(topic = "API")
 public class RpcApiServiceOnPBFT implements Service {
@@ -66,7 +66,8 @@ public class RpcApiServiceOnPBFT implements Service {
   }
 
   @Override
-  public void init(Args args) {
+  public void init(CommonParameter parameter) {
+
   }
 
   @Override
@@ -75,7 +76,7 @@ public class RpcApiServiceOnPBFT implements Service {
       NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
           .addService(new DatabaseApi());
 
-      Args args = Args.getInstance();
+      CommonParameter args = CommonParameter.getInstance();
 
       if (args.getRpcThreadNum() > 0) {
         serverBuilder = serverBuilder
@@ -334,7 +335,7 @@ public class RpcApiServiceOnPBFT implements Service {
       ECKey ecKey = new ECKey(Utils.getRandom());
       byte[] priKey = ecKey.getPrivKeyBytes();
       byte[] address = ecKey.getAddress();
-      String addressStr = WalletUtil.encode58Check(address);
+      String addressStr = StringUtil.encode58Check(address);
       String priKeyStr = Hex.encodeHexString(priKey);
       AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
       builder.setAddress(addressStr);

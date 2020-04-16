@@ -10,15 +10,16 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.Commons;
-import org.tron.common.utils.DBConfig;
-import org.tron.common.utils.ForkUtils;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -66,7 +67,7 @@ public class TransactionTrace {
 
   private Runtime runtime;
 
-  private ForkUtils forkUtils;
+  private ForkController forkController;
 
   @Getter
   private TransactionContext transactionContext;
@@ -98,8 +99,8 @@ public class TransactionTrace {
     this.receipt = new ReceiptCapsule(Sha256Hash.ZERO_HASH);
     this.energyProcessor = new EnergyProcessor(dynamicPropertiesStore, accountStore);
     this.runtime = runtime;
-    this.forkUtils = new ForkUtils();
-    forkUtils.init(dynamicPropertiesStore);
+    this.forkController = new ForkController();
+    forkController.init(storeFactory.getChainBaseManager());
   }
 
   public TransactionCapsule getTrx() {
@@ -132,9 +133,9 @@ public class TransactionTrace {
       ContractCapsule contract = contractStore
           .get(triggerContractFromTransaction.getContractAddress().toByteArray());
       if (contract == null) {
-        logger.info("contract: {} is not in contract store", WalletUtil
+        logger.info("contract: {} is not in contract store", StringUtil
             .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray()));
-        throw new ContractValidateException("contract: " + WalletUtil
+        throw new ContractValidateException("contract: " + StringUtil
             .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
             + " is not in contract store");
       }
@@ -174,7 +175,8 @@ public class TransactionTrace {
           .equals(receipt.getResult())) {
         setTimeResultType(TimeResultType.OUT_OF_TIME);
       } else if (System.currentTimeMillis() - txStartTimeInMs
-          > DBConfig.getLongRunningTime()) {
+          > CommonParameter.getInstance()
+          .getLongRunningTime()) {
         setTimeResultType(TimeResultType.LONG_RUNNING);
       }
     }
@@ -227,7 +229,7 @@ public class TransactionTrace {
     AccountCapsule origin = accountStore.get(originAccount);
     AccountCapsule caller = accountStore.get(callerAccount);
     receipt.payEnergyBill(
-        dynamicPropertiesStore, accountStore, forkUtils,
+        dynamicPropertiesStore, accountStore, forkController,
         origin,
         caller,
         percent, originEnergyLimit,
@@ -288,10 +290,10 @@ public class TransactionTrace {
     contractStore.delete(address);
   }
 
-  private byte[] convertToTronAddress(byte[] address) {
+  public static byte[] convertToTronAddress(byte[] address) {
     if (address.length == 20) {
       byte[] newAddress = new byte[21];
-      byte[] temp = new byte[]{addressPreFixByte};
+      byte[] temp = new byte[]{DecodeUtil.addressPreFixByte};
       System.arraycopy(temp, 0, newAddress, 0, temp.length);
       System.arraycopy(address, 0, newAddress, temp.length, address.length);
       address = newAddress;

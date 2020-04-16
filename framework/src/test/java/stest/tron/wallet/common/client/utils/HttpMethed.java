@@ -3231,6 +3231,22 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getNewShieldedAddress(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getnewshieldedaddress";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getZenPaymentAddress(String httpNode, String ivk, String d) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getzenpaymentaddress";
@@ -4235,7 +4251,37 @@ public class HttpMethed {
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
       userBaseObj2.addProperty("brokerage", brokerage);
+      logger.info("userBaseObj2:" + userBaseObj2);
       response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
+      response = broadcastTransaction(httpNode, transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse updateBrokerageOnVisible(String httpNode, byte[] ownerAddress,
+      Long brokerage,
+      String fromKey, String visible) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/updateBrokerage";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("brokerage", brokerage);
+      if (visible.equals("true")) {
+        userBaseObj2.addProperty("owner_address", Base58.encode58Check(ownerAddress));
+      } else if (visible.equals("false")) {
+        userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      }
+      userBaseObj2.addProperty("visible", visible);
+      response = createConnect(requestUrl, userBaseObj2);
+      logger.info("userBaseObj2:" + userBaseObj2);
       transactionString = EntityUtils.toString(response.getEntity());
       transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
       response = broadcastTransaction(httpNode, transactionSignString);
@@ -4255,6 +4301,7 @@ public class HttpMethed {
       String requestUrl = "http://" + httpNode + "/wallet/getReward";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("address", ByteArray.toHexString(address));
+      logger.info("userBaseObj2:" + userBaseObj2);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -4272,6 +4319,7 @@ public class HttpMethed {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getReward";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("address", ByteArray.toHexString(address));
+      logger.info("userBaseObj2:" + userBaseObj2);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -4310,6 +4358,7 @@ public class HttpMethed {
       String requestUrl = "http://" + httpNode + "/wallet/getBrokerage";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("address", ByteArray.toHexString(address));
+      logger.info("userBaseObj2:" + userBaseObj2);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -4327,6 +4376,102 @@ public class HttpMethed {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getBrokerage";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("address", ByteArray.toHexString(address));
+      logger.info("userBaseObj2:" + userBaseObj2);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getRewardOnVisible(String httpNode, byte[] address, String visible) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getReward";
+      JsonObject userBaseObj2 = new JsonObject();
+      if (visible.equals("true")) {
+        userBaseObj2.addProperty("address", Base58.encode58Check(address));
+      } else if (visible.equals("false")) {
+        userBaseObj2.addProperty("address", ByteArray.toHexString(address));
+      }
+      userBaseObj2.addProperty("visible", visible);
+      logger.info("userBaseObj2:" + userBaseObj2);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getRewardFromSolidityOnVisible(String httpSolidityNode, byte[] address,
+      String visible) {
+    try {
+      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getReward";
+      JsonObject userBaseObj2 = new JsonObject();
+      if (visible.equals("true")) {
+        userBaseObj2.addProperty("address", Base58.encode58Check(address));
+      } else if (visible.equals("false")) {
+        userBaseObj2.addProperty("address", ByteArray.toHexString(address));
+      }
+      userBaseObj2.addProperty("visible", visible);
+      logger.info("userBaseObj2:" + userBaseObj2);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getBrokerageOnVisible(String httpNode, byte[] address,
+      String visible) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getBrokerage";
+      JsonObject userBaseObj2 = new JsonObject();
+      if (visible.equals("true")) {
+        userBaseObj2.addProperty("address", Base58.encode58Check(address));
+      } else if (visible.equals("false")) {
+        userBaseObj2.addProperty("address", ByteArray.toHexString(address));
+      }
+      userBaseObj2.addProperty("visible", visible);
+      logger.info("userBaseObj2:" + userBaseObj2);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getBrokerageFromSolidityOnVisible(String httpSolidityNode,
+      byte[] address, String visible) {
+    try {
+      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getBrokerage";
+      JsonObject userBaseObj2 = new JsonObject();
+      if (visible.equals("true")) {
+        userBaseObj2.addProperty("address", Base58.encode58Check(address));
+      } else if (visible.equals("false")) {
+        userBaseObj2.addProperty("address", ByteArray.toHexString(address));
+      }
+      userBaseObj2.addProperty("visible", visible);
+      logger.info("userBaseObj2:" + userBaseObj2);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();

@@ -26,7 +26,7 @@ public class ProposalController {
   public void processProposals() {
     long latestProposalNum = manager.getDynamicPropertiesStore().getLatestProposalNum();
     if (latestProposalNum == 0) {
-      logger.info("latestProposalNum is 0,return");
+      logger.info("latestProposalNum is 0, return");
       return;
     }
 
@@ -45,14 +45,14 @@ public class ProposalController {
 
       if (proposalCapsule.hasProcessed()) {
         logger
-            .info("Proposal has processed，id:[{}],skip it and before it",
+            .info("Proposal has processed, id:[{}], skip it and before it",
                 proposalCapsule.getID());
         //proposals with number less than this one, have been processed before
         break;
       }
 
       if (proposalCapsule.hasCanceled()) {
-        logger.info("Proposal has canceled，id:[{}],skip it", proposalCapsule.getID());
+        logger.info("Proposal has canceled, id:[{}], skip it", proposalCapsule.getID());
         proposalNum--;
         continue;
       }
@@ -65,7 +65,7 @@ public class ProposalController {
       }
 
       proposalNum--;
-      logger.info("Proposal has not expired，id:[{}],skip it", proposalCapsule.getID());
+      logger.info("Proposal has not expired, id:[{}], skip it", proposalCapsule.getID());
     }
     logger.info("Processing proposals done, oldest proposal[{}]", proposalNum);
   }

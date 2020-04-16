@@ -27,10 +27,9 @@ public class CreateCommonTransactionServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String contract = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(contract);
-      boolean visible = Util.getVisiblePost(contract);
+      PostParams params = PostParams.getPostParams(request);
+      String contract = params.getParams();
+      boolean visible = params.isVisible();
       ContractType type = ContractType.valueOf(Util.getContractType(contract));
       Message.Builder build = getBuilder(type);
       JsonFormat.merge(contract, build, visible);
@@ -44,7 +43,8 @@ public class CreateCommonTransactionServlet extends RateLimiterServlet {
   }
 
   private Message.Builder getBuilder(ContractType type) throws NoSuchMethodException,
-      IllegalAccessException, InvocationTargetException, InstantiationException, ContractValidateException {
+      IllegalAccessException, InvocationTargetException, InstantiationException,
+      ContractValidateException {
     Class clazz = TransactionFactory.getContract(type);
     if (clazz != null) {
       Constructor<GeneratedMessageV3> constructor = clazz.getDeclaredConstructor();

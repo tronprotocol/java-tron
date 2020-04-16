@@ -27,7 +27,8 @@ public abstract class AbstractIterator<T> implements Iterator<Map.Entry<byte[], 
       @SuppressWarnings("unchecked")
       T t = (T) typeToken.getRawType().getConstructor(byte[].class).newInstance(value);
       return t;
-    } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+    } catch (InstantiationException | NoSuchMethodException
+        | InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }
   }

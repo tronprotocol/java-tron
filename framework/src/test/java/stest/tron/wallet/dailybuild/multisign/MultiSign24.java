@@ -171,6 +171,7 @@ public class MultiSign24 {
 
     PublicMethedForMutiSign
         .recoverAccountPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     txWeight = PublicMethedForMutiSign.getTransactionSignWeight(transaction2, blockingStubFull);
     logger.info("TransactionSignWeight info : " + txWeight);

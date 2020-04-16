@@ -17,7 +17,7 @@ package org.tron.common.application;
 
 import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.config.args.Args;
+import org.tron.common.parameter.CommonParameter;
 
 @Slf4j(topic = "app")
 public class ServiceContainer {
@@ -40,10 +40,10 @@ public class ServiceContainer {
     }
   }
 
-  public void init(Args args) {
+  public void init(CommonParameter parameter) {
     for (Service service : this.services) {
       logger.debug("Initing " + service.getClass().getSimpleName());
-      service.init(args);
+      service.init(parameter);
     }
   }
 

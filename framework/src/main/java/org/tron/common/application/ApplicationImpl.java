@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.BlockStore;
@@ -24,6 +26,9 @@ public class ApplicationImpl implements Application {
   private Manager dbManager;
 
   @Autowired
+  private ChainBaseManager chainBaseManager;
+
+  @Autowired
   private ConsensusService consensusService;
 
   private boolean isProducer;
@@ -35,7 +40,7 @@ public class ApplicationImpl implements Application {
 
   @Override
   @Autowired
-  public void init(Args args) {
+  public void init(CommonParameter parameter) {
     blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
   }
@@ -46,8 +51,8 @@ public class ApplicationImpl implements Application {
   }
 
   @Override
-  public void initServices(Args args) {
-    services.init(args);
+  public void initServices(CommonParameter parameter) {
+    services.init(parameter);
   }
 
   /**
@@ -60,15 +65,15 @@ public class ApplicationImpl implements Application {
 
   @Override
   public void shutdown() {
-    logger.info("******** begin to shutdown ********");
+    logger.info("******** start to shutdown ********");
     tronNetService.stop();
     consensusService.stop();
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();
     }
-    dbManager.stopRepushThread();
-    dbManager.stopRepushTriggerThread();
+    dbManager.stopRePushThread();
+    dbManager.stopRePushTriggerThread();
     EventPluginLoader.getInstance().stopPlugin();
     logger.info("******** end to shutdown ********");
   }
@@ -93,6 +98,11 @@ public class ApplicationImpl implements Application {
     return dbManager;
   }
 
+  @Override
+  public ChainBaseManager getChainBaseManager() {
+    return chainBaseManager;
+  }
+
   public boolean isProducer() {
     return isProducer;
   }
@@ -102,7 +112,7 @@ public class ApplicationImpl implements Application {
   }
 
   private void closeRevokingStore() {
-    logger.info("******** begin to closeRevokingStore ********");
+    logger.info("******** start to closeRevokingStore ********");
     dbManager.getRevokingStore().shutdown();
   }
 
