@@ -26,7 +26,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockGenerate;
 import org.tron.core.db.CommonDataBase;
 import org.tron.core.db.Manager;
-import org.tron.core.db2.core.ISession;
+import org.tron.core.db2.ISession;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -64,7 +64,7 @@ public class PbftApiTest extends BlockGenerate {
 
     for (int i = 1; i <= 10; i++) {
       try (ISession tmpSession = dbManager.getRevokingStore().buildSession()) {
-        BlockCapsule blockCapsule = createTestBlockCapsule(dbManager.getHeadBlockTimeStamp() + 3000L,
+        BlockCapsule blockCapsule = createTestBlockCapsule(dynamicPropertiesStore.getLatestBlockHeaderTimestamp() + 3000L,
             dbManager.getHeadBlockNum() + 1, dynamicPropertiesStore.getLatestBlockHeaderHash());
         dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
         dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
