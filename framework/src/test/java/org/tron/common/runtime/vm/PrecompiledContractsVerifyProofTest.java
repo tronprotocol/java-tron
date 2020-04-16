@@ -411,7 +411,7 @@ public class PrecompiledContractsVerifyProofTest {
 
   @Test
   public void merkleHashWrongInput() throws ZksnarkException {
-    long[] levelList = {-1, 64, (1L<<32)};
+    long[] levelList = {-1, 64, (1L << 32)};
 
     for (long level : levelList) {
       byte[] left = Wallet.generateRandomBytes(32);
