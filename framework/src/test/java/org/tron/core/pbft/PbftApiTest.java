@@ -57,7 +57,7 @@ public class PbftApiTest extends BlockGenerate {
   }
 
   @Test
-  public void getNowBlock() throws IOException, InterruptedException, HeaderNotFound {
+  public void pbftapi() throws IOException, InterruptedException, HeaderNotFound {
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
     DynamicPropertiesStore dynamicPropertiesStore = chainBaseManager.getDynamicPropertiesStore();
     CommonDataBase commonDataBase = chainBaseManager.getCommonDataBase();
