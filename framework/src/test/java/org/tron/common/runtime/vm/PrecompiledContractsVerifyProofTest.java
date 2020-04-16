@@ -41,6 +41,7 @@ import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.note.Note;
+import org.tron.keystore.Wallet;
 import org.tron.protos.contract.ShieldContract;
 import stest.tron.wallet.common.client.WalletClient;
 
@@ -288,7 +289,7 @@ public class PrecompiledContractsVerifyProofTest {
 
   private Pair<Boolean, byte[]> verifyTransfer(byte[] input) {
     transferContract.getEnergyForData(input);
-    transferContract.setVmShouldEndInUs(System.nanoTime() / 1000 + 500000 * 1000);
+    transferContract.setVmShouldEndInUs(System.nanoTime() / 1000 + 50 * 1000);
     Pair<Boolean, byte[]> ret = transferContract.execute(input);
     return ret;
   }
@@ -405,6 +406,20 @@ public class PrecompiledContractsVerifyProofTest {
       byte[] anchor = voucher.root().getContent().toByteArray();
 
       Assert.assertArrayEquals(anchor, node);
+    }
+  }
+
+  @Test
+  public void merkleHashWrongInput() throws ZksnarkException {
+    long[] levelList = {-1, 64, (1L<<32)};
+
+    for (long level : levelList) {
+      byte[] left = Wallet.generateRandomBytes(32);
+      byte[] right = Wallet.generateRandomBytes(32);
+      byte[] input = ByteUtil.merge(longTo32Bytes(level), left, right);
+      boolean result = merkleHash.execute(input).getLeft();
+
+      Assert.assertFalse(result);
     }
   }
 
