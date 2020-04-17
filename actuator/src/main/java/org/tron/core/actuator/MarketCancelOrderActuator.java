@@ -102,7 +102,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       Commons.adjustBalance(accountStore, accountStore.getBlackhole().createDbKey(), fee);
 
       // 1. return balance and token
-      returnSellTokenRemain(orderCapsule, accountCapsule);
+      MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore);
 
       MarketUtils.updateOrderState(orderCapsule, State.CANCELED, marketAccountStore);
       accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
@@ -216,23 +216,6 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     }
 
     return true;
-  }
-
-  public void returnSellTokenRemain(MarketOrderCapsule orderCapsule,
-      AccountCapsule accountCapsule) {
-
-    byte[] sellTokenId = orderCapsule.getSellTokenId();
-    long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
-    if (Arrays.equals(sellTokenId, "_".getBytes())) {
-      accountCapsule.setBalance(Math.addExact(
-          accountCapsule.getBalance(), sellTokenQuantityRemain));
-    } else {
-      accountCapsule
-          .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
-    }
-
-    orderCapsule.setSellTokenQuantityRemain(0L);
-
   }
 
   @Override

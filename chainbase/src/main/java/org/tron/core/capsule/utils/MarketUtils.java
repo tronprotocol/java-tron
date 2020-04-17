@@ -17,11 +17,15 @@ package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
+import java.util.Arrays;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.MarketAccountStore;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketPrice;
@@ -85,6 +89,16 @@ public class MarketUtils {
     return result;
   }
 
+  /**
+   * ex.
+   * for sellToken is A, buyToken is TRX.
+   * price_A_maker * sellQuantity_maker = Price_TRX * buyQuantity_maker
+   * ==> price_A_maker = Price_TRX * buyQuantity_maker/sellQuantity_maker
+   *
+   * price_A_maker_1 < price_A_maker_2
+   * ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
+   * ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
+   */
   public static int comparePrice(MarketPrice price1, MarketPrice price2) {
     try {
       long price1BuyQuantity = price1.getBuyTokenQuantity();
@@ -96,7 +110,7 @@ public class MarketUtils {
           Math.multiplyExact(price2BuyQuantity, price1SellQuantity));
 
     } catch (ArithmeticException ex) {
-
+      // do nothing here, because we will use BigInteger to compute again
     }
 
     BigInteger price1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
@@ -109,39 +123,15 @@ public class MarketUtils {
   }
 
   public static boolean isLowerPrice(MarketPrice price1, MarketPrice price2) {
-    // ex.
-    // for sellToken is A,buyToken is TRX.
-    // price_A_maker * sellQuantity_maker = Price_TRX * buyQuantity_maker
-    // ==> price_A_maker = Price_TRX * buyQuantity_maker/sellQuantity_maker
-
-    // price_A_maker_1 < price_A_maker_2
-    // ==> buyQuantity_maker_1/sellQuantity_maker_1 < buyQuantity_maker_2/sellQuantity_maker_2
-    // ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
-    try {
-      long price1BuyQuantity = price1.getBuyTokenQuantity();
-      long price1SellQuantity = price1.getSellTokenQuantity();
-      long price2BuyQuantity = price2.getBuyTokenQuantity();
-      long price2SellQuantity = price2.getSellTokenQuantity();
-
-      return Math.multiplyExact(price1BuyQuantity, price2SellQuantity)
-          < Math.multiplyExact(price2BuyQuantity, price1SellQuantity);
-    } catch (ArithmeticException ex) {
-
-    }
-
-    BigInteger price1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
-    BigInteger price1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
-    BigInteger price2BuyQuantity = BigInteger.valueOf(price2.getBuyTokenQuantity());
-    BigInteger price2SellQuantity = BigInteger.valueOf(price2.getSellTokenQuantity());
-
-    return price1BuyQuantity.multiply(price2SellQuantity).compareTo(price2BuyQuantity
-        .multiply(price1SellQuantity)) == -1;
-
+    return comparePrice(price1, price2) == -1;
   }
 
 
+  /**
+   * if takerPrice >= makerPrice, return True
+   * note: here are two different token pairs
+   */
   public static boolean priceMatch(MarketPrice takerPrice, MarketPrice makerPrice) {
-
     // for takerPrice, buyToken is A,sellToken is TRX.
     // price_A_taker * buyQuantity_taker = Price_TRX * sellQuantity_taker
     // ==> price_A_taker = Price_TRX * sellQuantity_taker/buyQuantity_taker
@@ -151,15 +141,13 @@ public class MarketUtils {
     // ==> Price_TRX * sellQuantity_taker/buyQuantity_taker >= Price_TRX * buyQuantity_maker/sellQuantity_maker
     // ==> sellQuantity_taker * sellQuantity_maker > buyQuantity_taker * buyQuantity_maker
 
-//
-
     try {
       return
           Math.multiplyExact(takerPrice.getSellTokenQuantity(), makerPrice.getSellTokenQuantity())
               >= Math
               .multiplyExact(takerPrice.getBuyTokenQuantity(), makerPrice.getBuyTokenQuantity());
     } catch (ArithmeticException ex) {
-
+      // do nothing here, because we will use BigInteger to compute again
     }
 
     BigInteger takerBuyQuantity = BigInteger.valueOf(takerPrice.getBuyTokenQuantity());
@@ -199,6 +187,21 @@ public class MarketUtils {
 
     return aBig.multiply(bBig).divide(cBig).longValue();
 
+  }
+
+  // for taker
+  public static void returnSellTokenRemain(MarketOrderCapsule orderCapsule, AccountCapsule accountCapsule,
+      DynamicPropertiesStore dynamicStore, AssetIssueStore assetIssueStore) {
+    byte[] sellTokenId = orderCapsule.getSellTokenId();
+    long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
+    if (Arrays.equals(sellTokenId, "_".getBytes())) {
+      accountCapsule.setBalance(Math.addExact(
+          accountCapsule.getBalance(), sellTokenQuantityRemain));
+    } else {
+      accountCapsule
+          .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
+    }
+    orderCapsule.setSellTokenQuantityRemain(0L);
   }
 
 }

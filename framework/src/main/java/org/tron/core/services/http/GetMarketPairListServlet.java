@@ -12,7 +12,7 @@ import org.tron.protos.Protocol.MarketOrderPairList;
 
 @Component
 @Slf4j(topic = "API")
-public class GetMarketPairListServer extends RateLimiterServlet {
+public class GetMarketPairListServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

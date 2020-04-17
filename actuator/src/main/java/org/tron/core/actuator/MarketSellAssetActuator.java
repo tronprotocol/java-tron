@@ -354,9 +354,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     if (count > MAX_SEARCH_NUM) {
       throw new ContractValidateException("Maximum number of queries exceeded，" + MAX_SEARCH_NUM);
     }
-
   }
-
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
@@ -407,7 +405,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
       // if not exists
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
 
-      // match different order same price
+      // match different orders which have the same price
       while (takerCapsule.getSellTokenQuantityRemain() != 0
           && !orderIdListCapsule.isOrderEmpty()) {
         byte[] orderId = orderIdListCapsule.getHead();
@@ -428,7 +426,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
         }
       }
 
-      // makerPrice all consumed
+      // makerPrice have been all consumed
       if (orderIdListCapsule.isOrderEmpty()) {
         pairPriceToOrderStore.delete(pairPriceKey);
 
@@ -442,7 +440,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
       }
     } // end while
   }
-
 
   // return all match or not
   public void matchSingleOrder(MarketOrderCapsule takerOrderCapsule,
@@ -468,7 +465,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
     if (takerBuyTokenQuantityRemain == 0) {
       // quantity too small, return sellToken to user
       takerOrderCapsule.setSellTokenQuantityReturn();
-      returnSellTokenRemain(takerOrderCapsule, takerAccountCapsule);
+      MarketUtils.returnSellTokenRemain(takerOrderCapsule, takerAccountCapsule,
+          dynamicStore, assetIssueStore);
       MarketUtils.updateOrderState(takerOrderCapsule, State.INACTIVE, marketAccountStore);
       return;
     }
@@ -495,8 +493,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
         MarketUtils.updateOrderState(takerOrderCapsule, State.INACTIVE, marketAccountStore);
       }
       MarketUtils.updateOrderState(makerOrderCapsule, State.INACTIVE, marketAccountStore);
-
-
     } else if (takerBuyTokenQuantityRemain < makerOrderCapsule.getSellTokenQuantityRemain()) {
       // taker < maker
       // if the quantity of taker want to buy is smaller than the remain of maker want to sell,
@@ -510,8 +506,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       makerOrderCapsule.setSellTokenQuantityRemain(Math.subtractExact(
           makerOrderCapsule.getSellTokenQuantityRemain(), takerBuyTokenQuantityRemain));
-
-
     } else {
       // taker > maker
       takerBuyTokenQuantityReceive = makerOrderCapsule.getSellTokenQuantityRemain();
@@ -543,7 +537,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
         takerOrderCapsule.setSellTokenQuantityRemain(Math.subtractExact(
             takerOrderCapsule.getSellTokenQuantityRemain(), makerBuyTokenQuantityReceive));
       }
-
     }
 
     // save makerOrderCapsule
@@ -559,13 +552,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
         setFillSellQuantity(makerBuyTokenQuantityReceive).
         setFillBuyQuantity(takerBuyTokenQuantityReceive).build();
     ret.addOrderDetails(orderDetail);
-
   }
-
 
   public MarketOrderCapsule createAndSaveOrder(AccountCapsule accountCapsule,
       MarketSellAssetContract contract) {
-
     MarketAccountOrderCapsule marketAccountOrderCapsule = marketAccountStore
         .getUnchecked(contract.getOwnerAddress().toByteArray());
     if (marketAccountOrderCapsule == null) {
@@ -590,19 +580,16 @@ public class MarketSellAssetActuator extends AbstractActuator {
     return orderCapsule;
   }
 
-
   public void transferBalanceOrToken(AccountCapsule accountCapsule) {
-
     if (Arrays.equals(sellTokenID, "_".getBytes())) {
       accountCapsule.setBalance(Math.subtractExact(accountCapsule.getBalance(), sellTokenQuantity));
     } else {
       accountCapsule
           .reduceAssetAmountV2(sellTokenID, sellTokenQuantity, dynamicStore, assetIssueStore);
     }
-
   }
 
-  //for taker
+  // for taker
   public void addTrxOrToken(MarketOrderCapsule orderCapsule, long num,
       AccountCapsule accountCapsule) {
 
@@ -629,45 +616,17 @@ public class MarketSellAssetActuator extends AbstractActuator {
     accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
   }
 
-  //for taker
-  public void returnSellTokenRemain(MarketOrderCapsule orderCapsule,
-      AccountCapsule accountCapsule) {
-
-    byte[] sellTokenId = orderCapsule.getSellTokenId();
-    long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
-    if (Arrays.equals(sellTokenId, "_".getBytes())) {
-      accountCapsule.setBalance(Math.addExact(
-          accountCapsule.getBalance(), sellTokenQuantityRemain));
-    } else {
-      accountCapsule
-          .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
-    }
-    orderCapsule.setSellTokenQuantityRemain(0L);
-  }
-
   public void returnSellTokenRemain(MarketOrderCapsule orderCapsule) {
     AccountCapsule accountCapsule = accountStore
         .get(orderCapsule.getOwnerAddress().toByteArray());
 
-    byte[] sellTokenId = orderCapsule.getSellTokenId();
-    long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
-    if (Arrays.equals(sellTokenId, "_".getBytes())) {
-      accountCapsule.setBalance(Math.addExact(
-          accountCapsule.getBalance(), sellTokenQuantityRemain));
-    } else {
-      accountCapsule
-          .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
-    }
+    MarketUtils.returnSellTokenRemain(orderCapsule, accountCapsule, dynamicStore, assetIssueStore);
     accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
-    orderCapsule.setSellTokenQuantityRemain(0L);
-
   }
-
 
   public void saveRemainOrder(MarketOrderCapsule orderCapsule, MarketPrice currentPrice,
       MarketOrderPosition position)
       throws ItemNotFoundException {
-
     // add price into pricesList
     byte[] pairKey = MarketUtils.createPairKey(sellTokenID, buyTokenID);
     MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.getUnchecked(pairKey);
