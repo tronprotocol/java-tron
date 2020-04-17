@@ -81,16 +81,9 @@ public class TransactionUtil {
     if (accountId.length > 32) {
       return false;
     }
-    // b must read able.
-    for (byte b : accountId) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
+
+    return validBytes(accountId);
+    
   }
 
   public static boolean validAssetName(byte[] assetName) {
@@ -100,16 +93,9 @@ public class TransactionUtil {
     if (assetName.length > 32) {
       return false;
     }
-    // b must read able.
-    for (byte b : assetName) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
+
+    return validBytes(assetName);
+
   }
 
   public static boolean validTokenAbbrName(byte[] abbrName) {
@@ -119,8 +105,14 @@ public class TransactionUtil {
     if (abbrName.length > 5) {
       return false;
     }
-    // b must read able.
-    for (byte b : abbrName) {
+
+    return validBytes(abbrName);
+
+  }
+
+  private static boolean validBytes(byte[] bytes) {
+    // b must be readable
+    for (byte b : bytes) {
       if (b < 0x21) {
         return false; // 0x21 = '!'
       }
