@@ -10,8 +10,7 @@ import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionByIdOnSolidityServlet
-    extends GetTransactionByIdServlet {
+public class GetTransactionByIdOnSolidityServlet extends GetTransactionByIdServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;

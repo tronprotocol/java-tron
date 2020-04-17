@@ -81,16 +81,9 @@ public class TransactionUtil {
     if (accountId.length > 32) {
       return false;
     }
-    // b must read able.
-    for (byte b : accountId) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
+
+    return validBytes(accountId);
+    
   }
 
   public static boolean validAssetName(byte[] assetName) {
@@ -100,16 +93,9 @@ public class TransactionUtil {
     if (assetName.length > 32) {
       return false;
     }
-    // b must read able.
-    for (byte b : assetName) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
+
+    return validBytes(assetName);
+
   }
 
   public static boolean validTokenAbbrName(byte[] abbrName) {
@@ -119,8 +105,14 @@ public class TransactionUtil {
     if (abbrName.length > 5) {
       return false;
     }
-    // b must read able.
-    for (byte b : abbrName) {
+
+    return validBytes(abbrName);
+
+  }
+
+  private static boolean validBytes(byte[] bytes) {
+    // b must be readable
+    for (byte b : bytes) {
       if (b < 0x21) {
         return false; // 0x21 = '!'
       }
@@ -191,42 +183,6 @@ public class TransactionUtil {
     }
   }
 
-  public static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
-
-    if (selector == null || selector.length != 4
-        || abi.getEntrysList().size() == 0) {
-      return false;
-    }
-
-    for (int i = 0; i < abi.getEntrysCount(); i++) {
-      ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != ABI.Entry.EntryType.Function) {
-        continue;
-      }
-
-      int inputCount = entry.getInputsCount();
-      StringBuilder sb = new StringBuilder();
-      sb.append(entry.getName());
-      sb.append("(");
-      for (int k = 0; k < inputCount; k++) {
-        ABI.Entry.Param param = entry.getInputs(k);
-        sb.append(param.getType());
-        if (k + 1 < inputCount) {
-          sb.append(",");
-        }
-      }
-      sb.append(")");
-
-      byte[] funcSelector = new byte[4];
-      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
-      if (Arrays.equals(funcSelector, selector)) {
-        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
-      }
-    }
-
-    return false;
-  }
-
   public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
 
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
@@ -247,7 +203,7 @@ public class TransactionUtil {
     return sha3omit12(combined);
   }
 
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+  public static boolean checkPermissionOperations(Permission permission, Contract contract)
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
@@ -306,7 +262,7 @@ public class TransactionUtil {
           throw new PermissionException("Permission type is wrong!");
         }
         //check operations
-        if (!checkPermissionOprations(permission, contract)) {
+        if (!checkPermissionOperations(permission, contract)) {
           throw new PermissionException("Permission denied!");
         }
       }

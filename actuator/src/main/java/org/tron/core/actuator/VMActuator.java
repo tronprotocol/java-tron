@@ -82,16 +82,16 @@ public class VMActuator implements Actuator2 {
 
   @Getter
   @Setter
-  private boolean isConstanCall = false;
+  private boolean isConstantCall = false;
 
   @Setter
-  private boolean enableEventLinstener;
+  private boolean enableEventListener;
 
   private LogInfoTriggerParser logInfoTriggerParser;
 
 
-  public VMActuator(boolean isConstanCall) {
-    this.isConstanCall = isConstanCall;
+  public VMActuator(boolean isConstantCall) {
+    this.isConstantCall = isConstantCall;
     programInvokeFactory = new ProgramInvokeFactoryImpl();
   }
 
@@ -121,7 +121,7 @@ public class VMActuator implements Actuator2 {
     //Prepare Repository
     repository = RepositoryImpl.createRoot(context.getStoreFactory());
 
-    enableEventLinstener = context.isEventPluginLoaded();
+    enableEventListener = context.isEventPluginLoaded();
 
     //set executorType type
     if (Objects.nonNull(blockCap)) {
@@ -130,7 +130,7 @@ public class VMActuator implements Actuator2 {
       this.blockCap = new BlockCapsule(Block.newBuilder().build());
       this.executorType = ExecutorType.ET_PRE_TYPE;
     }
-    if (isConstanCall) {
+    if (isConstantCall) {
       this.executorType = ExecutorType.ET_PRE_TYPE;
     }
 
@@ -173,7 +173,7 @@ public class VMActuator implements Actuator2 {
         vm.play(program);
         result = program.getResult();
 
-        if (isConstanCall) {
+        if (isConstantCall) {
           long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           long callTokenValue = TransactionUtil
               .getCallTokenValue(trx.getRawData().getContract(0));
@@ -376,7 +376,7 @@ public class VMActuator implements Actuator2 {
       );
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
-      if (enableEventLinstener && isCheckTransaction()) {
+      if (enableEventListener && isCheckTransaction()) {
         logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
             txId, callerAddress);
       }
@@ -465,7 +465,7 @@ public class VMActuator implements Actuator2 {
       }
       AccountCapsule caller = repository.getAccount(callerAddress);
       long energyLimit;
-      if (isConstanCall) {
+      if (isConstantCall) {
         energyLimit = VMConstant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
         AccountCapsule creator = repository
@@ -483,7 +483,7 @@ public class VMActuator implements Actuator2 {
           .createProgramInvoke(TrxType.TRX_CONTRACT_CALL_TYPE, executorType, trx,
               tokenValue, tokenId, blockCap.getInstance(), repository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
-      if (isConstanCall) {
+      if (isConstantCall) {
         programInvoke.setConstantCall();
       }
       this.vm = new VM();
@@ -492,7 +492,7 @@ public class VMActuator implements Actuator2 {
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
 
-      if (enableEventLinstener && isCheckTransaction()) {
+      if (enableEventListener && isCheckTransaction()) {
         logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
             txId, callerAddress);
       }

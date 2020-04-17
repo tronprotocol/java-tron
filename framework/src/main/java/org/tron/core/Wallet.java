@@ -20,6 +20,7 @@ package org.tron.core;
 
 import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
+import static org.tron.common.utils.WalletUtil.isConstant;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
@@ -800,26 +801,27 @@ public class Wallet {
         .build());
 
     // ALLOW_ZKSNARK_TRANSACTION
-//    builder.addChainParameter(
-//        Protocol.ChainParameters.ChainParameter.newBuilder()
-//            .setKey("getAllowShieldedTransaction")
-//            .setValue(dbManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
-//            .build());
-//
-//    // SHIELDED_TRANSACTION_FEE
-//    builder.addChainParameter(
-//        Protocol.ChainParameters.ChainParameter.newBuilder()
-//            .setKey("getShieldedTransactionFee")
-//            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
-//            .build());
-//
-//    // ShieldedTransactionCreateAccountFee
-//    builder.addChainParameter(
-//        Protocol.ChainParameters.ChainParameter.newBuilder()
-//            .setKey("getShieldedTransactionCreateAccountFee")
-//            .setValue(
-//                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
-//            .build());
+    //    builder.addChainParameter(
+    //        Protocol.ChainParameters.ChainParameter.newBuilder()
+    //            .setKey("getAllowShieldedTransaction")
+    //            .setValue(dbManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
+    //            .build());
+    //
+    //    // SHIELDED_TRANSACTION_FEE
+    //    builder.addChainParameter(
+    //        Protocol.ChainParameters.ChainParameter.newBuilder()
+    //            .setKey("getShieldedTransactionFee")
+    //            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
+    //            .build());
+    //
+    //    // ShieldedTransactionCreateAccountFee
+    //    builder.addChainParameter(
+    //        Protocol.ChainParameters.ChainParameter.newBuilder()
+    //            .setKey("getShieldedTransactionCreateAccountFee")
+    //            .setValue(
+    //                dbManager.getDynamicPropertiesStore()
+    //                .getShieldedTransactionCreateAccountFee())
+    //            .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getForbidTransferToContract")
@@ -845,6 +847,11 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getWitness127PayPerBlock")
         .setValue(chainBaseManager.getDynamicPropertiesStore().getWitness127PayPerBlock())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowPBFT")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowPBFT())
         .build());
 
     return builder.build();
@@ -2140,7 +2147,7 @@ public class Wallet {
     byte[] selector = WalletUtil.getSelector(
         triggerSmartContract.getData().toByteArray());
 
-    if (TransactionUtil.isConstant(abi, selector)) {
+    if (isConstant(abi, selector)) {
       return callConstantContract(trxCap, builder, retBuilder);
     } else {
       return trxCap.getInstance();

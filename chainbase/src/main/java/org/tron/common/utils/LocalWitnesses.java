@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -104,6 +105,16 @@ public class LocalWitnesses {
       return null;
     }
     return privateKeys.get(0);
+  }
+
+  public byte[] getPublicKey() {
+    if (CollectionUtils.isEmpty(privateKeys)) {
+      logger.warn("privateKey is null");
+      return null;
+    }
+    byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
+    final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    return ecKey.getAddress();
   }
 
 }

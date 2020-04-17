@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
 import com.typesafe.config.Config;
@@ -121,8 +122,10 @@ public class Args extends CommonParameter {
     PARAMETER.nodeP2pVersion = 0;
     PARAMETER.rpcPort = 0;
     PARAMETER.rpcOnSolidityPort = 0;
+    PARAMETER.rpcOnPBFTPort = 0;
     PARAMETER.fullNodeHttpPort = 0;
     PARAMETER.solidityHttpPort = 0;
+    PARAMETER.pBFTHttpPort = 0;
     PARAMETER.maintenanceTimeInterval = 0;
     PARAMETER.proposalExpireTime = 0;
     PARAMETER.checkFrozenTime = 1;
@@ -165,6 +168,8 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
     PARAMETER.nodeMetricsEnable = true;
+    PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    PARAMETER.allowPBFT = 0;
   }
 
   /**
@@ -431,6 +436,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_RPC_SOLIDITY_PORT)
             ? config.getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50061;
 
+    PARAMETER.rpcOnPBFTPort =
+        config.hasPath(Constant.NODE_RPC_PBFT_PORT)
+            ? config.getInt(Constant.NODE_RPC_PBFT_PORT) : 50071;
+
     PARAMETER.fullNodeHttpPort =
         config.hasPath(Constant.NODE_HTTP_FULLNODE_PORT)
             ? config.getInt(Constant.NODE_HTTP_FULLNODE_PORT) : 8090;
@@ -438,6 +447,10 @@ public class Args extends CommonParameter {
     PARAMETER.solidityHttpPort =
         config.hasPath(Constant.NODE_HTTP_SOLIDITY_PORT)
             ? config.getInt(Constant.NODE_HTTP_SOLIDITY_PORT) : 8091;
+
+    PARAMETER.pBFTHttpPort =
+        config.hasPath(Constant.NODE_HTTP_PBFT_PORT)
+            ? config.getInt(Constant.NODE_HTTP_PBFT_PORT) : 8092;
 
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
@@ -655,6 +668,18 @@ public class Args extends CommonParameter {
     PARAMETER.changedDelegation =
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
             .getInt(Constant.COMMITTEE_CHANGED_DELEGATION) : 0;
+
+    PARAMETER.allowPBFT =
+        config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
+            .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
+
+    PARAMETER.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
+        .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
+        ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
+    if (PARAMETER.isWitness()) {
+    //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    }
 
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
