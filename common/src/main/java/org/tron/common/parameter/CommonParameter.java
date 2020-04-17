@@ -357,7 +357,7 @@ public class CommonParameter {
   @Getter
   public SeedNode seedNode;
   @Getter
-  public EventPluginConfig eventPluginConfig;
+  public EventPluginConfig  eventPluginConfig;
   @Getter
   public FilterQuery eventFilter;
   @Getter
