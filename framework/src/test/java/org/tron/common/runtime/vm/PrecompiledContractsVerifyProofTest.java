@@ -285,6 +285,369 @@ public class PrecompiledContractsVerifyProofTest {
     }
   }
 
+  @Test
+  public void verifyTransfer1v1ProofCorrect() throws ZksnarkException {
+    int totalCountNum = 1;
+    long leafCount = 0;
+    byte[] frontier = new byte[32 * 33];
+
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    for (int countNum = 0; countNum < totalCountNum; countNum++) {
+      SpendingKey senderSk = SpendingKey.random();
+      ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
+      FullViewingKey senderFvk = senderSk.fullViewingKey();
+      byte[] senderOvk = senderFvk.getOvk();
+      IncomingViewingKey senderIvk = senderFvk.inViewingKey();
+      byte[] rcm1 = new byte[32];
+      JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
+
+      {//for mint1
+        ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
+        mintBuilder1.setTransparentToAmount(100);
+        mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+        mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
+        mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
+            senderPaymentAddress1.getPkD(), 100, rcm1, new byte[512]);
+        ShieldedTRC20Parameters mintParams1 = mintBuilder1.build(false);
+
+        byte[] mintInputData1 = abiEncodeForMint(mintParams1, 100, frontier, leafCount);
+        Pair<Boolean, byte[]> mintContractResult1 = mintContract.execute(mintInputData1);
+        byte[] mintResult1 = mintContractResult1.getRight();
+        Assert.assertEquals(1, mintResult1[31]);
+
+        //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
+        if (mintResult1[32] == 0) {
+          System.arraycopy(mintInputData1, 0, frontier, 0, 32);
+        } else {
+          int srcPos = (mintResult1[32] - 1) * 32 + 33;
+          int destPos = mintResult1[32] * 32;
+          System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
+        }
+        leafCount++;
+      }
+
+      {//for transfer
+        ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
+        builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
+        builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+        builder.setTransparentFromAmount(0);
+        builder.setTransparentToAmount(0);
+        //spendNote1
+        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
+            100, rcm1, new byte[512]);
+        byte[][] cm1 = new byte[1][32];
+        System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
+        IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
+        byte[] path1 = decodePath(voucher1.path().encode());
+        byte[] anchor1 = voucher1.root().getContent().toByteArray();
+        long position1 = voucher1.position();
+        builder.addSpend(senderExpsk, senderNote1, anchor1, path1, position1);
+
+        //receiveNote1
+        SpendingKey receiveSk1 = SpendingKey.random();
+        FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
+        IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        builder.addOutput(senderOvk, receivePaymentAddress1, 100, new byte[512]);
+
+        ShieldedTRC20Parameters params = builder.build(true);
+
+        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+        Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
+        byte[] result = contractResult.getRight();
+        Assert.assertEquals(1, result[31]);
+
+        //update frontier and leafCount
+        int idx = 32;
+        for (int i = 0; i < 1; i++) {
+          if (result[idx] == 0) {
+            byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
+                .toByteArray();
+            System.arraycopy(noteCommitment, 0, frontier, 0, 32);
+          } else {
+            int destPos = result[idx] * 32;
+            int srcPos = (result[idx] - 1) * 32 + idx + 1;
+            System.arraycopy(result, srcPos, frontier, destPos, 32);
+          }
+          idx += result[idx] * 32 + 1;
+          leafCount++;
+        }
+
+        byte[][] cm = new byte[1][32];
+        for (int i = 0; i < 1; i++) {
+          byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
+              .toByteArray();
+          System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
+        }
+        IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
+        byte[] root = voucher.root().getContent().toByteArray();
+
+        Assert.assertArrayEquals(root, Arrays.copyOfRange(result, idx, idx + 32));
+      }
+    }
+  }
+
+  @Test
+  public void verifyTransfer1v2ProofCorrect() throws ZksnarkException {
+    int totalCountNum = 1;
+    long leafCount = 0;
+    byte[] frontier = new byte[32 * 33];
+
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    for (int countNum = 0; countNum < totalCountNum; countNum++) {
+      SpendingKey senderSk = SpendingKey.random();
+      ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
+      FullViewingKey senderFvk = senderSk.fullViewingKey();
+      byte[] senderOvk = senderFvk.getOvk();
+      IncomingViewingKey senderIvk = senderFvk.inViewingKey();
+      byte[] rcm1 = new byte[32];
+      JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
+
+      {//for mint1
+        ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
+        mintBuilder1.setTransparentToAmount(100);
+        mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+        mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
+        mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
+            senderPaymentAddress1.getPkD(), 100, rcm1, new byte[512]);
+        ShieldedTRC20Parameters mintParams1 = mintBuilder1.build(false);
+
+        byte[] mintInputData1 = abiEncodeForMint(mintParams1, 100, frontier, leafCount);
+        Pair<Boolean, byte[]> mintContractResult1 = mintContract.execute(mintInputData1);
+        byte[] mintResult1 = mintContractResult1.getRight();
+        Assert.assertEquals(1, mintResult1[31]);
+
+        //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
+        if (mintResult1[32] == 0) {
+          System.arraycopy(mintInputData1, 0, frontier, 0, 32);
+        } else {
+          int srcPos = (mintResult1[32] - 1) * 32 + 33;
+          int destPos = mintResult1[32] * 32;
+          System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
+        }
+        leafCount++;
+      }
+
+      {//for transfer
+        ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
+        builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
+        builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+        builder.setTransparentFromAmount(0);
+        builder.setTransparentToAmount(0);
+        //spendNote1
+        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
+            100, rcm1, new byte[512]);
+        byte[][] cm1 = new byte[1][32];
+        System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
+        IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
+        byte[] path1 = decodePath(voucher1.path().encode());
+        byte[] anchor1 = voucher1.root().getContent().toByteArray();
+        long position1 = voucher1.position();
+        builder.addSpend(senderExpsk, senderNote1, anchor1, path1, position1);
+
+        //receiveNote1
+        SpendingKey receiveSk1 = SpendingKey.random();
+        FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
+        IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        builder.addOutput(senderOvk, receivePaymentAddress1, 40, new byte[512]);
+
+        //receiveNote2
+        SpendingKey receiveSk2 = SpendingKey.random();
+        FullViewingKey receiveFvk2 = receiveSk2.fullViewingKey();
+        IncomingViewingKey receiveIvk2 = receiveFvk2.inViewingKey();
+        PaymentAddress receivePaymentAddress2 = receiveIvk2.address(new DiversifierT()).get();
+        builder.addOutput(senderOvk, receivePaymentAddress2, 60, new byte[512]);
+
+        ShieldedTRC20Parameters params = builder.build(true);
+
+        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+        Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
+        byte[] result = contractResult.getRight();
+        Assert.assertEquals(1, result[31]);
+
+        //update frontier and leafCount
+        int idx = 32;
+        for (int i = 0; i < 2; i++) {
+          if (result[idx] == 0) {
+            byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
+                .toByteArray();
+            System.arraycopy(noteCommitment, 0, frontier, 0, 32);
+          } else {
+            int destPos = result[idx] * 32;
+            int srcPos = (result[idx] - 1) * 32 + idx + 1;
+            System.arraycopy(result, srcPos, frontier, destPos, 32);
+          }
+          idx += result[idx] * 32 + 1;
+          leafCount++;
+        }
+
+        byte[][] cm = new byte[2][32];
+        for (int i = 0; i < 2; i++) {
+          byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
+              .toByteArray();
+          System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
+        }
+        IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
+        byte[] root = voucher.root().getContent().toByteArray();
+
+        Assert.assertArrayEquals(root, Arrays.copyOfRange(result, idx, idx + 32));
+      }
+    }
+  }
+
+  @Test
+  public void verifyTransfer2v1ProofCorrect() throws ZksnarkException {
+    int totalCountNum = 1;
+    long leafCount = 0;
+    byte[] frontier = new byte[32 * 33];
+
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    for (int countNum = 0; countNum < totalCountNum; countNum++) {
+      SpendingKey senderSk = SpendingKey.random();
+      ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
+      FullViewingKey senderFvk = senderSk.fullViewingKey();
+      byte[] senderOvk = senderFvk.getOvk();
+      IncomingViewingKey senderIvk = senderFvk.inViewingKey();
+      byte[] rcm1 = new byte[32];
+      JLibrustzcash.librustzcashSaplingGenerateR(rcm1);
+      byte[] rcm2 = new byte[32];
+      JLibrustzcash.librustzcashSaplingGenerateR(rcm2);
+      PaymentAddress senderPaymentAddress1 = senderIvk.address(DiversifierT.random()).get();
+      PaymentAddress senderPaymentAddress2 = senderIvk.address(DiversifierT.random()).get();
+
+      {//for mint1
+        ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
+        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+        mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
+        mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
+            senderPaymentAddress1.getPkD(), 30, rcm1, new byte[512]);
+        ShieldedTRC20Parameters mintParams1 = mintBuilder1.build(false);
+
+        byte[] mintInputData1 = abiEncodeForMint(mintParams1, 30, frontier, leafCount);
+        Pair<Boolean, byte[]> mintContractResult1 = mintContract.execute(mintInputData1);
+        byte[] mintResult1 = mintContractResult1.getRight();
+        Assert.assertEquals(1, mintResult1[31]);
+
+        //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
+        if (mintResult1[32] == 0) {
+          System.arraycopy(mintInputData1, 0, frontier, 0, 32);
+        } else {
+          int srcPos = (mintResult1[32] - 1) * 32 + 33;
+          int destPos = mintResult1[32] * 32;
+          System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
+        }
+        leafCount++;
+      }
+
+      {//for mint2
+        ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
+        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+        mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
+        mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
+            senderPaymentAddress2.getPkD(), 70, rcm2, new byte[512]);
+        ShieldedTRC20Parameters mintParams2 = mintBuilder2.build(false);
+
+        byte[] mintInputData2 = abiEncodeForMint(mintParams2, 70, frontier, leafCount);
+        Pair<Boolean, byte[]> mintContractResult2 = mintContract.execute(mintInputData2);
+        byte[] mintResult2 = mintContractResult2.getRight();
+
+        Assert.assertEquals(1, mintResult2[31]);
+
+        //update frontier and leafCount
+        //if slot == 0, frontier[0:31]=noteCommitment
+        if (mintResult2[32] == 0) {
+          System.arraycopy(mintInputData2, 0, frontier, 0, 32);
+        } else {
+          int srcPos = (mintResult2[32] - 1) * 32 + 33;
+          int destPos = mintResult2[32] * 32;
+          System.arraycopy(mintResult2, srcPos, frontier, destPos, 32);
+        }
+        leafCount++;
+      }
+
+      {//for transfer
+        ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
+        builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
+        builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+        builder.setTransparentFromAmount(0);
+        builder.setTransparentToAmount(0);
+        //spendNote1
+        Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
+            30, rcm1, new byte[512]);
+        byte[][] cm1 = new byte[1][32];
+        System.arraycopy(senderNote1.cm(), 0, cm1[0], 0, 32);
+        IncrementalMerkleVoucherContainer voucher1 = addSimpleMerkleVoucherContainer(tree, cm1);
+        byte[] path1 = decodePath(voucher1.path().encode());
+        byte[] anchor1 = voucher1.root().getContent().toByteArray();
+        long position1 = voucher1.position();
+        builder.addSpend(senderExpsk, senderNote1, anchor1, path1, position1);
+
+        //spendNote2
+        Note senderNote2 = new Note(senderPaymentAddress2.getD(), senderPaymentAddress2.getPkD(),
+            70, rcm2, new byte[512]);
+        byte[][] cm2 = new byte[1][32];
+        System.arraycopy(senderNote2.cm(), 0, cm2[0], 0, 32);
+        IncrementalMerkleVoucherContainer voucher2 = addSimpleMerkleVoucherContainer(tree, cm2);
+        byte[] path2 = decodePath(voucher2.path().encode());
+        byte[] anchor2 = voucher2.root().getContent().toByteArray();
+        long position2 = voucher2.position();
+        builder.addSpend(senderExpsk, senderNote2, anchor2, path2, position2);
+
+        //receiveNote1
+        SpendingKey receiveSk1 = SpendingKey.random();
+        FullViewingKey receiveFvk1 = receiveSk1.fullViewingKey();
+        IncomingViewingKey receiveIvk1 = receiveFvk1.inViewingKey();
+        PaymentAddress receivePaymentAddress1 = receiveIvk1.address(new DiversifierT()).get();
+        builder.addOutput(senderOvk, receivePaymentAddress1, 100, new byte[512]);
+
+        ShieldedTRC20Parameters params = builder.build(true);
+
+        byte[] inputData = abiEncodeForTransfer(params, frontier, leafCount);
+        Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
+        byte[] result = contractResult.getRight();
+        Assert.assertEquals(1, result[31]);
+
+        //update frontier and leafCount
+        int idx = 32;
+        for (int i = 0; i < 1; i++) {
+          if (result[idx] == 0) {
+            byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
+                .toByteArray();
+            System.arraycopy(noteCommitment, 0, frontier, 0, 32);
+          } else {
+            int destPos = result[idx] * 32;
+            int srcPos = (result[idx] - 1) * 32 + idx + 1;
+            System.arraycopy(result, srcPos, frontier, destPos, 32);
+          }
+          idx += result[idx] * 32 + 1;
+          leafCount++;
+        }
+
+        byte[][] cm = new byte[1][32];
+        for (int i = 0; i < 1; i++) {
+          byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
+              .toByteArray();
+          System.arraycopy(noteCommitment, 0, cm[i], 0, 32);
+        }
+        IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
+        byte[] root = voucher.root().getContent().toByteArray();
+
+        Assert.assertArrayEquals(root, Arrays.copyOfRange(result, idx, idx + 32));
+      }
+    }
+  }
+
 
   @Test
   public void verifyBurnProofCorrect() throws ZksnarkException {
@@ -3045,7 +3408,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongCM(ShieldedTRC20Parameters params, long value,
-      byte[] frontier, long leafCount) {
+                                         byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3064,7 +3427,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongCV(ShieldedTRC20Parameters params, long value,
-      byte[] frontier, long leafCount) {
+                                         byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3083,7 +3446,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongEpk(ShieldedTRC20Parameters params, long value,
-      byte[] frontier, long leafCount) {
+                                          byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3102,7 +3465,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongProof(ShieldedTRC20Parameters params, long value,
-      byte[] frontier, long leafCount) {
+                                            byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3121,7 +3484,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongBindingSignature(ShieldedTRC20Parameters params, long value,
-      byte[] frontier, long leafCount) {
+                                                       byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3140,7 +3503,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForMintWrongHash(ShieldedTRC20Parameters params, long value,
-      byte[] frontier, long leafCount) {
+                                           byte[] frontier, long leafCount) {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = params.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
@@ -3159,7 +3522,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransfer(ShieldedTRC20Parameters params, byte[] frontier,
-      long leafCount) {
+                                      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3210,7 +3573,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongNf(ShieldedTRC20Parameters params, byte[] frontier,
-      long leafCount) {
+                                             long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3262,7 +3625,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongRoot(ShieldedTRC20Parameters params, byte[] frontier,
-      long leafCount) {
+                                               long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3315,7 +3678,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongSpendCV(ShieldedTRC20Parameters params, byte[] frontier,
-      long leafCount) {
+                                                  long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3367,7 +3730,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongRk(ShieldedTRC20Parameters params, byte[] frontier,
-      long leafCount) {
+                                             long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3419,8 +3782,8 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongSpendProof(ShieldedTRC20Parameters params,
-      byte[] frontier,
-      long leafCount) {
+                                                     byte[] frontier,
+                                                     long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3472,7 +3835,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongCM(ShieldedTRC20Parameters params, byte[] frontier,
-      long leafCount) {
+                                             long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3525,7 +3888,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongReceiveCV(ShieldedTRC20Parameters params, byte[] frontier,
-      long leafCount) {
+                                                    long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3577,7 +3940,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongEpk(ShieldedTRC20Parameters params, byte[] frontier,
-      long leafCount) {
+                                              long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3630,8 +3993,8 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongReceivProof(ShieldedTRC20Parameters params,
-      byte[] frontier,
-      long leafCount) {
+                                                      byte[] frontier,
+                                                      long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3683,8 +4046,8 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForTransferWrongBindingSignature(ShieldedTRC20Parameters params,
-      byte[] frontier,
-      long leafCount) {
+                                                           byte[] frontier,
+                                                           long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3737,7 +4100,7 @@ public class PrecompiledContractsVerifyProofTest {
 
 
   private byte[] abiEncodeForTransferWrongHash(ShieldedTRC20Parameters params, byte[] frontier,
-      long leafCount) {
+                                               long leafCount) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -3896,7 +4259,7 @@ public class PrecompiledContractsVerifyProofTest {
   }
 
   private byte[] abiEncodeForBurnWrongAuthoritySignature(ShieldedTRC20Parameters params,
-      long value) {
+                                                         long value) {
     byte[] mergedBytes;
     ShieldContract.SpendDescription spendDesc = params.getSpendDescription(0);
     mergedBytes = ByteUtil.merge(
