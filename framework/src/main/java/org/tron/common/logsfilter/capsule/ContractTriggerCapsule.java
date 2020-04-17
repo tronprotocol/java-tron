@@ -4,15 +4,12 @@ import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -31,11 +28,6 @@ public class ContractTriggerCapsule extends TriggerCapsule {
   @Getter
   @Setter
   private ContractTrigger contractTrigger;
-
-  @Getter
-  @Setter
-  private boolean isSolidity = false;
-
   public ContractTriggerCapsule(ContractTrigger contractTrigger) {
     this.contractTrigger = contractTrigger;
   }
@@ -134,14 +126,24 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
     if (matchFilter(contractTrigger)) {
       if (isEvent) {
-        EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) event);
+        if (EventPluginLoader.getInstance().isContractEventTriggerEnable()) {
+          EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) event);
+        }
+
+        if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
           Args.getSolidityContractEventTriggerList().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractEventTrigger) event);
+        }
 
       } else {
-        EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
+        if (EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
+          EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
+        }
+
+        if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
           Args.getSolidityContractLogTriggerList().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractLogTrigger) event);
+        }
       }
     }
   }

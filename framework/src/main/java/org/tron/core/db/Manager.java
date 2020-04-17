@@ -1611,7 +1611,6 @@ public class Manager {
         contractTriggerCapsule.getContractTrigger().setRemoved(remove);
         contractTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
             .getLatestSolidifiedBlockNum());
-          contractTriggerCapsule.setSolidity(true);
         if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
           logger
               .info("too many triggers, contract log trigger lost: {}", trigger.getTransactionId());
@@ -1621,9 +1620,12 @@ public class Manager {
   }
 
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
+    boolean isContractTriggerEnable = EventPluginLoader.getInstance().isContractEventTriggerEnable()
+        || EventPluginLoader.getInstance().isContractLogTriggerEnable();
+    boolean isSolidityContractTriggerEnable = EventPluginLoader.getInstance().isSolidityEventTriggerEnable()
+        || EventPluginLoader.getInstance().isSolidityLogTriggerEnable();
     if (eventPluginLoaded
-        && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-        || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
+        && (isContractTriggerEnable || isSolidityContractTriggerEnable) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
         ContractTriggerCapsule contractTriggerCapsule = new ContractTriggerCapsule(trigger);

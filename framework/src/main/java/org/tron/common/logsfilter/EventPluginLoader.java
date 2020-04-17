@@ -339,7 +339,7 @@ public class EventPluginLoader {
     return solidityLogTriggerEnable;
   }
 
-    public synchronized boolean isTransactionLogTriggerEnable() {
+  public synchronized boolean isTransactionLogTriggerEnable() {
     return transactionLogTriggerEnable;
   }
 
