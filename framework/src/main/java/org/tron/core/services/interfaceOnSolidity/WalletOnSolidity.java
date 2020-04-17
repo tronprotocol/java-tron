@@ -26,6 +26,7 @@ import org.tron.core.services.WalletOnCursor;
 @Slf4j(topic = "API")
 @Component
 public class WalletOnSolidity extends WalletOnCursor {
+
   public WalletOnSolidity() {
     super.cursor = Chainbase.Cursor.SOLIDITY;
   }

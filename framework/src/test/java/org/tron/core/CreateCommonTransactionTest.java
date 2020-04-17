@@ -14,8 +14,6 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 
-import static stest.tron.wallet.common.client.WalletClient.decodeFromBase58Check;
-
 public class CreateCommonTransactionTest {
 
   private static String fullnode = "127.0.0.1:50051";
@@ -25,9 +23,7 @@ public class CreateCommonTransactionTest {
    */
   public static void testCreateUpdateBrokerageContract() {
     WalletBlockingStub walletStub = WalletGrpc
-        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
-            .build());
+        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build());
     UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
     updateBrokerageContract.setOwnerAddress(
         ByteString.copyFrom(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz")))

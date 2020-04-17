@@ -37,8 +37,8 @@ public class HttpTestZenToken006 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] zenTokenOwnerAddress = ecKey1.getAddress();
   String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(0);
+  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
+      .get(0);
   private String httpSolidityNode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
   private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
@@ -117,8 +117,7 @@ public class HttpTestZenToken006 {
     logger.info("rcm: " + rcm);
   }
 
-  @Test(enabled = false,
-      description = "Public to shield transaction withoutask by http")
+  @Test(enabled = false, description = "Public to shield transaction withoutask by http")
   public void test04PublicToShieldTransactionWithoutAsk() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, tokenId,
@@ -141,8 +140,8 @@ public class HttpTestZenToken006 {
     Long sendAmount = sendSheldAddressAmount1 + zenTokenFee;
     shieldOutList.clear();
     shieldOutList = HttpMethed
-        .addShieldOutputList(httpnode, shieldOutList, paymentAddress1,
-            "" + sendSheldAddressAmount1, memo1);
+        .addShieldOutputList(httpnode, shieldOutList, paymentAddress1, "" + sendSheldAddressAmount1,
+            memo1);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
         .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, httpnode, zenTokenOwnerAddress,

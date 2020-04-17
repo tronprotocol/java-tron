@@ -1481,6 +1481,7 @@ public class Manager {
       logger.debug("too big transaction result");
     }
   }
+
   public long getHeadBlockNum() {
     return getDynamicPropertiesStore().getLatestBlockHeaderNumber();
   }

@@ -52,8 +52,8 @@ public class HttpTestAccount002 {
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
 
     //Freeze balance
-    response = HttpMethed.freezeBalance(httpnode, freezeBalanceAddress, frozenBalance, 0,
-        0, freezeBalanceKey);
+    response = HttpMethed
+        .freezeBalance(httpnode, freezeBalanceAddress, frozenBalance, 0, 0, freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
@@ -83,8 +83,8 @@ public class HttpTestAccount002 {
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
 
     //Freeze balance for energy
-    response = HttpMethed.freezeBalance(httpnode, freezeBalanceAddress, frozenBalance, 0,
-        1, freezeBalanceKey);
+    response = HttpMethed
+        .freezeBalance(httpnode, freezeBalanceAddress, frozenBalance, 0, 1, freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
@@ -119,8 +119,9 @@ public class HttpTestAccount002 {
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
 
     //Freeze balance with bandwidth for others
-    response = HttpMethed.freezeBalance(httpnode, freezeBalanceAddress, frozenBalance, 0,
-        0, receiverResourceAddress, freezeBalanceKey);
+    response = HttpMethed
+        .freezeBalance(httpnode, freezeBalanceAddress, frozenBalance, 0, 0, receiverResourceAddress,
+            freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
@@ -132,8 +133,8 @@ public class HttpTestAccount002 {
    */
   @Test(enabled = true, description = "Get Delegated Resource by http")
   public void test006GetDelegatedResource() {
-    response = HttpMethed.getDelegatedResource(
-        httpnode, freezeBalanceAddress, receiverResourceAddress);
+    response = HttpMethed
+        .getDelegatedResource(httpnode, freezeBalanceAddress, receiverResourceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("delegatedResource").toString());
@@ -153,8 +154,8 @@ public class HttpTestAccount002 {
   public void test007GetDelegatedResourceFromSolidity() {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     HttpMethed.waitToProduceOneBlockFromPbft(httpnode, httpPbftNode);
-    response = HttpMethed.getDelegatedResourceFromSolidity(
-        httpSoliditynode, freezeBalanceAddress, receiverResourceAddress);
+    response = HttpMethed.getDelegatedResourceFromSolidity(httpSoliditynode, freezeBalanceAddress,
+        receiverResourceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("delegatedResource").toString());
@@ -173,8 +174,8 @@ public class HttpTestAccount002 {
   @Test(enabled = true, description = "Get Delegated Resource from PBFT by http")
   public void test008GetDelegatedResourceFromPbft() {
     HttpMethed.waitToProduceOneBlockFromPbft(httpnode, httpPbftNode);
-    response = HttpMethed.getDelegatedResourceFromPbft(
-        httpPbftNode, freezeBalanceAddress, receiverResourceAddress);
+    response = HttpMethed
+        .getDelegatedResourceFromPbft(httpPbftNode, freezeBalanceAddress, receiverResourceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("delegatedResource").toString());
@@ -186,7 +187,6 @@ public class HttpTestAccount002 {
     Assert.assertEquals(jsonArray.getJSONObject(0).getLong("frozen_balance_for_bandwidth"),
         frozenBalance);
   }
-
 
 
   /**
@@ -207,8 +207,8 @@ public class HttpTestAccount002 {
    */
   @Test(enabled = true, description = "Get Delegated Resource Account Index from solidity by http")
   public void test010GetDelegatedResourceAccountIndexFromSolidity() {
-    response = HttpMethed.getDelegatedResourceAccountIndexFromSolidity(httpSoliditynode,
-        freezeBalanceAddress);
+    response = HttpMethed
+        .getDelegatedResourceAccountIndexFromSolidity(httpSoliditynode, freezeBalanceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertFalse(responseContent.get("toAccounts").toString().isEmpty());
@@ -221,15 +221,14 @@ public class HttpTestAccount002 {
    */
   @Test(enabled = true, description = "Get Delegated Resource Account Index from PBFT by http")
   public void test011GetDelegatedResourceAccountIndexFromPbft() {
-    response = HttpMethed.getDelegatedResourceAccountIndexFromPbft(httpPbftNode,
-        freezeBalanceAddress);
+    response = HttpMethed
+        .getDelegatedResourceAccountIndexFromPbft(httpPbftNode, freezeBalanceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertFalse(responseContent.get("toAccounts").toString().isEmpty());
     String toAddress = responseContent.getJSONArray("toAccounts").get(0).toString();
     Assert.assertEquals(toAddress, ByteArray.toHexString(receiverResourceAddress));
   }
-
 
 
   /**
@@ -241,8 +240,9 @@ public class HttpTestAccount002 {
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
 
     //UnFreeze balance with bandwidth for others
-    response = HttpMethed.unFreezeBalance(httpnode, freezeBalanceAddress, 0,
-        receiverResourceAddress, freezeBalanceKey);
+    response = HttpMethed
+        .unFreezeBalance(httpnode, freezeBalanceAddress, 0, receiverResourceAddress,
+            freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
@@ -261,8 +261,9 @@ public class HttpTestAccount002 {
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
 
     //Freeze balance with energy for others
-    response = HttpMethed.freezeBalance(httpnode, freezeBalanceAddress, frozenBalance, 0,
-        1, receiverResourceAddress, freezeBalanceKey);
+    response = HttpMethed
+        .freezeBalance(httpnode, freezeBalanceAddress, frozenBalance, 0, 1, receiverResourceAddress,
+            freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
@@ -277,8 +278,9 @@ public class HttpTestAccount002 {
     berforeBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
 
     //UnFreeze balance with energy for others
-    response = HttpMethed.unFreezeBalance(httpnode, freezeBalanceAddress, 1,
-        receiverResourceAddress, freezeBalanceKey);
+    response = HttpMethed
+        .unFreezeBalance(httpnode, freezeBalanceAddress, 1, receiverResourceAddress,
+            freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode, freezeBalanceAddress);
