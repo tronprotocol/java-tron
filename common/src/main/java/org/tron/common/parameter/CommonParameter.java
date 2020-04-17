@@ -408,6 +408,8 @@ public class CommonParameter {
   @Setter
   public long allowShieldedTRC20Transaction;
 
+  @Getter
+  @Setter
   public boolean openHistoryQueryWhenLiteFN = false;
 
   @Getter

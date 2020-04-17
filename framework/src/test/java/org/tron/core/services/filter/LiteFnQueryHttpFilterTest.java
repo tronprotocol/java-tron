@@ -27,6 +27,7 @@ import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
 public class LiteFnQueryHttpFilterTest {
@@ -54,8 +55,11 @@ public class LiteFnQueryHttpFilterTest {
             .getBean(FullNodeHttpApiService.class);
     HttpApiOnSolidityService httpApiOnSolidityService = context
             .getBean(HttpApiOnSolidityService.class);
+    HttpApiOnPBFTService httpApiOnPBFTService = context
+            .getBean(HttpApiOnPBFTService.class);
     appTest.addService(httpApiService);
     appTest.addService(httpApiOnSolidityService);
+    appTest.addService(httpApiOnPBFTService);
     appTest.initServices(Args.getInstance());
     appTest.startServices();
     appTest.startup();
@@ -83,6 +87,8 @@ public class LiteFnQueryHttpFilterTest {
     urlPathSets.forEach(urlPath -> {
       if (urlPath.contains("/walletsolidity")) {
         fullHttpPort = Args.getInstance().getSolidityHttpPort();
+      } else if (urlPath.contains("/walletpbft")) {
+        fullHttpPort = Args.getInstance().getPBFTHttpPort();
       } else {
         fullHttpPort = Args.getInstance().getFullNodeHttpPort();
       }

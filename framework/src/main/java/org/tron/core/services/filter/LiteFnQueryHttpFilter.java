@@ -41,6 +41,7 @@ public class LiteFnQueryHttpFilter implements Filter {
     filterPaths.add("/wallet/scannotebyivk");
     filterPaths.add("/wallet/scannotebyovk");
     filterPaths.add("/wallet/totaltransaction");
+    filterPaths.add("/wallet/gettransactioninfobyblocknum");
 
     // base path: /walletsolidity
     filterPaths.add("/walletsolidity/getblockbyid");
@@ -55,6 +56,21 @@ public class LiteFnQueryHttpFilter implements Filter {
     filterPaths.add("/walletsolidity/scanandmarknotebyivk");
     filterPaths.add("/walletsolidity/scannotebyivk");
     filterPaths.add("/walletsolidity/scannotebyovk");
+    filterPaths.add("/walletsolidity/gettransactioninfobyblocknum");
+
+    // base path: /walletpbft
+    filterPaths.add("/walletpbft/getblockbyid");
+    filterPaths.add("/walletpbft/getblockbylatestnum");
+    filterPaths.add("/walletpbft/getblockbylimitnext");
+    filterPaths.add("/walletpbft/getblockbynum");
+    filterPaths.add("/walletpbft/getmerkletreevoucherinfo");
+    filterPaths.add("/walletpbft/gettransactionbyid");
+    filterPaths.add("/walletpbft/gettransactioncountbyblocknum");
+    filterPaths.add("/walletpbft/gettransactioninfobyid");
+    filterPaths.add("/walletpbft/isspend");
+    filterPaths.add("/walletpbft/scanandmarknotebyivk");
+    filterPaths.add("/walletpbft/scannotebyivk");
+    filterPaths.add("/walletpbft/scannotebyovk");
   }
 
   @Override
