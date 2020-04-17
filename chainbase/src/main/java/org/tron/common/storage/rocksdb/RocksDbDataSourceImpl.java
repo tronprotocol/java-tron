@@ -49,6 +49,16 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String KEY_ENGINE = "ENGINE";
   private static final String ROCKSDB = "ROCKSDB";
+  private Options options;
+
+  public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings,
+      Options options) {
+    this.dataBaseName = name;
+    this.parentPath = parentPath;
+    this.options = options;
+    RocksDbSettings.setRocksDbSettings(settings);
+    initDB();
+  }
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings) {
     this.dataBaseName = name;
@@ -179,7 +189,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         throw new NullPointerException("no name set to the dbStore");
       }
 
-      try (Options options = new Options()) {
+      try (Options options = getDefaultOptions()) {
 
         // most of these options are suggested by https://github.com/facebook/rocksdb/wiki/Set-Up-Options
 
@@ -244,6 +254,14 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       resetDbLock.writeLock().unlock();
     }
   }
+
+  private Options getDefaultOptions() {
+    if (options != null) {
+      return options;
+    }
+    return new Options();
+  }
+
 
   @Override
   public void putData(byte[] key, byte[] value) {

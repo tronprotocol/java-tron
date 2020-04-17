@@ -1,6 +1,7 @@
 package org.tron.core.db2.core;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -133,5 +134,10 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   @Override
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     return dbSource.getValuesNext(key, limit);
+  }
+
+  @Override
+  public List<byte[]> getKeysNext(byte[] key, long limit) {
+    return dbSource.getKeysNext(key, limit);
   }
 }

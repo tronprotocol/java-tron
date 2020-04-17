@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -140,6 +141,7 @@ public class Chainbase implements IRevokingDB {
     return result;
   }
 
+
   //for blockstore
   private Set<byte[]> getValuesNext(Snapshot head, byte[] key, long limit) {
     if (limit <= 0) {
@@ -176,8 +178,57 @@ public class Chainbase implements IRevokingDB {
         .collect(Collectors.toSet());
   }
 
+
+  private List<byte[]> getKeysNext(Snapshot head, byte[] key, long limit) {
+    if (limit <= 0) {
+      return Collections.emptyList();
+    }
+
+    Map<WrappedByteArray, WrappedByteArray> levelDBMap = getEntityNext(head, key, limit);
+
+    return levelDBMap.entrySet().stream()
+        .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
+        .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
+        .limit(limit)
+        .map(Map.Entry::getKey)
+        .map(WrappedByteArray::getBytes)
+        .collect(Collectors.toList());
+  }
+
+  private Map<WrappedByteArray, WrappedByteArray> getEntityNext(Snapshot head, byte[] key,
+      long limit) {
+
+    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
+    if (head.getPrevious() != null) {
+      ((SnapshotImpl) head).collect(collection);
+    }
+
+    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
+
+    if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    }
+
+    levelDBMap.putAll(collection);
+
+    return levelDBMap;
+  }
+
   @Override
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     return getValuesNext(head(), key, limit);
+  }
+
+  @Override
+  public List<byte[]> getKeysNext(byte[] key, long limit) {
+    return getKeysNext(head(), key, limit);
   }
 }

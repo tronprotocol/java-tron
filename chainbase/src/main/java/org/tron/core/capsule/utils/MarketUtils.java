@@ -28,7 +28,7 @@ import org.tron.protos.Protocol.MarketPrice;
 
 public class MarketUtils {
 
-  private static final int TOKEN_ID_LENGTH = ByteArray
+  public static final int TOKEN_ID_LENGTH = ByteArray
       .fromString(Long.toString(Long.MAX_VALUE)).length; // 19
 
 
@@ -54,6 +54,12 @@ public class MarketUtils {
 
   public static byte[] createPairPriceKey(byte[] sellTokenId, byte[] buyTokenId,
       long sellTokenQuantity, long buyTokenQuantity) {
+
+//    byte[] pairKey = new byte[TOKEN_ID_LENGTH + TOKEN_ID_LENGTH];
+//    System.arraycopy(sellTokenId, 0, pairKey, 0, sellTokenId.length);
+//    System.arraycopy(buyTokenId, 0, pairKey, TOKEN_ID_LENGTH, buyTokenId.length);
+//    byte[] pairKeyHash = Hash.sha3(pairKey);
+
     byte[] sellTokenQuantityBytes = ByteArray.fromLong(sellTokenQuantity);
     byte[] buyTokenQuantityBytes = ByteArray.fromLong(buyTokenQuantity);
     byte[] result = new byte[TOKEN_ID_LENGTH + TOKEN_ID_LENGTH
@@ -68,7 +74,8 @@ public class MarketUtils {
         TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + sellTokenQuantityBytes.length,
         buyTokenQuantityBytes.length);
 
-    return Hash.sha3(result);
+//    return Hash.sha3(result);
+    return result;
   }
 
   public static byte[] createPairKey(byte[] sellTokenId, byte[] buyTokenId) {

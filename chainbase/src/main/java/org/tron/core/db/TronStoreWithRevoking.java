@@ -54,7 +54,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
             new LevelDB(
                 new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName),
                     dbName,
-                    StorageUtils.getOptionsByDbName(dbName),
+                    getOptionsByDbNameForLevelDB(dbName),
                     new WriteOptions().sync(CommonParameter.getInstance()
                         .getStorage().isDbSync())))));
       } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
@@ -66,11 +66,19 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
             new RocksDB(
                 new RocksDbDataSourceImpl(parentPath,
                     dbName, CommonParameter.getInstance()
-                    .getRocksDBCustomSettings()))));
+                    .getRocksDBCustomSettings(), getOptionsForRockDB()))));
       }
     } else {
       throw new RuntimeException("db version is error.");
     }
+  }
+
+  protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
+    return StorageUtils.getOptionsByDbName(dbName);
+  }
+
+  protected org.rocksdb.Options getOptionsForRockDB() {
+    return new org.rocksdb.Options();
   }
 
   protected TronStoreWithRevoking(DB<byte[], byte[]> db) {
