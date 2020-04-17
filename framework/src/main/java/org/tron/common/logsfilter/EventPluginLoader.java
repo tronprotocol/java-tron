@@ -298,7 +298,7 @@ public class EventPluginLoader {
       }
 
       if (!useNativeQueue) {
-        setPluginTopic(Trigger.SOLIDITY_EVENT, triggerConfig.getTopic());
+        setPluginTopic(Trigger.SOLIDITY_EVENT_TRIGGER, triggerConfig.getTopic());
       }
     } else if (EventPluginConfig.SOLIDITY_LOG_NAME
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
@@ -308,7 +308,7 @@ public class EventPluginLoader {
         solidityLogTriggerEnable = false;
       }
       if (!useNativeQueue) {
-        setPluginTopic(Trigger.SOLIDITY_LOG, triggerConfig.getTopic());
+        setPluginTopic(Trigger.SOLIDITY_LOG_TRIGGER, triggerConfig.getTopic());
       }
     }
   }
