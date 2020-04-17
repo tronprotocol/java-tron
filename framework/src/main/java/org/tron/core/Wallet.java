@@ -818,7 +818,8 @@ public class Wallet {
     //        Protocol.ChainParameters.ChainParameter.newBuilder()
     //            .setKey("getShieldedTransactionCreateAccountFee")
     //            .setValue(
-    //                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
+    //                dbManager.getDynamicPropertiesStore()
+    //                .getShieldedTransactionCreateAccountFee())
     //            .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
