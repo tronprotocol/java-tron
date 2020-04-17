@@ -103,7 +103,6 @@ public class HttpTestBlock001 {
   }
 
 
-
   /**
    * constructor.
    */
@@ -121,7 +120,7 @@ public class HttpTestBlock001 {
    */
   @Test(enabled = true, description = "Get block by num from solidity by http")
   public void get05BlockByNumFromSolidity() {
-    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getBlockByNumFromSolidity(httpSoliditynode, currentBlockNum);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -138,7 +137,6 @@ public class HttpTestBlock001 {
     responseContent = HttpMethed.parseResponseContent(response);
     Assert.assertEquals(responseContent, blockContent);
   }
-
 
 
   /**
@@ -204,7 +202,6 @@ public class HttpTestBlock001 {
     HttpMethed.printJsonContent(responseContent);
     Assert.assertEquals(blockId, responseContent.get("blockID").toString());
   }
-
 
 
   /**
@@ -282,15 +279,13 @@ public class HttpTestBlock001 {
    */
   @Test(enabled = true, description = "Get transaction count by blocknum from PBFT by http")
   public void get17TransactionCountByBlocknumFromPbft() {
-    response = HttpMethed
-        .getTransactionCountByBlocknumFromPbft(httpPbftNode, currentBlockNum);
+    response = HttpMethed.getTransactionCountByBlocknumFromPbft(httpPbftNode, currentBlockNum);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.size() == 1);
     Assert.assertTrue(Integer.parseInt(responseContent.get("count").toString()) >= 0);
   }
-
 
 
   /**
@@ -324,7 +319,6 @@ public class HttpTestBlock001 {
   }
 
 
-
   /**
    * constructor.
    */
@@ -352,7 +346,6 @@ public class HttpTestBlock001 {
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("block").toString());
     Assert.assertEquals(jsonArray.size(), 8);
   }
-
 
 
   /**

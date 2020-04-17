@@ -24,8 +24,8 @@ public class HttpTestSendCoin001 {
   byte[] receiverAddress = ecKey1.getAddress();
   String receiverKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   Long amount = 1000L;
-  private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(1);
+  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
+      .get(1);
   private String httpSoliditynode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
   private String httpPbftNode = Configuration.getByPath("testng.conf")
@@ -49,8 +49,8 @@ public class HttpTestSendCoin001 {
    */
   @Test(enabled = true, description = "Get transaction by id from solidity by http")
   public void test2GetTransactionByIdFromSolidity() {
-    String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
-        testKey002);
+    String txid = HttpMethed
+        .sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount, testKey002);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
 
     response = HttpMethed.getTransactionByIdFromSolidity(httpSoliditynode, txid);
@@ -58,8 +58,8 @@ public class HttpTestSendCoin001 {
     HttpMethed.printJsonContent(responseContent);
     String retString = responseContent.getString("ret");
     JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString(
-        "contractRet"), "SUCCESS");
+    Assert.assertEquals(
+        HttpMethed.parseStringContent(array.get(0).toString()).getString("contractRet"), "SUCCESS");
     Assert.assertTrue(responseContent.size() > 4);
   }
 
@@ -68,8 +68,8 @@ public class HttpTestSendCoin001 {
    */
   @Test(enabled = true, description = "Get transaction by id from PBFT by http")
   public void test3GetTransactionByIdFromPbft() {
-    String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
-        testKey002);
+    String txid = HttpMethed
+        .sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount, testKey002);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
 
     response = HttpMethed.getTransactionByIdFromPbft(httpPbftNode, txid);
@@ -77,11 +77,10 @@ public class HttpTestSendCoin001 {
     HttpMethed.printJsonContent(responseContent);
     String retString = responseContent.getString("ret");
     JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString(
-        "contractRet"), "SUCCESS");
+    Assert.assertEquals(
+        HttpMethed.parseStringContent(array.get(0).toString()).getString("contractRet"), "SUCCESS");
     Assert.assertTrue(responseContent.size() > 4);
   }
-
 
 
   /**
@@ -89,8 +88,8 @@ public class HttpTestSendCoin001 {
    */
   @Test(enabled = true, description = "Get transaction info by id from solidity by http")
   public void test4GetTransactionInfoByIdFromSolidity() {
-    String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
-        testKey002);
+    String txid = HttpMethed
+        .sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount, testKey002);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getTransactionInfoByIdFromSolidity(httpSoliditynode, txid);
@@ -104,8 +103,8 @@ public class HttpTestSendCoin001 {
    */
   @Test(enabled = true, description = "Get transaction info by id from PBFT by http")
   public void test5GetTransactionInfoByIdFromPbft() {
-    String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
-        testKey002);
+    String txid = HttpMethed
+        .sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount, testKey002);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getTransactionInfoByIdFromPbft(httpPbftNode, txid);
@@ -113,7 +112,6 @@ public class HttpTestSendCoin001 {
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.size() > 4);
   }
-
 
 
   /**
@@ -126,12 +124,12 @@ public class HttpTestSendCoin001 {
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    JSONObject transactionObject = HttpMethed.parseStringContent(JSONArray.parseArray(
-        responseContent.getString("transaction")).get(0).toString());
+    JSONObject transactionObject = HttpMethed.parseStringContent(
+        JSONArray.parseArray(responseContent.getString("transaction")).get(0).toString());
     String retString = transactionObject.getString("ret");
     JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString())
-        .getString("contractRet"), "SUCCESS");
+    Assert.assertEquals(
+        HttpMethed.parseStringContent(array.get(0).toString()).getString("contractRet"), "SUCCESS");
     Assert.assertTrue(responseContent.size() == 1);
   }
 
@@ -149,8 +147,8 @@ public class HttpTestSendCoin001 {
         JSONArray.parseArray(responseContent.getString("transaction")).get(0).toString());
     String retString = transactionObject.getString("ret");
     JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString(
-        "contractRet"), "SUCCESS");
+    Assert.assertEquals(
+        HttpMethed.parseStringContent(array.get(0).toString()).getString("contractRet"), "SUCCESS");
     Assert.assertTrue(responseContent.size() == 1);
   }
 

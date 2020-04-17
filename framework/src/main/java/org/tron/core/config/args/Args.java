@@ -665,7 +665,7 @@ public class Args extends CommonParameter {
     PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
         ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
     if (PARAMETER.isWitness()) {
-//      INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
 
     initBackupProperty(config);
