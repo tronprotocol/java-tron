@@ -1520,7 +1520,7 @@ public class Manager {
 
     try {
       eventPluginLoaded = EventPluginLoader.getInstance()
-            .start(Args.getInstance().getEventPluginConfig());
+          .start(Args.getInstance().getEventPluginConfig());
 
       if (!eventPluginLoaded) {
         logger.error("failed to load eventPlugin");
@@ -1601,31 +1601,13 @@ public class Manager {
     }
   }
 
-  private void postSolidityContractTrigger(final TransactionTrace trace, boolean remove) {
-    if (eventPluginLoaded
-        && (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()
-        || EventPluginLoader.getInstance().isSolidityLogTriggerEnable())) {
-      // be careful, trace.getRuntimeResult().getTriggerList() should never return null
-      for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
-        ContractTriggerCapsule contractTriggerCapsule = new ContractTriggerCapsule(trigger);
-        contractTriggerCapsule.getContractTrigger().setRemoved(remove);
-        contractTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
-            .getLatestSolidifiedBlockNum());
-        if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
-          logger
-              .info("too many triggers, contract log trigger lost: {}", trigger.getTransactionId());
-        }
-      }
-    }
-  }
-
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
     boolean isContractTriggerEnable = EventPluginLoader.getInstance().isContractEventTriggerEnable()
         || EventPluginLoader.getInstance().isContractLogTriggerEnable();
     boolean isSolidityContractTriggerEnable = EventPluginLoader.getInstance().isSolidityEventTriggerEnable()
         || EventPluginLoader.getInstance().isSolidityLogTriggerEnable();
     if (eventPluginLoaded
-        && (isContractTriggerEnable || isSolidityContractTriggerEnable) {
+        && (isContractTriggerEnable || isSolidityContractTriggerEnable)) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
         ContractTriggerCapsule contractTriggerCapsule = new ContractTriggerCapsule(trigger);

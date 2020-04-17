@@ -5,14 +5,12 @@ import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.runtime.LogEventWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry;
 
-@Slf4j(topic = "DB")
 public class ContractEventTriggerCapsule extends TriggerCapsule {
 
   @Getter
@@ -27,7 +25,6 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   @Getter
   @Setter
   private Entry abiEntry;
-
 
   public ContractEventTriggerCapsule(LogEventWrapper log) {
     this.contractEventTrigger = new ContractEventTrigger();
