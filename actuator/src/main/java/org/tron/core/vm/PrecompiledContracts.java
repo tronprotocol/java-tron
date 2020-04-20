@@ -1030,7 +1030,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 25000;
+      return 27000;
     }
 
     @Override
@@ -1103,7 +1103,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 30000;
+      return 32000;
     }
 
     @Override
@@ -1360,7 +1360,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 20000;
+      return 22000;
     }
 
     @Override
