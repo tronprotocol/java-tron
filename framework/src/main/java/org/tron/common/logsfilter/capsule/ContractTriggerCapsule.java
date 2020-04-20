@@ -28,6 +28,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
   @Getter
   @Setter
   private ContractTrigger contractTrigger;
+
   public ContractTriggerCapsule(ContractTrigger contractTrigger) {
     this.contractTrigger = contractTrigger;
   }

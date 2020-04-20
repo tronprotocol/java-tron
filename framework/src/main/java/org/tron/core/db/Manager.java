@@ -1369,7 +1369,9 @@ public class Manager {
   }
 
   private void postSolitityLogContractTrigger(Long blockNum) {
-    if (Args.getSolidityContractLogTriggerList().get(blockNum) == null) return;
+    if (Args.getSolidityContractLogTriggerList().get(blockNum) == null) {
+      return;
+    }
     for (ContractLogTrigger logTriggerCapsule : Args.getSolidityContractLogTriggerList().get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(
           logTriggerCapsule.getTransactionId())) != null) {
@@ -1381,7 +1383,9 @@ public class Manager {
   }
 
   private void postSolitityEventContractTrigger(Long blockNum) {
-    if (Args.getSolidityContractEventTriggerList().get(blockNum) == null) return;
+    if (Args.getSolidityContractEventTriggerList().get(blockNum) == null) {
+      return;
+    }
     for (ContractEventTrigger eventTriggerCapsule : Args
         .getSolidityContractEventTriggerList().get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
@@ -1617,10 +1621,12 @@ public class Manager {
   }
 
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
-    boolean isContractTriggerEnable = EventPluginLoader.getInstance().isContractEventTriggerEnable()
-        || EventPluginLoader.getInstance().isContractLogTriggerEnable();
-    boolean isSolidityContractTriggerEnable = EventPluginLoader.getInstance().isSolidityEventTriggerEnable()
-        || EventPluginLoader.getInstance().isSolidityLogTriggerEnable();
+    boolean isContractTriggerEnable = EventPluginLoader.getInstance()
+        .isContractEventTriggerEnable() || EventPluginLoader
+        .getInstance().isContractLogTriggerEnable();
+    boolean isSolidityContractTriggerEnable = EventPluginLoader.getInstance()
+        .isSolidityEventTriggerEnable() || EventPluginLoader
+        .getInstance().isSolidityLogTriggerEnable();
     if (eventPluginLoaded
         && (isContractTriggerEnable || isSolidityContractTriggerEnable)) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null

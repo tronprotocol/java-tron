@@ -74,11 +74,13 @@ public class Args extends CommonParameter {
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, List<ContractLogTrigger>> solidityContractLogTriggerList =  new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<Long, List<ContractLogTrigger>>
+      solidityContractLogTriggerList =  new ConcurrentHashMap<>();
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, List<ContractEventTrigger>> solidityContractEventTriggerList =  new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<Long, List<ContractEventTrigger>>
+      solidityContractEventTriggerList =  new ConcurrentHashMap<>();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
