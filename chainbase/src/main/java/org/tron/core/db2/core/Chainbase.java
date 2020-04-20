@@ -187,8 +187,8 @@ public class Chainbase implements IRevokingDB {
     Map<WrappedByteArray, WrappedByteArray> levelDBMap = getEntityNext(head, key, limit);
 
     return levelDBMap.entrySet().stream()
-        .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
-        .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
+        // .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
+        // .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
         .limit(limit)
         .map(Map.Entry::getKey)
         .map(WrappedByteArray::getBytes)

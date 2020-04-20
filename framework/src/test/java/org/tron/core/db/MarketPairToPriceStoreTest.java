@@ -84,7 +84,7 @@ public class MarketPairToPriceStoreTest {
     byte[] nextKey = this.store.getNextKey(pairPriceKey2);
 //    System.out.println("nextKey："+ByteArray.toHexString(nextKey));
 
-//    Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
+   Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
 
   }
 

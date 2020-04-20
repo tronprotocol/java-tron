@@ -315,7 +315,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       List<byte[]> result = new ArrayList<>();
       long i = 0;
       for (iterator.seek(key); iterator.hasNext() && i++ < limit; iterator.next()) {
-        result.add(iterator.peekNext().getValue());
+        result.add(iterator.peekNext().getKey());
       }
       return result;
     } catch (IOException e) {
