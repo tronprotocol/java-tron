@@ -83,6 +83,28 @@ public class MarketUtils {
   }
 
   /**
+   * Note: the params should be the same token pair, or you should change the order
+   * */
+  public static int comparePrice(long price1SellQuantity, long price1BuyQuantity,
+      long price2SellQuantity, long price2BuyQuantity) {
+    try {
+      return Long.compare(Math.multiplyExact(price1BuyQuantity, price2SellQuantity),
+          Math.multiplyExact(price2BuyQuantity, price1SellQuantity));
+
+    } catch (ArithmeticException ex) {
+      // do nothing here, because we will use BigInteger to compute again
+    }
+
+    BigInteger price1BuyQuantityBI = BigInteger.valueOf(price1BuyQuantity);
+    BigInteger price1SellQuantityBI = BigInteger.valueOf(price1SellQuantity);
+    BigInteger price2BuyQuantityBI = BigInteger.valueOf(price2BuyQuantity);
+    BigInteger price2SellQuantityBI = BigInteger.valueOf(price2SellQuantity);
+
+    return price1BuyQuantityBI.multiply(price2SellQuantityBI)
+        .compareTo(price2BuyQuantityBI.multiply(price1SellQuantityBI));
+  }
+
+  /**
    * ex.
    * for sellToken is A, buyToken is TRX.
    * price_A_maker * sellQuantity_maker = Price_TRX * buyQuantity_maker
@@ -93,36 +115,18 @@ public class MarketUtils {
    * ==> buyQuantity_maker_1*sellQuantity_maker_2 < buyQuantity_maker_2 * sellQuantity_maker_1
    */
   public static int comparePrice(MarketPrice price1, MarketPrice price2) {
-    try {
-      long price1BuyQuantity = price1.getBuyTokenQuantity();
-      long price1SellQuantity = price1.getSellTokenQuantity();
-      long price2BuyQuantity = price2.getBuyTokenQuantity();
-      long price2SellQuantity = price2.getSellTokenQuantity();
-
-      return Long.compare(Math.multiplyExact(price1BuyQuantity, price2SellQuantity),
-          Math.multiplyExact(price2BuyQuantity, price1SellQuantity));
-
-    } catch (ArithmeticException ex) {
-      // do nothing here, because we will use BigInteger to compute again
-    }
-
-    BigInteger price1BuyQuantity = BigInteger.valueOf(price1.getBuyTokenQuantity());
-    BigInteger price1SellQuantity = BigInteger.valueOf(price1.getSellTokenQuantity());
-    BigInteger price2BuyQuantity = BigInteger.valueOf(price2.getBuyTokenQuantity());
-    BigInteger price2SellQuantity = BigInteger.valueOf(price2.getSellTokenQuantity());
-
-    return price1BuyQuantity.multiply(price2SellQuantity).compareTo(price2BuyQuantity
-        .multiply(price1SellQuantity));
+    return comparePrice(price1.getSellTokenQuantity(), price1.getBuyTokenQuantity(),
+        price2.getSellTokenQuantity(), price2.getBuyTokenQuantity());
   }
 
   public static boolean isLowerPrice(MarketPrice price1, MarketPrice price2) {
     return comparePrice(price1, price2) == -1;
   }
 
-
   /**
    * if takerPrice >= makerPrice, return True
    * note: here are two different token pairs
+   * firstly, we should change the token pair of taker to be the same with maker
    */
   public static boolean priceMatch(MarketPrice takerPrice, MarketPrice makerPrice) {
     // for takerPrice, buyToken is A,sellToken is TRX.
@@ -134,22 +138,8 @@ public class MarketUtils {
     // ==> Price_TRX * sellQuantity_taker/buyQuantity_taker >= Price_TRX * buyQuantity_maker/sellQuantity_maker
     // ==> sellQuantity_taker * sellQuantity_maker > buyQuantity_taker * buyQuantity_maker
 
-    try {
-      return
-          Math.multiplyExact(takerPrice.getSellTokenQuantity(), makerPrice.getSellTokenQuantity())
-              >= Math
-              .multiplyExact(takerPrice.getBuyTokenQuantity(), makerPrice.getBuyTokenQuantity());
-    } catch (ArithmeticException ex) {
-      // do nothing here, because we will use BigInteger to compute again
-    }
-
-    BigInteger takerBuyQuantity = BigInteger.valueOf(takerPrice.getBuyTokenQuantity());
-    BigInteger takerSellQuantity = BigInteger.valueOf(takerPrice.getSellTokenQuantity());
-    BigInteger makerPriceBuyQuantity = BigInteger.valueOf(makerPrice.getBuyTokenQuantity());
-    BigInteger makerPriceSellQuantity = BigInteger.valueOf(makerPrice.getSellTokenQuantity());
-
-    return takerSellQuantity.multiply(makerPriceSellQuantity)
-        .compareTo(takerBuyQuantity.multiply(makerPriceBuyQuantity)) >= 0;
+    return comparePrice(takerPrice.getBuyTokenQuantity(), takerPrice.getSellTokenQuantity(),
+        makerPrice.getSellTokenQuantity(), makerPrice.getBuyTokenQuantity()) >= 0;
   }
 
   public static void updateOrderState(MarketOrderCapsule orderCapsule,
