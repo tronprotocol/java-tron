@@ -32,10 +32,10 @@ contract PrivateUSDT {
         require(value > 0, "Mint negative value!");
         require(noteCommitment[output[0]] == 0, "Duplicate noteCommitments!");
         bytes32 signHash = sha256(abi.encodePacked(address(this), value, output, c));
-        (bytes memory ret) = verifyMintProof(output, bindingSignature, value, signHash, frontier, leafCount);
-        uint256 result = uint256(bytesToBytes32(ret, 0));
+        (bytes32[] memory ret) = verifyMintProof(output, bindingSignature, value, signHash, frontier, leafCount);
+        uint256 result = uint256(ret[0]);
         require(result > 0, "The proof and signature have not been verified by the contract!");
-        uint256 slot = uint8(ret[32]);
+        uint256 slot = uint256(ret[1]);
         uint256 nodeIndex = leafCount + 2 ** 32 - 1;
         tree[nodeIndex] = output[0];
         if (slot == 0) {
@@ -43,12 +43,12 @@ contract PrivateUSDT {
         }
         for (uint256 i = 1; i < slot + 1; i++) {
             nodeIndex = (nodeIndex - 1) / 2;
-            tree[nodeIndex] = bytesToBytes32(ret, i * 32 + 1);
+            tree[nodeIndex] = ret[i + 1];
             if (i == slot) {
                 frontier[slot] = tree[nodeIndex];
             }
         }
-        latestRoot = bytesToBytes32(ret, slot * 32 + 33);
+        latestRoot = ret[slot + 2];
         roots[latestRoot] = latestRoot;
         noteCommitment[output[0]] = output[0];
         leafCount ++;
@@ -74,16 +74,15 @@ contract PrivateUSDT {
         bytes32 signHash = sha256(abi.encodePacked(address(this), input, output, c));
         require(output.length >= 1 && output.length <= 2, "Output number must be 1 or 2!");
         require(output.length == c.length, "Output number must be equal to c number!");
-        (bytes memory ret) = verifyTransferProof(input, spend_auth_sig, output, bindingSignature, signHash, frontier, leafCount);
-        uint256 result = uint256(bytesToBytes32(ret, 0));
+        (bytes32[] memory ret) = verifyTransferProof(input, spend_auth_sig, output, bindingSignature, signHash, frontier, leafCount);
+        uint256 result = uint256(ret[0]);
         require(result > 0, "The proof and signature have not been verified by the contract!");
 
-        uint256 offset = 32;
+        uint256 offset = 1;
         //ret offset
         for (uint256 i = 0; i < output.length; i++) {
-            uint slot = uint8(ret[offset]);
-            offset = offset + 1;
-            uint256 nodeIndex = leafCount + 2 ** 32 - 1 + i;
+            uint256 slot = uint256(ret[offset++]);
+            uint256 nodeIndex = leafCount + 2 ** 32 - 1;
             tree[nodeIndex] = output[i][0];
             //cm
             if (slot == 0) {
@@ -91,15 +90,14 @@ contract PrivateUSDT {
             }
             for (uint256 k = 1; k < slot + 1; k++) {
                 nodeIndex = (nodeIndex - 1) / 2;
-                tree[nodeIndex] = bytesToBytes32(ret, offset);
-                offset = offset + 32;
+                tree[nodeIndex] = ret[offset++];
                 if (k == slot) {
                     frontier[slot] = tree[nodeIndex];
                 }
             }
             leafCount++;
         }
-        latestRoot = bytesToBytes32(ret, offset);
+        latestRoot = ret[offset];
         roots[latestRoot] = latestRoot;
         for (uint256 i = 0; i < input.length; i++) {
             bytes32 nf = input[i][0];
@@ -190,13 +188,5 @@ contract PrivateUSDT {
             nodeIndex = (nodeIndex - 1) / 2;
         }
         return nodeValue;
-    }
-
-    function bytesToBytes32(bytes memory b, uint offset) private returns (bytes32) {
-        bytes32 out;
-        for (uint i = 0; i < 32; i++) {
-            out |= bytes32(b[i + offset] & 0xFF) >> (i * 8);
-        }
-        return out;
     }
 }
