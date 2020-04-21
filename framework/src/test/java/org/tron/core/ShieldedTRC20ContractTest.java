@@ -73,7 +73,6 @@ public class ShieldedTRC20ContractTest {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     Args.getInstance().setFullNodeAllowShieldedTRC20TransactionArgs(true);
     Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-
   }
 
   @AfterClass
@@ -153,8 +152,7 @@ public class ShieldedTRC20ContractTest {
 
   @Ignore
   @Test
-  public void testCreateShieldedContractParametersForMint()
-      throws ZksnarkException {
+  public void testCreateShieldedContractParametersForMint() throws ZksnarkException {
     librustzcashInitZksnarkParams();
     long fromAmount = 50;
     SpendingKey sk = SpendingKey.random();
@@ -250,11 +248,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(
+    byte[] contractResult1 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -322,11 +317,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(
+    byte[] contractResult1 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -415,11 +407,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(
+    byte[] contractResult1 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -435,11 +424,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid2, blockingStubFull);
     byte[] tx2Data = infoById2.get().getLog(0).getData().toByteArray();
     long pos2 = bytes32Tolong(ByteArray.subArray(tx2Data, 0, 32));
-    String txid4 = triggerGetPath(
+    byte[] contractResult2 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos2);
-    Optional<TransactionInfo> infoById4 = PublicMethed
-        .getTransactionInfoById(txid4, blockingStubFull);
-    byte[] contractResult2 = infoById4.get().getContractResult(0).toByteArray();
     byte[] path2 = ByteArray.subArray(contractResult2, 32, 1056);
     byte[] root2 = ByteArray.subArray(contractResult2, 0, 32);
     logger.info(Hex.toHexString(contractResult2));
@@ -516,11 +502,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(
+    byte[] contractResult1 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -536,11 +519,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid2, blockingStubFull);
     byte[] tx2Data = infoById2.get().getLog(0).getData().toByteArray();
     long pos2 = bytes32Tolong(ByteArray.subArray(tx2Data, 0, 32));
-    String txid4 = triggerGetPath(
+    byte[] contractResult2 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos2);
-    Optional<TransactionInfo> infoById4 = PublicMethed
-        .getTransactionInfoById(txid4, blockingStubFull);
-    byte[] contractResult2 = infoById4.get().getContractResult(0).toByteArray();
     byte[] path2 = ByteArray.subArray(contractResult2, 32, 1056);
     byte[] root2 = ByteArray.subArray(contractResult2, 0, 32);
     logger.info(Hex.toHexString(contractResult2));
@@ -601,7 +581,7 @@ public class ShieldedTRC20ContractTest {
   @Ignore
   @Test
   public void testCreateShieldedContractParametersForBurn()
-      throws ZksnarkException, ContractValidateException, BadItemException, ItemNotFoundException {
+      throws ZksnarkException, ContractValidateException {
     librustzcashInitZksnarkParams();
     byte[] contractAddress = WalletClient
         .decodeFromBase58Check(shieldedTRC20ContractAddress);
@@ -624,11 +604,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(
+    byte[] contractResult1 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -831,11 +808,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(
+    byte[] contractResult1 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -923,11 +897,9 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey,
+    byte[] contractResult1 = triggerGetPath(blockingStubFull, contractAddress, callerAddress,
+        privateKey,
         pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -1034,11 +1006,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(
+    byte[] contractResult1 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -1054,11 +1023,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid2, blockingStubFull);
     byte[] tx2Data = infoById2.get().getLog(0).getData().toByteArray();
     long pos2 = bytes32Tolong(ByteArray.subArray(tx2Data, 0, 32));
-    String txid4 = triggerGetPath(
+    byte[] contractResult2 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos2);
-    Optional<TransactionInfo> infoById4 = PublicMethed
-        .getTransactionInfoById(txid4, blockingStubFull);
-    byte[] contractResult2 = infoById4.get().getContractResult(0).toByteArray();
     byte[] path2 = ByteArray.subArray(contractResult2, 32, 1056);
     byte[] root2 = ByteArray.subArray(contractResult2, 0, 32);
     logger.info(Hex.toHexString(contractResult2));
@@ -1161,11 +1127,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(
+    byte[] contractResult1 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -1181,11 +1144,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid2, blockingStubFull);
     byte[] tx2Data = infoById2.get().getLog(0).getData().toByteArray();
     long pos2 = bytes32Tolong(ByteArray.subArray(tx2Data, 0, 32));
-    String txid4 = triggerGetPath(
+    byte[] contractResult2 = triggerGetPath(
         blockingStubFull, contractAddress, callerAddress, privateKey, pos2);
-    Optional<TransactionInfo> infoById4 = PublicMethed
-        .getTransactionInfoById(txid4, blockingStubFull);
-    byte[] contractResult2 = infoById4.get().getContractResult(0).toByteArray();
     byte[] path2 = ByteArray.subArray(contractResult2, 32, 1056);
     byte[] root2 = ByteArray.subArray(contractResult2, 0, 32);
     logger.info(Hex.toHexString(contractResult2));
@@ -1320,11 +1280,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey,
-        pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
+    byte[] contractResult1 = triggerGetPath(blockingStubFull, contractAddress, callerAddress,
+        privateKey, pos1);
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -1551,11 +1508,8 @@ public class ShieldedTRC20ContractTest {
         .getTransactionInfoById(txid1, blockingStubFull);
     byte[] tx1Data = infoById1.get().getLog(0).getData().toByteArray();
     long pos1 = bytes32Tolong(ByteArray.subArray(tx1Data, 0, 32));
-    String txid3 = triggerGetPath(blockingStubFull, contractAddress, callerAddress, privateKey,
-        pos1);
-    Optional<TransactionInfo> infoById3 = PublicMethed
-        .getTransactionInfoById(txid3, blockingStubFull);
-    byte[] contractResult1 = infoById3.get().getContractResult(0).toByteArray();
+    byte[] contractResult1 = triggerGetPath(blockingStubFull, contractAddress, callerAddress,
+        privateKey, pos1);
     byte[] path1 = ByteArray.subArray(contractResult1, 32, 1056);
     byte[] root1 = ByteArray.subArray(contractResult1, 0, 32);
     logger.info(Hex.toHexString(contractResult1));
@@ -1763,7 +1717,7 @@ public class ShieldedTRC20ContractTest {
   }
 
   private String triggerMint(WalletGrpc.WalletBlockingStub blockingStubFull, byte[] contractAddress,
-      byte[] callerAddress, String privateKey, String input) {
+                             byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
         "mint(uint64,bytes32[9],bytes32[2],bytes32[21])",
@@ -1783,7 +1737,7 @@ public class ShieldedTRC20ContractTest {
   }
 
   private GrpcAPI.PrivateShieldedTRC20Parameters mintParams(String privKey,
-      long value, String contractAddr)
+                                                            long value, String contractAddr)
       throws ZksnarkException, ContractValidateException {
     librustzcashInitZksnarkParams();
     long fromAmount = value;
@@ -1879,8 +1833,8 @@ public class ShieldedTRC20ContractTest {
   }
 
   private String triggerTransfer(WalletGrpc.WalletBlockingStub blockingStubFull,
-      byte[] contractAddress,
-      byte[] callerAddress, String privateKey, String input) {
+                                 byte[] contractAddress,
+                                 byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
         "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32[21][])",
@@ -1899,27 +1853,27 @@ public class ShieldedTRC20ContractTest {
     return txid;
   }
 
-  private String triggerGetPath(WalletGrpc.WalletBlockingStub blockingStubFull,
-      byte[] contractAddress,
-      byte[] callerAddress, String privateKey, long pos) {
-    String txid = PublicMethed.triggerContract(contractAddress,
-        "getPath(uint256)",
-        Hex.toHexString(longTo32Bytes(pos)),
-        true,
-        0L,
-        1000000000L,
-        callerAddress, privateKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(txid, blockingStubFull);
-    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
-    Assert.assertEquals(
-        Transaction.Result.contractResult.SUCCESS, infoById.get().getReceipt().getResult());
-    return txid;
+  private byte[] triggerGetPath(WalletGrpc.WalletBlockingStub blockingStubFull,
+                                byte[] contractAddress,
+                                byte[] callerAddress, String privateKey, long pos) {
+    GrpcAPI.TransactionExtention transactionExtention =
+        PublicMethed.triggerConstantContractForExtention(contractAddress,
+            "getPath(uint256)",
+            Hex.toHexString(longTo32Bytes(pos)),
+            true,
+            0L,
+            0,
+            "0",
+            0,
+            callerAddress, privateKey, blockingStubFull);
+    Assert.assertEquals(0, transactionExtention.getResult().getCodeValue());
+    byte[] result = transactionExtention.getConstantResult(0).toByteArray();
+    Assert.assertEquals(1088, result.length);
+    return result;
   }
 
   private String triggerBurn(WalletGrpc.WalletBlockingStub blockingStubFull, byte[] contractAddress,
-      byte[] callerAddress, String privateKey, String input) {
+                             byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
         "burn(bytes32[10],bytes32[2],uint64,bytes32[2],uint256)",
@@ -1939,7 +1893,7 @@ public class ShieldedTRC20ContractTest {
   }
 
   private String burnParamsToHexString(GrpcAPI.ShieldedTRC20Parameters burnParams, long value,
-      byte[] transparentToAddress) {
+                                       byte[] transparentToAddress) {
     byte[] mergedBytes;
     byte[] payTo = new byte[32];
     System.arraycopy(transparentToAddress, 0, payTo, 11, 21);

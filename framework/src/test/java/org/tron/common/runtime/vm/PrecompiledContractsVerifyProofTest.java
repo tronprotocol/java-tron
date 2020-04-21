@@ -94,7 +94,7 @@ public class PrecompiledContractsVerifyProofTest {
 
   @Test
   public void verifyMintProofCorrect() throws ZksnarkException {
-    int totalCountNum = 1;
+    int totalCountNum = 2;
     long leafCount = 0;
     long value = 100L;
     byte[] frontier = new byte[32 * 33];
@@ -121,11 +121,12 @@ public class PrecompiledContractsVerifyProofTest {
 
       //update frontier and leafCount
       //if slot == 0, frontier[0:31]=noteCommitment
-      if (result[32] == 0) {
+      int slot = result[63];
+      if (slot == 0) {
         System.arraycopy(inputData, 0, frontier, 0, 32);
       } else {
-        int srcPos = (result[32] - 1) * 32 + 33;
-        int destPos = result[32] * 32;
+        int srcPos = (slot + 1) * 32;
+        int destPos = slot * 32;
         System.arraycopy(result, srcPos, frontier, destPos, 32);
       }
       leafCount++;
@@ -134,7 +135,7 @@ public class PrecompiledContractsVerifyProofTest {
 
   @Test
   public void verifyTransferProofCorrect() throws ZksnarkException {
-    int totalCountNum = 1;
+    int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
@@ -169,11 +170,12 @@ public class PrecompiledContractsVerifyProofTest {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        if (mintResult1[32] == 0) {
+        int slot = mintResult1[63];
+        if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
         } else {
-          int srcPos = (mintResult1[32] - 1) * 32 + 33;
-          int destPos = mintResult1[32] * 32;
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
           System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
         }
         leafCount++;
@@ -196,11 +198,12 @@ public class PrecompiledContractsVerifyProofTest {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        if (mintResult2[32] == 0) {
+        int slot = mintResult2[63];
+        if (slot == 0) {
           System.arraycopy(mintInputData2, 0, frontier, 0, 32);
         } else {
-          int srcPos = (mintResult2[32] - 1) * 32 + 33;
-          int destPos = mintResult2[32] * 32;
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
           System.arraycopy(mintResult2, srcPos, frontier, destPos, 32);
         }
         leafCount++;
@@ -258,16 +261,19 @@ public class PrecompiledContractsVerifyProofTest {
         //update frontier and leafCount
         int idx = 32;
         for (int i = 0; i < 2; i++) {
-          if (result[idx] == 0) {
+          idx += 31;
+          int slot = result[idx];
+          idx += 1;
+          if (slot == 0) {
             byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
                 .toByteArray();
             System.arraycopy(noteCommitment, 0, frontier, 0, 32);
           } else {
-            int destPos = result[idx] * 32;
-            int srcPos = (result[idx] - 1) * 32 + idx + 1;
+            int destPos = slot * 32;
+            int srcPos = (slot - 1) * 32 + idx;
             System.arraycopy(result, srcPos, frontier, destPos, 32);
           }
-          idx += result[idx] * 32 + 1;
+          idx += slot * 32;
           leafCount++;
         }
 
@@ -287,7 +293,7 @@ public class PrecompiledContractsVerifyProofTest {
 
   @Test
   public void verifyTransfer1v1ProofCorrect() throws ZksnarkException {
-    int totalCountNum = 1;
+    int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
@@ -319,11 +325,12 @@ public class PrecompiledContractsVerifyProofTest {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        if (mintResult1[32] == 0) {
+        int slot = mintResult1[63];
+        if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
         } else {
-          int srcPos = (mintResult1[32] - 1) * 32 + 33;
-          int destPos = mintResult1[32] * 32;
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
           System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
         }
         leafCount++;
@@ -361,20 +368,19 @@ public class PrecompiledContractsVerifyProofTest {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
-        int idx = 32;
-        for (int i = 0; i < 1; i++) {
-          if (result[idx] == 0) {
-            byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
-                .toByteArray();
-            System.arraycopy(noteCommitment, 0, frontier, 0, 32);
-          } else {
-            int destPos = result[idx] * 32;
-            int srcPos = (result[idx] - 1) * 32 + idx + 1;
-            System.arraycopy(result, srcPos, frontier, destPos, 32);
-          }
-          idx += result[idx] * 32 + 1;
-          leafCount++;
+        int idx = 63;
+        int slot = result[idx];
+        if (slot == 0) {
+          byte[] noteCommitment = params.getReceiveDescription(0).getNoteCommitment()
+              .toByteArray();
+          System.arraycopy(noteCommitment, 0, frontier, 0, 32);
+        } else {
+          int destPos = slot * 32;
+          int srcPos = (slot - 1) * 32 + idx + 1;
+          System.arraycopy(result, srcPos, frontier, destPos, 32);
         }
+        idx += slot * 32 + 1;
+        leafCount++;
 
         byte[][] cm = new byte[1][32];
         for (int i = 0; i < 1; i++) {
@@ -392,7 +398,7 @@ public class PrecompiledContractsVerifyProofTest {
 
   @Test
   public void verifyTransfer1v2ProofCorrect() throws ZksnarkException {
-    int totalCountNum = 1;
+    int totalCountNum = 5;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
@@ -424,11 +430,12 @@ public class PrecompiledContractsVerifyProofTest {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        if (mintResult1[32] == 0) {
+        int slot = mintResult1[63];
+        if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
         } else {
-          int srcPos = (mintResult1[32] - 1) * 32 + 33;
-          int destPos = mintResult1[32] * 32;
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
           System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
         }
         leafCount++;
@@ -475,16 +482,19 @@ public class PrecompiledContractsVerifyProofTest {
         //update frontier and leafCount
         int idx = 32;
         for (int i = 0; i < 2; i++) {
-          if (result[idx] == 0) {
+          idx += 31;
+          int slot = result[idx];
+          idx += 1;
+          if (slot == 0) {
             byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
                 .toByteArray();
             System.arraycopy(noteCommitment, 0, frontier, 0, 32);
           } else {
-            int destPos = result[idx] * 32;
-            int srcPos = (result[idx] - 1) * 32 + idx + 1;
+            int destPos = slot * 32;
+            int srcPos = (slot - 1) * 32 + idx;
             System.arraycopy(result, srcPos, frontier, destPos, 32);
           }
-          idx += result[idx] * 32 + 1;
+          idx += slot * 32;
           leafCount++;
         }
 
@@ -504,7 +514,7 @@ public class PrecompiledContractsVerifyProofTest {
 
   @Test
   public void verifyTransfer2v1ProofCorrect() throws ZksnarkException {
-    int totalCountNum = 1;
+    int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
 
@@ -539,11 +549,12 @@ public class PrecompiledContractsVerifyProofTest {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        if (mintResult1[32] == 0) {
+        int slot = mintResult1[63];
+        if (slot == 0) {
           System.arraycopy(mintInputData1, 0, frontier, 0, 32);
         } else {
-          int srcPos = (mintResult1[32] - 1) * 32 + 33;
-          int destPos = mintResult1[32] * 32;
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
           System.arraycopy(mintResult1, srcPos, frontier, destPos, 32);
         }
         leafCount++;
@@ -566,11 +577,12 @@ public class PrecompiledContractsVerifyProofTest {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        if (mintResult2[32] == 0) {
+        int slot = mintResult2[63];
+        if (slot == 0) {
           System.arraycopy(mintInputData2, 0, frontier, 0, 32);
         } else {
-          int srcPos = (mintResult2[32] - 1) * 32 + 33;
-          int destPos = mintResult2[32] * 32;
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
           System.arraycopy(mintResult2, srcPos, frontier, destPos, 32);
         }
         leafCount++;
@@ -619,20 +631,19 @@ public class PrecompiledContractsVerifyProofTest {
         Assert.assertEquals(1, result[31]);
 
         //update frontier and leafCount
-        int idx = 32;
-        for (int i = 0; i < 1; i++) {
-          if (result[idx] == 0) {
-            byte[] noteCommitment = params.getReceiveDescription(i).getNoteCommitment()
-                .toByteArray();
-            System.arraycopy(noteCommitment, 0, frontier, 0, 32);
-          } else {
-            int destPos = result[idx] * 32;
-            int srcPos = (result[idx] - 1) * 32 + idx + 1;
-            System.arraycopy(result, srcPos, frontier, destPos, 32);
-          }
-          idx += result[idx] * 32 + 1;
-          leafCount++;
+        int idx = 63;
+        int slot = result[idx];
+        if (slot == 0) {
+          byte[] noteCommitment = params.getReceiveDescription(0).getNoteCommitment()
+              .toByteArray();
+          System.arraycopy(noteCommitment, 0, frontier, 0, 32);
+        } else {
+          int destPos = slot * 32;
+          int srcPos = (slot - 1) * 32 + idx + 1;
+          System.arraycopy(result, srcPos, frontier, destPos, 32);
         }
+        idx += slot * 32 + 1;
+        leafCount++;
 
         byte[][] cm = new byte[1][32];
         for (int i = 0; i < 1; i++) {
@@ -651,7 +662,7 @@ public class PrecompiledContractsVerifyProofTest {
 
   @Test
   public void verifyBurnProofCorrect() throws ZksnarkException {
-    int totalCountNum = 1;
+    int totalCountNum = 2;
     long leafCount = 0;
     long value = 100L;
     byte[] frontier = new byte[32 * 33];
@@ -684,11 +695,12 @@ public class PrecompiledContractsVerifyProofTest {
 
         //update frontier and leafCount
         //if slot == 0, frontier[0:31]=noteCommitment
-        if (mintResult[32] == 0) {
+        int slot = mintResult[63];
+        if (slot == 0) {
           System.arraycopy(mintInputData, 0, frontier, 0, 32);
         } else {
-          int srcPos = (mintResult[32] - 1) * 32 + 33;
-          int destPos = mintResult[32] * 32;
+          int srcPos = (slot + 1) * 32;
+          int destPos = slot * 32;
           System.arraycopy(mintResult, srcPos, frontier, destPos, 32);
         }
         leafCount++;
@@ -722,7 +734,7 @@ public class PrecompiledContractsVerifyProofTest {
 
   @Test
   public void merkleHashCorrectTest() throws ZksnarkException {
-    int totalCountNum = 1;
+    int totalCountNum = 2;
     byte[][] uncommitted = new byte[32][32];
     //initialize uncommitted
     uncommitted[0] = ByteArray.fromHexString(

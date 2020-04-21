@@ -978,15 +978,16 @@ public class PrecompiledContracts {
       }
       int resultArrayLength = 32;
       for (int i = 0; i < cmCount; i++) {
-        resultArrayLength += slot[i] * 32 + 1;
+        resultArrayLength += (slot[i] + 1) * 32;
       }
 
       byte[] result = new byte[resultArrayLength];
       try {
         int offset = 0;
         for (int i = 0; i < cmCount; i++) {
-          result[offset] = (byte) (slot[i] & 0xFF);
-          offset += 1;
+          byte[] slotArray = DataWord.of((byte) (slot[i] & 0xFF)).getData();
+          System.arraycopy(slotArray, 0, result, offset, 32);
+          offset += 32;
           nodeIndex = i + leafCount + TREE_WIDTH - 1;
           System.arraycopy(leafValue[i], 0, nodeValue, 0, 32);
           if (slot[i] == 0) {
@@ -1267,8 +1268,8 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckSpendTask(CountDownLatch countDownLatch,
-          long ctx, byte[] cv, byte[] anchor, byte[] nullifier,
-          byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
+                            long ctx, byte[] cv, byte[] anchor, byte[] nullifier,
+                            byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
         this.ctx = ctx;
         this.cv = cv;
         this.anchor = anchor;
@@ -1307,7 +1308,7 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckOutput(CountDownLatch countDownLatch, long ctx, byte[] cv, byte[] cm,
-          byte[] ephemeralKey, byte[] zkproof) {
+                         byte[] ephemeralKey, byte[] zkproof) {
         this.ctx = ctx;
         this.cv = cv;
         this.cm = cm;
@@ -1345,8 +1346,8 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckBingdingSig(CountDownLatch countDownLatch, long valueBalance, byte[] bindingSig,
-          byte[] signHash, byte[] spendCvs, int spendCvLen,
-          byte[] receiveCvs, int receiveCvLen) {
+                              byte[] signHash, byte[] spendCvs, int spendCvLen,
+                              byte[] receiveCvs, int receiveCvLen) {
         this.valueBalance = valueBalance;
         this.bindingSig = bindingSig;
         this.signHash = signHash;
