@@ -212,6 +212,10 @@ public class CrossChainActuator extends AbstractActuator {
               if (amount > inToken.longValue()) {
                 throw new ContractValidateException("inToken is not sufficient.");
               }
+              if (!StringUtils.equals(tokenChainId, toChainId)) {
+                logger.error("tokenChainId:{}, toChainId:{}", tokenChainId, toChainId);
+                throw new ContractValidateException("Invalid token chainId");
+              }
               assetId = ByteArray.fromString(crossRevokingStore
                   .getDestTokenFromMapping(tokenChainId, ByteArray.toStr(assetId)));
             }
