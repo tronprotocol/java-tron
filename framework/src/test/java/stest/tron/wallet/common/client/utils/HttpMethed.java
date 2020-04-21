@@ -24,7 +24,6 @@ import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
-import org.spongycastle.util.encoders.Base64;
 import org.testng.collections.Lists;
 import org.tron.api.GrpcAPI;
 import org.tron.common.utils.ByteArray;
@@ -296,7 +295,7 @@ public class HttpMethed {
       userBaseObj2.addProperty("to_address", ByteArray.toHexString(toAddress));
       userBaseObj2.addProperty("owner_address", ByteArray.toHexString(fromAddress));
       userBaseObj2.addProperty("amount", amount);
-      userBaseObj2.addProperty("extra_data", Base64.toBase64String(notes.getBytes()));
+      userBaseObj2.addProperty("extra_data", ByteArray.toHexString(notes.getBytes()));
       response = createConnect(requestUrl, userBaseObj2);
       transactionString = EntityUtils.toString(response.getEntity());
       transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
