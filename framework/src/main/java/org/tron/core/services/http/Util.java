@@ -352,9 +352,9 @@ public class Util {
       String data = jsonObject.getString(EXTRA_DATA);
       if (data.length() > 0) {
         Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
-        if(getVisibleOnlyForSign(jsonObject)){
+        if (getVisibleOnlyForSign(jsonObject)) {
           raw.setData(ByteString.copyFrom(data.getBytes()));
-        }else{
+        } else {
           raw.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
         }
         return transaction.toBuilder().setRawData(raw).build();
