@@ -3,6 +3,8 @@ package org.tron.core.pbft;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
+import java.io.File;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -31,9 +33,6 @@ import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.store.DynamicPropertiesStore;
 
-import java.io.File;
-import java.io.IOException;
-
 @Slf4j
 public class PbftApiTest extends BlockGenerate {
 
@@ -43,7 +42,7 @@ public class PbftApiTest extends BlockGenerate {
 
   @Before
   public void init() {
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath, "-w"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     dbManager = context.getBean(Manager.class);
     setManager(dbManager);
@@ -64,7 +63,8 @@ public class PbftApiTest extends BlockGenerate {
 
     for (int i = 1; i <= 10; i++) {
       try (ISession tmpSession = dbManager.getRevokingStore().buildSession()) {
-        BlockCapsule blockCapsule = createTestBlockCapsule(dynamicPropertiesStore.getLatestBlockHeaderTimestamp() + 3000L,
+        BlockCapsule blockCapsule = createTestBlockCapsule(
+            dynamicPropertiesStore.getLatestBlockHeaderTimestamp() + 3000L,
             dbManager.getHeadBlockNum() + 1, dynamicPropertiesStore.getLatestBlockHeaderHash());
         dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
         dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
@@ -75,8 +75,7 @@ public class PbftApiTest extends BlockGenerate {
 
     Assert.assertTrue(dynamicPropertiesStore.getLatestBlockHeaderNumber() >= 10);
     commonDataBase.saveLatestPbftBlockNum(6);
-    HttpApiOnPBFTService httpApiOnPBFTService = context
-        .getBean(HttpApiOnPBFTService.class);
+    HttpApiOnPBFTService httpApiOnPBFTService = context.getBean(HttpApiOnPBFTService.class);
     httpApiOnPBFTService.start();
     CloseableHttpResponse response = null;
     try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
@@ -84,7 +83,8 @@ public class PbftApiTest extends BlockGenerate {
       response = httpClient.execute(httpGet);
       String responseString = EntityUtils.toString(response.getEntity());
       JSONObject jsonObject = JSON.parseObject(responseString);
-      long num = jsonObject.getJSONObject("block_header").getJSONObject("raw_data").getLongValue("number");
+      long num = jsonObject.getJSONObject("block_header").getJSONObject("raw_data")
+          .getLongValue("number");
       Assert.assertEquals(commonDataBase.getLatestPbftBlockNum(), num);
       response.close();
     }
