@@ -23,7 +23,14 @@ public class GetDiversifierServlet extends RateLimiterServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
-      fillResponse(visible, response);
+
+      GrpcAPI.DiversifierMessage d = wallet.getDiversifier();
+
+      if (d != null) {
+        response.getWriter().println(JsonFormat.printToString(d, visible));
+      } else {
+        response.getWriter().println("{}");
+      }
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -32,19 +39,15 @@ public class GetDiversifierServlet extends RateLimiterServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = Util.getVisible(request);
-      fillResponse(visible, response);
+      GrpcAPI.DiversifierMessage d = wallet.getDiversifier();
+
+      if (d != null) {
+        response.getWriter().println(JsonFormat.printToString(d, visible));
+      } else {
+        response.getWriter().println("{}");
+      }
     } catch (Exception e) {
       Util.processError(e, response);
-    }
-  }
-
-  private void fillResponse(boolean visible, HttpServletResponse response)
-      throws Exception {
-    GrpcAPI.DiversifierMessage d = wallet.getDiversifier();
-    if (d != null) {
-      response.getWriter().println(JsonFormat.printToString(d, visible));
-    } else {
-      response.getWriter().println("{}");
     }
   }
 }
