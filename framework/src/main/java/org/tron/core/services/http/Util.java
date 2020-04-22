@@ -1,6 +1,7 @@
 package org.tron.core.services.http;
 
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -88,8 +89,8 @@ public class Util {
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(block, selfType));
     jsonObject.put("blockID", blockID);
     if (!blockCapsule.getTransactions().isEmpty()) {
-      jsonObject.put("transactions", printTransactionListToJSON(blockCapsule.getTransactions(),
-          selfType));
+      jsonObject.put("transactions",
+          printTransactionListToJSON(blockCapsule.getTransactions(), selfType));
     }
     return jsonObject;
   }
@@ -98,9 +99,8 @@ public class Util {
     List<Transaction> transactions = list.getTransactionList();
     JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
     JSONArray jsonArray = new JSONArray();
-    transactions.stream().forEach(transaction -> jsonArray
-        .add(printTransactionToJSON(transaction, selfType))
-    );
+    transactions.stream()
+        .forEach(transaction -> jsonArray.add(printTransactionToJSON(transaction, selfType)));
     jsonObject.put(TRANSACTION, jsonArray);
 
     return jsonObject.toJSONString();
@@ -139,8 +139,8 @@ public class Util {
     String string = JsonFormat.printToString(transactionExtention, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     if (transactionExtention.getResult().getResult()) {
-      JSONObject transactionObject = printTransactionToJSON(
-          transactionExtention.getTransaction(), selfType);
+      JSONObject transactionObject = printTransactionToJSON(transactionExtention.getTransaction(),
+          selfType);
       transactionObject.put(VISIBLE, selfType);
       jsonObject.put(TRANSACTION, transactionObject);
     }
@@ -152,16 +152,14 @@ public class Util {
     String string = JsonFormat.printToString(transactionSignWeight, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
-    jsonObjectExt
-        .put(TRANSACTION,
-            printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction(),
-                selfType));
+    jsonObjectExt.put(TRANSACTION,
+        printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction(), selfType));
     jsonObject.put(TRANSACTION, jsonObjectExt);
     return jsonObject.toJSONString();
   }
 
-  public static String printTransactionApprovedList(
-      TransactionApprovedList transactionApprovedList, boolean selfType) {
+  public static String printTransactionApprovedList(TransactionApprovedList transactionApprovedList,
+      boolean selfType) {
     String string = JsonFormat.printToString(transactionApprovedList, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
@@ -174,8 +172,9 @@ public class Util {
 
   public static byte[] generateContractAddress(Transaction trx, byte[] ownerAddress) {
     // get tx hash
-    byte[] txRawDataHash = Sha256Hash.of(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray()).getBytes();
+    byte[] txRawDataHash = Sha256Hash
+        .of(CommonParameter.getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())
+        .getBytes();
 
     // combine
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
@@ -186,8 +185,8 @@ public class Util {
   }
 
   public static JSONObject printTransactionToJSON(Transaction transaction, boolean selfType) {
-    JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction,
-        selfType));
+    JSONObject jsonTransaction = JSONObject
+        .parseObject(JsonFormat.printToString(transaction, selfType));
     JSONArray contracts = new JSONArray();
     transaction.getRawData().getContractList().stream().forEach(contract -> {
       try {
@@ -197,8 +196,8 @@ public class Util {
           case CreateSmartContract:
             CreateSmartContract deployContract = contractParameter
                 .unpack(CreateSmartContract.class);
-            contractJson = JSONObject.parseObject(JsonFormat.printToString(deployContract,
-                selfType));
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(deployContract, selfType));
             byte[] ownerAddress = deployContract.getOwnerAddress().toByteArray();
             byte[] contractAddress = generateContractAddress(transaction, ownerAddress);
             jsonTransaction.put("contract_address", ByteArray.toHexString(contractAddress));
@@ -232,8 +231,9 @@ public class Util {
     jsonTransaction.put("raw_data", rawData);
     String rawDataHex = ByteArray.toHexString(transaction.getRawData().toByteArray());
     jsonTransaction.put("raw_data_hex", rawDataHex);
-    String txID = ByteArray.toHexString(Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
+    String txID = ByteArray.toHexString(Sha256Hash
+        .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
     return jsonTransaction;
   }
@@ -424,8 +424,7 @@ public class Util {
     } else {
       JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
       String assetId = accountJson.get("asset_issued_ID").toString();
-      accountJson.put(
-          "asset_issued_ID",
+      accountJson.put("asset_issued_ID",
           ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
       return accountJson.toJSONString();
     }
@@ -444,8 +443,7 @@ public class Util {
     }
   }
 
-  public static byte[] getAddress(HttpServletRequest request)
-      throws Exception {
+  public static byte[] getAddress(HttpServletRequest request) throws Exception {
     byte[] address = null;
     String addressParam = "address";
     String addressStr = request.getParameter(addressParam);
@@ -457,8 +455,7 @@ public class Util {
       addressStr = jsonObject.getString(addressParam);
     }
     if (StringUtils.isNotBlank(addressStr)) {
-      if (StringUtils.startsWith(addressStr,
-          Constant.ADD_PRE_FIX_STRING_MAINNET)) {
+      if (StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
         address = Hex.decode(addressStr);
       } else {
         address = decodeFromBase58Check(addressStr);

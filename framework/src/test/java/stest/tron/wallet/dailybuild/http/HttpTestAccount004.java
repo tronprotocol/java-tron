@@ -36,7 +36,6 @@ public class HttpTestAccount004 {
       .getStringList("httpnode.ip.list").get(4);
 
 
-
   /**
    * constructor.
    */
@@ -46,14 +45,15 @@ public class HttpTestAccount004 {
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
 
-    response = HttpMethed.setAccountId(httpnode, setAccountIdAddress,
-        System.currentTimeMillis() + "id", false, setAccountIdKey);
+    response = HttpMethed
+        .setAccountId(httpnode, setAccountIdAddress, System.currentTimeMillis() + "id", false,
+            setAccountIdKey);
     Assert.assertFalse(HttpMethed.verificationResult(response));
 
     //Set account id.
     accountId = System.currentTimeMillis() + "id";
-    response = HttpMethed.setAccountId(httpnode, setAccountIdAddress,
-        accountId, true, setAccountIdKey);
+    response = HttpMethed
+        .setAccountId(httpnode, setAccountIdAddress, accountId, true, setAccountIdKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
   }
 
@@ -101,7 +101,6 @@ public class HttpTestAccount004 {
     Assert.assertEquals(responseContent.get("account_id"), accountId);
     Assert.assertTrue(responseContent.size() >= 10);
   }
-
 
 
   /**
