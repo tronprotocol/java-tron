@@ -109,7 +109,7 @@ contract PrivateUSDT {
         }
     }
     //input_bytes32*10: nf, anchor, cv, rk, proof
-    function burn(bytes32[10] calldata input, bytes32[2] calldata spend_auth_sig, uint64 value, bytes32[2] calldata bindingSignature, uint256 payToAddress) external {
+    function burn(bytes32[10] calldata input, bytes32[2] calldata spend_auth_sig, uint64 value, bytes32[2] calldata bindingSignature, address payToAddress) external {
         bytes32 nf = input[0];
         bytes32 anchor = input[1];
         require(value > 0, "Burn negative value!");
@@ -126,7 +126,7 @@ contract PrivateUSDT {
         emit tokenBurn(payTo, value);
     }
     //position: index of leafnode, start from 0
-    function getPath(uint256 position) public view returns (bytes32, bytes32[32] memory, uint256){
+    function getPath(uint256 position) public view returns (bytes32, bytes32[32] memory) {
         uint256 index = position + 2 ** 32 - 1;
         bytes32[32] memory path;
         require(position >= 0, "Position should be non-negative!");
@@ -145,7 +145,7 @@ contract PrivateUSDT {
             }
             index = (index - 1) / 2;
         }
-        return (latestRoot, path, position);
+        return (latestRoot, path);
     }
     function ancestorLevel(uint256 leafIndex) private view returns (uint32) {
         uint256 nodeIndex1 = leafIndex + 2 ** 32 - 1;
