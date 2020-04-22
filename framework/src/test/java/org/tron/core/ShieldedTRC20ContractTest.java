@@ -1868,7 +1868,7 @@ public class ShieldedTRC20ContractTest {
             callerAddress, privateKey, blockingStubFull);
     Assert.assertEquals(0, transactionExtention.getResult().getCodeValue());
     byte[] result = transactionExtention.getConstantResult(0).toByteArray();
-    Assert.assertEquals(1088, result.length);
+    Assert.assertEquals(1056, result.length);
     return result;
   }
 
@@ -1876,7 +1876,7 @@ public class ShieldedTRC20ContractTest {
                              byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
-        "burn(bytes32[10],bytes32[2],uint64,bytes32[2],uint256)",
+        "burn(bytes32[10],bytes32[2],uint64,bytes32[2],address)",
         input,
         true,
         0L, 1000000000L,
