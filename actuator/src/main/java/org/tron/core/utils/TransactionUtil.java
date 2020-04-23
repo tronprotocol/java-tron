@@ -57,7 +57,7 @@ public class TransactionUtil {
   private static final int maxAccountIdLen = 32;
   private static final int minAccountIdLen = 8;
   private static final int maxAssetNameLen = 32;
-  private static final int maxTokenAbbrName = 5;
+  private static final int maxTokenAbbrNameLen = 5;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -79,7 +79,7 @@ public class TransactionUtil {
   }
 
   public static boolean validTokenAbbrName(byte[] abbrName) {
-    return validReadableBytes(abbrName, maxTokenAbbrName);
+    return validReadableBytes(abbrName, maxTokenAbbrNameLen);
   }
 
   private static boolean validReadableBytes(byte[] bytes, int maxLength) {
