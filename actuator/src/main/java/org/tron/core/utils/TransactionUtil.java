@@ -23,7 +23,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.security.SignatureException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -35,7 +34,6 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -49,9 +47,6 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "capsule")
@@ -67,8 +62,16 @@ public class TransactionUtil {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
+  public static boolean validAccountName(byte[] accountName) {
+    if (ArrayUtils.isEmpty(accountName)) {
+      return true;   //account name can be empty
+    }
+
+    return accountName.length <= maxAccountNameLen;
+  }
+
   public static boolean validAccountId(byte[] accountId) {
-    return validReadableBytes(accountId, maxAccountIdLen) && accountId.length < minAccountIdLen;
+    return validReadableBytes(accountId, maxAccountIdLen) && accountId.length >= minAccountIdLen;
   }
 
   public static boolean validAssetName(byte[] assetName) {
@@ -93,13 +96,6 @@ public class TransactionUtil {
       }
     }
     return true;
-  }
-
-  public static boolean validAccountName(byte[] accountName) {
-    if (ArrayUtils.isEmpty(accountName)) {
-      return true;   //account name can be empty
-    }
-    return accountName.length <= maxAccountNameLen;
   }
 
   public static boolean validAssetDescription(byte[] description) {
