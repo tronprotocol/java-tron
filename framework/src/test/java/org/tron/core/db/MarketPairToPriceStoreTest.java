@@ -14,6 +14,7 @@ import org.tron.core.capsule.MarketPriceLinkedListCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketPairToPriceStore;
 
 @Slf4j
@@ -64,17 +65,50 @@ public class MarketPairToPriceStoreTest {
         2003L
     );
 
-    MarketPriceLinkedListCapsule capsule = new MarketPriceLinkedListCapsule(
-        sellTokenID1, buyTokenID1);
+    MarketPriceLinkedListCapsule capsule1 = new MarketPriceLinkedListCapsule(
+        ByteArray.fromString("0001"), ByteArray.fromString("0002"));
+    MarketPriceLinkedListCapsule capsule2 = new MarketPriceLinkedListCapsule(
+        ByteArray.fromString("0003"), ByteArray.fromString("0004"));
+    MarketPriceLinkedListCapsule capsule3 = new MarketPriceLinkedListCapsule(
+        ByteArray.fromString("0005"), ByteArray.fromString("0006"));
 
 //    System.out.println("pairPriceKey1："+ByteArray.toHexString(pairPriceKey1));
 //    System.out.println("pairPriceKey2："+ByteArray.toHexString(pairPriceKey2));
 //    System.out.println("pairPriceKey3："+ByteArray.toHexString(pairPriceKey3));
 
     //Use out-of-order insertion，key in store should be 1,2,3
-    this.store.put(pairPriceKey2, capsule);
-    this.store.put(pairPriceKey1, capsule);
-    this.store.put(pairPriceKey3, capsule);
+    this.store.put(pairPriceKey2, capsule2);
+    try {
+      Assert.assertArrayEquals(capsule2.getData(), this.store.get(pairPriceKey2).getData());
+    } catch (ItemNotFoundException e) {
+
+    }
+
+    this.store.put(pairPriceKey1, capsule1);
+    try {
+      Assert.assertArrayEquals(capsule1.getData(), this.store.get(pairPriceKey1).getData());
+      Assert.assertArrayEquals(capsule2.getData(), this.store.get(pairPriceKey2).getData());
+    } catch (ItemNotFoundException e) {
+
+    }
+
+    this.store.put(pairPriceKey3, capsule3);
+    try {
+      Assert.assertArrayEquals(capsule1.getData(), this.store.get(pairPriceKey1).getData());
+      Assert.assertArrayEquals(capsule2.getData(), this.store.get(pairPriceKey2).getData());
+      Assert.assertArrayEquals(capsule3.getData(), this.store.get(pairPriceKey3).getData());
+    } catch (ItemNotFoundException e) {
+
+    }
+
+    // check get data
+    try {
+      Assert.assertArrayEquals(capsule1.getData(), this.store.get(pairPriceKey1).getData());
+      Assert.assertArrayEquals(capsule2.getData(), this.store.get(pairPriceKey2).getData());
+      Assert.assertArrayEquals(capsule3.getData(), this.store.get(pairPriceKey3).getData());
+    } catch (ItemNotFoundException e) {
+
+    }
 
 //    Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = this.store.iterator();
 //    while (iterator.hasNext()){
@@ -140,5 +174,83 @@ public class MarketPairToPriceStoreTest {
 
   }
 
+  @Test
+  public void testPutAndHeadKey() {
+    byte[] sellTokenID1 = ByteArray.fromString("100");
+    byte[] buyTokenID1 = ByteArray.fromString("200");
+    byte[] pairPriceKey1 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        0L,
+        0L
+    );
+    byte[] pairPriceKey2 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        1000L,
+        2002L
+    );
+    byte[] pairPriceKey3 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        1000L,
+        2003L
+    );
 
+    MarketPriceLinkedListCapsule capsule1 = new MarketPriceLinkedListCapsule(
+        ByteArray.fromString("0001"), ByteArray.fromString("0002"));
+    MarketPriceLinkedListCapsule capsule2 = new MarketPriceLinkedListCapsule(
+        ByteArray.fromString("0003"), ByteArray.fromString("0004"));
+    MarketPriceLinkedListCapsule capsule3 = new MarketPriceLinkedListCapsule(
+        ByteArray.fromString("0005"), ByteArray.fromString("0006"));
+
+//    System.out.println("pairPriceKey1："+ByteArray.toHexString(pairPriceKey1));
+//    System.out.println("pairPriceKey2："+ByteArray.toHexString(pairPriceKey2));
+//    System.out.println("pairPriceKey3："+ByteArray.toHexString(pairPriceKey3));
+
+    //Use out-of-order insertion，key in store should be 1,2,3
+    this.store.put(pairPriceKey2, capsule2);
+    try {
+      Assert.assertArrayEquals(capsule2.getData(), this.store.get(pairPriceKey2).getData());
+    } catch (ItemNotFoundException e) {
+
+    }
+
+    this.store.put(pairPriceKey1, capsule1);
+    try {
+      Assert.assertArrayEquals(capsule1.getData(), this.store.get(pairPriceKey1).getData());
+      Assert.assertArrayEquals(capsule2.getData(), this.store.get(pairPriceKey2).getData());
+    } catch (ItemNotFoundException e) {
+
+    }
+
+    this.store.put(pairPriceKey3, capsule3);
+    try {
+      Assert.assertArrayEquals(capsule1.getData(), this.store.get(pairPriceKey1).getData());
+      Assert.assertArrayEquals(capsule2.getData(), this.store.get(pairPriceKey2).getData());
+      Assert.assertArrayEquals(capsule3.getData(), this.store.get(pairPriceKey3).getData());
+    } catch (ItemNotFoundException e) {
+
+    }
+
+    // check get data
+    try {
+      Assert.assertArrayEquals(capsule1.getData(), this.store.get(pairPriceKey1).getData());
+      Assert.assertArrayEquals(capsule2.getData(), this.store.get(pairPriceKey2).getData());
+      Assert.assertArrayEquals(capsule3.getData(), this.store.get(pairPriceKey3).getData());
+    } catch (ItemNotFoundException e) {
+
+    }
+
+//    Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = this.store.iterator();
+//    while (iterator.hasNext()){
+//      System.out.println("keys:" + ByteArray.toHexString(iterator.next().getKey()));
+//    }
+
+    byte[] nextKey = this.store.getNextKey(pairPriceKey2);
+//    System.out.println("nextKey："+ByteArray.toHexString(nextKey));
+
+    Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
+
+  }
 }
