@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.util.StringUtil;
-import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
@@ -353,7 +352,11 @@ public class Util {
       String data = jsonObject.getString(EXTRA_DATA);
       if (data.length() > 0) {
         Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
-        raw.setData(ByteString.copyFrom(Base64.decode(data)));
+        if (getVisibleOnlyForSign(jsonObject)) {
+          raw.setData(ByteString.copyFrom(data.getBytes()));
+        } else {
+          raw.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
+        }
         return transaction.toBuilder().setRawData(raw).build();
       }
     }
