@@ -23,7 +23,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.security.SignatureException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -35,7 +34,6 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -49,9 +47,6 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "capsule")
@@ -61,56 +56,30 @@ public class TransactionUtil {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  public static boolean validAccountName(byte[] accountName) {
-    if (ArrayUtils.isEmpty(accountName)) {
-      return true;   //account name can be empty
-    }
-
-    return accountName.length <= 200;
-  }
+  private static final int maxAccountNameLen = 200;
+  private static final int maxAccountIdLen = 32;
+  private static final int minAccountIdLen = 8;
+  private static final int maxAssetNameLen = 32;
+  private static final int maxTokenAbbrName = 5;
+  private static final int maxAssetDescription = 200;
+  private static final int maxUrlLen = 256;
 
   public static boolean validAccountId(byte[] accountId) {
-    if (ArrayUtils.isEmpty(accountId)) {
-      return false;
-    }
-
-    if (accountId.length < 8) {
-      return false;
-    }
-
-    if (accountId.length > 32) {
-      return false;
-    }
-
-    return validBytes(accountId);
-    
+    return validReadableBytes(accountId, maxAccountIdLen) && accountId.length < minAccountIdLen;
   }
 
   public static boolean validAssetName(byte[] assetName) {
-    if (ArrayUtils.isEmpty(assetName)) {
-      return false;
-    }
-    if (assetName.length > 32) {
-      return false;
-    }
-
-    return validBytes(assetName);
-
+    return validReadableBytes(assetName, maxAssetNameLen);
   }
 
   public static boolean validTokenAbbrName(byte[] abbrName) {
-    if (ArrayUtils.isEmpty(abbrName)) {
-      return false;
-    }
-    if (abbrName.length > 5) {
-      return false;
-    }
-
-    return validBytes(abbrName);
-
+    return validReadableBytes(abbrName, maxTokenAbbrName);
   }
 
-  private static boolean validBytes(byte[] bytes) {
+  private static boolean validReadableBytes(byte[] bytes, int maxLength) {
+    if (ArrayUtils.isEmpty(bytes) || bytes.length > maxLength) {
+      return false;
+    }
     // b must be readable
     for (byte b : bytes) {
       if (b < 0x21) {
@@ -123,20 +92,23 @@ public class TransactionUtil {
     return true;
   }
 
+  public static boolean validAccountName(byte[] accountName) {
+    return validBytes(accountName, maxAccountNameLen, true);
+  }
 
   public static boolean validAssetDescription(byte[] description) {
-    if (ArrayUtils.isEmpty(description)) {
-      return true;   //description can empty
-    }
-
-    return description.length <= 200;
+    return validBytes(description, maxAssetDescription, true);
   }
 
   public static boolean validUrl(byte[] url) {
-    if (ArrayUtils.isEmpty(url)) {
-      return false;
+    return validBytes(url, maxUrlLen, false);
+  }
+
+  private static boolean validBytes(byte[] bytes, int maxLength, boolean allowEmpty) {
+    if (ArrayUtils.isEmpty(bytes)) {
+      return allowEmpty;
     }
-    return url.length <= 256;
+    return bytes.length <= maxLength;
   }
 
   public static boolean isNumber(byte[] id) {
