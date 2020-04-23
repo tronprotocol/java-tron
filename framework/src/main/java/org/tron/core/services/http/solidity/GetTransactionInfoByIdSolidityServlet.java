@@ -29,8 +29,8 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
-      TransactionInfo transInfo = wallet.getTransactionInfoById(ByteString.copyFrom(
-          ByteArray.fromHexString(input)));
+      TransactionInfo transInfo = wallet
+          .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (transInfo == null) {
         response.getWriter().println("{}");
       } else {
@@ -70,4 +70,5 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
       }
     }
   }
+
 }
