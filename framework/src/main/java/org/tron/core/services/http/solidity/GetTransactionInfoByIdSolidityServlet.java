@@ -29,7 +29,13 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
-      fillResponse(ByteString.copyFrom(ByteArray.fromHexString(input)), visible, response);
+      TransactionInfo transInfo = wallet
+          .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(input)));
+      if (transInfo == null) {
+        response.getWriter().println("{}");
+      } else {
+        response.getWriter().println(JsonFormat.printToString(transInfo, visible));
+      }
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
@@ -49,7 +55,12 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
       boolean visible = Util.getVisiblePost(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
-      fillResponse(build.build().getValue(), visible, response);
+      TransactionInfo transInfo = wallet.getTransactionInfoById(build.build().getValue());
+      if (transInfo == null) {
+        response.getWriter().println("{}");
+      } else {
+        response.getWriter().println(JsonFormat.printToString(transInfo, visible));
+      }
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
@@ -60,13 +71,4 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
     }
   }
 
-  private void fillResponse(ByteString txId, boolean visible, HttpServletResponse response)
-      throws IOException {
-    TransactionInfo transInfo = wallet.getTransactionInfoById(txId);
-    if (transInfo == null) {
-      response.getWriter().println("{}");
-    } else {
-      response.getWriter().println(JsonFormat.printToString(transInfo, visible));
-    }
-  }
 }
