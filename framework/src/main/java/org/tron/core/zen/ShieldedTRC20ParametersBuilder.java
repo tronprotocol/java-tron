@@ -37,10 +37,8 @@ public class ShieldedTRC20ParametersBuilder {
   private static final int MERKLE_TREE_PATH_LENGTH = 1024; // 32*32
   private static final String MERKLE_TREE_PATH_LENGTH_ERROR = "Merkle tree path format is wrong";
   @Setter
-  @Getter
   private List<SpendDescriptionInfo> spends = new ArrayList<>();
   @Setter
-  @Getter
   private List<ReceiveDescriptionInfo> receives = new ArrayList<>();
   @Getter
   private ShieldedTRC20Parameters.Builder builder = ShieldedTRC20Parameters.newBuilder();
@@ -502,32 +500,14 @@ public class ShieldedTRC20ParametersBuilder {
 
   public static class SpendDescriptionInfo {
 
-    @Getter
-    @Setter
     private ExpandedSpendingKey expsk;
-    @Getter
-    @Setter
     private Note note;
-    @Getter
-    @Setter
     private byte[] alpha;
-    @Getter
-    @Setter
     private byte[] anchor;
-    @Getter
-    @Setter
     private byte[] path;
-    @Getter
-    @Setter
     private long position;
-    @Getter
-    @Setter
     private byte[] ak;
-    @Getter
-    @Setter
     private byte[] nsk;
-    @Getter
-    @Setter
     private byte[] ovk;
 
     private SpendDescriptionInfo(
@@ -583,7 +563,6 @@ public class ShieldedTRC20ParametersBuilder {
   @AllArgsConstructor
   private class ReceiveDescriptionInfo {
 
-    @Getter
     private byte[] ovk;
     @Getter
     private Note note;

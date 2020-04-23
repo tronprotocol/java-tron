@@ -2989,8 +2989,8 @@ public class Wallet {
     for (Block block : blockList.getBlockList()) {
       for (Transaction transaction : block.getTransactionsList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-        byte[] txid = transactionCapsule.getTransactionId().getBytes();
-        TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txid));
+        byte[] txId = transactionCapsule.getTransactionId().getBytes();
+        TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txId));
         if (ByteUtil.equals(info.getContractAddress().toByteArray(),
             shieldedTRC20ContractAddress)) {
           DecryptNotesTRC20.NoteTx.Builder noteBuilder;
@@ -2999,7 +2999,7 @@ public class Wallet {
           int index = 0;
           for (TransactionInfo.Log log : logList) {
             noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
-            noteBuilder.setTxid(ByteString.copyFrom(txid));
+            noteBuilder.setTxid(ByteString.copyFrom(txId));
             noteBuilder.setIndex(index);
             index += 1;
             noteTx = getNoteTxFromLogListByIvk(noteBuilder, log, ivk, ak, nk,
