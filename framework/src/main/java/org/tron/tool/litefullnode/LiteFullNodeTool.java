@@ -3,6 +3,7 @@ package org.tron.tool.litefullnode;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +44,7 @@ public class LiteFullNodeTool {
   private static final String SPLIT_BLOCK_NUM = "split_block_num";
   private static final String BACKUP_DIR_PREFIX = ".bak_";
   private static final String CHECKPOINT_DB = "tmp";
-  private static final long VM_NEED_RECENT_bLKS = 256;
+  private static final long VM_NEED_RECENT_BLKS = 256;
 
   private static final String BLOCK_DB_NAME = "block";
   private static final String BLOCK_INDEX_DB_NAME = "block-index";
@@ -56,7 +58,7 @@ public class LiteFullNodeTool {
       "trans",
       "transactionRetStore",
       "transactionHistoryStore");
-  private static List<String> snapshotDbs = Arrays.asList(
+  private static List<String> minimumDbsForLiteNode = Arrays.asList(
       "DelegatedResource",
       "DelegatedResourceAccountIndex",
       "IncrementalMerkleTree",
@@ -78,7 +80,7 @@ public class LiteFullNodeTool {
       "proposal",
       "recent-block",
       "storage-row",
-      TRANS_CACHE_DB_NAME,
+      //TRANS_CACHE_DB_NAME,
       //"tree-block-index",
       "votes",
       "witness",
@@ -97,6 +99,7 @@ public class LiteFullNodeTool {
     long start = System.currentTimeMillis();
     snapshotDir = Paths.get(snapshotDir, SNAPSHOT_DIR_NAME).toString();
     try {
+      List<String> snapshotDbs = getSnapshotDbs(sourceDir);
       split(sourceDir, snapshotDir, snapshotDbs);
       mergeCheckpoint2Snapshot(sourceDir, snapshotDir);
       // write genesisBlock and latestBlock
@@ -168,7 +171,23 @@ public class LiteFullNodeTool {
     logger.info("merge history finished, take {}s \n", (end - start) / 1000);
   }
 
+  private List<String> getSnapshotDbs(String sourceDir) {
+    List<String> snapshotDbs = Lists.newArrayList();
+    File basePath = new File(sourceDir);
+    Arrays.stream(Objects.requireNonNull(basePath.listFiles()))
+            .filter(File::isDirectory)
+            .filter(dir -> !archiveDbs.contains(dir.getName()))
+            .forEach(dir -> snapshotDbs.add(dir.getName()));
+    for (String dir : minimumDbsForLiteNode) {
+      if (!snapshotDbs.contains(dir)) {
+        throw new RuntimeException("databaseDir does not contain all the necessary databases");
+      }
+    }
+    return snapshotDbs;
+  }
+
   private void mergeCheckpoint2Snapshot(String sourceDir, String historyDir) {
+    List<String> snapshotDbs = getSnapshotDbs(sourceDir);
     mergeCheckpoint(sourceDir, historyDir, snapshotDbs);
   }
 
@@ -263,8 +282,8 @@ public class LiteFullNodeTool {
     destBlockDb.put(genesisBlockID, sourceBlockDb.get(genesisBlockID));
 
     long latestBlockNum = getLatestBlockHeaderNum(sourceDir);
-    long startIndex = latestBlockNum > VM_NEED_RECENT_bLKS
-            ? latestBlockNum - VM_NEED_RECENT_bLKS : 0;
+    long startIndex = latestBlockNum > VM_NEED_RECENT_BLKS
+            ? latestBlockNum - VM_NEED_RECENT_BLKS : 0;
     // put the recent blocks in snapshot, VM needs recent 256 blocks.
     LongStream.rangeClosed(startIndex, latestBlockNum).forEach(
         blockNum -> {
@@ -312,7 +331,6 @@ public class LiteFullNodeTool {
           try {
             blockCapsule = new BlockCapsule(block);
           } catch (BadItemException e) {
-            e.printStackTrace();
             throw new RuntimeException("construct block failed, num: " + blockNum);
           }
           if (blockCapsule.getTransactions().isEmpty()) {
@@ -382,9 +400,7 @@ public class LiteFullNodeTool {
       throw new RuntimeException("create bak dir failed");
     }
     Util.copyDatabases(Paths.get(databaseDir), Paths.get(bakDir), archiveDbs);
-    archiveDbs.forEach(db -> {
-      FileUtil.deleteDir(new File(databaseDir, db));
-    });
+    archiveDbs.forEach(db -> FileUtil.deleteDir(new File(databaseDir, db)));
   }
 
   private void copyHistory2Database(String historyDir, String databaseDir) throws IOException {
