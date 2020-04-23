@@ -121,13 +121,13 @@ public class PrecompiledContracts {
   private static final DataWord validateMultiSignAddr = new DataWord(
       "000000000000000000000000000000000000000000000000000000000000000a");
   private static final DataWord verifyMintProofAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000000000b");
+      "0000000000000000000000000000000000000000000000000000000001000001");
   private static final DataWord verifyTransferProofAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000000000c");
+      "0000000000000000000000000000000000000000000000000000000001000002");
   private static final DataWord verifyBurnProofAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000000000d");
+      "0000000000000000000000000000000000000000000000000000000001000003");
   private static final DataWord merkleHashAddr = new DataWord(
-      "000000000000000000000000000000000000000000000000000000000000000e");
+      "0000000000000000000000000000000000000000000000000000000001000004");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -920,20 +920,6 @@ public class PrecompiledContracts {
       }
     }
 
-    @Override
-    public long getEnergyForData(byte[] data) {
-
-      // energy charge for the execution:
-      // minimum 50 and additional 50 for each 32 bytes word (round  up)
-      /*
-      if (data == null) {
-        return 60;
-      }
-      return 60L + (data.length + 31) / 32 * 12;
-      */
-      return 0;
-    }
-
     protected long parseLong(byte[] data, int idx) {
       byte[] bytes = parseBytes(data, idx, 32);
       return new DataWord(bytes).longValueSafe();
@@ -1045,6 +1031,11 @@ public class PrecompiledContracts {
     private static final int SIZE = 1504;
 
     @Override
+    public long getEnergyForData(byte[] data) {
+      return 150000;
+    }
+
+    @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
@@ -1110,6 +1101,11 @@ public class PrecompiledContracts {
     static {
       workersInConstantCall = Executors.newFixedThreadPool(5);
       workersInNonConstantCall = Executors.newFixedThreadPool(5);
+    }
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return 200000;
     }
 
     @Override
@@ -1381,6 +1377,11 @@ public class PrecompiledContracts {
     private static final int SIZE = 512;
 
     @Override
+    public long getEnergyForData(byte[] data) {
+      return 150000;
+    }
+
+    @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
@@ -1432,10 +1433,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      if (data == null) {
-        return 60;
-      }
-      return 60L + (data.length + 31) / 32 * 12;
+      return 500;
     }
 
     @Override
