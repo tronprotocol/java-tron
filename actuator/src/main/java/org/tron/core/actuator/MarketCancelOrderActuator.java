@@ -58,7 +58,6 @@ public class MarketCancelOrderActuator extends AbstractActuator {
   private MarketOrderStore orderStore;
   private MarketPairToPriceStore pairToPriceStore;
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
-  private MarketPriceStore marketPriceStore;
 
   public MarketCancelOrderActuator() {
     super(ContractType.MarketCancelOrderContract, MarketCancelOrderContract.class);
@@ -73,7 +72,6 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     orderStore = chainBaseManager.getMarketOrderStore();
     pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     pairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
-    marketPriceStore = chainBaseManager.getMarketPriceStore();
   }
 
   @Override
@@ -125,16 +123,17 @@ public class MarketCancelOrderActuator extends AbstractActuator {
         pairPriceToOrderStore.delete(pairPriceKey);
 
         // 3. modify priceList
-        byte[] makerPair = MarketUtils.createPairKey(
-            orderCapsule.getSellTokenId(),
-            orderCapsule.getBuyTokenId()
-        );
-        MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(makerPair);
-
-        // delete price from priceList
-        MarketPrice marketPrice = marketPriceStore.get(pairPriceKey).getInstance();
-        priceListCapsule.deleteCurrentPrice(marketPrice, pairPriceKey, marketPriceStore,
-            makerPair, pairToPriceStore);
+        pairToPriceStore.delete(pairPriceKey);
+        // byte[] makerPair = MarketUtils.createPairKey(
+        //     orderCapsule.getSellTokenId(),
+        //     orderCapsule.getBuyTokenId()
+        // );
+        // MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(makerPair);
+        //
+        // // delete price from priceList
+        // MarketPrice marketPrice = marketPriceStore.get(pairPriceKey).getInstance();
+        // priceListCapsule.deleteCurrentPrice(marketPrice, pairPriceKey, marketPriceStore,
+        //     makerPair, pairToPriceStore);
       }
 
       ret.setStatus(fee, code.SUCESS);

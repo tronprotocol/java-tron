@@ -2268,21 +2268,8 @@ public class RpcApiService implements Service {
     @Override
     public void marketSellAsset(MarketSellAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      try {
-
-        MarketOrderPosition marketOrderPosition = wallet
-            .getMarketOrderPosition(request.getSellTokenId().toByteArray(),
-                request.getBuyTokenId().toByteArray(),
-                request.getSellTokenQuantity(),
-                request.getBuyTokenQuantity());
-        MarketSellAssetContract contract = request.toBuilder()
-            .setPrePriceKey(marketOrderPosition.getPrePriceKey()).build();
-
-        createTransactionExtention(contract, ContractType.MarketSellAssetContract,
-            responseObserver);
-      } catch (Exception e) {
-        responseObserver.onError(getRunTimeException(e));
-      }
+      createTransactionExtention(request, ContractType.MarketSellAssetContract,
+          responseObserver);
     }
 
     @Override

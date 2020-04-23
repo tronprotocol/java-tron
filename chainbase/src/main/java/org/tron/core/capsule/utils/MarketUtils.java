@@ -23,11 +23,13 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
+import org.tron.core.capsule.MarketPriceCapsule;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.MarketAccountStore;
 import org.tron.protos.Protocol.MarketOrder.State;
+import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketPrice;
 
 public class MarketUtils {
@@ -55,7 +57,6 @@ public class MarketUtils {
     return Hash.sha3(result);
   }
 
-
   public static byte[] createPairPriceKey(byte[] sellTokenId, byte[] buyTokenId,
       long sellTokenQuantity, long buyTokenQuantity) {
 
@@ -80,6 +81,37 @@ public class MarketUtils {
 
 //    return Hash.sha3(result);
     return result;
+  }
+
+  /**
+   * 0...18: sellTokenId
+   * 19...37: buyTokenId
+   * 38...45: sellTokenQuantity
+   * 46...53: buyTokenQuantity
+   * */
+  public static MarketPrice decodeKeyToMarketPrice(byte[] key) {
+    byte[] sellTokenQuantity = new byte[8];
+    byte[] buyTokenQuantity = new byte[8];
+
+    System.arraycopy(key, 38, sellTokenQuantity, 0, 8);
+    System.arraycopy(key, 46, buyTokenQuantity, 0, 8);
+
+    return new MarketPriceCapsule(ByteArray.toLong(sellTokenQuantity),
+        ByteArray.toLong(buyTokenQuantity)).getInstance();
+  }
+
+  public static MarketOrderPair decodeKeyToMarketPair(byte[] key) {
+    byte[] sellTokenId = new byte[TOKEN_ID_LENGTH];
+    byte[] buyTokenId = new byte[TOKEN_ID_LENGTH];
+
+    System.arraycopy(key, 0, sellTokenId, 0, TOKEN_ID_LENGTH);
+    System.arraycopy(key, 18, buyTokenId, 0, TOKEN_ID_LENGTH);
+
+    MarketOrderPair.Builder builder = MarketOrderPair.newBuilder();
+    builder.setSellTokenId(ByteString.copyFrom(sellTokenId))
+        .setBuyTokenId(ByteString.copyFrom(buyTokenId));
+
+    return builder.build();
   }
 
   public static byte[] createPairKey(byte[] sellTokenId, byte[] buyTokenId) {

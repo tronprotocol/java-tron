@@ -188,6 +188,7 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
 
   /*
    * delete current price, including head and other node
+   * return null if no next
    * */
   public MarketPrice deleteCurrentPrice(MarketPrice currentPrice, byte[] pairPriceKey,
       MarketPriceStore marketPriceStore, byte[] makerPair, MarketPairToPriceStore pairToPriceStore)
@@ -242,7 +243,8 @@ public class MarketPriceLinkedListCapsule implements ProtoCapsule<MarketPriceLin
           }
         }
 
-        pairToPriceStore.put(makerPair, this);
+        // pairToPriceStore.put(makerPair, this);
+        pairToPriceStore.putPrice(makerPair);
       } catch (ItemNotFoundException e) {
         throw new ItemNotFoundException(e.getMessage());
       }
