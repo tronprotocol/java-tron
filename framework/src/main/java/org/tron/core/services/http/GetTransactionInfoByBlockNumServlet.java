@@ -85,18 +85,14 @@ public class GetTransactionInfoByBlockNumServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-
+      PostParams params = PostParams.getPostParams(request);
       NumberMessage.Builder build = NumberMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
 
       long num = build.getNum();
       if (num > 0L) {
         TransactionInfoList reply = wallet.getTransactionInfoByBlockNum(num);
-        response.getWriter().println(printTransactionInfoList(reply, visible));
+        response.getWriter().println(printTransactionInfoList(reply, params.isVisible()));
       } else {
         response.getWriter().println("{}");
       }
