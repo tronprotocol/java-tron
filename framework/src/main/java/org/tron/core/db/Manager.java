@@ -517,6 +517,14 @@ public class Manager {
     return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
 
+  public void clearAndWriteCrossNode(Set<Node> nodes) {
+    this.peersStore.put("crossnode".getBytes(), nodes);
+  }
+
+  public Set<Node> readCrossNode() {
+    return this.peersStore.get("crossnode".getBytes());
+  }
+
   public void clearAndWriteNeighbours(Set<Node> nodes) {
     this.peersStore.put("neighbours".getBytes(), nodes);
   }

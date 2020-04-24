@@ -115,7 +115,7 @@ public class CrossChainHandshakeHandler extends ByteToMessageDecoder {
     logger.info("cross chain handshake Send to {}, {} ", ctx.channel().remoteAddress(), message);
   }
 
-  private void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
+  private synchronized void handleHelloMsg(ChannelHandlerContext ctx, HelloMessage msg) {
 
     channel.initNode(msg.getFrom().getId(), msg.getFrom().getPort());
 

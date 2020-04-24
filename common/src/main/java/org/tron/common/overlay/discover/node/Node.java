@@ -146,6 +146,10 @@ public class Node implements Serializable {
     return new String(id);
   }
 
+  public String getHostPort() {
+    return host + ":" + port;
+  }
+
   @Override
   public String toString() {
     return "Node{" + " host='" + host + '\'' + ", port=" + port

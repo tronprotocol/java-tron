@@ -3,9 +3,11 @@ package org.tron.core.ibc.connect;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,6 +22,7 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.net.peer.PeerConnection;
 
 @Slf4j(topic = "net-cross")
@@ -36,15 +39,23 @@ public class CrossChainConnectPool {
   private PeerClient peerClient;
   @Autowired
   private NodeManager nodeManager;
+  @Autowired
+  private Manager manager;
 
   public void init() {
-    List<Node> nodeList = Args.getInstance().getCrossChainConnect();
-    nodeList.forEach(n -> {
-      peerClient.connectAsync(nodeManager.getNodeHandler(n), false, true);
+    Set<String> compare = new HashSet<>();
+    Set<Node> dbCrossNode = manager.readCrossNode();
+    dbCrossNode.addAll(Args.getInstance().getCrossChainConnect());
+    dbCrossNode.forEach(n -> {
+      if (!compare.contains(n.getHostPort())) {
+        peerClient.connectAsync(nodeManager.getNodeHandler(n), false, true);
+        compare.add(n.getHostPort());
+      }
     });
 
     logExecutor.scheduleAtFixedRate(() -> {
       try {
+        writeCrossNode();
         logActivePeers();
       } catch (Throwable t) {
         logger.error("CrossChainConnectPool Exception in sync worker", t);
@@ -82,6 +93,18 @@ public class CrossChainConnectPool {
   public List<PeerConnection> getPeerConnect(ByteString chainId) {
     List<PeerConnection> peerConnectionList = crossChainConnectPool.get(chainId);
     return peerConnectionList == null ? Collections.emptyList() : peerConnectionList;
+  }
+
+  public void writeCrossNode() {
+    synchronized (this) {
+      Set<Node> nodeSet = new HashSet<>();
+      crossChainConnectPool.values().forEach(peerConnections -> {
+        peerConnections.forEach(peerConnection -> {
+          nodeSet.add(peerConnection.getNode());
+        });
+      });
+      manager.clearAndWriteCrossNode(nodeSet);
+    }
   }
 
   private void logActivePeers() {

@@ -11,6 +11,7 @@ import com.google.protobuf.ByteString;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -22,8 +23,10 @@ import org.tron.common.overlay.client.PeerClient;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.ByteArrayWrapper;
+import org.tron.core.ibc.common.CrossUtils;
 import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.ibc.connect.CrossChainTcpServer;
+import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -182,7 +185,24 @@ public class ChannelManager {
       peer.disconnect(peer.getNodeStatistics().getDisconnectReason());
       return false;
     }
-
+    if (Args.getInstance().getCrossChainConnect().stream().filter(node ->
+        node.getHost().equals(peer.getInetAddress().getHostAddress())).count() < 1) {
+      logger.error("host not accept:{}", peer.getInetAddress().getHostAddress());
+      peer.disconnect(ReasonCode.USER_REASON);
+      return false;
+    }
+    peer.getInetAddress();
+    List<PeerConnection> peerConnectionList = crossChainConnectPool.getPeerConnect(chainId);
+    Channel channel = CrossUtils.listToMap(peerConnectionList).get(peer.getNodeIdWrapper());
+    if (channel != null) {
+      if (channel.getStartTime() > peer.getStartTime()) {
+        logger.info("Disconnect connection established later, {}", channel.getNode());
+        channel.disconnect(DUPLICATE_PEER);
+      } else {
+        peer.disconnect(DUPLICATE_PEER);
+        return false;
+      }
+    }
     return true;
   }
 
