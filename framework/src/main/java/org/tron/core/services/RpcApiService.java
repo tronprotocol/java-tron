@@ -2337,7 +2337,7 @@ public class RpcApiService implements Service {
     public void createSpendAuthSig(SpendAuthSigParameters request,
         StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
       try {
-        checkSupportShieldedTransaction();
+//        checkSupportShieldedTransaction();
 
         BytesMessage spendAuthSig = wallet.createSpendAuthSig(request);
         responseObserver.onNext(spendAuthSig);

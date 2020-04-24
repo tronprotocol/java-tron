@@ -61,7 +61,7 @@ import stest.tron.wallet.common.client.WalletClient;
 
 
 @Slf4j
-public class ShieldedTRC20ApiTest extends BlockGenerate {
+public class ShieldedTRC20BuilderTest extends BlockGenerate {
 
   private static String dbPath = "output_Shielded_TRC20_Api_test";
   private static AnnotationConfigApplicationContext context;
@@ -83,13 +83,11 @@ public class ShieldedTRC20ApiTest extends BlockGenerate {
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
     FullNodeHttpApiService.librustzcashInitZksnarkParams();
     PUBLIC_TO_ADDRESS = WalletClient.decodeFromBase58Check(PUBLIC_TO_ADDRESS_STR);
-
   }
 
   VerifyMintProof mintContract = new VerifyMintProof();
   VerifyTransferProof transferContract = new VerifyTransferProof();
   VerifyBurnProof burnContract = new VerifyBurnProof();
-  MerkleHash merkleHash = new MerkleHash();
 
   @BeforeClass
   public static void init() {
@@ -2006,17 +2004,6 @@ public class ShieldedTRC20ApiTest extends BlockGenerate {
     Assert.assertTrue(result.getIsSpent());
   }
 
-  public IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm)
-      throws ZksnarkException {
-    IncrementalMerkleTreeContainer tree =
-        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
-    PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
-    compressCapsule1.setContent(ByteString.copyFrom(cm));
-    PedersenHash a = compressCapsule1.getInstance();
-    tree.append(a);
-    IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
-    return voucher;
-  }
 
   private byte[] abiEncodeForBurn(ShieldedTRC20Parameters params, long value) {
     byte[] mergedBytes;
