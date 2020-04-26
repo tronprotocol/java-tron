@@ -24,6 +24,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketPriceCapsule;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -83,6 +84,12 @@ public class MarketUtils {
     return result;
   }
 
+  public static byte[] expandTokenIdToPriceArray(byte[] tokenId) {
+    byte[] result = new byte[TOKEN_ID_LENGTH];
+    System.arraycopy(tokenId, 0, result, 0, tokenId.length);
+    return result;
+  }
+
   /**
    * 0...18: sellTokenId
    * 19...37: buyTokenId
@@ -105,7 +112,7 @@ public class MarketUtils {
     byte[] buyTokenId = new byte[TOKEN_ID_LENGTH];
 
     System.arraycopy(key, 0, sellTokenId, 0, TOKEN_ID_LENGTH);
-    System.arraycopy(key, 18, buyTokenId, 0, TOKEN_ID_LENGTH);
+    System.arraycopy(key, TOKEN_ID_LENGTH, buyTokenId, 0, TOKEN_ID_LENGTH);
 
     MarketOrderPair.Builder builder = MarketOrderPair.newBuilder();
     builder.setSellTokenId(ByteString.copyFrom(sellTokenId))
@@ -122,7 +129,8 @@ public class MarketUtils {
   }
 
   /**
-   * Note: the params should be the same token pair, or you should change the order
+   * Note: the params should be the same token pair, or you should change the order.
+   * All the quantity should be bigger than 0.
    * */
   public static int comparePrice(long price1SellQuantity, long price1BuyQuantity,
       long price2SellQuantity, long price2BuyQuantity) {

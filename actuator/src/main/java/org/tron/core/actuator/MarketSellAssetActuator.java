@@ -453,7 +453,9 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
         // need to delete marketPair if no more price(priceKeysList is empty after deleting)
         byte[] deletedKey = priceKeysList.remove(0);
-        pairToPriceStore.delete(deletedKey);
+        // TODO delete
+        Assert.assertArrayEquals(pairPriceKey, deletedKey);
+        pairToPriceStore.deletePriceKey(makerSellTokenID, makerBuyTokenID, deletedKey);
         if (priceKeysList.isEmpty()) {
           break;
         }

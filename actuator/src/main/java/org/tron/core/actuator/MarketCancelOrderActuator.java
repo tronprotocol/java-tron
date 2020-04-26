@@ -123,7 +123,9 @@ public class MarketCancelOrderActuator extends AbstractActuator {
         pairPriceToOrderStore.delete(pairPriceKey);
 
         // 3. modify priceList
-        pairToPriceStore.delete(pairPriceKey);
+        pairToPriceStore.deletePriceKey(orderCapsule.getSellTokenId(), orderCapsule.getBuyTokenId(),
+            pairPriceKey);
+
         // byte[] makerPair = MarketUtils.createPairKey(
         //     orderCapsule.getSellTokenId(),
         //     orderCapsule.getBuyTokenId()

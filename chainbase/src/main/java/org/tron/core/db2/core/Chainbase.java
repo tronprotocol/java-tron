@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
+import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
@@ -185,10 +187,11 @@ public class Chainbase implements IRevokingDB {
     }
 
     Map<WrappedByteArray, WrappedByteArray> levelDBMap = getEntityNext(head, key, limit);
+    MarketOrderPriceComparatorForLevelDB comparator = new MarketOrderPriceComparatorForLevelDB();
 
     return levelDBMap.entrySet().stream()
-        // .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
-        // .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
+        .sorted((e1, e2) -> comparator.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
+        .filter(e -> comparator.greaterOrEquals(e.getKey().getBytes(), key))
         .limit(limit)
         .map(Map.Entry::getKey)
         .map(WrappedByteArray::getBytes)

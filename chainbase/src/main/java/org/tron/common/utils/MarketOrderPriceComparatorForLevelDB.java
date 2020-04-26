@@ -21,9 +21,13 @@ public class MarketOrderPriceComparatorForLevelDB implements org.iq80.leveldb.DB
     return new byte[0];
   }
 
+  /**
+   * Note, for this compare, we should ensure token and quantity are all bigger than 0.
+   * Otherwise, when quantity is 0, the result of compare this key with others will be 0, but
+   * actually the result should be -1.
+   * */
   @Override
   public int compare(byte[] o1, byte[] o2) {
-
     //compare pair
     byte[] pair1 = new byte[MarketUtils.TOKEN_ID_LENGTH * 2];
     byte[] pair2 = new byte[MarketUtils.TOKEN_ID_LENGTH * 2];
@@ -60,13 +64,25 @@ public class MarketOrderPriceComparatorForLevelDB implements org.iq80.leveldb.DB
     long sellTokenQuantity2 = ByteArray.toLong(getSellTokenQuantity2);
     long buyTokenQuantity2 = ByteArray.toLong(getBuyTokenQuantity2);
 
-    MarketPrice p1 = MarketPrice.newBuilder().setSellTokenQuantity(sellTokenQuantity1)
-        .setBuyTokenQuantity(buyTokenQuantity1).build();
-    MarketPrice p2 = MarketPrice.newBuilder().setSellTokenQuantity(sellTokenQuantity2)
-        .setBuyTokenQuantity(buyTokenQuantity2).build();
+    if ((sellTokenQuantity1 == 0 || buyTokenQuantity1 == 0)
+        && (sellTokenQuantity2 == 0 || buyTokenQuantity2 == 0)) {
+      return 0;
+    }
 
-    return MarketUtils.comparePrice(p1, p2);
+    if (sellTokenQuantity1 == 0 || buyTokenQuantity1 == 0) {
+      return -1;
+    }
+
+    if (sellTokenQuantity2 == 0 || buyTokenQuantity2 == 0) {
+      return 1;
+    }
+
+    return MarketUtils.comparePrice(sellTokenQuantity1, buyTokenQuantity1,
+        sellTokenQuantity2, buyTokenQuantity2);
 
   }
 
+  public boolean greaterOrEquals(byte[] bytes1, byte[] bytes2) {
+    return compare(bytes1, bytes2) >= 0;
+  }
 }

@@ -118,9 +118,10 @@ public class MarketPairToPriceStore extends TronStoreWithRevoking<BytesCapsule> 
     if (hasPrice(headKey)) {
       long priceNum = getPriceNum(headKey);
       if (priceNum > 0) {
-        long end = priceNum > limit ? limit : priceNum;
         // skip the head key
-        result = getKeysNext(headKey, priceNum).subList(1, (int)end);
+        long fetchNum = priceNum + 1;
+        long end = fetchNum > limit ? limit : fetchNum;
+        result = getKeysNext(headKey, fetchNum).subList(1, (int)end);
       }
     } else if (insertHead) {
       setPriceNum(headKey, 0L);
@@ -163,5 +164,28 @@ public class MarketPairToPriceStore extends TronStoreWithRevoking<BytesCapsule> 
     // update DB
     setPriceNum(headKey, number);
     putPrice(newPriceKey);
+  }
+
+  public void deletePriceKey(byte[] sellTokenId, byte[] buyTokenId,
+      byte[] priceKey) {
+    byte[] headKey = getHeadKey(sellTokenId, buyTokenId);
+    long number;
+
+    // check if not exited
+    if (!has(priceKey)) {
+      return;
+    }
+
+    // delete key
+    if (!hasPrice(headKey)) {
+      // should never happened TODO add raise
+      number = 0;
+    } else {
+      number = getPriceNum(headKey) - 1;
+    }
+
+    // update DB
+    setPriceNum(headKey, number);
+    delete(priceKey);
   }
 }
