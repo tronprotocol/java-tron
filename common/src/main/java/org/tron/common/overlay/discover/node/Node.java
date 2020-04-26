@@ -57,7 +57,7 @@ public class Node implements Serializable {
 
   public static byte[] getNodeId() {
     Random gen = new Random();
-    byte[] id = new byte[KademliaOptions.NODE_ID_LEN];
+    byte[] id = new byte[64];
     gen.nextBytes(id);
     return id;
   }
