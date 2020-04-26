@@ -17,7 +17,7 @@ public class MarketOrderPriceComparatorForRockDB extends DirectBytewiseComparato
 
   @Override
   public int compare(final DirectSlice a, final DirectSlice b) {
-    return a.data().compareTo(b.data());
+    return MarketOrderPriceComparatorForLevelDB.compareIn(a.data().array(), b.data().array());
   }
 
 
