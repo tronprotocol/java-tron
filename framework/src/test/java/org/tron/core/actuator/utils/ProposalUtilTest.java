@@ -59,7 +59,7 @@ public class ProposalUtilTest {
   @Test
   public void validProposalTypeCheck() throws ContractValidateException {
 
-    Assert.assertEquals(false, ProposalType.contain(40));
+    Assert.assertEquals(false, ProposalType.contain(4000));
     Assert.assertEquals(false, ProposalType.contain(-1));
     Assert.assertEquals(true, ProposalType.contain(2));
 

@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class SolidityTrigger extends Trigger {
-
   @Getter
   @Setter
   private long latestSolidifiedBlockNumber;
@@ -22,3 +21,4 @@ public class SolidityTrigger extends Trigger {
         .append(latestSolidifiedBlockNumber).toString();
   }
 }
+

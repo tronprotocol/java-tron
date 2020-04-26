@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
 import com.typesafe.config.Config;
@@ -52,7 +53,6 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.store.AccountStore;
-import org.tron.core.vm.config.VMConfig;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -109,8 +109,10 @@ public class Args extends CommonParameter {
     PARAMETER.nodeP2pVersion = 0;
     PARAMETER.rpcPort = 0;
     PARAMETER.rpcOnSolidityPort = 0;
+    PARAMETER.rpcOnPBFTPort = 0;
     PARAMETER.fullNodeHttpPort = 0;
     PARAMETER.solidityHttpPort = 0;
+    PARAMETER.pBFTHttpPort = 0;
     PARAMETER.maintenanceTimeInterval = 0;
     PARAMETER.proposalExpireTime = 0;
     PARAMETER.checkFrozenTime = 1;
@@ -152,6 +154,9 @@ public class Args extends CommonParameter {
     PARAMETER.changedDelegation = 0;
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
+    PARAMETER.nodeMetricsEnable = true;
+    PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    PARAMETER.allowPBFT = 0;
   }
 
   /**
@@ -194,9 +199,9 @@ public class Args extends CommonParameter {
       }
       localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
       logger.debug("Got privateKey from cmd");
-    } else if (config.hasPath(Constant.LOCAL_WITENSS)) {
+    } else if (config.hasPath(Constant.LOCAL_WITNESS)) {
       localWitnesses = new LocalWitnesses();
-      List<String> localwitness = config.getStringList(Constant.LOCAL_WITENSS);
+      List<String> localwitness = config.getStringList(Constant.LOCAL_WITNESS);
       if (localwitness.size() > 1) {
         logger.warn("localwitness size must be one, get the first one");
         localwitness = localwitness.subList(0, 1);
@@ -214,7 +219,6 @@ public class Args extends CommonParameter {
         }
       }
       localWitnesses.initWitnessAccountAddress(PARAMETER.isECKeyCryptoEngine());
-
       logger.debug("Got privateKey from config.conf");
     } else if (config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)) {
       localWitnesses = new LocalWitnesses();
@@ -328,10 +332,10 @@ public class Args extends CommonParameter {
         .orElse(Storage.getIndexSwitchFromConfig(config)));
 
     PARAMETER.storage
-        .setTransactionHistoreSwitch(
-            Optional.ofNullable(PARAMETER.storageTransactionHistoreSwitch)
+        .setTransactionHistorySwitch(
+            Optional.ofNullable(PARAMETER.storageTransactionHistorySwitch)
                 .filter(StringUtils::isNotEmpty)
-                .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
+                .orElse(Storage.getTransactionHistorySwitchFromConfig(config)));
 
     PARAMETER.storage.setPropertyMapFromConfig(config);
 
@@ -419,6 +423,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_RPC_SOLIDITY_PORT)
             ? config.getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50061;
 
+    PARAMETER.rpcOnPBFTPort =
+        config.hasPath(Constant.NODE_RPC_PBFT_PORT)
+            ? config.getInt(Constant.NODE_RPC_PBFT_PORT) : 50071;
+
     PARAMETER.fullNodeHttpPort =
         config.hasPath(Constant.NODE_HTTP_FULLNODE_PORT)
             ? config.getInt(Constant.NODE_HTTP_FULLNODE_PORT) : 8090;
@@ -427,9 +435,13 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_HTTP_SOLIDITY_PORT)
             ? config.getInt(Constant.NODE_HTTP_SOLIDITY_PORT) : 8091;
 
+    PARAMETER.pBFTHttpPort =
+        config.hasPath(Constant.NODE_HTTP_PBFT_PORT)
+            ? config.getInt(Constant.NODE_HTTP_PBFT_PORT) : 8092;
+
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
-            : Runtime.getRuntime().availableProcessors() / 2;
+            : (Runtime.getRuntime().availableProcessors() + 1) / 2;
 
     PARAMETER.solidityThreads =
         config.hasPath(Constant.NODE_SOLIDITY_THREADS)
@@ -476,8 +488,8 @@ public class Args extends CommonParameter {
     PARAMETER.maxMessageSize = config.hasPath(Constant.NODE_RPC_MAX_MESSAGE_SIZE)
         ? config.getInt(Constant.NODE_RPC_MAX_MESSAGE_SIZE) : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
 
-    PARAMETER.maxHeaderListSize = config.hasPath(Constant.NODE_RPC_MAX_HEADER_LIST_ISZE)
-        ? config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_ISZE)
+    PARAMETER.maxHeaderListSize = config.hasPath(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
+        ? config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
         : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
 
     PARAMETER.maintenanceTimeInterval =
@@ -543,7 +555,7 @@ public class Args extends CommonParameter {
     PARAMETER.validateSignThreadNum =
         config.hasPath(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) ? config
             .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
-            : Runtime.getRuntime().availableProcessors() / 2;
+            : (Runtime.getRuntime().availableProcessors() + 1) / 2;
 
     PARAMETER.walletExtensionApi =
         config.hasPath(Constant.NODE_WALLET_EXTENSION_API)
@@ -644,6 +656,18 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
             .getInt(Constant.COMMITTEE_CHANGED_DELEGATION) : 0;
 
+    PARAMETER.allowPBFT =
+        config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
+            .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
+
+    PARAMETER.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
+        .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
+        ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
+    if (PARAMETER.isWitness()) {
+    //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    }
+
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
         .getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -656,6 +680,9 @@ public class Args extends CommonParameter {
             ? new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
             : Collections.emptySet();
 
+    if (config.hasPath(Constant.NODE_METRICS_ENABLE)) {
+      PARAMETER.nodeMetricsEnable = config.getBoolean(Constant.NODE_METRICS_ENABLE);
+    }
     logConfig();
   }
 
@@ -764,8 +791,8 @@ public class Args extends CommonParameter {
         }
       }
 
-      if (config.hasPath(Constant.EVENT_SUBSCIBE_DB_CONFIG)) {
-        String dbConfig = config.getString(Constant.EVENT_SUBSCIBE_DB_CONFIG);
+      if (config.hasPath(Constant.EVENT_SUBSCRIBE_DB_CONFIG)) {
+        String dbConfig = config.getString(Constant.EVENT_SUBSCRIBE_DB_CONFIG);
         if (StringUtils.isNotEmpty(dbConfig)) {
           eventPluginConfig.setDbConfig(dbConfig.trim());
         }
@@ -859,8 +886,8 @@ public class Args extends CommonParameter {
   }
 
   private static void externalIp(final com.typesafe.config.Config config) {
-    if (!config.hasPath(Constant.NODE_DISCOVERY_EXTENNAL_IP) || config
-        .getString(Constant.NODE_DISCOVERY_EXTENNAL_IP).trim().isEmpty()) {
+    if (!config.hasPath(Constant.NODE_DISCOVERY_EXTERNAL_IP) || config
+        .getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim().isEmpty()) {
       if (PARAMETER.nodeExternalIp == null) {
         logger.info("External IP wasn't set, using checkip.amazonaws.com to identify it...");
         BufferedReader in = null;
@@ -895,7 +922,7 @@ public class Args extends CommonParameter {
         }
       }
     } else {
-      PARAMETER.nodeExternalIp = config.getString(Constant.NODE_DISCOVERY_EXTENNAL_IP).trim();
+      PARAMETER.nodeExternalIp = config.getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim();
     }
   }
 
@@ -1003,3 +1030,4 @@ public class Args extends CommonParameter {
     return this.outputDirectory;
   }
 }
+

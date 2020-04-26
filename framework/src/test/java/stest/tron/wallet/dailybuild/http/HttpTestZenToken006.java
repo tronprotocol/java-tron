@@ -37,8 +37,8 @@ public class HttpTestZenToken006 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] zenTokenOwnerAddress = ecKey1.getAddress();
   String zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(0);
+  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
+      .get(0);
   private String httpSolidityNode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(2);
   private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
@@ -64,7 +64,7 @@ public class HttpTestZenToken006 {
     PublicMethed.printAddress(zenTokenOwnerKey);
   }
 
-  @Test(enabled = true, description = "Get new shielded address by http")
+  @Test(enabled = false, description = "Get new shielded address by http")
   public void test01GetNewShieldedAddress() {
     response = HttpMethed.getNewShieldedAddress(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -93,7 +93,7 @@ public class HttpTestZenToken006 {
     paymentAddress1 = responseContent.getString("payment_address");
   }
 
-  @Test(enabled = true, description = "Get expanded spending key by http")
+  @Test(enabled = false, description = "Get expanded spending key by http")
   public void test02GetExpandedSpendingKey() {
     response = HttpMethed.getExpandedSpendingKey(httpnode, sk);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -108,7 +108,7 @@ public class HttpTestZenToken006 {
   }
 
 
-  @Test(enabled = true, description = "Get rcm by http")
+  @Test(enabled = false, description = "Get rcm by http")
   public void test03GetRcm() {
     response = HttpMethed.getRcm(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -117,7 +117,7 @@ public class HttpTestZenToken006 {
     logger.info("rcm: " + rcm);
   }
 
-  @Test(enabled = true, description = "Public to shield transaction withoutask by http")
+  @Test(enabled = false, description = "Public to shield transaction withoutask by http")
   public void test04PublicToShieldTransactionWithoutAsk() {
     response = HttpMethed
         .transferAsset(httpnode, foundationZenTokenAddress, zenTokenOwnerAddress, tokenId,
@@ -140,12 +140,12 @@ public class HttpTestZenToken006 {
     Long sendAmount = sendSheldAddressAmount1 + zenTokenFee;
     shieldOutList.clear();
     shieldOutList = HttpMethed
-        .addShieldOutputList(httpnode, shieldOutList, paymentAddress1,
-            "" + sendSheldAddressAmount1, memo1);
+        .addShieldOutputList(httpnode, shieldOutList, paymentAddress1, "" + sendSheldAddressAmount1,
+            memo1);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, zenTokenOwnerAddress, sendAmount,
-            null, null, shieldOutList, null, 0, zenTokenOwnerKey);
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, httpnode, zenTokenOwnerAddress,
+            sendAmount, null, null, shieldOutList, null, 0, zenTokenOwnerKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 

@@ -28,8 +28,7 @@ import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
 import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
-
+import static org.tron.core.db.TransactionTrace.convertToTronAddress;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +48,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignUtils;
+import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
 import org.tron.common.crypto.zksnark.BN128G1;
@@ -348,6 +348,7 @@ public class PrecompiledContracts {
       if (data == null) {
         data = EMPTY_BYTE_ARRAY;
       }
+
       byte[] orig = Sha256Hash.hash(CommonParameter.getInstance()
           .isECKeyCryptoEngine(), data);
       System.arraycopy(orig, 0, target, 0, 20);

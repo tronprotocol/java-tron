@@ -706,9 +706,12 @@ service Wallet {
   rpc CreateShieldNullifier (NfParameters) returns (BytesMessage) {
   };
   // end for shiededTransaction
-  rpc CreateCommonTransaction (Transaction) returns (TransactionExtention) {
 
+  rpc CreateCommonTransaction (Transaction) returns (TransactionExtention) {
   };
+
+  rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
+  }
 };
 
 service WalletSolidity {
@@ -865,6 +868,9 @@ service WalletSolidity {
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
+  rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
+  }
+
 };
 
 service WalletExtension {
@@ -912,6 +918,18 @@ service Database {
 
   }
 };
+
+service Monitor {
+  rpc GetStatsInfo (EmptyMessage) returns (MetricsInfo) {
+    option (google.api.http) = {
+      post: "/monitor/getstatsinfo"
+      body: "*"
+      additional_bindings {
+        get: "/monitor/getstatsinfo"
+      }
+    };
+  }
+}
 
 message Return {
   enum response_code {
@@ -1301,4 +1319,8 @@ message NoteParameters {
 message SpendResult {
   bool result = 1;
   string message = 2;
+}
+
+message TransactionInfoList {
+  repeated TransactionInfo transactionInfo = 1;
 }

@@ -49,7 +49,6 @@ public class TransactionUtils {
   public static byte[] getHash(Transaction transaction) {
     Transaction.Builder tmp = transaction.toBuilder();
     //tmp.clearId();
-
     return Sha256Hash.hash(CommonParameter
         .getInstance().isECKeyCryptoEngine(), tmp.build().toByteArray());
   }

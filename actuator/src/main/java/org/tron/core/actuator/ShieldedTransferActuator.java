@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.capsule.TransactionCapsule.getShieldTransactionHashIgnoreTypeException;
 import static org.tron.core.utils.ZenChainParams.ZC_ENCCIPHERTEXT_SIZE;
 import static org.tron.core.utils.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
 
@@ -23,7 +24,6 @@ import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -35,6 +35,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ZKProofStore;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -74,7 +75,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     try {
       if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0) {
         executeTransparentFrom(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
-            shieldedTransferContract.getFromAmount(), ret,fee);
+            shieldedTransferContract.getFromAmount(), ret, fee);
       }
       Commons.adjustAssetBalanceV2(accountStore.getBlackhole().createDbKey(),
           CommonParameter.getInstance().getZenTokenId(), fee,
@@ -87,11 +88,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
 
     executeShielded(shieldedTransferContract.getSpendDescriptionList(),
-        shieldedTransferContract.getReceiveDescriptionList(), ret,fee);
+        shieldedTransferContract.getReceiveDescriptionList(), ret, fee);
 
     if (shieldedTransferContract.getTransparentToAddress().toByteArray().length > 0) {
       executeTransparentTo(shieldedTransferContract.getTransparentToAddress().toByteArray(),
-          shieldedTransferContract.getToAmount(), ret,fee);
+          shieldedTransferContract.getToAmount(), ret, fee);
     }
 
     //adjust and verify total shielded pool value
@@ -155,7 +156,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   //record shielded transaction data.
   private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives,
-      TransactionResultCapsule ret,long fee)
+      TransactionResultCapsule ret, long fee)
       throws ContractExeException {
 
     NullifierStore nullifierStore = chainBaseManager.getNullifierStore();
@@ -225,7 +226,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     //transparent verification
     checkSender(shieldedTransferContract);
     checkReceiver(shieldedTransferContract);
-    validateTransparent(shieldedTransferContract,fee);
+    validateTransparent(shieldedTransferContract, fee);
 
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
     // check duplicate sapling nullifiers
@@ -263,7 +264,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
     //check spendProofs receiveProofs and Binding sign hash
     try {
-      checkProof(spendDescriptions, receiveDescriptions,fee);
+      checkProof(spendDescriptions, receiveDescriptions, fee);
     } catch (ZkProofValidateException e) {
       if (e.isFirstValidated()) {
         recordProof(tx.getTransactionId(), false);
@@ -275,7 +276,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private void checkProof(List<SpendDescription> spendDescriptions,
-      List<ReceiveDescription> receiveDescriptions,long fee) throws ZkProofValidateException {
+      List<ReceiveDescription> receiveDescriptions, long fee) throws ZkProofValidateException {
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     ZKProofStore proofStore = chainBaseManager.getProofStore();
     if (proofStore.has(tx.getTransactionId().getBytes())) {
@@ -285,8 +286,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
         throw new ZkProofValidateException("record is fail, skip proof", false);
       }
     }
-    byte[] signHash = TransactionCapsule
-        .getShieldTransactionHashIgnoreTypeException(tx.getInstance());
+
+    byte[] signHash = getShieldTransactionHashIgnoreTypeException(tx.getInstance());
 
     if (CollectionUtils.isNotEmpty(spendDescriptions)
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
@@ -390,7 +391,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
   }
 
-  private void validateTransparent(ShieldedTransferContract shieldedTransferContract,long fee)
+  private void validateTransparent(ShieldedTransferContract shieldedTransferContract, long fee)
       throws ContractValidateException {
     boolean hasTransparentFrom;
     boolean hasTransparentTo;

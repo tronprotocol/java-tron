@@ -93,7 +93,7 @@ public class CommonParameter {
   public String storageIndexSwitch = "";
   @Parameter(names = {"--storage-transactionHistory-switch"},
       description = "Storage transaction history switch.(on or off)")
-  public String storageTransactionHistoreSwitch = "";
+  public String storageTransactionHistorySwitch = "";
   @Getter
   @Parameter(names = {"--fast-forward"})
   public boolean fastForward = false;
@@ -372,6 +372,24 @@ public class CommonParameter {
   @Getter
   @Setter
   public int maxTransactionPendingSize;
+
+  @Getter
+  @Setter
+  public boolean nodeMetricsEnable = true;
+
+  @Getter
+  @Setter
+  public int agreeNodeCount;
+
+  @Getter
+  @Setter
+  public long allowPBFT;
+  @Getter
+  @Setter
+  public int rpcOnPBFTPort;
+  @Getter
+  @Setter
+  public int pBFTHttpPort;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

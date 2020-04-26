@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
+import static org.tron.common.utils.DecodeUtil.addressPreFixByte;
 
 import java.util.Objects;
 import lombok.Getter;
@@ -14,7 +15,6 @@ import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -290,7 +290,7 @@ public class TransactionTrace {
     contractStore.delete(address);
   }
 
-  private byte[] convertToTronAddress(byte[] address) {
+  public static byte[] convertToTronAddress(byte[] address) {
     if (address.length == 20) {
       byte[] newAddress = new byte[21];
       byte[] temp = new byte[]{DecodeUtil.addressPreFixByte};

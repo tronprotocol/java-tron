@@ -33,7 +33,6 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -1358,7 +1357,6 @@ public class TransferAssetActuatorTest {
     }
   }
 
-
   @Test
   public void commonErrorCheck() {
     createAssertBeforSameTokenNameActive();
@@ -1448,5 +1446,4 @@ public class TransferAssetActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 }

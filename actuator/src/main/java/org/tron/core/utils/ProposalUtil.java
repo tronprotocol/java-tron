@@ -252,42 +252,43 @@ public class ProposalUtil {
         }
         break;
       }
-      case ALLOW_SHIELDED_TRANSACTION: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
-          throw new ContractValidateException(
-              "Bad chain parameter id [ALLOW_SHIELDED_TRANSACTION]");
-        }
-        if (value != 1) {
-          throw new ContractValidateException(
-                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_SHIELDED_TRANSACTION" + VALUE_NOT_ONE_ERROR);
-        }
-        break;
-      }
-      case SHIELDED_TRANSACTION_FEE: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
-          throw new ContractValidateException("Bad chain parameter id [SHIELD_TRANSACTION_FEE]");
-        }
-        if (!dynamicPropertiesStore.supportShieldedTransaction()) {
-          throw new ContractValidateException(
-              "Shielded Transaction is not activated, can not set Shielded Transaction fee");
-        }
-        if (value < 0 || value > 10_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad SHIELD_TRANSACTION_FEE parameter value, valid range is [0,10_000_000_000L]");
-        }
-        break;
-      }
-      case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
-          throw new ContractValidateException(
-              "Bad chain parameter id [SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE]");
-        }
-        if (value < 0 || value > 10_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value, valid range is [0,10_000_000_000L]");
-        }
-        break;
-      }
+//      case ALLOW_SHIELDED_TRANSACTION: {
+//        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+//          throw new ContractValidateException(
+//              "Bad chain parameter id [ALLOW_SHIELDED_TRANSACTION]");
+//        }
+//        if (value != 1) {
+//          throw new ContractValidateException(
+//                  PRE_VALUE_NOT_ONE_ERROR + "ALLOW_SHIELDED_TRANSACTION" + VALUE_NOT_ONE_ERROR);
+//        }
+//        break;
+//      }
+//      case SHIELDED_TRANSACTION_FEE: {
+//        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+//          throw new ContractValidateException("Bad chain parameter id [SHIELD_TRANSACTION_FEE]");
+//        }
+//        if (!dynamicPropertiesStore.supportShieldedTransaction()) {
+//          throw new ContractValidateException(
+//              "Shielded Transaction is not activated, can not set Shielded Transaction fee");
+//        }
+//        if (dynamicPropertiesStore.getAllowCreationOfContracts() == 0) {
+//          throw new ContractValidateException(
+//              "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
+//                  + "before [FORBID_TRANSFER_TO_CONTRACT] can be proposed");
+//        }
+//        break;
+//      }
+//      case SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE: {
+//        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+//          throw new ContractValidateException(
+//              "Bad chain parameter id [SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE]");
+//        }
+//        if (value < 0 || value > 10_000_000_000L) {
+//          throw new ContractValidateException(
+//              "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value, valid range is [0,10_000_000_000L]");
+//        }
+//        break;
+//      }
       case FORBID_TRANSFER_TO_CONTRACT: {
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_6_6)) {
 
@@ -304,13 +305,23 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_PBFT: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_3_8)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_PBFT]");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_PBFT] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
   }
 
-  public enum ProposalType {
-                                  // current value, value range
+  public enum ProposalType {         // current value, value range
     MAINTENANCE_TIME_INTERVAL(0), // 6 Hours, [3 * 27, 24 * 3600] s
     ACCOUNT_UPGRADE_COST(1), // 9999 TRX, [0, 100000000000] TRX
     CREATE_ACCOUNT_FEE(2), // 0.1 TRX, [0, 100000000000] TRX
@@ -338,15 +349,16 @@ public class ProposalUtil {
     ALLOW_PROTO_FILTER_NUM(24), // 0, {0, 1}
     ALLOW_ACCOUNT_STATE_ROOT(25), // 1, {0, 1}
     ALLOW_TVM_CONSTANTINOPLE(26), // 1, {0, 1}
-    ALLOW_SHIELDED_TRANSACTION(27), // 0, {0, 1}
-    SHIELDED_TRANSACTION_FEE(28), // 10 TRX, [0, 10000] TRX
+   // ALLOW_SHIELDED_TRANSACTION(27), // 0, {0, 1}
+   // SHIELDED_TRANSACTION_FEE(28), // 10 TRX, [0, 10000] TRX
     ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER(29), // 1000, [1, 10000]
     ALLOW_CHANGE_DELEGATION(30), // 1, {0, 1}
     WITNESS_127_PAY_PER_BLOCK(31), // 160 TRX, [0, 100000000000] TRX
     ALLOW_TVM_SOLIDITY_059(32), // 1, {0, 1}
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, [1, 1000]
-    SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34), // 1 TRX, [0, 10000] TRX
-    FORBID_TRANSFER_TO_CONTRACT(35); // 1, {0, 1}
+   // SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34), // 1 TRX, [0, 10000] TRX
+    FORBID_TRANSFER_TO_CONTRACT(35), // 1, {0, 1}
+    ALLOW_PBFT(40);// 1,40
 
     private long code;
 

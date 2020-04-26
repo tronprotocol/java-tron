@@ -101,7 +101,6 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     byte[] cowPrivKey = Hash.sha3("monkey".getBytes());
     byte[] addr = SignUtils.fromPrivate(cowPrivKey
         , CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress();
-
     return new DataWord(addr);
   }
 

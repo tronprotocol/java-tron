@@ -1,12 +1,10 @@
 package org.tron.common.crypto;
 
-import java.awt.Shape;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2.SM2Signature;
-import org.tron.common.utils.Sha256Hash;
 
 public class SignUtils {
   public static SignInterface getGeneratedRandomSign(boolean isECKeyCryptoEngine) {

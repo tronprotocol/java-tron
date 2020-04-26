@@ -17,8 +17,6 @@ package org.tron.common.crypto;
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -422,8 +420,7 @@ public class ECKey implements Serializable, SignInterface {
   }
 
   public static byte[] signatureToKeyBytes(byte[] messageHash,
-      ECDSASignature sig) throws
-      SignatureException {
+      ECDSASignature sig) throws SignatureException {
     check(messageHash.length == 32, "messageHash argument has length " +
         messageHash.length);
     int header = sig.v;
@@ -529,8 +526,7 @@ public class ECKey implements Serializable, SignInterface {
    */
   @Nullable
   public static byte[] recoverPubBytesFromSignature(int recId,
-      ECDSASignature sig,
-      byte[] messageHash) {
+      ECDSASignature sig, byte[] messageHash) {
     check(recId >= 0, "recId must be positive");
     check(sig.r.signum() >= 0, "r must be positive");
     check(sig.s.signum() >= 0, "s must be positive");
@@ -607,8 +603,7 @@ public class ECKey implements Serializable, SignInterface {
    */
   @Nullable
   public static byte[] recoverAddressFromSignature(int recId,
-      ECDSASignature sig,
-      byte[] messageHash) {
+      ECDSASignature sig, byte[] messageHash) {
     final byte[] pubBytes = recoverPubBytesFromSignature(recId, sig,
         messageHash);
     if (pubBytes == null) {

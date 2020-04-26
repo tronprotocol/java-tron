@@ -90,7 +90,8 @@ public class WalletTestZenToken003 {
     Args.setFullNodeAllowShieldedTransaction(true);
   }
 
-  @Test(enabled = true, description = "Public to two shield transaction")
+  @Test(enabled = false,
+      description = "Public to two shield transaction")
   public void test1Public2ShieldTransaction() {
     Optional<ShieldAddressInfo> shieldAddressInfo1 = PublicMethed.generateShieldAddress();
     String shieldAddress1 = shieldAddressInfo1.get().getAddress();
@@ -150,7 +151,8 @@ public class WalletTestZenToken003 {
 
   }
 
-  @Test(enabled = true, description = "Public to one public and one shield transaction")
+  @Test(enabled = false,
+      description = "Public to one public and one shield transaction")
   public void test2Public2OneShieldAndOnePublicTransaction() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -221,7 +223,8 @@ public class WalletTestZenToken003 {
     Assert.assertEquals(afterReceiverPublicAssetBalance, sendToPublicAddressAmount);
   }
 
-  @Test(enabled = true, description = "Public to one public and two shield transaction")
+  @Test(enabled = false,
+      description = "Public to one public and two shield transaction")
   public void test3Public2OneShieldAndOnePublicTransaction() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -298,7 +301,8 @@ public class WalletTestZenToken003 {
         - beforeReceiverPublicAssetBalance == sendToPublicAddressAmount);
   }
 
-  @Test(enabled = true, description = "Public to one smart contract and one shield transaction")
+  @Test(enabled = false,
+      description = "Public to one smart contract and one shield transaction")
   public void test4Public2OneShieldAndOneSmartContractAddressTransaction() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -392,8 +396,8 @@ public class WalletTestZenToken003 {
     Assert.assertEquals(afterReceiverPublicAssetBalance, sendToPublicAddressAmount);
   }
 
-
-  @Test(enabled = true, description = "Public to two same shield address")
+  @Test(enabled = false,
+      description = "Public to two same shield address")
   public void test5Public2TwoSameShieldAddress() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));

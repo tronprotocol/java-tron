@@ -117,7 +117,7 @@ public class BlockMsgHandler implements TronMsgHandler {
       }
     }
 
-    tronNetDelegate.processBlock(block);
+    tronNetDelegate.processBlock(block, false);
     witnessProductBlockService.validWitnessProductTwoBlock(block);
     tronNetDelegate.getActivePeer().forEach(p -> {
       if (p.getAdvInvReceive().getIfPresent(blockId) != null) {

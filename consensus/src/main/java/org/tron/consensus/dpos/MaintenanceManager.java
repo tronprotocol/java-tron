@@ -1,6 +1,6 @@
 package org.tron.consensus.dpos;
 
-import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+import static org.tron.common.utils.WalletUtil.getAddressStringList;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
@@ -9,14 +9,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.StringUtil;
 import org.tron.consensus.ConsensusDelegate;
+import org.tron.consensus.pbft.PbftManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.VotesCapsule;
@@ -38,17 +39,44 @@ public class MaintenanceManager {
   @Setter
   private DposService dposService;
 
+  @Setter
+  private PbftManager pbftManager;
+
+  @Getter
+  private final List<ByteString> beforeWitness = new ArrayList<>();
+  @Getter
+  private final List<ByteString> currentWitness = new ArrayList<>();
+  @Getter
+  private long beforeMaintenanceTime;
+
+  public void init() {
+    currentWitness.addAll(consensusDelegate.getActiveWitnesses());
+  }
+
   public void applyBlock(BlockCapsule blockCapsule) {
     long blockNum = blockCapsule.getNum();
     long blockTime = blockCapsule.getTimeStamp();
+    long nextMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
     boolean flag = consensusDelegate.getNextMaintenanceTime() <= blockTime;
     if (flag) {
       if (blockNum != 1) {
+        updateWitnessValue(beforeWitness);
+        beforeMaintenanceTime = nextMaintenanceTime;
         doMaintenance();
+        updateWitnessValue(currentWitness);
+        //pbft sr msg
+        pbftManager.srPrePrepare(blockCapsule, currentWitness, nextMaintenanceTime);
       }
       consensusDelegate.updateNextMaintenanceTime(blockTime);
     }
     consensusDelegate.saveStateFlag(flag ? 1 : 0);
+    //pbft block msg
+    pbftManager.blockPrePrepare(blockCapsule, nextMaintenanceTime);
+  }
+
+  private void updateWitnessValue(List<ByteString> srList) {
+    srList.clear();
+    srList.addAll(consensusDelegate.getActiveWitnesses());
   }
 
   public void doMaintenance() {
@@ -82,14 +110,7 @@ public class MaintenanceManager {
             witnessCapsule.getVoteCount());
       });
 
-      dposService.sortWitness(newWitnessAddressList);
-
-      if (newWitnessAddressList.size() > MAX_ACTIVE_WITNESS_NUM) {
-        consensusDelegate
-            .saveActiveWitnesses(newWitnessAddressList.subList(0, MAX_ACTIVE_WITNESS_NUM));
-      } else {
-        consensusDelegate.saveActiveWitnesses(newWitnessAddressList);
-      }
+      dposService.updateWitness(newWitnessAddressList);
 
       incentiveManager.reward(newWitnessAddressList);
 
@@ -108,8 +129,8 @@ public class MaintenanceManager {
       }
 
       logger.info("Update witness success. \nbefore: {} \nafter: {}",
-          StringUtil.getAddressStringList(currentWits),
-          StringUtil.getAddressStringList(newWits));
+          getAddressStringList(currentWits),
+          getAddressStringList(newWits));
     }
 
     DynamicPropertiesStore dynamicPropertiesStore = consensusDelegate.getDynamicPropertiesStore();

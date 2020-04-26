@@ -10,8 +10,8 @@ import org.tron.core.services.interfaceOnSolidity.WalletOnSolidity;
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionCountByBlockNumOnSolidityServlet
-    extends GetTransactionCountByBlockNumServlet {
+public class GetTransactionCountByBlockNumOnSolidityServlet extends
+    GetTransactionCountByBlockNumServlet {
 
   @Autowired
   private WalletOnSolidity walletOnSolidity;

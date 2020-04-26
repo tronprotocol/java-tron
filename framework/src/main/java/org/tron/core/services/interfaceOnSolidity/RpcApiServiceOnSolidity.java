@@ -28,6 +28,7 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
@@ -37,7 +38,6 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
@@ -92,8 +92,7 @@ public class RpcApiServiceOnSolidity implements Service {
       serverBuilder = serverBuilder.addService(new WalletSolidityApi());
 
       // Set configs from config.conf or default value
-      serverBuilder
-          .maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
+      serverBuilder.maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
           .flowControlWindow(parameter.getFlowControlWindow())
           .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
           .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
@@ -166,29 +165,26 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getBlockReference(EmptyMessage request,
         StreamObserver<BlockReference> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getDatabaseApi().getBlockReference(request, responseObserver)
-      );
+          () -> rpcApiService.getDatabaseApi().getBlockReference(request, responseObserver));
     }
 
     @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getDatabaseApi().getNowBlock(request, responseObserver));
+      walletOnSolidity
+          .futureGet(() -> rpcApiService.getDatabaseApi().getNowBlock(request, responseObserver));
     }
 
     @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getDatabaseApi().getBlockByNum(request, responseObserver)
-      );
+      walletOnSolidity
+          .futureGet(() -> rpcApiService.getDatabaseApi().getBlockByNum(request, responseObserver));
     }
 
     @Override
     public void getDynamicProperties(EmptyMessage request,
         StreamObserver<DynamicProperties> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getDatabaseApi().getDynamicProperties(request, responseObserver)
-      );
+          () -> rpcApiService.getDatabaseApi().getDynamicProperties(request, responseObserver));
     }
   }
 
@@ -200,175 +196,145 @@ public class RpcApiServiceOnSolidity implements Service {
     @Override
     public void getAccount(Account request, StreamObserver<Account> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getAccount(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getAccount(request, responseObserver));
     }
 
     @Override
     public void getAccountById(Account request, StreamObserver<Account> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getAccountById(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getAccountById(request, responseObserver));
     }
 
     @Override
     public void listWitnesses(EmptyMessage request, StreamObserver<WitnessList> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().listWitnesses(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().listWitnesses(request, responseObserver));
     }
 
     @Override
     public void getAssetIssueById(BytesMessage request,
         StreamObserver<AssetIssueContract> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getAssetIssueById(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getAssetIssueById(request, responseObserver));
     }
 
     @Override
     public void getAssetIssueByName(BytesMessage request,
         StreamObserver<AssetIssueContract> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getAssetIssueByName(request, responseObserver)
-      );
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getAssetIssueByName(request, responseObserver));
     }
 
     @Override
     public void getAssetIssueList(EmptyMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getAssetIssueList(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getAssetIssueList(request, responseObserver));
     }
 
     @Override
     public void getAssetIssueListByName(BytesMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi()
-              .getAssetIssueListByName(request, responseObserver)
-      );
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getAssetIssueListByName(request, responseObserver));
     }
 
     @Override
     public void getPaginatedAssetIssueList(PaginatedMessage request,
         StreamObserver<AssetIssueList> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi()
-              .getPaginatedAssetIssueList(request, responseObserver)
-      );
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getPaginatedAssetIssueList(request, responseObserver));
     }
 
     @Override
-    public void getExchangeById(BytesMessage request,
-        StreamObserver<Exchange> responseObserver) {
+    public void getExchangeById(BytesMessage request, StreamObserver<Exchange> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getExchangeById(
-              request, responseObserver
-          )
-      );
+          () -> rpcApiService.getWalletSolidityApi().getExchangeById(request, responseObserver));
     }
 
     @Override
     public void getNowBlock(EmptyMessage request, StreamObserver<Block> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getNowBlock(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getNowBlock(request, responseObserver));
     }
 
     @Override
     public void getNowBlock2(EmptyMessage request,
         StreamObserver<BlockExtention> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getNowBlock2(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getNowBlock2(request, responseObserver));
 
     }
 
     @Override
     public void getBlockByNum(NumberMessage request, StreamObserver<Block> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getBlockByNum(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getBlockByNum(request, responseObserver));
     }
 
     @Override
     public void getBlockByNum2(NumberMessage request,
         StreamObserver<BlockExtention> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getBlockByNum2(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getBlockByNum2(request, responseObserver));
     }
 
     @Override
     public void getDelegatedResource(DelegatedResourceMessage request,
         StreamObserver<DelegatedResourceList> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getDelegatedResource(request, responseObserver)
-      );
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getDelegatedResource(request, responseObserver));
     }
 
     @Override
     public void getDelegatedResourceAccountIndex(BytesMessage request,
         StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi()
-              .getDelegatedResourceAccountIndex(request, responseObserver)
-      );
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getDelegatedResourceAccountIndex(request, responseObserver));
     }
 
     @Override
     public void getTransactionCountByBlockNum(NumberMessage request,
         StreamObserver<NumberMessage> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi()
-              .getTransactionCountByBlockNum(request, responseObserver)
-      );
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getTransactionCountByBlockNum(request, responseObserver));
     }
 
     @Override
     public void getTransactionById(BytesMessage request,
         StreamObserver<Transaction> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getTransactionById(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getTransactionById(request, responseObserver));
 
     }
 
     @Override
     public void getTransactionInfoById(BytesMessage request,
         StreamObserver<TransactionInfo> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi()
-              .getTransactionInfoById(request, responseObserver)
-      );
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getTransactionInfoById(request, responseObserver));
 
     }
 
     @Override
-    public void listExchanges(EmptyMessage request,
-        StreamObserver<ExchangeList> responseObserver) {
+    public void listExchanges(EmptyMessage request, StreamObserver<ExchangeList> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().listExchanges(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().listExchanges(request, responseObserver));
     }
 
     @Override
     public void triggerConstantContract(TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi()
-              .triggerConstantContract(request, responseObserver)
-      );
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .triggerConstantContract(request, responseObserver));
     }
 
 
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<AddressPrKeyPairMessage> responseObserver) {
-      SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-          Args.getInstance().isECKeyCryptoEngine());
+      SignInterface cryptoEngine = SignUtils
+          .getGeneratedRandomSign(Utils.getRandom(), Args.getInstance().isECKeyCryptoEngine());
       byte[] priKey = cryptoEngine.getPrivateKey();
       byte[] address = cryptoEngine.getAddress();
       String addressStr = StringUtil.encode58Check(address);
@@ -384,57 +350,55 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getRewardInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getRewardInfo(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getRewardInfo(request, responseObserver));
     }
 
     @Override
     public void getBrokerageInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getBrokerageInfo(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().getBrokerageInfo(request, responseObserver));
     }
 
     @Override
     public void getMerkleTreeVoucherInfo(OutputPointInfo request,
         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi()
-              .getMerkleTreeVoucherInfo(request, responseObserver)
-      );
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getMerkleTreeVoucherInfo(request, responseObserver));
     }
 
     @Override
     public void scanNoteByIvk(GrpcAPI.IvkDecryptParameters request,
         StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().scanNoteByIvk(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().scanNoteByIvk(request, responseObserver));
     }
 
     @Override
     public void scanAndMarkNoteByIvk(GrpcAPI.IvkDecryptAndMarkParameters request,
         StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().scanAndMarkNoteByIvk(request, responseObserver)
-      );
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .scanAndMarkNoteByIvk(request, responseObserver));
     }
 
     @Override
     public void scanNoteByOvk(GrpcAPI.OvkDecryptParameters request,
         StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().scanNoteByOvk(request, responseObserver)
-      );
+          () -> rpcApiService.getWalletSolidityApi().scanNoteByOvk(request, responseObserver));
     }
 
     @Override
     public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
-      walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().isSpend(request, responseObserver)
-      );
+      walletOnSolidity
+          .futureGet(() -> rpcApiService.getWalletSolidityApi().isSpend(request, responseObserver));
     }
 
+    @Override
+    public void getTransactionInfoByBlockNum(NumberMessage request,
+        StreamObserver<TransactionInfoList> responseObserver) {
+      walletOnSolidity.futureGet(() -> rpcApiService.getWalletSolidityApi()
+          .getTransactionInfoByBlockNum(request, responseObserver));
+    }
   }
 }
