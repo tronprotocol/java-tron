@@ -1372,7 +1372,8 @@ public class Manager {
     if (Args.getSolidityContractLogTriggerList().get(blockNum) == null) {
       return;
     }
-    for (ContractLogTrigger logTriggerCapsule : Args.getSolidityContractLogTriggerList().get(blockNum)) {
+    for (ContractLogTrigger logTriggerCapsule : Args
+        .getSolidityContractLogTriggerList().get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(
           logTriggerCapsule.getTransactionId())) != null) {
         logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
@@ -1388,7 +1389,8 @@ public class Manager {
     }
     for (ContractEventTrigger eventTriggerCapsule : Args
         .getSolidityContractEventTriggerList().get(blockNum)) {
-      if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
+      if (chainBaseManager.getTransactionStore()
+          .getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
           .getTransactionId())) != null) {
         eventTriggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
         EventPluginLoader.getInstance().postContractEventTrigger(eventTriggerCapsule);
