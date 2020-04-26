@@ -23,6 +23,10 @@ public class MarketOrderPriceComparatorForLevelDB implements org.iq80.leveldb.DB
 
   @Override
   public int compare(byte[] o1, byte[] o2) {
+    return compareIn(o1, o2);
+  }
+
+  public static int compareIn(byte[] o1, byte[] o2) {
 
     //compare pair
     byte[] pair1 = new byte[MarketUtils.TOKEN_ID_LENGTH * 2];
