@@ -108,7 +108,8 @@ public class WalletTestZenToken008 {
 
   }
 
-  @Test(enabled = true, description = "Public send 1 token to shield transaction")
+  @Test(enabled = false,
+      description = "Public send 1 token to shield transaction")
   public void test1Shield2ShieldTransaction() {
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -127,7 +128,8 @@ public class WalletTestZenToken008 {
 
   }
 
-  @Test(enabled = true, description = "Shield send 0 token to shield transaction")
+  @Test(enabled = false,
+      description = "Shield send 0 token to shield transaction")
   public void test2Shield2ShieldTransaction() {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         zenTokenFee * 2, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));

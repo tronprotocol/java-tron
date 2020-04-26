@@ -5,7 +5,6 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;

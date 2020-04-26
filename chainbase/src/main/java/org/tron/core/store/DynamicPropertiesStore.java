@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
@@ -122,6 +121,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_SHIELDED_TRANSACTION = "ALLOW_SHIELDED_TRANSACTION".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
+  private static final byte[] FORBID_TRANSFER_TO_CONTRACT = "FORBID_TRANSFER_TO_CONTRACT"
+      .getBytes();
   //Used only for protobuf data filter , once，value is 0,1
   private static final byte[] ALLOW_PROTO_FILTER_NUM = "ALLOW_PROTO_FILTER_NUM"
       .getBytes();
@@ -131,6 +132,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
+  private static final byte[] ALLOW_PBFT = "ALLOW_PBFT".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -498,6 +500,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getForbidTransferToContract();
+    } catch (IllegalArgumentException e) {
+      this.saveForbidTransferToContract(CommonParameter.getInstance()
+          .getForbidTransferToContract());
+    }
+
+    try {
       this.getAvailableContractType();
     } catch (IllegalArgumentException e) {
       String contractType = "7fff1fc0037e0000000000000000000000000000000000000000000000000000";
@@ -536,8 +545,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowShieldedTransaction();
     } catch (IllegalArgumentException e) {
-      this.saveAllowShieldedTransaction(CommonParameter.getInstance()
-          .getAllowShieldedTransaction());
+      this.saveAllowShieldedTransaction(0L);
     }
 
     try {
@@ -611,6 +619,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveChangeDelegation(CommonParameter.getInstance()
           .getChangedDelegation());
+    }
+
+    try {
+      this.getAllowPBFT();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowPBFT(CommonParameter.getInstance().getAllowPBFT());
     }
 
   }
@@ -1086,7 +1100,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE"));
+            () -> new IllegalArgumentException(
+                "not found SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE"));
   }
 
   public void saveShieldedTransactionCreateAccountFee(long fee) {
@@ -1400,6 +1415,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_TVM_SOLIDITY_059"));
+  }
+
+  public void saveForbidTransferToContract(long value) {
+    this.put(FORBID_TRANSFER_TO_CONTRACT,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getForbidTransferToContract() {
+    return Optional.ofNullable(getUnchecked(FORBID_TRANSFER_TO_CONTRACT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found FORBID_TRANSFER_TO_CONTRACT"));
   }
 
   public void saveAvailableContractType(byte[] value) {
@@ -1813,6 +1840,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowChangeDelegation() {
     return getChangeDelegation() == 1;
+  }
+
+  public void saveAllowPBFT(long number) {
+    this.put(ALLOW_PBFT,
+        new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getAllowPBFT() {
+    return Optional.ofNullable(getUnchecked(ALLOW_PBFT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_PBFT"));
+  }
+
+  public boolean allowPBFT() {
+    return getAllowPBFT() == 1;
   }
 
   private static class DynamicResourceProperties {

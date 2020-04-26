@@ -46,7 +46,7 @@ public class Node implements Serializable {
 
   public static Node instanceOf(String hostPort) {
     try {
-      String [] sz = hostPort.split(":");
+      String[] sz = hostPort.split(":");
       int port = Integer.parseInt(sz[1]);
       return new Node(Node.getNodeId(), sz[0], port);
     } catch (Exception e) {

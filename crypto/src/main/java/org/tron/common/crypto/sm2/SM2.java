@@ -1,5 +1,21 @@
 package org.tron.common.crypto.sm2;
 
+import static org.tron.common.crypto.Hash.computeAddress;
+import static org.tron.common.utils.BIUtil.isLessThan;
+import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
+import java.security.SignatureException;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.asn1.ASN1InputStream;
 import org.spongycastle.asn1.ASN1Integer;
@@ -7,11 +23,16 @@ import org.spongycastle.asn1.DLSequence;
 import org.spongycastle.asn1.x9.X9IntegerConverter;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
 import org.spongycastle.crypto.generators.ECKeyPairGenerator;
-import org.spongycastle.crypto.params.*;
 import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.spongycastle.jce.spec.ECParameterSpec;
 import org.spongycastle.jce.spec.ECPrivateKeySpec;
-import org.spongycastle.math.ec.*;
+import org.spongycastle.crypto.params.ECDomainParameters;
+import org.spongycastle.crypto.params.ECKeyGenerationParameters;
+import org.spongycastle.crypto.params.ECPrivateKeyParameters;
+import org.spongycastle.crypto.params.ECPublicKeyParameters;
+import org.spongycastle.math.ec.ECAlgorithms;
+import org.spongycastle.math.ec.ECCurve;
+import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
@@ -20,21 +41,6 @@ import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.ByteUtil;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.io.Serializable;
-import java.math.BigInteger;
-import java.nio.charset.Charset;
-import java.security.*;
-import java.security.interfaces.ECPrivateKey;
-import java.security.interfaces.ECPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
-
-import static org.tron.common.utils.BIUtil.isLessThan;
-import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
-import static org.tron.common.crypto.Hash.computeAddress;
 
 /**
  * Implement Chinese Commercial Cryptographic Standard of SM2
@@ -494,7 +500,6 @@ public class SM2 implements Serializable, SignInterface {
         // No decryption of private key required.
         SM2Signer signer = getSigner();
         BigInteger[] componets =  signer.generateHashSignature(messageHash);
-
         SM2Signature sig = new SM2.SM2Signature(componets[0], componets[1]);
         // Now we have to work backwards to figure out the recId needed to
         // recover the signature.
@@ -573,7 +578,7 @@ public class SM2 implements Serializable, SignInterface {
      * @param userID
      * @return SM2Signature signature that contains the R and S components
      */
-    public SM2.SM2Signature signMsg(byte[] msg,@Nullable String userID) {
+    public SM2Signature signMsg(byte[] msg,@Nullable String userID) {
         if (null == msg) {
             throw new IllegalArgumentException("Expected signature message of " +
                     "SM2 is null");
@@ -581,7 +586,7 @@ public class SM2 implements Serializable, SignInterface {
         // No decryption of private key required.
         SM2Signer signer = getSigner();
         BigInteger[] componets =  signer.generateSignature(msg);
-        return new SM2.SM2Signature(componets[0], componets[1]);
+        return new SM2Signature(componets[0], componets[1]);
     }
 
     private SM2Signer getSigner() {
@@ -948,7 +953,6 @@ public class SM2 implements Serializable, SignInterface {
         return b.toString();
     }
 
-
     /**
      * Verifies the given ASN.1 encoded SM2 signature against a hash using the public key.
      *
@@ -1091,7 +1095,7 @@ public class SM2 implements Serializable, SignInterface {
             return isLessThan(s, SM2.SM2_N);
         }
 
-        public static SM2.SM2Signature decodeFromDER(byte[] bytes) {
+        public static SM2Signature decodeFromDER(byte[] bytes) {
             ASN1InputStream decoder = null;
             try {
                 decoder = new ASN1InputStream(bytes);
@@ -1111,7 +1115,7 @@ public class SM2 implements Serializable, SignInterface {
                 // values as unsigned, though they should not be
                 // Thus, we always use the positive versions. See:
                 // http://r6.ca/blog/20111119T211504Z.html
-                return new SM2.SM2Signature(r.getPositiveValue(), s
+                return new SM2Signature(r.getPositiveValue(), s
                         .getPositiveValue());
             } catch (IOException e) {
                 throw new RuntimeException(e);

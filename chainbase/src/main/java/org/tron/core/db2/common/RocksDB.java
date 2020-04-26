@@ -7,7 +7,6 @@ import lombok.Getter;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.db.common.iterator.DBIterator;
 
 public class RocksDB implements DB<byte[], byte[]>, Flusher {

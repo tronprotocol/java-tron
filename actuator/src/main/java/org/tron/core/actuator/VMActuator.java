@@ -23,12 +23,13 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.StorageUtils;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -81,16 +82,16 @@ public class VMActuator implements Actuator2 {
 
   @Getter
   @Setter
-  private boolean isConstanCall = false;
+  private boolean isConstantCall = false;
 
   @Setter
-  private boolean enableEventLinstener;
+  private boolean enableEventListener;
 
   private LogInfoTriggerParser logInfoTriggerParser;
 
 
-  public VMActuator(boolean isConstanCall) {
-    this.isConstanCall = isConstanCall;
+  public VMActuator(boolean isConstantCall) {
+    this.isConstantCall = isConstantCall;
     programInvokeFactory = new ProgramInvokeFactoryImpl();
   }
 
@@ -120,7 +121,7 @@ public class VMActuator implements Actuator2 {
     //Prepare Repository
     repository = RepositoryImpl.createRoot(context.getStoreFactory());
 
-    enableEventLinstener = context.isEventPluginLoaded();
+    enableEventListener = context.isEventPluginLoaded();
 
     //set executorType type
     if (Objects.nonNull(blockCap)) {
@@ -129,7 +130,7 @@ public class VMActuator implements Actuator2 {
       this.blockCap = new BlockCapsule(Block.newBuilder().build());
       this.executorType = ExecutorType.ET_PRE_TYPE;
     }
-    if (isConstanCall) {
+    if (isConstantCall) {
       this.executorType = ExecutorType.ET_PRE_TYPE;
     }
 
@@ -157,8 +158,8 @@ public class VMActuator implements Actuator2 {
     ProgramResult result = context.getProgramResult();
     try {
       if (vm != null) {
-        if (null != blockCap && blockCap.generatedByMyself && null != TransactionUtil
-            .getContractRet(trx)
+        if (null != blockCap && blockCap.generatedByMyself && blockCap.hasWitnessSignature()
+            && null != TransactionUtil.getContractRet(trx)
             && contractResult.OUT_OF_TIME == TransactionUtil.getContractRet(trx)) {
           result = program.getResult();
           program.spendAllEnergy();
@@ -172,8 +173,8 @@ public class VMActuator implements Actuator2 {
         vm.play(program);
         result = program.getResult();
 
-        if (isConstanCall) {
-          long callValue = TransactionUtil.getCallValue(trx.getRawData().getContract(0));
+        if (isConstantCall) {
+          long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           long callTokenValue = TransactionUtil
               .getCallTokenValue(trx.getRawData().getContract(0));
           if (callValue > 0 || callTokenValue > 0) {
@@ -313,7 +314,7 @@ public class VMActuator implements Actuator2 {
     // insure the new contract address haven't exist
     if (repository.getAccount(contractAddress) != null) {
       throw new ContractValidateException(
-          "Trying to create a contract with existing contract address: " + MUtil
+          "Trying to create a contract with existing contract address: " + StringUtil
               .encode58Check(contractAddress));
     }
 
@@ -375,7 +376,7 @@ public class VMActuator implements Actuator2 {
       );
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
-      if (enableEventLinstener && isCheckTransaction()) {
+      if (enableEventListener && isCheckTransaction()) {
         logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
             txId, callerAddress);
       }
@@ -397,11 +398,9 @@ public class VMActuator implements Actuator2 {
     if (callValue > 0) {
       transfer(this.repository, callerAddress, contractAddress, callValue);
     }
-    if (VMConfig.allowTvmTransferTrc10()) {
-      if (tokenValue > 0) {
-        transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
-            tokenValue);
-      }
+    if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
+      transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
+          tokenValue);
     }
 
   }
@@ -466,7 +465,7 @@ public class VMActuator implements Actuator2 {
       }
       AccountCapsule caller = repository.getAccount(callerAddress);
       long energyLimit;
-      if (isConstanCall) {
+      if (isConstantCall) {
         energyLimit = VMConstant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
         AccountCapsule creator = repository
@@ -484,7 +483,7 @@ public class VMActuator implements Actuator2 {
           .createProgramInvoke(TrxType.TRX_CONTRACT_CALL_TYPE, executorType, trx,
               tokenValue, tokenId, blockCap.getInstance(), repository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
-      if (isConstanCall) {
+      if (isConstantCall) {
         programInvoke.setConstantCall();
       }
       this.vm = new VM();
@@ -493,7 +492,7 @@ public class VMActuator implements Actuator2 {
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
 
-      if (enableEventLinstener && isCheckTransaction()) {
+      if (enableEventListener && isCheckTransaction()) {
         logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
             txId, callerAddress);
       }
@@ -505,11 +504,9 @@ public class VMActuator implements Actuator2 {
     if (callValue > 0) {
       transfer(this.repository, callerAddress, contractAddress, callValue);
     }
-    if (VMConfig.allowTvmTransferTrc10()) {
-      if (tokenValue > 0) {
-        transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
-            tokenValue);
-      }
+    if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
+      transferToken(this.repository, callerAddress, contractAddress, String.valueOf(tokenId),
+          tokenValue);
     }
 
   }
@@ -587,19 +584,17 @@ public class VMActuator implements Actuator2 {
 
 
   public void checkTokenValueAndId(long tokenValue, long tokenId) throws ContractValidateException {
-    if (VMConfig.allowTvmTransferTrc10()) {
-      if (VMConfig.allowMultiSign()) { //allowMultiSigns
-        // tokenid can only be 0
-        // or (MIN_TOKEN_ID, Long.Max]
-        if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
-          throw new ContractValidateException("tokenId must be > " + VMConstant.MIN_TOKEN_ID);
-        }
-        // tokenid can only be 0 when tokenvalue = 0,
-        // or (MIN_TOKEN_ID, Long.Max]
-        if (tokenValue > 0 && tokenId == 0) {
-          throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
-              ", tokenId = " + tokenId);
-        }
+    if (VMConfig.allowTvmTransferTrc10() && VMConfig.allowMultiSign()) {
+      // tokenid can only be 0
+      // or (MIN_TOKEN_ID, Long.Max]
+      if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
+        throw new ContractValidateException("tokenId must be > " + VMConstant.MIN_TOKEN_ID);
+      }
+      // tokenid can only be 0 when tokenvalue = 0,
+      // or (MIN_TOKEN_ID, Long.Max]
+      if (tokenValue > 0 && tokenId == 0) {
+        throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
+            ", tokenId = " + tokenId);
       }
     }
   }
@@ -612,7 +607,7 @@ public class VMActuator implements Actuator2 {
     if (ExecutorType.ET_NORMAL_TYPE == executorType) {
       // self witness generates block
       if (this.blockCap != null && blockCap.generatedByMyself &&
-          this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
+          !this.blockCap.hasWitnessSignature()) {
         cpuLimitRatio = 1.0;
       } else {
         // self witness or other witness or fullnode verifies block

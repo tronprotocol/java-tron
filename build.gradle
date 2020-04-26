@@ -59,6 +59,11 @@ subprojects {
 //        archives jar
         archives sourcesJar
     }
+
+    tasks.withType(AbstractArchiveTask) {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
 }
 
 task copyToParent(type: Copy) {
@@ -69,3 +74,4 @@ task copyToParent(type: Copy) {
 }
 
 build.finalizedBy(copyToParent)
+

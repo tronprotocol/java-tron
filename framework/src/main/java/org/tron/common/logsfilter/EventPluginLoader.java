@@ -19,6 +19,7 @@ import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.logsfilter.trigger.SolidityTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
 
@@ -46,6 +47,8 @@ public class EventPluginLoader {
   private boolean contractEventTriggerEnable = false;
 
   private boolean contractLogTriggerEnable = false;
+
+  private boolean solidityLogTriggerEnable = true;
 
   private FilterQuery filterQuery;
 
@@ -272,11 +275,35 @@ public class EventPluginLoader {
       if (!useNativeQueue) {
         setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
       }
+    } else if (EventPluginConfig.SOLIDITY_TRIGGER_NAME
+        .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        solidityLogTriggerEnable = true;
+      } else {
+        solidityLogTriggerEnable = false;
+      }
+      if (!useNativeQueue) {
+        setPluginTopic(Trigger.SOLIDITY_TRIGGER, triggerConfig.getTopic());
+      }
+    }
+  }
+
+  public void postSolidityTrigger(SolidityTrigger trigger) {
+    if (useNativeQueue) {
+      NativeMessageQueue.getInstance()
+          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    } else {
+      eventListeners.forEach(listener ->
+          listener.handleSolidityTrigger(toJsonString(trigger)));
     }
   }
 
   public synchronized boolean isBlockLogTriggerEnable() {
     return blockLogTriggerEnable;
+  }
+
+  public synchronized boolean isSolidityLogTriggerEnable() {
+    return solidityLogTriggerEnable;
   }
 
   public synchronized boolean isTransactionLogTriggerEnable() {

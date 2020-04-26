@@ -48,9 +48,6 @@ public class ProposalUtilTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    AppT.shutdownServices();
-    AppT.shutdown();
-
     context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
@@ -62,7 +59,7 @@ public class ProposalUtilTest {
   @Test
   public void validProposalTypeCheck() throws ContractValidateException {
 
-    Assert.assertEquals(false, ProposalType.contain(40));
+    Assert.assertEquals(false, ProposalType.contain(4000));
     Assert.assertEquals(false, ProposalType.contain(-1));
     Assert.assertEquals(true, ProposalType.contain(2));
 

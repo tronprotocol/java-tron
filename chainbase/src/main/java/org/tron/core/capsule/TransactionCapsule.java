@@ -15,8 +15,8 @@
 
 package org.tron.core.capsule;
 
+import static org.tron.common.utils.StringUtil.encode58Check;
 import static org.tron.common.utils.WalletUtil.checkPermissionOperations;
-import static org.tron.common.utils.WalletUtil.encode58Check;
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 
 import com.google.common.primitives.Bytes;
@@ -39,14 +39,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.TransactionFactory;
@@ -98,7 +96,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   @Setter
   private TransactionTrace trxTrace;
+
   private StringBuilder toStringBuff = new StringBuilder();
+  @Getter
+  @Setter
+  private long time;
 
   /**
    * constructor TransactionCapsule.
@@ -615,7 +617,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public boolean validateSignature(AccountStore accountStore,
       DynamicPropertiesStore dynamicPropertiesStore) throws ValidateSignatureException {
-    if (isVerified == true) {
+    if (isVerified) {
       return true;
     }
     //Do not support multi contracts in one transaction

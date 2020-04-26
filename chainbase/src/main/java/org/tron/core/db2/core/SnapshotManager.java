@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.common.DB;
@@ -103,8 +102,13 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   @Override
-  public void setMode(boolean mode) {
-    dbs.forEach(db -> db.setMode(mode));
+  public void setCursor(Chainbase.Cursor cursor) {
+    dbs.forEach(db -> db.setCursor(cursor));
+  }
+
+  @Override
+  public void setCursor(Chainbase.Cursor cursor, long offset) {
+    dbs.forEach(db -> db.setCursor(cursor, offset));
   }
 
   @Override

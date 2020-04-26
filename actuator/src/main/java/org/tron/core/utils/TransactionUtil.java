@@ -23,7 +23,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.security.SignatureException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -35,11 +34,9 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
@@ -50,14 +47,17 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "capsule")
 @Component
 public class TransactionUtil {
+
+  private static final int maxAccountNameLen = 200;
+  private static final int maxAccountIdLen = 32;
+  private static final int minAccountIdLen = 8;
+  private static final int maxAssetNameLen = 32;
+  private static final int maxTokenAbbrNameLen = 5;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -67,61 +67,27 @@ public class TransactionUtil {
       return true;   //account name can be empty
     }
 
-    return accountName.length <= 200;
+    return accountName.length <= maxAccountNameLen;
   }
 
   public static boolean validAccountId(byte[] accountId) {
-    if (ArrayUtils.isEmpty(accountId)) {
-      return false;
-    }
-
-    if (accountId.length < 8) {
-      return false;
-    }
-
-    if (accountId.length > 32) {
-      return false;
-    }
-    // b must read able.
-    for (byte b : accountId) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
+    return validReadableBytes(accountId, maxAccountIdLen) && accountId.length >= minAccountIdLen;
   }
 
   public static boolean validAssetName(byte[] assetName) {
-    if (ArrayUtils.isEmpty(assetName)) {
-      return false;
-    }
-    if (assetName.length > 32) {
-      return false;
-    }
-    // b must read able.
-    for (byte b : assetName) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
+    return validReadableBytes(assetName, maxAssetNameLen);
   }
 
   public static boolean validTokenAbbrName(byte[] abbrName) {
-    if (ArrayUtils.isEmpty(abbrName)) {
+    return validReadableBytes(abbrName, maxTokenAbbrNameLen);
+  }
+
+  private static boolean validReadableBytes(byte[] bytes, int maxLength) {
+    if (ArrayUtils.isEmpty(bytes) || bytes.length > maxLength) {
       return false;
     }
-    if (abbrName.length > 5) {
-      return false;
-    }
-    // b must read able.
-    for (byte b : abbrName) {
+    // b must be readable
+    for (byte b : bytes) {
       if (b < 0x21) {
         return false; // 0x21 = '!'
       }
@@ -131,7 +97,6 @@ public class TransactionUtil {
     }
     return true;
   }
-
 
   public static boolean validAssetDescription(byte[] description) {
     if (ArrayUtils.isEmpty(description)) {
@@ -174,26 +139,6 @@ public class TransactionUtil {
     return transaction.getRet(0).getContractRet();
   }
 
-
-  public static long getCallValue(Transaction.Contract contract) {
-    try {
-      Any contractParameter = contract.getParameter();
-      switch (contract.getType()) {
-        case TriggerSmartContract:
-          return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
-
-        case CreateSmartContract:
-          return contractParameter.unpack(CreateSmartContract.class).getNewContract()
-              .getCallValue();
-        default:
-          return 0L;
-      }
-    } catch (Exception ex) {
-      logger.error(ex.getMessage());
-      return 0L;
-    }
-  }
-
   public static long getCallTokenValue(Transaction.Contract contract) {
     try {
       Any contractParameter = contract.getParameter();
@@ -210,57 +155,6 @@ public class TransactionUtil {
       logger.error(ex.getMessage());
       return 0L;
     }
-  }
-
-  public static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
-
-    if (selector == null || selector.length != 4
-        || abi.getEntrysList().size() == 0) {
-      return false;
-    }
-
-    for (int i = 0; i < abi.getEntrysCount(); i++) {
-      ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != ABI.Entry.EntryType.Function) {
-        continue;
-      }
-
-      int inputCount = entry.getInputsCount();
-      StringBuilder sb = new StringBuilder();
-      sb.append(entry.getName());
-      sb.append("(");
-      for (int k = 0; k < inputCount; k++) {
-        ABI.Entry.Param param = entry.getInputs(k);
-        sb.append(param.getType());
-        if (k + 1 < inputCount) {
-          sb.append(",");
-        }
-      }
-      sb.append(")");
-
-      byte[] funcSelector = new byte[4];
-      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
-      if (Arrays.equals(funcSelector, selector)) {
-        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
-      }
-    }
-
-    return false;
-  }
-
-  public static byte[] generateContractAddress(Transaction trx) {
-
-    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-    TransactionCapsule trxCap = new TransactionCapsule(trx);
-    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
-
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return sha3omit12(combined);
-
   }
 
   public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
@@ -283,7 +177,7 @@ public class TransactionUtil {
     return sha3omit12(combined);
   }
 
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+  public static boolean checkPermissionOperations(Permission permission, Contract contract)
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
@@ -297,17 +191,6 @@ public class TransactionUtil {
   public static String makeUpperCamelMethod(String originName) {
     return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)
         .replace("_", "");
-  }
-
-  public static byte[] getSelector(byte[] data) {
-    if (data == null
-        || data.length < 4) {
-      return null;
-    }
-
-    byte[] ret = new byte[4];
-    System.arraycopy(data, 0, ret, 0, 4);
-    return ret;
   }
 
   public static TransactionCapsule getTransactionSign(TransactionSign transactionSign) {
@@ -353,7 +236,7 @@ public class TransactionUtil {
           throw new PermissionException("Permission type is wrong!");
         }
         //check operations
-        if (!checkPermissionOprations(permission, contract)) {
+        if (!checkPermissionOperations(permission, contract)) {
           throw new PermissionException("Permission denied!");
         }
       }

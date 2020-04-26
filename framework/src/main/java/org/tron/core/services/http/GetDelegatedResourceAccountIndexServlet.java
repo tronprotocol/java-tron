@@ -2,6 +2,7 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
+import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,14 +29,7 @@ public class GetDelegatedResourceAccountIndexServlet extends RateLimiterServlet 
       if (visible) {
         address = Util.getHexAddress(address);
       }
-      DelegatedResourceAccountIndex reply =
-          wallet.getDelegatedResourceAccountIndex(
-              ByteString.copyFrom(ByteArray.fromHexString(address)));
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(ByteString.copyFrom(ByteArray.fromHexString(address)), visible, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -56,15 +50,21 @@ public class GetDelegatedResourceAccountIndexServlet extends RateLimiterServlet 
 
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
-      DelegatedResourceAccountIndex reply =
-          wallet.getDelegatedResourceAccountIndex(build.getValue());
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+
+      fillResponse(build.getValue(), visible, response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(ByteString address, boolean visible, HttpServletResponse response)
+      throws IOException {
+    DelegatedResourceAccountIndex reply =
+        wallet.getDelegatedResourceAccountIndex(address);
+    if (reply != null) {
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }

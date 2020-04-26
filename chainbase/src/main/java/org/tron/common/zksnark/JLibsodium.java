@@ -1,7 +1,6 @@
 package org.tron.common.zksnark;
 
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.zksnark.JLibsodiumParam.Black2bSaltPersonalParams;
 import org.tron.common.zksnark.JLibsodiumParam.Blake2bFinalParams;
 import org.tron.common.zksnark.JLibsodiumParam.Blake2bInitSaltPersonalParams;

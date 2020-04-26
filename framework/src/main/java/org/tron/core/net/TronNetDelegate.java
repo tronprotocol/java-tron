@@ -44,6 +44,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
@@ -75,6 +76,9 @@ public class TronNetDelegate {
 
   @Autowired
   private BackupServer backupServer;
+
+  @Autowired
+  private MetricsService metricsService;
 
   private volatile boolean backupServerStartFlag;
 
@@ -187,7 +191,7 @@ public class TronNetDelegate {
     }
   }
 
-  public void processBlock(BlockCapsule block) throws P2pException {
+  public void processBlock(BlockCapsule block, boolean isSync) throws P2pException {
     BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
       try {
@@ -197,6 +201,10 @@ public class TronNetDelegate {
                 block.getBlockId().getString(),
                 Hex.toHexString(block.getWitnessAddress().toByteArray()),
                 getHeadBlockId().getString());
+          }
+          if (!isSync) {
+            //record metrics
+            metricsService.applyBlock(block);
           }
           dbManager.pushBlock(block);
           freshBlockId.add(blockId);
@@ -224,6 +232,7 @@ public class TronNetDelegate {
           | ReceiptCheckErrException
           | VMIllegalException
           | ZksnarkException e) {
+        metricsService.failProcessBlock(block.getNum(), e.getMessage());
         logger.error("Process block failed, {}, reason: {}.", blockId.getString(), e.getMessage());
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
       }
@@ -232,6 +241,7 @@ public class TronNetDelegate {
 
   public void pushTransaction(TransactionCapsule trx) throws P2pException {
     try {
+      trx.setTime(System.currentTimeMillis());
       dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException
         | VMIllegalException e) {

@@ -80,9 +80,7 @@ public class HttpTestMutiSign001 {
 
   @BeforeClass
   public void beforeClass() {
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true).build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
@@ -131,8 +129,9 @@ public class HttpTestMutiSign001 {
         "7fff1fc0037e0000000000000000000000000000000000000000000000000000");
     activeObject.add("keys", activeKeys);
 
-    response = HttpMethed.accountPermissionUpdate(httpnode, ownerAddress, ownerObject,
-        witnessObject, activeObject, ownerKey);
+    response = HttpMethed
+        .accountPermissionUpdate(httpnode, ownerAddress, ownerObject, witnessObject, activeObject,
+            ownerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
   }
 

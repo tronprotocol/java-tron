@@ -1,9 +1,10 @@
 package org.tron.core.vm.config;
 
 
+import static org.tron.core.capsule.ReceiptCapsule.checkForEnergyLimit;
+
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.DBConfig;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 
@@ -27,11 +28,4 @@ public class ConfigLoader {
       }
     }
   }
-
-  private static boolean checkForEnergyLimit(DynamicPropertiesStore ds) {
-    long blockNum = ds.getLatestBlockHeaderNumber();
-    return blockNum >= CommonParameter.getInstance()
-        .getBlockNumForEneryLimit();
-  }
-
 }

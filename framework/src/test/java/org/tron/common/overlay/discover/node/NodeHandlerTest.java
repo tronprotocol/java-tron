@@ -57,8 +57,6 @@ public class NodeHandlerTest {
   @After
   public void destroy() {
     Args.clearParam();
-    appTest.shutdownServices();
-    appTest.shutdown();
     context.destroy();
     if (FileUtil.deleteDir(new File("output-directory"))) {
       logger.info("Release resources successful.");

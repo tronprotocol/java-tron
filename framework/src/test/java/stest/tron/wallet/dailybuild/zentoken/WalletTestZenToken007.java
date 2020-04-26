@@ -197,7 +197,7 @@ public class WalletTestZenToken007 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get spending key")
+  @Test(enabled = false, description = "Get spending key")
   public void test01GetSpendingKey() {
     sk = blockingStubFull.getSpendingKey(EmptyMessage.newBuilder().build());
     logger.info("sk: " + ByteArray.toHexString(sk.getValue().toByteArray()));
@@ -207,7 +207,7 @@ public class WalletTestZenToken007 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get diversifier")
+  @Test(enabled = false, description = "Get diversifier")
   public void test02GetDiversifier() {
     diversifierMessage1 = blockingStubFull.getDiversifier(EmptyMessage.newBuilder().build());
     logger.info("d1: " + ByteArray.toHexString(diversifierMessage1.getD().toByteArray()));
@@ -221,7 +221,7 @@ public class WalletTestZenToken007 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get expanded spending key")
+  @Test(enabled = false, description = "Get expanded spending key")
   public void test03GetExpandedSpendingKey() {
     expandedSpendingKeyMessage = blockingStubFull.getExpandedSpendingKey(sk);
     logger.info("ask: " + ByteArray.toHexString(expandedSpendingKeyMessage.getAsk().toByteArray()));
@@ -233,7 +233,7 @@ public class WalletTestZenToken007 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get AK from ASK")
+  @Test(enabled = false, description = "Get AK from ASK")
   public void test04GetAkFromAsk() {
     BytesMessage.Builder askBuilder = BytesMessage.newBuilder();
     askBuilder.setValue(expandedSpendingKeyMessage.getAsk());
@@ -244,7 +244,7 @@ public class WalletTestZenToken007 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get Nk from Nsk")
+  @Test(enabled = false, description = "Get Nk from Nsk")
   public void test05GetNkFromNsk() {
     BytesMessage.Builder nskBuilder = BytesMessage.newBuilder();
     nskBuilder.setValue(expandedSpendingKeyMessage.getNsk());
@@ -255,7 +255,7 @@ public class WalletTestZenToken007 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get incoming viewing Key")
+  @Test(enabled = false, description = "Get incoming viewing Key")
   public void test06GetIncomingViewingKey() {
     ViewingKeyMessage.Builder viewBuilder = ViewingKeyMessage.newBuilder();
     viewBuilder.setAk(ak.getValue());
@@ -267,7 +267,7 @@ public class WalletTestZenToken007 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get Zen Payment Address")
+  @Test(enabled = false, description = "Get Zen Payment Address")
   public void test07GetZenPaymentAddress() {
     IncomingViewingKeyDiversifierMessage.Builder builder =
         IncomingViewingKeyDiversifierMessage.newBuilder();
@@ -314,7 +314,7 @@ public class WalletTestZenToken007 {
 
   }
 
-  @Test(enabled = true, description = "Shield to shield transaction")
+  @Test(enabled = false, description = "Shield to shield transaction")
   public void test08Shield2ShieldTransaction() {
     //S to S address1
     receiverShieldAddress1 = receiverAddressInfo1.get().getAddress();
@@ -380,7 +380,8 @@ public class WalletTestZenToken007 {
     Assert.assertTrue(receiverNote3.getValue() == sendNote3.getValue() - zenTokenFee);
   }
 
-  @Test(enabled = true, description = "Shield to shield transaction without ask")
+  @Test(enabled = false,
+      description = "Shield to shield transaction without ask")
   public void test09Shield2ShieldTransactionWithoutAsk() {
     //Same sk and different d can produce different shield address,
     // the notes can use by scan from same ovk.
@@ -454,7 +455,7 @@ public class WalletTestZenToken007 {
     Assert.assertEquals(memo3, PublicMethed.getMemo(sendNote3));
   }
 
-  @Test(enabled = true, description = "Get shield Nulltifier")
+  @Test(enabled = false, description = "Get shield Nulltifier")
   public void test10GetShieldNulltifier() {
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo1, blockingStubFull);
     Assert.assertEquals(PublicMethed.getShieldNullifier(sendShieldAddressInfo1.get(),
@@ -467,7 +468,8 @@ public class WalletTestZenToken007 {
         notes.getNoteTxs(0), blockingStubFull).getResult());
   }
 
-  @Test(enabled = true, description = "Same sk transfer shield address note is spent")
+  @Test(enabled = false,
+      description = "Same sk transfer shield address note is spent")
   public void test11SameSkTransferShieldAddressNoteCanSpent() {
     notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2, blockingStubFull);
 
@@ -491,7 +493,7 @@ public class WalletTestZenToken007 {
         notes.getNoteTxs(2), blockingStubFull).getResult());
   }
 
-  @Test(enabled = true, description = "Same sk transfer two shield address,"
+  @Test(enabled = false, description = "Same sk transfer two shield address,"
       + "in one transaction send to these shield transaction")
   public void test12SameSkTransferTwoShieldAddressInOneTransaction() {
     shieldOutList.clear();
