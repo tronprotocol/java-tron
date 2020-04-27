@@ -52,7 +52,7 @@ public class EventPluginLoader {
 
   private boolean solidityLogTriggerEnable = false;
 
-  private boolean solidityTriggerEnable = true;
+  private boolean solidityTriggerEnable = false;
 
   private FilterQuery filterQuery;
 
