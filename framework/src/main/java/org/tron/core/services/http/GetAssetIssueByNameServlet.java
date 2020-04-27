@@ -36,16 +36,14 @@ public class GetAssetIssueByNameServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      JSONObject jsonObject = JSON.parseObject(input);
+      PostParams params = PostParams.getPostParams(request);
+      JSONObject jsonObject = JSON.parseObject(params.getParams());
       String value = jsonObject.getString("value");
-      if (visible) {
+      if (params.isVisible()) {
         value = Util.getHexString(value);
       }
-      fillResponse(visible, ByteString.copyFrom(ByteArray.fromHexString(value)), response);
+      fillResponse(params.isVisible(), ByteString.copyFrom(
+              ByteArray.fromHexString(value)), response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
