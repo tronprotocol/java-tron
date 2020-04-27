@@ -68,7 +68,7 @@ public class LiteFullNodeTool {
       "accountid-index",
       "asset-issue",
       "asset-issue-v2",
-      "block_KDB",
+      //"block_KDB",
       "code",
       //"common",
       "contract",
