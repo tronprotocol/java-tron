@@ -116,8 +116,6 @@ import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
-import org.tron.core.capsule.MarketPriceCapsule;
-import org.tron.core.capsule.MarketPriceLinkedListCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -154,7 +152,6 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
-import org.tron.core.store.MarketPriceStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
@@ -175,9 +172,7 @@ import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.MarketOrder;
 import org.tron.protos.Protocol.MarketOrderList;
-import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketOrderPairList;
-import org.tron.protos.Protocol.MarketOrderPosition;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.Permission;
@@ -2152,7 +2147,16 @@ public class Wallet {
   public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId) {
     MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
         .getMarketPairToPriceStore();
-    List<byte[]> priceKeysList = marketPairToPriceStore.getPriceKeysList(sellTokenId, buyTokenId);
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = dbManager.getChainBaseManager()
+        .getMarketPairPriceToOrderStore();
+
+    long count = marketPairToPriceStore.getPriceNum(sellTokenId, buyTokenId);
+    if (count == 0) {
+      return null;
+    }
+
+    List<byte[]> priceKeysList = marketPairPriceToOrderStore
+        .getPriceKeysList(sellTokenId, buyTokenId, count);
     if (priceKeysList.isEmpty()) {
       return null;
     }
@@ -2178,15 +2182,14 @@ public class Wallet {
     MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
         .getMarketPairToPriceStore();
 
-    // Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = marketPairToPriceStore
-    //     .iterator();
-    // while (iterator.hasNext()) {
-    //   Entry<byte[], MarketPriceLinkedListCapsule> next = iterator.next();
-    //   MarketOrderPair pair = MarketOrderPair.newBuilder()
-    //       .setSellTokenId(ByteString.copyFrom(next.getValue().getSellTokenId()))
-    //       .setBuyTokenId(ByteString.copyFrom(next.getValue().getBuyTokenId())).build();
-    //   builder.addOrderPair(pair);
-    // }
+    Iterator<Entry<byte[], BytesCapsule>> iterator = marketPairToPriceStore
+        .iterator();
+    while (iterator.hasNext()) {
+      Entry<byte[], BytesCapsule> next = iterator.next();
+
+      byte[] pairKey = next.getKey();
+      builder.addOrderPair(MarketUtils.decodeKeyToMarketPair(pairKey));
+    }
 
     return builder.build();
   }
@@ -2197,7 +2200,16 @@ public class Wallet {
 
     MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
         .getMarketPairToPriceStore();
-    List<byte[]> priceKeysList = marketPairToPriceStore.getPriceKeysList(sellTokenId, buyTokenId);
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = dbManager.getChainBaseManager()
+        .getMarketPairPriceToOrderStore();
+
+    long count = marketPairToPriceStore.getPriceNum(sellTokenId, buyTokenId);
+    if (count == 0) {
+      return null;
+    }
+
+    List<byte[]> priceKeysList = marketPairPriceToOrderStore
+        .getPriceKeysList(sellTokenId, buyTokenId, count);
     if (priceKeysList.isEmpty()) {
       return null;
     }

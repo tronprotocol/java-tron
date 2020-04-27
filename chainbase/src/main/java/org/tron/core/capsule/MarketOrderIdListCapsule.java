@@ -10,8 +10,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
-import org.tron.core.store.MarketPriceStore;
-import org.tron.protos.Protocol.MarketOrder;
 import org.tron.protos.Protocol.MarketOrderIdList;
 
 @Slf4j(topic = "capsule")
@@ -38,6 +36,13 @@ public class MarketOrderIdListCapsule implements ProtoCapsule<MarketOrderIdList>
         .build();
   }
 
+  // just for test
+  public MarketOrderIdListCapsule(byte[] head, byte[] tail) {
+    this.orderIdList = MarketOrderIdList.newBuilder()
+        .setHead(ByteString.copyFrom(head))
+        .setTail(ByteString.copyFrom(tail))
+        .build();
+  }
 
   public boolean isOrderExists(byte[] orderId, MarketOrderStore orderStore)
       throws ItemNotFoundException {
