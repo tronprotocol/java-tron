@@ -111,7 +111,6 @@ import org.tron.protos.Protocol.MarketOrder;
 import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketOrderPairList;
-import org.tron.protos.Protocol.MarketOrderPosition;
 import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.NodeInfo;
 import org.tron.protos.Protocol.Proposal;
