@@ -24,7 +24,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketPriceCapsule;
-import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -84,6 +83,14 @@ public class MarketUtils {
     return result;
   }
 
+  /**
+   * The first price key of one token
+   * Because using the price compare, we can set the smallest price as the first one.
+   * */
+  public static byte[] getPairPriceHeadKey(byte[] sellTokenId, byte[] buyTokenId) {
+    return createPairPriceKey(sellTokenId, buyTokenId, 0L, 0L);
+  }
+
   public static byte[] expandTokenIdToPriceArray(byte[] tokenId) {
     byte[] result = new byte[TOKEN_ID_LENGTH];
     System.arraycopy(tokenId, 0, result, 0, tokenId.length);
@@ -95,6 +102,8 @@ public class MarketUtils {
    * 19...37: buyTokenId
    * 38...45: sellTokenQuantity
    * 46...53: buyTokenQuantity
+   *
+   * return sellTokenQuantity, buyTokenQuantity
    * */
   public static MarketPrice decodeKeyToMarketPrice(byte[] key) {
     byte[] sellTokenQuantity = new byte[8];
@@ -107,6 +116,9 @@ public class MarketUtils {
         ByteArray.toLong(buyTokenQuantity)).getInstance();
   }
 
+  /**
+   * input key can be pairKey or pairPriceKey
+   * */
   public static MarketOrderPair decodeKeyToMarketPair(byte[] key) {
     byte[] sellTokenId = new byte[TOKEN_ID_LENGTH];
     byte[] buyTokenId = new byte[TOKEN_ID_LENGTH];

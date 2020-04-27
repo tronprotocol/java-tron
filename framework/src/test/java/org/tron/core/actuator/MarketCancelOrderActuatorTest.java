@@ -36,7 +36,6 @@ import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
-import org.tron.core.store.MarketPriceStore;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketOrderPair;
@@ -473,7 +472,6 @@ public class MarketCancelOrderActuatorTest {
     MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
     AccountStore accountStore = dbManager.getAccountStore();
-    MarketPriceStore marketPriceStore = chainBaseManager.getMarketPriceStore();
 
     addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
         200L, OWNER_ADDRESS_FIRST);
@@ -486,11 +484,11 @@ public class MarketCancelOrderActuatorTest {
     addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
         400L, OWNER_ADDRESS_FIRST);
 
-    List<byte[]> priceKeysList = pairToPriceStore
-        .getPriceKeysList(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
-    Assert.assertEquals(3, priceKeysList.size());
     Assert.assertEquals(3,
         pairToPriceStore.getPriceNum(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes()));
+    List<byte[]> priceKeysList = pairPriceToOrderStore
+        .getPriceKeysList(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 3);
+    Assert.assertEquals(3, priceKeysList.size());
 
     //record account state
     AccountCapsule accountCapsule = accountStore
@@ -533,8 +531,8 @@ public class MarketCancelOrderActuatorTest {
         pairToPriceStore.getPriceNum(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes()));
 
     // check the second price
-    priceKeysList = pairToPriceStore
-        .getPriceKeysList(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
+    priceKeysList = pairPriceToOrderStore
+        .getPriceKeysList(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 3);
     MarketOrderPair marketOrderPair = MarketUtils.decodeKeyToMarketPair(priceKeysList.get(0));
     MarketPrice marketPrice = MarketUtils.decodeKeyToMarketPrice(priceKeysList.get(1));
     Assert.assertEquals(100L, marketPrice.getSellTokenQuantity());
@@ -575,7 +573,6 @@ public class MarketCancelOrderActuatorTest {
     MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
-    MarketPriceStore marketPriceStore = chainBaseManager.getMarketPriceStore();
 
     addOrder(TRX, 100L, TOKEN_ID_TWO,
         200L, OWNER_ADDRESS_FIRST);
@@ -626,8 +623,8 @@ public class MarketCancelOrderActuatorTest {
     Assert.assertEquals(3,
         pairToPriceStore.getPriceNum(TRX.getBytes(), TOKEN_ID_TWO.getBytes()));
 
-    List<byte[]> priceKeysList = pairToPriceStore
-        .getPriceKeysList(TRX.getBytes(), TOKEN_ID_TWO.getBytes());
+    List<byte[]> priceKeysList = pairPriceToOrderStore
+        .getPriceKeysList(TRX.getBytes(), TOKEN_ID_TWO.getBytes(), 3);
     MarketOrderPair marketOrderPair = MarketUtils.decodeKeyToMarketPair(priceKeysList.get(0));
     MarketPrice marketPrice = MarketUtils.decodeKeyToMarketPrice(priceKeysList.get(1));
     Assert.assertEquals(100L, marketPrice.getSellTokenQuantity());
@@ -660,7 +657,6 @@ public class MarketCancelOrderActuatorTest {
     MarketPairToPriceStore pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     MarketPairPriceToOrderStore pairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
-    MarketPriceStore marketPriceStore = chainBaseManager.getMarketPriceStore();
 
     addOrder(TOKEN_ID_ONE, 100L, TOKEN_ID_TWO,
         200L, OWNER_ADDRESS_FIRST);
@@ -692,7 +688,7 @@ public class MarketCancelOrderActuatorTest {
         +accountCapsule.getBalance());
 
     //check token number return
-    Assert.assertEquals(100L,accountCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
+    Assert.assertEquals(100L, accountCapsule.getAssetMapV2().get(TOKEN_ID_ONE).longValue());
 
     //check accountOrder
     accountOrderCapsule = marketAccountStore.get(ByteArray.fromHexString(OWNER_ADDRESS_FIRST));
@@ -712,8 +708,8 @@ public class MarketCancelOrderActuatorTest {
     Assert.assertEquals(2,
         pairToPriceStore.getPriceNum(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes()));
 
-    List<byte[]> priceKeysList = pairToPriceStore
-        .getPriceKeysList(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
+    List<byte[]> priceKeysList = pairPriceToOrderStore
+        .getPriceKeysList(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 2);
     MarketOrderPair marketOrderPair = MarketUtils.decodeKeyToMarketPair(priceKeysList.get(0));
     MarketPrice marketPrice = MarketUtils.decodeKeyToMarketPrice(priceKeysList.get(0));
     Assert.assertEquals(100L, marketPrice.getSellTokenQuantity());
