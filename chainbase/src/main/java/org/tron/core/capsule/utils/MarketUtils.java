@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
@@ -119,6 +120,18 @@ public class MarketUtils {
         .setBuyTokenId(ByteString.copyFrom(buyTokenId));
 
     return builder.build();
+  }
+
+  public static boolean pairKeyIsEqual(byte[] key1,byte[] key2){
+    byte[] bytes1 = decodeKeyToMarketPairKey(key1);
+    byte[] bytes2 = decodeKeyToMarketPairKey(key2);
+    return ByteUtil.equals(bytes1, bytes2);
+  }
+
+  public static byte[] decodeKeyToMarketPairKey(byte[] key) {
+    byte[] pairKey = new byte[TOKEN_ID_LENGTH*2];
+    System.arraycopy(key, 0, pairKey, 0, TOKEN_ID_LENGTH *2);
+    return pairKey;
   }
 
   public static byte[] createPairKey(byte[] sellTokenId, byte[] buyTokenId) {

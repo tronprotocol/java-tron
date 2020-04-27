@@ -2,6 +2,7 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -181,49 +182,51 @@ public class Chainbase implements IRevokingDB {
   }
 
 
+
+
+  //for market
   private List<byte[]> getKeysNext(Snapshot head, byte[] key, long limit) {
     if (limit <= 0) {
       return Collections.emptyList();
     }
-
-    Map<WrappedByteArray, WrappedByteArray> levelDBMap = getEntityNext(head, key, limit);
-    MarketOrderPriceComparatorForLevelDB comparator = new MarketOrderPriceComparatorForLevelDB();
-
-    return levelDBMap.entrySet().stream()
-        .sorted((e1, e2) -> comparator.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
-        .filter(e -> comparator.greaterOrEquals(e.getKey().getBytes(), key))
-        .limit(limit)
-        .map(Map.Entry::getKey)
-        .map(WrappedByteArray::getBytes)
-        .collect(Collectors.toList());
-  }
-
-  private Map<WrappedByteArray, WrappedByteArray> getEntityNext(Snapshot head, byte[] key,
-      long limit) {
 
     Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
     if (head.getPrevious() != null) {
       ((SnapshotImpl) head).collect(collection);
     }
 
-    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
+    List<WrappedByteArray> snapshotList = collection.keySet()
+        .stream()
+        .filter(e -> MarketUtils.pairKeyIsEqual(e.getBytes(), key))
+        .collect(Collectors.toList());
 
+    List<WrappedByteArray> levelDBList = new ArrayList<>();
     if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
       ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
           .map(e -> Maps
               .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
-          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+          .forEach(e -> levelDBList.add(e.getKey()));
     } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
       ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
           .map(e -> Maps
               .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
-          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+          .forEach(e -> levelDBList.add(e.getKey()));
     }
 
-    levelDBMap.putAll(collection);
+    List<WrappedByteArray> keyList = new ArrayList<>();
+    keyList.addAll(snapshotList);
+    keyList.addAll(levelDBList);
 
-    return levelDBMap;
+    MarketOrderPriceComparatorForLevelDB comparator = new MarketOrderPriceComparatorForLevelDB();
+
+    return keyList.stream()
+        .filter(e -> comparator.greaterOrEquals(e.getBytes(), key))
+        .sorted((e1, e2) -> comparator.compare(e1.getBytes(), e2.getBytes()))
+        .limit(limit)
+        .map(WrappedByteArray::getBytes)
+        .collect(Collectors.toList());
   }
+
 
   @Override
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
