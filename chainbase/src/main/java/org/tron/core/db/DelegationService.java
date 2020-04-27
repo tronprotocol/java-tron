@@ -4,11 +4,13 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -28,6 +30,7 @@ public class DelegationService {
   private WitnessStore witnessStore;
 
   @Setter
+  @Getter
   private DelegationStore delegationStore;
 
   @Setter
@@ -117,6 +120,7 @@ public class DelegationService {
     //
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
+      delegationStore.setRemark(endCycle, address);
       delegationStore.setBeginCycle(address, endCycle + 1);
       return;
     }
@@ -132,6 +136,9 @@ public class DelegationService {
     logger.info("adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
             + "account vote {},", Hex.toHexString(address), reward, currentCycle,
         beginCycle, endCycle, accountCapsule.getVotesList());
+    //debug
+    logger.info("Account-setAccountVote: {},",
+        delegationStore.getAccountVote(endCycle, address));
   }
 
   public long queryReward(byte[] address) {
@@ -226,4 +233,18 @@ public class DelegationService {
         .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
+  public long getCycleFromTimeStamp(long timeStamp) {
+    long currentCycleTimeStamp = dynamicPropertiesStore.getCurrentCycleTimeStamp();
+    if (timeStamp >= currentCycleTimeStamp) {
+      return dynamicPropertiesStore.getCurrentCycleNumber();
+    }
+    long maintenanceNum = (currentCycleTimeStamp - timeStamp) / CommonParameter
+        .getInstance().getMaintenanceTimeInterval() ;
+    if ((currentCycleTimeStamp - timeStamp) % CommonParameter
+        .getInstance().getMaintenanceTimeInterval() != 0) {
+      maintenanceNum = maintenanceNum + 1;
+    }
+    return (dynamicPropertiesStore.getCurrentCycleNumber() - maintenanceNum) > 0 ?
+        (dynamicPropertiesStore.getCurrentCycleNumber() - maintenanceNum) : 0;
+  }
 }

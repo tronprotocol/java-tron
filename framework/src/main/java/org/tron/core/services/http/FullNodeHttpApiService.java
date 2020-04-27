@@ -235,6 +235,20 @@ public class FullNodeHttpApiService implements Service {
   private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
   @Autowired
   private MetricsServlet metricsServlet;
+  @Autowired
+  private GetAccountRewardByTimeStampServlet getAccountRewardByTimeStampServlet;
+  @Autowired
+  private GetSRPayByTimeStampServlet getSRPayByTimeStampServlet;
+  @Autowired
+  private GetSRRewardByTimeStampServlet getSRRewardByTimeStampServlet;
+  @Autowired
+  private GetAccountLastUnwithdrawRewardServlet getAccountLastUnwithdrawRewardServlet;
+  @Autowired
+  private GetCurrentCycleService getCurrentCycleServlet;
+  @Autowired
+  private GetSRAnnualizedRateOfReturnServlet getSRAnnualizedRateOfReturnServlet;
+  @Autowired
+  private GetNowSRAnnualizedRateOfReturnServlet getNowSRAnnualizedRateOfReturnServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -437,6 +451,15 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/wallet/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/wallet/createCommonTransaction");
+      context.addServlet(new ServletHolder(getAccountRewardByTimeStampServlet)
+          , "/wallet/getAccountRewardByTimeStamp");
+      context.addServlet(new ServletHolder(getSRPayByTimeStampServlet), "/wallet/getSRPayByTimeStamp");
+      context.addServlet(new ServletHolder(getSRRewardByTimeStampServlet),
+          "/wallet/getSRRewardByTimeStamp");
+      context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet), "/wallet/getSRAnnualizedRateOfReturnServlet");
+      context.addServlet(new ServletHolder(getNowSRAnnualizedRateOfReturnServlet), "/wallet/getNowSRAnnualizedRateOfReturnServlet");
+      context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet), "/wallet/getAccountLastUnwithdrawReward");
+      context.addServlet(new ServletHolder(getCurrentCycleServlet), "/wallet/getCurrentCycleServlet");
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
           "/wallet/gettransactioninfobyblocknum");
 

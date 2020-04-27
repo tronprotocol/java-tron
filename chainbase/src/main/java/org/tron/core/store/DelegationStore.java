@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import java.util.Arrays;
 
+@Slf4j
 @Component
 public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
@@ -24,6 +27,9 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
   @Override
   public BytesCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
+    //debug
+    logger.info("Account-revokingDB.getUnchecked(key): {},Account-key: {},",
+        Arrays.toString(value),key);
     return ArrayUtils.isEmpty(value) ? null : new BytesCapsule(value);
   }
 
@@ -49,6 +55,23 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public void setBeginCycle(byte[] address, long number) {
     put(address, new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public BytesCapsule getRemark(long cycle, byte[] address) {
+    return get(buildRemarkKey(cycle, address));
+  }
+
+  public void setLastWithdrawCycle(long cycle, byte[] address) {
+    put(buildLastWithdrawCycleKey(address), new BytesCapsule(ByteArray.fromLong(cycle)));
+  }
+
+  public long getLastWithdrawCycle(byte[] address) {
+    BytesCapsule bytesCapsule = get(buildLastWithdrawCycleKey(address));
+    return bytesCapsule == null ? REMARK : ByteArray.toLong(bytesCapsule.getData());
+  }
+
+  public void setRemark(long cycle, byte[] address) {
+    put(buildRemarkKey(cycle, address), new BytesCapsule(ByteArray.fromLong(REMARK)));
   }
 
   public long getBeginCycle(byte[] address) {
@@ -84,6 +107,10 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public AccountCapsule getAccountVote(long cycle, byte[] address) {
     BytesCapsule bytesCapsule = get(buildAccountVoteKey(cycle, address));
+    //debug
+    logger.info("Account-bytesCapsule: {},Account-cycle: {},Account-address: {},Account-buildAccountVoteKey: {}",
+        bytesCapsule,cycle,address,buildAccountVoteKey(cycle, address));
+
     if (bytesCapsule == null) {
       return null;
     } else {
@@ -118,6 +145,14 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private byte[] buildRewardKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-reward").getBytes();
+  }
+
+  private byte[] buildRemarkKey(long cycle, byte[] address) {
+    return (cycle + "-" + Hex.toHexString(address) + "remark").getBytes();
+  }
+
+  private byte[] buildLastWithdrawCycleKey(byte[] address) {
+    return ("lastWithdraw-" + Hex.toHexString(address)).getBytes();
   }
 
   private byte[] buildAccountVoteKey(long cycle, byte[] address) {

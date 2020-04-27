@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -91,6 +92,7 @@ import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -149,6 +151,7 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.store.DelegationStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -172,6 +175,7 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
@@ -2286,6 +2290,157 @@ public class Wallet {
     return builder.build();
   }
 
+  private List<Vote> getVoteList (byte[] address, long cycle) {
+    for (long i = cycle; i >=0 ;i --) {
+      AccountCapsule accountCapsule = dbManager.getDelegationStore()
+          .getAccountVote(i, address);
+      if (accountCapsule != null) {
+        return accountCapsule.getVotesList();
+      }
+      BytesCapsule remark = dbManager.getDelegationStore()
+          .getRemark(i, address);
+      //debug
+      logger.info("Account-accountCapsule: {},Account-remark: {}",
+          accountCapsule,remark);
+
+      if (remark != null) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  public HashMap<String, Long> computeUnwithdrawReward(byte[] address) {
+    HashMap<String, Long> rewardMap = new HashMap<>();
+    long beginCycle =  dbManager.getDelegationStore()
+        .getLastWithdrawCycle(address);
+    long endCycle =    dbManager.getDynamicPropertiesStore()
+        .getCurrentCycleNumber();
+    if (address.length == 0) {
+      return rewardMap;
+    }
+
+    for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+      List<Vote> voteList = getVoteList(address, cycle);
+      if (voteList != null) {
+        for (Vote vote : voteList) {
+          byte[] srAddress = vote.getVoteAddress().toByteArray();
+          long totalReward = dbManager.getDelegationStore().getReward(cycle, srAddress);
+          long totalVote = dbManager.getDelegationStore()
+              .getWitnessVote(cycle, srAddress);
+          if (totalVote == DelegationStore.REMARK || totalVote == 0) {
+            continue;
+          }
+          long userVote = vote.getVoteCount();
+          double voteRate = (double) userVote / totalVote;
+          String SR = StringUtil
+              .encode58Check(srAddress);
+          if (rewardMap.containsKey(SR) == false) {
+            rewardMap.put(SR, (long)(voteRate * totalReward));
+          } else {
+            long reward = rewardMap.get(SR) + (long)(voteRate * totalReward);
+            rewardMap.put(SR, reward);
+          }
+        }
+      }
+    }
+    return rewardMap;
+  }
+
+  public HashMap<String, Long> computeRewardByTimeStamp(byte[] address,
+      long startTimeStamp, long endTimeStamp) {
+    HashMap<String, Long> rewardMap = new HashMap<>();
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    if (address.length == 0) {
+      return rewardMap;
+    }
+
+    //debug
+    logger.info("Account-beginCycle: {}, Account-beginCycle: {},",
+        beginCycle,endCycle);
+
+    for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+      List<Vote> voteList = getVoteList(address, cycle);
+      if (voteList != null) {
+        for (Vote vote : voteList) {
+          byte[] srAddress = vote.getVoteAddress().toByteArray();
+          long totalReward = dbManager.getDelegationStore().getReward(cycle, srAddress);
+          long totalVote = dbManager.getDelegationStore()
+              .getWitnessVote(cycle, srAddress);
+          if (totalVote == DelegationStore.REMARK || totalVote == 0) {
+            continue;
+          }
+          long userVote = vote.getVoteCount();
+          double voteRate = (double) userVote / totalVote;
+          String SR = StringUtil
+              .encode58Check(srAddress);
+
+          logger.info("Account-userVote: {}, Account-totalVote: {},Account-SR: {},",
+              userVote,totalVote,SR);
+
+          if (rewardMap.containsKey(SR) == false) {
+            rewardMap.put(SR, (long)(voteRate * totalReward));
+          } else {
+            long reward = rewardMap.get(SR) + (long)(voteRate * totalReward);
+            rewardMap.put(SR, reward);
+          }
+        }
+      }
+    }
+    logger.info("Account-rewardMap: {}",
+        rewardMap);
+    return rewardMap;
+  }
+
+  public long queryPayByTimeStamp(byte[] address, long startTimeStamp, long endTimeStamp) {
+    if (!dbManager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      return 0;
+    }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    long reward = 0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
+        double brokerageRate = (double) brokerage / 100;
+        reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
+      }
+    }
+    return reward;
+  }
+
+  public long queryRewardByTimeStamp(byte[] address, long startTimeStamp, long endTimeStamp) {
+    if (!dbManager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      return 0;
+    }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    long reward = 0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        reward += dbManager.getDelegationStore().getReward(cycle, address);
+      }
+    }
+    return reward;
+  }
+
   public ExchangeList getPaginatedExchangeList(long offset, long limit) {
     if (limit < 0 || offset < 0) {
       return null;
@@ -2318,6 +2473,98 @@ public class Wallet {
             .addExchanges(exchangeCapsule.getInstance()));
     return builder.build();
 
+  }
+
+  public double queryVoteNumber(byte[] address, long startTimeStamp, long endTimeStamp) {
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    long voteNumber = 0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        voteNumber += dbManager.getDelegationStore().getWitnessVote(cycle,address);
+      }
+      voteNumber = voteNumber / (endCycle - beginCycle);
+    }
+    return voteNumber;
+  }
+
+  public double queryTotalVoteNumber(long startTimeStamp, long endTimeStamp) {
+
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    AtomicLong voteNumber = new AtomicLong();
+    double voteNumberTotal=0;
+
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        List<WitnessCapsule> allWitnesses = dbManager.getWitnessStore().getAllWitnesses();
+        long finalCycle = cycle;
+        allWitnesses.forEach(witness ->{
+          voteNumber.addAndGet(dbManager.getDelegationStore().getWitnessVote(finalCycle, witness.getAddress().toByteArray()));
+        });
+      }
+      voteNumberTotal= voteNumber.longValue() / (endCycle - beginCycle);
+    }
+    return voteNumberTotal;
+//    return voteNumber.doubleValue();
+  }
+
+  public double querySrRatio(byte[] address, long startTimeStamp, long endTimeStamp) {
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long beginCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(startTimeStamp);
+    long endCycle = dbManager.getDelegationService().
+        getCycleFromTimeStamp(endTimeStamp);
+    double srRatio = 0;
+//    double brokerage=0.0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle < endCycle) {
+      for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+        srRatio += dbManager.getDelegationStore().getBrokerage(cycle, address);
+      }
+    }
+    srRatio = srRatio / (endCycle - beginCycle);
+    return srRatio;
+  }
+
+  public long getRewardOfVoteEachBlock() {
+    return dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock();
+  }
+
+  public long getRewardOfBlockEachBlock() {
+    return dbManager.getDynamicPropertiesStore().getWitnessPayPerBlock();
+  }
+
+  public int getSrNumber() {
+    return dbManager.getWitnessStore().getAllWitnesses().size();
+  }
+
+  public double queryNowVoteNumber(byte[] address) {
+    return dbManager.getWitnessStore().get(address).getVoteCount();
+  }
+
+  public double queryNowTotalVoteNumber() {
+    AtomicLong voteNumber = new AtomicLong();
+    List<WitnessCapsule> allWitnesses = dbManager.getWitnessStore().getAllWitnesses();
+    allWitnesses.forEach(witness ->{
+      voteNumber.addAndGet(dbManager.getWitnessStore().get(witness.getAddress().toByteArray()).getVoteCount());
+    });
+    return voteNumber.doubleValue();
+  }
+
+  public double queryNowSrRatio(byte[] address) {
+    return dbManager.getDelegationStore().getBrokerage(address);
   }
 
   /*
