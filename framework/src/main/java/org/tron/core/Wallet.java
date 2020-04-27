@@ -20,6 +20,7 @@ package org.tron.core;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
 import com.google.common.collect.ContiguousSet;
@@ -2150,20 +2151,19 @@ public class Wallet {
     MarketPairPriceToOrderStore marketPairPriceToOrderStore = dbManager.getChainBaseManager()
         .getMarketPairPriceToOrderStore();
 
-    long count = marketPairToPriceStore.getPriceNum(sellTokenId, buyTokenId);
-    if (count == 0) {
-      return null;
-    }
-
-    List<byte[]> priceKeysList = marketPairPriceToOrderStore
-        .getPriceKeysList(sellTokenId, buyTokenId, count);
-    if (priceKeysList.isEmpty()) {
-      return null;
-    }
-
     MarketPriceList.Builder marketPriceListBuilder = MarketPriceList.newBuilder()
         .setSellTokenId(ByteString.copyFrom(sellTokenId))
         .setBuyTokenId(ByteString.copyFrom(buyTokenId));
+
+    long count = marketPairToPriceStore.getPriceNum(sellTokenId, buyTokenId);
+    if (count == 0) {
+      return marketPriceListBuilder.build();
+    }
+
+    long limit = count < MARKET_COUNT_LIMIT_MAX ? count : MARKET_COUNT_LIMIT_MAX;
+
+    List<byte[]> priceKeysList = marketPairPriceToOrderStore
+        .getPriceKeysList(sellTokenId, buyTokenId, limit);
 
     priceKeysList.forEach(
         priceKey -> {
@@ -2176,7 +2176,6 @@ public class Wallet {
     return marketPriceListBuilder.build();
   }
 
-  // TODO
   public MarketOrderPairList getMarketPairList() {
     MarketOrderPairList.Builder builder = MarketOrderPairList.newBuilder();
     MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
@@ -2184,11 +2183,16 @@ public class Wallet {
 
     Iterator<Entry<byte[], BytesCapsule>> iterator = marketPairToPriceStore
         .iterator();
+    long count = 0;
     while (iterator.hasNext()) {
       Entry<byte[], BytesCapsule> next = iterator.next();
 
       byte[] pairKey = next.getKey();
       builder.addOrderPair(MarketUtils.decodeKeyToMarketPair(pairKey));
+      count++;
+      if (count > MARKET_COUNT_LIMIT_MAX) {
+        break;
+      }
     }
 
     return builder.build();
@@ -2202,27 +2206,30 @@ public class Wallet {
         .getMarketPairToPriceStore();
     MarketPairPriceToOrderStore marketPairPriceToOrderStore = dbManager.getChainBaseManager()
         .getMarketPairPriceToOrderStore();
-
-    long count = marketPairToPriceStore.getPriceNum(sellTokenId, buyTokenId);
-    if (count == 0) {
-      return null;
-    }
-
-    List<byte[]> priceKeysList = marketPairPriceToOrderStore
-        .getPriceKeysList(sellTokenId, buyTokenId, count);
-    if (priceKeysList.isEmpty()) {
-      return null;
-    }
-
     MarketPairPriceToOrderStore pairPriceToOrderStore = dbManager.getChainBaseManager()
         .getMarketPairPriceToOrderStore();
     MarketOrderStore orderStore = dbManager.getChainBaseManager().getMarketOrderStore();
 
+    long countForPrice = marketPairToPriceStore.getPriceNum(sellTokenId, buyTokenId);
+    if (countForPrice == 0) {
+      return builder.build();
+    }
+    long limitForPrice =
+        countForPrice < MARKET_COUNT_LIMIT_MAX ? countForPrice : MARKET_COUNT_LIMIT_MAX;
+
+    List<byte[]> priceKeysList = marketPairPriceToOrderStore
+        .getPriceKeysList(sellTokenId, buyTokenId, limitForPrice);
+
+    long countForOrder = 0;
     for (byte[] pairPriceKey : priceKeysList) {
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
           .getUnchecked(pairPriceKey);
+      if (MARKET_COUNT_LIMIT_MAX - countForOrder <= 0) {
+        break;
+      }
       if (orderIdListCapsule != null) {
-        List<MarketOrderCapsule> orderList = orderIdListCapsule.getAllOrder(orderStore);
+        List<MarketOrderCapsule> orderList = orderIdListCapsule
+            .getAllOrder(orderStore, MARKET_COUNT_LIMIT_MAX - countForOrder);
 
         orderList.forEach(orderCapsule -> {
           // set prev and next, hide these messages in the print
@@ -2231,6 +2238,7 @@ public class Wallet {
 
           builder.addOrders(orderCapsule.getInstance());
         });
+        countForOrder += orderList.size();
       }
     }
 
