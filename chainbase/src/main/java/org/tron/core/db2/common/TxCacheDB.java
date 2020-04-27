@@ -166,7 +166,6 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   public void reset() {
     db.clear();
     blockNumMap.clear();
-    persistentStore.close();
   }
 
   @Override
