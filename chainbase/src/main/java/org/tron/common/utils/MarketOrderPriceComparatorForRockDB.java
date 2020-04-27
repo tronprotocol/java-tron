@@ -3,6 +3,7 @@ package org.tron.common.utils;
 import org.rocksdb.ComparatorOptions;
 import org.rocksdb.DirectSlice;
 import org.rocksdb.util.DirectBytewiseComparator;
+import org.tron.core.capsule.utils.MarketUtils;
 
 public class MarketOrderPriceComparatorForRockDB extends DirectBytewiseComparator {
 
@@ -17,7 +18,7 @@ public class MarketOrderPriceComparatorForRockDB extends DirectBytewiseComparato
 
   @Override
   public int compare(final DirectSlice a, final DirectSlice b) {
-    return MarketOrderPriceComparatorForLevelDB.compareIn(a.data().array(), b.data().array());
+    return MarketUtils.comparePriceKey(a.data().array(), b.data().array());
   }
 
 

@@ -182,8 +182,6 @@ public class Chainbase implements IRevokingDB {
   }
 
 
-
-
   //for market
   private List<byte[]> getKeysNext(Snapshot head, byte[] key, long limit) {
     if (limit <= 0) {
@@ -217,11 +215,9 @@ public class Chainbase implements IRevokingDB {
     keyList.addAll(snapshotList);
     keyList.addAll(levelDBList);
 
-    MarketOrderPriceComparatorForLevelDB comparator = new MarketOrderPriceComparatorForLevelDB();
-
     return keyList.stream()
-        .filter(e -> comparator.greaterOrEquals(e.getBytes(), key))
-        .sorted((e1, e2) -> comparator.compare(e1.getBytes(), e2.getBytes()))
+        .filter(e -> MarketUtils.greaterOrEquals(e.getBytes(), key))
+        .sorted((e1, e2) -> MarketUtils.comparePriceKey(e1.getBytes(), e2.getBytes()))
         .limit(limit)
         .map(WrappedByteArray::getBytes)
         .collect(Collectors.toList());
