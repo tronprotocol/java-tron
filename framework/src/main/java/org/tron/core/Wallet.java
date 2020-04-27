@@ -2167,7 +2167,6 @@ public class Wallet {
 
     priceKeysList.forEach(
         priceKey -> {
-          // set prev and next, hide these messages in the print
           MarketPrice marketPrice = MarketUtils.decodeKeyToMarketPrice(priceKey);
           marketPriceListBuilder.addPrices(marketPrice);
         }
@@ -2176,7 +2175,6 @@ public class Wallet {
     return marketPriceListBuilder.build();
   }
 
-  // TODO
   public MarketOrderPairList getMarketPairList() {
     MarketOrderPairList.Builder builder = MarketOrderPairList.newBuilder();
     MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
@@ -2236,60 +2234,6 @@ public class Wallet {
 
     return builder.build();
   }
-
-  /*
-  //if price exists or price list is empty, pre_price_key = null
-  public MarketOrderPosition getMarketOrderPosition(byte[] sellTokenId, byte[] buyTokenId,
-      long sellQuant, long buyQuant) throws ItemNotFoundException {
-    MarketOrderPosition orderPosition = MarketOrderPosition.newBuilder().build();
-
-    MarketPrice newOrderPrice = MarketPrice.newBuilder()
-        .setSellTokenQuantity(sellQuant)
-        .setBuyTokenQuantity(buyQuant).build();
-
-    MarketPriceStore marketPriceStore = dbManager.getChainBaseManager().getMarketPriceStore();
-
-    byte[] key = new MarketPriceCapsule(newOrderPrice).getKey(sellTokenId, buyTokenId);
-    if (marketPriceStore.getUnchecked(key) != null && !marketPriceStore.get(key).isNull()) {
-      //price exists
-      return orderPosition.toBuilder().setPriceExist(true).setPriceListNotEmpty(true).build();
-    }
-
-    //price not exist
-    byte[] makerPair = MarketUtils.createPairKey(sellTokenId, buyTokenId);
-    MarketPriceLinkedListCapsule priceListCapsule = dbManager.getChainBaseManager()
-        .getMarketPairToPriceStore().getUnchecked(makerPair);
-
-    //price list is empty
-    if (priceListCapsule == null) {
-      return orderPosition.toBuilder().setPriceExist(false).setPriceListNotEmpty(false).build();
-    }
-    MarketPriceCapsule head = new MarketPriceCapsule(priceListCapsule.getBestPrice());
-    if (head.isNull()) {
-      return orderPosition.toBuilder().setPriceExist(false).setPriceListNotEmpty(false).build();
-    }
-
-    // find the pre price
-    // dummy.next = head
-    MarketPriceCapsule dummy = new MarketPriceCapsule(0, 0);
-    if (!head.isNull()) {
-      dummy.setNext(head.getKey(sellTokenId, buyTokenId));
-    }
-    head = dummy;
-    while (!head.isNextNull()) {
-      if (MarketUtils
-          .isLowerPrice(marketPriceStore.get(head.getNext()).getInstance(), newOrderPrice)) {
-        head = marketPriceStore.get(head.getNext());
-      } else {
-        break;
-      }
-    }
-
-    ByteString prePriceKey = ByteString.copyFrom(head.getKey(sellTokenId, buyTokenId));
-    return orderPosition.toBuilder().setPriceExist(false).setPriceListNotEmpty(true)
-        .setPrePriceKey(prePriceKey).build();
-  }
-   */
 
   public Transaction deployContract(TransactionCapsule trxCap) {
 
