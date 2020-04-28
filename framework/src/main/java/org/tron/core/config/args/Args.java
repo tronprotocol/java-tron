@@ -444,14 +444,19 @@ public class Args {
   @Setter
   private int minEffectiveConnection;
 
-//  @Getter
-//  @Setter
-//  private long allowShieldedTransaction; //committee parameter
+  @Getter
+  @Setter
+  private long allowShieldedTransaction; //committee parameter
+
 
   // full node used this parameter to close shielded transaction
   @Getter
   @Setter
   private boolean fullNodeAllowShieldedTransactionArgs;
+
+  @Getter
+  @Setter
+  private boolean allowUsingZkProofStore;
 
   @Getter
   @Setter
@@ -602,11 +607,12 @@ public class Args {
     INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
-//    INSTANCE.allowShieldedTransaction = 0;
+    INSTANCE.allowShieldedTransaction = 0;
     INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.fullNodeAllowShieldedTransactionArgs = true;
+    INSTANCE.allowUsingZkProofStore = true;
     INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
@@ -1029,9 +1035,9 @@ public class Args {
     INSTANCE.saveInternalTx =
         config.hasPath(Constant.VM_SAVE_INTERNAL_TX) && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
 
-//    INSTANCE.allowShieldedTransaction =
-//        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
-//            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
+    INSTANCE.allowShieldedTransaction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
 
     INSTANCE.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE) ?
@@ -1043,6 +1049,10 @@ public class Args {
     INSTANCE.fullNodeAllowShieldedTransactionArgs =
         !config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)
             || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
+
+    INSTANCE.allowUsingZkProofStore =
+        !config.hasPath(Constant.NODE_ALLOW_USING_ZK_PROOF_STORE)
+            || config.getBoolean(Constant.NODE_ALLOW_USING_ZK_PROOF_STORE);
 
     INSTANCE.zenTokenId = config.hasPath(Constant.NODE_ZEN_TOKENID) ?
         config.getString(Constant.NODE_ZEN_TOKENID) : "000000";
@@ -1485,12 +1495,13 @@ public class Args {
     DBConfig.setForbidTransferToContract(cfgArgs.getForbidTransferToContract());
     DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
     DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
-//    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
+    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
     DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
     DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
     DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransactionArgs());
+    DBConfig.setAllowUsingZkProofStore(cfgArgs.isAllowUsingZkProofStore());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
     DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
     DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
