@@ -29,7 +29,7 @@ public class MarketOrderPriceComparatorForRockDB extends DirectBytewiseComparato
     byte[] bytes = new byte[capacity];
 
     for (int i = 0; i < capacity; i++) {
-      bytes[0] = directSlice.get(i);
+      bytes[i] = directSlice.get(i);
     }
 
     return bytes;
