@@ -347,12 +347,12 @@ public class Util {
   }
 
   public static Transaction setTransactionExtraData(JSONObject jsonObject,
-      Transaction transaction) {
+      Transaction transaction, boolean visible) {
     if (jsonObject.containsKey(EXTRA_DATA)) {
       String data = jsonObject.getString(EXTRA_DATA);
       if (data.length() > 0) {
         Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
-        if (getVisibleOnlyForSign(jsonObject)) {
+        if (visible) {
           raw.setData(ByteString.copyFrom(data.getBytes()));
         } else {
           raw.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
