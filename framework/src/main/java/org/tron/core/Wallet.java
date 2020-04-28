@@ -2290,8 +2290,8 @@ public class Wallet {
     return builder.build();
   }
 
-  private List<Vote> getVoteList (byte[] address, long cycle) {
-    for (long i = cycle; i >=0; i --) {
+  private List<Vote> getVoteList(byte[] address, long cycle) {
+    for (long i = cycle; i >= 0; i--) {
       AccountCapsule accountCapsule = dbManager.getDelegationStore()
           .getAccountVote(i, address);
       if (accountCapsule != null) {
