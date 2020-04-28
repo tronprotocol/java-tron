@@ -34,14 +34,6 @@ public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrd
 
   //todo: to test later
   @Override
-  protected org.rocksdb.Options getOptionsForRockDB() {
-    ComparatorOptions comparatorOptions = new ComparatorOptions();
-    org.rocksdb.Options options = new org.rocksdb.Options();
-    options.setComparator(new MarketOrderPriceComparatorForRockDB(comparatorOptions));
-    return options;
-  }
-
-  @Override
   protected DirectComparator getDirectComparator() {
     ComparatorOptions comparatorOptions = new ComparatorOptions();
     return new MarketOrderPriceComparatorForRockDB(comparatorOptions);

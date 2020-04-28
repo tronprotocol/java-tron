@@ -18,8 +18,21 @@ public class MarketOrderPriceComparatorForRockDB extends DirectBytewiseComparato
 
   @Override
   public int compare(final DirectSlice a, final DirectSlice b) {
-    return MarketUtils.comparePriceKey(a.data().array(), b.data().array());
+    return MarketUtils.comparePriceKey(convertDataToBytes(a), convertDataToBytes(b));
   }
 
+  /**
+   * DirectSlice.data().array will throw UnsupportedOperationException.
+   * */
+  public byte[] convertDataToBytes(DirectSlice directSlice) {
+    int capacity = directSlice.data().capacity();
+    byte[] bytes = new byte[capacity];
+
+    for (int i = 0; i < capacity; i++) {
+      bytes[0] = directSlice.get(i);
+    }
+
+    return bytes;
+  }
 
 }

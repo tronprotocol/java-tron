@@ -78,10 +78,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     return StorageUtils.getOptionsByDbName(dbName);
   }
 
-  protected org.rocksdb.Options getOptionsForRockDB() {
-    return new org.rocksdb.Options();
-  }
-
   protected DirectComparator getDirectComparator() {
     return null;
   }

@@ -115,7 +115,6 @@ public class MarketPairPriceToOrderStoreTest {
     MarketOrderIdListCapsule capsule3 = new MarketOrderIdListCapsule(ByteArray.fromLong(3),
         ByteArray.fromLong(3));
 
-
     // System.out.println("pairPriceKey1："+ByteArray.toHexString(pairPriceKey1));
     // System.out.println("pairPriceKey2："+ByteArray.toHexString(pairPriceKey2));
     // System.out.println("pairPriceKey3："+ByteArray.toHexString(pairPriceKey3));
@@ -139,7 +138,6 @@ public class MarketPairPriceToOrderStoreTest {
       Assert.assertTrue(false);
     }
 
-
     // Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = this.store.iterator();
     // while (iterator.hasNext()){
     //   System.out.println("keys:" + ByteArray.toHexString(iterator.next().getKey()));
@@ -158,7 +156,8 @@ public class MarketPairPriceToOrderStoreTest {
     System.out.println("testOrderWithSamePair");
 
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
-    MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
 
     byte[] sellTokenID1 = ByteArray.fromString("100");
     byte[] buyTokenID1 = ByteArray.fromString("200");
@@ -229,7 +228,8 @@ public class MarketPairPriceToOrderStoreTest {
     System.out.println("testOrderWithSamePair");
 
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
-    MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
 
     byte[] sellTokenID1 = ByteArray.fromString("100");
     byte[] buyTokenID1 = ByteArray.fromString("200");
@@ -315,7 +315,8 @@ public class MarketPairPriceToOrderStoreTest {
     System.out.println("testOrderWithSamePair");
 
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
-    MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
 
     byte[] sellTokenID1 = ByteArray.fromString("100");
     byte[] buyTokenID1 = ByteArray.fromString("200");
@@ -416,7 +417,8 @@ public class MarketPairPriceToOrderStoreTest {
     System.out.println("testOrderWithSamePair");
 
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
-    MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
 
     byte[] sellTokenID1 = ByteArray.fromString("100");
     byte[] buyTokenID1 = ByteArray.fromString("200");

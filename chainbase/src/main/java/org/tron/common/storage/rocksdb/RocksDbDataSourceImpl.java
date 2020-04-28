@@ -50,17 +50,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String KEY_ENGINE = "ENGINE";
   private static final String ROCKSDB = "ROCKSDB";
-  private Options options;
   private DirectComparator comparator;
-
-  public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings,
-      Options options) {
-    this.dataBaseName = name;
-    this.parentPath = parentPath;
-    this.options = options;
-    RocksDbSettings.setRocksDbSettings(settings);
-    initDB();
-  }
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings,
       DirectComparator comparator) {
@@ -268,14 +258,6 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       resetDbLock.writeLock().unlock();
     }
   }
-
-  private Options getDefaultOptions() {
-    if (options != null) {
-      return options;
-    }
-    return new Options();
-  }
-
 
   @Override
   public void putData(byte[] key, byte[] value) {
