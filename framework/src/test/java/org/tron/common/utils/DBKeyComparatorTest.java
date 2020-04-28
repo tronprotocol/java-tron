@@ -26,7 +26,7 @@ public class DBKeyComparatorTest {
         1000L,
         2001L
     );
-    Assert.assertEquals(-1,comparator.compare(pairPriceKey1, pairPriceKey2));
+    Assert.assertEquals(-1, comparator.compare(pairPriceKey1, pairPriceKey2));
   }
 
 
@@ -46,7 +46,7 @@ public class DBKeyComparatorTest {
         2001L
     );
 
-    Assert.assertEquals(false,MarketUtils.pairKeyIsEqual(pairPriceKey1,pairPriceKey2));
+    Assert.assertFalse(MarketUtils.pairKeyIsEqual(pairPriceKey1, pairPriceKey2));
   }
 
 
