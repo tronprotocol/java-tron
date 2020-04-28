@@ -28,6 +28,8 @@ public class Node implements Serializable {
   private int p2pVersion;
 
   private boolean isFakeNodeId = false;
+  
+  private final int NODE_ID_LENGTH = 64;
 
   public Node(byte[] id, String host, int port) {
     this.id = id;
@@ -56,7 +58,7 @@ public class Node implements Serializable {
 
   public static byte[] getNodeId() {
     Random gen = new Random();
-    byte[] id = new byte[64];
+    byte[] id = new byte[NODE_ID_LENGTH];
     gen.nextBytes(id);
     return id;
   }
