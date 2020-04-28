@@ -961,7 +961,7 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
         .build());
 
-//     ALLOW_ZKSNARK_TRANSACTION
+    // ALLOW_ZKSNARK_TRANSACTION
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowShieldedTransaction")

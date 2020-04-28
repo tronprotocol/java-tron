@@ -358,7 +358,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private void recordProof(Sha256Hash tid, boolean result) {
-    if(DBConfig.isAllowUsingZkProofStore()){
+    if (DBConfig.isAllowUsingZkProofStore()) {
       ZKProofStore proofStore = chainBaseManager.getProofStore();
       proofStore.put(tid.getBytes(), result);
     }
