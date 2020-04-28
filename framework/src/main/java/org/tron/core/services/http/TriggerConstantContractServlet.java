@@ -84,7 +84,7 @@ public class TriggerConstantContractServlet extends RateLimiterServlet {
               trxExtBuilder,
               retBuilder);
       trx = Util.setTransactionPermissionId(jsonObject, trx);
-      trx = Util.setTransactionExtraData(jsonObject, trx);
+      trx = Util.setTransactionExtraData(jsonObject, trx, visible);
       trxExtBuilder.setTransaction(trx);
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
     } catch (ContractValidateException e) {
