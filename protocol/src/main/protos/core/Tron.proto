@@ -412,8 +412,6 @@ message Transaction {
   repeated Result ret = 5;
 }
 
-
-
 message TransactionInfo {
   enum code {
     SUCESS = 0;

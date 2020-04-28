@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.iq80.leveldb.Options;
 import org.rocksdb.ComparatorOptions;
+import org.rocksdb.DirectComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -38,6 +39,12 @@ public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrd
     org.rocksdb.Options options = new org.rocksdb.Options();
     options.setComparator(new MarketOrderPriceComparatorForRockDB(comparatorOptions));
     return options;
+  }
+
+  @Override
+  protected DirectComparator getDirectComparator() {
+    ComparatorOptions comparatorOptions = new ComparatorOptions();
+    return new MarketOrderPriceComparatorForRockDB(comparatorOptions);
   }
 
   @Override

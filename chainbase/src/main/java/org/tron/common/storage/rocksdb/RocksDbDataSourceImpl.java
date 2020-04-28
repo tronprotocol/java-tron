@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.Checkpoint;
+import org.rocksdb.DirectComparator;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
@@ -50,12 +51,22 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   private static final String KEY_ENGINE = "ENGINE";
   private static final String ROCKSDB = "ROCKSDB";
   private Options options;
+  private DirectComparator comparator;
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings,
       Options options) {
     this.dataBaseName = name;
     this.parentPath = parentPath;
     this.options = options;
+    RocksDbSettings.setRocksDbSettings(settings);
+    initDB();
+  }
+
+  public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings,
+      DirectComparator comparator) {
+    this.dataBaseName = name;
+    this.parentPath = parentPath;
+    this.comparator = comparator;
     RocksDbSettings.setRocksDbSettings(settings);
     initDB();
   }
@@ -189,7 +200,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         throw new NullPointerException("no name set to the dbStore");
       }
 
-      try (Options options = getDefaultOptions()) {
+      try (Options options = new Options()) {
 
         // most of these options are suggested by https://github.com/facebook/rocksdb/wiki/Set-Up-Options
 
@@ -211,6 +222,9 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         options.setLevel0FileNumCompactionTrigger(settings.getLevel0FileNumCompactionTrigger());
         options.setTargetFileSizeMultiplier(settings.getTargetFileSizeMultiplier());
         options.setTargetFileSizeBase(settings.getTargetFileSizeBase());
+        if (comparator != null) {
+          options.setComparator(comparator);
+        }
 
         // table options
         final BlockBasedTableConfig tableCfg;

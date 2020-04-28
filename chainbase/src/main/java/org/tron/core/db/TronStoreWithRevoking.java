@@ -14,6 +14,7 @@ import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
+import org.rocksdb.DirectComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -66,7 +67,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
             new RocksDB(
                 new RocksDbDataSourceImpl(parentPath,
                     dbName, CommonParameter.getInstance()
-                    .getRocksDBCustomSettings(), getOptionsForRockDB()))));
+                    .getRocksDBCustomSettings(), getDirectComparator()))));
       }
     } else {
       throw new RuntimeException("db version is error.");
@@ -79,6 +80,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   protected org.rocksdb.Options getOptionsForRockDB() {
     return new org.rocksdb.Options();
+  }
+
+  protected DirectComparator getDirectComparator() {
+    return null;
   }
 
   protected TronStoreWithRevoking(DB<byte[], byte[]> db) {
