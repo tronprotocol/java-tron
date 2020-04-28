@@ -14,6 +14,7 @@ import org.tron.core.db.Manager;
 public class GetCurrentCycleService extends RateLimiterServlet {
   @Autowired
   private Manager manager;
+
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       int value = 0;
