@@ -263,11 +263,11 @@ public class MarketUtils {
 
   public static int comparePriceKey(byte[] o1, byte[] o2) {
     //compare pair
-    byte[] pair1 = new byte[MarketUtils.TOKEN_ID_LENGTH * 2];
-    byte[] pair2 = new byte[MarketUtils.TOKEN_ID_LENGTH * 2];
+    byte[] pair1 = new byte[TOKEN_ID_LENGTH * 2];
+    byte[] pair2 = new byte[TOKEN_ID_LENGTH * 2];
 
-    System.arraycopy(o1, 0, pair1, 0, MarketUtils.TOKEN_ID_LENGTH * 2);
-    System.arraycopy(o2, 0, pair2, 0, MarketUtils.TOKEN_ID_LENGTH * 2);
+    System.arraycopy(o1, 0, pair1, 0, TOKEN_ID_LENGTH * 2);
+    System.arraycopy(o2, 0, pair2, 0, TOKEN_ID_LENGTH * 2);
 
     int pairResult = org.spongycastle.util.Arrays.compareUnsigned(pair1, pair2);
     if (pairResult != 0) {
@@ -283,14 +283,14 @@ public class MarketUtils {
 
     int longByteNum = 8;
 
-    System.arraycopy(o1, MarketUtils.TOKEN_ID_LENGTH + MarketUtils.TOKEN_ID_LENGTH,
+    System.arraycopy(o1, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH,
         getSellTokenQuantity1, 0, longByteNum);
-    System.arraycopy(o1, MarketUtils.TOKEN_ID_LENGTH + MarketUtils.TOKEN_ID_LENGTH + longByteNum,
+    System.arraycopy(o1, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + longByteNum,
         getBuyTokenQuantity1, 0, longByteNum);
 
-    System.arraycopy(o2, MarketUtils.TOKEN_ID_LENGTH + MarketUtils.TOKEN_ID_LENGTH,
+    System.arraycopy(o2, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH,
         getSellTokenQuantity2, 0, longByteNum);
-    System.arraycopy(o2, MarketUtils.TOKEN_ID_LENGTH + MarketUtils.TOKEN_ID_LENGTH + longByteNum,
+    System.arraycopy(o2, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + longByteNum,
         getBuyTokenQuantity2, 0, longByteNum);
 
     long sellTokenQuantity1 = ByteArray.toLong(getSellTokenQuantity1);
@@ -311,7 +311,7 @@ public class MarketUtils {
       return 1;
     }
 
-    return MarketUtils.comparePrice(sellTokenQuantity1, buyTokenQuantity1,
+    return comparePrice(sellTokenQuantity1, buyTokenQuantity1,
         sellTokenQuantity2, buyTokenQuantity2);
 
   }
