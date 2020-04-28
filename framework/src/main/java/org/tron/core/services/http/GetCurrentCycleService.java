@@ -17,7 +17,6 @@ public class GetCurrentCycleService extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      int value = 0;
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       JSONObject jsonObject = JSONObject.parseObject(input);

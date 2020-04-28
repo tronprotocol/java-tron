@@ -1,20 +1,18 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+import java.io.IOException;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.stream.Collectors;
-
 @Component
 @Slf4j(topic = "API")
-public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
+public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -22,7 +20,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      double annualizedRateOfReturn=0;
+      double annualizedRateOfReturn = 0;
       byte[] address = Util.getAddress(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
@@ -32,8 +30,8 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
       long endTimeStamp = Util.getJsonLongValue(jsonObject, "endTimeStamp", true);
 
 
-      long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock()/1000000;
-      long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock()/1000000;
+      long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock() / 1000000;
+      long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock() / 1000000;
       int srNumber = 27;
       int blockNumberEachDay = 28792;
 
@@ -52,7 +50,8 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet{
             rewardOfVoteEachBlock,rewardOfBlockEachBlock,srNumber);
         logger.info("totalVote: {}, srVote: {}, ratio: {},",
             totalVote,srVote,ratio);
-        annualizedRateOfReturn=(rewardOfBlockEachBlock/srNumber/srVote+rewardOfVoteEachBlock/totalVote)*blockNumberEachDay*ratio*365;
+        annualizedRateOfReturn = (rewardOfBlockEachBlock / srNumber / srVote
+            + rewardOfVoteEachBlock / totalVote) * blockNumberEachDay * ratio * 365;
       }
 
       response.getWriter().println("{\"annualizedRateOfReturn\": " + annualizedRateOfReturn + "}");

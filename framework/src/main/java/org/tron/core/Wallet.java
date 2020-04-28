@@ -2335,7 +2335,7 @@ public class Wallet {
           double voteRate = (double) userVote / totalVote;
           String SR = StringUtil
               .encode58Check(srAddress);
-          if (rewardMap.containsKey(SR) == false) {
+          if (!rewardMap.containsKey(SR)) {
             rewardMap.put(SR, (long)(voteRate * totalReward));
           } else {
             long reward = rewardMap.get(SR) + (long)(voteRate * totalReward);
@@ -2381,7 +2381,7 @@ public class Wallet {
           logger.info("Account-userVote: {}, Account-totalVote: {},Account-SR: {},",
               userVote,totalVote,SR);
 
-          if (rewardMap.containsKey(SR) == false) {
+          if (!rewardMap.containsKey(SR)) {
             rewardMap.put(SR, (long)(voteRate * totalReward));
           } else {
             long reward = rewardMap.get(SR) + (long)(voteRate * totalReward);
@@ -2513,7 +2513,7 @@ public class Wallet {
               .getWitnessVote(finalCycle, witness.getAddress().toByteArray()));
         });
       }
-      voteNumberTotal = voteNumber.longValue() / (endCycle - beginCycle);
+      voteNumberTotal = voteNumber.doubleValue() / (double)(endCycle - beginCycle);
     }
     return voteNumberTotal;
   }
