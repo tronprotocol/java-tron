@@ -1003,6 +1003,14 @@ public class Wallet {
 //                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
 //            .build());
 
+    // ALLOW_SHIELDED_TRC20_TRANSACTION
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowShieldedTRC20Transaction")
+            .setValue(
+                dbManager.getDynamicPropertiesStore().getAllowShieldedTRC20ContractTransaction())
+            .build());
+
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getForbidTransferToContract")
         .setValue(dbManager.getDynamicPropertiesStore().getForbidTransferToContract())
