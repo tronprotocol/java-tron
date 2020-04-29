@@ -165,16 +165,16 @@ public class PrecompiledContracts {
     if (VMConfig.allowTvmSolidity059() && address.equals(validateMultiSignAddr)) {
       return validateMultiSign;
     }
-    if (address.equals(verifyMintProofAddr)) {
+    if (VMConfig.allowShieldedTRC20Transaction() && address.equals(verifyMintProofAddr)) {
       return verifyMintProof;
     }
-    if (address.equals(verifyTransferProofAddr)) {
+    if (VMConfig.allowShieldedTRC20Transaction() && address.equals(verifyTransferProofAddr)) {
       return verifyTransferProof;
     }
-    if (address.equals(verifyBurnProofAddr)) {
+    if (VMConfig.allowShieldedTRC20Transaction() && address.equals(verifyBurnProofAddr)) {
       return verifyBurnProof;
     }
-    if (address.equals(merkleHashAddr)) {
+    if (VMConfig.allowShieldedTRC20Transaction() && address.equals(merkleHashAddr)) {
       return merkleHash;
     }
 
