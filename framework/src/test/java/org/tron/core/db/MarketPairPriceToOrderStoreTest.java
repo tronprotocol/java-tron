@@ -242,8 +242,8 @@ public class MarketPairPriceToOrderStoreTest {
     byte[] pairPriceKey1 = MarketUtils.createPairPriceKey(
         sellTokenID1,
         buyTokenID1,
-        1L,
-        1L
+        3L,
+        3L
     );
     byte[] pairPriceKey2 = MarketUtils.createPairPriceKey(
         sellTokenID1,
@@ -278,6 +278,9 @@ public class MarketPairPriceToOrderStoreTest {
     marketPairPriceToOrderStore.put(pairPriceKey0, capsule0);
 
     try {
+      Assert
+          .assertArrayEquals(capsule0.getData(),
+              marketPairPriceToOrderStore.get(pairPriceKey0).getData());
       Assert
           .assertArrayEquals(capsule1.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey1).getData());
