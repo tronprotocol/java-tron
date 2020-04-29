@@ -108,44 +108,12 @@ public class Chainbase implements IRevokingDB {
     return head().iterator();
   }
 
-  //for blockstore
   @Override
-  public Set<byte[]> getlatestValues(long limit) {
-    return getlatestValues(head(), limit);
+  public Set<byte[]> getValuesNext(byte[] key, long limit) {
+    return getValuesNext(head(), key, limit);
   }
 
-  //for blockstore
-  private synchronized Set<byte[]> getlatestValues(Snapshot head, long limit) {
-    if (limit <= 0) {
-      return Collections.emptySet();
-    }
-
-    Set<byte[]> result = new HashSet<>();
-    Snapshot snapshot = head;
-    long tmp = limit;
-    for (; tmp > 0 && snapshot.getPrevious() != null; snapshot = snapshot.getPrevious()) {
-      if (!((SnapshotImpl) snapshot).db.isEmpty()) {
-        --tmp;
-        Streams.stream(((SnapshotImpl) snapshot).db)
-            .map(Map.Entry::getValue)
-            .map(Value::getBytes)
-            .forEach(result::add);
-      }
-    }
-
-    if (snapshot.getPrevious() == null && tmp != 0) {
-      if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
-        result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
-      } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
-        result.addAll(((RocksDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
-      }
-    }
-
-    return result;
-  }
-
-
-  //for blockstore
+  // for blockstore
   private Set<byte[]> getValuesNext(Snapshot head, byte[] key, long limit) {
     if (limit <= 0) {
       return Collections.emptySet();
@@ -181,8 +149,12 @@ public class Chainbase implements IRevokingDB {
         .collect(Collectors.toSet());
   }
 
+  @Override
+  public List<byte[]> getKeysNext(byte[] key, long limit) {
+    return getKeysNext(head(), key, limit);
+  }
 
-  //for market
+  // for market
   private List<byte[]> getKeysNext(Snapshot head, byte[] key, long limit) {
     if (limit <= 0) {
       return Collections.emptyList();
@@ -200,15 +172,11 @@ public class Chainbase implements IRevokingDB {
 
     List<WrappedByteArray> levelDBList = new ArrayList<>();
     if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
-      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
-          .map(e -> Maps
-              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
-          .forEach(e -> levelDBList.add(e.getKey()));
+      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, limit)
+          .forEach(e -> levelDBList.add(WrappedByteArray.of(e)));
     } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
-      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
-          .map(e -> Maps
-              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
-          .forEach(e -> levelDBList.add(e.getKey()));
+      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, limit)
+          .forEach(e -> levelDBList.add(WrappedByteArray.of(e)));
     }
 
     List<WrappedByteArray> keyList = new ArrayList<>();
@@ -223,14 +191,39 @@ public class Chainbase implements IRevokingDB {
         .collect(Collectors.toList());
   }
 
-
+  // for blockstore
   @Override
-  public Set<byte[]> getValuesNext(byte[] key, long limit) {
-    return getValuesNext(head(), key, limit);
+  public Set<byte[]> getlatestValues(long limit) {
+    return getlatestValues(head(), limit);
   }
 
-  @Override
-  public List<byte[]> getKeysNext(byte[] key, long limit) {
-    return getKeysNext(head(), key, limit);
+  // for blockstore
+  private synchronized Set<byte[]> getlatestValues(Snapshot head, long limit) {
+    if (limit <= 0) {
+      return Collections.emptySet();
+    }
+
+    Set<byte[]> result = new HashSet<>();
+    Snapshot snapshot = head;
+    long tmp = limit;
+    for (; tmp > 0 && snapshot.getPrevious() != null; snapshot = snapshot.getPrevious()) {
+      if (!((SnapshotImpl) snapshot).db.isEmpty()) {
+        --tmp;
+        Streams.stream(((SnapshotImpl) snapshot).db)
+            .map(Map.Entry::getValue)
+            .map(Value::getBytes)
+            .forEach(result::add);
+      }
+    }
+
+    if (snapshot.getPrevious() == null && tmp != 0) {
+      if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+        result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
+      } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+        result.addAll(((RocksDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
+      }
+    }
+
+    return result;
   }
 }

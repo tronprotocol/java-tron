@@ -124,9 +124,6 @@ public class MarketSellAssetActuatorTest {
         .put(ownerAccountFirstCapsule.getAddress().toByteArray(), ownerAccountFirstCapsule);
     dbManager.getAccountStore()
         .put(ownerAccountSecondCapsule.getAddress().toByteArray(), ownerAccountSecondCapsule);
-
-//    InitAsset();
-
   }
 
   private void InitAsset() {
@@ -255,7 +252,7 @@ public class MarketSellAssetActuatorTest {
     {
       byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_NOT_EXIST);
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      Assert.assertEquals(null, accountCapsule);
+      Assert.assertNull(accountCapsule);
 
       MarketSellAssetActuator actuator = new MarketSellAssetActuator();
       actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
@@ -406,7 +403,7 @@ public class MarketSellAssetActuatorTest {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     Assert.assertEquals(10000_000000L, accountCapsule.getBalance());
 
-    String sellTokenId = "_";
+    String sellTokenId = TRX;
     //sellTokenQuant = balance - fee + 1
     long sellTokenQuant = accountCapsule.getBalance()
         - dbManager.getDynamicPropertiesStore().getMarketSellFee() + 1;
@@ -604,7 +601,7 @@ public class MarketSellAssetActuatorTest {
 
     String sellTokenId = TOKEN_ID_ONE;
     long sellTokenQuant = 100L;
-    String buyTokenId = "_";
+    String buyTokenId = TRX;
     long buyTokenQuant = 300L;
 
     for (int i = 0; i < 10; i++) {
@@ -968,7 +965,7 @@ public class MarketSellAssetActuatorTest {
 
     InitAsset();
 
-    String sellTokenId = "_";
+    String sellTokenId = TRX;
     long sellTokenQuant = 100_000000L;
     String buyTokenId = TOKEN_ID_ONE;
     long buyTokenQuant = 200_000000L;
@@ -1047,7 +1044,7 @@ public class MarketSellAssetActuatorTest {
 
     String sellTokenId = TOKEN_ID_ONE;
     long sellTokenQuant = 100_000000L;
-    String buyTokenId = "_";
+    String buyTokenId = TRX;
     long buyTokenQuant = 200_000000L;
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
@@ -1641,7 +1638,7 @@ public class MarketSellAssetActuatorTest {
     long l = System.nanoTime();
     actuator.validate();
     actuator.execute(ret);
-//    System.out.println("time:"+(System.currentTimeMillis() - l));
+    // System.out.println("time:"+(System.currentTimeMillis() - l));
     return (System.nanoTime() - l);
   }
 

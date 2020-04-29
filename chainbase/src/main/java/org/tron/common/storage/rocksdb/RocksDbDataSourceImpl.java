@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -381,6 +383,26 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       } catch (Exception e1) {
         throw new RuntimeException(e);
       }
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public List<byte[]> getKeysNext(byte[] key, long limit) {
+    if (quitIfNotAlive()) {
+      return new ArrayList<>();
+    }
+    if (limit <= 0) {
+      return new ArrayList<>();
+    }
+    resetDbLock.readLock().lock();
+    try (RocksIterator iter = database.newIterator()) {
+      List<byte[]> result = new ArrayList<>();
+      long i = 0;
+      for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
+        result.add(iter.key());
+      }
+      return result;
     } finally {
       resetDbLock.readLock().unlock();
     }
