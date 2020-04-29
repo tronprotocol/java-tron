@@ -35,19 +35,14 @@ public class VMConfig {
   @Setter
   private static boolean vmTrace = false;
 
-  @Setter
   private static boolean ALLOW_TVM_TRANSFER_TRC10 = false;
 
-  @Setter
   private static boolean ALLOW_TVM_CONSTANTINOPLE = false;
 
-  @Setter
   private static boolean ALLOW_MULTI_SIGN = false;
 
-  @Setter
   private static boolean ALLOW_TVM_SOLIDITY_059 = false;
 
-  @Setter
   private static boolean ALLOW_SHIELDED_TRC20_TRANSACTION = false;
 
   private VMConfig() {
