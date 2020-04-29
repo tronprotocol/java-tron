@@ -10,6 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
@@ -64,7 +65,6 @@ public class MarketPairPriceToOrderStoreTest {
 
   @After
   public void cleanDb() {
-    System.out.println("======== cleanDb ========");
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
     MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
@@ -81,8 +81,6 @@ public class MarketPairPriceToOrderStoreTest {
 
   @Test
   public void testOrderWithSamePair() {
-    System.out.println("testOrderWithSamePair");
-
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
     MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
@@ -115,10 +113,6 @@ public class MarketPairPriceToOrderStoreTest {
     MarketOrderIdListCapsule capsule3 = new MarketOrderIdListCapsule(ByteArray.fromLong(3),
         ByteArray.fromLong(3));
 
-    // System.out.println("pairPriceKey1："+ByteArray.toHexString(pairPriceKey1));
-    // System.out.println("pairPriceKey2："+ByteArray.toHexString(pairPriceKey2));
-    // System.out.println("pairPriceKey3："+ByteArray.toHexString(pairPriceKey3));
-
     //Use out-of-order insertion，key in store should be 1,2,3
     marketPairPriceToOrderStore.put(pairPriceKey2, capsule2);
     marketPairPriceToOrderStore.put(pairPriceKey1, capsule1);
@@ -138,23 +132,13 @@ public class MarketPairPriceToOrderStoreTest {
       Assert.assertTrue(false);
     }
 
-    // Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = this.store.iterator();
-    // while (iterator.hasNext()){
-    //   System.out.println("keys:" + ByteArray.toHexString(iterator.next().getKey()));
-    // }
-
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
-    // System.out.println("nextKey："+ByteArray.toHexString(nextKey));
 
     Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
-
-    System.out.println("testOrderWithSamePair end");
   }
 
   @Test
   public void testOrderWithSamePairOrdinal() {
-    System.out.println("testOrderWithSamePair");
-
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
     MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
@@ -187,10 +171,6 @@ public class MarketPairPriceToOrderStoreTest {
     MarketOrderIdListCapsule capsule3 = new MarketOrderIdListCapsule(ByteArray.fromLong(3),
         ByteArray.fromLong(3));
 
-    // System.out.println("pairPriceKey1："+ByteArray.toHexString(pairPriceKey1));
-    // System.out.println("pairPriceKey2："+ByteArray.toHexString(pairPriceKey2));
-    // System.out.println("pairPriceKey3："+ByteArray.toHexString(pairPriceKey3));
-
     //Use out-of-order insertion，key in store should be 1,2,3
     marketPairPriceToOrderStore.put(pairPriceKey1, capsule1);
     marketPairPriceToOrderStore.put(pairPriceKey2, capsule2);
@@ -210,23 +190,13 @@ public class MarketPairPriceToOrderStoreTest {
       Assert.assertTrue(false);
     }
 
-    // Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = this.store.iterator();
-    // while (iterator.hasNext()){
-    //   System.out.println("keys:" + ByteArray.toHexString(iterator.next().getKey()));
-    // }
-
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
-    // System.out.println("nextKey："+ByteArray.toHexString(nextKey));
 
     Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
-
-    System.out.println("testOrderWithSamePair end");
   }
 
   @Test
   public void testAddPrice() {
-    System.out.println("testOrderWithSamePair");
-
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
     MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
@@ -267,10 +237,6 @@ public class MarketPairPriceToOrderStoreTest {
     MarketOrderIdListCapsule capsule3 = new MarketOrderIdListCapsule(ByteArray.fromLong(3),
         ByteArray.fromLong(3));
 
-    // System.out.println("pairPriceKey1："+ByteArray.toHexString(pairPriceKey1));
-    // System.out.println("pairPriceKey2："+ByteArray.toHexString(pairPriceKey2));
-    // System.out.println("pairPriceKey3："+ByteArray.toHexString(pairPriceKey3));
-
     //Use out-of-order insertion，key in store should be 1,2,3
     marketPairPriceToOrderStore.put(pairPriceKey2, capsule2);
     marketPairPriceToOrderStore.put(pairPriceKey1, capsule1);
@@ -294,13 +260,7 @@ public class MarketPairPriceToOrderStoreTest {
       Assert.assertTrue(false);
     }
 
-    // Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = this.store.iterator();
-    // while (iterator.hasNext()){
-    //   System.out.println("keys:" + ByteArray.toHexString(iterator.next().getKey()));
-    // }
-
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
-    // System.out.println("nextKey："+ByteArray.toHexString(nextKey));
 
     Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
 
@@ -309,14 +269,10 @@ public class MarketPairPriceToOrderStoreTest {
     Assert.assertArrayEquals(pairPriceKey1, keyList.get(1));
     Assert.assertArrayEquals(pairPriceKey2, keyList.get(2));
     Assert.assertArrayEquals(pairPriceKey3, keyList.get(3));
-
-    System.out.println("testOrderWithSamePair end");
   }
 
   @Test
   public void testAddPriceWithoutHeadKey() {
-    System.out.println("testOrderWithSamePair");
-
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
     MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
@@ -349,18 +305,12 @@ public class MarketPairPriceToOrderStoreTest {
     MarketOrderIdListCapsule capsule3 = new MarketOrderIdListCapsule(ByteArray.fromLong(3),
         ByteArray.fromLong(3));
 
-    // System.out.println("pairPriceKey1："+ByteArray.toHexString(pairPriceKey1));
-    // System.out.println("pairPriceKey2："+ByteArray.toHexString(pairPriceKey2));
-    // System.out.println("pairPriceKey3："+ByteArray.toHexString(pairPriceKey3));
-
     Assert.assertEquals(false, marketPairPriceToOrderStore.has(pairPriceKey1));
     Assert.assertEquals(false, marketPairPriceToOrderStore.has(pairPriceKey2));
     Assert.assertEquals(false, marketPairPriceToOrderStore.has(pairPriceKey3));
 
     //Use out-of-order insertion，key in store should be 1,2,3
-    System.out.println("--- put 1000 2002 ---");
     marketPairPriceToOrderStore.put(pairPriceKey2, capsule2);
-    System.out.println("--- put 1000 2002 done ---");
     try {
       Assert
           .assertArrayEquals(capsule2.getData(),
@@ -369,13 +319,10 @@ public class MarketPairPriceToOrderStoreTest {
       Assert.assertTrue(false);
     }
 
-    System.out.println("--- check has pairPriceKey2 ---");
     Assert.assertEquals(true, marketPairPriceToOrderStore.has(pairPriceKey2));
-    System.out.println("--- check has pairPriceKey1 ---");
     Assert.assertEquals(false, marketPairPriceToOrderStore.has(pairPriceKey1));
     Assert.assertEquals(false, marketPairPriceToOrderStore.has(pairPriceKey3));
 
-    System.out.println("--- put 1000 2003 ---");
     marketPairPriceToOrderStore.put(pairPriceKey3, capsule3);
     try {
       Assert
@@ -402,23 +349,14 @@ public class MarketPairPriceToOrderStoreTest {
       Assert.assertTrue(false);
     }
 
-    // Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = this.store.iterator();
-    // while (iterator.hasNext()){
-    //   System.out.println("keys:" + ByteArray.toHexString(iterator.next().getKey()));
-    // }
-
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
-    // System.out.println("nextKey："+ByteArray.toHexString(nextKey));
 
     Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
 
-    System.out.println("testOrderWithSamePair end");
   }
 
   @Test
   public void testAddPriceAndHeadKey() {
-    System.out.println("testOrderWithSamePair");
-
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
     MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
         .getMarketPairPriceToOrderStore();
@@ -456,7 +394,6 @@ public class MarketPairPriceToOrderStoreTest {
     Assert.assertEquals(false, marketPairPriceToOrderStore.has(pairPriceKey3));
 
     //Use out-of-order insertion，key in store should be 1,2,3
-    System.out.println("--- put 0 0 ---");
     marketPairPriceToOrderStore.put(pairPriceKey1, capsule1);
     try {
       Assert
@@ -466,9 +403,7 @@ public class MarketPairPriceToOrderStoreTest {
       Assert.assertTrue(false);
     }
 
-    System.out.println("--- put 1000 2002 ---");
     marketPairPriceToOrderStore.put(pairPriceKey2, capsule2);
-    System.out.println("--- put 1000 2002 done ---");
     try {
       Assert
           .assertArrayEquals(capsule2.getData(),
@@ -477,7 +412,6 @@ public class MarketPairPriceToOrderStoreTest {
       Assert.assertTrue(false);
     }
 
-    System.out.println("--- put 1000 2003 ---");
     marketPairPriceToOrderStore.put(pairPriceKey3, capsule3);
     try {
       Assert
@@ -497,17 +431,9 @@ public class MarketPairPriceToOrderStoreTest {
       Assert.assertTrue(false);
     }
 
-    // Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = this.store.iterator();
-    // while (iterator.hasNext()){
-    //   System.out.println("keys:" + ByteArray.toHexString(iterator.next().getKey()));
-    // }
-
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
-    // System.out.println("nextKey："+ByteArray.toHexString(nextKey));
 
     Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
-
-    System.out.println("testOrderWithSamePair end");
   }
 
 
@@ -576,9 +502,132 @@ public class MarketPairPriceToOrderStoreTest {
     Assert.assertEquals(3, marketPairToPriceStore.getPriceNum(sellTokenID1, buyTokenID1));
 
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
-    // System.out.println("nextKey："+ByteArray.toHexString(nextKey));
 
     Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
+  }
+
+  @Test
+  public void testPriceSeqWithSamePair() {
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+    MarketPairToPriceStore marketPairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
+
+    // put order: pairPriceKey2 pairPriceKey1 pairPriceKey3 pairPriceKey0
+    // lexicographical order: pairPriceKey0 < pairPriceKey3 < pairPriceKey1 < pairPriceKey2
+    // key order: pairPriceKey0 < pairPriceKey1 = pairPriceKey2 < pairPriceKey3
+    byte[] sellTokenID1 = ByteArray.fromString("100");
+    byte[] buyTokenID1 = ByteArray.fromString("200");
+    byte[] pairPriceKey0 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        0L,
+        0L
+    );
+    byte[] pairPriceKey1 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        2L,
+        6L
+    );
+    byte[] pairPriceKey2 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        3L,
+        9L
+    );
+    byte[] pairPriceKey3 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        1L,
+        4L
+    );
+
+    // lexicographical order: pairPriceKey0 < pairPriceKey3 < pairPriceKey1 < pairPriceKey2
+    Assert.assertTrue(ByteUtil.compare(pairPriceKey0, pairPriceKey3) < 0);
+    Assert.assertTrue(ByteUtil.compare(pairPriceKey3, pairPriceKey1) < 0);
+    Assert.assertTrue(ByteUtil.compare(pairPriceKey1, pairPriceKey2) < 0);
+
+    MarketOrderIdListCapsule capsule0 = new MarketOrderIdListCapsule(ByteArray.fromLong(0),
+        ByteArray.fromLong(0));
+    MarketOrderIdListCapsule capsule1 = new MarketOrderIdListCapsule(ByteArray.fromLong(1),
+        ByteArray.fromLong(1));
+    MarketOrderIdListCapsule capsule2 = new MarketOrderIdListCapsule(ByteArray.fromLong(2),
+        ByteArray.fromLong(2));
+    MarketOrderIdListCapsule capsule3 = new MarketOrderIdListCapsule(ByteArray.fromLong(3),
+        ByteArray.fromLong(3));
+
+    Assert.assertFalse(marketPairPriceToOrderStore.has(pairPriceKey2));
+    if (!marketPairPriceToOrderStore.has(pairPriceKey2)) {
+      marketPairPriceToOrderStore.put(pairPriceKey2, capsule2);
+    }
+
+    try {
+      Assert
+          .assertArrayEquals(capsule2.getData(),
+              marketPairPriceToOrderStore.get(pairPriceKey2).getData());
+    } catch (ItemNotFoundException e) {
+      Assert.assertTrue(false);
+    }
+
+    // pairPriceKey1 and pairPriceKey2 has the same value, so pairPriceKey1 will not put
+    Assert.assertTrue(marketPairPriceToOrderStore.has(pairPriceKey1));
+    if (!marketPairPriceToOrderStore.has(pairPriceKey1)) {
+      marketPairPriceToOrderStore.put(pairPriceKey1, capsule1);
+      // this should not be executed
+      Assert.assertTrue(true);
+    }
+
+    try {
+      Assert
+          .assertArrayEquals(capsule2.getData(),
+              marketPairPriceToOrderStore.get(pairPriceKey1).getData());
+      Assert
+          .assertArrayEquals(capsule2.getData(),
+              marketPairPriceToOrderStore.get(pairPriceKey2).getData());
+    } catch (ItemNotFoundException e) {
+      Assert.assertTrue(false);
+    }
+
+    Assert.assertFalse(marketPairPriceToOrderStore.has(pairPriceKey0));
+    if (!marketPairPriceToOrderStore.has(pairPriceKey0)) {
+      marketPairPriceToOrderStore.put(pairPriceKey0, capsule0);
+    }
+
+    Assert.assertFalse(marketPairPriceToOrderStore.has(pairPriceKey3));
+    if (!marketPairPriceToOrderStore.has(pairPriceKey3)) {
+      marketPairPriceToOrderStore.put(pairPriceKey3, capsule3);
+    }
+
+    // get pairPriceKey1, will get pairPriceKey2's value capsule2
+    try {
+      Assert
+          .assertArrayEquals(capsule0.getData(),
+              marketPairPriceToOrderStore.get(pairPriceKey0).getData());
+      Assert
+          .assertArrayEquals(capsule2.getData(),
+              marketPairPriceToOrderStore.get(pairPriceKey1).getData());
+      Assert
+          .assertArrayEquals(capsule2.getData(),
+              marketPairPriceToOrderStore.get(pairPriceKey2).getData());
+      Assert
+          .assertArrayEquals(capsule3.getData(),
+              marketPairPriceToOrderStore.get(pairPriceKey3).getData());
+    } catch (ItemNotFoundException e) {
+      Assert.assertTrue(false);
+    }
+
+    byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
+    Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
+
+    // Assert.assertEquals(3, marketPairToPriceStore.getPriceNum(sellTokenID1, buyTokenID1));
+    List<byte[]> keyList = marketPairPriceToOrderStore.getKeysNext(pairPriceKey0, 3 + 1);
+    Assert.assertArrayEquals(pairPriceKey0, keyList.get(0));
+    Assert.assertArrayEquals(pairPriceKey2, keyList.get(1));
+    Assert.assertArrayEquals(pairPriceKey3, keyList.get(2));
+
+
+
   }
 
 }

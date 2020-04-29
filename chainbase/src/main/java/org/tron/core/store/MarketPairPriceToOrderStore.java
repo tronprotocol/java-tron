@@ -80,6 +80,10 @@ public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrd
   public byte[] getNextKey(byte[] key) {
     // contain the key
     List<byte[]> keysNext = revokingDB.getKeysNext(key, 2);
-    return ByteUtil.equals(keysNext.get(0), key) ? keysNext.get(1) : keysNext.get(0);
+    if (keysNext.size() < 2) {
+      return new byte[0];
+    } else {
+      return ByteUtil.equals(keysNext.get(0), key) ? keysNext.get(1) : keysNext.get(0);
+    }
   }
 }
