@@ -183,6 +183,7 @@ public class WalletUtils {
 //
 //        return cleanInput.length() == ADDRESS_LENGTH_IN_HEX;
 //    }
+
   public static boolean passwordValid(String password) {
     if (StringUtils.isEmpty(password)) {
       return false;
