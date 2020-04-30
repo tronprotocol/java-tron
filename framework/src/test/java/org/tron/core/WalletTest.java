@@ -530,4 +530,17 @@ public class WalletTest {
     long l = wallet.getRewardOfBlockEachBlock();
     Assert.assertEquals(32000000L,l);
   }
+
+  @Test
+  public void queryVoteNumber() {
+    double v = wallet.queryVoteNumber(ACCOUNT_ADDRESS_ONE.getBytes(),
+        BLOCK_TIMESTAMP_ONE, BLOCK_TIMESTAMP_TWO);
+    Assert.assertEquals(0.0,v,0);
+  }
+
+  @Test
+  public void queryTotalVoteNumber() {
+    double v = wallet.queryTotalVoteNumber(BLOCK_TIMESTAMP_ONE, BLOCK_TIMESTAMP_TWO);
+    Assert.assertEquals(0.0,v,0);
+  }
 }
