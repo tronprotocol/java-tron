@@ -173,7 +173,7 @@ public class Chainbase implements IRevokingDB {
     List<WrappedByteArray> snapshotList = new ArrayList<>();
     if (!collection.isEmpty()) {
       snapshotList = collection.stream()
-          .filter(e -> MarketUtils.greaterOrEquals(e.getBytes(), key))
+          .filter(e -> MarketUtils.pairKeyIsEqual(e.getBytes(), key))
           .collect(Collectors.toList());
     }
 
