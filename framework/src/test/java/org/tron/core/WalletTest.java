@@ -50,6 +50,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
@@ -517,4 +518,16 @@ public class WalletTest {
     System.out.printf(builder.build().toString());
   }
 
+  @Test
+  public void getRewardOfVoteEachBlock() {
+    long l = wallet.getRewardOfVoteEachBlock();
+    System.out.println(l);
+    Assert.assertEquals(16000000L,l);
+  }
+
+  @Test
+  public void getRewardOfBlockEachBlock() {
+    long l = wallet.getRewardOfBlockEachBlock();
+    Assert.assertEquals(32000000L,l);
+  }
 }
