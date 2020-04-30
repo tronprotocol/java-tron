@@ -1568,12 +1568,14 @@ public class Manager {
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-      for (long i = Args.getInstance().getOldSolidityBlockNum() + 1; i <= latestSolidifiedBlockNumber; i++) {
+      for (long i = Args.getInstance()
+          .getOldSolidityBlockNum() + 1; i <= latestSolidifiedBlockNumber; i++) {
         postSolitityLogContractTrigger(i);
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-      for (long i = Args.getInstance().getOldSolidityBlockNum() + 1; i <= latestSolidifiedBlockNumber; i++) {
+      for (long i = Args.getInstance()
+          .getOldSolidityBlockNum() + 1; i <= latestSolidifiedBlockNumber; i++) {
         postSolitityEventContractTrigger(i);
       }
     }
