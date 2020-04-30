@@ -155,20 +155,27 @@ public class Chainbase implements IRevokingDB {
   }
 
   // for market
+  /**
+   * Notes: For now, this function is just used for Market, because it should use
+   * MarketUtils.comparePriceKey as its comparator.
+   * It need to use MarketUtils.createPairPriceKey to create the key.
+   * */
   private List<byte[]> getKeysNext(Snapshot head, byte[] key, long limit) {
     if (limit <= 0) {
       return Collections.emptyList();
     }
 
-    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
+    List<WrappedByteArray> collection = new ArrayList<>();
     if (head.getPrevious() != null) {
       ((SnapshotImpl) head).collect(collection);
     }
 
-    List<WrappedByteArray> snapshotList = collection.keySet()
-        .stream()
-        .filter(e -> MarketUtils.pairKeyIsEqual(e.getBytes(), key))
-        .collect(Collectors.toList());
+    List<WrappedByteArray> snapshotList = new ArrayList<>();
+    if (!collection.isEmpty()) {
+      snapshotList = collection.stream()
+          .filter(e -> MarketUtils.greaterOrEquals(e.getBytes(), key))
+          .collect(Collectors.toList());
+    }
 
     List<WrappedByteArray> levelDBList = new ArrayList<>();
     if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {

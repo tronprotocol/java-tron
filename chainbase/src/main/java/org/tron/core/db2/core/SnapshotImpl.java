@@ -7,6 +7,7 @@ import com.google.common.collect.Streams;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Getter;
@@ -110,6 +111,15 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
       Streams.stream(((SnapshotImpl) next).db)
           .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
               WrappedByteArray.of(e.getValue().getBytes())));
+      next = next.getNext();
+    }
+  }
+
+  synchronized void collect(List<WrappedByteArray> all) {
+    Snapshot next = getRoot().getNext();
+    while (next != null) {
+      Streams.stream(((SnapshotImpl) next).db)
+          .forEach(e -> all.add(WrappedByteArray.of(e.getKey().getBytes())));
       next = next.getNext();
     }
   }

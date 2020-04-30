@@ -1,6 +1,8 @@
 package org.tron.core.db2;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -12,9 +14,11 @@ import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.SessionOptional;
 import org.tron.core.Constant;
+import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TronStoreWithRevoking;
@@ -224,6 +228,145 @@ public class RevokingDbWithCacheNewValueTest {
     }
   }
 
+  @Test
+  public synchronized void testGetKeysNext() {
+    revokingDatabase = context.getBean(SnapshotManager.class);
+    revokingDatabase.enable();
+    tronDatabase = new TestRevokingTronStore("testSnapshotManager-testGetKeysNext");
+    revokingDatabase.add(tronDatabase.getRevokingDB());
+    while (revokingDatabase.size() != 0) {
+      revokingDatabase.pop();
+    }
+
+    byte[] sellTokenID1 = ByteArray.fromString("100");
+    byte[] buyTokenID1 = ByteArray.fromString("200");
+    byte[] pairPriceKey0 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        0L,
+        0L
+    );
+    byte[] pairPriceKey1 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        2L,
+        6L
+    );
+    byte[] pairPriceKey2 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        3L,
+        9L
+    );
+    byte[] pairPriceKey3 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        1L,
+        4L
+    );
+
+    // put: 2 1 0 3
+    ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("getKeysNext2").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey2, testProtoCapsule);
+      tmpSession.commit();
+    }
+    testProtoCapsule = new ProtoCapsuleTest(("getKeysNext1").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey1, testProtoCapsule);
+      tmpSession.commit();
+    }
+
+    boolean b = tronDatabase.has(pairPriceKey2);
+
+    testProtoCapsule = new ProtoCapsuleTest(("getKeysNext0").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey0, testProtoCapsule);
+      tmpSession.commit();
+    }
+    testProtoCapsule = new ProtoCapsuleTest(("getKeysNext3").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey3, testProtoCapsule);
+      tmpSession.commit();
+    }
+
+    List<byte[]> result = tronDatabase.getRevokingDB().getKeysNext(pairPriceKey0, 4);
+
+    List<byte[]> list = Arrays.asList(pairPriceKey0, pairPriceKey2, pairPriceKey1, pairPriceKey3);
+    for (int i = 0; i < 4; i++) {
+      Assert.assertArrayEquals(list.get(i), result.get(i));
+    }
+  }
+
+  // @Test
+  public synchronized void testGetKeysNextWithSameKey() {
+    revokingDatabase = context.getBean(SnapshotManager.class);
+    revokingDatabase.enable();
+    tronDatabase = new TestRevokingTronStore("testSnapshotManager-testGetKeysNextWithSameKey");
+    revokingDatabase.add(tronDatabase.getRevokingDB());
+    while (revokingDatabase.size() != 0) {
+      revokingDatabase.pop();
+    }
+
+    byte[] sellTokenID1 = ByteArray.fromString("100");
+    byte[] buyTokenID1 = ByteArray.fromString("200");
+    byte[] pairPriceKey0 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        0L,
+        0L
+    );
+    byte[] pairPriceKey1 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        2L,
+        6L
+    );
+    byte[] pairPriceKey2 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        3L,
+        9L
+    );
+    byte[] pairPriceKey3 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        1L,
+        4L
+    );
+
+    // put: 2 1 0 3
+    ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("getKeysNext2").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey2, testProtoCapsule);
+      tmpSession.commit();
+    }
+    testProtoCapsule = new ProtoCapsuleTest(("getKeysNext1").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey1, testProtoCapsule);
+      tmpSession.commit();
+    }
+
+    boolean b = tronDatabase.has(pairPriceKey2);
+
+    testProtoCapsule = new ProtoCapsuleTest(("getKeysNext0").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey0, testProtoCapsule);
+      tmpSession.commit();
+    }
+    testProtoCapsule = new ProtoCapsuleTest(("getKeysNext3").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey3, testProtoCapsule);
+      tmpSession.commit();
+    }
+
+    List<byte[]> result = tronDatabase.getRevokingDB().getKeysNext(pairPriceKey0, 3);
+
+    List<byte[]> list = Arrays.asList(pairPriceKey0, pairPriceKey1, pairPriceKey3);
+    for (int i = 0; i < 3; i++) {
+      Assert.assertArrayEquals(list.get(i), result.get(i));
+    }
+  }
 
   public static class TestRevokingTronStore extends TronStoreWithRevoking<ProtoCapsuleTest> {
 

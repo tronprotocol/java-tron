@@ -223,7 +223,6 @@ public class RevokingDbWithCacheOldValueTest {
     for (int i = start; i < 5; i++) {
       Assert.assertArrayEquals(new ProtoCapsuleTest((protoCapsuleStr + i).getBytes()).getData(),
           result.get(i - 2));
-      // Assert.assertTrue(result.contains(new ProtoCapsuleTest(("getValuesNext" + i).getBytes())));
     }
     tronDatabase.close();
   }

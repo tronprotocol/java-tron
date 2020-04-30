@@ -38,7 +38,6 @@ public class MarketUtils {
   public static final int TOKEN_ID_LENGTH = ByteArray
       .fromString(Long.toString(Long.MAX_VALUE)).length; // 19
 
-
   public static byte[] calculateOrderId(ByteString address, byte[] sellTokenId,
       byte[] buyTokenId, long count) {
 
@@ -61,11 +60,6 @@ public class MarketUtils {
   public static byte[] createPairPriceKey(byte[] sellTokenId, byte[] buyTokenId,
       long sellTokenQuantity, long buyTokenQuantity) {
 
-//    byte[] pairKey = new byte[TOKEN_ID_LENGTH + TOKEN_ID_LENGTH];
-//    System.arraycopy(sellTokenId, 0, pairKey, 0, sellTokenId.length);
-//    System.arraycopy(buyTokenId, 0, pairKey, TOKEN_ID_LENGTH, buyTokenId.length);
-//    byte[] pairKeyHash = Hash.sha3(pairKey);
-
     byte[] sellTokenQuantityBytes = ByteArray.fromLong(sellTokenQuantity);
     byte[] buyTokenQuantityBytes = ByteArray.fromLong(buyTokenQuantity);
     byte[] result = new byte[TOKEN_ID_LENGTH + TOKEN_ID_LENGTH
@@ -80,7 +74,6 @@ public class MarketUtils {
         TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + sellTokenQuantityBytes.length,
         buyTokenQuantityBytes.length);
 
-//    return Hash.sha3(result);
     return result;
   }
 
@@ -134,15 +127,15 @@ public class MarketUtils {
     return builder.build();
   }
 
-  public static boolean pairKeyIsEqual(byte[] key1,byte[] key2){
+  public static boolean pairKeyIsEqual(byte[] key1,byte[] key2) {
     byte[] bytes1 = decodeKeyToMarketPairKey(key1);
     byte[] bytes2 = decodeKeyToMarketPairKey(key2);
     return ByteUtil.equals(bytes1, bytes2);
   }
 
   public static byte[] decodeKeyToMarketPairKey(byte[] key) {
-    byte[] pairKey = new byte[TOKEN_ID_LENGTH*2];
-    System.arraycopy(key, 0, pairKey, 0, TOKEN_ID_LENGTH *2);
+    byte[] pairKey = new byte[TOKEN_ID_LENGTH * 2];
+    System.arraycopy(key, 0, pairKey, 0, TOKEN_ID_LENGTH * 2);
     return pairKey;
   }
 
@@ -227,13 +220,12 @@ public class MarketUtils {
     }
   }
 
-
   public static long multiplyAndDivide(long a, long b, long c) {
     try {
       long tmp = Math.multiplyExact(a, b);
       return Math.floorDiv(tmp, c);
     } catch (ArithmeticException ex) {
-
+      // do nothing here, because we will use BigInteger to compute again
     }
 
     BigInteger aBig = BigInteger.valueOf(a);
@@ -241,12 +233,13 @@ public class MarketUtils {
     BigInteger cBig = BigInteger.valueOf(c);
 
     return aBig.multiply(bBig).divide(cBig).longValue();
-
   }
 
   // for taker
-  public static void returnSellTokenRemain(MarketOrderCapsule orderCapsule, AccountCapsule accountCapsule,
-      DynamicPropertiesStore dynamicStore, AssetIssueStore assetIssueStore) {
+  public static void returnSellTokenRemain(MarketOrderCapsule orderCapsule,
+      AccountCapsule accountCapsule,
+      DynamicPropertiesStore dynamicStore,
+      AssetIssueStore assetIssueStore) {
     byte[] sellTokenId = orderCapsule.getSellTokenId();
     long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
     if (Arrays.equals(sellTokenId, "_".getBytes())) {
@@ -258,8 +251,6 @@ public class MarketUtils {
     }
     orderCapsule.setSellTokenQuantityRemain(0L);
   }
-
-
 
   public static int comparePriceKey(byte[] o1, byte[] o2) {
     //compare pair
