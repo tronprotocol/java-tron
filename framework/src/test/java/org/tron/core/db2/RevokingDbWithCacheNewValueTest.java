@@ -107,7 +107,7 @@ public class RevokingDbWithCacheNewValueTest {
       tronDatabase.delete(testProtoCapsule.getData());
       tmpSession.merge();
     }
-    Assert.assertEquals(null, tronDatabase.get(testProtoCapsule.getData()));
+    Assert.assertNull(tronDatabase.get(testProtoCapsule.getData()));
     dialog.reset();
   }
 
@@ -135,7 +135,7 @@ public class RevokingDbWithCacheNewValueTest {
 
     Assert.assertEquals(1, revokingDatabase.getSize());
     dialog.reset();
-    Assert.assertTrue(revokingDatabase.getSize() == 0);
+    Assert.assertEquals(0, revokingDatabase.getSize());
     Assert.assertEquals(0, revokingDatabase.getActiveSession());
 
     dialog.setValue(revokingDatabase.buildSession());
@@ -166,8 +166,9 @@ public class RevokingDbWithCacheNewValueTest {
 
     dialog.reset();
 
-    logger.info("**********testProtoCapsule:" + String
-        .valueOf(tronDatabase.getUnchecked(testProtoCapsule.getData())));
+    logger.info(
+        "**********testProtoCapsule:" + (tronDatabase.getUnchecked(testProtoCapsule.getData()))
+            .toString());
     Assert.assertEquals(testProtoCapsule, tronDatabase.get(testProtoCapsule.getData()));
   }
 
@@ -194,8 +195,7 @@ public class RevokingDbWithCacheNewValueTest {
         .collect(Collectors.toSet());
 
     for (int i = 9; i >= 5; i--) {
-      Assert.assertEquals(true,
-          result.contains(new ProtoCapsuleTest(("getLastestValues" + i).getBytes())));
+      Assert.assertTrue(result.contains(new ProtoCapsuleTest(("getLastestValues" + i).getBytes())));
     }
   }
 
@@ -223,8 +223,7 @@ public class RevokingDbWithCacheNewValueTest {
         ).stream().map(ProtoCapsuleTest::new).collect(Collectors.toSet());
 
     for (int i = 2; i < 5; i++) {
-      Assert.assertEquals(true,
-          result.contains(new ProtoCapsuleTest(("getValuesNext" + i).getBytes())));
+      Assert.assertTrue(result.contains(new ProtoCapsuleTest(("getValuesNext" + i).getBytes())));
     }
   }
 
@@ -249,8 +248,8 @@ public class RevokingDbWithCacheNewValueTest {
     byte[] pairPriceKey1 = MarketUtils.createPairPriceKey(
         sellTokenID1,
         buyTokenID1,
-        2L,
-        6L
+        1L,
+        4L
     );
     byte[] pairPriceKey2 = MarketUtils.createPairPriceKey(
         sellTokenID1,
@@ -261,8 +260,8 @@ public class RevokingDbWithCacheNewValueTest {
     byte[] pairPriceKey3 = MarketUtils.createPairPriceKey(
         sellTokenID1,
         buyTokenID1,
-        1L,
-        4L
+        2L,
+        7L
     );
 
     // put: 2 1 0 3
@@ -277,8 +276,6 @@ public class RevokingDbWithCacheNewValueTest {
       tmpSession.commit();
     }
 
-    boolean b = tronDatabase.has(pairPriceKey2);
-
     testProtoCapsule = new ProtoCapsuleTest(("getKeysNext0").getBytes());
     try (ISession tmpSession = revokingDatabase.buildSession()) {
       tronDatabase.put(pairPriceKey0, testProtoCapsule);
@@ -292,13 +289,14 @@ public class RevokingDbWithCacheNewValueTest {
 
     List<byte[]> result = tronDatabase.getRevokingDB().getKeysNext(pairPriceKey0, 4);
 
-    List<byte[]> list = Arrays.asList(pairPriceKey0, pairPriceKey2, pairPriceKey1, pairPriceKey3);
+    // lexicographical order: 0 1 3 2
+    List<byte[]> list = Arrays.asList(pairPriceKey0, pairPriceKey2, pairPriceKey3, pairPriceKey1);
     for (int i = 0; i < 4; i++) {
       Assert.assertArrayEquals(list.get(i), result.get(i));
     }
   }
 
-  // @Test
+  @Test
   public synchronized void testGetKeysNextWithSameKey() {
     revokingDatabase = context.getBean(SnapshotManager.class);
     revokingDatabase.enable();
@@ -335,28 +333,38 @@ public class RevokingDbWithCacheNewValueTest {
         4L
     );
 
+    Assert.assertArrayEquals(pairPriceKey1, pairPriceKey2);
+
     // put: 2 1 0 3
-    ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("getKeysNext2").getBytes());
+    ProtoCapsuleTest testProtoCapsule2 = new ProtoCapsuleTest(("getKeysNext2").getBytes());
     try (ISession tmpSession = revokingDatabase.buildSession()) {
-      tronDatabase.put(pairPriceKey2, testProtoCapsule);
+      tronDatabase.put(pairPriceKey2, testProtoCapsule2);
       tmpSession.commit();
     }
-    testProtoCapsule = new ProtoCapsuleTest(("getKeysNext1").getBytes());
+    Assert.assertArrayEquals(testProtoCapsule2.getData(),
+        tronDatabase.get(pairPriceKey2).getData());
+
+    ProtoCapsuleTest testProtoCapsule1 = new ProtoCapsuleTest(("getKeysNext1").getBytes());
     try (ISession tmpSession = revokingDatabase.buildSession()) {
-      tronDatabase.put(pairPriceKey1, testProtoCapsule);
+      tronDatabase.put(pairPriceKey1, testProtoCapsule1);
       tmpSession.commit();
     }
 
-    boolean b = tronDatabase.has(pairPriceKey2);
+    // pairPriceKey1 equals pairPriceKey2, the latter will overwrite the previous
+    Assert.assertArrayEquals(testProtoCapsule1.getData(),
+        tronDatabase.get(pairPriceKey1).getData());
+    Assert.assertArrayEquals(testProtoCapsule1.getData(),
+        tronDatabase.get(pairPriceKey2).getData());
 
-    testProtoCapsule = new ProtoCapsuleTest(("getKeysNext0").getBytes());
+    ProtoCapsuleTest testProtoCapsule0 = new ProtoCapsuleTest(("getKeysNext0").getBytes());
     try (ISession tmpSession = revokingDatabase.buildSession()) {
-      tronDatabase.put(pairPriceKey0, testProtoCapsule);
+      tronDatabase.put(pairPriceKey0, testProtoCapsule0);
       tmpSession.commit();
     }
-    testProtoCapsule = new ProtoCapsuleTest(("getKeysNext3").getBytes());
+
+    ProtoCapsuleTest testProtoCapsule3 = new ProtoCapsuleTest(("getKeysNext3").getBytes());
     try (ISession tmpSession = revokingDatabase.buildSession()) {
-      tronDatabase.put(pairPriceKey3, testProtoCapsule);
+      tronDatabase.put(pairPriceKey3, testProtoCapsule3);
       tmpSession.commit();
     }
 

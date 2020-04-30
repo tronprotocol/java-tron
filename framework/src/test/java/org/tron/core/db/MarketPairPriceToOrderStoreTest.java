@@ -627,4 +627,16 @@ public class MarketPairPriceToOrderStoreTest {
     Assert.assertArrayEquals(pairPriceKey3, keyList.get(2));
   }
 
+  @Test
+  public void testFindGCD() {
+    Assert.assertEquals(0, MarketUtils.findGCD(0, 0));
+    Assert.assertEquals(0, MarketUtils.findGCD(1, 0));
+    Assert.assertEquals(0, MarketUtils.findGCD(0, 1));
+    Assert.assertEquals(1, MarketUtils.findGCD(1, 3));
+    Assert.assertEquals(1, MarketUtils.findGCD(3, 1));
+    Assert.assertEquals(3, MarketUtils.findGCD(3, 15));
+    Assert.assertEquals(1, MarketUtils.findGCD(13, 15));
+    Assert.assertEquals(9, MarketUtils.findGCD(27, 9));
+  }
+
 }

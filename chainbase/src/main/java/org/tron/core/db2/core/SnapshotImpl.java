@@ -35,20 +35,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     return get(this, key);
   }
 
-  @Override
-  public void put(byte[] key, byte[] value) {
-    Preconditions.checkNotNull(key, "key in db is not null.");
-    Preconditions.checkNotNull(value, "value in db is not null.");
-
-    db.put(Key.copyOf(key), Value.copyOf(Value.Operator.PUT, value));
-  }
-
-  @Override
-  public void remove(byte[] key) {
-    Preconditions.checkNotNull(key, "key in db is not null.");
-    db.put(Key.of(key), Value.of(Value.Operator.DELETE, null));
-  }
-
   private byte[] get(Snapshot head, byte[] key) {
     Snapshot snapshot = head;
     Value value;
@@ -61,6 +47,20 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     }
 
     return snapshot == null ? null : snapshot.get(key);
+  }
+
+  @Override
+  public void put(byte[] key, byte[] value) {
+    Preconditions.checkNotNull(key, "key in db is not null.");
+    Preconditions.checkNotNull(value, "value in db is not null.");
+
+    db.put(Key.copyOf(key), Value.copyOf(Value.Operator.PUT, value));
+  }
+
+  @Override
+  public void remove(byte[] key) {
+    Preconditions.checkNotNull(key, "key in db is not null.");
+    db.put(Key.of(key), Value.of(Value.Operator.DELETE, null));
   }
 
   // we have a 3x3 matrix of all possibilities when merging previous snapshot and current snapshot :
@@ -115,11 +115,21 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     }
   }
 
+  /**
+   * In the snapshot, there may be same keys.
+   * If we use Map to get all the data, the later will overwrite the previous value.
+   * So, if we use list, we need to exclude duplicate keys.
+   * */
   synchronized void collect(List<WrappedByteArray> all) {
     Snapshot next = getRoot().getNext();
     while (next != null) {
       Streams.stream(((SnapshotImpl) next).db)
-          .forEach(e -> all.add(WrappedByteArray.of(e.getKey().getBytes())));
+          .forEach(e -> {
+            WrappedByteArray key = WrappedByteArray.of(e.getKey().getBytes());
+            if (!all.contains(key)) {
+              all.add(key);
+            }
+          });
       next = next.getNext();
     }
   }
