@@ -224,7 +224,6 @@ public class MarketCancelOrderActuatorTest {
       actuator.validate();
       fail("Invalid address");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Invalid address", e.getMessage());
     }
   }
@@ -245,7 +244,6 @@ public class MarketCancelOrderActuatorTest {
       actuator.validate();
       fail("Account does not exist!");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Account does not exist!", e.getMessage());
     }
   }
@@ -265,7 +263,6 @@ public class MarketCancelOrderActuatorTest {
       actuator.validate();
       fail("orderId not exists");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("orderId not exists", e.getMessage());
     }
   }
@@ -300,7 +297,6 @@ public class MarketCancelOrderActuatorTest {
       actuator.validate();
       fail("Order is not active!");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Order is not active!", e.getMessage());
     }
   }
@@ -336,10 +332,9 @@ public class MarketCancelOrderActuatorTest {
       actuator.execute(ret);
       fail("Order does not belong to the account!");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Order does not belong to the account!", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      Assert.fail();
     }
   }
 
@@ -379,10 +374,9 @@ public class MarketCancelOrderActuatorTest {
       actuator.execute(ret);
       fail("No enough balance !");
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("No enough balance !", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.assertFalse(e instanceof ContractExeException);
+      Assert.fail();
     } finally {
       // reset fee
       dbManager.getDynamicPropertiesStore().saveMarketCancelFee(0L);
@@ -415,7 +409,6 @@ public class MarketCancelOrderActuatorTest {
     try {
       actuator.validate();
     } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
       fail("validateSuccess error");
     }
   }
@@ -526,7 +519,6 @@ public class MarketCancelOrderActuatorTest {
     Assert.assertEquals(State.CANCELED, orderCapsule.getSt());
 
     //check pairToPrice
-    byte[] marketPair = MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
     Assert.assertEquals(3,
         pairToPriceStore.getPriceNum(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes()));
 
@@ -535,11 +527,14 @@ public class MarketCancelOrderActuatorTest {
         .getPriceKeysList(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 3);
     MarketOrderPair marketOrderPair = MarketUtils.decodeKeyToMarketPair(priceKeysList.get(0));
     MarketPrice marketPrice = MarketUtils.decodeKeyToMarketPrice(priceKeysList.get(1));
-    Assert.assertEquals(100L, marketPrice.getSellTokenQuantity());
-    Assert.assertEquals(300L, marketPrice.getBuyTokenQuantity());
+    // 100:300 => 1；3
+    Assert.assertEquals(1L, marketPrice.getSellTokenQuantity());
+    Assert.assertEquals(3L, marketPrice.getBuyTokenQuantity());
 
-    // Assert.assertArrayEquals(TOKEN_ID_ONE.getBytes(), marketOrderPair.getSellTokenId().toByteArray());
-    // Assert.assertArrayEquals(TOKEN_ID_TWO.getBytes(), marketOrderPair.getBuyTokenId().toByteArray());
+    // Assert.assertArrayEquals(TOKEN_ID_ONE.getBytes(),
+    //     marketOrderPair.getSellTokenId().toByteArray());
+    // Assert.assertArrayEquals(TOKEN_ID_TWO.getBytes(),
+    //     marketOrderPair.getBuyTokenId().toByteArray());
 
     byte[] pairPriceKey1 = MarketUtils.createPairPriceKey(
         marketOrderPair.getSellTokenId().toByteArray(),
@@ -619,16 +614,15 @@ public class MarketCancelOrderActuatorTest {
     Assert.assertEquals(State.CANCELED, orderCapsule.getSt());
 
     //check pairToPrice
-    byte[] marketPair = MarketUtils.createPairKey(TRX.getBytes(), TOKEN_ID_TWO.getBytes());
     Assert.assertEquals(3,
         pairToPriceStore.getPriceNum(TRX.getBytes(), TOKEN_ID_TWO.getBytes()));
 
     List<byte[]> priceKeysList = pairPriceToOrderStore
         .getPriceKeysList(TRX.getBytes(), TOKEN_ID_TWO.getBytes(), 3);
-    MarketOrderPair marketOrderPair = MarketUtils.decodeKeyToMarketPair(priceKeysList.get(0));
     MarketPrice marketPrice = MarketUtils.decodeKeyToMarketPrice(priceKeysList.get(1));
-    Assert.assertEquals(100L, marketPrice.getSellTokenQuantity());
-    Assert.assertEquals(300L, marketPrice.getBuyTokenQuantity());
+    // 100:300 => 1:3
+    Assert.assertEquals(1L, marketPrice.getSellTokenQuantity());
+    Assert.assertEquals(3L, marketPrice.getBuyTokenQuantity());
 
     //check pairPriceToOrder
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(
@@ -704,7 +698,6 @@ public class MarketCancelOrderActuatorTest {
     Assert.assertEquals(State.CANCELED, orderCapsule.getSt());
 
     //check pairToPrice
-    byte[] marketPair = MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
     Assert.assertEquals(2,
         pairToPriceStore.getPriceNum(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes()));
 
@@ -712,12 +705,14 @@ public class MarketCancelOrderActuatorTest {
         .getPriceKeysList(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes(), 2);
     MarketOrderPair marketOrderPair = MarketUtils.decodeKeyToMarketPair(priceKeysList.get(0));
     MarketPrice marketPrice = MarketUtils.decodeKeyToMarketPrice(priceKeysList.get(0));
-    Assert.assertEquals(100L, marketPrice.getSellTokenQuantity());
-    Assert.assertEquals(200L, marketPrice.getBuyTokenQuantity());
+    // 100:200 => 1:2
+    Assert.assertEquals(1L, marketPrice.getSellTokenQuantity());
+    Assert.assertEquals(2L, marketPrice.getBuyTokenQuantity());
 
     marketPrice = MarketUtils.decodeKeyToMarketPrice(priceKeysList.get(1));
-    Assert.assertEquals(100L, marketPrice.getSellTokenQuantity());
-    Assert.assertEquals(400L, marketPrice.getBuyTokenQuantity());
+    // 100:400 => 1:4
+    Assert.assertEquals(1L, marketPrice.getSellTokenQuantity());
+    Assert.assertEquals(4L, marketPrice.getBuyTokenQuantity());
 
     //check pairPriceToOrder
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(
@@ -787,7 +782,6 @@ public class MarketCancelOrderActuatorTest {
     Assert.assertEquals(State.CANCELED, orderCapsule.getSt());
 
     //check pairToPrice
-    byte[] marketPair = MarketUtils.createPairKey(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes());
     Assert.assertEquals(0,
         pairToPriceStore.getPriceNum(TOKEN_ID_ONE.getBytes(), TOKEN_ID_TWO.getBytes()));
 

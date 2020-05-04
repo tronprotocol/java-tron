@@ -92,17 +92,33 @@ public class MarketUtils {
       buyTokenQuantityBytes = ByteArray.fromLong(buyTokenQuantity / gcd);
     }
 
+    return doCreatePairPriceKey(sellTokenId, buyTokenId,
+        sellTokenQuantityBytes, buyTokenQuantityBytes);
+  }
+
+  public static byte[] createPairPriceKeyNoGCD(byte[] sellTokenId, byte[] buyTokenId,
+      long sellTokenQuantity, long buyTokenQuantity) {
+
+    byte[] sellTokenQuantityBytes = ByteArray.fromLong(sellTokenQuantity);
+    byte[] buyTokenQuantityBytes = ByteArray.fromLong(buyTokenQuantity);
+
+    return doCreatePairPriceKey(sellTokenId, buyTokenId,
+        sellTokenQuantityBytes, buyTokenQuantityBytes);
+  }
+
+  private static byte[] doCreatePairPriceKey(byte[] sellTokenId, byte[] buyTokenId,
+      byte[] sellTokenQuantity, byte[] buyTokenQuantity) {
     byte[] result = new byte[TOKEN_ID_LENGTH + TOKEN_ID_LENGTH
-        + sellTokenQuantityBytes.length + buyTokenQuantityBytes.length];
+        + sellTokenQuantity.length + buyTokenQuantity.length];
 
     System.arraycopy(sellTokenId, 0, result, 0, sellTokenId.length);
     System.arraycopy(buyTokenId, 0, result, TOKEN_ID_LENGTH, buyTokenId.length);
-    System.arraycopy(sellTokenQuantityBytes, 0, result,
+    System.arraycopy(sellTokenQuantity, 0, result,
         TOKEN_ID_LENGTH + TOKEN_ID_LENGTH,
-        sellTokenQuantityBytes.length);
-    System.arraycopy(buyTokenQuantityBytes, 0, result,
-        TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + sellTokenQuantityBytes.length,
-        buyTokenQuantityBytes.length);
+        sellTokenQuantity.length);
+    System.arraycopy(buyTokenQuantity, 0, result,
+        TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + buyTokenQuantity.length,
+        buyTokenQuantity.length);
 
     return result;
   }
