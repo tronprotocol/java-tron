@@ -1,4 +1,4 @@
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.21;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
@@ -6,8 +6,7 @@ contract TokenTRC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
-    // 18 decimals is the strongly suggested default, avoid changing it
+    uint8 public decimals = 6;
     uint256 public totalSupply;
 
     // This creates an array with all balances

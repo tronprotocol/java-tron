@@ -6,7 +6,7 @@ contract TokenTRC20 {
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 }
 
-contract PrivateUSDT {
+contract ShieldedTRC20 {
     mapping(bytes32 => bytes32) public nullifiers; // store nullifiers of spent commitments
     mapping(bytes32 => bytes32) public roots; // store history root
     mapping(uint256 => bytes32) public tree;
@@ -15,13 +15,14 @@ contract PrivateUSDT {
     bytes32[33] frontier;
     uint256 public leafCount;
     bytes32 public latestRoot;
+    uint256 public balance;
     address _owner;
     TokenTRC20 _trc20Token;
  
     event newLeaf(uint256 position, bytes32 cm, bytes32 cv, bytes32 epk, bytes32[21] c);
     event tokenMint(address from, uint64 value);
     event tokenBurn(address to, uint64 value);
-    //TODO  address
+    
     constructor (address trc20ContractAddress) public {
         _owner = msg.sender;
         _trc20Token = TokenTRC20(trc20ContractAddress);
@@ -56,6 +57,8 @@ contract PrivateUSDT {
         // Finally, transfer the trc20Token from the sender to this contract
         bool transferResult = _trc20Token.transferFrom(sender, address(this), value);
         require(transferResult, "TransferFrom failed!");
+        balance += value;
+        require(balance >= value, "Overflow!");
         emit tokenMint(sender, value);
     }
     //input_bytes32*10: nf, anchor, cv, rk, proof
@@ -113,6 +116,7 @@ contract PrivateUSDT {
         bytes32 nf = input[0];
         bytes32 anchor = input[1];
         require(value > 0, "Burn negative value!");
+        require(balance >= value, "Not enough balance!");
         require(nullifiers[nf] == 0, "The note has already been spent!");
         require(roots[anchor] != 0, "The anchor must exist!");
         address payTo = address(payToAddress);
@@ -123,6 +127,7 @@ contract PrivateUSDT {
         //Finally, transfer trc20Token from this contract to the nominated address
         bool transferResult = _trc20Token.transfer(payTo, value);
         require(transferResult, "Transfer failed!");
+        balance -= value;
         emit tokenBurn(payTo, value);
     }
     //position: index of leafnode, start from 0
