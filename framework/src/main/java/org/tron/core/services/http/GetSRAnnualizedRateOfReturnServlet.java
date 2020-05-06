@@ -45,11 +45,6 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
         if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 100 || ratio < 0) {
           throw new Exception("bad parameters");
         }
-        //debug
-        logger.debug("getRewardOfVoteEachBlock: {}, getRewardOfBlockEachBlock: {}, getSrNumber: {},",
-            rewardOfVoteEachBlock,rewardOfBlockEachBlock,srNumber);
-        logger.info("totalVote: {}, srVote: {}, ratio: {},",
-            totalVote,srVote,ratio);
         annualizedRateOfReturn = (rewardOfBlockEachBlock / srNumber / srVote
             + rewardOfVoteEachBlock / totalVote) * blockNumberEachDay * ratio * 365;
       }
