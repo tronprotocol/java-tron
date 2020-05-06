@@ -46,7 +46,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
           throw new Exception("bad parameters");
         }
         //debug
-        logger.info("getRewardOfVoteEachBlock: {}, getRewardOfBlockEachBlock: {}, getSrNumber: {},",
+        logger.debug("getRewardOfVoteEachBlock: {}, getRewardOfBlockEachBlock: {}, getSrNumber: {},",
             rewardOfVoteEachBlock,rewardOfBlockEachBlock,srNumber);
         logger.info("totalVote: {}, srVote: {}, ratio: {},",
             totalVote,srVote,ratio);

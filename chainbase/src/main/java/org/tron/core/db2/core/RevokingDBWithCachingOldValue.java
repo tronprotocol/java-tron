@@ -78,9 +78,6 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   @Override
   public byte[] getUnchecked(byte[] key) {
     try {
-      //debug
-      logger.info("Account-getUnchecked(key)-get(key): {},Account-key: {},",
-          get(key),key);
       return get(key);
     } catch (ItemNotFoundException e) {
       return null;

@@ -451,23 +451,25 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/wallet/updateBrokerage");
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/wallet/createCommonTransaction");
-      context.addServlet(new ServletHolder(getAccountRewardByTimeStampServlet),
-          "/wallet/getAccountRewardByTimeStamp");
-      context.addServlet(new ServletHolder(getSRPayByTimeStampServlet),
-          "/wallet/getSRPayByTimeStamp");
-      context.addServlet(new ServletHolder(getSRRewardByTimeStampServlet),
-          "/wallet/getSRRewardByTimeStamp");
-      context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet),
-          "/wallet/getSRAnnualizedRateOfReturnServlet");
-      context.addServlet(new ServletHolder(getNowSRAnnualizedRateOfReturnServlet),
-          "/wallet/getNowSRAnnualizedRateOfReturnServlet");
-      context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet),
-          "/wallet/getAccountLastUnwithdrawReward");
-      context.addServlet(new ServletHolder(getCurrentCycleServlet),
-          "/wallet/getCurrentCycleServlet");
+      if (Args.getInstance().isNodeHttpStatisticsSRRewardEnable()) {
+        context.addServlet(new ServletHolder(getAccountRewardByTimeStampServlet),
+            "/wallet/getAccountRewardByTimeStamp");
+        context.addServlet(new ServletHolder(getSRPayByTimeStampServlet),
+            "/wallet/getSRPayByTimeStamp");
+        context.addServlet(new ServletHolder(getSRRewardByTimeStampServlet),
+            "/wallet/getSRRewardByTimeStamp");
+        context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet),
+            "/wallet/getSRAnnualizedRateOfReturnServlet");
+        context.addServlet(new ServletHolder(getNowSRAnnualizedRateOfReturnServlet),
+            "/wallet/getNowSRAnnualizedRateOfReturnServlet");
+        context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet),
+            "/wallet/getAccountLastUnwithdrawReward");
+        context.addServlet(new ServletHolder(getCurrentCycleServlet),
+            "/wallet/getCurrentCycleServlet");
+      }
+
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
           "/wallet/gettransactioninfobyblocknum");
-
       context.addServlet(new ServletHolder(listNodesServlet), "/net/listnodes");
 
       context.addServlet(new ServletHolder(metricsServlet), "/monitor/getstatsinfo");

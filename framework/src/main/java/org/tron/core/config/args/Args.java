@@ -42,7 +42,6 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
-import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.overlay.discover.node.Node;
@@ -295,6 +294,11 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(Constant.NODE_HTTP_SOLIDITY_ENABLE)) {
       PARAMETER.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_HTTP_STATISTICS_SR_REWARD_SWITCH)) {
+      PARAMETER.nodeHttpStatisticsSRRewardEnable = config
+          .getBoolean(Constant.NODE_HTTP_STATISTICS_SR_REWARD_SWITCH);
     }
 
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {

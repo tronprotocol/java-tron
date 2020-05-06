@@ -27,9 +27,6 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
   @Override
   public BytesCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    //debug
-    logger.info("Account-revokingDB.getUnchecked(key): {},Account-key: {},",
-        Arrays.toString(value),key);
     return ArrayUtils.isEmpty(value) ? null : new BytesCapsule(value);
   }
 
@@ -107,10 +104,6 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
 
   public AccountCapsule getAccountVote(long cycle, byte[] address) {
     BytesCapsule bytesCapsule = get(buildAccountVoteKey(cycle, address));
-    //debug
-    logger.info("Account-bytesCapsule: {},Account-cycle: {},Account-address: {},Account-buildAccountVoteKey: {}",
-        bytesCapsule,cycle,address,buildAccountVoteKey(cycle, address));
-
     if (bytesCapsule == null) {
       return null;
     } else {

@@ -42,6 +42,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -50,11 +51,11 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
@@ -542,5 +543,24 @@ public class WalletTest {
   public void queryTotalVoteNumber() {
     double v = wallet.queryTotalVoteNumber(BLOCK_TIMESTAMP_ONE, BLOCK_TIMESTAMP_TWO);
     Assert.assertEquals(0.0,v,0);
+  }
+
+  @Test
+  public void getVoteList() {
+    long currentcycle = 10;
+    String OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+
+    AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+        110_000_000L);
+    chainBaseManager.getDelegationStore()
+        .setAccountVote(currentcycle, ACCOUNT_ADDRESS_ONE.getBytes(), ownerCapsule);
+    Assert.assertNotNull(
+        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle));
+    Assert.assertNotNull(
+        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle + 1));
+    Assert.assertNull(
+        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle - 1));
   }
 }

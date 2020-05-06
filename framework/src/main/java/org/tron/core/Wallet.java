@@ -2290,7 +2290,7 @@ public class Wallet {
     return builder.build();
   }
 
-  private List<Vote> getVoteList(byte[] address, long cycle) {
+  public List<Vote> getVoteList(byte[] address, long cycle) {
     for (long i = cycle; i >= 0; i--) {
       AccountCapsule accountCapsule = dbManager.getDelegationStore()
           .getAccountVote(i, address);
@@ -2299,9 +2299,6 @@ public class Wallet {
       }
       BytesCapsule remark = dbManager.getDelegationStore()
           .getRemark(i, address);
-      //debug
-      logger.info("Account-accountCapsule: {},Account-remark: {}",
-          accountCapsule,remark);
 
       if (remark != null) {
         return null;
@@ -2358,10 +2355,6 @@ public class Wallet {
       return rewardMap;
     }
 
-    //debug
-    logger.info("Account-beginCycle: {}, Account-beginCycle: {},",
-        beginCycle,endCycle);
-
     for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
       List<Vote> voteList = getVoteList(address, cycle);
       if (voteList != null) {
@@ -2378,7 +2371,7 @@ public class Wallet {
           String SR = StringUtil
               .encode58Check(srAddress);
 
-          logger.info("Account-userVote: {}, Account-totalVote: {},Account-SR: {},",
+          logger.debug("Account-userVote: {}, Account-totalVote: {},Account-SR: {},",
               userVote,totalVote,SR);
 
           if (!rewardMap.containsKey(SR)) {
@@ -2390,7 +2383,7 @@ public class Wallet {
         }
       }
     }
-    logger.info("Account-rewardMap: {}",
+    logger.debug("Account-rewardMap: {}",
         rewardMap);
     return rewardMap;
   }

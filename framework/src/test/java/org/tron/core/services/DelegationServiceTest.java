@@ -12,6 +12,7 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.db.DelegationService;
@@ -115,6 +116,20 @@ public class DelegationServiceTest {
     manager.getDelegationStore().setWitnessVote(2, sr27, 100000000);
     testPay(0);
     testWithdraw();
+    testGetCycleFromTimeStamp();
   }
 
+  public void testGetCycleFromTimeStamp() {
+    long t = System.currentTimeMillis();
+    long currentCircle = 3;
+    manager.getDynamicPropertiesStore().saveCurrentCycleTiimeStamp(t);
+    manager.getDynamicPropertiesStore().saveCurrentCycleNumber(currentCircle);
+    Assert.assertEquals(delegationService
+        .getCycleFromTimeStamp(t + 60), currentCircle);
+    Assert.assertEquals(delegationService.getCycleFromTimeStamp(t - CommonParameter
+        .getInstance().getMaintenanceTimeInterval()), currentCircle - 1);
+    Assert.assertEquals(delegationService.getCycleFromTimeStamp(t - CommonParameter
+        .getInstance().getMaintenanceTimeInterval()) - 1, currentCircle - 2);
+
+  }
 }

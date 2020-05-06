@@ -34,7 +34,7 @@ public class GetNowSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       totalVote = wallet.queryNowTotalVoteNumber();
       ratio = wallet.queryNowSrRatio(address);
       //debug
-      logger.info("getRewardOfVoteEachBlock: {}, getRewardOfBlockEachBlock: {}, getSrNumber: {},",
+      logger.debug("getRewardOfVoteEachBlock: {}, getRewardOfBlockEachBlock: {}, getSrNumber: {},",
           rewardOfVoteEachBlock,rewardOfBlockEachBlock,srNumber);
       logger.info("totalVoteNow: {}, srVoteNow: {}, ratioNow: {},",
           totalVote,srVote,ratio);
