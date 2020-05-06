@@ -538,7 +538,7 @@ public class MarketPairPriceToOrderStoreTest {
         4L
     );
 
-    // lexicographical order: pairPriceKey0 < pairPriceKey3 < pairPriceKey1 < pairPriceKey2
+    // lexicographical order: pairPriceKey0 < pairPriceKey3 < pairPriceKey1 = pairPriceKey2
     Assert.assertTrue(ByteUtil.compare(pairPriceKey0, pairPriceKey3) < 0);
     Assert.assertTrue(ByteUtil.compare(pairPriceKey3, pairPriceKey1) < 0);
     Assert.assertEquals(0, ByteUtil.compare(pairPriceKey1, pairPriceKey2));

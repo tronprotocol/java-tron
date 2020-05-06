@@ -265,6 +265,8 @@ public class RevokingDbWithCacheNewValueTest {
     );
 
     // put: 2 1 0 3
+    // comparator: 0 2 3 1
+    // lexicographical order: 0 1 3 2
     ProtoCapsuleTest testProtoCapsule = new ProtoCapsuleTest(("getKeysNext2").getBytes());
     try (ISession tmpSession = revokingDatabase.buildSession()) {
       tronDatabase.put(pairPriceKey2, testProtoCapsule);
@@ -336,6 +338,8 @@ public class RevokingDbWithCacheNewValueTest {
     Assert.assertArrayEquals(pairPriceKey1, pairPriceKey2);
 
     // put: 2 1 0 3
+    // comparator: 0 1 3
+    // lexicographical order: 0 1 3
     ProtoCapsuleTest testProtoCapsule2 = new ProtoCapsuleTest(("getKeysNext2").getBytes());
     try (ISession tmpSession = revokingDatabase.buildSession()) {
       tronDatabase.put(pairPriceKey2, testProtoCapsule2);
@@ -371,6 +375,89 @@ public class RevokingDbWithCacheNewValueTest {
     List<byte[]> result = tronDatabase.getRevokingDB().getKeysNext(pairPriceKey0, 3);
 
     List<byte[]> list = Arrays.asList(pairPriceKey0, pairPriceKey1, pairPriceKey3);
+    for (int i = 0; i < 3; i++) {
+      Assert.assertArrayEquals(list.get(i), result.get(i));
+    }
+  }
+
+  @Test
+  public synchronized void testGetKeysNextWithSameKeyOrderCheck() {
+    revokingDatabase = context.getBean(SnapshotManager.class);
+    revokingDatabase.enable();
+    tronDatabase = new TestRevokingTronStore("testSnapshotManager-testGetKeysNextWithSameKey");
+    revokingDatabase.add(tronDatabase.getRevokingDB());
+    while (revokingDatabase.size() != 0) {
+      revokingDatabase.pop();
+
+    }
+
+    byte[] sellTokenID1 = ByteArray.fromString("100");
+    byte[] buyTokenID1 = ByteArray.fromString("200");
+    byte[] pairPriceKey0 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        0L,
+        0L
+    );
+    byte[] pairPriceKey1 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        1L,
+        4L
+    );
+    byte[] pairPriceKey2 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        2L,
+        8L
+    );
+    byte[] pairPriceKey3 = MarketUtils.createPairPriceKey(
+        sellTokenID1,
+        buyTokenID1,
+        2L,
+        7L
+    );
+
+    Assert.assertArrayEquals(pairPriceKey1, pairPriceKey2);
+
+    // put: 2 1 0 3
+    // comparator: 0 3 1
+    // lexicographical order: 0 1 3
+    ProtoCapsuleTest testProtoCapsule2 = new ProtoCapsuleTest(("getKeysNext2").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey2, testProtoCapsule2);
+      tmpSession.commit();
+    }
+    Assert.assertArrayEquals(testProtoCapsule2.getData(),
+        tronDatabase.get(pairPriceKey2).getData());
+
+    ProtoCapsuleTest testProtoCapsule1 = new ProtoCapsuleTest(("getKeysNext1").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey1, testProtoCapsule1);
+      tmpSession.commit();
+    }
+
+    // pairPriceKey1 equals pairPriceKey2, the latter will overwrite the previous
+    Assert.assertArrayEquals(testProtoCapsule1.getData(),
+        tronDatabase.get(pairPriceKey1).getData());
+    Assert.assertArrayEquals(testProtoCapsule1.getData(),
+        tronDatabase.get(pairPriceKey2).getData());
+
+    ProtoCapsuleTest testProtoCapsule0 = new ProtoCapsuleTest(("getKeysNext0").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey0, testProtoCapsule0);
+      tmpSession.commit();
+    }
+
+    ProtoCapsuleTest testProtoCapsule3 = new ProtoCapsuleTest(("getKeysNext3").getBytes());
+    try (ISession tmpSession = revokingDatabase.buildSession()) {
+      tronDatabase.put(pairPriceKey3, testProtoCapsule3);
+      tmpSession.commit();
+    }
+
+    List<byte[]> result = tronDatabase.getRevokingDB().getKeysNext(pairPriceKey0, 3);
+
+    List<byte[]> list = Arrays.asList(pairPriceKey0, pairPriceKey3, pairPriceKey1);
     for (int i = 0; i < 3; i++) {
       Assert.assertArrayEquals(list.get(i), result.get(i));
     }
