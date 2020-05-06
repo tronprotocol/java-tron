@@ -1836,8 +1836,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveCurrentCycleNumber(long number) {
-    logger.info("save current number: {}, timeStamp: {}",
-        number, System.currentTimeMillis());
     this.put(CURRENT_CYCLE_NUMBER, new BytesCapsule(ByteArray.fromLong(number)));
   }
 

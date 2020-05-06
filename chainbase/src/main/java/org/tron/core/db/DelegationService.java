@@ -136,9 +136,6 @@ public class DelegationService {
     logger.info("adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
             + "account vote {},", Hex.toHexString(address), reward, currentCycle,
         beginCycle, endCycle, accountCapsule.getVotesList());
-    //debug
-    logger.info("Account-setAccountVote: {},",
-        delegationStore.getAccountVote(endCycle, address));
   }
 
   public long queryReward(byte[] address) {
