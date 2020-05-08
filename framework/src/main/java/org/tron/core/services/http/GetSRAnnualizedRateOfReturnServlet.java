@@ -32,8 +32,8 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
 
       long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock() / 1000000;
       long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock() / 1000000;
-      int srNumber = 27;
-      int blockNumberEachDay = 28792;
+      double srNumber = 27;
+      double blockNumberEachDay = 28792;
 
       double totalVote;
       double srVote;
