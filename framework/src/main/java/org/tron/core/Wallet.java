@@ -804,6 +804,7 @@ public class Wallet {
             .setKey("getShieldedTransactionFee")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee())
             .build());
+
     // ShieldedTransactionCreateAccountFee
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -847,11 +848,6 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMarketCancelFee")
         .setValue(dbManager.getDynamicPropertiesStore().getMarketCancelFee())
-        .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getMarketQuantityLimit")
-        .setValue(dbManager.getDynamicPropertiesStore().getMarketQuantityLimit())
         .build());
 
     return builder.build();
@@ -1205,11 +1201,6 @@ public class Wallet {
   public boolean getFullNodeAllowShieldedTransaction() {
     return Args.getInstance().isFullNodeAllowShieldedTransactionArgs();
   }
-
-  public boolean getFullNodeAllowMarketTransaction() {
-    return Args.getInstance().isFullNodeAllowMarketTransactionArgs();
-  }
-
 
   public BytesMessage getNullifier(ByteString id) {
     if (Objects.isNull(id)) {

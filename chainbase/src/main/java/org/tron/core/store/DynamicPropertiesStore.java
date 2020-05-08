@@ -434,13 +434,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMarketSellFee();
     } catch (IllegalArgumentException e) {
-      this.saveMarketSellFee(10000L);
+      this.saveMarketSellFee(0L); // 0L
     }
 
     try {
       this.getMarketCancelFee();
     } catch (IllegalArgumentException e) {
-      this.saveMarketCancelFee(10000L);
+      this.saveMarketCancelFee(0L);
     }
 
     try {
@@ -1262,7 +1262,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found EXCHANGE_BALANCE_LIMIT"));
   }
 
-
   public void saveAllowMarketTransaction(long allowMarketTransaction) {
     this.put(DynamicPropertiesStore.ALLOW_MARKET_TRANSACTION,
         new BytesCapsule(ByteArray.fromLong(allowMarketTransaction)));
@@ -1290,23 +1289,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found MarketSell_FEE"));
+            () -> new IllegalArgumentException("not found MARKET_SELL_FEE"));
   }
-
-
-  public void saveMarketQuantityLimit(long limit) {
-    this.put(MARKET_QUANTITY_LIMIT,
-        new BytesCapsule(ByteArray.fromLong(limit)));
-  }
-
-  public long getMarketQuantityLimit() {
-    return Optional.ofNullable(getUnchecked(MARKET_QUANTITY_LIMIT))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found MARKET_QUANTITY_LIMIT"));
-  }
-
 
   public void saveMarketCancelFee(long fee) {
     this.put(MARKET_CANCEL_FEE,
@@ -1319,6 +1303,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MARKET_CANCEL_FEE"));
+  }
+
+  public void saveMarketQuantityLimit(long limit) {
+    this.put(MARKET_QUANTITY_LIMIT,
+        new BytesCapsule(ByteArray.fromLong(limit)));
+  }
+
+  public long getMarketQuantityLimit() {
+    return Optional.ofNullable(getUnchecked(MARKET_QUANTITY_LIMIT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MARKET_QUANTITY_LIMIT"));
   }
 
   public void saveTotalTransactionCost(long value) {

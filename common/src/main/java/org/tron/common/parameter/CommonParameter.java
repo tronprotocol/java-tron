@@ -384,11 +384,6 @@ public class CommonParameter {
   @Setter
   public boolean fullNodeAllowShieldedTransactionArgs;
 
-  // full node used this parameter to close market transaction
-  @Getter
-  @Setter
-  public boolean fullNodeAllowMarketTransactionArgs;
-
   @Getter
   @Setter
   public long blockNumForEneryLimit;
