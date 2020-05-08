@@ -546,6 +546,12 @@ public class WalletTest {
   }
 
   @Test
+  public void getBlockNumberEachDay() {
+    double blockNumberEachDay = wallet.getBlockNumberEachDay();
+    Assert.assertEquals(28792,blockNumberEachDay,0);
+  }
+
+  @Test
   public void getVoteList() {
     long currentcycle = 10;
     String OWNER_ADDRESS =
