@@ -267,7 +267,7 @@ public class ProposalUtil {
         }
         if (!dynamicPropertiesStore.supportShieldedTransaction()) {
           throw new ContractValidateException(
-              "Shielded Transaction is not activated, can not set Shielded Transaction fee");
+              "Shielded Transaction is not activated, can not set SHIELD_TRANSACTION_FEE");
         }
         if (value < 0 || value > 10_000_000_000L) {
           throw new ContractValidateException(
@@ -279,9 +279,13 @@ public class ProposalUtil {
         if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
           throw new ContractValidateException("Bad chain parameter id [SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE]");
         }
+        if (!dynamicPropertiesStore.supportShieldedTransaction()) {
+          throw new ContractValidateException(
+              "Shielded Transaction is not activated, can not set SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE");
+        }
         if (value < 0 || value > 10_000_000_000L) {
           throw new ContractValidateException(
-              "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value,valid range is [0,10_000_000_000L]");
+              "Bad SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE parameter value, valid range is [0,10_000_000_000L]");
         }
         break;
       }
