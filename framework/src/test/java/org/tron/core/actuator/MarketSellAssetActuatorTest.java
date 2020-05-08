@@ -865,7 +865,7 @@ public class MarketSellAssetActuatorTest {
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
     long balanceBefore = accountCapsule.getBalance();
-    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+    Assert.assertEquals(sellTokenQuant, (long)accountCapsule.getAssetMapV2().get(sellTokenId));
 
     MarketSellAssetActuator actuator = new MarketSellAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
@@ -1380,7 +1380,7 @@ public class MarketSellAssetActuatorTest {
     int k = 0;
     long sum = 0;
     while (k < num) {
-      sum += matchTimeTest(numMatch);
+      sum += doMatchTimeTest(numMatch);
       k++;
       System.out.println("sum:" + sum);
     }
@@ -1419,7 +1419,7 @@ public class MarketSellAssetActuatorTest {
     return (System.currentTimeMillis() - l);
   }
 
-  public long matchTimeTest(int num) throws Exception {
+  public long doMatchTimeTest(int num) throws Exception {
 
     MarketSellAssetActuator.MAX_ACTIVE_ORDER_NUM = 10000;
     //(sell id_1  and buy id_2)
@@ -1769,7 +1769,7 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == sellTokenQuant);
+    Assert.assertEquals(sellTokenQuant, (long)accountCapsule.getAssetMapV2().get(sellTokenId));
 
     // Initialize the order book
 
