@@ -30,7 +30,7 @@ public class NativeClient {
         }
       }
     }).start();
-    req.connect("tcp://39.106.145.222:50070");
+    req.connect("tcp://1.1.1.1:50070");
     req.setReceiveTimeOut(10000);
     while (true) {
       byte[] message = req.recv();
