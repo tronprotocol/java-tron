@@ -1,7 +1,7 @@
 package org.tron.core.db;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import lombok.Setter;
@@ -36,6 +36,9 @@ public class DelegationService {
   @Setter
   private AccountStore accountStore;
 
+  // Store the first 127 witnesses, according to the order of voting
+  private List<ByteString> witnessAddressList = Lists.newArrayList();
+
   public void initStore(WitnessStore witnessStore, DelegationStore delegationStore,
       DynamicPropertiesStore dynamicPropertiesStore, AccountStore accountStore) {
     this.witnessStore = witnessStore;
@@ -45,15 +48,9 @@ public class DelegationService {
   }
 
   public void payStandbyWitness() {
-    List<ByteString> witnessAddressList = new ArrayList<>();
-    for (WitnessCapsule witnessCapsule : witnessStore.getAllWitnesses()) {
-      witnessAddressList.add(witnessCapsule.getAddress());
+    if (witnessAddressList.isEmpty()) {
+      updateWitnessAddressList();
     }
-    sortWitness(witnessAddressList);
-    if (witnessAddressList.size() > ChainConstant.WITNESS_STANDBY_LENGTH) {
-      witnessAddressList = witnessAddressList.subList(0, ChainConstant.WITNESS_STANDBY_LENGTH);
-    }
-
     long voteSum = 0;
     long totalPay = dynamicPropertiesStore.getWitness127PayPerBlock();
     for (ByteString b : witnessAddressList) {
@@ -221,9 +218,19 @@ public class DelegationService {
     accountStore.put(account.createDbKey(), account);
   }
 
-  private void sortWitness(List<ByteString> list) {
-    list.sort(Comparator.comparingLong((ByteString b) -> getWitnesseByAddress(b).getVoteCount())
-        .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+  /**
+   * Updating the witnessAddressList, often invoked in each maintenance.
+   * As pushBlock a sync method, so no sync action to be considered on witnessAddressList.
+   */
+  public void updateWitnessAddressList() {
+    for (WitnessCapsule witnessCapsule : witnessStore.getAllWitnesses()) {
+      witnessAddressList.add(witnessCapsule.getAddress());
+    }
+    witnessAddressList.sort(Comparator.comparingLong((ByteString b) ->
+            getWitnesseByAddress(b).getVoteCount()).reversed()
+            .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+    if (witnessAddressList.size() > ChainConstant.WITNESS_STANDBY_LENGTH) {
+      witnessAddressList = witnessAddressList.subList(0, ChainConstant.WITNESS_STANDBY_LENGTH);
+    }
   }
-
 }
