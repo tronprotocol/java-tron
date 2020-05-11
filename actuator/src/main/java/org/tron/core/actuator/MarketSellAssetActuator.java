@@ -20,6 +20,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
@@ -54,6 +56,11 @@ import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 @Slf4j(topic = "actuator")
 public class MarketSellAssetActuator extends AbstractActuator {
 
+  @Getter
+  @Setter
+  private static int MAX_ACTIVE_ORDER_NUM = 100;
+  private static int MAX_MATCH_NUM = 20;
+
   private AccountStore accountStore;
   private DynamicPropertiesStore dynamicStore;
   private AssetIssueStore assetIssueStore;
@@ -63,9 +70,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private MarketOrderStore orderStore;
   private MarketPairToPriceStore pairToPriceStore;
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
-
-  public static int MAX_ACTIVE_ORDER_NUM = 100;
-  public static int MAX_MATCH_NUM = 20;
 
   private byte[] sellTokenID = null;
   private byte[] buyTokenID = null;

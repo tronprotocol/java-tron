@@ -1389,7 +1389,7 @@ public class MarketSellAssetActuatorTest {
 
   public long doMatchTimeTest(int num) throws Exception {
 
-    MarketSellAssetActuator.MAX_ACTIVE_ORDER_NUM = 10000;
+    MarketSellAssetActuator.setMAX_ACTIVE_ORDER_NUM(10000);
     //(sell id_1  and buy id_2)
     String sellTokenId = TOKEN_ID_ONE;
     long sellTokenQuant = 2000L * num;
