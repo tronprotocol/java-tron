@@ -129,17 +129,6 @@ public class MarketCancelOrderActuator extends AbstractActuator {
         } else {
           pairToPriceStore.setPriceNum(makerPair, remainCount);
         }
-
-        // byte[] makerPair = MarketUtils.createPairKey(
-        //     orderCapsule.getSellTokenId(),
-        //     orderCapsule.getBuyTokenId()
-        // );
-        // MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(makerPair);
-        //
-        // // delete price from priceList
-        // MarketPrice marketPrice = marketPriceStore.get(pairPriceKey).getInstance();
-        // priceListCapsule.deleteCurrentPrice(marketPrice, pairPriceKey, marketPriceStore,
-        //     makerPair, pairToPriceStore);
       }
 
       ret.setStatus(fee, code.SUCESS);
