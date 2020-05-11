@@ -20,21 +20,23 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
+import org.tron.core.capsule.MarketPriceCapsule;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.MarketAccountStore;
 import org.tron.protos.Protocol.MarketOrder.State;
+import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketPrice;
 
 public class MarketUtils {
 
   public static final int TOKEN_ID_LENGTH = ByteArray
       .fromString(Long.toString(Long.MAX_VALUE)).length; // 19
-
 
   public static byte[] calculateOrderId(ByteString address, byte[] sellTokenId,
       byte[] buyTokenId, long count) {
@@ -55,31 +57,132 @@ public class MarketUtils {
     return Hash.sha3(result);
   }
 
+  public static long findGCD(long number1, long number2) {
+    if (number1 == 0 || number2 == 0) {
+      return 0;
+    }
+    return calGCD(number1, number2);
+  }
 
+  private static long calGCD(long number1, long number2) {
+    if (number2 == 0) {
+      return number1;
+    }
+    return calGCD(number2, number1 % number2);
+  }
+
+  /**
+   * In order to avoid the difference between the data of same key stored and fetched by hashMap and
+   * levelDB, when creating the price key, we will find the GCD (Greatest Common Divisor) of
+   * sellTokenQuantity and buyTokenQuantity.
+   */
   public static byte[] createPairPriceKey(byte[] sellTokenId, byte[] buyTokenId,
       long sellTokenQuantity, long buyTokenQuantity) {
 
-//    byte[] pairKey = new byte[TOKEN_ID_LENGTH + TOKEN_ID_LENGTH];
-//    System.arraycopy(sellTokenId, 0, pairKey, 0, sellTokenId.length);
-//    System.arraycopy(buyTokenId, 0, pairKey, TOKEN_ID_LENGTH, buyTokenId.length);
-//    byte[] pairKeyHash = Hash.sha3(pairKey);
+    byte[] sellTokenQuantityBytes;
+    byte[] buyTokenQuantityBytes;
+
+    // cal the GCD
+    long gcd = findGCD(sellTokenQuantity, buyTokenQuantity);
+    if (gcd == 0) {
+      sellTokenQuantityBytes = ByteArray.fromLong(sellTokenQuantity);
+      buyTokenQuantityBytes = ByteArray.fromLong(buyTokenQuantity);
+    } else {
+      sellTokenQuantityBytes = ByteArray.fromLong(sellTokenQuantity / gcd);
+      buyTokenQuantityBytes = ByteArray.fromLong(buyTokenQuantity / gcd);
+    }
+
+    return doCreatePairPriceKey(sellTokenId, buyTokenId,
+        sellTokenQuantityBytes, buyTokenQuantityBytes);
+  }
+
+  public static byte[] createPairPriceKeyNoGCD(byte[] sellTokenId, byte[] buyTokenId,
+      long sellTokenQuantity, long buyTokenQuantity) {
 
     byte[] sellTokenQuantityBytes = ByteArray.fromLong(sellTokenQuantity);
     byte[] buyTokenQuantityBytes = ByteArray.fromLong(buyTokenQuantity);
+
+    return doCreatePairPriceKey(sellTokenId, buyTokenId,
+        sellTokenQuantityBytes, buyTokenQuantityBytes);
+  }
+
+  private static byte[] doCreatePairPriceKey(byte[] sellTokenId, byte[] buyTokenId,
+      byte[] sellTokenQuantity, byte[] buyTokenQuantity) {
     byte[] result = new byte[TOKEN_ID_LENGTH + TOKEN_ID_LENGTH
-        + sellTokenQuantityBytes.length + buyTokenQuantityBytes.length];
+        + sellTokenQuantity.length + buyTokenQuantity.length];
 
     System.arraycopy(sellTokenId, 0, result, 0, sellTokenId.length);
     System.arraycopy(buyTokenId, 0, result, TOKEN_ID_LENGTH, buyTokenId.length);
-    System.arraycopy(sellTokenQuantityBytes, 0, result,
+    System.arraycopy(sellTokenQuantity, 0, result,
         TOKEN_ID_LENGTH + TOKEN_ID_LENGTH,
-        sellTokenQuantityBytes.length);
-    System.arraycopy(buyTokenQuantityBytes, 0, result,
-        TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + sellTokenQuantityBytes.length,
-        buyTokenQuantityBytes.length);
+        sellTokenQuantity.length);
+    System.arraycopy(buyTokenQuantity, 0, result,
+        TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + buyTokenQuantity.length,
+        buyTokenQuantity.length);
 
-//    return Hash.sha3(result);
     return result;
+  }
+
+  /**
+   * The first price key of one token
+   * Because using the price compare, we can set the smallest price as the first one.
+   * */
+  public static byte[] getPairPriceHeadKey(byte[] sellTokenId, byte[] buyTokenId) {
+    return createPairPriceKey(sellTokenId, buyTokenId, 0L, 0L);
+  }
+
+  public static byte[] expandTokenIdToPriceArray(byte[] tokenId) {
+    byte[] result = new byte[TOKEN_ID_LENGTH];
+    System.arraycopy(tokenId, 0, result, 0, tokenId.length);
+    return result;
+  }
+
+  /**
+   * 0...18: sellTokenId
+   * 19...37: buyTokenId
+   * 38...45: sellTokenQuantity
+   * 46...53: buyTokenQuantity
+   *
+   * return sellTokenQuantity, buyTokenQuantity
+   * */
+  public static MarketPrice decodeKeyToMarketPrice(byte[] key) {
+    byte[] sellTokenQuantity = new byte[8];
+    byte[] buyTokenQuantity = new byte[8];
+
+    System.arraycopy(key, 38, sellTokenQuantity, 0, 8);
+    System.arraycopy(key, 46, buyTokenQuantity, 0, 8);
+
+    return new MarketPriceCapsule(ByteArray.toLong(sellTokenQuantity),
+        ByteArray.toLong(buyTokenQuantity)).getInstance();
+  }
+
+  /**
+   * input key can be pairKey or pairPriceKey
+   * */
+  public static MarketOrderPair decodeKeyToMarketPair(byte[] key) {
+    byte[] sellTokenId = new byte[TOKEN_ID_LENGTH];
+    byte[] buyTokenId = new byte[TOKEN_ID_LENGTH];
+
+    System.arraycopy(key, 0, sellTokenId, 0, TOKEN_ID_LENGTH);
+    System.arraycopy(key, TOKEN_ID_LENGTH, buyTokenId, 0, TOKEN_ID_LENGTH);
+
+    MarketOrderPair.Builder builder = MarketOrderPair.newBuilder();
+    builder.setSellTokenId(ByteString.copyFrom(sellTokenId))
+        .setBuyTokenId(ByteString.copyFrom(buyTokenId));
+
+    return builder.build();
+  }
+
+  public static boolean pairKeyIsEqual(byte[] key1,byte[] key2) {
+    byte[] bytes1 = decodeKeyToMarketPairKey(key1);
+    byte[] bytes2 = decodeKeyToMarketPairKey(key2);
+    return ByteUtil.equals(bytes1, bytes2);
+  }
+
+  public static byte[] decodeKeyToMarketPairKey(byte[] key) {
+    byte[] pairKey = new byte[TOKEN_ID_LENGTH * 2];
+    System.arraycopy(key, 0, pairKey, 0, TOKEN_ID_LENGTH * 2);
+    return pairKey;
   }
 
   public static byte[] createPairKey(byte[] sellTokenId, byte[] buyTokenId) {
@@ -90,7 +193,8 @@ public class MarketUtils {
   }
 
   /**
-   * Note: the params should be the same token pair, or you should change the order
+   * Note: the params should be the same token pair, or you should change the order.
+   * All the quantity should be bigger than 0.
    * */
   public static int comparePrice(long price1SellQuantity, long price1BuyQuantity,
       long price2SellQuantity, long price2BuyQuantity) {
@@ -162,13 +266,12 @@ public class MarketUtils {
     }
   }
 
-
   public static long multiplyAndDivide(long a, long b, long c) {
     try {
       long tmp = Math.multiplyExact(a, b);
       return Math.floorDiv(tmp, c);
     } catch (ArithmeticException ex) {
-
+      // do nothing here, because we will use BigInteger to compute again
     }
 
     BigInteger aBig = BigInteger.valueOf(a);
@@ -176,12 +279,13 @@ public class MarketUtils {
     BigInteger cBig = BigInteger.valueOf(c);
 
     return aBig.multiply(bBig).divide(cBig).longValue();
-
   }
 
   // for taker
-  public static void returnSellTokenRemain(MarketOrderCapsule orderCapsule, AccountCapsule accountCapsule,
-      DynamicPropertiesStore dynamicStore, AssetIssueStore assetIssueStore) {
+  public static void returnSellTokenRemain(MarketOrderCapsule orderCapsule,
+      AccountCapsule accountCapsule,
+      DynamicPropertiesStore dynamicStore,
+      AssetIssueStore assetIssueStore) {
     byte[] sellTokenId = orderCapsule.getSellTokenId();
     long sellTokenQuantityRemain = orderCapsule.getSellTokenQuantityRemain();
     if (Arrays.equals(sellTokenId, "_".getBytes())) {
@@ -192,6 +296,65 @@ public class MarketUtils {
           .addAssetAmountV2(sellTokenId, sellTokenQuantityRemain, dynamicStore, assetIssueStore);
     }
     orderCapsule.setSellTokenQuantityRemain(0L);
+  }
+
+  public static int comparePriceKey(byte[] o1, byte[] o2) {
+    //compare pair
+    byte[] pair1 = new byte[TOKEN_ID_LENGTH * 2];
+    byte[] pair2 = new byte[TOKEN_ID_LENGTH * 2];
+
+    System.arraycopy(o1, 0, pair1, 0, TOKEN_ID_LENGTH * 2);
+    System.arraycopy(o2, 0, pair2, 0, TOKEN_ID_LENGTH * 2);
+
+    int pairResult = org.spongycastle.util.Arrays.compareUnsigned(pair1, pair2);
+    if (pairResult != 0) {
+      return pairResult;
+    }
+
+    //compare price
+    byte[] getSellTokenQuantity1 = new byte[8];
+    byte[] getBuyTokenQuantity1 = new byte[8];
+
+    byte[] getSellTokenQuantity2 = new byte[8];
+    byte[] getBuyTokenQuantity2 = new byte[8];
+
+    int longByteNum = 8;
+
+    System.arraycopy(o1, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH,
+        getSellTokenQuantity1, 0, longByteNum);
+    System.arraycopy(o1, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + longByteNum,
+        getBuyTokenQuantity1, 0, longByteNum);
+
+    System.arraycopy(o2, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH,
+        getSellTokenQuantity2, 0, longByteNum);
+    System.arraycopy(o2, TOKEN_ID_LENGTH + TOKEN_ID_LENGTH + longByteNum,
+        getBuyTokenQuantity2, 0, longByteNum);
+
+    long sellTokenQuantity1 = ByteArray.toLong(getSellTokenQuantity1);
+    long buyTokenQuantity1 = ByteArray.toLong(getBuyTokenQuantity1);
+    long sellTokenQuantity2 = ByteArray.toLong(getSellTokenQuantity2);
+    long buyTokenQuantity2 = ByteArray.toLong(getBuyTokenQuantity2);
+
+    if ((sellTokenQuantity1 == 0 || buyTokenQuantity1 == 0)
+        && (sellTokenQuantity2 == 0 || buyTokenQuantity2 == 0)) {
+      return 0;
+    }
+
+    if (sellTokenQuantity1 == 0 || buyTokenQuantity1 == 0) {
+      return -1;
+    }
+
+    if (sellTokenQuantity2 == 0 || buyTokenQuantity2 == 0) {
+      return 1;
+    }
+
+    return comparePrice(sellTokenQuantity1, buyTokenQuantity1,
+        sellTokenQuantity2, buyTokenQuantity2);
+
+  }
+
+  public static boolean greaterOrEquals(byte[] bytes1, byte[] bytes2) {
+    return comparePriceKey(bytes1, bytes2) >= 0;
   }
 
 }

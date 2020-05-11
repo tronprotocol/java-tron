@@ -1,21 +1,22 @@
 package org.tron.core.store;
 
-import java.util.List;
-import org.iq80.leveldb.Options;
-import org.rocksdb.ComparatorOptions;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
-import org.tron.common.utils.MarketOrderPriceComparatorForRockDB;
-import org.tron.common.utils.StorageUtils;
-import org.tron.core.capsule.MarketPriceLinkedListCapsule;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.MarketOrderIdListCapsule;
+import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.db.TronStoreWithRevoking;
-import org.tron.core.exception.ItemNotFoundException;
 
+/**
+ * This store is used to store the first price Key of specific token pair
+ * Key: sell_id + buy_id, use createPairKey
+ * Value: sell_id + buy_id + sell_quantity + buy_quantity, use createPairPriceKey
+ * */
 @Component
-public class MarketPairToPriceStore extends TronStoreWithRevoking<MarketPriceLinkedListCapsule> {
+public class MarketPairToPriceStore extends TronStoreWithRevoking<BytesCapsule> {
 
   @Autowired
   protected MarketPairToPriceStore(@Value("market_pair_to_price") String dbName) {
@@ -23,31 +24,49 @@ public class MarketPairToPriceStore extends TronStoreWithRevoking<MarketPriceLin
   }
 
   @Override
-  protected Options getOptionsByDbNameForLevelDB(String dbName) {
-    Options options = StorageUtils.getOptionsByDbName(dbName);
-    options.comparator(new MarketOrderPriceComparatorForLevelDB());
-    return options;
+  public BytesCapsule get(byte[] key) {
+    byte[] value = revokingDB.getUnchecked(key);
+    return ArrayUtils.isEmpty(value) ? null : new BytesCapsule(value);
   }
 
-  //todo: to test later
-  @Override
-  protected org.rocksdb.Options getOptionsForRockDB() {
-    ComparatorOptions comparatorOptions = new ComparatorOptions();
-    org.rocksdb.Options options = new org.rocksdb.Options();
-    options.setComparator(new MarketOrderPriceComparatorForRockDB(comparatorOptions));
-    return options;
+  public long getPriceNum(byte[] key) {
+    BytesCapsule bytesCapsule = get(key);
+    if (bytesCapsule != null) {
+      return ByteArray.toLong(bytesCapsule.getData());
+    } else {
+      return 0L;
+    }
   }
 
-  @Override
-  public MarketPriceLinkedListCapsule get(byte[] key) throws ItemNotFoundException {
-    byte[] value = revokingDB.get(key);
-    return new MarketPriceLinkedListCapsule(value);
+  public long getPriceNum(byte[] sellTokenId, byte[] buyTokenId) {
+    return getPriceNum(MarketUtils.createPairKey(sellTokenId, buyTokenId));
   }
 
+  public void setPriceNum(byte[] key, long number) {
+    put(key, new BytesCapsule(ByteArray.fromLong(number)));
+  }
 
-  public byte[] getNextKey(byte[] key) {
-    //contain the key
-    List<byte[]> keysNext = revokingDB.getKeysNext(key, 2);
-    return ByteUtil.equals(keysNext.get(0), key) ? keysNext.get(1) : keysNext.get(0);
+  public void setPriceNum(byte[] sellTokenId, byte[] buyTokenId, long number) {
+    setPriceNum(MarketUtils.createPairKey(sellTokenId, buyTokenId), number);
+  }
+
+  /**
+   * if pair not exits, add token pair, set count = 1, add headKey to pairPriceToOrderStore.
+   * otherwise, increase count
+   * */
+  public void addNewPriceKey(byte[] sellTokenId, byte[] buyTokenId,
+      MarketPairPriceToOrderStore pairPriceToOrderStore) {
+    long number;
+
+    byte[] pairKey = MarketUtils.createPairKey(sellTokenId, buyTokenId);
+    if (has(pairKey)) {
+      number = getPriceNum(pairKey) + 1;
+    } else {
+      number = 1;
+      byte[] headKey = MarketUtils.getPairPriceHeadKey(sellTokenId, buyTokenId);
+      pairPriceToOrderStore.put(headKey, new MarketOrderIdListCapsule());
+    }
+
+    setPriceNum(pairKey, number);
   }
 }

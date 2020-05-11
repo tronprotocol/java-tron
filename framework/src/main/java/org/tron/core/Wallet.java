@@ -20,6 +20,7 @@ package org.tron.core;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
 import com.google.common.collect.ContiguousSet;
@@ -116,8 +117,6 @@ import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
-import org.tron.core.capsule.MarketPriceCapsule;
-import org.tron.core.capsule.MarketPriceLinkedListCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -154,7 +153,6 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
-import org.tron.core.store.MarketPriceStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
@@ -175,9 +173,7 @@ import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.MarketOrder;
 import org.tron.protos.Protocol.MarketOrderList;
-import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketOrderPairList;
-import org.tron.protos.Protocol.MarketOrderPosition;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.MarketPriceList;
 import org.tron.protos.Protocol.Permission;
@@ -808,6 +804,7 @@ public class Wallet {
             .setKey("getShieldedTransactionFee")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee())
             .build());
+
     // ShieldedTransactionCreateAccountFee
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -851,11 +848,6 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMarketCancelFee")
         .setValue(dbManager.getDynamicPropertiesStore().getMarketCancelFee())
-        .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getMarketQuantityLimit")
-        .setValue(dbManager.getDynamicPropertiesStore().getMarketQuantityLimit())
         .build());
 
     return builder.build();
@@ -1209,11 +1201,6 @@ public class Wallet {
   public boolean getFullNodeAllowShieldedTransaction() {
     return Args.getInstance().isFullNodeAllowShieldedTransactionArgs();
   }
-
-  public boolean getFullNodeAllowMarketTransaction() {
-    return Args.getInstance().isFullNodeAllowMarketTransactionArgs();
-  }
-
 
   public BytesMessage getNullifier(ByteString id) {
     if (Objects.isNull(id)) {
@@ -2149,52 +2136,53 @@ public class Wallet {
     return marketOrderListBuilder.build();
   }
 
-  public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId)
-      throws ItemNotFoundException {
+  public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId) {
     MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
         .getMarketPairToPriceStore();
-    byte[] makerPair = MarketUtils.createPairKey(sellTokenId, buyTokenId);
-
-    MarketPriceLinkedListCapsule priceListCapsule = marketPairToPriceStore.getUnchecked(makerPair);
-    if (priceListCapsule == null) {
-      return null;
-    }
-
-    MarketPriceStore marketPriceStore = dbManager.getChainBaseManager().getMarketPriceStore();
-    List<MarketPrice> marketPrices = priceListCapsule.getPricesList(marketPriceStore);
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = dbManager.getChainBaseManager()
+        .getMarketPairPriceToOrderStore();
 
     MarketPriceList.Builder marketPriceListBuilder = MarketPriceList.newBuilder()
-        .setSellTokenId(ByteString.copyFrom(priceListCapsule.getSellTokenId()))
-        .setBuyTokenId(ByteString.copyFrom(priceListCapsule.getBuyTokenId()));
+        .setSellTokenId(ByteString.copyFrom(sellTokenId))
+        .setBuyTokenId(ByteString.copyFrom(buyTokenId));
 
-    marketPrices.forEach(
-        marketPrice -> {
-          // set prev and next, hide these messages in the print
-          MarketPriceCapsule priceCapsule = new MarketPriceCapsule(marketPrice);
-          priceCapsule.setPrev(new byte[0]);
-          priceCapsule.setNext(new byte[0]);
+    long count = marketPairToPriceStore.getPriceNum(sellTokenId, buyTokenId);
+    if (count == 0) {
+      return marketPriceListBuilder.build();
+    }
 
-          marketPriceListBuilder.addPrices(priceCapsule.getInstance());
+    long limit = count < MARKET_COUNT_LIMIT_MAX ? count : MARKET_COUNT_LIMIT_MAX;
+
+    List<byte[]> priceKeysList = marketPairPriceToOrderStore
+        .getPriceKeysList(sellTokenId, buyTokenId, limit);
+
+    priceKeysList.forEach(
+        priceKey -> {
+          MarketPrice marketPrice = MarketUtils.decodeKeyToMarketPrice(priceKey);
+          marketPriceListBuilder.addPrices(marketPrice);
         }
     );
 
     return marketPriceListBuilder.build();
   }
 
-
   public MarketOrderPairList getMarketPairList() {
     MarketOrderPairList.Builder builder = MarketOrderPairList.newBuilder();
     MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
         .getMarketPairToPriceStore();
 
-    Iterator<Entry<byte[], MarketPriceLinkedListCapsule>> iterator = marketPairToPriceStore
+    Iterator<Entry<byte[], BytesCapsule>> iterator = marketPairToPriceStore
         .iterator();
+    long count = 0;
     while (iterator.hasNext()) {
-      Entry<byte[], MarketPriceLinkedListCapsule> next = iterator.next();
-      MarketOrderPair pair = MarketOrderPair.newBuilder().
-          setSellTokenId(ByteString.copyFrom(next.getValue().getSellTokenId()))
-          .setBuyTokenId(ByteString.copyFrom(next.getValue().getBuyTokenId())).build();
-      builder.addOrderPair(pair);
+      Entry<byte[], BytesCapsule> next = iterator.next();
+
+      byte[] pairKey = next.getKey();
+      builder.addOrderPair(MarketUtils.decodeKeyToMarketPair(pairKey));
+      count++;
+      if (count > MARKET_COUNT_LIMIT_MAX) {
+        break;
+      }
     }
 
     return builder.build();
@@ -2206,28 +2194,32 @@ public class Wallet {
 
     MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
         .getMarketPairToPriceStore();
-    MarketPriceStore marketPriceStore = dbManager.getChainBaseManager().getMarketPriceStore();
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = dbManager.getChainBaseManager()
+        .getMarketPairPriceToOrderStore();
     MarketPairPriceToOrderStore pairPriceToOrderStore = dbManager.getChainBaseManager()
         .getMarketPairPriceToOrderStore();
     MarketOrderStore orderStore = dbManager.getChainBaseManager().getMarketOrderStore();
 
-    byte[] makerPair = MarketUtils.createPairKey(sellTokenId, buyTokenId);
-    MarketPriceLinkedListCapsule priceListCapsule = marketPairToPriceStore.getUnchecked(makerPair);
-    if (priceListCapsule == null) {
-      return null;
+    long countForPrice = marketPairToPriceStore.getPriceNum(sellTokenId, buyTokenId);
+    if (countForPrice == 0) {
+      return builder.build();
     }
+    long limitForPrice =
+        countForPrice < MARKET_COUNT_LIMIT_MAX ? countForPrice : MARKET_COUNT_LIMIT_MAX;
 
-    List<MarketPrice> marketPrices = priceListCapsule.getPricesList(marketPriceStore);
+    List<byte[]> priceKeysList = marketPairPriceToOrderStore
+        .getPriceKeysList(sellTokenId, buyTokenId, limitForPrice);
 
-    for (MarketPrice price : marketPrices) {
-      byte[] pairPriceKey = MarketUtils
-          .createPairPriceKey(sellTokenId, buyTokenId, price.getSellTokenQuantity(),
-              price.getBuyTokenQuantity());
-
+    long countForOrder = 0;
+    for (byte[] pairPriceKey : priceKeysList) {
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore
           .getUnchecked(pairPriceKey);
+      if (MARKET_COUNT_LIMIT_MAX - countForOrder <= 0) {
+        break;
+      }
       if (orderIdListCapsule != null) {
-        List<MarketOrderCapsule> orderList = orderIdListCapsule.getAllOrder(orderStore);
+        List<MarketOrderCapsule> orderList = orderIdListCapsule
+            .getAllOrder(orderStore, MARKET_COUNT_LIMIT_MAX - countForOrder);
 
         orderList.forEach(orderCapsule -> {
           // set prev and next, hide these messages in the print
@@ -2236,65 +2228,12 @@ public class Wallet {
 
           builder.addOrders(orderCapsule.getInstance());
         });
+        countForOrder += orderList.size();
       }
     }
 
     return builder.build();
   }
-
-
-  //if price exists or price list is empty, pre_price_key = null
-  public MarketOrderPosition getMarketOrderPosition(byte[] sellTokenId, byte[] buyTokenId,
-      long sellQuant, long buyQuant) throws ItemNotFoundException {
-    MarketOrderPosition orderPosition = MarketOrderPosition.newBuilder().build();
-
-    MarketPrice newOrderPrice = MarketPrice.newBuilder()
-        .setSellTokenQuantity(sellQuant)
-        .setBuyTokenQuantity(buyQuant).build();
-
-    MarketPriceStore marketPriceStore = dbManager.getChainBaseManager().getMarketPriceStore();
-
-    byte[] key = new MarketPriceCapsule(newOrderPrice).getKey(sellTokenId, buyTokenId);
-    if (marketPriceStore.getUnchecked(key) != null && !marketPriceStore.get(key).isNull()) {
-      //price exists
-      return orderPosition.toBuilder().setPriceExist(true).setPriceListNotEmpty(true).build();
-    }
-
-    //price not exist
-    byte[] makerPair = MarketUtils.createPairKey(sellTokenId, buyTokenId);
-    MarketPriceLinkedListCapsule priceListCapsule = dbManager.getChainBaseManager()
-        .getMarketPairToPriceStore().getUnchecked(makerPair);
-
-    //price list is empty
-    if (priceListCapsule == null) {
-      return orderPosition.toBuilder().setPriceExist(false).setPriceListNotEmpty(false).build();
-    }
-    MarketPriceCapsule head = new MarketPriceCapsule(priceListCapsule.getBestPrice());
-    if (head.isNull()) {
-      return orderPosition.toBuilder().setPriceExist(false).setPriceListNotEmpty(false).build();
-    }
-
-    // find the pre price
-    // dummy.next = head
-    MarketPriceCapsule dummy = new MarketPriceCapsule(0, 0);
-    if (!head.isNull()) {
-      dummy.setNext(head.getKey(sellTokenId, buyTokenId));
-    }
-    head = dummy;
-    while (!head.isNextNull()) {
-      if (MarketUtils
-          .isLowerPrice(marketPriceStore.get(head.getNext()).getInstance(), newOrderPrice)) {
-        head = marketPriceStore.get(head.getNext());
-      } else {
-        break;
-      }
-    }
-
-    ByteString prePriceKey = ByteString.copyFrom(head.getKey(sellTokenId, buyTokenId));
-    return orderPosition.toBuilder().setPriceExist(false).setPriceListNotEmpty(true)
-        .setPrePriceKey(prePriceKey).build();
-  }
-
 
   public Transaction deployContract(TransactionCapsule trxCap) {
 

@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -18,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.Checkpoint;
+import org.rocksdb.DirectComparator;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
@@ -49,13 +52,13 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
   private static final String KEY_ENGINE = "ENGINE";
   private static final String ROCKSDB = "ROCKSDB";
-  private Options options;
+  private DirectComparator comparator;
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings,
-      Options options) {
+      DirectComparator comparator) {
     this.dataBaseName = name;
     this.parentPath = parentPath;
-    this.options = options;
+    this.comparator = comparator;
     RocksDbSettings.setRocksDbSettings(settings);
     initDB();
   }
@@ -189,7 +192,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         throw new NullPointerException("no name set to the dbStore");
       }
 
-      try (Options options = getDefaultOptions()) {
+      try (Options options = new Options()) {
 
         // most of these options are suggested by https://github.com/facebook/rocksdb/wiki/Set-Up-Options
 
@@ -211,6 +214,9 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         options.setLevel0FileNumCompactionTrigger(settings.getLevel0FileNumCompactionTrigger());
         options.setTargetFileSizeMultiplier(settings.getTargetFileSizeMultiplier());
         options.setTargetFileSizeBase(settings.getTargetFileSizeBase());
+        if (comparator != null) {
+          options.setComparator(comparator);
+        }
 
         // table options
         final BlockBasedTableConfig tableCfg;
@@ -254,14 +260,6 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       resetDbLock.writeLock().unlock();
     }
   }
-
-  private Options getDefaultOptions() {
-    if (options != null) {
-      return options;
-    }
-    return new Options();
-  }
-
 
   @Override
   public void putData(byte[] key, byte[] value) {
@@ -385,6 +383,26 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       } catch (Exception e1) {
         throw new RuntimeException(e);
       }
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public List<byte[]> getKeysNext(byte[] key, long limit) {
+    if (quitIfNotAlive()) {
+      return new ArrayList<>();
+    }
+    if (limit <= 0) {
+      return new ArrayList<>();
+    }
+    resetDbLock.readLock().lock();
+    try (RocksIterator iter = database.newIterator()) {
+      List<byte[]> result = new ArrayList<>();
+      long i = 0;
+      for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
+        result.add(iter.key());
+      }
+      return result;
     } finally {
       resetDbLock.readLock().unlock();
     }

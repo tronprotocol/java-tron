@@ -197,7 +197,14 @@ public class ProposalService extends ProposalUtil {
           }
           break;
         }
-
+        case MARKET_SELL_FEE: {
+          manager.getDynamicPropertiesStore().saveMarketSellFee(entry.getValue());
+          break;
+        }
+        case MARKET_CANCEL_FEE: {
+          manager.getDynamicPropertiesStore().saveMarketCancelFee(entry.getValue());
+          break;
+        }
 
         default:
           find = false;

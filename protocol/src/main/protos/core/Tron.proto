@@ -101,27 +101,11 @@ message MarketAccountOrder {
   repeated bytes orders = 2; // order_id list
   int64 count = 3; // active count
   int64 total_count = 4;
-
-}
-
-message MarketOrderPosition {
-  //if price list is empty or price exist, pre_price_key = null
-  bool price_list_not_empty = 1;
-  bool price_exist = 2;
-  bytes pre_price_key = 3;
 }
 
 message MarketPrice {
   int64 sell_token_quantity = 1;
   int64 buy_token_quantity = 2;
-  bytes prev = 3;
-  bytes next = 4;
-}
-
-message MarketPriceLinkedList {
-  bytes sell_token_id = 1;
-  bytes buy_token_id = 2;
-  MarketPrice bestPrice = 3;
 }
 
 message MarketPriceList {
@@ -427,8 +411,6 @@ message Transaction {
   repeated bytes signature = 2;
   repeated Result ret = 5;
 }
-
-
 
 message TransactionInfo {
   enum code {

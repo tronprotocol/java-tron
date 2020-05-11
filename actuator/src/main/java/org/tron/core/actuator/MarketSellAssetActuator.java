@@ -18,19 +18,20 @@ package org.tron.core.actuator;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
-import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
-import org.tron.core.capsule.MarketPriceCapsule;
-import org.tron.core.capsule.MarketPriceLinkedListCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -43,11 +44,9 @@ import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
-import org.tron.core.store.MarketPriceStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.MarketOrderDetail;
-import org.tron.protos.Protocol.MarketOrderPosition;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -56,6 +55,11 @@ import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 
 @Slf4j(topic = "actuator")
 public class MarketSellAssetActuator extends AbstractActuator {
+
+  @Getter
+  @Setter
+  private static int MAX_ACTIVE_ORDER_NUM = 100;
+  private static int MAX_MATCH_NUM = 20;
 
   private AccountStore accountStore;
   private DynamicPropertiesStore dynamicStore;
@@ -66,11 +70,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private MarketOrderStore orderStore;
   private MarketPairToPriceStore pairToPriceStore;
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
-  private MarketPriceStore marketPriceStore;
-
-  public static Integer MAX_SEARCH_NUM = 100;
-  public static Integer MAX_ACTIVE_ORDER_NUM = 100;
-  public static Integer MAX_MATCH_NUM = 20;
 
   private byte[] sellTokenID = null;
   private byte[] buyTokenID = null;
@@ -91,18 +90,17 @@ public class MarketSellAssetActuator extends AbstractActuator {
     orderStore = chainBaseManager.getMarketOrderStore();
     pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     pairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
-    marketPriceStore = chainBaseManager.getMarketPriceStore();
   }
 
   @Override
   public boolean execute(Object object) throws ContractExeException {
-
     initStores();
 
     TransactionResultCapsule ret = (TransactionResultCapsule) object;
     if (Objects.isNull(ret)) {
       throw new RuntimeException("TransactionResultCapsule is null");
     }
+
     long fee = calcFee();
 
     try {
@@ -136,10 +134,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       // 4. save remain order into order book
       if (orderCapsule.getSellTokenQuantityRemain() != 0) {
-        ByteString prePriceKey = contract.getPrePriceKey();
-        MarketOrderPosition position = MarketOrderPosition.newBuilder()
-            .setPrePriceKey(prePriceKey).build();
-        saveRemainOrder(orderCapsule, takerPrice, position);
+        saveRemainOrder(orderCapsule);
       }
 
       orderStore.put(orderCapsule.getID().toByteArray(), orderCapsule);
@@ -271,89 +266,12 @@ public class MarketSellAssetActuator extends AbstractActuator {
           throw new ContractValidateException("No buyTokenID !");
         }
       }
-
-      byte[] prePriceKey = contract.getPrePriceKey().toByteArray();
-      checkPosition(prePriceKey);
-
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 
     return true;
-  }
-
-  private void checkPosition(byte[] prePriceKey)
-      throws ContractValidateException {
-
-    MarketPrice newPrice = MarketPrice.newBuilder().setSellTokenQuantity(sellTokenQuantity)
-        .setBuyTokenQuantity(buyTokenQuantity).build();
-
-    // check position info
-    if (prePriceKey.length != 0) {
-      MarketPriceCapsule prePriceCapsule = marketPriceStore.getUnchecked(prePriceKey);
-      if (prePriceCapsule == null) {
-        throw new ContractValidateException("prePriceKey not exists");
-      }
-
-      // pre price should be less than current price
-      if (!MarketUtils.isLowerPrice(prePriceCapsule.getInstance(), newPrice)) {
-        throw new ContractValidateException("pre price should be less than current price");
-      }
-    }
-
-    byte[] newPairPriceKey = MarketUtils
-        .createPairPriceKey(sellTokenID, buyTokenID, sellTokenQuantity, buyTokenQuantity);
-    MarketPriceCapsule newPriceCapsule = marketPriceStore.getUnchecked(newPairPriceKey);
-
-    if (newPriceCapsule != null) {
-      // if price exists, no need to use position info
-      return;
-    }
-
-    // get the start position
-    MarketPriceCapsule head = null;
-    if (prePriceKey.length == 0) {
-      // search from the bestPrice
-      // check if price list or bestPrice exists
-      MarketPriceCapsule bestPrice = null;
-      byte[] makerPair = MarketUtils.createPairKey(sellTokenID, buyTokenID);
-      MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.getUnchecked(makerPair);
-      if (priceListCapsule != null) {
-        bestPrice = new MarketPriceCapsule(priceListCapsule.getBestPrice());
-      }
-      if (bestPrice == null || bestPrice.isNull()) {
-        // if price list is empty, no need to search
-        return;
-      }
-      head = bestPrice;
-    } else {
-      // search from the prePrice
-      // has checked prePrice exist before
-      MarketPriceCapsule prePriceCapsule = marketPriceStore.getUnchecked(prePriceKey);
-      head = prePriceCapsule;
-    }
-
-    // check how many times need to find the correct position
-    MarketPriceCapsule dummy = new MarketPriceCapsule(0, 0);
-    if (!head.isNull()) {
-      dummy.setNext(head.getKey(sellTokenID, buyTokenID));
-    }
-    head = dummy;
-    Integer count = 0;
-    while (count <= MAX_SEARCH_NUM && !head.isNextNull()) {
-      if (MarketUtils
-          .isLowerPrice(marketPriceStore.getUnchecked(head.getNext()).getInstance(), newPrice)) {
-        head = marketPriceStore.getUnchecked(head.getNext());
-      } else {
-        break;
-      }
-      count++;
-    }
-
-    if (count > MAX_SEARCH_NUM) {
-      throw new ContractValidateException("Maximum number of queries exceeded，" + MAX_SEARCH_NUM);
-    }
   }
 
   @Override
@@ -366,41 +284,50 @@ public class MarketSellAssetActuator extends AbstractActuator {
     return dynamicStore.getMarketSellFee();
   }
 
-  public boolean hasMatch(MarketPriceLinkedListCapsule makerPriceListCapsule,
-      MarketPrice takerPrice) {
-    MarketPrice bestPrice = makerPriceListCapsule.getBestPrice();
-    if (new MarketPriceCapsule(bestPrice).isNull()) {
-      return false;
+  /**
+   * return marketPrice if matched, otherwise null
+   * */
+  private MarketPrice hasMatch(List<byte[]> priceKeysList, MarketPrice takerPrice) {
+    if (priceKeysList.isEmpty()) {
+      return null;
     }
 
-    return MarketUtils.priceMatch(takerPrice, bestPrice);
+    // get the first key which is the lowest price
+    MarketPrice bestPrice = MarketUtils.decodeKeyToMarketPrice(priceKeysList.get(0));
+
+    return MarketUtils.priceMatch(takerPrice, bestPrice) ? bestPrice : null;
   }
 
-  public void matchOrder(MarketOrderCapsule takerCapsule, MarketPrice takerPrice,
+  private void matchOrder(MarketOrderCapsule takerCapsule, MarketPrice takerPrice,
       TransactionResultCapsule ret, AccountCapsule takerAccountCapsule)
       throws ItemNotFoundException, ContractValidateException {
 
-    byte[] makerPair = MarketUtils.createPairKey(buyTokenID, sellTokenID);
-    MarketPriceLinkedListCapsule makerPriceListCapsule = pairToPriceStore.getUnchecked(makerPair);
+    byte[] makerSellTokenID = buyTokenID;
+    byte[] makerBuyTokenID = sellTokenID;
+    byte[] makerPair = MarketUtils.createPairKey(makerSellTokenID, makerBuyTokenID);
 
-    // if not exists
-    if (makerPriceListCapsule == null) {
+    // makerPair not exists
+    long makerPriceNumber = pairToPriceStore.getPriceNum(makerPair);
+    if (makerPriceNumber == 0) {
       return;
     }
+    long remainCount = makerPriceNumber;
+
+    // get maker price list
+    List<byte[]> priceKeysList = pairPriceToOrderStore
+        .getPriceKeysList(MarketUtils.getPairPriceHeadKey(makerSellTokenID, makerBuyTokenID),
+            (long)(MAX_MATCH_NUM + 1), makerPriceNumber, true);
 
     int matchOrderCount = 0;
     // match different price
-    while (takerCapsule.getSellTokenQuantityRemain() != 0
-        && hasMatch(makerPriceListCapsule, takerPrice)) {
+    while (takerCapsule.getSellTokenQuantityRemain() != 0) {
       // get lowest ordersList
-      MarketPrice makerPrice = makerPriceListCapsule.getBestPrice();
+      MarketPrice makerPrice = hasMatch(priceKeysList, takerPrice);
+      if (makerPrice == null) {
+        return;
+      }
 
-      byte[] pairPriceKey = MarketUtils.createPairPriceKey(
-          makerPriceListCapsule.getSellTokenId(),
-          makerPriceListCapsule.getBuyTokenId(),
-          makerPrice.getSellTokenQuantity(),
-          makerPrice.getBuyTokenQuantity()
-      );
+      byte[] pairPriceKey = priceKeysList.get(0);
 
       // if not exists
       MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.get(pairPriceKey);
@@ -426,23 +353,28 @@ public class MarketSellAssetActuator extends AbstractActuator {
         }
       }
 
-      // makerPrice have been all consumed
+      // the orders of makerPrice have been all consumed
       if (orderIdListCapsule.isOrderEmpty()) {
         pairPriceToOrderStore.delete(pairPriceKey);
 
-        // need to delete marketPair
-        if (makerPriceListCapsule
-            .deleteCurrentPrice(makerPrice, pairPriceKey, marketPriceStore, makerPair,
-                pairToPriceStore) == null) {
-          break;
-        }
+        // need to delete marketPair if no more price(priceKeysList is empty after deleting)
+        priceKeysList.remove(0);
 
+        // update priceInfo's count
+        remainCount = remainCount - 1;
+        // if really empty, need to delete token pair from pairToPriceStore
+        if (remainCount == 0) {
+          pairToPriceStore.delete(makerPair);
+          break;
+        } else {
+          pairToPriceStore.setPriceNum(makerPair, remainCount);
+        }
       }
     } // end while
   }
 
   // return all match or not
-  public void matchSingleOrder(MarketOrderCapsule takerOrderCapsule,
+  private void matchSingleOrder(MarketOrderCapsule takerOrderCapsule,
       MarketOrderCapsule makerOrderCapsule, TransactionResultCapsule ret,
       AccountCapsule takerAccountCapsule)
       throws ItemNotFoundException {
@@ -456,8 +388,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
     // for makerPrice,sellToken is A,buyToken is TRX.
     // for takerPrice,buyToken is A,sellToken is TRX.
 
-    // makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX = takerBuyTokenQuantityCurrent_A/takerSellTokenQuantityRemain_TRX
-    // => takerBuyTokenQuantityCurrent_A = takerSellTokenQuantityRemain_TRX * makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
+    // makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX =
+    //   takerBuyTokenQuantityCurrent_A/takerSellTokenQuantityRemain_TRX
+    // => takerBuyTokenQuantityCurrent_A = takerSellTokenQuantityRemain_TRX *
+    //   makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
 
     long takerBuyTokenQuantityRemain = MarketUtils
         .multiplyAndDivide(takerSellRemainQuantity, makerSellQuantity, makerBuyQuantity);
@@ -477,8 +411,10 @@ public class MarketSellAssetActuator extends AbstractActuator {
     if (takerBuyTokenQuantityRemain == makerOrderCapsule.getSellTokenQuantityRemain()) {
       // taker == maker
 
-      // makerSellTokenQuantityRemain_A/makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
-      // => makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantityRemain_A * makerBuyTokenQuantity_TRX / makerSellTokenQuantity_A
+      // makerSellTokenQuantityRemain_A/makerBuyTokenQuantityCurrent_TRX =
+      //   makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
+      // => makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantityRemain_A *
+      //   makerBuyTokenQuantity_TRX / makerSellTokenQuantity_A
 
       makerBuyTokenQuantityReceive = MarketUtils
           .multiplyAndDivide(makerSellRemainQuantity, makerBuyQuantity, makerSellQuantity);
@@ -512,10 +448,8 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
       // if the quantity of taker want to buy is bigger than the remain of maker want to sell,
       // consume the order of maker
-      // makerSellTokenQuantityRemain_A/makerBuyTokenQuantityCurrent_TRX = makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
-      // makerBuyTokenQuantityReceive = Math
-      //     .floorDiv(Math.multiplyExact(makerOrderCapsule.getSellTokenQuantityRemain(),
-      //         makerOrderCapsule.getBuyTokenQuantity()), makerOrderCapsule.getSellTokenQuantity());
+      // makerSellTokenQuantityRemain_A/makerBuyTokenQuantityCurrent_TRX =
+      //   makerSellTokenQuantity_A/makerBuyTokenQuantity_TRX
       makerBuyTokenQuantityReceive = MarketUtils
           .multiplyAndDivide(makerSellRemainQuantity, makerBuyQuantity, makerSellQuantity);
 
@@ -546,15 +480,16 @@ public class MarketSellAssetActuator extends AbstractActuator {
     addTrxOrToken(takerOrderCapsule, takerBuyTokenQuantityReceive, takerAccountCapsule);
     addTrxOrToken(makerOrderCapsule, makerBuyTokenQuantityReceive);
 
-    MarketOrderDetail orderDetail = MarketOrderDetail.newBuilder().
-        setMakerOrderId(makerOrderCapsule.getID()).
-        setTakerOrderId(takerOrderCapsule.getID()).
-        setFillSellQuantity(makerBuyTokenQuantityReceive).
-        setFillBuyQuantity(takerBuyTokenQuantityReceive).build();
+    MarketOrderDetail orderDetail = MarketOrderDetail.newBuilder()
+        .setMakerOrderId(makerOrderCapsule.getID())
+        .setTakerOrderId(takerOrderCapsule.getID())
+        .setFillSellQuantity(makerBuyTokenQuantityReceive)
+        .setFillBuyQuantity(takerBuyTokenQuantityReceive)
+        .build();
     ret.addOrderDetails(orderDetail);
   }
 
-  public MarketOrderCapsule createAndSaveOrder(AccountCapsule accountCapsule,
+  private MarketOrderCapsule createAndSaveOrder(AccountCapsule accountCapsule,
       MarketSellAssetContract contract) {
     MarketAccountOrderCapsule marketAccountOrderCapsule = marketAccountStore
         .getUnchecked(contract.getOwnerAddress().toByteArray());
@@ -580,7 +515,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     return orderCapsule;
   }
 
-  public void transferBalanceOrToken(AccountCapsule accountCapsule) {
+  private void transferBalanceOrToken(AccountCapsule accountCapsule) {
     if (Arrays.equals(sellTokenID, "_".getBytes())) {
       accountCapsule.setBalance(Math.subtractExact(accountCapsule.getBalance(), sellTokenQuantity));
     } else {
@@ -590,7 +525,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   }
 
   // for taker
-  public void addTrxOrToken(MarketOrderCapsule orderCapsule, long num,
+  private void addTrxOrToken(MarketOrderCapsule orderCapsule, long num,
       AccountCapsule accountCapsule) {
 
     byte[] buyTokenId = orderCapsule.getBuyTokenId();
@@ -602,7 +537,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     }
   }
 
-  public void addTrxOrToken(MarketOrderCapsule orderCapsule, long num) {
+  private void addTrxOrToken(MarketOrderCapsule orderCapsule, long num) {
     AccountCapsule accountCapsule = accountStore
         .get(orderCapsule.getOwnerAddress().toByteArray());
 
@@ -616,7 +551,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
     accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
   }
 
-  public void returnSellTokenRemain(MarketOrderCapsule orderCapsule) {
+  private void returnSellTokenRemain(MarketOrderCapsule orderCapsule) {
     AccountCapsule accountCapsule = accountStore
         .get(orderCapsule.getOwnerAddress().toByteArray());
 
@@ -624,31 +559,24 @@ public class MarketSellAssetActuator extends AbstractActuator {
     accountStore.put(orderCapsule.getOwnerAddress().toByteArray(), accountCapsule);
   }
 
-  public void saveRemainOrder(MarketOrderCapsule orderCapsule, MarketPrice currentPrice,
-      MarketOrderPosition position)
+  private void saveRemainOrder(MarketOrderCapsule orderCapsule)
       throws ItemNotFoundException {
-    // add price into pricesList
-    byte[] pairKey = MarketUtils.createPairKey(sellTokenID, buyTokenID);
-    MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.getUnchecked(pairKey);
-    if (priceListCapsule == null) {
-      priceListCapsule = new MarketPriceLinkedListCapsule(sellTokenID, buyTokenID);
-    }
-
-    priceListCapsule
-        .insertMarket(currentPrice, sellTokenID, buyTokenID, marketPriceStore, position);
-    pairToPriceStore.put(pairKey, priceListCapsule);
-
     // add order into orderList
     byte[] pairPriceKey = MarketUtils.createPairPriceKey(
-        orderCapsule.getSellTokenId(),
-        orderCapsule.getBuyTokenId(),
-        orderCapsule.getSellTokenQuantity(),
-        orderCapsule.getBuyTokenQuantity()
+        sellTokenID,
+        buyTokenID,
+        sellTokenQuantity,
+        buyTokenQuantity
     );
 
     MarketOrderIdListCapsule orderIdListCapsule = pairPriceToOrderStore.getUnchecked(pairPriceKey);
     if (orderIdListCapsule == null) {
       orderIdListCapsule = new MarketOrderIdListCapsule();
+
+      // pairPriceKey not exists, increase price count:
+      // if pair not exits, add token pair, set count = 1, add headKey to pairPriceToOrderStore
+      // if pair exists, increase count
+      pairToPriceStore.addNewPriceKey(sellTokenID, buyTokenID, pairPriceToOrderStore);
     }
 
     orderIdListCapsule.addOrder(orderCapsule, orderStore);

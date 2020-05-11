@@ -17,17 +17,15 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
-import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
-import org.tron.core.capsule.MarketPriceLinkedListCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.MarketUtils;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -39,9 +37,7 @@ import org.tron.core.store.MarketAccountStore;
 import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
-import org.tron.core.store.MarketPriceStore;
 import org.tron.protos.Protocol.MarketOrder.State;
-import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -58,7 +54,6 @@ public class MarketCancelOrderActuator extends AbstractActuator {
   private MarketOrderStore orderStore;
   private MarketPairToPriceStore pairToPriceStore;
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
-  private MarketPriceStore marketPriceStore;
 
   public MarketCancelOrderActuator() {
     super(ContractType.MarketCancelOrderContract, MarketCancelOrderContract.class);
@@ -73,7 +68,6 @@ public class MarketCancelOrderActuator extends AbstractActuator {
     orderStore = chainBaseManager.getMarketOrderStore();
     pairToPriceStore = chainBaseManager.getMarketPairToPriceStore();
     pairPriceToOrderStore = chainBaseManager.getMarketPairPriceToOrderStore();
-    marketPriceStore = chainBaseManager.getMarketPriceStore();
   }
 
   @Override
@@ -125,16 +119,27 @@ public class MarketCancelOrderActuator extends AbstractActuator {
         pairPriceToOrderStore.delete(pairPriceKey);
 
         // 3. modify priceList
-        byte[] makerPair = MarketUtils.createPairKey(
-            orderCapsule.getSellTokenId(),
-            orderCapsule.getBuyTokenId()
-        );
-        MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(makerPair);
+        // decrease price number
+        // if empty, delete token pair
+        byte[] makerPair = MarketUtils
+            .createPairKey(orderCapsule.getSellTokenId(), orderCapsule.getBuyTokenId());
+        long remainCount = pairToPriceStore.getPriceNum(makerPair) - 1;
+        if (remainCount == 0) {
+          pairToPriceStore.delete(makerPair);
+        } else {
+          pairToPriceStore.setPriceNum(makerPair, remainCount);
+        }
 
-        // delete price from priceList
-        MarketPrice marketPrice = marketPriceStore.get(pairPriceKey).getInstance();
-        priceListCapsule.deleteCurrentPrice(marketPrice, pairPriceKey, marketPriceStore,
-            makerPair, pairToPriceStore);
+        // byte[] makerPair = MarketUtils.createPairKey(
+        //     orderCapsule.getSellTokenId(),
+        //     orderCapsule.getBuyTokenId()
+        // );
+        // MarketPriceLinkedListCapsule priceListCapsule = pairToPriceStore.get(makerPair);
+        //
+        // // delete price from priceList
+        // MarketPrice marketPrice = marketPriceStore.get(pairPriceKey).getInstance();
+        // priceListCapsule.deleteCurrentPrice(marketPrice, pairPriceKey, marketPriceStore,
+        //     makerPair, pairToPriceStore);
       }
 
       ret.setStatus(fee, code.SUCESS);

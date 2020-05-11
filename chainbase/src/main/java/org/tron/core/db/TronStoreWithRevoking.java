@@ -13,7 +13,9 @@ import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteOptions;
+import org.rocksdb.DirectComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -47,7 +49,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     int dbVersion = CommonParameter.getInstance().getStorage().getDbVersion();
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
     if (dbVersion == 1) {
-      this.revokingDB = new RevokingDBWithCachingOldValue(dbName);
+      this.revokingDB = new RevokingDBWithCachingOldValue(dbName,
+          getOptionsByDbNameForLevelDB(dbName));
     } else if (dbVersion == 2) {
       if ("LEVELDB".equals(dbEngine.toUpperCase())) {
         this.revokingDB = new Chainbase(new SnapshotRoot(
@@ -66,7 +69,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
             new RocksDB(
                 new RocksDbDataSourceImpl(parentPath,
                     dbName, CommonParameter.getInstance()
-                    .getRocksDBCustomSettings(), getOptionsForRockDB()))));
+                    .getRocksDBCustomSettings(), getDirectComparator()))));
       }
     } else {
       throw new RuntimeException("db version is error.");
@@ -77,8 +80,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     return StorageUtils.getOptionsByDbName(dbName);
   }
 
-  protected org.rocksdb.Options getOptionsForRockDB() {
-    return new org.rocksdb.Options();
+  protected DirectComparator getDirectComparator() {
+    return null;
   }
 
   protected TronStoreWithRevoking(DB<byte[], byte[]> db) {
@@ -93,6 +96,13 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   // only for test
   protected TronStoreWithRevoking(String dbName, RevokingDatabase revokingDatabase) {
     this.revokingDB = new RevokingDBWithCachingOldValue(dbName,
+        (AbstractRevokingStore) revokingDatabase);
+  }
+
+  // only for test
+  protected TronStoreWithRevoking(String dbName, Options options,
+      RevokingDatabase revokingDatabase) {
+    this.revokingDB = new RevokingDBWithCachingOldValue(dbName, options,
         (AbstractRevokingStore) revokingDatabase);
   }
 
