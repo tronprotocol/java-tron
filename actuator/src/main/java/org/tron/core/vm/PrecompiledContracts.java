@@ -1063,7 +1063,7 @@ public class PrecompiledContracts {
       }
       long leafCount = parseLong(data, 1472);
       if (leafCount >= TREE_WIDTH) {
-        return Pair.of(false, DataWord.ZERO().getData());
+        return Pair.of(true, DataWord.ZERO().getData());
       }
 
       boolean result;

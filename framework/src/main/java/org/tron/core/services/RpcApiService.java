@@ -2454,12 +2454,8 @@ public class RpcApiService implements Service {
         checkSupportShieldedTRC20ContractTransaction();
         BytesMessage bytesMessage = wallet.getTriggerInputForShieldedTRC20Contract(request);
         responseObserver.onNext(bytesMessage);
-      } catch (ZksnarkException e) {
+      } catch (ZksnarkException | ContractValidateException e) {
         responseObserver.onError(e);
-      } catch (BadItemException e) {
-        e.printStackTrace();
-      } catch (ItemNotFoundException e) {
-        e.printStackTrace();
       }
       responseObserver.onCompleted();
     }
