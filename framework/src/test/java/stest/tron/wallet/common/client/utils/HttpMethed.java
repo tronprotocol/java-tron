@@ -3004,6 +3004,9 @@ public class HttpMethed {
       JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
       jsonObjectWarp.put("ak", responseContent.getString("value"));
 
+      response = HttpMethed
+          .getExpandedSpendingKey(httpNode, ByteArray.toHexString(shieldAddressInfo.sk));
+      responseContent = HttpMethed.parseResponseContent(response);
       String nsk = responseContent.getString("nsk");
       response = HttpMethed.getNkFromNsk(httpNode, nsk);
       responseContent = HttpMethed.parseResponseContent(response);
@@ -3052,6 +3055,9 @@ public class HttpMethed {
       JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
       jsonObjectWarp.put("ak", responseContent.getString("value"));
 
+      response = HttpMethed
+          .getExpandedSpendingKey(httpNode, ByteArray.toHexString(shieldAddressInfo.sk));
+      responseContent = HttpMethed.parseResponseContent(response);
       String nsk = responseContent.getString("nsk");
       response = HttpMethed.getNkFromNsk(httpNode, nsk);
       responseContent = HttpMethed.parseResponseContent(response);

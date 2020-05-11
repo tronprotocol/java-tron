@@ -70,13 +70,13 @@ public class HttpTestZenToken004 {
   /**
    * constructor.
    */
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     Args.getInstance().setFullNodeAllowShieldedTransaction(true);
   }
 
-  @Test(enabled = false, description = "Shield to two shield transaction by http")
+  @Test(enabled = true, description = "Shield to two shield transaction by http")
   public void test01ShieldToTwoShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -130,7 +130,7 @@ public class HttpTestZenToken004 {
     Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
   }
 
-  @Test(enabled = false, description = "Shield to one public and one shield transaction by http")
+  @Test(enabled = true, description = "Shield to one public and one shield transaction by http")
   public void test02ShieldToOnePublicAndOneShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -210,7 +210,7 @@ public class HttpTestZenToken004 {
         .get(0).getIsSpend());
   }
 
-  @Test(enabled = false, description = "Shield to one public and two shield transaction by http")
+  @Test(enabled = true, description = "Shield to one public and two shield transaction by http")
   public void test03ShieldToOnePublicAndTwoShieldTransaction() {
     sendShieldAddressInfo = HttpMethed.generateShieldAddress(httpnode);
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
@@ -284,7 +284,7 @@ public class HttpTestZenToken004 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = false)
+  @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     final Long assetBalance = HttpMethed
         .getAssetIssueValue(httpnode, receiverPublicAddress, assetIssueId);
