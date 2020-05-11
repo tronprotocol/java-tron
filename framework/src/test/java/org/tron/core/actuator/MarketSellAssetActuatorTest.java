@@ -1387,38 +1387,6 @@ public class MarketSellAssetActuatorTest {
     System.out.println("time:" + sum / num);
   }
 
-  //  @Test
-  public void searchTimeTest() throws Exception {
-    InitAsset();
-    int num = 10;
-    int numMatch = 1000;
-    int k = 0;
-    long sum = 0;
-    while (k < num) {
-      sum += searchTimeTest(numMatch);
-      k++;
-      System.out.println("sum:" + sum);
-    }
-    System.out.println("time:" + sum / num);
-  }
-
-  public long searchTimeTest(int num) throws Exception {
-
-    MarketSellAssetActuator.MAX_SEARCH_NUM = 10000;
-    MarketSellAssetActuator.MAX_ACTIVE_ORDER_NUM = 100000;
-    for (int i = 0; i < num; i++) {
-      addOrder(TOKEN_ID_TWO, 1001L + i, TOKEN_ID_ONE,
-          2000L, OWNER_ADDRESS_SECOND);
-      if (i % 100 == 0) {
-        System.out.println("i:" + i);
-      }
-    }
-    long l = System.currentTimeMillis();
-    addOrder(TOKEN_ID_TWO, 100L, TOKEN_ID_ONE,
-        200L, OWNER_ADDRESS_SECOND);
-    return (System.currentTimeMillis() - l);
-  }
-
   public long doMatchTimeTest(int num) throws Exception {
 
     MarketSellAssetActuator.MAX_ACTIVE_ORDER_NUM = 10000;

@@ -64,7 +64,6 @@ public class MarketSellAssetActuator extends AbstractActuator {
   private MarketPairToPriceStore pairToPriceStore;
   private MarketPairPriceToOrderStore pairPriceToOrderStore;
 
-  public static int MAX_SEARCH_NUM = 100;
   public static int MAX_ACTIVE_ORDER_NUM = 100;
   public static int MAX_MATCH_NUM = 20;
 
