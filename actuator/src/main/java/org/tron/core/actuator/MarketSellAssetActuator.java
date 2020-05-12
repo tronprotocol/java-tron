@@ -59,6 +59,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
   @Getter
   @Setter
   private static int MAX_ACTIVE_ORDER_NUM = 100;
+  @Getter
   private static int MAX_MATCH_NUM = 20;
 
   private AccountStore accountStore;
