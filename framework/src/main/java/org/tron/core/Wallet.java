@@ -2235,7 +2235,10 @@ public class Wallet {
             TransactionInfoCapsule transactionInfoCapsule = dbManager.getTransactionHistoryStore()
                 .get(Sha256Hash.hash(DBConfig.isECKeyCryptoEngine(),
                     transaction.getRawData().toByteArray()));
-            transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
+
+            if (transactionInfoCapsule != null) {
+              transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
+            }
           }
         }
       }
