@@ -434,6 +434,7 @@ public class Util {
         System.arraycopy(oldAddress, 0, newAddress, start, oldAddress.length);
         logBuilder.setAddress(ByteString.copyFrom(MUtil.convertToTronAddress(newAddress)));
       }
+
       newLogList.add(logBuilder.build());
     }
 
