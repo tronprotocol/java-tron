@@ -546,6 +546,19 @@ public class WalletTest {
   }
 
   @Test
+  public void getBlockNumberEachDay() {
+    double v = wallet.getBlockNumberEachDay();
+    Assert.assertEquals(28792,v,0);
+  }
+
+  @Test
+  public void getAnnualizedRateOfReturn() throws Exception {
+    double v = wallet.getAnnualizedRateOfReturn(1,1,
+        1,1,1,1,1);
+    Assert.assertEquals(730,v,0);
+  }
+
+  @Test
   public void getVoteList() {
     long currentcycle = 10;
     String OWNER_ADDRESS =

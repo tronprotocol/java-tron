@@ -22,6 +22,7 @@ import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
@@ -2774,6 +2775,28 @@ public class Wallet {
       } // end of transaction
     } //end of block list
     return builder.build();
+  }
+
+  public double getBlockNumberEachDay() {
+    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();
+    if (maintenanceTimeInterval == 0) {
+      maintenanceTimeInterval = 21600000L;
+    }
+    double blockNumberEachDay = FROZEN_PERIOD / BLOCK_PRODUCED_INTERVAL
+        - 2 * (FROZEN_PERIOD / maintenanceTimeInterval);
+    return blockNumberEachDay;
+  }
+
+  public double getAnnualizedRateOfReturn(long rewardOfBlockEachBlock, double blockNumberEachDay,
+                                          double srNumber, double srVote, double totalVote,
+                                          long rewardOfVoteEachBlock,double ratio)
+      throws Exception {
+    if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 100 || ratio < 0) {
+      throw new Exception("bad parameters");
+    }
+    double annualizedRateOfReturn = (rewardOfBlockEachBlock / srNumber / srVote
+        + rewardOfVoteEachBlock / totalVote) * blockNumberEachDay * ratio * 365;
+    return annualizedRateOfReturn;
   }
 }
 
