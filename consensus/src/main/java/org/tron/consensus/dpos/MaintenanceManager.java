@@ -23,6 +23,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.db.DelegationService;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
@@ -36,6 +37,9 @@ public class MaintenanceManager {
 
   @Autowired
   private IncentiveManager incentiveManager;
+
+  @Autowired
+  private DelegationService delegationService;
 
   @Setter
   private DposService dposService;
@@ -118,6 +122,8 @@ public class MaintenanceManager {
         delegationStore.setWitnessVote(nextCycle, witness.createDbKey(), witness.getVoteCount());
       });
     }
+    // update the witnessAddressList in delegationService
+    delegationService.updateWitnessAddressList();
   }
 
   private Map<ByteString, Long> countVote(VotesStore votesStore) {
