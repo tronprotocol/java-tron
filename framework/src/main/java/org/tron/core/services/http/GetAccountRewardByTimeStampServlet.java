@@ -56,9 +56,8 @@ public class GetAccountRewardByTimeStampServlet extends RateLimiterServlet {
       long endTimeStamp = jsonObject.getLong("endTimeStamp");
 
       if (startTimeStamp < endTimeStamp && build.getAddress().toByteArray() != null) {
-        HashMap<String, Long> value = wallet
-            .computeRewardByTimeStamp(build.getAddress().toByteArray()
-                , startTimeStamp, endTimeStamp);
+        HashMap<String, Long> value = wallet.computeRewardByTimeStamp(build
+            .getAddress().toByteArray(), startTimeStamp, endTimeStamp);
         response.getWriter().println(Util.printRewardMapToJSON(value));
       } else {
         response.getWriter().println("{}");
