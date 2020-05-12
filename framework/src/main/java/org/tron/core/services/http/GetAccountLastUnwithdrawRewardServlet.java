@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j(topic = "API")
@@ -38,6 +39,24 @@ public class GetAccountLastUnwithdrawRewardServlet extends RateLimiterServlet {
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
+    try {
+      PostParams params = PostParams.getPostParams(request);
+      Account.Builder build = Account.newBuilder();
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      if (build.getAddress().toByteArray() != null) {
+        HashMap<String, Long> value = wallet
+            .computeUnwithdrawReward(build.getAddress().toByteArray());
+        response.getWriter().println(Util.printRewardMapToJSON(value));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (Exception e) {
+        logger.error("", e);
+        try {
+          response.getWriter().println(Util.printErrorMsg(e));
+        } catch (IOException ioe) {
+          logger.debug("IOException: {}", ioe.getMessage());
+        }
+    }
   }
 }

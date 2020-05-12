@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
-
+import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j(topic = "API")
@@ -45,6 +45,27 @@ public class GetSRPayByTimeStampServlet extends RateLimiterServlet {
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
+    try {
+      long value = 0;
+      PostParams params = PostParams.getPostParams(request);
+      Account.Builder build = Account.newBuilder();
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      JSONObject jsonObject = JSONObject.parseObject(params.getParams());
+      long startTimeStamp = jsonObject.getLong("startTimeStamp");
+      long endTimeStamp = jsonObject.getLong("endTimeStamp");
+      byte[] address = build.getAddress().toByteArray();
+      if (startTimeStamp < endTimeStamp && address != null) {
+        value = wallet
+            .queryPayByTimeStamp(address, startTimeStamp, endTimeStamp);
+      }
+      response.getWriter().println("{\"reward\": " + value + "}");
+    } catch (Exception e) {
+      logger.error("", e);
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
+    }
   }
 }

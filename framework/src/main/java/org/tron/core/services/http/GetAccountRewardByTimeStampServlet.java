@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
-
+import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j(topic = "API")
@@ -47,6 +47,25 @@ public class GetAccountRewardByTimeStampServlet extends RateLimiterServlet {
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    doGet(request, response);
+    try {
+      PostParams params = PostParams.getPostParams(request);
+      Account.Builder build = Account.newBuilder();
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
+      JSONObject jsonObject = JSONObject.parseObject(params.getParams());
+      long startTimeStamp = jsonObject.getLong("startTimeStamp");
+      long endTimeStamp = jsonObject.getLong("endTimeStamp");
+
+      if (startTimeStamp < endTimeStamp && build.getAddress().toByteArray() != null) {
+        HashMap<String, Long> value = wallet
+            .computeRewardByTimeStamp(build.getAddress().toByteArray()
+                , startTimeStamp, endTimeStamp);
+        response.getWriter().println(Util.printRewardMapToJSON(value));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (Exception e) {
+      Util.processError(e, response);
+    }
+
   }
 }
