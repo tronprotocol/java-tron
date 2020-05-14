@@ -1948,14 +1948,16 @@ public class MarketSellAssetActuatorTest {
 
     InitAsset();
 
-    // int maxNum = 9;
-    // MarketSellAssetActuator.setMAX_MATCH_NUM(maxNum);
+    int start = 10;
+    int limit = MarketSellAssetActuator.getMAX_MATCH_NUM();
+    int step = 1;
+    int end = start + step * limit;
 
     //(sell id_1  and buy id_2)
     String sellTokenId = TOKEN_ID_ONE;
-    long sellTokenQuant = 800L;
     String buyTokenId = TOKEN_ID_TWO;
     long buyTokenQuant = 400L;
+    long sellTokenQuant = buyTokenQuant * (end / start + 1);
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
@@ -1966,10 +1968,9 @@ public class MarketSellAssetActuatorTest {
 
     // Initialize the order book
 
-    // [10, 30], 21 orders
-    for (int i = 10; i <= 30; i++) {
-      addOrder(TOKEN_ID_TWO, 10L, TOKEN_ID_ONE,
-          i, OWNER_ADDRESS_SECOND);
+    // at least limit+1 times
+    for (int i = start; i <= limit; i += step) {
+      addOrder(buyTokenId, (long) start, sellTokenId, i, OWNER_ADDRESS_SECOND);
     }
 
     // this order(taker) need to match 21 times
