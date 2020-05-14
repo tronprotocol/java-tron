@@ -1,6 +1,7 @@
 package org.tron.tool.litefullnode;
 
 import java.io.IOException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,7 +46,11 @@ public class Util {
     try {
       // create hard link when file is .sst
       if (source.toString().endsWith(".sst")) {
-        Files.createLink(dest, source);
+        try {
+          Files.createLink(dest, source);
+        } catch (FileSystemException e) {
+          Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
+        }
       } else {
         Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
       }
