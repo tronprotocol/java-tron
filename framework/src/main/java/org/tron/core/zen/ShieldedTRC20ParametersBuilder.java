@@ -1,6 +1,7 @@
 package org.tron.core.zen;
 
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -49,11 +50,11 @@ public class ShieldedTRC20ParametersBuilder {
   @Setter
   private byte[] shieldedTRC20Address;
   @Setter
-  private long transparentFromAmount;
+  private BigInteger transparentFromAmount;
   @Setter
   private byte[] transparentToAddress;
   @Setter
-  private long transparentToAmount;
+  private BigInteger transparentToAmount;
 
   public ShieldedTRC20ParametersBuilder() {
 
@@ -227,7 +228,7 @@ public class ShieldedTRC20ParametersBuilder {
     // Empty output script
     byte[] mergedBytes;
     byte[] dataHashToBeSigned; //256
-    long value = 0;
+    BigInteger value = BigInteger.ZERO;
     ShieldContract.SpendDescription spendDescription;
     ShieldContract.ReceiveDescription receiveDescription;
     ShieldedTRC20Parameters shieldedTRC20Parameters;
@@ -237,8 +238,8 @@ public class ShieldedTRC20ParametersBuilder {
         ReceiveDescriptionInfo receive = receives.get(0);
         receiveDescription = generateOutputProof(receive, ctx).getInstance();
         builder.addReceiveDescription(receiveDescription);
-        mergedBytes = ByteUtil.merge(shieldedTRC20Address, ByteArray
-                .fromLong(transparentFromAmount),
+        mergedBytes = ByteUtil.merge(shieldedTRC20Address,
+            ByteArray.fromLong(receive.getNote().getValue()),
             encodeReceiveDescriptionWithoutC(receiveDescription),
             encodeCencCout(receiveDescription));
         value = transparentFromAmount;
@@ -271,7 +272,8 @@ public class ShieldedTRC20ParametersBuilder {
         builder.addSpendDescription(spendDescription);
         mergedBytes = ByteUtil.merge(shieldedTRC20Address,
             encodeSpendDescriptionWithoutSpendAuthSig(spendDescription),
-            transparentToAddress, ByteArray.fromLong(transparentToAmount));
+            transparentToAddress,
+            ByteArray.fromLong(spend.note.getValue()));
         value = transparentToAmount;
         builder.setParameterType("burn");
         break;
@@ -308,8 +310,9 @@ public class ShieldedTRC20ParametersBuilder {
   }
 
   public String getTriggerContractInput(ShieldedTRC20Parameters shieldedTRC20Parameters,
-      List<BytesMessage> spendAuthoritySignature,
-      long value, boolean withAsk, byte[] transparentToAddress) {
+                                        List<BytesMessage> spendAuthoritySignature,
+                                        BigInteger value, boolean withAsk,
+                                        byte[] transparentToAddress) {
     switch (shieldedTRC20ParametersType) {
       case MINT:
         return mintParamsToHexString(shieldedTRC20Parameters, value);
@@ -323,14 +326,15 @@ public class ShieldedTRC20ParametersBuilder {
     }
   }
 
-  private String mintParamsToHexString(GrpcAPI.ShieldedTRC20Parameters mintParams, long value) {
+  private String mintParamsToHexString(GrpcAPI.ShieldedTRC20Parameters mintParams,
+                                       BigInteger value) {
     byte[] mergedBytes;
-    if (value < 0) {
+    if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("require the value be positive");
     }
     ShieldContract.ReceiveDescription revDesc = mintParams.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
-        ByteUtil.longTo32Bytes(value),
+        ByteUtil.bigIntegerToBytes(value, 32),
         revDesc.getNoteCommitment().toByteArray(),
         revDesc.getValueCommitment().toByteArray(),
         revDesc.getEpk().toByteArray(),
@@ -418,12 +422,13 @@ public class ShieldedTRC20ParametersBuilder {
   }
 
   private String burnParamsToHexString(GrpcAPI.ShieldedTRC20Parameters burnParams,
-      List<BytesMessage> spendAuthoritySignature, long value,
-      byte[] transparentToAddress, boolean withAsk) {
+                                       List<BytesMessage> spendAuthoritySignature,
+                                       BigInteger value, byte[] transparentToAddress,
+                                       boolean withAsk) {
     byte[] payTo = new byte[32];
     byte[] spendAuthSign = new byte[0];
-    if (value < 0) {
-      throw new IllegalArgumentException("require the value be positive");
+    if (value.compareTo(BigInteger.ZERO) <= 0) {
+      throw new IllegalArgumentException("the value must be non-negative");
     }
     if (ArrayUtils.isEmpty(transparentToAddress)) {
       throw new IllegalArgumentException("the transparent payTo address is null");
@@ -443,7 +448,7 @@ public class ShieldedTRC20ParametersBuilder {
         spendDesc.getRk().toByteArray(),
         spendDesc.getZkproof().toByteArray(),
         spendAuthSign,
-        ByteUtil.longTo32Bytes(value),
+        ByteUtil.bigIntegerToBytes(value, 32),
         burnParams.getBindingSignature().toByteArray(),
         payTo
     ));

@@ -5,6 +5,7 @@ import static org.tron.core.zksnark.LibrustzcashTest.librustzcashInitZksnarkPara
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -55,10 +56,12 @@ public class ShieldedTRC20ContractTest {
   private static WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private static String fullnode = "127.0.0.1:50051";
   private static String soliditynode = "127.0.0.1:50061";
-  private String trc20ContractAddress = "TX89RWqH3gX3m5wvZvSDaedyLBF4SzZqy5";
-  private String shieldedTRC20ContractAddress = "TB8MuSWh979b4donqWUZtFJ4aYAemZ1R6U";
-  private String privateKey = "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD812";
-  private String pubAddress = "TFsrP7YcSSRwHzLPwaCnXyTKagHs8rXKNJ";
+  private static String trc20ContractAddress = "TLaLZbfRW6QcVc8AGTxNDx3tvfoA4EP8AZ";
+  private static String shieldedTRC20ContractAddress = "THFeFdN7eMrAFaytvxMjMPiF7jksyw9eST";
+  private static String privateKey =
+      "650950B193DDDDB35B6E48912DD28F7AB0E7140C1BFDEFD493348F02295BD810";
+  private static String pubAddress = "TBaBXpRAeBhs75TZT751LwyhrcR25XeUot";
+  private static BigInteger scalingFactorBi;
 
   @BeforeClass
   public static void beforeClass() {
@@ -71,6 +74,7 @@ public class ShieldedTRC20ContractTest {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     Args.getInstance().setFullNodeAllowShieldedTRC20TransactionArgs(true);
     Wallet.setAddressPreFixByte(Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    scalingFactorBi = getScalingFactorBi();
   }
 
   @AfterClass
@@ -128,7 +132,7 @@ public class ShieldedTRC20ContractTest {
     byte[] shieldedContractAddressPadding = new byte[32];
     System.arraycopy(shieldedContractAddress, 0, shieldedContractAddressPadding, 11, 21);
     logger.info("shielded contract addr " + ByteArray.toHexString(shieldedContractAddressPadding));
-    byte[] valueBytes = longTo32Bytes(100_000L);
+    byte[] valueBytes = longTo32Bytes(100_000_000_000L);
     String input = Hex.toHexString(ByteUtil.merge(shieldedContractAddressPadding, valueBytes));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     byte[] callerAddress = WalletClient.decodeFromBase58Check(pubAddress);
@@ -174,7 +178,7 @@ public class ShieldedTRC20ContractTest {
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder paramBuilder = GrpcAPI
         .PrivateShieldedTRC20Parameters.newBuilder();
     paramBuilder.setOvk(ByteString.copyFrom(ovk));
-    paramBuilder.setFromAmount(fromAmount);
+    paramBuilder.setFromAmount(getScaledPublicAmount(fromAmount));
     paramBuilder.addShieldedReceives(revNoteBuilder.build());
     paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
 
@@ -182,7 +186,7 @@ public class ShieldedTRC20ContractTest {
         .createShieldedContractParameters(paramBuilder.build());
     GrpcAPI.PrivateShieldedTRC20Parameters trc20Params = paramBuilder.build();
     logger.info(Hex.toHexString(trc20Params.getOvk().toByteArray()));
-    logger.info(String.valueOf(trc20Params.getFromAmount()));
+    logger.info(trc20Params.getFromAmount());
     logger.info(String.valueOf(trc20Params.getShieldedReceives(0).getNote().getValue()));
     logger.info(trc20Params.getShieldedReceives(0).getNote().getPaymentAddress());
     logger.info(Hex.toHexString(
@@ -234,7 +238,7 @@ public class ShieldedTRC20ContractTest {
         privateKey, 60, shieldedTRC20ContractAddress);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(
         mintPrivateParam1);
-    String mintInput1 = mintParamsToHexString(mintParam1, 60);
+    String mintInput1 = mintParam1.getTriggerContractInput();
     String txid1 = triggerMint(
         blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............mint result...........");
@@ -303,7 +307,7 @@ public class ShieldedTRC20ContractTest {
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(
         mintPrivateParam1);
 
-    String mintInput1 = mintParamsToHexString(mintParam1, 100);
+    String mintInput1 = mintParam1.getTriggerContractInput();
     String txid1 = triggerMint(
         blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............mint result...........");
@@ -389,8 +393,8 @@ public class ShieldedTRC20ContractTest {
     GrpcAPI.ShieldedTRC20Parameters mintParam2 = blockingStubFull.createShieldedContractParameters(
         mintPrivateParam2);
 
-    String mintInput1 = mintParamsToHexString(mintParam1, 60);
-    String mintInput2 = mintParamsToHexString(mintParam2, 40);
+    String mintInput1 = mintParam1.getTriggerContractInput();
+    String mintInput2 = mintParam2.getTriggerContractInput();
     String txid1 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey,
         mintInput1);
     String txid2 = triggerMint(blockingStubFull, contractAddress, callerAddress, privateKey,
@@ -484,8 +488,8 @@ public class ShieldedTRC20ContractTest {
     GrpcAPI.ShieldedTRC20Parameters mintParam2 = blockingStubFull.createShieldedContractParameters(
         mintPrivateParam2);
 
-    String mintInput1 = mintParamsToHexString(mintParam1, 60);
-    String mintInput2 = mintParamsToHexString(mintParam2, 40);
+    String mintInput1 = mintParam1.getTriggerContractInput();
+    String mintInput2 = mintParam2.getTriggerContractInput();
     String txid1 = triggerMint(
         blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     String txid2 = triggerMint(
@@ -590,7 +594,7 @@ public class ShieldedTRC20ContractTest {
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull.createShieldedContractParameters(
         mintPrivateParam1);
     long value = 60;
-    String mintInput1 = mintParamsToHexString(mintParam1, value);
+    String mintInput1 = mintParam1.getTriggerContractInput();
     String txid1 = triggerMint(
         blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............result...........");
@@ -620,7 +624,8 @@ public class ShieldedTRC20ContractTest {
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
-    privateTRC20Builder.setToAmount(60);
+    BigInteger toAmount = BigInteger.valueOf(60).multiply(scalingFactorBi);
+    privateTRC20Builder.setToAmount(toAmount.toString());
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     GrpcAPI.ShieldedTRC20Parameters burnParam = blockingStubFull
@@ -712,7 +717,8 @@ public class ShieldedTRC20ContractTest {
     GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk.Builder paramBuilder = GrpcAPI
         .PrivateShieldedTRC20ParametersWithoutAsk.newBuilder();
     paramBuilder.setOvk(ByteString.copyFrom(ovk));
-    paramBuilder.setFromAmount(revValue);
+    BigInteger fromAmount = BigInteger.valueOf(revValue).multiply(scalingFactorBi);
+    paramBuilder.setFromAmount(fromAmount.toString());
     paramBuilder.addShieldedReceives(revNoteBuilder.build());
     paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     GrpcAPI.ShieldedTRC20Parameters trc20MintParams = blockingStubFull
@@ -770,7 +776,8 @@ public class ShieldedTRC20ContractTest {
         ShieldedTRC20TriggerContractParameters
             .newBuilder();
     triggerParam.setShieldedTRC20Parameters(trc20MintParams);
-    triggerParam.setAmount(revValue);
+    BigInteger amount = BigInteger.valueOf(revValue).multiply(scalingFactorBi);
+    triggerParam.setAmount(amount.toString());
     BytesMessage triggerInput = blockingStubFull
         .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
     Assert.assertArrayEquals(triggerInput.getValue().toByteArray(),
@@ -794,7 +801,7 @@ public class ShieldedTRC20ContractTest {
         privateKey, 60, shieldedTRC20ContractAddress);
     GrpcAPI.ShieldedTRC20Parameters mintParam1 = blockingStubFull
         .createShieldedContractParameters(mintPrivateParam1);
-    String mintInput1 = mintParamsToHexString(mintParam1, 60);
+    String mintInput1 = mintParam1.getTriggerContractInput();
     String txid1 = triggerMint(
         blockingStubFull, contractAddress, callerAddress, privateKey, mintInput1);
     logger.info("..............result...........");
@@ -1297,7 +1304,8 @@ public class ShieldedTRC20ContractTest {
     FullViewingKey fvk = expsk.fullViewingKey();
     privateTRC20Builder.setAk(ByteString.copyFrom(fvk.getAk()));
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
-    privateTRC20Builder.setToAmount(60);
+    BigInteger toAmount = BigInteger.valueOf(value).multiply(scalingFactorBi);
+    privateTRC20Builder.setToAmount(toAmount.toString());
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     GrpcAPI.ShieldedTRC20Parameters transferParam = blockingStubFull
@@ -1342,7 +1350,7 @@ public class ShieldedTRC20ContractTest {
             .newBuilder();
     triggerParam.setShieldedTRC20Parameters(transferParam);
     triggerParam.addSpendAuthoritySignature(signMsg);
-    triggerParam.setAmount(value);
+    triggerParam.setAmount(toAmount.toString());
     triggerParam.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     BytesMessage triggerInput = blockingStubFull
         .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
@@ -1524,7 +1532,8 @@ public class ShieldedTRC20ContractTest {
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
     privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
-    privateTRC20Builder.setToAmount(60);
+    BigInteger toAmount = BigInteger.valueOf(value).multiply(scalingFactorBi);
+    privateTRC20Builder.setToAmount(toAmount.toString());
     privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(callerAddress));
     privateTRC20Builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     GrpcAPI.ShieldedTRC20Parameters burnParam = blockingStubFull
@@ -1701,7 +1710,7 @@ public class ShieldedTRC20ContractTest {
     byte[] mergedBytes;
     ShieldContract.ReceiveDescription revDesc = mintParams.getReceiveDescription(0);
     mergedBytes = ByteUtil.merge(
-        longTo32Bytes(value),
+        ByteUtil.bigIntegerToBytes(BigInteger.valueOf(value).multiply(scalingFactorBi), 32),
         revDesc.getNoteCommitment().toByteArray(),
         revDesc.getValueCommitment().toByteArray(),
         revDesc.getEpk().toByteArray(),
@@ -1718,7 +1727,7 @@ public class ShieldedTRC20ContractTest {
                              byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
-        "mint(uint64,bytes32[9],bytes32[2],bytes32[21])",
+        "mint(uint256,bytes32[9],bytes32[2],bytes32[21])",
         input,
         true,
         0L, 1000000000L,
@@ -1738,7 +1747,7 @@ public class ShieldedTRC20ContractTest {
                                                             long value, String contractAddr)
       throws ZksnarkException, ContractValidateException {
     librustzcashInitZksnarkParams();
-    long fromAmount = value;
+    BigInteger fromAmount = BigInteger.valueOf(value).multiply(scalingFactorBi);
     SpendingKey sk = SpendingKey.decode(privKey);
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     byte[] ask = expsk.getAsk();
@@ -1763,7 +1772,7 @@ public class ShieldedTRC20ContractTest {
     paramBuilder.setAsk(ByteString.copyFrom(ask));
     paramBuilder.setNsk(ByteString.copyFrom(nsk));
     paramBuilder.setOvk(ByteString.copyFrom(ovk));
-    paramBuilder.setFromAmount(fromAmount);
+    paramBuilder.setFromAmount(fromAmount.toString());
     paramBuilder.addShieldedReceives(revNoteBuilder.build());
     paramBuilder.setShieldedTRC20ContractAddress(ByteString.copyFrom(contractAddress));
     return paramBuilder.build();
@@ -1874,7 +1883,7 @@ public class ShieldedTRC20ContractTest {
                              byte[] callerAddress, String privateKey, String input) {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = PublicMethed.triggerContract(contractAddress,
-        "burn(bytes32[10],bytes32[2],uint64,bytes32[2],address)",
+        "burn(bytes32[10],bytes32[2],uint256,bytes32[2],address)",
         input,
         true,
         0L, 1000000000L,
@@ -1909,6 +1918,39 @@ public class ShieldedTRC20ContractTest {
     );
     logger.info("merged bytes: " + ByteArray.toHexString(mergedBytes));
     return Hex.toHexString(mergedBytes);
+  }
+
+  private String getScaledPublicAmount(long amount) {
+    BigInteger result = BigInteger.valueOf(amount).multiply(scalingFactorBi);
+    return result.toString();
+  }
+
+  private static BigInteger getScalingFactorBi() {
+    byte[] contractAddress = WalletClient
+        .decodeFromBase58Check(shieldedTRC20ContractAddress);
+    byte[] scalingFactorBytes = triggerGetScalingFactor(blockingStubFull, contractAddress);
+    return ByteUtil.bytesToBigInteger(scalingFactorBytes);
+  }
+
+  private static byte[] triggerGetScalingFactor(WalletGrpc.WalletBlockingStub blockingStubFull,
+                                byte[] contractAddress) {
+    String methodSign = "scalingFactor()";
+    byte[] selector = new byte[4];
+    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
+    SmartContractOuterClass.TriggerSmartContract.Builder triggerBuilder = SmartContractOuterClass
+        .TriggerSmartContract.newBuilder();
+    triggerBuilder.setContractAddress(ByteString.copyFrom(contractAddress));
+    triggerBuilder.setData(ByteString.copyFrom(selector));
+    GrpcAPI.TransactionExtention trxExt2 = blockingStubFull.triggerConstantContract(
+        triggerBuilder.build());
+    List<ByteString> list = trxExt2.getConstantResultList();
+    byte[] result = new byte[0];
+    for (ByteString bs : list) {
+      result = ByteUtil.merge(result, bs.toByteArray());
+    }
+    Assert.assertEquals(32, result.length);
+    System.out.println(ByteArray.toHexString(result));
+    return result;
   }
 
   private byte[] longTo32Bytes(long value) {

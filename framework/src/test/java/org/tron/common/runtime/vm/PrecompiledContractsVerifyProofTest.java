@@ -2,6 +2,7 @@ package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -101,7 +102,7 @@ public class PrecompiledContractsVerifyProofTest {
 
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
-      builder.setTransparentToAmount(value);
+      builder.setTransparentFromAmount(BigInteger.valueOf(value));
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
 
@@ -156,7 +157,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -183,7 +184,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -213,8 +214,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -311,7 +312,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(100);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -340,8 +341,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             100, rcm1, new byte[512]);
@@ -416,7 +417,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(100);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(100));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -445,8 +446,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             100, rcm1, new byte[512]);
@@ -535,7 +536,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -562,7 +563,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -592,8 +593,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -681,7 +682,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
-        mintBuilder.setTransparentToAmount(value);
+        mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder.addOutput(DEFAULT_OVK, senderPaymentAddress.getD(),
@@ -710,7 +711,7 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentToAmount(value);
+        builder.setTransparentToAmount(BigInteger.valueOf(value));
         builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
         //spendNote1
         Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
@@ -825,7 +826,7 @@ public class PrecompiledContractsVerifyProofTest {
     byte[] frontier = new byte[32 * 33];
 
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
-    builder.setTransparentToAmount(value);
+    builder.setTransparentFromAmount(BigInteger.valueOf(value));
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
 
@@ -865,8 +866,8 @@ public class PrecompiledContractsVerifyProofTest {
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-    builder.setTransparentFromAmount(0);
-    builder.setTransparentToAmount(0);
+    builder.setTransparentFromAmount(BigInteger.ZERO);
+    builder.setTransparentToAmount(BigInteger.ZERO);
 
     IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
         new IncrementalMerkleTreeCapsule());
@@ -929,7 +930,7 @@ public class PrecompiledContractsVerifyProofTest {
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-    builder.setTransparentToAmount(value);
+    builder.setTransparentToAmount(BigInteger.valueOf(value));
     builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
     //spendNote
     Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
@@ -961,7 +962,7 @@ public class PrecompiledContractsVerifyProofTest {
 
     for (long leafCount : leafCountList) {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
-      builder.setTransparentToAmount(value);
+      builder.setTransparentFromAmount(BigInteger.valueOf(value));
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
 
@@ -1002,8 +1003,8 @@ public class PrecompiledContractsVerifyProofTest {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-      builder.setTransparentFromAmount(0);
-      builder.setTransparentToAmount(0);
+      builder.setTransparentFromAmount(BigInteger.ZERO);
+      builder.setTransparentToAmount(BigInteger.ZERO);
       IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
           new IncrementalMerkleTreeCapsule());
       //spendNote1
@@ -1068,8 +1069,8 @@ public class PrecompiledContractsVerifyProofTest {
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-    builder.setTransparentFromAmount(0);
-    builder.setTransparentToAmount(0);
+    builder.setTransparentFromAmount(BigInteger.ZERO);
+    builder.setTransparentToAmount(BigInteger.ZERO);
 
     IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
         new IncrementalMerkleTreeCapsule());
@@ -1127,8 +1128,8 @@ public class PrecompiledContractsVerifyProofTest {
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-    builder.setTransparentFromAmount(0);
-    builder.setTransparentToAmount(0);
+    builder.setTransparentFromAmount(BigInteger.ZERO);
+    builder.setTransparentToAmount(BigInteger.ZERO);
 
     IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
         new IncrementalMerkleTreeCapsule());
@@ -1178,11 +1179,11 @@ public class PrecompiledContractsVerifyProofTest {
   public void verifyMintWrongValue() throws ZksnarkException {
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
-    long[] valueList = {0, 1000, -1};
+    long[] negativeValueList = {100, 1000};
 
-    for (long value : valueList) {
+    for (long value : negativeValueList) {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
-      builder.setTransparentToAmount(value);
+      builder.setTransparentFromAmount(BigInteger.valueOf(value));
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
 
@@ -1217,7 +1218,7 @@ public class PrecompiledContractsVerifyProofTest {
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
     builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-    builder.setTransparentToAmount(value);
+    builder.setTransparentToAmount(BigInteger.valueOf(value));
     builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
     //spendNote
     Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
@@ -1249,7 +1250,7 @@ public class PrecompiledContractsVerifyProofTest {
 
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
-      builder.setTransparentToAmount(value);
+      builder.setTransparentFromAmount(BigInteger.valueOf(value));
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
 
@@ -1279,7 +1280,7 @@ public class PrecompiledContractsVerifyProofTest {
 
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
-      builder.setTransparentToAmount(value);
+      builder.setTransparentFromAmount(BigInteger.valueOf(value));
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
 
@@ -1308,7 +1309,7 @@ public class PrecompiledContractsVerifyProofTest {
 
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
-      builder.setTransparentToAmount(value);
+      builder.setTransparentFromAmount(BigInteger.valueOf(value));
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
 
@@ -1337,7 +1338,7 @@ public class PrecompiledContractsVerifyProofTest {
 
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
-      builder.setTransparentToAmount(value);
+      builder.setTransparentFromAmount(BigInteger.valueOf(value));
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
 
@@ -1366,7 +1367,7 @@ public class PrecompiledContractsVerifyProofTest {
 
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
-      builder.setTransparentToAmount(value);
+      builder.setTransparentFromAmount(BigInteger.valueOf(value));
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
 
@@ -1395,7 +1396,7 @@ public class PrecompiledContractsVerifyProofTest {
 
     for (int countNum = 0; countNum < totalCountNum; countNum++) {
       ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
-      builder.setTransparentToAmount(value);
+      builder.setTransparentFromAmount(BigInteger.valueOf(value));
       builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
       builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
 
@@ -1438,7 +1439,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -1464,7 +1465,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -1493,8 +1494,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -1564,7 +1565,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -1590,7 +1591,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -1619,8 +1620,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -1691,7 +1692,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -1717,7 +1718,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -1746,8 +1747,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -1817,7 +1818,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -1843,7 +1844,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -1872,8 +1873,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -1943,7 +1944,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -1969,7 +1970,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -1998,8 +1999,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -2069,7 +2070,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -2095,7 +2096,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -2124,8 +2125,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -2195,7 +2196,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -2221,7 +2222,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -2250,8 +2251,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -2321,7 +2322,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -2347,7 +2348,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -2376,8 +2377,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -2447,7 +2448,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -2473,7 +2474,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -2502,8 +2503,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -2573,7 +2574,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -2599,7 +2600,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -2628,8 +2629,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -2699,7 +2700,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint1
         ShieldedTRC20ParametersBuilder mintBuilder1 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder1.setTransparentToAmount(30);
+        mintBuilder1.setTransparentFromAmount(BigInteger.valueOf(30));
         mintBuilder1.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder1.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder1.addOutput(DEFAULT_OVK, senderPaymentAddress1.getD(),
@@ -2725,7 +2726,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint2
         ShieldedTRC20ParametersBuilder mintBuilder2 = new ShieldedTRC20ParametersBuilder();
-        mintBuilder2.setTransparentToAmount(70);
+        mintBuilder2.setTransparentFromAmount(BigInteger.valueOf(70));
         mintBuilder2.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder2.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder2.addOutput(DEFAULT_OVK, senderPaymentAddress2.getD(),
@@ -2754,8 +2755,8 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.TRANSFER);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentFromAmount(0);
-        builder.setTransparentToAmount(0);
+        builder.setTransparentFromAmount(BigInteger.ZERO);
+        builder.setTransparentToAmount(BigInteger.ZERO);
         //spendNote1
         Note senderNote1 = new Note(senderPaymentAddress1.getD(), senderPaymentAddress1.getPkD(),
             30, rcm1, new byte[512]);
@@ -2823,7 +2824,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
-        mintBuilder.setTransparentToAmount(value);
+        mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder.addOutput(DEFAULT_OVK, senderPaymentAddress.getD(),
@@ -2851,7 +2852,7 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentToAmount(value);
+        builder.setTransparentToAmount(BigInteger.valueOf(value));
         builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
         //spendNote1
         Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
@@ -2894,7 +2895,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
-        mintBuilder.setTransparentToAmount(value);
+        mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder.addOutput(DEFAULT_OVK, senderPaymentAddress.getD(),
@@ -2922,7 +2923,7 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentToAmount(value);
+        builder.setTransparentToAmount(BigInteger.valueOf(value));
         builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
         //spendNote1
         Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
@@ -2966,7 +2967,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
-        mintBuilder.setTransparentToAmount(value);
+        mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder.addOutput(DEFAULT_OVK, senderPaymentAddress.getD(),
@@ -2994,7 +2995,7 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentToAmount(value);
+        builder.setTransparentToAmount(BigInteger.valueOf(value));
         builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
         //spendNote1
         Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
@@ -3037,7 +3038,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
-        mintBuilder.setTransparentToAmount(value);
+        mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder.addOutput(DEFAULT_OVK, senderPaymentAddress.getD(),
@@ -3065,7 +3066,7 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentToAmount(value);
+        builder.setTransparentToAmount(BigInteger.valueOf(value));
         builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
         //spendNote1
         Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
@@ -3108,7 +3109,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
-        mintBuilder.setTransparentToAmount(value);
+        mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder.addOutput(DEFAULT_OVK, senderPaymentAddress.getD(),
@@ -3136,7 +3137,7 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentToAmount(value);
+        builder.setTransparentToAmount(BigInteger.valueOf(value));
         builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
         //spendNote1
         Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
@@ -3179,7 +3180,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
-        mintBuilder.setTransparentToAmount(value);
+        mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder.addOutput(DEFAULT_OVK, senderPaymentAddress.getD(),
@@ -3207,7 +3208,7 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentToAmount(value);
+        builder.setTransparentToAmount(BigInteger.valueOf(value));
         builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
         //spendNote1
         Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
@@ -3250,7 +3251,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
-        mintBuilder.setTransparentToAmount(value);
+        mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder.addOutput(DEFAULT_OVK, senderPaymentAddress.getD(),
@@ -3278,7 +3279,7 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentToAmount(value);
+        builder.setTransparentToAmount(BigInteger.valueOf(value));
         builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
         //spendNote1
         Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
@@ -3321,7 +3322,7 @@ public class PrecompiledContractsVerifyProofTest {
 
       {//for mint
         ShieldedTRC20ParametersBuilder mintBuilder = new ShieldedTRC20ParametersBuilder();
-        mintBuilder.setTransparentToAmount(value);
+        mintBuilder.setTransparentFromAmount(BigInteger.valueOf(value));
         mintBuilder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
         mintBuilder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.MINT);
         mintBuilder.addOutput(DEFAULT_OVK, senderPaymentAddress.getD(),
@@ -3349,7 +3350,7 @@ public class PrecompiledContractsVerifyProofTest {
         ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
         builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
         builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
-        builder.setTransparentToAmount(value);
+        builder.setTransparentToAmount(BigInteger.valueOf(value));
         builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
         //spendNote1
         Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),

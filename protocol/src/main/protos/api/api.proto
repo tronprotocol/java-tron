@@ -1353,11 +1353,11 @@ message PrivateShieldedTRC20Parameters {
   bytes ask = 1;
   bytes nsk = 2;
   bytes ovk = 3;
-  int64 from_amount = 4;
+  string from_amount = 4;
   repeated SpendNoteTRC20 shielded_spends = 5;
   repeated ReceiveNote shielded_receives = 6;
   bytes transparent_to_address = 7;
-  int64 to_amount = 8;
+  string to_amount = 8;
   bytes shielded_TRC20_contract_address = 9;
 }
 
@@ -1365,11 +1365,11 @@ message PrivateShieldedTRC20ParametersWithoutAsk {
   bytes ak = 1;
   bytes nsk = 2;
   bytes ovk = 3;
-  int64 from_amount = 4;
+  string from_amount = 4;
   repeated SpendNoteTRC20 shielded_spends = 5;
   repeated ReceiveNote shielded_receives = 6;
   bytes transparent_to_address = 7;
-  int64 to_amount = 8;
+  string to_amount = 8;
   bytes shielded_TRC20_contract_address = 9;
 }
 
@@ -1424,6 +1424,6 @@ message NullifierResult {
 message ShieldedTRC20TriggerContractParameters {
   ShieldedTRC20Parameters shielded_TRC20_Parameters = 1;
   repeated BytesMessage spend_authority_signature = 2;
-  int64 amount = 3;
+  string amount = 3;
   bytes transparent_to_address = 4;
 }
