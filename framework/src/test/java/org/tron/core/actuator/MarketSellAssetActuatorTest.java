@@ -1969,7 +1969,7 @@ public class MarketSellAssetActuatorTest {
     // Initialize the order book
 
     // at least limit+1 times
-    for (int i = start; i <= limit; i += step) {
+    for (int i = start; i <= end; i += step) {
       addOrder(buyTokenId, (long) start, sellTokenId, i, OWNER_ADDRESS_SECOND);
     }
 
@@ -1984,7 +1984,7 @@ public class MarketSellAssetActuatorTest {
       TransactionResultCapsule ret = new TransactionResultCapsule();
       actuator.validate();
       actuator.execute(ret);
-      // fail(errorMessage);
+      fail(errorMessage);
     } catch (ContractExeException e) {
       Assert.assertEquals(errorMessage, e.getMessage());
     } catch (Exception e) {
