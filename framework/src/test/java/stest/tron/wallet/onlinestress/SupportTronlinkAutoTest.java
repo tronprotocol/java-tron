@@ -19,9 +19,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.WitnessContract;
-import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
@@ -81,12 +79,10 @@ public class SupportTronlinkAutoTest {
       manager1Address = ecKey1.getAddress();
       manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-
       ecKey3 = new ECKey(Utils.getRandom());
       ownerAddress = ecKey3.getAddress();
       ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
       //PublicMethed.printAddress(ownerKey);
-
 
       PublicMethed.sendcoin(ownerAddress, 200000000000L, fromAddress, testKey002,
           blockingStubFull);
@@ -117,7 +113,7 @@ public class SupportTronlinkAutoTest {
       System.out.println("owner" + i + " --------------------------------------------------------");
       PublicMethed.printAddress(ownerKey);
       System.out.println("mutli sig address for owner "
-          + i  + " ----------------------------------");
+          + i + " ----------------------------------");
       PublicMethed.printAddress(manager1Key);
       System.out.println("-------------------------------"
           + "-----------------------------------------");
@@ -138,7 +134,6 @@ public class SupportTronlinkAutoTest {
       ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
       //PublicMethed.printAddress(ownerKey);
 
-
       PublicMethed.sendcoin(ownerAddress, 50000000000L, fromAddress, testKey002,
           blockingStubFull);
 
@@ -146,7 +141,7 @@ public class SupportTronlinkAutoTest {
 
       String createWitnessUrl = "IOS-UI-Witness-00" + i;
       byte[] createUrl = createWitnessUrl.getBytes();
-      createWitness(ownerAddress,createUrl,ownerKey);
+      createWitness(ownerAddress, createUrl, ownerKey);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       System.out.println("witness " + i + " -----------------------------"
           + "---------------------------");
@@ -163,7 +158,7 @@ public class SupportTronlinkAutoTest {
 
   @Test(enabled = true, threadPoolSize = 1, invocationCount = 1)
   public void test03MutiSignForAccount() {
-    HashMap<String,String> muti = new HashMap();
+    HashMap<String, String> muti = new HashMap();
     muti.put("9a2ba173645be8d37a82084f984ba873fbcf817b589c62a59b3ba1494c3406e0",
         "cefba96470224724bde255f3402fca3d67b6c7c5d34deb7a8524c9482c58fe8b");
     muti.put("36f5430b4003f41ee8969421d9366ab1414e62111aec07a73d06eefcda8aad14",
@@ -247,7 +242,7 @@ public class SupportTronlinkAutoTest {
       System.out.println("owner " + i++ + " -----------------"
           + "---------------------------------------");
       PublicMethed.printAddress(ownerKey);
-      System.out.println("mutli sig address for owner " + i++  + " ------------"
+      System.out.println("mutli sig address for owner " + i++ + " ------------"
           + "----------------------");
       PublicMethed.printAddress(manager1Key);
       System.out.println("-----------------------------------"
@@ -285,7 +280,7 @@ public class SupportTronlinkAutoTest {
 
       String createWitnessUrl = "IOS-UI-Witness-00" + i++;
       byte[] createUrl = createWitnessUrl.getBytes();
-      createWitness(ownerAddress,createUrl,ownerKey);
+      createWitness(ownerAddress, createUrl, ownerKey);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       PublicMethed.printAddress(ownerKey);
       System.out.println("witness url is : " + createWitnessUrl);
@@ -295,10 +290,6 @@ public class SupportTronlinkAutoTest {
 
 
   }
-
-
-
-
 
 
   @Test(enabled = true, threadPoolSize = 1, invocationCount = 1)
@@ -332,12 +323,13 @@ public class SupportTronlinkAutoTest {
           + "\"" + ", 20000000000";
       System.out.println(triggerString);
       //dapp chain trc20 tract TXkdXbzjoLpxGAD2strP1zwjJzR6osNfD7
-      byte[] contractAddress =  PublicMethed.decode58Check("TXkdXbzjoLpxGAD2strP1zwjJzR6osNfD7");
+      byte[] contractAddress = PublicMethed.decode58Check("TXkdXbzjoLpxGAD2strP1zwjJzR6osNfD7");
       //main chain TRC 20 contract TCCcBZEdTHmS1NfFtCYfwpjBKeTv515n71
       //byte[] contractAddress =  PublicMethed.decode58Check("TCCcBZEdTHmS1NfFtCYfwpjBKeTv515n71");
 
-      PublicMethed.triggerContract(contractAddress,"transfer(address,uint256)",triggerString,false,
-          0,1000000000,"0",0,fromAddress,testKey002,blockingStubFull);
+      PublicMethed
+          .triggerContract(contractAddress, "transfer(address,uint256)", triggerString, false,
+              0, 1000000000, "0", 0, fromAddress, testKey002, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
 
 
@@ -345,11 +337,6 @@ public class SupportTronlinkAutoTest {
 
 
   }
-
-
-
-
-
 
 
   /**

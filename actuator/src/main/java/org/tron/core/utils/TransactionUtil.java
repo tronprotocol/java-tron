@@ -58,16 +58,22 @@ public class TransactionUtil {
   private static final int minAccountIdLen = 8;
   private static final int maxAssetNameLen = 32;
   private static final int maxTokenAbbrNameLen = 5;
+  private static final int maxAssetDescriptionLen = 200;
+  private static final int maxUrlLen = 256;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
 
   public static boolean validAccountName(byte[] accountName) {
-    if (ArrayUtils.isEmpty(accountName)) {
-      return true;   //account name can be empty
-    }
+    return validBytes(accountName, maxAccountNameLen, true);
+  }
 
-    return accountName.length <= maxAccountNameLen;
+  public static boolean validAssetDescription(byte[] description) {
+    return validBytes(description, maxAssetDescriptionLen, true);
+  }
+
+  public static boolean validUrl(byte[] url) {
+    return validBytes(url, maxUrlLen, false);
   }
 
   public static boolean validAccountId(byte[] accountId) {
@@ -80,6 +86,13 @@ public class TransactionUtil {
 
   public static boolean validTokenAbbrName(byte[] abbrName) {
     return validReadableBytes(abbrName, maxTokenAbbrNameLen);
+  }
+
+  private static boolean validBytes(byte[] bytes, int maxLength, boolean allowEmpty) {
+    if (ArrayUtils.isEmpty(bytes)) {
+      return allowEmpty;
+    }
+    return bytes.length <= maxLength;
   }
 
   private static boolean validReadableBytes(byte[] bytes, int maxLength) {
@@ -96,21 +109,6 @@ public class TransactionUtil {
       }
     }
     return true;
-  }
-
-  public static boolean validAssetDescription(byte[] description) {
-    if (ArrayUtils.isEmpty(description)) {
-      return true;   //description can empty
-    }
-
-    return description.length <= 200;
-  }
-
-  public static boolean validUrl(byte[] url) {
-    if (ArrayUtils.isEmpty(url)) {
-      return false;
-    }
-    return url.length <= 256;
   }
 
   public static boolean isNumber(byte[] id) {
