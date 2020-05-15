@@ -35,8 +35,6 @@ public class MarketPairPriceToOrderStoreTest {
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  // MarketPairPriceToOrderStore store;
-
   /**
    * Init data.
    */
@@ -56,13 +54,6 @@ public class MarketPairPriceToOrderStoreTest {
     }
   }
 
-  // @Before
-  // public void initDb() {
-  //   // this.store = context.getBean(MarketPairPriceToOrderStore.class);
-  //   ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
-  //   this.store = chainBaseManager.getMarketPairPriceToOrderStore();
-  // }
-
   @After
   public void cleanDb() {
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
@@ -77,6 +68,10 @@ public class MarketPairPriceToOrderStoreTest {
     marketPairToPriceStore.forEach(
         entry -> marketPairToPriceStore.delete(entry.getKey())
     );
+  }
+
+  private static int randomInt(int minInt, int maxInt) {
+    return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
 
   @Test
@@ -762,6 +757,51 @@ public class MarketPairPriceToOrderStoreTest {
     Assert.assertEquals(3, MarketUtils.findGCD(3, 15));
     Assert.assertEquals(1, MarketUtils.findGCD(13, 15));
     Assert.assertEquals(9, MarketUtils.findGCD(27, 9));
+  }
+
+  private boolean randomOp() {
+    int i = randomInt(0, 999999);
+    return i % 2 == 0;
+  }
+
+  /**
+   * From this test we know that, if we use getKeysNext to get the priceKey list of one token pair,
+   * we should know the count of priceKey previously.
+   * */
+  @Test
+  public void testGetKeysNextNotExitsWithRandom() {
+    int maxInt = 99999999;
+    ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
+    MarketPairPriceToOrderStore marketPairPriceToOrderStore = chainBaseManager
+        .getMarketPairPriceToOrderStore();
+
+    int sellToken = randomInt(100, 9999);
+    int buyToken = randomInt(10000, 9999999);
+
+    for (int i = 0; i < 1000; i++) {
+      int randomSellToken =
+          randomOp() ? sellToken + randomInt(1, maxInt) : sellToken - randomInt(1, sellToken - 1);
+      int randomBuyToken =
+          randomOp() ? buyToken + randomInt(1, maxInt) : buyToken - randomInt(1, buyToken - 1);
+      byte[] pairPriceKey = MarketUtils.createPairPriceKeyNoGCD(
+          ByteArray.fromString(String.valueOf(randomSellToken)),
+          ByteArray.fromString(String.valueOf(randomBuyToken)),
+          randomInt(1, 999999),
+          randomInt(1, 999999)
+      );
+      MarketOrderIdListCapsule capsule = new MarketOrderIdListCapsule(
+          ByteArray.fromLong(randomInt(1, 999999)),
+          ByteArray.fromLong(randomInt(1, 999999)));
+
+      marketPairPriceToOrderStore.put(pairPriceKey, capsule);
+    }
+
+    byte[] sellTokenId = ByteArray.fromString(String.valueOf(sellToken));
+    byte[] buyTokenId = ByteArray.fromString(String.valueOf(buyToken));
+    byte[] headKey = MarketUtils.getPairPriceHeadKey(sellTokenId, buyTokenId);
+
+    List<byte[]> list = marketPairPriceToOrderStore.getKeysNext(headKey, 100);
+    Assert.assertNotEquals(0, list.size());
   }
 
 }

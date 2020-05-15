@@ -1,6 +1,7 @@
 package org.tron.core.store;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.iq80.leveldb.Options;
 import org.rocksdb.ComparatorOptions;
@@ -46,6 +47,10 @@ public class MarketPairPriceToOrderStore extends TronStoreWithRevoking<MarketOrd
   }
 
   public List<byte[]> getKeysNext(byte[] key, long limit) {
+    if (limit <= 0) {
+      return Collections.emptyList();
+    }
+
     return revokingDB.getKeysNext(key, limit);
   }
 
