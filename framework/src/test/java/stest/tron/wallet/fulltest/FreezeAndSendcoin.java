@@ -80,9 +80,9 @@ public class FreezeAndSendcoin {
 
     BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract
         .newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
+    ByteString byteAddress = ByteString.copyFrom(address);
 
-    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
+    builder.setOwnerAddress(byteAddress).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
 
     BalanceContract.FreezeBalanceContract contract = builder.build();
@@ -253,9 +253,9 @@ public class FreezeAndSendcoin {
 
     UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract
         .newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
+    ByteString byteAddress = ByteString.copyFrom(address);
 
-    builder.setOwnerAddress(byteAddreess);
+    builder.setOwnerAddress(byteAddress);
 
     UnfreezeBalanceContract contract = builder.build();
 
@@ -292,8 +292,8 @@ public class FreezeAndSendcoin {
     BalanceContract.WithdrawBalanceContract.Builder builder =
         BalanceContract.WithdrawBalanceContract
             .newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
-    builder.setOwnerAddress(byteAddreess);
+    ByteString byteAddress = ByteString.copyFrom(address);
+    builder.setOwnerAddress(byteAddress);
     BalanceContract.WithdrawBalanceContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.withdrawBalance(contract);
