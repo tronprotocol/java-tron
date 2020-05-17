@@ -376,11 +376,11 @@ public class WalletClient {
   public static AccountCreateContract createAccountCreateContract(
       AccountType accountType, byte[] accountName, byte[] address) {
     AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
-    ByteString bsaAdress = ByteString.copyFrom(address);
+    ByteString bsAddress = ByteString.copyFrom(address);
     ByteString bsAccountName = ByteString.copyFrom(accountName);
     builder.setType(accountType);
     builder.setAccountAddress(bsAccountName);
-    builder.setOwnerAddress(bsaAdress);
+    builder.setOwnerAddress(bsAddress);
     return builder.build();
   }
 
@@ -400,11 +400,11 @@ public class WalletClient {
   public static AccountUpdateContract createAccountUpdateContract(byte[] accountName,
       byte[] address) {
     AccountUpdateContract.Builder builder = AccountUpdateContract.newBuilder();
-    ByteString basAddreess = ByteString.copyFrom(address);
+    ByteString bsAddress = ByteString.copyFrom(address);
     ByteString bsAccountName = ByteString.copyFrom(accountName);
 
     builder.setAccountName(bsAccountName);
-    builder.setOwnerAddress(basAddreess);
+    builder.setOwnerAddress(bsAddress);
 
     return builder.build();
   }
@@ -926,9 +926,9 @@ public class WalletClient {
       long frozenDuration) {
     byte[] address = getAddress();
     FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
+    ByteString byteAddress = ByteString.copyFrom(address);
 
-    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
+    builder.setOwnerAddress(byteAddress).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
 
     return builder.build();
@@ -956,8 +956,8 @@ public class WalletClient {
     byte[] address = getAddress();
     UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract
         .newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
-    builder.setOwnerAddress(byteAddreess);
+    ByteString byteAddress = ByteString.copyFrom(address);
+    builder.setOwnerAddress(byteAddress);
 
     return builder.build();
   }
@@ -983,9 +983,9 @@ public class WalletClient {
     byte[] address = getAddress();
     WithdrawBalanceContract.Builder builder = WithdrawBalanceContract
         .newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
+    ByteString byteAddress = ByteString.copyFrom(address);
 
-    builder.setOwnerAddress(byteAddreess);
+    builder.setOwnerAddress(byteAddress);
 
     return builder.build();
   }
