@@ -223,6 +223,7 @@ public class DelegationService {
    * As pushBlock a sync method, so no sync action to be considered on witnessAddressList.
    */
   public void updateWitnessAddressList() {
+    witnessAddressList.clear();
     for (WitnessCapsule witnessCapsule : witnessStore.getAllWitnesses()) {
       witnessAddressList.add(witnessCapsule.getAddress());
     }
