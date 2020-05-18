@@ -17,13 +17,8 @@ public class GetCurrentCycleService extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      JSONObject jsonObject = JSONObject.parseObject(input);
-      long startTimeStamp = Util
-          .getJsonLongValue(jsonObject, "timeStamp", true);
-
-      long cycle = manager.getDelegationService().getCycleFromTimeStamp(startTimeStamp);
+      long cycle = manager.getDynamicPropertiesStore()
+          .getCurrentCycleNumber();
       response.getWriter().println("{\"cycle\": " + cycle + "}");
     } catch (Exception e) {
       Util.processError(e, response);

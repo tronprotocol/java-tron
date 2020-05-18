@@ -236,11 +236,11 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private MetricsServlet metricsServlet;
   @Autowired
-  private GetAccountRewardByTimeStampServlet getAccountRewardByTimeStampServlet;
+  private GetAccountRewardByCycleServlet getAccountRewardByCycleServlet;
   @Autowired
-  private GetSRPayByTimeStampServlet getSRPayByTimeStampServlet;
+  private GetSRPayByCycleServlet getSRPayByCycleServlet;
   @Autowired
-  private GetSRRewardByTimeStampServlet getSRRewardByTimeStampServlet;
+  private GetSRRewardByCycleServlet getSRRewardByCycleServlet;
   @Autowired
   private GetAccountLastUnwithdrawRewardServlet getAccountLastUnwithdrawRewardServlet;
   @Autowired
@@ -452,18 +452,18 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(createCommonTransactionServlet),
           "/wallet/createCommonTransaction");
       if (Args.getInstance().isNodeHttpStatisticsSRRewardEnable()) {
-        context.addServlet(new ServletHolder(getAccountRewardByTimeStampServlet),
-            "/wallet/getAccountRewardByTimeStamp");
-        context.addServlet(new ServletHolder(getSRPayByTimeStampServlet),
-            "/wallet/getSRPayByTimeStamp");
-        context.addServlet(new ServletHolder(getSRRewardByTimeStampServlet),
-            "/wallet/getSRRewardByTimeStamp");
+        context.addServlet(new ServletHolder(getAccountRewardByCycleServlet),
+            "/wallet/getAccountRewardByCycleServlet");
+        context.addServlet(new ServletHolder(getSRPayByCycleServlet),
+            "/wallet/getSRPayByCycleServlet");
+        context.addServlet(new ServletHolder(getSRRewardByCycleServlet),
+            "/wallet/getSRRewardByCycleServlet");
         context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet),
             "/wallet/getSRAnnualizedRateOfReturnServlet");
         context.addServlet(new ServletHolder(getNowSRAnnualizedRateOfReturnServlet),
             "/wallet/getNowSRAnnualizedRateOfReturnServlet");
         context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet),
-            "/wallet/getAccountLastUnwithdrawReward");
+            "/wallet/getAccountLastUnwithdrawRewardServlet");
         context.addServlet(new ServletHolder(getCurrentCycleServlet),
             "/wallet/getCurrentCycleServlet");
       }

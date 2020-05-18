@@ -25,9 +25,8 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       JSONObject jsonObject = JSONObject.parseObject(input);
-      long startTimeStamp = Util
-          .getJsonLongValue(jsonObject, "startTimeStamp", true);
-      long endTimeStamp = Util.getJsonLongValue(jsonObject, "endTimeStamp", true);
+      long startCycle = jsonObject.getLong("startCycle");
+      long endCycle = jsonObject.getLong("endCycle");
       long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock() / 1000000;
       long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock() / 1000000;
       double srNumber = 27;
@@ -35,10 +34,10 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       double totalVote;
       double srVote;
       double ratio;
-      if (startTimeStamp < endTimeStamp && address != null) {
-        srVote = wallet.queryVoteNumber(address, startTimeStamp, endTimeStamp);
-        totalVote = wallet.queryTotalVoteNumber(startTimeStamp, endTimeStamp);
-        ratio = wallet.querySrRatio(address, startTimeStamp, endTimeStamp);
+      if (startCycle < endCycle && address != null) {
+        srVote = wallet.queryVoteNumber(address, startCycle, endCycle);
+        totalVote = wallet.queryTotalVoteNumber(startCycle, endCycle);
+        ratio = wallet.querySrRatio(address, startCycle, endCycle);
         annualizedRateOfReturn = wallet.getAnnualizedRateOfReturn(rewardOfBlockEachBlock,
             blockNumberEachDay, srNumber,srVote,totalVote,rewardOfVoteEachBlock,ratio);
       }
@@ -57,9 +56,8 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       JSONObject jsonObject = JSONObject.parseObject(params.getParams());
       double annualizedRateOfReturn = 0;
       byte[] address = build.getAddress().toByteArray();
-      long startTimeStamp = Util
-          .getJsonLongValue(jsonObject, "startTimeStamp", true);
-      long endTimeStamp = Util.getJsonLongValue(jsonObject, "endTimeStamp", true);
+      long startCycle = jsonObject.getLong("startCycle");
+      long endCycle = jsonObject.getLong("endCycle");
       long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock() / 1000000;
       long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock() / 1000000;
       double srNumber = 27;
@@ -68,10 +66,10 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       double srVote;
       double ratio;
 
-      if (startTimeStamp < endTimeStamp && address != null) {
-        srVote = wallet.queryVoteNumber(address, startTimeStamp, endTimeStamp);
-        totalVote = wallet.queryTotalVoteNumber(startTimeStamp, endTimeStamp);
-        ratio = wallet.querySrRatio(address, startTimeStamp, endTimeStamp);
+      if (startCycle < endCycle && address != null) {
+        srVote = wallet.queryVoteNumber(address, startCycle, endCycle);
+        totalVote = wallet.queryTotalVoteNumber(startCycle, endCycle);
+        ratio = wallet.querySrRatio(address, startCycle, endCycle);
         annualizedRateOfReturn = wallet.getAnnualizedRateOfReturn(rewardOfBlockEachBlock,
             blockNumberEachDay, srNumber,srVote,totalVote,rewardOfVoteEachBlock,ratio);
       }

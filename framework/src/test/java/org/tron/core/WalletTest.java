@@ -576,4 +576,17 @@ public class WalletTest {
     Assert.assertNull(
         wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle - 1));
   }
+
+  @Test
+  public void queryPayByTimeStamp() {
+    String OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    long start = System.currentTimeMillis();
+    long end = System.currentTimeMillis() + 60;
+    {
+      chainBaseManager.getDynamicPropertiesStore().saveChangeDelegation(0);
+      Assert.assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+          .getBytes(), start, end).size(), 0);
+    }
+  }
 }

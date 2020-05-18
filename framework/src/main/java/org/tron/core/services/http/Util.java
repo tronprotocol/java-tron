@@ -84,6 +84,14 @@ public class Util {
     return printBlockToJSON(block, selfType).toJSONString();
   }
 
+  public static JSONObject printMapToJSON(HashMap<String, Long> map) {
+    JSONObject jsonObject = new JSONObject();
+    for (HashMap.Entry<String, Long> entry : map.entrySet()) {
+      jsonObject.put(entry.getKey(), entry.getValue());
+    }
+    return jsonObject;
+  }
+
   public static JSONObject printRewardMapToJSON(HashMap<String, Long> rewardMap) {
     JSONObject jsonObject = new JSONObject();
     long totalReward = 0;

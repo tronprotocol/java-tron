@@ -14,7 +14,7 @@ import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j(topic = "API")
-public class GetAccountRewardByTimeStampServlet extends RateLimiterServlet {
+public class GetSRRewardByCycleServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -25,17 +25,16 @@ public class GetAccountRewardByTimeStampServlet extends RateLimiterServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       JSONObject jsonObject = JSONObject.parseObject(input);
-      long startTimeStamp = Util
-          .getJsonLongValue(jsonObject, "startTimeStamp", true);
-      long endTimeStamp = Util.getJsonLongValue(jsonObject, "endTimeStamp", true);
-      if (startTimeStamp < endTimeStamp && address != null) {
+      long startCycle = Util
+          .getJsonLongValue(jsonObject, "startCycle", true);
+      long endCycle = Util.getJsonLongValue(jsonObject, "endCycle", true);
+      if (startCycle <= endCycle && address != null) {
         HashMap<String, Long> value = wallet
-            .computeRewardByTimeStamp(address, startTimeStamp, endTimeStamp);
-        response.getWriter().println(Util.printRewardMapToJSON(value));
+            .queryRewardByCycle(address, startCycle, endCycle);
+        response.getWriter().println(Util.printMapToJSON(value));
       } else {
         response.getWriter().println("{}");
       }
-
     } catch (Exception e) {
       logger.error("", e);
       try {
@@ -52,19 +51,23 @@ public class GetAccountRewardByTimeStampServlet extends RateLimiterServlet {
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
       JSONObject jsonObject = JSONObject.parseObject(params.getParams());
-      long startTimeStamp = jsonObject.getLong("startTimeStamp");
-      long endTimeStamp = jsonObject.getLong("endTimeStamp");
-
-      if (startTimeStamp < endTimeStamp && build.getAddress().toByteArray() != null) {
-        HashMap<String, Long> value = wallet.computeRewardByTimeStamp(build
-            .getAddress().toByteArray(), startTimeStamp, endTimeStamp);
-        response.getWriter().println(Util.printRewardMapToJSON(value));
+      long startCycle = jsonObject.getLong("startCycle");
+      long endCycle = jsonObject.getLong("endCycle");
+      byte[] address = build.getAddress().toByteArray();
+      if (startCycle <= endCycle && address != null) {
+        HashMap<String, Long> value = wallet
+            .queryRewardByCycle(address, startCycle, endCycle);
+        response.getWriter().println(Util.printMapToJSON(value));
       } else {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      Util.processError(e, response);
+      logger.error("", e);
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
     }
-
   }
 }

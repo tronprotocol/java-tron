@@ -30,6 +30,27 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     return ArrayUtils.isEmpty(value) ? null : new BytesCapsule(value);
   }
 
+  public void addBlockReward(long cycle, byte[] address, long value) {
+    byte[] key = buildRewarkBlockKey(cycle, address);
+    BytesCapsule bytesCapsule = get(key);
+
+    if (bytesCapsule == null) {
+      put(key, new BytesCapsule(ByteArray.fromLong(value)));
+    } else {
+      put(key, new BytesCapsule(ByteArray
+          .fromLong(ByteArray.toLong(bytesCapsule.getData()) + value)));
+    }
+  }
+
+  public long getBlockReward(long cycle, byte[] address) {
+    BytesCapsule bytesCapsule = get(buildRewarkBlockKey(cycle, address));
+    if (bytesCapsule == null) {
+      return 0L;
+    } else {
+      return ByteArray.toLong(bytesCapsule.getData());
+    }
+  }
+
   public void addReward(long cycle, byte[] address, long value) {
     byte[] key = buildRewardKey(cycle, address);
     BytesCapsule bytesCapsule = get(key);
@@ -140,8 +161,12 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     return (cycle + "-" + Hex.toHexString(address) + "-reward").getBytes();
   }
 
+  private byte[] buildRewarkBlockKey(long cycle, byte[] address) {
+    return (cycle + "-" + Hex.toHexString(address) + "-block").getBytes();
+  }
+
   private byte[] buildRemarkKey(long cycle, byte[] address) {
-    return (cycle + "-" + Hex.toHexString(address) + "remark").getBytes();
+    return (cycle + "-" + Hex.toHexString(address) + "-remark").getBytes();
   }
 
   private byte[] buildLastWithdrawCycleKey(byte[] address) {
