@@ -238,9 +238,9 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetAccountRewardByCycleServlet getAccountRewardByCycleServlet;
   @Autowired
-  private GetSRPayByCycleServlet getSRPayByCycleServlet;
+  private GetSRProfitByCycleServlet getSRProfitByCycleServlet;
   @Autowired
-  private GetSRRewardByCycleServlet getSRRewardByCycleServlet;
+  private GetSRDividendsByCycleServlet getSRDividendsByCycleServlet;
   @Autowired
   private GetAccountLastUnwithdrawRewardServlet getAccountLastUnwithdrawRewardServlet;
   @Autowired
@@ -454,10 +454,10 @@ public class FullNodeHttpApiService implements Service {
       if (Args.getInstance().isNodeHttpStatisticsSRRewardEnable()) {
         context.addServlet(new ServletHolder(getAccountRewardByCycleServlet),
             "/wallet/getAccountRewardByCycleServlet");
-        context.addServlet(new ServletHolder(getSRPayByCycleServlet),
-            "/wallet/getSRPayByCycleServlet");
-        context.addServlet(new ServletHolder(getSRRewardByCycleServlet),
-            "/wallet/getSRRewardByCycleServlet");
+        context.addServlet(new ServletHolder(getSRProfitByCycleServlet),
+            "/wallet/getSRProfitByCycleServlet");
+          context.addServlet(new ServletHolder(getSRDividendsByCycleServlet),
+            "/wallet/getSRDividendsByCycleServlet");
         context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet),
             "/wallet/getSRAnnualizedRateOfReturnServlet");
         context.addServlet(new ServletHolder(getNowSRAnnualizedRateOfReturnServlet),

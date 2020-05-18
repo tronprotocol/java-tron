@@ -14,7 +14,7 @@ import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j(topic = "API")
-public class GetSRPayByCycleServlet extends RateLimiterServlet {
+public class GetSRProfitByCycleServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -47,7 +47,7 @@ public class GetSRPayByCycleServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      PostParams params = PostParams.getPostParams(request);
+        PostParams params = PostParams.getPostParams(request);
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(params.getParams(), build, params.isVisible());
       JSONObject jsonObject = JSONObject.parseObject(params.getParams());
