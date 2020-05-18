@@ -83,6 +83,8 @@ public class WalletTest {
   public static final long BLOCK_NUM_THREE = 3;
   public static final long BLOCK_NUM_FOUR = 4;
   public static final long BLOCK_NUM_FIVE = 5;
+  public static final long CYCLE_NUM_ONE = 1;
+  public static final long CYCLE_NUM_TWO = 2;
   public static final long BLOCK_TIMESTAMP_ONE = DateTime.now().minusDays(4).getMillis();
   public static final long BLOCK_TIMESTAMP_TWO = DateTime.now().minusDays(3).getMillis();
   public static final long BLOCK_TIMESTAMP_THREE = DateTime.now().minusDays(2).getMillis();
@@ -533,16 +535,17 @@ public class WalletTest {
   }
 
   @Test
-  public void queryVoteNumber() {
+  public void queryVoteNumberZero() {
     double v = wallet.queryVoteNumber(ACCOUNT_ADDRESS_ONE.getBytes(),
-        BLOCK_TIMESTAMP_ONE, BLOCK_TIMESTAMP_TWO);
+        CYCLE_NUM_ONE, CYCLE_NUM_TWO);
     Assert.assertEquals(0.0,v,0);
   }
 
   @Test
   public void queryTotalVoteNumber() {
-    double v = wallet.queryTotalVoteNumber(BLOCK_TIMESTAMP_ONE, BLOCK_TIMESTAMP_TWO);
-    Assert.assertEquals(0.0,v,0);
+    double v = wallet.queryTotalVoteNumber(CYCLE_NUM_ONE, CYCLE_NUM_ONE);
+    int srNumber = wallet.getSrNumber();
+    Assert.assertEquals(-srNumber,v,0);
   }
 
   @Test
