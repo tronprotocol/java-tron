@@ -2503,7 +2503,7 @@ public class Wallet {
       for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
         voteNumber += dbManager.getDelegationStore().getWitnessVote(cycle,address);
       }
-      voteNumber = voteNumber / (endCycle - beginCycle+ 1);
+      voteNumber = voteNumber / (endCycle - beginCycle + 1);
     }
     return voteNumber;
   }

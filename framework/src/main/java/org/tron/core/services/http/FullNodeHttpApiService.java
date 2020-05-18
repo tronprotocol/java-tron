@@ -456,7 +456,7 @@ public class FullNodeHttpApiService implements Service {
             "/wallet/getAccountRewardByCycleServlet");
         context.addServlet(new ServletHolder(getSRProfitByCycleServlet),
             "/wallet/getSRProfitByCycleServlet");
-          context.addServlet(new ServletHolder(getSRDividendsByCycleServlet),
+        context.addServlet(new ServletHolder(getSRDividendsByCycleServlet),
             "/wallet/getSRDividendsByCycleServlet");
         context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet),
             "/wallet/getSRAnnualizedRateOfReturnServlet");
