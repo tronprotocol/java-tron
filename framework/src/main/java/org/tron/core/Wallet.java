@@ -2503,7 +2503,7 @@ public class Wallet {
       for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
         voteNumber += dbManager.getDelegationStore().getWitnessVote(cycle,address);
       }
-      voteNumber = voteNumber / (endCycle - beginCycle);
+      voteNumber = voteNumber / (endCycle - beginCycle+ 1);
     }
     return voteNumber;
   }
@@ -2521,7 +2521,7 @@ public class Wallet {
               .getWitnessVote(finalCycle, witness.getAddress().toByteArray()));
         });
       }
-      voteNumberTotal = voteNumber.doubleValue() / (double)(endCycle - beginCycle);
+      voteNumberTotal = voteNumber.doubleValue() / (double)(endCycle - beginCycle + 1);
     }
     return voteNumberTotal;
   }
@@ -2537,7 +2537,7 @@ public class Wallet {
         srRatio += dbManager.getDelegationStore().getBrokerage(cycle, address);
       }
     }
-    srRatio = srRatio / (endCycle - beginCycle);
+    srRatio = srRatio / (endCycle - beginCycle + 1);
     return srRatio;
   }
 
