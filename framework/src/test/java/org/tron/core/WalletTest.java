@@ -581,15 +581,41 @@ public class WalletTest {
   }
 
   @Test
-  public void queryPayByTimeStamp() {
+  public void testQueryPayByCycle() {
     String OWNER_ADDRESS =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-    long start = System.currentTimeMillis();
-    long end = System.currentTimeMillis() + 60;
+    long start = 10;
+    long end = start + 60;
     {
       chainBaseManager.getDynamicPropertiesStore().saveChangeDelegation(0);
       Assert.assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
           .getBytes(), start, end).size(), 0);
     }
+    {
+      chainBaseManager.getDynamicPropertiesStore().saveChangeDelegation(1);
+      Assert.assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+          .getBytes(), start, end).size(), 0);
+    }
+    {
+      AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+          110_000_000L);
+      chainBaseManager.getAccountStore().put(OWNER_ADDRESS
+          .getBytes(), ownerCapsule);
+      Assert.assertNotEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+          .getBytes(), start, end).size(), 0);
+    }
+  }
+
+  @Test
+  public void testPercentageOfBlockReward() {
+    String OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    long beginCycle = 60;
+    long endCycle = 10;
+    double result = 0;
+    Assert.assertEquals(wallet.percentageOfBlockReward(beginCycle, endCycle, OWNER_ADDRESS
+        .getBytes()), result, 10);
   }
 }
+
