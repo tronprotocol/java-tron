@@ -7,6 +7,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
@@ -116,5 +117,16 @@ public class DelegationServiceTest {
     manager.getDelegationStore().setWitnessVote(2, sr27, 100000000);
     testPay(0);
     testWithdraw();
+    testBlockReward();
+  }
+
+  public void testBlockReward() {
+    String address = "TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD";
+    long cycle = 10;
+    manager.getDelegationStore().addBlockReward(cycle, address.getBytes(), 10);
+    manager.getDelegationStore().addBlockReward(cycle, address.getBytes(), 20);
+    Assert.assertEquals(manager.getDelegationStore()
+        .getBlockReward(cycle, address.getBytes()), 30);
+
   }
 }
