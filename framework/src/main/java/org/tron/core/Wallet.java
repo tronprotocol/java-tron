@@ -2407,9 +2407,9 @@ public class Wallet {
         blockPayReward += dbManager.getDelegationStore().getBlockReward(cycle, address);
       }
     }
-    rewardMap.put("totalIncome", reward);
-    rewardMap.put("produceBlockIncome", blockPayReward);
-    rewardMap.put("voteIncome", reward - blockPayReward);
+    rewardMap.put("total", reward);
+    rewardMap.put("produceBlock", blockPayReward);
+    rewardMap.put("vote", reward - blockPayReward);
 
     return rewardMap;
   }
@@ -2452,9 +2452,9 @@ public class Wallet {
     double percentage = percentageOfBlockReward(beginCycle, endCycle, address);
     Double blockBonus = new Double(bonus * percentage);
 
-    rewardMap.put("totalIncome", bonus);
-    rewardMap.put("produceBlockIncome", blockBonus.longValue());
-    rewardMap.put("voteIncome", bonus - blockBonus.longValue());
+    rewardMap.put("total", bonus);
+    rewardMap.put("produceBlock", blockBonus.longValue());
+    rewardMap.put("vote", bonus - blockBonus.longValue());
     return rewardMap;
   }
 
