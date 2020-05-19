@@ -2292,7 +2292,9 @@ public class Wallet {
   }
 
   public List<Vote> getVoteList(byte[] address, long cycle) {
-    for (long i = cycle; i >= 0; i--) {
+    long current = dbManager.getDynamicPropertiesStore()
+        .getCurrentCycleNumber();
+    for (long i = cycle; i <= current; i++) {
       AccountCapsule accountCapsule = dbManager.getDelegationStore()
           .getAccountVote(i, address);
       if (accountCapsule != null) {
@@ -2305,7 +2307,10 @@ public class Wallet {
         return null;
       }
     }
-    return null;
+
+    return dbManager.getAccountStore()
+        .get(address) == null ? null : dbManager.getAccountStore()
+        .get(address).getVotesList();
   }
 
   public HashMap<String, Long> computeUnwithdrawReward(byte[] address) {

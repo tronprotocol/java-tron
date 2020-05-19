@@ -572,11 +572,14 @@ public class WalletTest {
         110_000_000L);
     chainBaseManager.getDelegationStore()
         .setAccountVote(currentcycle, ACCOUNT_ADDRESS_ONE.getBytes(), ownerCapsule);
+    chainBaseManager.getDynamicPropertiesStore()
+        .saveCurrentCycleNumber(currentcycle + 10);
+
     Assert.assertNotNull(
         wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle));
-    Assert.assertNotNull(
-        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle + 1));
     Assert.assertNull(
+        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle + 1));
+    Assert.assertNotNull(
         wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle - 1));
   }
 
