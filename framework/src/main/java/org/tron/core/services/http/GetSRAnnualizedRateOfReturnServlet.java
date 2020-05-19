@@ -34,7 +34,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       double totalVote;
       double srVote;
       double ratio;
-      if (startCycle < endCycle && address != null) {
+      if (startCycle <= endCycle && address != null) {
         srVote = wallet.queryVoteNumber(address, startCycle, endCycle);
         totalVote = wallet.queryTotalVoteNumber(startCycle, endCycle);
         ratio = wallet.querySrRatio(address, startCycle, endCycle);
@@ -66,7 +66,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       double srVote;
       double ratio;
 
-      if (startCycle < endCycle && address != null) {
+      if (startCycle <= endCycle && address != null) {
         srVote = wallet.queryVoteNumber(address, startCycle, endCycle);
         totalVote = wallet.queryTotalVoteNumber(startCycle, endCycle);
         ratio = wallet.querySrRatio(address, startCycle, endCycle);
