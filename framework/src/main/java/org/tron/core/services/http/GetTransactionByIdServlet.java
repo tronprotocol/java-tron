@@ -1,6 +1,7 @@
 package org.tron.core.services.http;
 
 import com.google.protobuf.ByteString;
+import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,13 +25,7 @@ public class GetTransactionByIdServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
-      Transaction reply = wallet
-          .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(input)));
-      if (reply != null) {
-        response.getWriter().println(Util.printTransaction(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(ByteString.copyFrom(ByteArray.fromHexString(input)), visible, response);
     } catch (Exception e) {
       Util.processError(e, response);
     }
@@ -44,14 +39,19 @@ public class GetTransactionByIdServlet extends RateLimiterServlet {
       boolean visible = Util.getVisiblePost(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
-      Transaction reply = wallet.getTransactionById(build.getValue());
-      if (reply != null) {
-        response.getWriter().println(Util.printTransaction(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      fillResponse(build.getValue(), visible, response);
     } catch (Exception e) {
       Util.processError(e, response);
+    }
+  }
+
+  private void fillResponse(ByteString txId, boolean visible, HttpServletResponse response)
+      throws IOException {
+    Transaction reply = wallet.getTransactionById(txId);
+    if (reply != null) {
+      response.getWriter().println(Util.printTransaction(reply, visible));
+    } else {
+      response.getWriter().println("{}");
     }
   }
 }
