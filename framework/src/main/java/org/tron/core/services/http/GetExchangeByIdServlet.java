@@ -21,16 +21,13 @@ public class GetExchangeByIdServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
+      PostParams params = PostParams.getPostParams(request);
+      JSONObject jsonObject = JSONObject.parseObject(params.getParams());
       long id = Util.getJsonLongValue(jsonObject, "id", true);
       response.getWriter()
           .println(JsonFormat
               .printToString(wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(id))),
-                  visible));
+                  params));
     } catch (Exception e) {
       Util.processError(e, response);
     }
