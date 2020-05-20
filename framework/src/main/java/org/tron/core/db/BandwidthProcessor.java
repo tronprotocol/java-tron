@@ -4,7 +4,6 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.ShieldedTransferContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 
-
 import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Map;
