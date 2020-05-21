@@ -67,6 +67,8 @@ public class DelegationService {
         double eachVotePay = (double) totalPay / voteSum;
         long pay = (long) (getWitnesseByAddress(b).getVoteCount() * eachVotePay);
         logger.debug("pay {} stand reward {}", Hex.toHexString(b.toByteArray()), pay);
+        delegationStore.addVodeReward(dynamicPropertiesStore
+            .getCurrentCycleNumber(), b.toByteArray(), pay);
         payReward(b.toByteArray(), pay);
       }
     }

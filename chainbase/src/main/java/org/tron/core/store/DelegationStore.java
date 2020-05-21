@@ -10,7 +10,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
-import java.util.Arrays;
 
 @Slf4j
 @Component
@@ -31,7 +30,7 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public void addBlockReward(long cycle, byte[] address, long value) {
-    byte[] key = buildRewarkBlockKey(cycle, address);
+    byte[] key = buildRewardBlockKey(cycle, address);
     BytesCapsule bytesCapsule = get(key);
 
     if (bytesCapsule == null) {
@@ -43,7 +42,28 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   public long getBlockReward(long cycle, byte[] address) {
-    BytesCapsule bytesCapsule = get(buildRewarkBlockKey(cycle, address));
+    BytesCapsule bytesCapsule = get(buildRewardBlockKey(cycle, address));
+    if (bytesCapsule == null) {
+      return 0L;
+    } else {
+      return ByteArray.toLong(bytesCapsule.getData());
+    }
+  }
+
+  public void addVodeReward(long cycle, byte[] address, long value) {
+    byte[] key = buildRewardVoteKey(cycle, address);
+    BytesCapsule bytesCapsule = get(key);
+
+    if (bytesCapsule == null) {
+      put(key, new BytesCapsule(ByteArray.fromLong(value)));
+    } else {
+      put(key, new BytesCapsule(ByteArray
+          .fromLong(ByteArray.toLong(bytesCapsule.getData()) + value)));
+    }
+  }
+
+  public long getVoteReward(long cycle, byte[] address) {
+    BytesCapsule bytesCapsule = get(buildRewardVoteKey(cycle, address));
     if (bytesCapsule == null) {
       return 0L;
     } else {
@@ -161,8 +181,12 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     return (cycle + "-" + Hex.toHexString(address) + "-reward").getBytes();
   }
 
-  private byte[] buildRewarkBlockKey(long cycle, byte[] address) {
+  private byte[] buildRewardBlockKey(long cycle, byte[] address) {
     return (cycle + "-" + Hex.toHexString(address) + "-block").getBytes();
+  }
+
+  private byte[] buildRewardVoteKey(long cycle, byte[] address) {
+    return (cycle + "-" + Hex.toHexString(address) + "-reward-vote").getBytes();
   }
 
   private byte[] buildRemarkKey(long cycle, byte[] address) {

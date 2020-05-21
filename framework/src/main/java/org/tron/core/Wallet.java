@@ -2408,9 +2408,14 @@ public class Wallet {
     if (beginCycle <= endCycle) {
       for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
         int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
-        double brokerageRate = (double) brokerage / 100;
-        reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
         blockPayReward += dbManager.getDelegationStore().getBlockReward(cycle, address);
+        if (brokerage == 100) {
+          reward += dbManager.getDelegationStore().getBlockReward(cycle, address) + dbManager
+              .getDelegationStore().getVoteReward(cycle, address);
+        } else {
+          double brokerageRate = (double) brokerage / 100;
+          reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
+        }
       }
     }
     rewardMap.put("total", reward);
