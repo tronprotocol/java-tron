@@ -33,6 +33,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.math.BigDecimal;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -2806,7 +2807,8 @@ public class Wallet {
                                           double srNumber, double srVote, double totalVote,
                                           long rewardOfVoteEachBlock,double ratio)
       throws Exception {
-    if (srVote == 0) {
+    BigDecimal srVoteB = new BigDecimal(srVote);
+    if (srVoteB.equals(0)) {
       return 0;
     }
     if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 100 || ratio < 0) {

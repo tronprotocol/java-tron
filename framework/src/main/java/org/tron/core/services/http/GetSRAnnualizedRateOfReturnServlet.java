@@ -27,7 +27,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       JSONObject jsonObject = JSONObject.parseObject(input);
       long startCycle = jsonObject.getLong("startCycle");
       long endCycle = jsonObject.getLong("endCycle");
-      long currentCycle = wallet.queryCurrentCycle();;
+      long currentCycle = wallet.queryCurrentCycle();
       long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock() / 1000000;
       long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock() / 1000000;
       double srNumber = 27;
@@ -62,7 +62,7 @@ public class GetSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       byte[] address = build.getAddress().toByteArray();
       long startCycle = jsonObject.getLong("startCycle");
       long endCycle = jsonObject.getLong("endCycle");
-      long currentCycle = wallet.queryCurrentCycle();;
+      long currentCycle = wallet.queryCurrentCycle();
       long rewardOfVoteEachBlock = wallet.getRewardOfVoteEachBlock() / 1000000;
       long rewardOfBlockEachBlock = wallet.getRewardOfBlockEachBlock() / 1000000;
       double srNumber = 27;
