@@ -297,9 +297,11 @@ public class Util {
 
   public static boolean getVisiblePost(final String input) {
     boolean visible = false;
-    JSONObject jsonObject = JSON.parseObject(input);
-    if (jsonObject.containsKey(VISIBLE)) {
-      visible = jsonObject.getBoolean(VISIBLE);
+    if (StringUtil.isNotBlank(input)) {
+      JSONObject jsonObject = JSON.parseObject(input);
+      if (jsonObject.containsKey(VISIBLE)) {
+        visible = jsonObject.getBoolean(VISIBLE);
+      }
     }
 
     return visible;
