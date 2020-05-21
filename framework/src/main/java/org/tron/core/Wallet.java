@@ -2533,17 +2533,17 @@ public class Wallet {
 
   public double querySrRatio(byte[] address, long beginCycle, long endCycle) {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    double srRatio = 0;
+    double borkerage = 0;
     if (accountCapsule == null) {
       return 0;
     }
     if (beginCycle <= endCycle) {
       for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
-        srRatio += dbManager.getDelegationStore().getBrokerage(cycle, address);
+        borkerage += dbManager.getDelegationStore().getBrokerage(cycle, address);
       }
     }
-    srRatio = srRatio / (endCycle - beginCycle + 1);
-    return srRatio;
+    borkerage = borkerage / (endCycle - beginCycle + 1);
+    return 100 - borkerage;
   }
 
   public long getRewardOfVoteEachBlock() {
@@ -2573,7 +2573,7 @@ public class Wallet {
   }
 
   public double queryNowSrRatio(byte[] address) {
-    return dbManager.getDelegationStore().getBrokerage(address);
+    return 100 - dbManager.getDelegationStore().getBrokerage(address);
   }
 
   /*
@@ -2806,12 +2806,21 @@ public class Wallet {
                                           double srNumber, double srVote, double totalVote,
                                           long rewardOfVoteEachBlock,double ratio)
       throws Exception {
+    if (srVote == 0) {
+      return 0;
+    }
     if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 100 || ratio < 0) {
       throw new Exception("bad parameters");
     }
     double annualizedRateOfReturn = (rewardOfBlockEachBlock / srNumber / srVote
         + rewardOfVoteEachBlock / totalVote) * blockNumberEachDay * ratio * 365;
     return annualizedRateOfReturn;
+  }
+
+  public long queryCurrentCycle() {
+    long current = dbManager.getDynamicPropertiesStore()
+        .getCurrentCycleNumber();
+    return current;
   }
 }
 
