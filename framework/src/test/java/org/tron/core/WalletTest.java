@@ -21,11 +21,15 @@ package org.tron.core;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static stest.tron.wallet.common.client.utils.PublicMethed.decode58Check;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -49,6 +53,7 @@ import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -559,6 +564,9 @@ public class WalletTest {
     double v = wallet.getAnnualizedRateOfReturn(1,1,
         1,1,1,1,1);
     Assert.assertEquals(730,v,0);
+    double v1 = wallet.getAnnualizedRateOfReturn(1,1,
+        1,0,1,1,1);
+    Assert.assertEquals(0,v1,0);
   }
 
   @Test
@@ -620,5 +628,25 @@ public class WalletTest {
     Assert.assertEquals(wallet.percentageOfBlockReward(beginCycle, endCycle, OWNER_ADDRESS
         .getBytes()), result, 10);
   }
+
+  @Test
+  public void checkAddress() {
+    List<ByteString> witnessAddresses = new ArrayList<>();
+    byte[] address = decode58Check("TT1smsmhxype64boboU8xTuNZVCKP1w6qT");
+    witnessAddresses.add(ByteString.copyFrom(address));
+    chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(witnessAddresses);
+    Assert.assertTrue(wallet.checkAddress(address));
+  }
+
+  @Test
+  public void existAddress() {
+    byte[] address = decode58Check("TT1smsmhxype64boboU8xTuNZVCKP1w6qT");
+    byte[] address1 = decode58Check("TB4B1RMhoPeivkj4Hebm6tttHjRY9yQFes");
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainBaseManager.getWitnessStore().put(address, witnessCapsule);
+    Assert.assertTrue(wallet.existAddress(address));
+    Assert.assertFalse(wallet.existAddress(address1));
+  }
+
 }
 
