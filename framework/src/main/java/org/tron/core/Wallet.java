@@ -2807,8 +2807,7 @@ public class Wallet {
                                           double srNumber, double srVote, double totalVote,
                                           long rewardOfVoteEachBlock,double ratio)
       throws Exception {
-    BigDecimal srVoteB = new BigDecimal(srVote);
-    if (srVoteB.equals(0)) {
+    if ((int)srVote == 0) {
       return 0;
     }
     if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 100 || ratio < 0) {
