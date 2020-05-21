@@ -33,7 +33,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.math.BigDecimal;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -104,6 +103,7 @@ import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
@@ -206,6 +206,8 @@ public class Wallet {
   private TronNetDelegate tronNetDelegate;
   @Autowired
   private Manager dbManager;
+  @Autowired
+  private ConsensusDelegate consensusDelegate;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -2823,10 +2825,16 @@ public class Wallet {
     return annualizedRateOfReturn;
   }
 
-  public long queryCurrentCycle() {
-    long current = dbManager.getDynamicPropertiesStore()
-        .getCurrentCycleNumber();
-    return current;
+  public boolean checkAddress(byte[] address) {
+    return consensusDelegate.getActiveWitnesses().contains(ByteString.copyFrom(address));
+  }
+
+  public boolean existAddress(byte[] address) {
+    WitnessCapsule witnessCapsule = dbManager.getWitnessStore().get(address);
+    if (witnessCapsule != null) {
+      return true;
+    }
+    return false;
   }
 }
 

@@ -246,8 +246,6 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetCurrentCycleService getCurrentCycleServlet;
   @Autowired
-  private GetSRAnnualizedRateOfReturnServlet getSRAnnualizedRateOfReturnServlet;
-  @Autowired
   private GetNowSRAnnualizedRateOfReturnServlet getNowSRAnnualizedRateOfReturnServlet;
 
   private static String getParamsFile(String fileName) {
@@ -458,8 +456,6 @@ public class FullNodeHttpApiService implements Service {
             "/wallet/getSRProfitByCycleServlet");
         context.addServlet(new ServletHolder(getSRDividendsByCycleServlet),
             "/wallet/getSRDividendsByCycleServlet");
-        context.addServlet(new ServletHolder(getSRAnnualizedRateOfReturnServlet),
-            "/wallet/getSRAnnualizedRateOfReturnServlet");
         context.addServlet(new ServletHolder(getNowSRAnnualizedRateOfReturnServlet),
             "/wallet/getNowSRAnnualizedRateOfReturnServlet");
         context.addServlet(new ServletHolder(getAccountLastUnwithdrawRewardServlet),
