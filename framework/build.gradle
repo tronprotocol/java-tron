@@ -31,7 +31,7 @@ static def isWindows() {
 }
 
 task version(type: Exec) {
-    commandLine 'bash', '-c', './ver.sh'
+    commandLine 'bash', '-c', '../ver.sh'
 }
 
 dependencies {
