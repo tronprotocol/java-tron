@@ -2433,6 +2433,10 @@ public class Wallet {
     if (beginCycle <= endCycle) {
       for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
         int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
+        if (brokerage == 100) {
+          continue;
+        }
+        
         double brokerageRate = (double) brokerage / 100;
         reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
         blockPayReward += dbManager.getDelegationStore().getBlockReward(cycle, address);
