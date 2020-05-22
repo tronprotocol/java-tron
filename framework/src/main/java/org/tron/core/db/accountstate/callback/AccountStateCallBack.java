@@ -9,6 +9,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -86,8 +87,8 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
     }
     if (!oldRoot.isEmpty() && !Arrays.equals(oldRoot.toByteArray(), newRoot)) {
       logger.error("the accountStateRoot hash is error. {}, oldRoot: {}, newRoot: {}",
-          blockCapsule, ByteUtil.toHexString(oldRoot.toByteArray()),
-          ByteUtil.toHexString(newRoot));
+          blockCapsule, ByteArray.toHexString(oldRoot.toByteArray()),
+          ByteArray.toHexString(newRoot));
       throw new BadBlockException("the accountStateRoot hash is error");
     }
   }

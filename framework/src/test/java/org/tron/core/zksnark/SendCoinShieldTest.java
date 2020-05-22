@@ -878,16 +878,16 @@ public class SendCoinShieldTest {
         .decode("0b862f0e70048551c08518ff49a19db027d62cdeeb2fa974db91c10e6ebcdc16");
     System.out.println(sk.encode());
     System.out.println(
-        "sk.expandedSpendingKey()" + ByteUtil.toHexString(sk.expandedSpendingKey().encode()));
-    System.out.println("sk.fullViewKey()" + ByteUtil.toHexString(sk.fullViewingKey().encode()));
+        "sk.expandedSpendingKey()" + ByteArray.toHexString(sk.expandedSpendingKey().encode()));
+    System.out.println("sk.fullViewKey()" + ByteArray.toHexString(sk.fullViewingKey().encode()));
     System.out
-        .println("sk.ivk()" + ByteUtil.toHexString(sk.fullViewingKey().inViewingKey().getValue()));
+        .println("sk.ivk()" + ByteArray.toHexString(sk.fullViewingKey().inViewingKey().getValue()));
     System.out.println(
-        "sk.defaultDiversifier:" + ByteUtil.toHexString(sk.defaultDiversifier().getData()));
+        "sk.defaultDiversifier:" + ByteArray.toHexString(sk.defaultDiversifier().getData()));
 
-    System.out.println("sk.defaultAddress:" + ByteUtil.toHexString(sk.defaultAddress().encode()));
+    System.out.println("sk.defaultAddress:" + ByteArray.toHexString(sk.defaultAddress().encode()));
 
-    System.out.println("rcm:" + ByteUtil.toHexString(Note.generateR()));
+    System.out.println("rcm:" + ByteArray.toHexString(Note.generateR()));
 
     int count = 10;
     for (int i = 0; i < count; i++) {
@@ -895,7 +895,7 @@ public class SendCoinShieldTest {
       System.out.println("---- random " + i + " ----");
 
       sk = SpendingKey.random();
-      System.out.println("sk is: " + ByteUtil.toHexString(sk.getValue()));
+      System.out.println("sk is: " + ByteArray.toHexString(sk.getValue()));
 
       DiversifierT diversifierT = new DiversifierT();
       byte[] d;
@@ -906,39 +906,39 @@ public class SendCoinShieldTest {
         }
       }
       diversifierT.setData(d);
-      System.out.println("d is: " + ByteUtil.toHexString(d));
+      System.out.println("d is: " + ByteArray.toHexString(d));
 
       ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-      System.out.println("expsk-ask is: " + ByteUtil.toHexString(expsk.getAsk()));
-      System.out.println("expsk-nsk is: " + ByteUtil.toHexString(expsk.getNsk()));
-      System.out.println("expsk-ovk is: " + ByteUtil.toHexString(expsk.getOvk()));
+      System.out.println("expsk-ask is: " + ByteArray.toHexString(expsk.getAsk()));
+      System.out.println("expsk-nsk is: " + ByteArray.toHexString(expsk.getNsk()));
+      System.out.println("expsk-ovk is: " + ByteArray.toHexString(expsk.getOvk()));
 
       FullViewingKey fullViewingKey = expsk.fullViewingKey();
-      System.out.println("fullviewkey-ak is: " + ByteUtil.toHexString(fullViewingKey.getAk()));
-      System.out.println("fullviewkey-nk is: " + ByteUtil.toHexString(fullViewingKey.getNk()));
-      System.out.println("fullviewkey-ovk is: " + ByteUtil.toHexString(fullViewingKey.getOvk()));
+      System.out.println("fullviewkey-ak is: " + ByteArray.toHexString(fullViewingKey.getAk()));
+      System.out.println("fullviewkey-nk is: " + ByteArray.toHexString(fullViewingKey.getNk()));
+      System.out.println("fullviewkey-ovk is: " + ByteArray.toHexString(fullViewingKey.getOvk()));
 
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      System.out.println("ivk is: " + ByteUtil.toHexString(incomingViewingKey.getValue()));
+      System.out.println("ivk is: " + ByteArray.toHexString(incomingViewingKey.getValue()));
 
       Optional<PaymentAddress> op = incomingViewingKey.address(diversifierT);
-      System.out.println("pkD is: " + ByteUtil.toHexString(op.get().getPkD()));
+      System.out.println("pkD is: " + ByteArray.toHexString(op.get().getPkD()));
 
       byte[] rcm = Note.generateR();
-      System.out.println("rcm is " + ByteUtil.toHexString(rcm));
+      System.out.println("rcm is " + ByteArray.toHexString(rcm));
 
       byte[] alpha = Note.generateR();
-      System.out.println("alpha is " + ByteUtil.toHexString(alpha));
+      System.out.println("alpha is " + ByteArray.toHexString(alpha));
 
       String address = KeyIo.encodePaymentAddress(op.get());
       System.out.println("saplingaddress is: " + address);
 
       // check
       PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(address);
-      Assert.assertEquals(ByteUtil.toHexString(paymentAddress.getD().getData()),
-          ByteUtil.toHexString(d));
-      Assert.assertEquals(ByteUtil.toHexString(paymentAddress.getPkD()),
-          ByteUtil.toHexString(op.get().getPkD()));
+      Assert.assertEquals(ByteArray.toHexString(paymentAddress.getD().getData()),
+          ByteArray.toHexString(d));
+      Assert.assertEquals(ByteArray.toHexString(paymentAddress.getPkD()),
+          ByteArray.toHexString(op.get().getPkD()));
 
     }
   }
