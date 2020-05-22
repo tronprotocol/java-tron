@@ -39,7 +39,7 @@ public class GetNowSRAnnualizedRateOfReturnServlet extends RateLimiterServlet {
       double totalVote;
       double srVote;
       double ratio;
-      if (wallet.existAddress(address)) {
+      if (!wallet.existAddress(address)) {
         throw new AddressNotFound("address not found!");
       }
       srVote = wallet.queryNowVoteNumber(address);
