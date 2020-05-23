@@ -247,7 +247,7 @@ public class NodeInfo {
     private double cpuRate;
     private String javaVersion;
     private String osName;
-    private long jvmTotalMemoery;
+    private long jvmTotalMemory;
     private long jvmFreeMemory;
     private double processCpuRate;
     private List<MemoryDescInfo> memoryDescInfoList = new ArrayList<>();
@@ -317,11 +317,11 @@ public class NodeInfo {
     }
 
     public long getJvmTotalMemoery() {
-      return jvmTotalMemoery;
+      return jvmTotalMemory;
     }
 
-    public MachineInfo setJvmTotalMemoery(long jvmTotalMemoery) {
-      this.jvmTotalMemoery = jvmTotalMemoery;
+    public MachineInfo setJvmTotalMemoery(long jvmTotalMemory) {
+      this.jvmTotalMemory = jvmTotalMemory;
       return this;
     }
 
