@@ -1,20 +1,17 @@
 package org.tron.core.services;
 
+import java.util.concurrent.Callable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.tron.core.db.Manager;
 import org.tron.core.db2.core.Chainbase;
-
-import java.util.concurrent.Callable;
 
 @Slf4j(topic = "API")
 public abstract class WalletOnCursor {
 
+  protected Chainbase.Cursor cursor = Chainbase.Cursor.HEAD;
   @Autowired
   private Manager dbManager;
-
-  protected Chainbase.Cursor cursor = Chainbase.Cursor.HEAD;
 
   public <T> T futureGet(TronCallable<T> callable) {
     try {
@@ -35,6 +32,7 @@ public abstract class WalletOnCursor {
   }
 
   public interface TronCallable<T> extends Callable<T> {
+
     @Override
     T call();
   }

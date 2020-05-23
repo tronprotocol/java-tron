@@ -10,11 +10,11 @@ class ServletOutputStreamCopy extends ServletOutputStream {
 
   private OutputStream outputStream;
   private ByteArrayOutputStream copy;
-  private int MAX_REPONSE_SIZE = 4096;
+  private int MAX_RESPONSE_SIZE = 4096;
 
   public ServletOutputStreamCopy(OutputStream outputStream) {
     this.outputStream = outputStream;
-    this.copy = new ByteArrayOutputStream(MAX_REPONSE_SIZE);
+    this.copy = new ByteArrayOutputStream(MAX_RESPONSE_SIZE);
   }
 
   @Override

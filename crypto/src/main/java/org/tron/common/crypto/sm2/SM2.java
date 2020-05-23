@@ -1,8 +1,8 @@
 package org.tron.common.crypto.sm2;
 
+import static org.tron.common.crypto.Hash.computeAddress;
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
-import static org.tron.common.utils.Hash.computeAddress;
 
 import java.io.IOException;
 import java.io.Serializable;

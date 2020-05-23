@@ -35,14 +35,11 @@ public class DeployContractServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String contract = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(contract);
-      boolean visible = getVisiblePost(contract);
+      PostParams params = PostParams.getPostParams(request);
       CreateSmartContract.Builder build = CreateSmartContract.newBuilder();
-      JSONObject jsonObject = JSONObject.parseObject(contract);
+      JSONObject jsonObject = JSONObject.parseObject(params.getParams());
       String owner_address = jsonObject.getString("owner_address");
-      if (visible) {
+      if (params.isVisible()) {
         owner_address = getHexAddress(owner_address);
       }
       byte[] ownerAddress = ByteArray.fromHexString(owner_address);
@@ -56,7 +53,7 @@ public class DeployContractServlet extends RateLimiterServlet {
         abiSB.append("\"entrys\":");
         abiSB.append(abi);
         abiSB.append("}");
-        JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
+        JsonFormat.merge(abiSB.toString(), abiBuilder, params.isVisible());
       }
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder
@@ -91,7 +88,7 @@ public class DeployContractServlet extends RateLimiterServlet {
       rawBuilder.setFeeLimit(feeLimit);
       txBuilder.setRawData(rawBuilder);
       tx = setTransactionPermissionId(jsonObject, txBuilder.build());
-      response.getWriter().println(Util.printCreateTransaction(tx, visible));
+      response.getWriter().println(Util.printCreateTransaction(tx, params.isVisible()));
     } catch (Exception e) {
       Util.processError(e, response);
     }

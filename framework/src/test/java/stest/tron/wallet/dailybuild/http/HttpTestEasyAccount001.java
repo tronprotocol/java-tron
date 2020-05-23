@@ -23,8 +23,7 @@ public class HttpTestEasyAccount001 {
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
-  String url = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetUrl");
+  String url = Configuration.getByPath("testng.conf").getString("defaultParameter.assetUrl");
   long beforeEasyBalance = 0L;
   long afterEasyBalance = 0L;
   long beforeGenerateBalance = 0L;
@@ -42,8 +41,8 @@ public class HttpTestEasyAccount001 {
       .get(0);
   private long now = System.currentTimeMillis();
   private final long totalSupply = now;
-  private String userPassword = "ps_" + Long.toString(now);
-  private String assetName = "httpEasyAsset_" + Long.toString(now);
+  private String userPassword = "ps_" + now;
+  private String assetName = "httpEasyAsset_" + now;
   private String easyAddress = null;
   private String generatePriKey = null;
   private String generateAddress = null;
@@ -154,8 +153,7 @@ public class HttpTestEasyAccount001 {
   @Test(enabled = true, description = "Easy transfer by privateKey by http")
   public void test05EasyTransferByPrivateKey() {
     response = HttpMethed
-        .easyTransferByPrivate(httpnode, generatePriKey,
-            Commons.decodeFromBase58Check(easyAddress),
+        .easyTransferByPrivate(httpnode, generatePriKey, Commons.decodeFromBase58Check(easyAddress),
             1000000L);
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
@@ -187,8 +185,8 @@ public class HttpTestEasyAccount001 {
     //Create an asset issue
     response = HttpMethed
         .assetIssue(httpnode, assetAddress, assetName, assetName, totalSupply, 1, 1,
-            System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,
-            2, 3, description, url, 1000L, 1000L, assetKey);
+            System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000, 2, 3,
+            description, url, 1000L, 1000L, assetKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
 
@@ -201,8 +199,8 @@ public class HttpTestEasyAccount001 {
     Assert.assertTrue(Integer.parseInt(assetIssueId) > 1000000);
 
     response = HttpMethed
-        .transferAsset(httpnode, assetAddress,
-            Commons.decodeFromBase58Check(easyAddress), assetIssueId, 100L, assetKey);
+        .transferAsset(httpnode, assetAddress, Commons.decodeFromBase58Check(easyAddress),
+            assetIssueId, 100L, assetKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
 
@@ -229,8 +227,7 @@ public class HttpTestEasyAccount001 {
     response = HttpMethed.getAccount(httpnode, Commons.decodeFromBase58Check(easyAddress));
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    afterEasyAsset = responseContent.getJSONArray("assetV2").getJSONObject(0)
-        .getLongValue("value");
+    afterEasyAsset = responseContent.getJSONArray("assetV2").getJSONObject(0).getLongValue("value");
     logger.info("afterEasyAsset:" + afterEasyAsset);
 
     response = HttpMethed.getAccount(httpnode, Commons.decodeFromBase58Check(generateAddress));
@@ -248,10 +245,8 @@ public class HttpTestEasyAccount001 {
    */
   @Test(enabled = true, description = "Easy transfer asset by private key by http")
   public void test08EasyTransferAssetByPrivateKey() {
-    response = HttpMethed
-        .easyTransferAssetByPrivate(httpnode, generatePriKey,
-            Commons.decodeFromBase58Check(easyAddress),
-            5L, assetIssueId);
+    response = HttpMethed.easyTransferAssetByPrivate(httpnode, generatePriKey,
+        Commons.decodeFromBase58Check(easyAddress), 5L, assetIssueId);
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -259,8 +254,7 @@ public class HttpTestEasyAccount001 {
     response = HttpMethed.getAccount(httpnode, Commons.decodeFromBase58Check(easyAddress));
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    afterEasyAsset = responseContent.getJSONArray("assetV2").getJSONObject(0)
-        .getLongValue("value");
+    afterEasyAsset = responseContent.getJSONArray("assetV2").getJSONObject(0).getLongValue("value");
     logger.info("beforeEasyAsset:" + beforeEasyAsset);
     logger.info("afterEasyAsset:" + afterEasyAsset);
 
@@ -270,8 +264,7 @@ public class HttpTestEasyAccount001 {
     afterGenerateAsset = responseContent.getJSONArray("assetV2").getJSONObject(0)
         .getLongValue("value");
     logger.info("afterGenerateAsset:" + afterGenerateAsset);
-    Assert
-        .assertEquals(beforeGenerateAsset - afterGenerateAsset, afterEasyAsset - beforeEasyAsset);
+    Assert.assertEquals(beforeGenerateAsset - afterGenerateAsset, afterEasyAsset - beforeEasyAsset);
   }
 
   /**

@@ -309,8 +309,8 @@ public class Program {
   }
 
   /**
-   * @param transferAddress the address send trx to.
-   * @param value  the trx value transferred in the internaltransaction
+   * @param transferAddress the address send TRX to.
+   * @param value  the TRX value transferred in the internal transaction
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] transferAddress,
@@ -791,7 +791,7 @@ public class Program {
         throw e;
       }
     }
-    // transfer trx validation
+    // transfer TRX validation
     byte[] tokenId = null;
 
     checkTokenId(msg);
@@ -822,7 +822,7 @@ public class Program {
     byte[] programCode =
         accountCapsule != null ? getContractState().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
-    // only for trx, not for token
+    // only for TRX, not for token
     long contextBalance = 0L;
     if (byTestingSuite()) {
       // This keeps track of the calls created for a test
@@ -1360,7 +1360,7 @@ public class Program {
 
     checkTokenId(msg);
     boolean isTokenTransfer = isTokenTransfer(msg);
-    // transfer trx validation
+    // transfer TRX validation
     if (!isTokenTransfer) {
       senderBalance = deposit.getBalance(senderAddress);
     } else {
@@ -1445,7 +1445,7 @@ public class Program {
    * [Long.Min, 0)        Not possible                               error
    * --------------------------------------------------------------------------------------------- 0
    * allowed and only allowed                    error (guaranteed in CALLTOKEN) transfertoken id=0
-   * should not transfer trx） ---------------------------------------------------------------------
+   * should not transfer TRX） ---------------------------------------------------------------------
    * (0-100_0000]          Not possible                              error
    * ---------------------------------------------------------------------------------------------
    * (100_0000, Long.Max]  Not possible                             allowed
@@ -1542,7 +1542,7 @@ public class Program {
 
   private void createAccountIfNotExist(Repository deposit, byte[] contextAddress) {
     if (VMConfig.allowTvmSolidity059()) {
-      //after solidity059 proposal , allow contract transfer trc10 or trx to non-exist address(would create one)
+      //after solidity059 proposal , allow contract transfer trc10 or TRX to non-exist address(would create one)
       AccountCapsule sender = deposit.getAccount(contextAddress);
       if (sender == null) {
         deposit.createNormalAccount(contextAddress);

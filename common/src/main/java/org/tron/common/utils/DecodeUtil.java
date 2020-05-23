@@ -32,8 +32,4 @@ public class DecodeUtil {
     return true;
   }
 
-  public static String createReadableString(byte[] bytes) {
-    return ByteArray.toHexString(bytes);
-  }
-
 }

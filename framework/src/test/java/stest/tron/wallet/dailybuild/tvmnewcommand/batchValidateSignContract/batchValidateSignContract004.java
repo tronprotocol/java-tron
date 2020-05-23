@@ -1,7 +1,5 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.batchValidateSignContract;
 
-import static stest.tron.wallet.common.client.utils.PublicMethed.parametersString;
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -26,7 +24,6 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.TransactionInfo;
