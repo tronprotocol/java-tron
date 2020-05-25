@@ -171,11 +171,18 @@ public class Constant {
 
 //  public static final String COMMITTEE_ALLOW_SHIELDED_TRANSACTION = "committee.allowShieldedTransaction";
 
+  public static final String COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION = "committee"
+      + ".allowShieldedTRC20Transaction";
+
   public static final String EVENT_SUBSCRIBE = "event.subscribe";
 
   public static final String EVENT_SUBSCRIBE_FILTER = "event.subscribe.filter";
 
-  public static final String NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION = "node.fullNodeAllowShieldedTransaction";
+  public static final String NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION = "node"
+      + ".fullNodeAllowShieldedTransaction";
+
+  public static final String NODE_FULLNODE_ALLOW_SHIELDED_TRC20_TRANSACTION = "node"
+      + ".fullNodeAllowShieldedTRC20Transaction";
 
   public static final String NODE_ZEN_TOKENID = "node.zenTokenId";
 

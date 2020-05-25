@@ -31,12 +31,15 @@ import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
 import org.tron.core.services.http.GetRewardServlet;
 import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
 import org.tron.core.services.http.GetTransactionInfoByBlockNumServlet;
+import org.tron.core.services.http.IsShieldedTRC20ContractNoteSpentServlet;
 import org.tron.core.services.http.IsSpendServlet;
 import org.tron.core.services.http.ListExchangesServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
 import org.tron.core.services.http.ScanAndMarkNoteByIvkServlet;
 import org.tron.core.services.http.ScanNoteByIvkServlet;
 import org.tron.core.services.http.ScanNoteByOvkServlet;
+import org.tron.core.services.http.ScanShieldedTRC20NotesbyIvkServlet;
+import org.tron.core.services.http.ScanShieldedTRC20NotesbyOvkServlet;
 import org.tron.core.services.http.TriggerConstantContractServlet;
 
 
@@ -102,6 +105,12 @@ public class SolidityNodeHttpApiService implements Service {
   private GetMerkleTreeVoucherInfoServlet getMerkleTreeVoucherInfoServlet;
   @Autowired
   private IsSpendServlet isSpendServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesbyIvkServlet scanShieldedTRC20NotesbyIvkServlet;
+  @Autowired
+  private ScanShieldedTRC20NotesbyOvkServlet scanShieldedTRC20NotesbyOvkServlet;
+  @Autowired
+  private IsShieldedTRC20ContractNoteSpentServlet isShieldedTRC20ContractNoteSpentServlet;
 
   @Autowired
   private GetBrokerageServlet getBrokerageServlet;
@@ -175,6 +184,13 @@ public class SolidityNodeHttpApiService implements Service {
       //     "/walletsolidity/scannotebyovk");
       // context.addServlet(new ServletHolder(isSpendServlet),
       //     "/walletsolidity/isspend");
+
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyIvkServlet),
+          "/walletsolidity/scanshieldedtrc20notesbyivk");
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyOvkServlet),
+          "/walletsolidity/scanshieldedtrc20notesbyovk");
+      context.addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
+          "/walletsolidity/isshieldedtrc20contractnotespent");
 
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
           "/walletsolidity/gettransactioninfobyblocknum");

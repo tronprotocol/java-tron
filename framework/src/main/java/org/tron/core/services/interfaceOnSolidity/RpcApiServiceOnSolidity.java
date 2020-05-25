@@ -7,6 +7,8 @@ import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import io.grpc.stub.StreamObservers;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -447,5 +449,31 @@ public class RpcApiServiceOnSolidity implements Service {
       );
     }
 
+    @Override
+    public void scanShieldedTRC20NotesbyIvk(GrpcAPI.IvkDecryptTRC20Parameters request,
+        StreamObserver<GrpcAPI.DecryptNotesTRC20> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .scanShieldedTRC20NotesbyIvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void scanShieldedTRC20NotesbyOvk(GrpcAPI.OvkDecryptTRC20Parameters request,
+        StreamObserver<GrpcAPI.DecryptNotesTRC20> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .scanShieldedTRC20NotesbyOvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void isShieldedTRC20ContractNoteSpent(GrpcAPI.NfTRC20Parameters request,
+        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .isShieldedTRC20ContractNoteSpent(request, responseObserver)
+      );
+    }
   }
 }

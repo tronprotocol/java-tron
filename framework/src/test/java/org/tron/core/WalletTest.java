@@ -514,5 +514,4 @@ public class WalletTest {
 
     System.out.printf(builder.build().toString());
   }
-
 }

@@ -803,6 +803,60 @@ public class LibrustzcashParam {
   }
 
   /**
+   * bindingSig: 64 bytes sighashValue: sha256 of transaction,32 bytes,
+   */
+  public static class FinalCheckNewParams implements ValidParam {
+
+    @Setter
+    @Getter
+    private long valueBalance;
+    @Setter
+    @Getter
+    private byte[] bindingSig;
+    @Setter
+    @Getter
+    private byte[] sighashValue;
+    @Setter
+    @Getter
+    private byte[] spendCv;
+    @Setter
+    @Getter
+    private int spendCvLen;
+    @Setter
+    @Getter
+    private byte[] outputCv;
+    @Setter
+    @Getter
+    private int outputCvLen;
+
+    public FinalCheckNewParams(long valueBalance, byte[] bindingSig, byte[] sighashValue,
+                               byte[] spendCv, int spendCvLen, byte[] outputCv, int outputCvLen) throws ZksnarkException {
+      this.valueBalance = valueBalance;
+      this.bindingSig = bindingSig;
+      this.sighashValue = sighashValue;
+      this.spendCv = spendCv;
+      this.spendCvLen = spendCvLen;
+      this.outputCv = outputCv;
+      this.outputCvLen = outputCvLen;
+      valid();
+    }
+
+    @Override
+    public void valid() throws ZksnarkException {
+      validParamLength(bindingSig, 64);
+      valid32Params(sighashValue);
+      if(spendCvLen <=0 || outputCvLen <=0) {
+        throw new ZksnarkException("spendCvLen and  outputCvLen must be positive");
+      }
+      if(spendCvLen % 32 != 0 || outputCvLen % 32 != 0) {
+        throw new ZksnarkException("spendCvLen and  ouFinalCheckNewParamstputCvLen must be multiple of 32");
+      }
+      validParamLength(spendCv, spendCvLen);
+      validParamLength(outputCv, outputCvLen);
+    }
+  }
+
+  /**
    * ivk: incoming viewing key, 32 bytes, should be 251bits , not checked; d: 11 bytes pkD: 32
    * bytes
    */
