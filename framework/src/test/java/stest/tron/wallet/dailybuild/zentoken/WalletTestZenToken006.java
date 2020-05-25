@@ -216,7 +216,7 @@ public class WalletTestZenToken006 {
   }
 
 
-  @Test(enabled = true, description = "Shield note memo is empty")
+  @Test(enabled = true, description = "Shield note memo contains special char")
   public void test5ShieldMemoIsEmpty() {
     shieldAddressInfo = PublicMethed.generateShieldAddress();
     shieldAddress = shieldAddressInfo.get().getAddress();
@@ -225,7 +225,7 @@ public class WalletTestZenToken006 {
     memo = "{\n"
         + "  note {\n"
         + "    value: 49957\n"
-        + "    payment_address: \"ztron1f42n7h0l3p8mlaq0d0rxdkhq"
+        + "    payment_address: \"ztron1f42n7h0l3p8mlaq0d0rxdkhq~!@@#$%^&"
         + "n6xuq49xhvj593wfduy24kn3xrmxfpqt8lnmh9ysnu5nzt3zgzx\"\n"
         + "    rcm: \"\\210x\\256\\211\\256v\\0344\\267\\240\\375\\377xs\\3"
         + "50\\3558^Y\\200i0$S\\312KK\\326l\\234J\\b\"\n"
@@ -252,7 +252,6 @@ public class WalletTestZenToken006 {
 
 
   }
-
 
   /**
    * constructor.
