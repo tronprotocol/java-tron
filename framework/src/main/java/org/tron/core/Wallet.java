@@ -23,6 +23,7 @@ import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.WITNESS_STANDBY_LENGTH;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
@@ -35,6 +36,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -2436,7 +2438,7 @@ public class Wallet {
         if (brokerage == 100) {
           continue;
         }
-        
+
         double brokerageRate = (double) brokerage / 100;
         reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
         blockPayReward += dbManager.getDelegationStore().getBlockReward(cycle, address);
@@ -2839,6 +2841,23 @@ public class Wallet {
       return true;
     }
     return false;
+  }
+
+  public boolean checkStandbyWitness(byte[] address) {
+    List<ByteString> witnessAddressList = new ArrayList<>();
+    for (WitnessCapsule witnessCapsule : consensusDelegate.getAllWitnesses()) {
+      witnessAddressList.add(witnessCapsule.getAddress());
+    }
+    witnessAddressList.sort(Comparator.comparingLong((ByteString b) ->
+        consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
+        .reversed()
+        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+
+    if (witnessAddressList.size() > WITNESS_STANDBY_LENGTH) {
+      witnessAddressList = witnessAddressList.subList(0, WITNESS_STANDBY_LENGTH);
+    }
+    boolean contains = witnessAddressList.contains(ByteString.copyFrom(address));
+    return contains;
   }
 }
 
