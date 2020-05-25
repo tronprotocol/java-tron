@@ -29,7 +29,7 @@ public class GetTriggerInputForShieldedTRC20ContractServlet extends RateLimiterS
       ShieldedTRC20TriggerContractParameters.Builder builder =
           ShieldedTRC20TriggerContractParameters
               .newBuilder();
-      JsonFormat.merge(input, builder);
+      JsonFormat.merge(input, builder, visible);
       BytesMessage result = wallet.getTriggerInputForShieldedTRC20Contract(builder.build());
       response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {

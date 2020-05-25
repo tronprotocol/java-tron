@@ -43,7 +43,7 @@ public class ScanShieldedTRC20NotesbyIvkServlet extends RateLimiterServlet {
       boolean visible = Util.getVisiblePost(input);
       IvkDecryptTRC20Parameters.Builder ivkDecryptTRC20Parameters = IvkDecryptTRC20Parameters
           .newBuilder();
-      JsonFormat.merge(input, ivkDecryptTRC20Parameters);
+      JsonFormat.merge(input, ivkDecryptTRC20Parameters, visible);
 
       GrpcAPI.DecryptNotesTRC20 notes = wallet
           .scanShieldedTRC20NotesbyIvk(ivkDecryptTRC20Parameters.getStartBlockIndex(),
@@ -60,13 +60,16 @@ public class ScanShieldedTRC20NotesbyIvkServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = Util.getVisible(request);
       long startNum = Long.parseLong(request.getParameter("start_block_index"));
       long endNum = Long.parseLong(request.getParameter("end_block_index"));
       String ivk = request.getParameter("ivk");
-      String contractAddress = request.getParameter("contract_address");
+      String contractAddress = request.getParameter("shielded_TRC20_contract_address");
+      if (visible) {
+        contractAddress = Util.getHexAddress(contractAddress);
+      }
       String ak = request.getParameter("ak");
       String nk = request.getParameter("nk");
-      boolean visible = Util.getVisible(request);
       GrpcAPI.DecryptNotesTRC20 notes = wallet
           .scanShieldedTRC20NotesbyIvk(startNum, endNum,
               ByteArray.fromHexString(contractAddress), ByteArray.fromHexString(ivk),

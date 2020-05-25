@@ -28,7 +28,7 @@ public class IsShieldedTRC20ContractNoteSpentServlet extends RateLimiterServlet 
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
       NfTRC20Parameters.Builder build = NfTRC20Parameters.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible);
       GrpcAPI.NullifierResult result = wallet.isShieldedTRC20ContractNoteSpent(build.build());
       response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {

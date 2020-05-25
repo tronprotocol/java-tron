@@ -2986,7 +2986,7 @@ public class Wallet {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txId = transactionCapsule.getTransactionId().getBytes();
         TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txId));
-        if (ByteUtil.equals(info.getContractAddress().toByteArray(),
+        if (info != null && ByteUtil.equals(info.getContractAddress().toByteArray(),
             shieldedTRC20ContractAddress)) {
           DecryptNotesTRC20.NoteTx.Builder noteBuilder;
           List<TransactionInfo.Log> logList = info.getLogList();
@@ -3138,16 +3138,8 @@ public class Wallet {
       for (Transaction transaction : block.getTransactionsList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
-        TransactionInfoCapsule transactionInfoCapsule;
-        try {
-          transactionInfoCapsule = dbManager.getTransactionRetStore()
-              .getTransactionInfo(txid);
-        } catch (BadItemException e) {
-          throw new ZksnarkException(
-              "get TransactionInfoCapsule failed.");
-        }
-        TransactionInfo info = transactionInfoCapsule.getInstance();
-        if (ByteUtil.equals(info.getContractAddress().toByteArray(),
+        TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txid));
+        if (info != null && ByteUtil.equals(info.getContractAddress().toByteArray(),
             shieldedTRC20ContractAddress)) {
           DecryptNotesTRC20.NoteTx.Builder noteBuilder;
           List<TransactionInfo.Log> logList = info.getLogList();

@@ -409,7 +409,7 @@ public class FullNodeHttpApiService implements Service {
       // for shielded contract
       context
           .addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),
-              "/isshieldedtrc20contractNoteSpent");
+              "/isshieldedtrc20contractnotespent");
       context.addServlet(new ServletHolder(createShieldedContractParametersServlet),
           "/createshieldedcontractparameters");
       context.addServlet(new ServletHolder(createShieldedContractParametersWithoutAskServlet),

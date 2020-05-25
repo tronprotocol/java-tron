@@ -1402,7 +1402,7 @@ message DecryptNotesTRC20 {
   message NoteTx {
     Note note = 1;
     int64 position = 2;
-    bool isSpent = 3;
+    bool is_spent = 3;
     bytes txid = 4;
     int32 index = 5; //the index of note in txid
   }
@@ -1418,7 +1418,7 @@ message NfTRC20Parameters {
 }
 
 message NullifierResult {
-  bool isSpent = 1;
+  bool is_spent = 1;
 }
 
 message ShieldedTRC20TriggerContractParameters {
