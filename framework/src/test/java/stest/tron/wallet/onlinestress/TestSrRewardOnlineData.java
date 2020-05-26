@@ -8,8 +8,11 @@ import com.alibaba.fastjson.JSONObject;
 import io.grpc.ManagedChannel;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -149,12 +152,15 @@ public class TestSrRewardOnlineData {
     HttpMethed.printJsonContent(responseContent);
     JSONArray wintessArray = responseContent.getJSONArray("witnesses");
     List<Long> voteList = new ArrayList<>();
+    HashMap<String,Long> witness127 = new HashMap<>();
+
     for (int i = 0; i < wintessArray.size();i++) {
       if (wintessArray.getJSONObject(i).containsKey("voteCount")) {
         voteList.add(wintessArray.getJSONObject(i).getLong("voteCount"));
+        witness127.put(wintessArray.getJSONObject(i).getString("address"),
+            wintessArray.getJSONObject(i).getLong("voteCount"));
       }
     }
-    Collections.sort(voteList,Collections.reverseOrder());
 
     Long totalVote = 0L;
     Long voteFor127 = 0L;
@@ -174,16 +180,36 @@ public class TestSrRewardOnlineData {
 
 
 
-    Long srVote = 3414289114L;
-    double annualizedRateOfReturn = ((double) 16 / (double) 27 / (double)srVote
-        + (double)160 / (double)totalVote) * (double)blockNumberEachDay * (double)80 * (double)365;
-    logger.info("totalVote annu is :" + annualizedRateOfReturn);
 
 
-    annualizedRateOfReturn = ((double) 16 / (double) 27 / (double)srVote
+    List<String> result = new ArrayList<>();
+
+    for (String key : witness127.keySet()) {
+      Long srVote = witness127.get(key);
+      String witnessAddress = key;
+      response = HttpMethed.getNowSrAnnualizedRate(httpnode,witnessAddress);
+      responseContent = HttpMethed.parseResponseContent(response);
+      double annualizedRateOfReturn = Double.valueOf(responseContent
+          .getString("annualizedRateOfReturn"));
+      if (annualizedRateOfReturn > 0) {
+        result.add(
+            witnessAddress + " annualizedRateOfReturn is:"
+                + responseContent.getString("annualizedRateOfReturn"));
+      }
+    }
+
+    for (int i = 0; i < result.size();i++) {
+      logger.info(result.get(i));
+    }
+
+    logger.info(result.size() + "");
+
+
+
+    /*    double annualizedRateOfReturn = ((double) 16 / (double) 27 / (double)srVote
         + (double)160 / (double)voteFor127) * (double)blockNumberEachDay
         * (double)80 * (double)365;
-    logger.info("voteFor127 annu is:" + annualizedRateOfReturn);
+    logger.info("voteFor127 annu is:" + annualizedRateOfReturn);*/
   }
 
 
@@ -201,7 +227,6 @@ public class TestSrRewardOnlineData {
   public void shutdown() throws InterruptedException {
     HttpMethed.disConnect();
   }
-
 
 
 
