@@ -738,15 +738,19 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public void setResultWithRet(TransactionContext context) {
     contractResult code = context.getProgramResult().getResultCode();
-    Result ret = Result.newBuilder().setContractRet(code).build();
-    if (this.transaction.getRetCount() > 0) {
-      ret = this.transaction.getRet(0).toBuilder().setContractRet(code).setRet(Result.code.SUCESS)
-          .build();
+    Result.Builder ret = Result.newBuilder().setContractRet(code);
 
-      this.transaction = transaction.toBuilder().setRet(0, ret).build();
+    if (code.equals(contractResult.SUCCESS)) {
+      ret.setRet(Result.code.SUCESS);
+    } else {
+      ret.setRet(Result.code.FAILED);
+    }
+    if (this.transaction.getRetCount() > 0) {
+      this.transaction = transaction.toBuilder().setRet(0, ret.build()).build();
       return;
     }
-    this.transaction = transaction.toBuilder().addRet(ret).build();
+    this.transaction = transaction.toBuilder().addRet(ret.build()).build();
+
   }
 
   public contractResult getContractRet() {
