@@ -22,12 +22,8 @@ public class GetAccountRewardByCycleServlet extends RateLimiterServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       byte[] address = Util.getAddress(request);
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      JSONObject jsonObject = JSONObject.parseObject(input);
-      long startCycle = Util
-          .getJsonLongValue(jsonObject, "startCycle", true);
-      long endCycle = Util.getJsonLongValue(jsonObject, "endCycle", true);
+      long startCycle = Long.parseLong(request.getParameter("startCycle"));
+      long endCycle = Long.parseLong(request.getParameter("endCycle"));
       if (startCycle <= endCycle && address != null) {
         HashMap<String, Long> value = wallet
             .computeRewardByCycle(address, startCycle, endCycle);
@@ -37,7 +33,6 @@ public class GetAccountRewardByCycleServlet extends RateLimiterServlet {
       }
 
     } catch (Exception e) {
-      logger.error("", e);
       try {
         response.getWriter().println(Util.printErrorMsg(e));
       } catch (IOException ioe) {
