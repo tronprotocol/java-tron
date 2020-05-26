@@ -121,7 +121,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_SHIELDED_TRANSACTION = "ALLOW_SHIELDED_TRANSACTION".getBytes();
   private static final byte[] ALLOW_SHIELDED_TRC20_TRANSACTION =
       "ALLOW_SHIELDED_TRC20_CONTRACT_TRANSACTION"
-      .getBytes();
+          .getBytes();
+  private static final byte[] ALLOW_SET_TRANSACTION_RET = "ALLOW_SET_TRANSACTION_RET".getBytes();
+
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
   private static final byte[] FORBID_TRANSFER_TO_CONTRACT = "FORBID_TRANSFER_TO_CONTRACT"
@@ -545,6 +547,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowShieldedTRC20ContractTransaction();
     } catch (IllegalArgumentException e) {
       this.saveAllowShieldedTRC20Transaction(DBConfig.getAllowShieldedTRC20Transaction());
+    }
+
+    try {
+      this.getAllowSetTransactionRet();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowSetTransactionRet(DBConfig.getAllowSetTransactionRet());
     }
 
     try {
@@ -1532,6 +1540,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowCreationOfContracts() == 1L;
   }
 
+  public boolean needSetTransactionRet() {
+    return getAllowSetTransactionRet() == 1L;
+  }
+
   public void saveAllowShieldedTransaction(long allowShieldedTransaction) {
     this.put(DynamicPropertiesStore.ALLOW_SHIELDED_TRANSACTION,
         new BytesCapsule(ByteArray.fromLong(allowShieldedTransaction)));
@@ -1553,6 +1565,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public long getAllowShieldedTRC20ContractTransaction() {
     String msg = "not found ALLOW_SHIELDED_TRC20_CONTRACT_TRANSACTION";
     return Optional.ofNullable(getUnchecked(ALLOW_SHIELDED_TRC20_TRANSACTION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowSetTransactionRet(long allowSetTransactionRet) {
+    this.put(DynamicPropertiesStore.ALLOW_SET_TRANSACTION_RET,
+        new BytesCapsule(ByteArray.fromLong(allowSetTransactionRet)));
+  }
+
+  public long getAllowSetTransactionRet() {
+    String msg = "not found ALLOW_SET_TRANSACTION_RET";
+    return Optional.ofNullable(getUnchecked(ALLOW_SET_TRANSACTION_RET))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
@@ -1871,10 +1897,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
     private static final byte[] ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER =
         "ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER"
-        .getBytes();
+            .getBytes();
     private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO =
         "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"
-        .getBytes();
+            .getBytes();
   }
 
 }

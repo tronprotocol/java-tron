@@ -285,7 +285,7 @@ public class ProposalUtil {
 //        }
 //        break;
 //      }
-        case FORBID_TRANSFER_TO_CONTRACT: {
+      case FORBID_TRANSFER_TO_CONTRACT: {
         if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_3_6_6)) {
 
           throw new ContractValidateException(BAD_PARAM_ID);
@@ -309,6 +309,17 @@ public class ProposalUtil {
         if (value != 1 && value != 0) {
           throw new ContractValidateException(
               "This value[ALLOW_SHIELDED_TRC20_CONTRACT] is only allowed to be 1 or 0");
+        }
+        break;
+      }
+      case ALLOW_SET_TRANSACTION_RET: {
+        if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_SET_TRANSACTION_RET]");
+        }
+        if (value != 1 && value != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_SET_TRANSACTION_RET] is only allowed to be 1 or 0");
         }
         break;
       }
@@ -345,7 +356,7 @@ public class ProposalUtil {
     ALLOW_PROTO_FILTER_NUM(24), // 1, 24
     ALLOW_ACCOUNT_STATE_ROOT(25), // 1, 25
     ALLOW_TVM_CONSTANTINOPLE(26), // 1, 26
-//    ALLOW_SHIELDED_TRANSACTION(27), // 27
+    //    ALLOW_SHIELDED_TRANSACTION(27), // 27
 //    SHIELDED_TRANSACTION_FEE(28), // 28
     ADAPTIVE_RESOURCE_LIMIT_MULTIPLIER(29), // 1000, 29
     ALLOW_CHANGE_DELEGATION(30), //1, 30
@@ -354,7 +365,8 @@ public class ProposalUtil {
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, 33
     //    SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34); // 34
     FORBID_TRANSFER_TO_CONTRACT(35), // 1, 35
-    ALLOW_SHIELDED_TRC20_TRANSACTION(39); //1, 39
+    ALLOW_SHIELDED_TRC20_TRANSACTION(39), //1, 39
+    ALLOW_SET_TRANSACTION_RET(40); //1, 39
 
     private long code;
 

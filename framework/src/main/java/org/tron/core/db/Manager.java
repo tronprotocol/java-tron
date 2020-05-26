@@ -1317,7 +1317,11 @@ public class Manager {
 
     trace.finalization();
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
-      trxCap.setResult(trace.getTransactionContext());
+      if (getDynamicPropertiesStore().needSetTransactionRet()) {
+        trxCap.setResultWithRet(trace.getTransactionContext());
+      } else {
+        trxCap.setResult(trace.getTransactionContext());
+      }
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 

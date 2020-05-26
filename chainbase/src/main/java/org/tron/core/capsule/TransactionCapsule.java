@@ -39,7 +39,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
@@ -287,7 +286,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         tokenId.getBytes()).getBytes(),
         transaction.getRawData().toByteArray());
     return Sha256Hash.of(DBConfig.isECKeyCryptoEngine(),
-          mergedByte).getBytes();
+        mergedByte).getBytes();
   }
 
   // todo mv this static function to capsule util
@@ -760,6 +759,19 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Result ret = Result.newBuilder().setContractRet(code).build();
     if (this.transaction.getRetCount() > 0) {
       ret = this.transaction.getRet(0).toBuilder().setContractRet(code).build();
+
+      this.transaction = transaction.toBuilder().setRet(0, ret).build();
+      return;
+    }
+    this.transaction = transaction.toBuilder().addRet(ret).build();
+  }
+
+  public void setResultWithRet(TransactionContext context) {
+    contractResult code = context.getProgramResult().getResultCode();
+    Result ret = Result.newBuilder().setContractRet(code).build();
+    if (this.transaction.getRetCount() > 0) {
+      ret = this.transaction.getRet(0).toBuilder().setContractRet(code).setRet(Result.code.SUCESS)
+          .build();
 
       this.transaction = transaction.toBuilder().setRet(0, ret).build();
       return;

@@ -157,7 +157,7 @@ public class Constant {
 
   public static final String STORAGE_NEEDTO_UPDATE_ASSET = "storage.needToUpdateAsset";
 
-  public static final String  TRX_REFERENCE_BLOCK = "trx.reference.block";
+  public static final String TRX_REFERENCE_BLOCK = "trx.reference.block";
 
   public static final String TRX_EXPIRATION_TIME_IN_MILLIS_SECONDS = "trx.expiration.timeInMilliseconds";
 
@@ -173,6 +173,8 @@ public class Constant {
 
   public static final String COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION = "committee"
       + ".allowShieldedTRC20Transaction";
+  public static final String COMMITTEE_ALLOW_SET_TRANSACTION_RET = "committee"
+      + ".allowSetTransactionRetForContract";
 
   public static final String EVENT_SUBSCRIBE = "event.subscribe";
 
