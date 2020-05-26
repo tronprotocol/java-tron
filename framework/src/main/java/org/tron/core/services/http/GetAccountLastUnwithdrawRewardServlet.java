@@ -29,12 +29,7 @@ public class GetAccountLastUnwithdrawRewardServlet extends RateLimiterServlet {
       }
 
     } catch (Exception e) {
-      logger.error("", e);
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 
@@ -51,12 +46,7 @@ public class GetAccountLastUnwithdrawRewardServlet extends RateLimiterServlet {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      logger.error("", e);
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 }

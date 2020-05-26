@@ -33,11 +33,7 @@ public class GetAccountRewardByCycleServlet extends RateLimiterServlet {
       }
 
     } catch (Exception e) {
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 
