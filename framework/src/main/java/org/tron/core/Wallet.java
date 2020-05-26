@@ -2578,10 +2578,10 @@ public class Wallet {
 
   public double queryNowTotalVoteNumber() {
     AtomicLong voteNumber = new AtomicLong();
-    List<WitnessCapsule> allWitnesses = dbManager.getWitnessStore().getAllWitnesses();
+    List<ByteString> allWitnesses = getStandbyWitness();
     allWitnesses.forEach(witness -> {
       voteNumber.addAndGet(dbManager.getWitnessStore()
-          .get(witness.getAddress().toByteArray()).getVoteCount());
+          .get(witness.toByteArray()).getVoteCount());
     });
     return voteNumber.doubleValue();
   }
@@ -2843,7 +2843,7 @@ public class Wallet {
     return false;
   }
 
-  public boolean checkStandbyWitness(byte[] address) {
+  public List<ByteString> getStandbyWitness() {
     List<ByteString> witnessAddressList = new ArrayList<>();
     for (WitnessCapsule witnessCapsule : consensusDelegate.getAllWitnesses()) {
       witnessAddressList.add(witnessCapsule.getAddress());
@@ -2856,7 +2856,12 @@ public class Wallet {
     if (witnessAddressList.size() > WITNESS_STANDBY_LENGTH) {
       witnessAddressList = witnessAddressList.subList(0, WITNESS_STANDBY_LENGTH);
     }
-    boolean contains = witnessAddressList.contains(ByteString.copyFrom(address));
+    return witnessAddressList;
+
+  }
+
+  public boolean checkStandbyWitness(byte[] address) {
+    boolean contains = getStandbyWitness().contains(ByteString.copyFrom(address));
     return contains;
   }
 }
