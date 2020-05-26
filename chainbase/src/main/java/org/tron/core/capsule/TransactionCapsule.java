@@ -726,31 +726,30 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public void setResultCode(contractResult code) {
-    Result ret = Result.newBuilder().setContractRet(code).build();
+    Result ret;
     if (this.transaction.getRetCount() > 0) {
       ret = this.transaction.getRet(0).toBuilder().setContractRet(code).build();
 
       this.transaction = transaction.toBuilder().setRet(0, ret).build();
       return;
     }
+    ret = Result.newBuilder().setContractRet(code).build();
     this.transaction = transaction.toBuilder().addRet(ret).build();
   }
 
   public void setResultWithRet(TransactionContext context) {
     contractResult code = context.getProgramResult().getResultCode();
-    Result.Builder ret = Result.newBuilder().setContractRet(code);
 
-    if (code.equals(contractResult.SUCCESS)) {
-      ret.setRet(Result.code.SUCESS);
-    } else {
-      ret.setRet(Result.code.FAILED);
-    }
+    Result ret;
     if (this.transaction.getRetCount() > 0) {
-      this.transaction = transaction.toBuilder().setRet(0, ret.build()).build();
+      ret = this.transaction.getRet(0).toBuilder().setContractRet(code).setRet(Result.code.SUCESS)
+          .build();
+
+      this.transaction = transaction.toBuilder().setRet(0, ret).build();
       return;
     }
-    this.transaction = transaction.toBuilder().addRet(ret.build()).build();
-
+    ret = Result.newBuilder().setContractRet(code).setRet(Result.code.SUCESS).build();
+    this.transaction = transaction.toBuilder().addRet(ret).build();
   }
 
   public contractResult getContractRet() {
