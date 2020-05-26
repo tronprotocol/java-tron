@@ -328,6 +328,18 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_SET_TRANSACTION_RET: {
+        //TODO: java-tron 4.1, change the version to VERSION_4_1
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_SET_TRANSACTION_RET]");
+        }
+        if (value != 1 && value != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_SET_TRANSACTION_RET] is only allowed to be 1 or 0");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -371,7 +383,8 @@ public class ProposalUtil {
     // SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34), // 1 TRX, [0, 10000] TRX
     FORBID_TRANSFER_TO_CONTRACT(35), // 1, {0, 1}
     ALLOW_SHIELDED_TRC20_TRANSACTION(39), // 1, 39
-    ALLOW_PBFT(40);// 1,40
+    ALLOW_PBFT(40),// 1,40
+    ALLOW_SET_TRANSACTION_RET(41); //1, 39
 
     private long code;
 

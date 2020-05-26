@@ -44,6 +44,8 @@ public class VMConfig {
 
   private static boolean ALLOW_SHIELDED_TRC20_TRANSACTION = false;
 
+  private static boolean ALLOW_SET_TRANSACTION_RET = false;
+
   private VMConfig() {
   }
 
