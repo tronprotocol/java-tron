@@ -962,7 +962,7 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
         .build());
 
-    // ALLOW_ZKSNARK_TRANSACTION
+    // ALLOW_SHIELDED_TRANSACTION
     // builder.addChainParameter(
     //     Protocol.ChainParameters.ChainParameter.newBuilder()
     //         .setKey("getAllowShieldedTransaction")
@@ -989,7 +989,7 @@ public class Wallet {
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowShieldedTRC20Transaction")
             .setValue(
-                dbManager.getDynamicPropertiesStore().getAllowShieldedTRC20ContractTransaction())
+                dbManager.getDynamicPropertiesStore().getAllowShieldedTRC20Transaction())
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
