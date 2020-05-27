@@ -5586,6 +5586,24 @@ public class PublicMethed {
   }
 
   /**
+   * getShieldNotesByIvkWithBlocknum
+   */
+  public static DecryptNotes getShieldNotesByIvkWithBlockNum(Optional<ShieldAddressInfo> shieldAddressInfo,
+                                                             Long startBlockNum,Long endBlockNum,
+                                                             WalletGrpc.WalletBlockingStub blockingStubFull) {
+    logger.info("ivk:" + ByteArray.toHexString(shieldAddressInfo.get().ivk));
+    IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(endBlockNum);
+    builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+    DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
+
+
+  /**
    * constructor.
    */
   public static DecryptNotesMarked getShieldNotesAndMarkByIvk(
@@ -5603,6 +5621,30 @@ public class PublicMethed {
       IvkDecryptAndMarkParameters.Builder builder = IvkDecryptAndMarkParameters.newBuilder();
       builder.setStartBlockIndex(startBlockNum + 1);
       builder.setEndBlockIndex(currentBlockNum + 1);
+      builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+      builder.setAk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getAk()));
+      builder.setNk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getNk()));
+      DecryptNotesMarked decryptNotes = blockingStubFull.scanAndMarkNoteByIvk(builder.build());
+      logger.info(decryptNotes.toString());
+      return decryptNotes;
+    } catch (Exception e) {
+      logger.info(e.toString());
+      return null;
+    }
+  }
+
+  /**
+   * getShieldNotesAndMarkByIvkWithBlockNum
+   */
+  public static DecryptNotesMarked getShieldNotesAndMarkByIvkWithBlockNum(
+          Optional<ShieldAddressInfo> shieldAddressInfo,
+          Long startBlockNum,Long endBlockNum,
+          WalletGrpc.WalletBlockingStub blockingStubFull) {
+    logger.info("ivk:" + ByteArray.toHexString(shieldAddressInfo.get().ivk));
+    try {
+      IvkDecryptAndMarkParameters.Builder builder = IvkDecryptAndMarkParameters.newBuilder();
+      builder.setStartBlockIndex(startBlockNum );
+      builder.setEndBlockIndex(endBlockNum);
       builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
       builder.setAk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getAk()));
       builder.setNk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getNk()));
@@ -5634,6 +5676,30 @@ public class PublicMethed {
       IvkDecryptAndMarkParameters.Builder builder = IvkDecryptAndMarkParameters.newBuilder();
       builder.setStartBlockIndex(startBlockNum + 1);
       builder.setEndBlockIndex(currentBlockNum + 1);
+      builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+      builder.setAk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getAk()));
+      builder.setNk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getNk()));
+      DecryptNotesMarked decryptNotes = blockingStubSolidity.scanAndMarkNoteByIvk(builder.build());
+      logger.info(decryptNotes.toString());
+      return decryptNotes;
+    } catch (Exception e) {
+      logger.info(e.toString());
+      return null;
+    }
+  }
+
+  /**
+   * getShieldNotesAndMarkByIvkOnSolidityWithBlockNum
+   */
+  public static DecryptNotesMarked getShieldNotesAndMarkByIvkOnSolidityWithBlockNum(
+          Optional<ShieldAddressInfo> shieldAddressInfo,
+          Long startBlockNum,Long endBlockNum,
+          WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    logger.info("ivk:" + ByteArray.toHexString(shieldAddressInfo.get().ivk));
+    try {
+      IvkDecryptAndMarkParameters.Builder builder = IvkDecryptAndMarkParameters.newBuilder();
+      builder.setStartBlockIndex(startBlockNum );
+      builder.setEndBlockIndex(endBlockNum);
       builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
       builder.setAk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getAk()));
       builder.setNk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getNk()));
@@ -5706,6 +5772,22 @@ public class PublicMethed {
     return notes;
   }
 
+  /**
+   * constructor.
+   */
+  public static DecryptNotes getShieldNotesByIvkOnSolidityWithBlockNum(
+          Optional<ShieldAddressInfo> shieldAddressInfo,
+          Long startBlockNum,Long endBlockNum,
+          WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(endBlockNum);
+    builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+    DecryptNotes notes = blockingStubSolidity.scanNoteByIvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
 
   /**
    * constructor.
@@ -5729,6 +5811,22 @@ public class PublicMethed {
   }
 
   /**
+   * getShieldNotesByOvkWithBlockNum.
+   */
+  public static DecryptNotes getShieldNotesByOvkWithBlockNum(Optional<ShieldAddressInfo> shieldAddressInfo,
+                                                             Long startBlockNum,Long endBlockNum,
+                                                 WalletGrpc.WalletBlockingStub blockingStubFull) {
+    logger.info("ovk:" + ByteArray.toHexString(shieldAddressInfo.get().ovk));
+    OvkDecryptParameters.Builder builder = OvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(endBlockNum);
+    builder.setOvk(ByteString.copyFrom(shieldAddressInfo.get().getOvk()));
+    DecryptNotes notes = blockingStubFull.scanNoteByOvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
+  /**
    * constructor.
    */
   public static DecryptNotes getShieldNotesByOvkOnSolidity(
@@ -5744,6 +5842,22 @@ public class PublicMethed {
     OvkDecryptParameters.Builder builder = OvkDecryptParameters.newBuilder();
     builder.setStartBlockIndex(startBlockNum);
     builder.setEndBlockIndex(currentBlockNum);
+    builder.setOvk(ByteString.copyFrom(shieldAddressInfo.get().getOvk()));
+    DecryptNotes notes = blockingStubSolidity.scanNoteByOvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
+  /**
+   * getShieldNotesByOvkOnSolidityWithBlockNum.
+   */
+  public static DecryptNotes getShieldNotesByOvkOnSolidityWithBlockNum(
+          Optional<ShieldAddressInfo> shieldAddressInfo,
+          Long startBlockNum,Long endBlockNum,
+          WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    OvkDecryptParameters.Builder builder = OvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(endBlockNum);
     builder.setOvk(ByteString.copyFrom(shieldAddressInfo.get().getOvk()));
     DecryptNotes notes = blockingStubSolidity.scanNoteByOvk(builder.build());
     logger.info(notes.toString());
