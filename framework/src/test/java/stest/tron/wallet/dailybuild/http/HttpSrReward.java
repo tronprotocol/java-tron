@@ -46,7 +46,7 @@ public class HttpSrReward {
    */
   @Test(enabled = true, description = "Get now current cycles")
   public void test01GetnowCurrentCycles() {
-    Integer retryTime = 20;
+    Integer retryTime = 100;
     while (cycle < 3 && retryTime-- > 0) {
       response = HttpMethed.getCurrentCycle(httpnode);
       Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
@@ -130,7 +130,7 @@ public class HttpSrReward {
    * constructor.
    */
   @Test(enabled = true, description = "Get SR dividends by cycle")
-  public void test05GetSrProfitByCycle() throws Exception {
+  public void test05GetSrDividendsByCycle() throws Exception {
     response = HttpMethed
         .getSrDividendsByCycle(httpnode, srAddress,cycle - 1, cycle + 2);
     responseContent = HttpMethed.parseResponseContent(response);
