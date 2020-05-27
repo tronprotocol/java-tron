@@ -106,9 +106,6 @@ public class DBConfig {
   private static boolean fullNodeAllowShieldedTransaction;
   @Getter
   @Setter
-  private static boolean fullNodeAllowShieldedTRC20Transaction;
-  @Getter
-  @Setter
   private static String zenTokenId;
   @Getter
   @Setter

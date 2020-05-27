@@ -457,11 +457,6 @@ public class Args {
   @Setter
   private long allowShieldedTRC20Transaction;
 
-  // full node used this parameter to close shielded TRC-20 transaction
-  @Getter
-  @Setter
-  private boolean fullNodeAllowShieldedTRC20TransactionArgs;
-
   @Getter
   @Setter
   private long blockNumForEneryLimit;
@@ -617,7 +612,6 @@ public class Args {
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.fullNodeAllowShieldedTransactionArgs = true;
-    INSTANCE.fullNodeAllowShieldedTRC20TransactionArgs = true;
     INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
@@ -1058,10 +1052,6 @@ public class Args {
     INSTANCE.fullNodeAllowShieldedTransactionArgs =
         !config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)
             || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
-
-    INSTANCE.fullNodeAllowShieldedTRC20TransactionArgs =
-        !config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRC20_TRANSACTION)
-            || config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRC20_TRANSACTION);
 
     INSTANCE.zenTokenId = config.hasPath(Constant.NODE_ZEN_TOKENID) ?
         config.getString(Constant.NODE_ZEN_TOKENID) : "000000";
@@ -1512,8 +1502,6 @@ public class Args {
     DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
     DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransactionArgs());
-    DBConfig.setFullNodeAllowShieldedTRC20Transaction(
-        cfgArgs.isFullNodeAllowShieldedTRC20TransactionArgs());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
     DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
     DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
@@ -1533,13 +1521,6 @@ public class Args {
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
     this.fullNodeAllowShieldedTransactionArgs = fullNodeAllowShieldedTransaction;
     DBConfig.setFullNodeAllowShieldedTransaction(fullNodeAllowShieldedTransaction);
-  }
-
-  public void setFullNodeAllowShieldedTRC20Transaction(
-      boolean fullNodeAllowShieldedTRC20Transaction) {
-    this.fullNodeAllowShieldedTRC20TransactionArgs = fullNodeAllowShieldedTRC20Transaction;
-    DBConfig
-        .setFullNodeAllowShieldedTRC20Transaction(fullNodeAllowShieldedTRC20Transaction);
   }
 
   /**

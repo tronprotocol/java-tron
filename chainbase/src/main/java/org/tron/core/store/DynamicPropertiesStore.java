@@ -120,7 +120,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //If the parameter is larger than 0, allow ZKsnark Transaction
   private static final byte[] ALLOW_SHIELDED_TRANSACTION = "ALLOW_SHIELDED_TRANSACTION".getBytes();
   private static final byte[] ALLOW_SHIELDED_TRC20_TRANSACTION =
-      "ALLOW_SHIELDED_TRC20_CONTRACT_TRANSACTION"
+      "ALLOW_SHIELDED_TRC20_TRANSACTION"
       .getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
@@ -542,7 +542,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowShieldedTRC20ContractTransaction();
+      this.getAllowShieldedTRC20Transaction();
     } catch (IllegalArgumentException e) {
       this.saveAllowShieldedTRC20Transaction(DBConfig.getAllowShieldedTRC20Transaction());
     }
@@ -1542,7 +1542,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found ALLOW_ZKSNARK_TRANSACTION"));
+            () -> new IllegalArgumentException("not found ALLOW_SHIELDED_TRANSACTION"));
   }
 
   public void saveAllowShieldedTRC20Transaction(long allowShieldedTRC20Transaction) {
@@ -1550,8 +1550,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(allowShieldedTRC20Transaction)));
   }
 
-  public long getAllowShieldedTRC20ContractTransaction() {
-    String msg = "not found ALLOW_SHIELDED_TRC20_CONTRACT_TRANSACTION";
+  public long getAllowShieldedTRC20Transaction() {
+    String msg = "not found ALLOW_SHIELDED_TRC20_TRANSACTION";
     return Optional.ofNullable(getUnchecked(ALLOW_SHIELDED_TRC20_TRANSACTION))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
@@ -1563,8 +1563,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowShieldedTransaction() == 1L;
   }
 
-  public boolean supportShieldedTRC20ContractTransaction() {
-    return getAllowShieldedTRC20ContractTransaction() == 1L;
+  public boolean supportShieldedTRC20Transaction() {
+    return getAllowShieldedTRC20Transaction() == 1L;
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {

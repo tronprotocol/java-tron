@@ -304,11 +304,11 @@ public class ProposalUtil {
       case ALLOW_SHIELDED_TRC20_TRANSACTION: {
         if (!forkUtils.pass(ForkBlockVersionEnum.VERSION_4_0)) {
           throw new ContractValidateException(
-              "Bad chain parameter id [ALLOW_SHIELDED_TRC20_CONTRACT]");
+              "Bad chain parameter id [ALLOW_SHIELDED_TRC20_TRANSACTION]");
         }
         if (value != 1 && value != 0) {
           throw new ContractValidateException(
-              "This value[ALLOW_SHIELDED_TRC20_CONTRACT] is only allowed to be 1 or 0");
+              "This value[ALLOW_SHIELDED_TRC20_TRANSACTION] is only allowed to be 1 or 0");
         }
         break;
       }
@@ -354,7 +354,7 @@ public class ProposalUtil {
     ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO(33), // 10, 33
     //    SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE(34); // 34
     FORBID_TRANSFER_TO_CONTRACT(35), // 1, 35
-    ALLOW_SHIELDED_TRC20_TRANSACTION(39); //1, 39
+    ALLOW_SHIELDED_TRC20_TRANSACTION(39); // 1, 39
 
     private long code;
 
