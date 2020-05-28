@@ -1,4 +1,4 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.5.12;
 pragma experimental ABIEncoderV2;
 
 import "./SafeMath.sol";
@@ -37,6 +37,9 @@ contract ShieldedTRC20 {
     // output: cm, cv, epk, proof
     function mint(uint256 rawValue, bytes32[9] calldata output, bytes32[2] calldata bindingSignature, bytes32[21] calldata c) external {
         address sender = msg.sender;
+        // transfer the trc20Token from the sender to this contract
+        bool transferResult = trc20Token.transferFrom(sender, address(this), rawValue);
+        require(transferResult, "TransferFrom failed!");
         require(noteCommitment[output[0]] == 0, "Duplicate noteCommitments!");
         uint64 value = rawValueToValue(rawValue);
         bytes32 signHash = sha256(abi.encodePacked(address(this), value, output, c));
@@ -61,9 +64,6 @@ contract ShieldedTRC20 {
         noteCommitment[output[0]] = output[0];
         leafCount ++;
         emit NewLeaf(leafCount - 1, output[0], output[1], output[2], c);
-        // Finally, transfer the trc20Token from the sender to this contract
-        bool transferResult = trc20Token.transferFrom(sender, address(this), rawValue);
-        require(transferResult, "TransferFrom failed!");
         emit TokenMint(sender, rawValue);
     }
     //input: nf, anchor, cv, rk, proof
@@ -71,6 +71,8 @@ contract ShieldedTRC20 {
     function transfer(bytes32[10][] calldata input, bytes32[2][] calldata spendAuthoritySignature, bytes32[9][] calldata output, bytes32[2] calldata bindingSignature, bytes32[21][] calldata c) external {
         require(input.length >= 1 && input.length <= 2, "Input number must be 1 or 2!");
         require(input.length == spendAuthoritySignature.length, "Input number must be equal to spendAuthoritySignature number!");
+        require(output.length >= 1 && output.length <= 2, "Output number must be 1 or 2!");
+        require(output.length == c.length, "Output number must be equal to c number!");
         
         for (uint256 i = 0; i < input.length; i++) {
             require(nullifiers[input[i][0]] == 0, "The note has already been spent!");
@@ -80,8 +82,6 @@ contract ShieldedTRC20 {
             require(noteCommitment[output[i][0]] == 0, "Duplicate noteCommitment!");
         }
         bytes32 signHash = sha256(abi.encodePacked(address(this), input, output, c));
-        require(output.length >= 1 && output.length <= 2, "Output number must be 1 or 2!");
-        require(output.length == c.length, "Output number must be equal to c number!");
         (bytes32[] memory ret) = verifyTransferProof(input, spendAuthoritySignature, output, bindingSignature, signHash, frontier, leafCount);
         uint256 result = uint256(ret[0]);
         require(result == 1, "The proof and signature have not been verified by the contract!");
@@ -116,13 +116,12 @@ contract ShieldedTRC20 {
         }
     }
     //input: nf, anchor, cv, rk, proof
-    function burn(bytes32[10] calldata input, bytes32[2] calldata spendAuthoritySignature, uint256 rawValue, bytes32[2] calldata bindingSignature, address payToAddress) external {
+    function burn(bytes32[10] calldata input, bytes32[2] calldata spendAuthoritySignature, uint256 rawValue, bytes32[2] calldata bindingSignature, address payTo) external {
         uint64 value = rawValueToValue(rawValue);
         bytes32 nf = input[0];
         bytes32 anchor = input[1];
         require(nullifiers[nf] == 0, "The note has already been spent!");
         require(roots[anchor] != 0, "The anchor must exist!");
-        address payTo = address(payToAddress);
         bytes32 signHash = sha256(abi.encodePacked(address(this), input, payTo, value));
         (bool result) = verifyBurnProof(input, spendAuthoritySignature, value, bindingSignature, signHash);
         require(result, "The proof and signature have not been verified by the contract!");
