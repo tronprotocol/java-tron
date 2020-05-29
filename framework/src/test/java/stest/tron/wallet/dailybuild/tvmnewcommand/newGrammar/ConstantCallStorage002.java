@@ -66,17 +66,17 @@ public class ConstantCallStorage002 {
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-      .usePlaintext(true)
-      .build();
+        .usePlaintext(true)
+        .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-      .usePlaintext(true)
-      .build();
+        .usePlaintext(true)
+        .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-      .usePlaintext(true)
-      .build();
+        .usePlaintext(true)
+        .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
@@ -85,7 +85,7 @@ public class ConstantCallStorage002 {
   public void testConstantCallStorage001() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-        blockingStubFull));
+            blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/constantCallStorage001.sol";
@@ -95,8 +95,8 @@ public class ConstantCallStorage002 {
     String abi = retMap.get("abI").toString();
 
     contractAddress = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-      0L, 100, null, contractExcKey,
-      contractExcAddress, blockingStubFull);
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
@@ -118,17 +118,17 @@ public class ConstantCallStorage002 {
     // modify bool type
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
-        "changeBool(bool)", "true", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+            "changeBool(bool)", "true", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals(1,
         ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "getBool()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "getBool()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals(0,
@@ -136,18 +136,18 @@ public class ConstantCallStorage002 {
 
     // modify NegativeInt type
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "changeNegativeInt(int256)", "-2", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "changeNegativeInt(int256)", "-2", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals(-2,
         ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "getNegativeInt()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "getNegativeInt()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals(-32482989,
@@ -155,10 +155,10 @@ public class ConstantCallStorage002 {
 
     // modify address type
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "changeAddress(address)", "\"" + WalletClient.encode58Check(contractAddress) + "\"",
-        false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "changeAddress(address)", "\"" + WalletClient.encode58Check(contractAddress) + "\"",
+            false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     String ContractResult =
@@ -168,9 +168,9 @@ public class ConstantCallStorage002 {
     Assert.assertEquals(WalletClient.encode58Check(contractAddress), tmpAddress);
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "getAddress()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "getAddress()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("000000000000000000000000dcad3a6d3569df655070ded06cb7a1b2ccd1d3af",
@@ -178,19 +178,19 @@ public class ConstantCallStorage002 {
 
     // modify byte32s type
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "changeBytes32(bytes32)", "\"0xdCad3a6d3569DF655070DEd1\"",
-        false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "changeBytes32(bytes32)", "\"0xdCad3a6d3569DF655070DEd1\"",
+            false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("dcad3a6d3569df655070ded10000000000000000000000000000000000000000",
         ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "getBytes32()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "getBytes32()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("0000000000000000000000000000000000000000dcad3a6d3569df655070ded0",
@@ -198,65 +198,65 @@ public class ConstantCallStorage002 {
 
     // modify bytes type
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "changeBytes(bytes)", "\"0x05\"",
-        false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "changeBytes(bytes)", "\"0x05\"",
+            false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000001"
-        + "0500000000000000000000000000000000000000000000000000000000000000",
+            + "0000000000000000000000000000000000000000000000000000000000000001"
+            + "0500000000000000000000000000000000000000000000000000000000000000",
         ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "getBytes()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "getBytes()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000003"
-        + "0000000000000000000000000000000000000000000000000000000000000000",
+            + "0000000000000000000000000000000000000000000000000000000000000003"
+            + "0000000000000000000000000000000000000000000000000000000000000000",
         ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()));
 
     // modify string type
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "changeString(string)", "\"321test\"",
-        false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "changeString(string)", "\"321test\"",
+            false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("321test",
         ByteArray.toStr(transactionExtention
-        .getConstantResult(0).substring(64, 64 + 7).toByteArray()));
+            .getConstantResult(0).substring(64, 64 + 7).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "getString()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "getString()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("123qwe",
         ByteArray.toStr(transactionExtention
-        .getConstantResult(0).substring(64, 64 + 6).toByteArray()));
+            .getConstantResult(0).substring(64, 64 + 6).toByteArray()));
 
     // modify enum type
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "changeActionChoices(uint8)", "3",
-        false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "changeActionChoices(uint8)", "3",
+            false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals(3,
         ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "getActionChoices()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "getActionChoices()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals(1,
@@ -264,138 +264,138 @@ public class ConstantCallStorage002 {
 
     // modify Int64NegativeArray type
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-          "changeInt64NegativeArray(int64[])",
-        "0000000000000000000000000000000000000000000000000000000000000020"
-          + "0000000000000000000000000000000000000000000000000000000000000002"
-          + "0000000000000000000000000000000000000000000000000000000000000003"
-          + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-        true,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "changeInt64NegativeArray(int64[])",
+            "0000000000000000000000000000000000000000000000000000000000000020"
+                + "0000000000000000000000000000000000000000000000000000000000000002"
+                + "0000000000000000000000000000000000000000000000000000000000000003"
+                + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            true,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000002"
-        + "0000000000000000000000000000000000000000000000000000000000000003"
-        + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            + "0000000000000000000000000000000000000000000000000000000000000002"
+            + "0000000000000000000000000000000000000000000000000000000000000003"
+            + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         ByteArray.toHexString(transactionExtention
-          .getConstantResult(0).toByteArray()));
+            .getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "getInt64NegativeArray()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "getInt64NegativeArray()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000003"
-        + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-        + "0000000000000000000000000000000000000000000000000000000000000002"
-        + "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd",
+            + "0000000000000000000000000000000000000000000000000000000000000003"
+            + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+            + "0000000000000000000000000000000000000000000000000000000000000002"
+            + "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd",
         ByteArray.toHexString(transactionExtention
-          .getConstantResult(0).toByteArray()));
+            .getConstantResult(0).toByteArray()));
 
     // modify Int32Array[2][] type
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "changeInt32Array(int32[2][])",
-        "0000000000000000000000000000000000000000000000000000000000000020"
-          + "0000000000000000000000000000000000000000000000000000000000000005"
-          + "0000000000000000000000000000000000000000000000000000000000000001"
-          + "0000000000000000000000000000000000000000000000000000000000000002"
-          + "0000000000000000000000000000000000000000000000000000000000000003"
-          + "0000000000000000000000000000000000000000000000000000000000000004"
-          + "0000000000000000000000000000000000000000000000000000000000000005"
-          + "0000000000000000000000000000000000000000000000000000000000000006"
-          + "0000000000000000000000000000000000000000000000000000000000000007"
-          + "0000000000000000000000000000000000000000000000000000000000000008"
-          + "0000000000000000000000000000000000000000000000000000000000000009"
-          + "000000000000000000000000000000000000000000000000000000000000000a",
-        true,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "changeInt32Array(int32[2][])",
+            "0000000000000000000000000000000000000000000000000000000000000020"
+                + "0000000000000000000000000000000000000000000000000000000000000005"
+                + "0000000000000000000000000000000000000000000000000000000000000001"
+                + "0000000000000000000000000000000000000000000000000000000000000002"
+                + "0000000000000000000000000000000000000000000000000000000000000003"
+                + "0000000000000000000000000000000000000000000000000000000000000004"
+                + "0000000000000000000000000000000000000000000000000000000000000005"
+                + "0000000000000000000000000000000000000000000000000000000000000006"
+                + "0000000000000000000000000000000000000000000000000000000000000007"
+                + "0000000000000000000000000000000000000000000000000000000000000008"
+                + "0000000000000000000000000000000000000000000000000000000000000009"
+                + "000000000000000000000000000000000000000000000000000000000000000a",
+            true,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000005"
-        + "0000000000000000000000000000000000000000000000000000000000000001"
-        + "0000000000000000000000000000000000000000000000000000000000000002"
-        + "0000000000000000000000000000000000000000000000000000000000000003"
-        + "0000000000000000000000000000000000000000000000000000000000000004"
-        + "0000000000000000000000000000000000000000000000000000000000000005"
-        + "0000000000000000000000000000000000000000000000000000000000000006"
-        + "0000000000000000000000000000000000000000000000000000000000000007"
-        + "0000000000000000000000000000000000000000000000000000000000000008"
-        + "0000000000000000000000000000000000000000000000000000000000000009"
-        + "000000000000000000000000000000000000000000000000000000000000000a",
+            + "0000000000000000000000000000000000000000000000000000000000000005"
+            + "0000000000000000000000000000000000000000000000000000000000000001"
+            + "0000000000000000000000000000000000000000000000000000000000000002"
+            + "0000000000000000000000000000000000000000000000000000000000000003"
+            + "0000000000000000000000000000000000000000000000000000000000000004"
+            + "0000000000000000000000000000000000000000000000000000000000000005"
+            + "0000000000000000000000000000000000000000000000000000000000000006"
+            + "0000000000000000000000000000000000000000000000000000000000000007"
+            + "0000000000000000000000000000000000000000000000000000000000000008"
+            + "0000000000000000000000000000000000000000000000000000000000000009"
+            + "000000000000000000000000000000000000000000000000000000000000000a",
         ByteArray.toHexString(transactionExtention
-        .getConstantResult(0).toByteArray()));
+            .getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "getInt32Array()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "getInt32Array()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000020"
-        + "0000000000000000000000000000000000000000000000000000000000000003"
-        + "0000000000000000000000000000000000000000000000000000000000000001"
-        + "0000000000000000000000000000000000000000000000000000000000000002"
-        + "0000000000000000000000000000000000000000000000000000000000000003"
-        + "0000000000000000000000000000000000000000000000000000000000000004"
-        + "0000000000000000000000000000000000000000000000000000000000000005"
-        + "0000000000000000000000000000000000000000000000000000000000000006",
+            + "0000000000000000000000000000000000000000000000000000000000000003"
+            + "0000000000000000000000000000000000000000000000000000000000000001"
+            + "0000000000000000000000000000000000000000000000000000000000000002"
+            + "0000000000000000000000000000000000000000000000000000000000000003"
+            + "0000000000000000000000000000000000000000000000000000000000000004"
+            + "0000000000000000000000000000000000000000000000000000000000000005"
+            + "0000000000000000000000000000000000000000000000000000000000000006",
         ByteArray.toHexString(transactionExtention
-        .getConstantResult(0).toByteArray()));
+            .getConstantResult(0).toByteArray()));
 
     // modify Int256Array[2][2] type
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "changeInt256Array(int256[2][2])",
+        .triggerConstantContractForExtention(contractAddress,
+            "changeInt256Array(int256[2][2])",
 
-        "0000000000000000000000000000000000000000000000000000000000000001"
-          + "0000000000000000000000000000000000000000000000000000000000000002"
-          + "0000000000000000000000000000000000000000000000000000000000000003"
-          + "0000000000000000000000000000000000000000000000000000000000000004",
-        true,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+            "0000000000000000000000000000000000000000000000000000000000000001"
+                + "0000000000000000000000000000000000000000000000000000000000000002"
+                + "0000000000000000000000000000000000000000000000000000000000000003"
+                + "0000000000000000000000000000000000000000000000000000000000000004",
+            true,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000001"
-        + "0000000000000000000000000000000000000000000000000000000000000002"
-        + "0000000000000000000000000000000000000000000000000000000000000003"
-        + "0000000000000000000000000000000000000000000000000000000000000004",
+            + "0000000000000000000000000000000000000000000000000000000000000002"
+            + "0000000000000000000000000000000000000000000000000000000000000003"
+            + "0000000000000000000000000000000000000000000000000000000000000004",
         ByteArray.toHexString(transactionExtention
-        .getConstantResult(0).toByteArray()));
+            .getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "getInt256Array()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "getInt256Array()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals(
         "000000000000000000000000000000000000000000000000000000000000000b"
-        + "0000000000000000000000000000000000000000000000000000000000000016"
-        + "0000000000000000000000000000000000000000000000000000000000000021"
-        + "000000000000000000000000000000000000000000000000000000000000002c",
+            + "0000000000000000000000000000000000000000000000000000000000000016"
+            + "0000000000000000000000000000000000000000000000000000000000000021"
+            + "000000000000000000000000000000000000000000000000000000000000002c",
         ByteArray.toHexString(transactionExtention
-        .getConstantResult(0).toByteArray()));
+            .getConstantResult(0).toByteArray()));
 
     // modify mapping type
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "setMapping(uint256)", "55",
-        false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "setMapping(uint256)", "55",
+            false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals(55,
         ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "mapa(address)", "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\"", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "mapa(address)", "\"T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb\"", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertEquals("SUCESS",
         transactionExtention.getTransaction().getRet(0).getRet().toString());
     Assert.assertEquals(34,

@@ -157,7 +157,7 @@ public class AssignToExternalTest {
     logger.info("infoById" + infoById);
     int contractResult =
         ByteArray.toInt(infoById.get().getContractResult(0).toByteArray());
-    Assert.assertEquals(3,contractResult);
+    Assert.assertEquals(3, contractResult);
   }
 
   @Test(enabled = true, description = "Trigger contract with ")
@@ -177,7 +177,7 @@ public class AssignToExternalTest {
         ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray());
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000020"
         + "0000000000000000000000000000000000000000000000000000000000000004"
-        + "7465737400000000000000000000000000000000000000000000000000000000",contractResult);
+        + "7465737400000000000000000000000000000000000000000000000000000000", contractResult);
   }
 
   @Test(enabled = true, description = "Trigger contract with ")
@@ -195,7 +195,7 @@ public class AssignToExternalTest {
     logger.info("infoById" + infoById);
     int contractResult =
         ByteArray.toInt(infoById.get().getContractResult(0).toByteArray());
-    Assert.assertEquals(1001,contractResult);
+    Assert.assertEquals(1001, contractResult);
   }
 
   @Test(enabled = true, description = "Trigger contract with ")
@@ -215,7 +215,7 @@ public class AssignToExternalTest {
     String contractResult =
         ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray());
     Assert.assertEquals("00000000000000000000000000000000000000000000000000000000000003e9"
-        + "00000000000000000000000000000000000000000000000000000000000003e9",contractResult);
+        + "00000000000000000000000000000000000000000000000000000000000003e9", contractResult);
   }
 
   @Test(enabled = true, description = "Trigger contract with ")
@@ -236,6 +236,7 @@ public class AssignToExternalTest {
     Assert.assertEquals("000000000000000000000000f70b0a56acf4b0af44723c329ff113a677b5f589",
         contractResult);
   }
+
   /**
    * constructor.
    */

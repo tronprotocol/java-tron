@@ -33,33 +33,24 @@ public class ConstantCallStorage001 {
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
+  byte[] contractAddress = null;
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] contractExcAddress = ecKey1.getAddress();
+  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
   private ManagedChannel channelSolidity = null;
-
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
-
-
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
-
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
-
-  byte[] contractAddress = null;
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contractExcAddress = ecKey1.getAddress();
-  String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
 
   @BeforeSuite
   public void beforeSuite() {
@@ -75,17 +66,17 @@ public class ConstantCallStorage001 {
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
-      .usePlaintext(true)
-      .build();
+        .usePlaintext(true)
+        .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-      .usePlaintext(true)
-      .build();
+        .usePlaintext(true)
+        .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
     channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-      .usePlaintext(true)
-      .build();
+        .usePlaintext(true)
+        .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
@@ -93,7 +84,7 @@ public class ConstantCallStorage001 {
   public void testConstantCallStorage001() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-        blockingStubFull));
+            blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/constantCallStorage001.sol";
@@ -103,8 +94,8 @@ public class ConstantCallStorage001 {
     String abi = retMap.get("abI").toString();
 
     contractAddress = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-      0L, 100, null, contractExcKey,
-      contractExcAddress, blockingStubFull);
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     //Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
@@ -126,8 +117,8 @@ public class ConstantCallStorage001 {
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
-        "setnum()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+            "setnum()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     logger.info("transactionExtention: " + transactionExtention);
     Assert.assertTrue(transactionExtention.getResult().getResult());
     Assert.assertEquals(138,
@@ -135,9 +126,9 @@ public class ConstantCallStorage001 {
     logger.info("transactionExtention: " + transactionExtention);
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "num()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "num()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertTrue(transactionExtention.getResult().getResult());
     Assert.assertEquals(123,
         ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
@@ -151,8 +142,9 @@ public class ConstantCallStorage001 {
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-    byte[] contractAddress002 = PublicMethed.deployContract(contractName,"[]",code,"",maxFeeLimit,
-      0L,100, null,contractExcKey,contractExcAddress,blockingStubFull);
+    byte[] contractAddress002 = PublicMethed
+        .deployContract(contractName, "[]", code, "", maxFeeLimit,
+            0L, 100, null, contractExcKey, contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress002, blockingStubFull);
     //Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
@@ -162,16 +154,17 @@ public class ConstantCallStorage001 {
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress002,
-        "setnumuseproxy(address)", "\"" + WalletClient.encode58Check(contractAddress) + "\"", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+            "setnumuseproxy(address)", "\"" + WalletClient.encode58Check(contractAddress) + "\"",
+            false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     logger.info("transactionExtention: " + transactionExtention);
     Assert.assertEquals(138,
         ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "num()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "num()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertTrue(transactionExtention.getResult().getResult());
     Assert.assertEquals(123,
         ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
@@ -188,8 +181,8 @@ public class ConstantCallStorage001 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
     byte[] contractAddress002 = PublicMethed
-      .deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey, contractExcAddress, blockingStubFull);
+        .deployContract(contractName, abi, code, "", maxFeeLimit,
+            0L, 100, null, contractExcKey, contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress002, blockingStubFull);
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
@@ -199,8 +192,9 @@ public class ConstantCallStorage001 {
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress002,
-        "setnumuseproxy(address)", "\"" + WalletClient.encode58Check(contractAddress) + "\"", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+            "setnumuseproxy(address)", "\"" + WalletClient.encode58Check(contractAddress) + "\"",
+            false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     logger.info("transactionExtention: " + transactionExtention);
     Assert.assertFalse(transactionExtention.getResult().getResult());
     Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
@@ -217,8 +211,8 @@ public class ConstantCallStorage001 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
     byte[] contractAddress002 = PublicMethed
-      .deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey, contractExcAddress, blockingStubFull);
+        .deployContract(contractName, abi, code, "", maxFeeLimit,
+            0L, 100, null, contractExcKey, contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress002, blockingStubFull);
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
@@ -228,16 +222,17 @@ public class ConstantCallStorage001 {
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress002,
-        "setnumuseproxy(address)", "\"" + WalletClient.encode58Check(contractAddress) + "\"", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+            "setnumuseproxy(address)", "\"" + WalletClient.encode58Check(contractAddress) + "\"",
+            false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     logger.info("transactionExtention: " + transactionExtention);
     Assert.assertEquals(138,
         ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
 
     transactionExtention = PublicMethed
-      .triggerConstantContractForExtention(contractAddress,
-        "num()", "#", false,
-        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+        .triggerConstantContractForExtention(contractAddress,
+            "num()", "#", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert.assertTrue(transactionExtention.getResult().getResult());
     Assert.assertEquals(123,
         ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));

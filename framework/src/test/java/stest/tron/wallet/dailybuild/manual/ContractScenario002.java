@@ -1,6 +1,5 @@
 package stest.tron.wallet.dailybuild.manual;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -31,10 +30,10 @@ public class ContractScenario002 {
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private String txid;
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contract002Address = ecKey1.getAddress();
   String contract002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  private String txid;
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private ManagedChannel channelSoliInFull = null;
@@ -174,10 +173,10 @@ public class ContractScenario002 {
    */
   @Test(enabled = true, description = "Get transaction by id from solidity")
   public void test03GetTransactionByIdFromSolidity() {
-    Assert.assertFalse(PublicMethed.getTransactionById(txid,blockingStubSolidity)
+    Assert.assertFalse(PublicMethed.getTransactionById(txid, blockingStubSolidity)
         .get().getSignature(0).isEmpty());
-    Assert.assertEquals(PublicMethed.getTransactionById(txid,blockingStubFull),
-        PublicMethed.getTransactionById(txid,blockingStubSolidity));
+    Assert.assertEquals(PublicMethed.getTransactionById(txid, blockingStubFull),
+        PublicMethed.getTransactionById(txid, blockingStubSolidity));
   }
 
   /**
@@ -185,10 +184,10 @@ public class ContractScenario002 {
    */
   @Test(enabled = true, description = "Get transaction by id from PBFT")
   public void test04GetTransactionByIdFromPbft() {
-    Assert.assertFalse(PublicMethed.getTransactionById(txid,blockingStubPbft)
+    Assert.assertFalse(PublicMethed.getTransactionById(txid, blockingStubPbft)
         .get().getSignature(0).isEmpty());
-    Assert.assertEquals(PublicMethed.getTransactionById(txid,blockingStubSoliInFull),
-        PublicMethed.getTransactionById(txid,blockingStubPbft));
+    Assert.assertEquals(PublicMethed.getTransactionById(txid, blockingStubSoliInFull),
+        PublicMethed.getTransactionById(txid, blockingStubPbft));
   }
 
   /**
@@ -196,15 +195,15 @@ public class ContractScenario002 {
    */
   @Test(enabled = true, description = "Get transaction by id from Solidity")
   public void test05GetTransactionInfoByIdFromSolidity() throws Exception {
-    long netUsage = PublicMethed.getTransactionInfoById(txid,blockingStubFull).get().getReceipt()
+    long netUsage = PublicMethed.getTransactionInfoById(txid, blockingStubFull).get().getReceipt()
         .getNetUsage();
 
+    Assert.assertEquals(PublicMethed.getTransactionInfoByIdFromSolidity(txid, blockingStubSolidity)
+        .get().getReceipt().getNetUsage(), netUsage);
 
-    Assert.assertEquals(PublicMethed.getTransactionInfoByIdFromSolidity(txid,blockingStubSolidity)
-        .get().getReceipt().getNetUsage(),netUsage);
-
-    Assert.assertEquals(PublicMethed.getTransactionInfoByIdFromSolidity(txid,blockingStubSoliInFull)
-        .get().getReceipt().getNetUsage(),netUsage);
+    Assert
+        .assertEquals(PublicMethed.getTransactionInfoByIdFromSolidity(txid, blockingStubSoliInFull)
+            .get().getReceipt().getNetUsage(), netUsage);
   }
 
   /**
@@ -212,15 +211,13 @@ public class ContractScenario002 {
    */
   @Test(enabled = true, description = "Get transaction by id from PBFT")
   public void test06GetTransactionInfoByIdFromPbft() {
-    long energyUsage = PublicMethed.getTransactionInfoById(txid,blockingStubFull).get().getReceipt()
+    long energyUsage = PublicMethed.getTransactionInfoById(txid, blockingStubFull).get()
+        .getReceipt()
         .getEnergyUsage();
 
-    Assert.assertEquals(PublicMethed.getTransactionInfoByIdFromSolidity(txid,blockingStubPbft)
-        .get().getReceipt().getEnergyUsage(),energyUsage);
+    Assert.assertEquals(PublicMethed.getTransactionInfoByIdFromSolidity(txid, blockingStubPbft)
+        .get().getReceipt().getEnergyUsage(), energyUsage);
   }
-
-
-
 
 
   /**
