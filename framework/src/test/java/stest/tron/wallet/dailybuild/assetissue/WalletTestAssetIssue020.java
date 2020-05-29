@@ -199,15 +199,14 @@ public class WalletTestAssetIssue020 {
   @Test(enabled = true, description = "Get asset issue list by name from Solidity")
   public void test04GetAssetIssueListByNameFromSolidity() {
     Assert.assertEquals(PublicMethed.getAssetIssueListByNameFromSolidity(name,
-        blockingStubSolidity).get().getAssetIssueList().get(0).getTotalSupply(),totalSupply);
+        blockingStubSolidity).get().getAssetIssueList().get(0).getTotalSupply(), totalSupply);
   }
 
   @Test(enabled = true, description = "Get asset issue list by name from PBFT")
   public void test05GetAssetIssueListByNameFromPbft() {
     Assert.assertEquals(PublicMethed.getAssetIssueListByNameFromSolidity(name,
-        blockingStubPbft).get().getAssetIssue(0).getTotalSupply(),totalSupply);
+        blockingStubPbft).get().getAssetIssue(0).getTotalSupply(), totalSupply);
   }
-
 
 
   /**
