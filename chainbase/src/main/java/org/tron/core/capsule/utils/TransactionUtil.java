@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
@@ -137,5 +138,18 @@ public class TransactionUtil {
     }
 
     return new TransactionInfoCapsule(builder.build());
+  }
+
+  public static boolean isNumber(byte[] id) {
+    if (ArrayUtils.isEmpty(id)) {
+      return false;
+    }
+    for (byte b : id) {
+      if (b < '0' || b > '9') {
+        return false;
+      }
+    }
+
+    return !(id.length > 1 && id[0] == '0');
   }
 }

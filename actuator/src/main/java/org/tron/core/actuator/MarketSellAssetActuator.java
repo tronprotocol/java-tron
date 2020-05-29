@@ -204,11 +204,11 @@ public class MarketSellAssetActuator extends AbstractActuator {
     }
 
     if (!Arrays.equals(sellTokenID, "_".getBytes()) && !TransactionUtil.isNumber(sellTokenID)) {
-      throw new ContractValidateException("sellTokenID is not a valid number");
+      throw new ContractValidateException("sellTokenId is not a valid number");
     }
     if (!Arrays.equals(buyTokenID, "_".getBytes()) && !TransactionUtil
         .isNumber(buyTokenID)) {
-      throw new ContractValidateException("buyTokenID is not a valid number");
+      throw new ContractValidateException("buyTokenId is not a valid number");
     }
 
     if (Arrays.equals(sellTokenID, buyTokenID)) {
@@ -250,7 +250,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
             .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store)
             .get(sellTokenID);
         if (assetIssueCapsule == null) {
-          throw new ContractValidateException("No sellTokenID !");
+          throw new ContractValidateException("No sellTokenId !");
         }
         if (!ownerAccount.assetBalanceEnoughV2(sellTokenID, sellTokenQuantity,
             dynamicStore)) {
@@ -264,7 +264,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
             .getAssetIssueStoreFinal(dynamicStore, assetIssueStore, assetIssueV2Store)
             .get(buyTokenID);
         if (assetIssueCapsule == null) {
-          throw new ContractValidateException("No buyTokenID !");
+          throw new ContractValidateException("No buyTokenId !");
         }
       }
     } catch (ArithmeticException e) {

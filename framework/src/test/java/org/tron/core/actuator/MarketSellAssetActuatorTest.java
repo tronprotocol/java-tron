@@ -346,9 +346,9 @@ public class MarketSellAssetActuatorTest {
           OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
       try {
         actuator.validate();
-        fail("sellTokenID is not a valid number");
+        fail("sellTokenId is not a valid number");
       } catch (ContractValidateException e) {
-        Assert.assertEquals("sellTokenID is not a valid number", e.getMessage());
+        Assert.assertEquals("sellTokenId is not a valid number", e.getMessage());
       }
     }
     {
@@ -362,9 +362,9 @@ public class MarketSellAssetActuatorTest {
           OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
       try {
         actuator.validate();
-        fail("buyTokenID is not a valid number");
+        fail("buyTokenId is not a valid number");
       } catch (ContractValidateException e) {
-        Assert.assertEquals("buyTokenID is not a valid number", e.getMessage());
+        Assert.assertEquals("buyTokenId is not a valid number", e.getMessage());
       }
     }
     {
@@ -468,7 +468,7 @@ public class MarketSellAssetActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    String errorMessage = "No sellTokenID !";
+    String errorMessage = "No sellTokenId !";
     try {
       actuator.validate();
       fail(errorMessage);
@@ -526,7 +526,7 @@ public class MarketSellAssetActuatorTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, sellTokenId, sellTokenQuant, buyTokenId, buyTokenQuant));
 
-    String errorMessage = "No buyTokenID !";
+    String errorMessage = "No buyTokenId !";
     try {
       actuator.validate();
       fail(errorMessage);

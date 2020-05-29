@@ -2136,7 +2136,10 @@ public class Wallet {
     return marketOrderListBuilder.build();
   }
 
-  public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId) {
+  public MarketPriceList getMarketPriceByPair(byte[] sellTokenId, byte[] buyTokenId)
+      throws BadItemException {
+    MarketUtils.checkPairValid(sellTokenId, buyTokenId);
+
     MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()
         .getMarketPairToPriceStore();
     MarketPairPriceToOrderStore marketPairPriceToOrderStore = dbManager.getChainBaseManager()
@@ -2178,7 +2181,7 @@ public class Wallet {
       Entry<byte[], BytesCapsule> next = iterator.next();
 
       byte[] pairKey = next.getKey();
-      builder.addOrderPair(MarketUtils.decodeKeyToMarketPair(pairKey));
+      builder.addOrderPair(MarketUtils.decodeKeyToMarketPairHuman(pairKey));
       count++;
       if (count > MARKET_COUNT_LIMIT_MAX) {
         break;
@@ -2189,7 +2192,9 @@ public class Wallet {
   }
 
   public MarketOrderList getMarketOrderListByPair(byte[] sellTokenId, byte[] buyTokenId)
-      throws ItemNotFoundException {
+      throws ItemNotFoundException, BadItemException {
+    MarketUtils.checkPairValid(sellTokenId, buyTokenId);
+
     MarketOrderList.Builder builder = MarketOrderList.newBuilder();
 
     MarketPairToPriceStore marketPairToPriceStore = dbManager.getChainBaseManager()

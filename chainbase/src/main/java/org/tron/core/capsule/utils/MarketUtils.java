@@ -18,6 +18,7 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
+import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -25,6 +26,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketPriceCapsule;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -165,6 +167,36 @@ public class MarketUtils {
 
     System.arraycopy(key, 0, sellTokenId, 0, TOKEN_ID_LENGTH);
     System.arraycopy(key, TOKEN_ID_LENGTH, buyTokenId, 0, TOKEN_ID_LENGTH);
+
+    MarketOrderPair.Builder builder = MarketOrderPair.newBuilder();
+    builder.setSellTokenId(ByteString.copyFrom(sellTokenId))
+        .setBuyTokenId(ByteString.copyFrom(buyTokenId));
+
+    return builder.build();
+  }
+
+  private static byte[] trim(byte[] bytes) {
+    int i = bytes.length - 1;
+    while (i >= 0 && bytes[i] == 0)
+    {
+      --i;
+    }
+
+    return Arrays.copyOf(bytes, i + 1);
+  }
+
+  /**
+   * It's almost the same as decodeKeyToMarketPair, except remove useless 0
+   * */
+  public static MarketOrderPair decodeKeyToMarketPairHuman(byte[] key) {
+    byte[] sellTokenId = new byte[TOKEN_ID_LENGTH];
+    byte[] buyTokenId = new byte[TOKEN_ID_LENGTH];
+
+    System.arraycopy(key, 0, sellTokenId, 0, TOKEN_ID_LENGTH);
+    System.arraycopy(key, TOKEN_ID_LENGTH, buyTokenId, 0, TOKEN_ID_LENGTH);
+
+    sellTokenId = trim(sellTokenId);
+    buyTokenId = trim(buyTokenId);
 
     MarketOrderPair.Builder builder = MarketOrderPair.newBuilder();
     builder.setSellTokenId(ByteString.copyFrom(sellTokenId))
@@ -357,4 +389,22 @@ public class MarketUtils {
     return comparePriceKey(bytes1, bytes2) >= 0;
   }
 
+  public static boolean checkTokenValid(byte[] tokenId) {
+    if (!Arrays.equals("_".getBytes(), tokenId) && !TransactionUtil.isNumber(tokenId)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public static void checkPairValid(byte[] sellTokenId, byte[] buyTokenId)
+      throws BadItemException {
+    if (!checkTokenValid(sellTokenId)) {
+      throw new BadItemException("sellTokenId is not a valid number");
+    }
+
+    if (!checkTokenValid(buyTokenId)) {
+      throw new BadItemException("buyTokenId is not a valid number");
+    }
+  }
 }
