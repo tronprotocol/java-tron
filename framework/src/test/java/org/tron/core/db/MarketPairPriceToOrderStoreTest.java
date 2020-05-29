@@ -21,6 +21,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
+import org.tron.protos.Protocol.MarketOrderPair;
 import org.tron.protos.Protocol.MarketPrice;
 
 @Slf4j
@@ -804,4 +805,18 @@ public class MarketPairPriceToOrderStoreTest {
     Assert.assertNotEquals(0, list.size());
   }
 
+  @Test
+  public void testTrim() {
+    byte[] tokenId = ByteArray.fromString("10000010");
+    Assert.assertArrayEquals(tokenId, MarketUtils.trim(tokenId));
+
+    byte[] sellTokenId = ByteArray.fromString("100");
+    byte[] buyTokenId = ByteArray.fromString("200");
+    byte[] pairKey = MarketUtils.createPairKey(sellTokenId, buyTokenId);
+    MarketOrderPair marketOrderPair = MarketUtils.decodeKeyToMarketPair(pairKey);
+    Assert.assertArrayEquals(sellTokenId,
+        MarketUtils.trim(marketOrderPair.getSellTokenId().toByteArray()));
+    Assert.assertArrayEquals(buyTokenId,
+        MarketUtils.trim(marketOrderPair.getBuyTokenId().toByteArray()));
+  }
 }

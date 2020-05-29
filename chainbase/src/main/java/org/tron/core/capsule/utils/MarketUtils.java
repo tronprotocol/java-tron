@@ -175,7 +175,7 @@ public class MarketUtils {
     return builder.build();
   }
 
-  private static byte[] trim(byte[] bytes) {
+  public static byte[] trim(byte[] bytes) {
     int i = bytes.length - 1;
     while (i >= 0 && bytes[i] == 0)
     {
