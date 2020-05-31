@@ -373,11 +373,9 @@ public class WalletExchange001 {
    */
   @Test(enabled = true)
   public void test9GetExchangeByIdFromPbft() {
-    Assert.assertEquals(PublicMethed.getExchange(exchangeId.toString(),blockingStubPbft),
-        PublicMethed.getExchange(exchangeId.toString(),blockingStubSolidity));
+    Assert.assertEquals(PublicMethed.getExchange(exchangeId.toString(), blockingStubPbft),
+        PublicMethed.getExchange(exchangeId.toString(), blockingStubSolidity));
   }
-
-
 
 
   /**

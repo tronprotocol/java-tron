@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +14,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -234,7 +232,7 @@ public class WalletTestBlock002 {
   public void test07GetNowBlockFromPbft() {
     Block nowBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long nowBlockNum = nowBlock.getBlockHeader().getRawData().getNumber();
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubPbft);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubPbft);
     Block pbftNowBlock = blockingStubPbft.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long nowPbftBlockNum = pbftNowBlock.getBlockHeader().getRawData().getNumber();
     logger.info("nowBlockNum:" + nowBlockNum + " , nowPbftBlockNum:" + nowPbftBlockNum);

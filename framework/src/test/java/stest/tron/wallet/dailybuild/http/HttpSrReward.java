@@ -1,35 +1,29 @@
 package stest.tron.wallet.dailybuild.http;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-import org.tron.core.capsule.AccountCapsule;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class HttpSrReward {
+
   private final String foundationAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] foundationAddressByte = PublicMethed.getFinalAddress(foundationAccountKey);
   private final String srKey = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final String srAddress = PublicMethed.getAddressString(srKey);
-  private JSONObject responseContent;
-  private HttpResponse response;
-  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(0);
   Long totalReward = 0L;
   Integer cycle = 0;
   Long amount = 50000000L;
@@ -40,6 +34,10 @@ public class HttpSrReward {
   private final byte[] voteAccountAddressByte = PublicMethed.getFinalAddress(voteAccountKey);
   JsonArray voteKeys = new JsonArray();
   JsonObject voteElement = new JsonObject();
+  private JSONObject responseContent;
+  private HttpResponse response;
+  private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
+      .get(0);
 
   /**
    * constructor.
@@ -73,7 +71,7 @@ public class HttpSrReward {
             0, voteAccountKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    voteElement.addProperty("vote_address",srAddress);
+    voteElement.addProperty("vote_address", srAddress);
     voteElement.addProperty("vote_count", frozenAmount / 1000000L);
     voteKeys.add(voteElement);
     response = HttpMethed
@@ -92,7 +90,7 @@ public class HttpSrReward {
     System.out.println("totalReward:" + totalReward);
     System.out.println("responseContent.getLong(srAddress):" + responseContent.getLong(srAddress));
     //Assert.assertTrue(totalReward == responseContent.getLong(srAddress));
-    Assert.assertEquals(totalReward,responseContent.getLong(srAddress));
+    Assert.assertEquals(totalReward, responseContent.getLong(srAddress));
   }
 
   /**
@@ -115,7 +113,7 @@ public class HttpSrReward {
   @Test(enabled = true, description = "Get SR profit by cycle")
   public void test04GetSrProfitByCycle() throws Exception {
     response = HttpMethed
-        .getSrProfitByCycle(httpnode, srAddress,cycle - 1, cycle + 2);
+        .getSrProfitByCycle(httpnode, srAddress, cycle - 1, cycle + 2);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Long total = responseContent.getLong("total");
@@ -132,7 +130,7 @@ public class HttpSrReward {
   @Test(enabled = true, description = "Get SR dividends by cycle")
   public void test05GetSrDividendsByCycle() throws Exception {
     response = HttpMethed
-        .getSrDividendsByCycle(httpnode, srAddress,cycle - 1, cycle + 2);
+        .getSrDividendsByCycle(httpnode, srAddress, cycle - 1, cycle + 2);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Long total = responseContent.getLong("total");
@@ -147,7 +145,7 @@ public class HttpSrReward {
    */
   @Test(enabled = true, description = "Get now SR annualized rate")
   public void test06GetNowSrAnnualizedRate() throws Exception {
-    response = HttpMethed.getNowSrAnnualizedRate(httpnode,srAddress);
+    response = HttpMethed.getNowSrAnnualizedRate(httpnode, srAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.getDouble("annualizedRateOfReturn") > 0);
