@@ -106,7 +106,7 @@ public class ShieldTrc20Token005 extends ZenTrc20Base {
     inputShieldAddressList.add(senderShieldAddressInfo.get());
     inputNoteList.add(senderNote);
     BigInteger receiveAmount = publicFromAmount;
-    //Create transfer parameters
+    //Create burn parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20ParametersWithoutAsk(BigInteger.valueOf(0),
         inputNoteList,inputShieldAddressList,null,receiverAddressString,receiveAmount.longValue(),blockingStubFull
@@ -114,7 +114,7 @@ public class ShieldTrc20Token005 extends ZenTrc20Base {
 
     String data = encodeBurnParamsToHexString(shieldedTrc20Parameters,receiveAmount,receiverAddressString);
     String txid = PublicMethed.triggerContract(shieldAddressByte,
-        burn, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
+        gburn, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed

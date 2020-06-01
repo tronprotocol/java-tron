@@ -302,7 +302,6 @@ public class ZenTrc20Base {
 
     byte[] ask = new byte[32];
     if (inputNoteList != null) {
-      logger.info("Enter transfer type code");
       List<String> rootAndPath = new ArrayList<>();
       for (int i = 0; i < inputNoteList.size(); i++) {
         long position = inputNoteList.get(0).getNoteTxs(0).getPosition();
@@ -321,14 +320,35 @@ public class ZenTrc20Base {
 
       for (int i = 0; i < inputNoteList.size(); ++i) {
         if (i == 0) {
-          String shieldedAddress = inputNoteList.get(i).getNoteTxs(0).getNote().getPaymentAddress();
+/*          String shieldedAddress = inputNoteList.get(i).getNoteTxs(0).getNote().getPaymentAddress();
           SpendingKey spendingKey = new SpendingKey(shieldedAddressInfoList.get(i).getSk());
           ExpandedSpendingKey expandedSpendingKey = spendingKey.expandedSpendingKey();
           System.arraycopy(expandedSpendingKey.getAsk(), 0, ask, 0, 32);
           builder.setAk(ByteString.copyFrom(
               ExpandedSpendingKey.getAkFromAsk(expandedSpendingKey.getAsk())));
           builder.setNsk(ByteString.copyFrom(expandedSpendingKey.getNsk()));
-          builder.setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));
+          builder.setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));*/
+
+          String spendingKey = ByteArray.toHexString(shieldedAddressInfoList.get(i).getSk());
+          BytesMessage sk = BytesMessage.newBuilder()
+              .setValue(ByteString.copyFrom(ByteArray.fromHexString(spendingKey))).build();
+          Optional<GrpcAPI.ExpandedSpendingKeyMessage> esk = Optional
+              .of(blockingStubFull.getExpandedSpendingKey(sk));
+
+
+          String ask1 = ByteArray.toHexString(esk.get().getAsk().toByteArray());
+
+          BytesMessage ask2 = BytesMessage.newBuilder()
+              .setValue(ByteString.copyFrom(ByteArray.fromHexString(ask1))).build();
+          Optional<BytesMessage> ak = Optional.of(blockingStubFull.getAkFromAsk(ask2));
+          String akString = ByteArray.toHexString(ak.get().getValue().toByteArray());
+
+
+
+          builder.setAk(ByteString.copyFrom(ByteArray.fromHexString(akString)));
+          builder.setOvk(esk.get().getOvk());
+          builder.setNsk(esk.get().getNsk());
+
         }
         Note.Builder noteBuild = Note.newBuilder();
         noteBuild.setPaymentAddress(shieldedAddressInfoList.get(i).getAddress());
