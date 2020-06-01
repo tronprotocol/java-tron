@@ -150,8 +150,24 @@ public class ZenTrc20Base {
 
     GrpcAPI.PrivateShieldedTRC20Parameters.Builder builder = GrpcAPI.PrivateShieldedTRC20Parameters.newBuilder();
     builder.setFromAmount(publicFromAmount.toString());
-    builder.setShieldedTRC20ContractAddress(shieldAddressByteString);
+    builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(shieldAddressByte));
     long valueBalance = 0;
+
+
+    if (inputNoteList != null) {
+
+    }else {
+      //@TODO remove randomOvk by sha256.of(privateKey)
+      byte[] ovk = getRandomOvk();
+      if (ovk != null) {
+        builder.setOvk(ByteString.copyFrom(ovk));
+      } else {
+        System.out.println("Get random ovk from Rpc failure,please check config");
+        return null;
+      }
+    }
+
+
     if (outputNoteList.size() > 0) {
       for (int i = 0; i < outputNoteList.size(); i++) {
         GrpcAPI.Note note = outputNoteList.get(i);
@@ -162,9 +178,13 @@ public class ZenTrc20Base {
     }
 
 
-    GrpcAPI.ShieldedTRC20Parameters parameters =
-        blockingStubFull.createShieldedContractParameters(builder.build());
-    return parameters;
+    try {
+      return blockingStubFull.createShieldedContractParameters(builder.build());
+    } catch (Exception e) {
+      Status status = Status.fromThrowable(e);
+      System.out.println("createShieldedContractParameters failed,error " + status.getDescription());
+    }
+    return null;
   }
 
 
@@ -296,23 +316,27 @@ public class ZenTrc20Base {
   /**
    * constructor.
    */
-  public static List<Note> addShieldOutputList(List<Note> shieldOutList, String shieldToAddress,
-      Long toAmount, String menoString) {
-
-
-      Note.Builder noteBuild = Note.newBuilder();
-      noteBuild.setPaymentAddress(shieldToAddress);
-      noteBuild.setPaymentAddress(shieldToAddress);
-      noteBuild.setValue(toAmount);
-    try {
-      noteBuild.setRcm(ByteString.copyFrom(org.tron.core.zen.note.Note.generateR()));
-    } catch (Exception e) {
-      System.out.println(e);
+  public static List<Note> addShieldTrc20OutputList(List<Note> shieldOutList, String shieldToAddress,
+      String toAmountString, String menoString,WalletGrpc.WalletBlockingStub blockingStubFull) {
+    String shieldAddress = shieldToAddress;
+    String amountString = toAmountString;
+    if (menoString.equals("null")) {
+      menoString = "";
     }
-      noteBuild.setMemo(ByteString.copyFrom(menoString.getBytes()));
+    long shieldAmount = 0;
+    if (!StringUtil.isNullOrEmpty(amountString)) {
+      shieldAmount = Long.valueOf(amountString);
+    }
+
+    Note.Builder noteBuild = Note.newBuilder();
+    noteBuild.setPaymentAddress(shieldAddress);
+    //noteBuild.setPaymentAddress(shieldAddress);
+    noteBuild.setValue(shieldAmount);
+    noteBuild.setRcm(ByteString.copyFrom(blockingStubFull.getRcm(EmptyMessage.newBuilder().build()).getValue().toByteArray()));
+    noteBuild.setMemo(ByteString.copyFrom(menoString.getBytes()));
     shieldOutList.add(noteBuild.build());
-    return  shieldOutList;
-    }
+    return shieldOutList;
+  }
 
 
   /**
@@ -339,7 +363,7 @@ public class ZenTrc20Base {
 
   public GrpcAPI.DecryptNotesTRC20 scanShieldedTRC20NoteByIvk(ShieldedAddressInfo shieldedAddressInfo,
       WalletGrpc.WalletBlockingStub blockingStubFull) throws Exception {
-    Long currentBlockNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
+    long currentBlockNum = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build())
         .getBlockHeader().getRawData().getNumber();
 
     System.out.println("sk :" + ByteArray.toHexString(shieldedAddressInfo.getSk()));
@@ -367,31 +391,85 @@ public class ZenTrc20Base {
     Optional<BytesMessage> nk = Optional.of(blockingStubFull.getNkFromNsk(nsk1));
     System.out.println("nk:" + ByteArray.toHexString(nk.get().getValue().toByteArray()));
     String nkString = ByteArray.toHexString(nk.get().getValue().toByteArray());
-    System.out.println("ivk:" + ByteArray.toHexString(shieldedAddressInfo.getIvk()));
-    String ivkString = ByteArray.toHexString(shieldedAddressInfo.getIvk());
 
+    GrpcAPI.ViewingKeyMessage.Builder viewBuilder = GrpcAPI.ViewingKeyMessage.newBuilder();
+    viewBuilder.setAk(ak.get().getValue());
+    viewBuilder.setNk(nk.get().getValue());
+    GrpcAPI.IncomingViewingKeyMessage ivk = blockingStubFull
+        .getIncomingViewingKey(viewBuilder.build());
+
+
+
+
+    //ivk.getIvk()
+    String ivkString = ByteArray.toHexString(ivk.getIvk().toByteArray());
+    System.out.println("ivkString:" + ivkString);
+    String ivkStringOld = ByteArray.toHexString(shieldedAddressInfo.getIvk());
+    System.out.println("ivkStringOld:" + ivkStringOld);
     System.out.println("shield address:" + shieldedAddressInfo.getAddress());
     System.out.println("start:" + (currentBlockNum - 99));
     System.out.println("end:" + (currentBlockNum));
     GrpcAPI.IvkDecryptTRC20Parameters parameters = GrpcAPI.IvkDecryptTRC20Parameters
         .newBuilder()
-        .setStartBlockIndex(currentBlockNum - 99)
+        .setStartBlockIndex(currentBlockNum - 80)
         .setEndBlockIndex(currentBlockNum)
-        .setShieldedTRC20ContractAddress(ByteString.copyFrom(shieldAddressByte))
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(Base58.decode58Check(shieldAddress)))
         .setIvk(ByteString.copyFrom(ByteArray.fromHexString(ivkString)))
         .setAk(ByteString.copyFrom(ByteArray.fromHexString(akString)))
         .setNk(ByteString.copyFrom(ByteArray.fromHexString(nkString)))
         .build();
-    logger.info("check");
+    logger.info(parameters.toString());
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     try {
       return blockingStubFull.scanShieldedTRC20NotesbyIvk(parameters);
     } catch (Exception e) {
+      System.out.println(e);
       Status status = Status.fromThrowable(e);
       System.out.println("ScanShieldedTRC20NoteByIvk failed,error " + status.getDescription());
 
     }
     return null;
   }
+
+  public GrpcAPI.DecryptNotesTRC20 scanShieldedTRC20NoteByIvk() throws Exception {
+
+    GrpcAPI.IvkDecryptTRC20Parameters parameters = GrpcAPI.IvkDecryptTRC20Parameters
+        .newBuilder()
+        .setStartBlockIndex(1870)
+        .setEndBlockIndex(1885)
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(Base58.decode58Check("THPdbzXUvUDmKWVpSHvf6iU22PRAd8f3y7")))
+        .setIvk(ByteString.copyFrom(ByteArray.fromHexString("e8537a560c9ffecc4e6785dfd4e197fb15611d6c9330b3b1b2cf90c46238dc03")))
+        .setAk(ByteString.copyFrom(ByteArray.fromHexString("34fa7333febc2e17dc721fa4221c57cf8f446bf5e55041a97e2d924d637b349b")))
+        .setNk(ByteString.copyFrom(ByteArray.fromHexString("5c66b74618703811a8e4eba5c4760a77bbe8be48eab7a7a3aeb30f5f36fa4638")))
+        .build();
+    logger.info(parameters.toString());
+    try {
+      return blockingStubFull.scanShieldedTRC20NotesbyIvk(parameters);
+    } catch (Exception e) {
+      System.out.println(e);
+      Status status = Status.fromThrowable(e);
+      System.out.println("ScanShieldedTRC20NoteByIvk failed,error " + status.getDescription());
+
+    }
+    return null;
+  }
+
+
+  public byte[] getRandomOvk() {
+    try {
+      Optional<BytesMessage> sk = Optional.of(blockingStubFull.getSpendingKey(EmptyMessage.newBuilder().build()));
+      Optional<GrpcAPI.ExpandedSpendingKeyMessage> expandedSpendingKeyMessage = Optional.of(blockingStubFull
+          .getExpandedSpendingKey(sk.get()));
+      return expandedSpendingKeyMessage.get().getOvk().toByteArray();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+
+
+
 
 
 

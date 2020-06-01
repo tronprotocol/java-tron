@@ -47,16 +47,19 @@ public class ShieldTrc20Token002 extends ZenTrc20Base{
   }
 
   @Test(enabled = true, description = "Send shield trc20 from T account to shield account")
-  public void test01GenerateNewShieldedTrc20Address() throws Exception{
+  public void test01GenerateNewShieldedTrc20Address() throws Exception {
     Long beforeMintAccountBalance = getBalanceOfShieldTrc20(zenTrc20TokenOwnerAddressString,zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey,blockingStubFull);
     Long beforeMintShieldAccountBalance = getBalanceOfShieldTrc20(shieldAddress,zenTrc20TokenOwnerAddress,
         zenTrc20TokenOwnerKey,blockingStubFull);
     receiverShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
     String memo = "Send shield trc20 from T account to shield account in" + System.currentTimeMillis();
+    memo ="";
     String receiverShieldAddress = receiverShieldAddressInfo.get().getAddress();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, receiverShieldAddress,
-        "" + publicFromAmount, memo);
+
+    shieldOutList = addShieldTrc20OutputList(shieldOutList, receiverShieldAddress,
+        "" + publicFromAmount, memo,blockingStubFull);
+
 
     GrpcAPI.ShieldedTRC20Parameters shieldedTRC20Parameters = createShieldedTrc20Parameters(publicFromAmount,
         null,shieldOutList,"",0L,blockingStubFull
@@ -85,9 +88,10 @@ public class ShieldTrc20Token002 extends ZenTrc20Base{
     logger.info("afterMintShieldAccountBalance :" + afterMintShieldAccountBalance);
     Assert.assertEquals(BigInteger.valueOf(beforeMintAccountBalance - afterMintAccountBalance) , publicFromAmount);
     Assert.assertEquals(BigInteger.valueOf(afterMintShieldAccountBalance - beforeMintShieldAccountBalance) , publicFromAmount);
-
+    logger.info(scanShieldedTRC20NoteByIvk().toString());
+    logger.info("-----------------------");
     GrpcAPI.DecryptNotesTRC20 note = scanShieldedTRC20NoteByIvk(receiverShieldAddressInfo.get(),blockingStubFull);
-    //logger.info("" + scanShieldedTRC20NoteByIvk(receiverShieldAddressInfo.get(),blockingStubFull).getNoteTxs(0).getNote());
+    logger.info("" + note);
 
   }
 
