@@ -36,6 +36,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -2984,7 +2985,7 @@ public class Wallet {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txId = transactionCapsule.getTransactionId().getBytes();
         TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txId));
-        if (info != null && ByteUtil.equals(info.getContractAddress().toByteArray(),
+        if (info != null && Arrays.equals(info.getContractAddress().toByteArray(),
             shieldedTRC20ContractAddress)) {
           DecryptNotesTRC20.NoteTx.Builder noteBuilder;
           List<TransactionInfo.Log> logList = info.getLogList();
@@ -3137,7 +3138,7 @@ public class Wallet {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
         TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txid));
-        if (info != null && ByteUtil.equals(info.getContractAddress().toByteArray(),
+        if (info != null && Arrays.equals(info.getContractAddress().toByteArray(),
             shieldedTRC20ContractAddress)) {
           DecryptNotesTRC20.NoteTx.Builder noteBuilder;
           List<TransactionInfo.Log> logList = info.getLogList();
