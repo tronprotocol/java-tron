@@ -2984,8 +2984,8 @@ public class Wallet {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txId = transactionCapsule.getTransactionId().getBytes();
         TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txId));
-        if (info != null && ByteUtil.equals(info.getContractAddress().toByteArray(),
-            shieldedTRC20ContractAddress)) {
+        if (info != null && ByteArray.toHexString(info.getContractAddress().toByteArray()).equals(
+            ByteArray.toHexString(shieldedTRC20ContractAddress))) {
           DecryptNotesTRC20.NoteTx.Builder noteBuilder;
           List<TransactionInfo.Log> logList = info.getLogList();
           Optional<DecryptNotesTRC20.NoteTx> noteTx;
@@ -3137,8 +3137,8 @@ public class Wallet {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
         TransactionInfo info = this.getTransactionInfoById(ByteString.copyFrom(txid));
-        if (info != null && ByteUtil.equals(info.getContractAddress().toByteArray(),
-            shieldedTRC20ContractAddress)) {
+        if (info != null && ByteArray.toHexString(info.getContractAddress().toByteArray()).equals(
+            ByteArray.toHexString(shieldedTRC20ContractAddress))) {
           DecryptNotesTRC20.NoteTx.Builder noteBuilder;
           List<TransactionInfo.Log> logList = info.getLogList();
           Optional<DecryptNotesTRC20.NoteTx> noteTx;
