@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -83,6 +85,8 @@ public class ZenTrc20Base {
   public static String transfer = "transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],bytes32[21][])";
   public static String burn = "burn(bytes32[10],bytes32[2],uint256,bytes32[2],address)";
   public Wallet wallet = new Wallet();
+  static HttpResponse response;
+  static HttpPost httppost;
 
   /**
    * constructor.
@@ -161,7 +165,7 @@ public class ZenTrc20Base {
    * constructor.
    */
   public GrpcAPI.ShieldedTRC20Parameters createShieldedTrc20Parameters(BigInteger publicFromAmount,
-      List<GrpcAPI.DecryptNotesTRC20> inputNoteList,List<ShieldedAddressInfo> shieldedAddressInfoList,List<Note> outputNoteList, String publicToAddress,Long pubicToAmount,
+      GrpcAPI.DecryptNotesTRC20 inputNoteList,List<ShieldedAddressInfo> shieldedAddressInfoList,List<Note> outputNoteList, String publicToAddress,Long pubicToAmount,
       WalletGrpc.WalletBlockingStub blockingStubFull) throws ZksnarkException {
 
 
@@ -180,11 +184,11 @@ public class ZenTrc20Base {
     if (inputNoteList != null) {
       logger.info("Enter transfer type code");
       List<String> rootAndPath = new ArrayList<>();
-      for (int i = 0; i < inputNoteList.size(); i++) {
-        long position = inputNoteList.get(0).getNoteTxs(0).getPosition();
+      for (int i = 0; i < inputNoteList.getNoteTxsCount(); i++) {
+        long position = inputNoteList.getNoteTxs(i).getPosition();
         rootAndPath.add(getRootAndPath(position,blockingStubFull));
       }
-      if (rootAndPath.isEmpty() || rootAndPath.size() != inputNoteList.size()) {
+      if (rootAndPath.isEmpty() || rootAndPath.size() != inputNoteList.getNoteTxsCount()) {
         System.out.println("Can't get all merkle tree, please check the notes.");
         return null;
       }
@@ -195,9 +199,9 @@ public class ZenTrc20Base {
         }
       }
 
-      for (int i = 0; i < inputNoteList.size(); ++i) {
+      for (int i = 0; i < inputNoteList.getNoteTxsCount(); ++i) {
         if (i == 0) {
-          String shieldedAddress = inputNoteList.get(i).getNoteTxs(0).getNote().getPaymentAddress();
+          String shieldedAddress = inputNoteList.getNoteTxs(i).getNote().getPaymentAddress();
 
           String spendingKey = ByteArray.toHexString(shieldedAddressInfoList.get(i).getSk());
           BytesMessage sk = BytesMessage.newBuilder()
@@ -212,16 +216,16 @@ public class ZenTrc20Base {
         }
         Note.Builder noteBuild = Note.newBuilder();
         noteBuild.setPaymentAddress(shieldedAddressInfoList.get(i).getAddress());
-        noteBuild.setValue(inputNoteList.get(i).getNoteTxs(0).getNote().getValue());
-        noteBuild.setRcm(inputNoteList.get(i).getNoteTxs(0).getNote().getRcm());
-        noteBuild.setMemo(inputNoteList.get(i).getNoteTxs(0).getNote().getMemo());
+        noteBuild.setValue(inputNoteList.getNoteTxs(i).getNote().getValue());
+        noteBuild.setRcm(inputNoteList.getNoteTxs(i).getNote().getRcm());
+        noteBuild.setMemo(inputNoteList.getNoteTxs(i).getNote().getMemo());
 
         System.out.println("address " + shieldedAddressInfoList.get(i).getAddress());
-        System.out.println("value " + inputNoteList.get(i).getNoteTxs(0).getNote().getValue());
+        System.out.println("value " + inputNoteList.getNoteTxs(i).getNote().getValue());
         //System.out.println("rcm " + ByteString.copyFrom(inputNoteList.get(i).getNoteTxs(0).getNote().getRcm()));
-        System.out.println("trxId " + inputNoteList.get(i).getNoteTxs(0).getTxid());
-        System.out.println("index " + inputNoteList.get(i).getNoteTxs(0).getIndex());
-        System.out.println("position " + inputNoteList.get(i).getNoteTxs(0).getPosition());
+        System.out.println("trxId " + inputNoteList.getNoteTxs(i).getTxid());
+        System.out.println("index " + inputNoteList.getNoteTxs(i).getIndex());
+        System.out.println("position " + inputNoteList.getNoteTxs(i).getPosition());
         //System.out.println("memo " + ZenUtils.getMemo(inputNoteList.get(i).getNoteTxs(0).getNote().getMemo()));
 
         byte[] eachRootAndPath = ByteArray.fromHexString(rootAndPath.get(i));
@@ -233,9 +237,9 @@ public class ZenTrc20Base {
             EmptyMessage.newBuilder().build()).getValue().toByteArray()));
         spendTRC20NoteBuilder.setRoot(ByteString.copyFrom(root));
         spendTRC20NoteBuilder.setPath(ByteString.copyFrom(path));
-        spendTRC20NoteBuilder.setPos(inputNoteList.get(i).getNoteTxs(0).getPosition());
+        spendTRC20NoteBuilder.setPos(inputNoteList.getNoteTxs(i).getPosition());
 
-        valueBalance = Math.addExact(valueBalance, inputNoteList.get(i).getNoteTxs(0).getNote().getValue());
+        valueBalance = Math.addExact(valueBalance, inputNoteList.getNoteTxs(i).getNote().getValue());
         builder.addShieldedSpends(spendTRC20NoteBuilder.build());
       }
     } else {
@@ -285,7 +289,7 @@ public class ZenTrc20Base {
    * constructor.
    */
   public GrpcAPI.ShieldedTRC20Parameters createShieldedTrc20ParametersWithoutAsk(BigInteger publicFromAmount,
-      List<GrpcAPI.DecryptNotesTRC20> inputNoteList,List<ShieldedAddressInfo> shieldedAddressInfoList,List<Note> outputNoteList, String publicToAddress,Long pubicToAmount,
+      GrpcAPI.DecryptNotesTRC20 inputNoteList,List<ShieldedAddressInfo> shieldedAddressInfoList,List<Note> outputNoteList, String publicToAddress,Long pubicToAmount,
       WalletGrpc.WalletBlockingStub blockingStubFull) throws ZksnarkException {
 
 
@@ -303,11 +307,11 @@ public class ZenTrc20Base {
     byte[] ask = new byte[32];
     if (inputNoteList != null) {
       List<String> rootAndPath = new ArrayList<>();
-      for (int i = 0; i < inputNoteList.size(); i++) {
-        long position = inputNoteList.get(0).getNoteTxs(0).getPosition();
+      for (int i = 0; i < inputNoteList.getNoteTxsCount(); i++) {
+        long position = inputNoteList.getNoteTxs(i).getPosition();
         rootAndPath.add(getRootAndPath(position,blockingStubFull));
       }
-      if (rootAndPath.isEmpty() || rootAndPath.size() != inputNoteList.size()) {
+      if (rootAndPath.isEmpty() || rootAndPath.size() != inputNoteList.getNoteTxsCount()) {
         System.out.println("Can't get all merkle tree, please check the notes.");
         return null;
       }
@@ -318,22 +322,14 @@ public class ZenTrc20Base {
         }
       }
 
-      for (int i = 0; i < inputNoteList.size(); ++i) {
+      for (int i = 0; i < inputNoteList.getNoteTxsCount(); ++i) {
         if (i == 0) {
-/*          String shieldedAddress = inputNoteList.get(i).getNoteTxs(0).getNote().getPaymentAddress();
-          SpendingKey spendingKey = new SpendingKey(shieldedAddressInfoList.get(i).getSk());
-          ExpandedSpendingKey expandedSpendingKey = spendingKey.expandedSpendingKey();
-          System.arraycopy(expandedSpendingKey.getAsk(), 0, ask, 0, 32);
-          builder.setAk(ByteString.copyFrom(
-              ExpandedSpendingKey.getAkFromAsk(expandedSpendingKey.getAsk())));
-          builder.setNsk(ByteString.copyFrom(expandedSpendingKey.getNsk()));
-          builder.setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));*/
-
           String spendingKey = ByteArray.toHexString(shieldedAddressInfoList.get(i).getSk());
           BytesMessage sk = BytesMessage.newBuilder()
               .setValue(ByteString.copyFrom(ByteArray.fromHexString(spendingKey))).build();
           Optional<GrpcAPI.ExpandedSpendingKeyMessage> esk = Optional
               .of(blockingStubFull.getExpandedSpendingKey(sk));
+          System.arraycopy(esk.get().getAsk().toByteArray(), 0, ask, 0, 32);
 
 
           String ask1 = ByteArray.toHexString(esk.get().getAsk().toByteArray());
@@ -352,17 +348,15 @@ public class ZenTrc20Base {
         }
         Note.Builder noteBuild = Note.newBuilder();
         noteBuild.setPaymentAddress(shieldedAddressInfoList.get(i).getAddress());
-        noteBuild.setValue(inputNoteList.get(i).getNoteTxs(0).getNote().getValue());
-        noteBuild.setRcm(inputNoteList.get(i).getNoteTxs(0).getNote().getRcm());
-        noteBuild.setMemo(inputNoteList.get(i).getNoteTxs(0).getNote().getMemo());
+        noteBuild.setValue(inputNoteList.getNoteTxs(i).getNote().getValue());
+        noteBuild.setRcm(inputNoteList.getNoteTxs(i).getNote().getRcm());
+        noteBuild.setMemo(inputNoteList.getNoteTxs(i).getNote().getMemo());
 
         System.out.println("address " + shieldedAddressInfoList.get(i).getAddress());
-        System.out.println("value " + inputNoteList.get(i).getNoteTxs(0).getNote().getValue());
-        //System.out.println("rcm " + ByteString.copyFrom(inputNoteList.get(i).getNoteTxs(0).getNote().getRcm()));
-        System.out.println("trxId " + ByteArray.toHexString(inputNoteList.get(i).getNoteTxs(0).getTxid().toByteArray()));
-        System.out.println("index " + inputNoteList.get(i).getNoteTxs(0).getIndex());
-        System.out.println("position " + inputNoteList.get(i).getNoteTxs(0).getPosition());
-        //System.out.println("memo " + ZenUtils.getMemo(inputNoteList.get(i).getNoteTxs(0).getNote().getMemo()));
+        System.out.println("value " + inputNoteList.getNoteTxs(i).getNote().getValue());
+        System.out.println("trxId " + ByteArray.toHexString(inputNoteList.getNoteTxs(i).getTxid().toByteArray()));
+        System.out.println("index " + inputNoteList.getNoteTxs(i).getIndex());
+        System.out.println("position " + inputNoteList.getNoteTxs(i).getPosition());
 
         byte[] eachRootAndPath = ByteArray.fromHexString(rootAndPath.get(i));
         byte[] root = Arrays.copyOfRange(eachRootAndPath, 0, 32);
@@ -373,10 +367,10 @@ public class ZenTrc20Base {
             EmptyMessage.newBuilder().build()).getValue().toByteArray()));
         spendTRC20NoteBuilder.setRoot(ByteString.copyFrom(root));
         spendTRC20NoteBuilder.setPath(ByteString.copyFrom(path));
-        spendTRC20NoteBuilder.setPos(inputNoteList.get(i).getNoteTxs(0).getPosition());
+        spendTRC20NoteBuilder.setPos(inputNoteList.getNoteTxs(i).getPosition());
 
         builder.addShieldedSpends(spendTRC20NoteBuilder.build());
-        valueBalance = Math.addExact(valueBalance, inputNoteList.get(i).getNoteTxs(0).getNote().getValue());
+        valueBalance = Math.addExact(valueBalance, inputNoteList.getNoteTxs(i).getNote().getValue());
       }
     } else {
       //@TODO remove randomOvk by sha256.of(privateKey)
@@ -814,7 +808,20 @@ public class ZenTrc20Base {
   }
 
 
-
+  /**
+   * constructor.
+   */
+  public static HttpResponse getNewShieldedAddress(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getnewshieldedaddress";
+      response = HttpMethed.createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
 
 
 

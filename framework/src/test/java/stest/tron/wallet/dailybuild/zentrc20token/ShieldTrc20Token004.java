@@ -35,7 +35,6 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
   List<ShieldedAddressInfo> inputShieldAddressList = new ArrayList<>();
   List<GrpcAPI.DecryptNotesTRC20> inputNoteList = new ArrayList<>();
   GrpcAPI.DecryptNotesTRC20 senderNote;
-  GrpcAPI.DecryptNotesTRC20 receiverNote;
   long sender_position;
 
   //get account
@@ -105,12 +104,11 @@ public class ShieldTrc20Token004 extends ZenTrc20Base {
 
     //String burnMemo = "Burn type test " + System.currentTimeMillis();
     inputShieldAddressList.add(senderShieldAddressInfo.get());
-    inputNoteList.add(senderNote);
     BigInteger receiveAmount = publicFromAmount;
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        inputNoteList,inputShieldAddressList,null,receiverAddressString,receiveAmount.longValue(),blockingStubFull
+        senderNote,inputShieldAddressList,null,receiverAddressString,receiveAmount.longValue(),blockingStubFull
     );
 
     String data = encodeBurnParamsToHexString(shieldedTrc20Parameters,receiveAmount,receiverAddressString);

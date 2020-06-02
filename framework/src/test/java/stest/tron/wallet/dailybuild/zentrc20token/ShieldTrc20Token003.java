@@ -30,7 +30,6 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
   private BigInteger publicFromAmount;
   List<Note> shieldOutList = new ArrayList<>();
   List<ShieldedAddressInfo> inputShieldAddressList = new ArrayList<>();
-  List<GrpcAPI.DecryptNotesTRC20> inputNoteList = new ArrayList<>();
   GrpcAPI.DecryptNotesTRC20 senderNote;
   GrpcAPI.DecryptNotesTRC20 receiverNote;
   long sender_position;
@@ -95,11 +94,11 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
     shieldOutList = addShieldTrc20OutputList(shieldOutList, receiverShieldAddress,
         "" + publicFromAmount, transferMemo,blockingStubFull);
     inputShieldAddressList.add(senderShieldAddressInfo.get());
-    inputNoteList.add(senderNote);
+    //inputNoteList.add(senderNote);
     //Create transfer parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-        inputNoteList,inputShieldAddressList,shieldOutList,"",0L,blockingStubFull
+        senderNote,inputShieldAddressList,shieldOutList,"",0L,blockingStubFull
     );
 
     String data = encodeTransferParamsToHexString(shieldedTrc20Parameters);
@@ -135,6 +134,54 @@ public class ShieldTrc20Token003 extends ZenTrc20Base {
     final Long afterMintShieldContractBalance = getBalanceOfShieldTrc20(shieldAddress,
         zenTrc20TokenOwnerAddress, zenTrc20TokenOwnerKey,blockingStubFull);
     Assert.assertEquals(beforeMintShieldContractBalance,afterMintShieldContractBalance);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Shield TRC20 transaction with type transfer without ask")
+  public void test02ShieldTrc20TransactionWithTypeTransferWithoutAsk() throws Exception {
+    //Scan receiver note prepare for without type of transfer
+    receiverNote = scanShieldedTrc20NoteByIvk(receiverShieldAddressInfo.get(),
+        blockingStubFull);
+    String transferMemo = "Transfer type without ask test " + System.currentTimeMillis();
+    shieldOutList.clear();
+    shieldOutList = addShieldTrc20OutputList(shieldOutList, senderShieldAddressInfo.get().getAddress(),
+        "" + publicFromAmount, transferMemo,blockingStubFull);
+    inputShieldAddressList.clear();
+    inputShieldAddressList.add(receiverShieldAddressInfo.get());
+
+    //Create transfer parameters
+    GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
+        = createShieldedTrc20ParametersWithoutAsk(BigInteger.valueOf(0),
+        receiverNote,inputShieldAddressList,shieldOutList,"",0L,blockingStubFull
+    );
+
+    String data = encodeTransferParamsToHexString(shieldedTrc20Parameters);
+    String txid = PublicMethed.triggerContract(shieldAddressByte,
+        transfer, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
+        zenTrc20TokenOwnerKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getReceipt().getResultValue() == 1);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 300000);
+
+    senderNote = scanShieldedTrc20NoteByIvk(senderShieldAddressInfo.get(),
+        blockingStubFull);
+
+    logger.info("" + senderNote);
+    Assert.assertEquals(senderNote.getNoteTxs(1).getTxid(),infoById.get().getId());
+    Assert.assertEquals(senderNote.getNoteTxs(1).getNote().getMemo(), ByteString.copyFromUtf8(transferMemo));
+    Assert.assertEquals(senderNote.getNoteTxs(1).getNote().getValue(),publicFromAmount.longValue());
+    Assert.assertEquals(senderNote.getNoteTxs(1).getNote().getPaymentAddress(),
+        senderShieldAddressInfo.get().getAddress());
+
+
+    //logger.info("scanShieldedTrc20NoteByIvk + senderNote:" + senderNote);
+    receiverNote = scanShieldedTrc20NoteByIvk(receiverShieldAddressInfo.get(),
+        blockingStubFull);
+    Assert.assertEquals(receiverNote.getNoteTxs(0).getIsSpent(),true);
   }
 
   /**
