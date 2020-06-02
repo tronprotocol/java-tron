@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.TransactionCapsule;
@@ -241,6 +242,9 @@ public class PbftBlockListener implements EventListener<PbftBlockCommitEvent> {
   public boolean validTimeOut(long timeOutHeight, ByteString toChainId, Transaction sourceTx) {
     Sha256Hash sourceHash = Sha256Hash.of(sourceTx.getRawData().toByteArray());
     TransactionStore transactionStore = chainBaseManager.getTransactionStore();
+    logger.info("valid chain {} time out, time out height:{},chain height:{}",
+        ByteArray.toHexString(toChainId.toByteArray()),
+        timeOutHeight, communicateService.getHeight(toChainId));
     if (timeOutHeight < communicateService.getHeight(toChainId)
         && communicateService.checkCommit(sourceHash)
         && transactionStore.getUnchecked(CrossUtils.getAddSourceTxId(sourceTx).getBytes())

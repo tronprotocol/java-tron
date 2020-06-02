@@ -1,11 +1,12 @@
 package org.tron.core.db;
 
-import java.util.Optional;
-
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.math.BigInteger;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
@@ -75,7 +76,8 @@ public class CommonDataBase extends TronDatabase<byte[]> {
 
   public void saveLatestPBFTBlockNum(String chainId, long number) {
     if (number <= getLatestPBFTBlockNum(chainId)) {
-      logger.warn("chainId: {}, pbft number {} <= latest number {}", chainId, number, getLatestPBFTBlockNum(chainId));
+      logger.warn("chainId: {}, pbft number {} <= latest number {}", chainId, number,
+          getLatestPBFTBlockNum(chainId));
       return;
     }
     this.put(buildKey(LATEST_PBFT_BLOCK_NUM, chainId), Longs.toByteArray(number));

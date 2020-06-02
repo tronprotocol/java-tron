@@ -721,11 +721,12 @@ message BlockHeaderRequestMessage {
 message BlockHeaderInventory {
   bytes chainId = 1;
   int64 currentBlockHeight = 2;
-  repeated BlockHeader blockHeader = 3;
+  repeated SignedBlockHeader signedBlockHeader = 3;
 }
 
 message SignedBlockHeader {
   BlockHeader blockHeader = 1;
   repeated bytes srs_signature = 2;
+  PBFTCommitResult sr_list = 3;
 }
 

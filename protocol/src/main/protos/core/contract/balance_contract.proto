@@ -54,3 +54,11 @@ message CrossToken {
   int32 precision = 4;
   bytes chain_id = 5;
 }
+
+message RegisterCrossContract {
+  bytes chain_id = 1;
+  bytes sr_list = 2;
+  int64 begin_sync_height = 3;
+  int64 maintenance_time_interval = 4;
+  bytes parent_block_hash = 5;
+}

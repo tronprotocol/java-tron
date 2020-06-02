@@ -1,9 +1,8 @@
 package org.tron.core.net.message;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.tron.common.overlay.message.Message;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.TransactionCapsule;
+import java.util.List;
 import org.tron.protos.Protocol;
 
 public class BlockHeaderUpdatedNoticeMessage extends TronMessage {
@@ -15,7 +14,8 @@ public class BlockHeaderUpdatedNoticeMessage extends TronMessage {
     blockHeaderUpdatedNotice = Protocol.BlockHeaderUpdatedNotice.parseFrom(packed);
   }
 
-  public BlockHeaderUpdatedNoticeMessage(Protocol.BlockHeaderUpdatedNotice blockHeaderUpdatedNotice) {
+  public BlockHeaderUpdatedNoticeMessage(
+      Protocol.BlockHeaderUpdatedNotice blockHeaderUpdatedNotice) {
     this.blockHeaderUpdatedNotice = blockHeaderUpdatedNotice;
     super.type = MessageTypes.HEADER_UPDATED_NOTICE.asByte();
     super.data = blockHeaderUpdatedNotice.toByteArray();
@@ -26,7 +26,8 @@ public class BlockHeaderUpdatedNoticeMessage extends TronMessage {
   }
 
   public long getCurrentBlockHeight() {
-    return blockHeaderUpdatedNotice.getSignedBlockHeader().getBlockHeader().getRawData().getNumber();
+    return blockHeaderUpdatedNotice.getSignedBlockHeader().getBlockHeader().getRawData()
+        .getNumber();
   }
 
   public Protocol.BlockHeader getBlockHeader() {
@@ -35,6 +36,10 @@ public class BlockHeaderUpdatedNoticeMessage extends TronMessage {
 
   public Protocol.SignedBlockHeader getSignedBlockHeader() {
     return blockHeaderUpdatedNotice.getSignedBlockHeader();
+  }
+
+  public List<ByteString> getAllSrsSignature() {
+    return blockHeaderUpdatedNotice.getSignedBlockHeader().getSrsSignatureList();
   }
 
   @Override

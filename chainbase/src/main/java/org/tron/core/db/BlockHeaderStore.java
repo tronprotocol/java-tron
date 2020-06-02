@@ -15,29 +15,20 @@
 
 package org.tron.core.db;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 import com.google.common.primitives.Bytes;
-import com.google.common.primitives.Longs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.BlockCapsule;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BlockHeaderCapsule;
-import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j(topic = "DB")
 @Component
-public class BlockHeaderStore extends TronStoreWithRevoking<BlockHeaderCapsule> {
+public class BlockHeaderStore extends TronDatabase<BlockHeaderCapsule> {
 
   private static final String SPLIT = "_";
 
@@ -46,34 +37,38 @@ public class BlockHeaderStore extends TronStoreWithRevoking<BlockHeaderCapsule> 
     super(dbName);
   }
 
-  public List<BlockHeaderCapsule> getLimitNumber(long startNumber, long limit) {
-    BlockId startBlockId = new BlockId(Sha256Hash.ZERO_HASH, startNumber);
-    return revokingDB.getValuesNext(startBlockId.getBytes(), limit).stream()
-        .map(bytes -> {
-          try {
-            return new BlockHeaderCapsule(bytes);
-          } catch (BadItemException ignored) {
-          }
-          return null;
-        })
-        .filter(Objects::nonNull)
-        .sorted(Comparator.comparing(BlockHeaderCapsule::getNum))
-        .collect(Collectors.toList());
+  @Override
+  public void put(byte[] key, BlockHeaderCapsule item) {
+    dbSource.putData(key, item.getData());
   }
 
-  public List<BlockHeaderCapsule> getBlockHeaderByLatestNum(long getNum) {
+  @Override
+  public void delete(byte[] key) {
+    dbSource.deleteData(key);
+  }
 
-    return revokingDB.getlatestValues(getNum).stream()
-        .map(bytes -> {
-          try {
-            return new BlockHeaderCapsule(bytes);
-          } catch (BadItemException ignored) {
-          }
-          return null;
-        })
-        .filter(Objects::nonNull)
-        .sorted(Comparator.comparing(BlockHeaderCapsule::getNum))
-        .collect(Collectors.toList());
+  @Override
+  public BlockHeaderCapsule get(byte[] key) throws BadItemException {
+    byte[] data = dbSource.getData(key);
+    if (ByteUtil.isNullOrZeroArray(data)) {
+      return null;
+    }
+    return new BlockHeaderCapsule(data);
+  }
+
+  @Override
+  public BlockHeaderCapsule getUnchecked(byte[] key) {
+    try {
+      return get(key);
+    } catch (BadItemException e) {
+      logger.error("", e);
+    }
+    return null;
+  }
+
+  @Override
+  public boolean has(byte[] key) {
+    return dbSource.getData(key) != null;
   }
 
   private byte[] buildKey(String chainId, BlockId blockId) {

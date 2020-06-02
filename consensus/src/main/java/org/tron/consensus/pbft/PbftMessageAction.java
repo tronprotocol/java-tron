@@ -48,9 +48,9 @@ public class PbftMessageAction {
       break;
       case SRL: {
         Raw raw = message.getPbftMessage().getRawData();
-        chainBaseManager.getPbftSignDataStore().putSrSignData(message.getEpoch(),
+        chainBaseManager.getPbftSignDataStore().putSrSignData(raw.getEpoch(),
             new PbftSignCapsule(raw.toByteString(), dataSignList));
-        logger.info("sr commit msg :{}, epoch:{}", message.getNumber(), message.getEpoch());
+        logger.info("sr commit msg :{}, epoch:{}", raw.getViewN(), raw.getEpoch());
       }
       break;
       default:

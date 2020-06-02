@@ -66,6 +66,7 @@ public class CrossChainConnectPool {
   public void onConnect(ByteString chainId, Channel channel) {
     synchronized (this) {
       PeerConnection peerConnection = (PeerConnection) channel;
+      peerConnection.setChainId(chainId);
       if (!crossChainConnectPool.containsKey(chainId)) {
         crossChainConnectPool.put(chainId, new ArrayList<>());
       }

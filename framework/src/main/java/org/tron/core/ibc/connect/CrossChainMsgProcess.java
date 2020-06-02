@@ -6,10 +6,9 @@ import org.springframework.stereotype.Component;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.ibc.communicate.CommunicateService;
+import org.tron.core.ibc.spv.CrossHeaderMsgProcess;
 import org.tron.core.net.message.CrossChainMessage;
 import org.tron.core.net.message.TronMessage;
-import org.tron.core.net.messagehandler.BlockHeaderSyncHandler;
-import org.tron.core.net.messagehandler.BlockHeaderSyncHandler2;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -20,8 +19,10 @@ public class CrossChainMsgProcess {
   @Autowired
   private CommunicateService communicateService;
 
+  //  @Autowired
+//  private BlockHeaderSyncHandler2 blockHeaderSyncHandler;
   @Autowired
-  private BlockHeaderSyncHandler2 blockHeaderSyncHandler;
+  private CrossHeaderMsgProcess crossHeaderMsgProcess;
 
   protected void onMessage(PeerConnection peer, TronMessage msg) {
     try {
@@ -35,19 +36,22 @@ public class CrossChainMsgProcess {
           break;
         }
         case HEADER_UPDATED_NOTICE:
-          blockHeaderSyncHandler.HandleUpdatedNotice(peer, msg);
+          crossHeaderMsgProcess.handleCrossUpdatedNotice(peer, msg);
+//          blockHeaderSyncHandler.HandleUpdatedNotice(peer, msg);
           break;
         case HEADER_REQUEST_MESSAGE:
-          blockHeaderSyncHandler.handleRequest(peer, msg);
+          crossHeaderMsgProcess.handleRequest(peer, msg);
+//          blockHeaderSyncHandler.handleRequest(peer, msg);
           break;
         case HEADER_INVENTORY:
-          blockHeaderSyncHandler.handleInventory(peer, msg);
+          crossHeaderMsgProcess.handleInventory(peer, msg);
+//          blockHeaderSyncHandler.handleInventory(peer, msg);
           break;
         case SR_LIST:
-          blockHeaderSyncHandler.handleSrList(peer, msg);
+//          blockHeaderSyncHandler.handleSrList(peer, msg);
           break;
         case EPOCH_MESSAGE:
-          blockHeaderSyncHandler.handleEpoch(peer, msg);
+//          blockHeaderSyncHandler.handleEpoch(peer, msg);
         default:
           throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }

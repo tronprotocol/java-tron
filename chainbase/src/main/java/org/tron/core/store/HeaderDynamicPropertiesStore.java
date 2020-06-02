@@ -6,11 +6,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.DBConfig;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 
@@ -58,8 +60,7 @@ public class HeaderDynamicPropertiesStore extends TronStoreWithRevoking<BytesCap
     return Optional.ofNullable(getUnchecked(buildHeaderHashKey(chainId)))
         .map(BytesCapsule::getData)
         .map(String::new)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found latest block header hash"));
+        .orElse(null);
   }
 
   public void saveCurrentSrList(String chainId, List<ByteString> srList) {
@@ -78,6 +79,37 @@ public class HeaderDynamicPropertiesStore extends TronStoreWithRevoking<BytesCap
     String srString = new String(bytesCapsule.getData());
     return JSON.parseArray(srString, String.class).stream().map(sr -> ByteString.copyFromUtf8(sr))
         .collect(Collectors.toList());
+  }
+
+  public long getCrossNextMaintenanceTime(String chainId) {
+    return Optional.ofNullable(getUnchecked(buildChainMaintenanceTimeKey(chainId)))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveCrossNextMaintenanceTime(String chainId, long nextMaintenanceTime) {
+    this.put(buildChainMaintenanceTimeKey(chainId),
+        new BytesCapsule(ByteArray.fromLong(nextMaintenanceTime)));
+  }
+
+  public void updateCrossNextMaintenanceTime(String chainId, long blockTime) {
+    long maintenanceTimeInterval = DBConfig.getMaintenanceTimeInterval();//todo
+
+    long currentMaintenanceTime = getCrossNextMaintenanceTime(chainId);
+    long round = (blockTime - currentMaintenanceTime) / maintenanceTimeInterval;
+    long nextMaintenanceTime = currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;
+    saveCrossNextMaintenanceTime(chainId, nextMaintenanceTime);
+
+    logger.info(
+        "do update cross chain:{} nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",
+        chainId, new DateTime(currentMaintenanceTime), new DateTime(blockTime),
+        new DateTime(nextMaintenanceTime)
+    );
+  }
+
+  private byte[] buildChainMaintenanceTimeKey(String chainId) {
+    return ("maintenance" + chainId).getBytes();
   }
 
   private byte[] buildSolidityKey(String chainId) {

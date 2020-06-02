@@ -148,8 +148,8 @@ public class CreateCommonTransactionTest {
             .setTotalSupply(100000000)
             .setPrecision(0)
             .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
-            .setStartTime(1589705931000L)
-            .setEndTime(1589805931000L)
+            .setStartTime(1595805931000L)
+            .setEndTime(1596905931000L)
             .setTrxNum(1).setNum(1)
             .build();
 
@@ -170,10 +170,10 @@ public class CreateCommonTransactionTest {
 
   public static void main(String[] args) {
 //    testCreateUpdateBrokerageContract();
-    testCrossTx();
+//    testCrossTx();
 //    testCrossTxBack();
-//    query();
-//    createAsset("testCross");
+    query();
+//    createAsset("testCross111");
   }
 
 }

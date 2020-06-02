@@ -1,24 +1,42 @@
 package org.tron.core.db;
 
-import java.util.Arrays;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Component
-public class BlockHeaderIndexStore extends TronStoreWithRevoking<BytesCapsule> {
+public class BlockHeaderIndexStore extends TronDatabase<BytesCapsule> {
 
   private static final String SPLIT = "_";
 
   @Autowired
   public BlockHeaderIndexStore(@Value("block-header-index") String dbName) {
     super(dbName);
+  }
 
+  @Override
+  public void put(byte[] key, BytesCapsule item) {
+    dbSource.putData(key, item.getData());
+  }
+
+  @Override
+  public void delete(byte[] key) {
+    dbSource.deleteData(key);
+  }
+
+  @Override
+  public BytesCapsule getUnchecked(byte[] key) {
+    return get(key);
+  }
+
+  @Override
+  public boolean has(byte[] key) {
+    return dbSource.getData(key) != null;
   }
 
   public void put(String chainId, BlockId id) {
@@ -43,13 +61,12 @@ public class BlockHeaderIndexStore extends TronStoreWithRevoking<BytesCapsule> {
   }
 
   @Override
-  public BytesCapsule get(byte[] key)
-      throws ItemNotFoundException {
-    byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
-      throw new ItemNotFoundException("number: " + Arrays.toString(key) + " is not found!");
+  public BytesCapsule get(byte[] key) {
+    byte[] data = dbSource.getData(key);
+    if (ByteUtil.isNullOrZeroArray(data)) {
+      return null;
     }
-    return new BytesCapsule(value);
+    return new BytesCapsule(data);
   }
 
   private byte[] buildKey(String chainId, Long num) {

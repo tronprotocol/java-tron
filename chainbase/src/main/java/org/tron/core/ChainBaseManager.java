@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.MerkleContainer;
+import org.tron.core.db.BlockHeaderIndexStore;
+import org.tron.core.db.BlockHeaderStore;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CommonDataBase;
@@ -29,6 +31,7 @@ import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.store.HeaderDynamicPropertiesStore;
 import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
@@ -147,6 +150,16 @@ public class ChainBaseManager {
   @Getter
   private CrossRevokingStore crossRevokingStore;
 
+  @Autowired
+  @Getter
+  private HeaderDynamicPropertiesStore headerPropertiesStore;
+  @Autowired
+  @Getter
+  private BlockHeaderIndexStore blockHeaderIndexStore;
+  @Autowired
+  @Getter
+  private BlockHeaderStore blockHeaderStore;
+
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
@@ -186,5 +199,8 @@ public class ChainBaseManager {
     closeOneStore(commonDataBase);
     closeOneStore(crossStore);
     closeOneStore(crossRevokingStore);
+    closeOneStore(headerPropertiesStore);
+    closeOneStore(blockHeaderIndexStore);
+    closeOneStore(blockHeaderStore);
   }
 }

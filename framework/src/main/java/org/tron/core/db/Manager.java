@@ -59,6 +59,7 @@ import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkController;
+import org.tron.common.utils.InitParameter;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
@@ -654,6 +655,7 @@ public class Manager {
         this.updateRecentBlock(genesisBlock);
       }
     }
+    InitParameter.genesisBlock = genesisBlock;
   }
 
   /**

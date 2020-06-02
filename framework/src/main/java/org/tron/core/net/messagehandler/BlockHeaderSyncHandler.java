@@ -116,15 +116,15 @@ public class BlockHeaderSyncHandler {
 
   @PostConstruct
   private void init() {
-    updateHeaderExecutor.execute(this::updateBlockHeader);
-    sendRequestExecutor.execute(this::sendRequest);
-    handleLatestBlockHeaderExecutor.execute(this::handleLatestBlockHeader);
-    sendEpochExecutor.execute(this::sendEpoch);
-    if (Args.getInstance().isInterChainNode()) {
-      triggerNoticeExecutor = Executors.newSingleThreadExecutor(
-          new ThreadFactoryBuilder().setNameFormat("sendNoticeExecutor").build());
-      triggerNoticeExecutor.execute(this::triggerNotice);
-    }
+//    updateHeaderExecutor.execute(this::updateBlockHeader);
+//    sendRequestExecutor.execute(this::sendRequest);
+//    handleLatestBlockHeaderExecutor.execute(this::handleLatestBlockHeader);
+//    sendEpochExecutor.execute(this::sendEpoch);
+//    if (Args.getInstance().isInterChainNode()) {
+//      triggerNoticeExecutor = Executors.newSingleThreadExecutor(
+//          new ThreadFactoryBuilder().setNameFormat("sendNoticeExecutor").build());
+//      triggerNoticeExecutor.execute(this::triggerNotice);
+//    }
   }
 
   public void HandleUpdatedNotice(PeerConnection peer, TronMessage msg)
@@ -170,22 +170,22 @@ public class BlockHeaderSyncHandler {
         blockHeaders.add(blockHeaderCapsule.getInstance());
       }
 
-      BlockHeaderInventoryMesasge inventoryMesasge = new BlockHeaderInventoryMesasge(chainIdString, currentBlockheight, blockHeaders);
+      BlockHeaderInventoryMesasge inventoryMesasge = new BlockHeaderInventoryMesasge(chainIdString, currentBlockheight, null);
       peer.sendMessage(inventoryMesasge);
     }
   }
 
   public void handleInventory(PeerConnection peer, TronMessage msg) throws BadBlockException, ItemNotFoundException {
     BlockHeaderInventoryMesasge blockHeaderInventoryMesasge = (BlockHeaderInventoryMesasge) msg;
-    List<Protocol.BlockHeader> blockHeaders = blockHeaderInventoryMesasge.getBlockHeaders();
-    logger.info("handleInventory, peer:{}, inventory num:{}", peer, blockHeaders.size());
-    for (Protocol.BlockHeader blockHeader : blockHeaders) {
-      blockHeaderMap.put(blockHeader.getRawData().getNumber(), new BlockHeaderCapsule(blockHeader));
-    }
-
-    long currentBlockHeight = blockHeaderInventoryMesasge.getCurrentBlockHeight();
-    thatPeerInfoMap.compute(peer, (k, v) -> new PeerInfo()).setCurrentBlockHeight(currentBlockHeight);
-    updateLatestHeaderOnChain();
+//    List<Protocol.BlockHeader> blockHeaders = blockHeaderInventoryMesasge.getBlockHeaders();
+//    logger.info("handleInventory, peer:{}, inventory num:{}", peer, blockHeaders.size());
+//    for (Protocol.BlockHeader blockHeader : blockHeaders) {
+//      blockHeaderMap.put(blockHeader.getRawData().getNumber(), new BlockHeaderCapsule(blockHeader));
+//    }
+//
+//    long currentBlockHeight = blockHeaderInventoryMesasge.getCurrentBlockHeight();
+//    thatPeerInfoMap.compute(peer, (k, v) -> new PeerInfo()).setCurrentBlockHeight(currentBlockHeight);
+//    updateLatestHeaderOnChain();
   }
 
   public void handleSrList(PeerConnection peer, TronMessage msg) throws Exception {
@@ -205,7 +205,7 @@ public class BlockHeaderSyncHandler {
 
   private boolean verifySrList(Protocol.PBFTCommitResult srl) throws InvalidProtocolBufferException {
     long nextEpoch = calculateNextEpoch();
-    return headerManager.validSrList(srl, nextEpoch, null);
+    return headerManager.validSrList(srl, null);
   }
 
   public void handleEpoch(PeerConnection peer, TronMessage msg) throws InvalidProtocolBufferException {
@@ -263,7 +263,7 @@ public class BlockHeaderSyncHandler {
       waitSRL();
     }
 
-    return headerManager.validBlockPbftSign(blockHeader);
+    return headerManager.validBlockPbftSign(blockHeader,null);
   }
 
   private void waitSRL() {
