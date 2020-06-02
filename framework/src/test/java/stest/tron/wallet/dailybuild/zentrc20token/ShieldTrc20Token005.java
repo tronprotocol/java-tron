@@ -28,13 +28,11 @@ public class ShieldTrc20Token005 extends ZenTrc20Base {
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   Optional<ShieldedAddressInfo> senderShieldAddressInfo;
-  Optional<ShieldedAddressInfo> receiverShieldAddressInfo;
   private BigInteger publicFromAmount;
   List<Note> shieldOutList = new ArrayList<>();
   List<ShieldedAddressInfo> inputShieldAddressList = new ArrayList<>();
   List<GrpcAPI.DecryptNotesTRC20> inputNoteList = new ArrayList<>();
   GrpcAPI.DecryptNotesTRC20 senderNote;
-  GrpcAPI.DecryptNotesTRC20 receiverNote;
   long sender_position;
 
   //get account
@@ -55,9 +53,12 @@ public class ShieldTrc20Token005 extends ZenTrc20Base {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     publicFromAmount = getRandomAmount();
 
+    org.testng.Assert
+        .assertTrue(PublicMethed.sendcoin(receiverAddressbyte, 2048000000, foundationAccountAddress,
+            foundationAccountKey, blockingStubFull));
+
     //Generate new shiled account for sender and receiver
     senderShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
-    receiverShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
     String memo = "Create a note for burn withask test " + System.currentTimeMillis();
     String sendShieldAddress = senderShieldAddressInfo.get().getAddress();
     shieldOutList.clear();
@@ -114,8 +115,8 @@ public class ShieldTrc20Token005 extends ZenTrc20Base {
 
     String data = encodeBurnParamsToHexString(shieldedTrc20Parameters,receiveAmount,receiverAddressString);
     String txid = PublicMethed.triggerContract(shieldAddressByte,
-        gburn, data, true, 0, maxFeeLimit, zenTrc20TokenOwnerAddress,
-        zenTrc20TokenOwnerKey, blockingStubFull);
+        burn, data, true, 0, maxFeeLimit, receiverAddressbyte,
+        receiverKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);

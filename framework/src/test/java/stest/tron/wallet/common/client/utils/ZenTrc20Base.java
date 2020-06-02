@@ -298,8 +298,8 @@ public class ZenTrc20Base {
     }
 
     builder.setShieldedTRC20ContractAddress(ByteString.copyFrom(shieldAddressByte));
-    long valueBalance = 0;
 
+    long valueBalance = 0;
     byte[] ask = new byte[32];
     if (inputNoteList != null) {
       List<String> rootAndPath = new ArrayList<>();
@@ -359,7 +359,7 @@ public class ZenTrc20Base {
         System.out.println("address " + shieldedAddressInfoList.get(i).getAddress());
         System.out.println("value " + inputNoteList.get(i).getNoteTxs(0).getNote().getValue());
         //System.out.println("rcm " + ByteString.copyFrom(inputNoteList.get(i).getNoteTxs(0).getNote().getRcm()));
-        System.out.println("trxId " + inputNoteList.get(i).getNoteTxs(0).getTxid());
+        System.out.println("trxId " + ByteArray.toHexString(inputNoteList.get(i).getNoteTxs(0).getTxid().toByteArray()));
         System.out.println("index " + inputNoteList.get(i).getNoteTxs(0).getIndex());
         System.out.println("position " + inputNoteList.get(i).getNoteTxs(0).getPosition());
         //System.out.println("memo " + ZenUtils.getMemo(inputNoteList.get(i).getNoteTxs(0).getNote().getMemo()));
