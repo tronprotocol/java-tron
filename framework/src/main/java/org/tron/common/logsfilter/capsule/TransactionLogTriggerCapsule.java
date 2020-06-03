@@ -19,9 +19,9 @@ import org.tron.common.logsfilter.trigger.InternalTransactionPojo;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
 import org.tron.protos.Protocol;
@@ -114,10 +114,10 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
             }
           } else if (contract.getType() == CreateSmartContract) {
-             CreateSmartContract contractTransfer = contractParameter
+            CreateSmartContract contractTransfer = contractParameter
                  .unpack(CreateSmartContract.class);
-             transactionLogTrigger.setData(
-                 ByteArray.toHexString(contractTransfer
+            transactionLogTrigger.setData(
+                ByteArray.toHexString(contractTransfer
                      .getNewContract().getBytecode().toByteArray()));
           } else if (contract.getType() == TriggerSmartContract) {
             SmartContractOuterClass.TriggerSmartContract triggerSmart = contractParameter
