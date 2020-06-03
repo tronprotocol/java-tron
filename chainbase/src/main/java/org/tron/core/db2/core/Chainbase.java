@@ -17,6 +17,7 @@ import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.common.Value;
+import org.tron.core.db2.common.Value.Operator;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -155,24 +156,24 @@ public class Chainbase implements IRevokingDB {
 
   /**
    * Notes: For now, this function is just used for Market, because it should use
-   * MarketUtils.comparePriceKey as its comparator.
-   * It need to use MarketUtils.createPairPriceKey to create the key.
-   * */
+   * MarketUtils.comparePriceKey as its comparator. It need to use MarketUtils.createPairPriceKey to
+   * create the key.
+   */
   // for market
   private List<byte[]> getKeysNext(Snapshot head, byte[] key, long limit) {
     if (limit <= 0) {
       return Collections.emptyList();
     }
 
-    List<WrappedByteArray> collectionList = new ArrayList<>();
+    Map<WrappedByteArray, Operator> collectionList = new HashMap<>();
     if (head.getPrevious() != null) {
-      ((SnapshotImpl) head).collect(collectionList);
+      ((SnapshotImpl) head).collectUnique(collectionList);
     }
 
     // just get the same token pair
     List<WrappedByteArray> snapshotList = new ArrayList<>();
     if (!collectionList.isEmpty()) {
-      snapshotList = collectionList.stream()
+      snapshotList = collectionList.keySet().stream()
           .filter(e -> MarketUtils.pairKeyIsEqual(e.getBytes(), key))
           .collect(Collectors.toList());
     }
@@ -187,8 +188,15 @@ public class Chainbase implements IRevokingDB {
     }
 
     List<WrappedByteArray> keyList = new ArrayList<>();
-    keyList.addAll(snapshotList);
     keyList.addAll(levelDBList);
+    snapshotList.forEach(key1 -> {
+      if (!keyList.contains(key1)) {
+        keyList.add(key1);
+      }
+      if (collectionList.get(key1) == Operator.DELETE) {
+        keyList.remove(key1);
+      }
+    });
 
     return keyList.stream()
         .filter(e -> MarketUtils.greaterOrEquals(e.getBytes(), key))

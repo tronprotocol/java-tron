@@ -14,6 +14,7 @@ import lombok.Getter;
 import org.tron.core.db2.common.HashDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
+import org.tron.core.db2.common.Value.Operator;
 import org.tron.core.db2.common.WrappedByteArray;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
@@ -120,19 +121,23 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
    * If we use Map to get all the data, the later will overwrite the previous value.
    * So, if we use list, we need to exclude duplicate keys.
    * */
-  synchronized void collect(List<WrappedByteArray> all) {
+  synchronized void collectUnique(Map<WrappedByteArray, Operator> all) {
     Snapshot next = getRoot().getNext();
     while (next != null) {
       Streams.stream(((SnapshotImpl) next).db)
           .forEach(e -> {
             WrappedByteArray key = WrappedByteArray.of(e.getKey().getBytes());
-            if (!all.contains(key)) {
-              all.add(key);
+            if (!all.containsKey(key)) {
+              all.put(WrappedByteArray.of(e.getKey().getBytes()),
+                   e.getValue().getOperator());
             }
+
           });
       next = next.getNext();
     }
   }
+
+
 
   @Override
   public void close() {
