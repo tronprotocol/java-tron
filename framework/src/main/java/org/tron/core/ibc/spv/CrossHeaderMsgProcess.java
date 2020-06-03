@@ -29,9 +29,9 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.ibc.connect.CrossChainConnectPool;
-import org.tron.core.net.message.BlockHeaderInventoryMesasge;
-import org.tron.core.net.message.BlockHeaderRequestMessage;
-import org.tron.core.net.message.BlockHeaderUpdatedNoticeMessage;
+import org.tron.core.ibc.spv.message.BlockHeaderInventoryMesasge;
+import org.tron.core.ibc.spv.message.BlockHeaderRequestMessage;
+import org.tron.core.ibc.spv.message.BlockHeaderUpdatedNoticeMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.SignedBlockHeader;
@@ -94,6 +94,7 @@ public class CrossHeaderMsgProcess {
     if (noticeMessage.getCurrentBlockHeight() - localLatestHeight <= 1
         && noticeMessage.getCurrentBlockHeight() - localLatestHeight >= 0) {//
       syncDisabledMap.put(chainIdStr, true);
+      sendHeaderNumCache.invalidate(chainIdStr);
       headerManager.pushBlockHeader(noticeMessage.getSignedBlockHeader());
       syncBlockHeaderMap.put(chainIdStr,
           noticeMessage.getSignedBlockHeader().getBlockHeader().getRawData().getNumber());

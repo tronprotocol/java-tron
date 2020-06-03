@@ -1,8 +1,10 @@
-package org.tron.core.net.message;
+package org.tron.core.ibc.spv.message;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import org.tron.core.net.message.MessageTypes;
+import org.tron.core.net.message.TronMessage;
 import org.tron.protos.Protocol;
 
 public class BlockHeaderUpdatedNoticeMessage extends TronMessage {

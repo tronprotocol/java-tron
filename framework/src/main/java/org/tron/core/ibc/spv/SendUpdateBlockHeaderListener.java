@@ -15,7 +15,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.ibc.communicate.CommunicateService;
 import org.tron.core.ibc.connect.CrossChainConnectPool;
-import org.tron.core.net.message.BlockHeaderUpdatedNoticeMessage;
+import org.tron.core.ibc.spv.message.BlockHeaderUpdatedNoticeMessage;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.SignedBlockHeader.Builder;
