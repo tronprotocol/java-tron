@@ -1,5 +1,9 @@
 package stest.tron.wallet.common.client.utils;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import io.grpc.Grpc;
 import io.grpc.ManagedChannel;
@@ -23,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import javax.xml.ws.Response;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.spongycastle.util.encoders.Hex;
@@ -61,11 +66,11 @@ public class ZenTrc20Base {
   public final String foundationAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   public final byte[] foundationAccountAddress = PublicMethed.getFinalAddress(foundationAccountKey);
-  public final String zenTrc20TokenOwnerKey = Configuration.getByPath("testng.conf")
+  public static final String zenTrc20TokenOwnerKey = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.zenTrc20TokenOwnerKey");
-  public final byte[] zenTrc20TokenOwnerAddress = PublicMethed
+  public static final byte[] zenTrc20TokenOwnerAddress = PublicMethed
       .getFinalAddress(zenTrc20TokenOwnerKey);
-  public final String zenTrc20TokenOwnerAddressString = PublicMethed
+  public static final String zenTrc20TokenOwnerAddressString = PublicMethed
       .getAddressString(zenTrc20TokenOwnerKey);
   public ManagedChannel channelFull = null;
   public WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -87,6 +92,8 @@ public class ZenTrc20Base {
   public Wallet wallet = new Wallet();
   static HttpResponse response;
   static HttpPost httppost;
+  static JSONObject responseContent;
+
 
   /**
    * constructor.
@@ -717,6 +724,15 @@ public class ZenTrc20Base {
     return BigInteger.valueOf(x);
   }
 
+  /**
+   * constructor.
+   */
+  public Long getRandomLongAmount() {
+    Random random = new Random();
+    int x = random.nextInt(100000) + 100;
+    return Long.valueOf(x);
+  }
+
 
   public String encodeTransferParamsToHexString(GrpcAPI.ShieldedTRC20Parameters parameters) {
     byte[] input = new byte[0];
@@ -807,6 +823,18 @@ public class ZenTrc20Base {
     return ByteUtil.merge(zeroBytes, longBytes);
   }
 
+  public JSONArray getHttpShieldedReceivesJsonArray(JSONArray shieldReceives,Long value,String paymentAddress,String rcm) {
+    JSONObject note = new JSONObject();
+    note.put("value",value);
+    note.put("payment_address",paymentAddress);
+    note.put("rcm",rcm);
+    JSONObject noteIndex = new JSONObject();
+    noteIndex.put("note",note);
+    shieldReceives.add(noteIndex);
+    return shieldReceives;
+
+  }
+
 
   /**
    * constructor.
@@ -822,6 +850,328 @@ public class ZenTrc20Base {
     }
     return response;
   }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse createShieldContractParameters(String httpNode,Long fromAmount,
+      JSONObject shieldAccountInfo, JSONArray shiledReceives) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/createshieldedcontractparameters";
+
+
+      JSONObject rawBody = new JSONObject();
+      rawBody.put("ovk","4364c875deeb663781a2f1530f9e4f87ea81cc3c757ca2a30fa4768940de2f98");
+      rawBody.put("from_amount",fromAmount.toString());
+      rawBody.put("shielded_receives",shiledReceives);
+      rawBody.put("shielded_TRC20_contract_address",shieldAddress);
+      rawBody.put("visible",true);
+
+
+      response = HttpMethed.createConnectForShieldTrc20(requestUrl, rawBody);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse createShieldContractParametersForBurn(String httpNode,
+      JSONObject shieldAccountInfo, JSONArray shieldedSpends,String toAddress,Long toAmount) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/createshieldedcontractparameters";
+
+
+      JSONObject rawBody = new JSONObject();
+      rawBody.put("ovk",shieldAccountInfo.getString("ovk"));
+      rawBody.put("ask",shieldAccountInfo.getString("ask"));
+      rawBody.put("nsk",shieldAccountInfo.getString("nsk"));
+      rawBody.put("shielded_spends",shieldedSpends);
+      rawBody.put("shielded_TRC20_contract_address",shieldAddress);
+      rawBody.put("transparent_to_address",toAddress);
+      rawBody.put("to_amount",toAmount.toString());
+      rawBody.put("visible",true);
+
+      response = HttpMethed.createConnectForShieldTrc20(requestUrl, rawBody);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse createShieldContractParametersForTransfer(String httpNode,
+      JSONObject shieldAccountInfo, JSONArray shieldedSpends,JSONArray shieldedReceives) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/createshieldedcontractparameters";
+      JSONObject rawBody = new JSONObject();
+      rawBody.put("ovk",shieldAccountInfo.getString("ovk"));
+      rawBody.put("ask",shieldAccountInfo.getString("ask"));
+      rawBody.put("nsk",shieldAccountInfo.getString("nsk"));
+      rawBody.put("shielded_spends",shieldedSpends);
+      rawBody.put("shielded_TRC20_contract_address",shieldAddress);
+      rawBody.put("shielded_receives",shieldedReceives);
+      rawBody.put("visible",true);
+      logger.info(rawBody.toString());
+      response = HttpMethed.createConnectForShieldTrc20(requestUrl, rawBody);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse createShieldContractParametersWithAskForTransfer(String httpNode,
+      JSONObject shieldAccountInfo, JSONArray shieldedSpends,JSONArray shieldedReceives) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/createshieldedcontractparameterswithoutask";
+      JSONObject rawBody = new JSONObject();
+      rawBody.put("ovk",shieldAccountInfo.getString("ovk"));
+      rawBody.put("ak",shieldAccountInfo.getString("ak"));
+      rawBody.put("nsk",shieldAccountInfo.getString("nsk"));
+      rawBody.put("shielded_spends",shieldedSpends);
+      rawBody.put("shielded_TRC20_contract_address",shieldAddress);
+      rawBody.put("shielded_receives",shieldedReceives);
+      rawBody.put("visible",true);
+      logger.info(rawBody.toString());
+      response = HttpMethed.createConnectForShieldTrc20(requestUrl, rawBody);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static JSONObject createSpendAuthSig(String httpNode,
+      JSONObject shieldAccountInfo, JSONObject noteTxs) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/createspendauthsig";
+      JSONObject rawBody = new JSONObject();
+      rawBody.put("ask",shieldAccountInfo.getString("ask"));
+      rawBody.put("tx_hash",noteTxs.getString("txid"));
+      rawBody.put("alpha",noteTxs.getJSONObject("note").getString("rcm"));
+
+      //rawBody.put("visible",true);
+      logger.info("createSpendAuthSig:" + rawBody.toString());
+      response = HttpMethed.createConnectForShieldTrc20(requestUrl, rawBody);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return HttpMethed.parseResponseContent(response);
+  }
+
+
+
+
+
+
+
+
+
+  /**
+   * constructor.
+   */
+  public static JSONArray scanShieldTrc20NoteByIvk(String httpNode,
+      JSONObject shieldAddressInfo) {
+    try {
+      Long endScanNumber = HttpMethed.getNowBlockNum(httpNode);
+      Long startScanNumer = endScanNumber > 99 ? endScanNumber - 90 : 1;
+
+      final String requestUrl = "http://" + httpNode + "/wallet/scanshieldedtrc20notesbyivk";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("start_block_index", startScanNumer);
+      userBaseObj2.addProperty("end_block_index", endScanNumber);
+      userBaseObj2.addProperty("shielded_TRC20_contract_address", shieldAddress);
+      userBaseObj2.addProperty("ivk", shieldAddressInfo.getString("ivk"));
+      userBaseObj2.addProperty("ak", shieldAddressInfo.getString("ak"));
+      userBaseObj2.addProperty("nk", shieldAddressInfo.getString("nk"));
+      userBaseObj2.addProperty("visible", true);
+      logger.info("scanShieldTrc20NoteByIvk:" + userBaseObj2.toString());
+      response = HttpMethed.createConnect(requestUrl, userBaseObj2);
+
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      JSONArray jsonArray = responseContent.getJSONArray("noteTxs");
+
+      return jsonArray;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static JSONArray scanShieldTrc20NoteByOvk(String httpNode,
+      JSONObject shieldAddressInfo) {
+    try {
+      Long endScanNumber = HttpMethed.getNowBlockNum(httpNode);
+      Long startScanNumer = endScanNumber > 99 ? endScanNumber - 90 : 1;
+
+      final String requestUrl = "http://" + httpNode + "/wallet/scanshieldedtrc20notesbyovk";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("start_block_index", startScanNumer);
+      userBaseObj2.addProperty("end_block_index", endScanNumber);
+      userBaseObj2.addProperty("shielded_TRC20_contract_address", shieldAddress);
+      userBaseObj2.addProperty("ovk", shieldAddressInfo.getString("ovk"));
+      userBaseObj2.addProperty("visible", true);
+      logger.info("userBaseObj2:" + userBaseObj2.toString());
+      response = HttpMethed.createConnect(requestUrl, userBaseObj2);
+
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      JSONArray jsonArray = responseContent.getJSONArray("noteTxs");
+
+      return jsonArray;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static String getRootAndPathByHttp(String httpNode,Integer position) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/triggerconstantcontract";
+      JsonObject userBaseObj2 = new JsonObject();
+
+      userBaseObj2.addProperty("owner_address", zenTrc20TokenOwnerAddressString);
+      userBaseObj2.addProperty("contract_address", shieldAddress);
+      userBaseObj2.addProperty("function_selector", "getPath(uint256)");
+      byte[] indexBytes = ByteArray.fromLong(position);
+      String argsStr = ByteArray.toHexString(indexBytes);
+      String parameter = "000000000000000000000000000000000000000000000000" + argsStr;
+      userBaseObj2.addProperty("parameter", parameter);
+      userBaseObj2.addProperty("fee_limit", maxFeeLimit);
+      userBaseObj2.addProperty("visible",true);
+
+      response = HttpMethed.createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return HttpMethed.parseResponseContent(response).getJSONArray("constant_result").getString(0);
+  }
+
+  /**
+   * constructor.
+   */
+  public static JSONArray createAndSetShieldedSpends(String httpNode,JSONArray shieldedSpends,JSONObject noteTxs) {
+    JSONObject shieldedSpend = new JSONObject();
+    shieldedSpend.put("note",noteTxs.getJSONObject("note"));
+    shieldedSpend.put("alpha",noteTxs.getJSONObject("note").getString("rcm"));
+    Integer position = noteTxs.containsKey("position") ? noteTxs.getInteger("position") : 0;
+    String rootAndPath = getRootAndPathByHttp(httpNode,position);
+    String root = rootAndPath.substring(0,64);
+    String path = rootAndPath.substring(64);
+    shieldedSpend.put("root",root);
+    shieldedSpend.put("path",path);
+    shieldedSpend.put("pos",position);
+    shieldedSpends.add(shieldedSpend);
+    return shieldedSpends;
+  }
+
+
+
+
+  /**
+   * constructor.
+   */
+  public static String getRcm(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getrcm";
+      response = HttpMethed.createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return HttpMethed.parseResponseContent(response).getString("value");
+  }
+
+
+
+
+  /**
+   * constructor.
+   */
+  public static Boolean isShieldedTrc20ContractNoteSpent(String httpNode,JSONObject accountInfo,JSONObject noteTxs) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/isshieldedtrc20contractnotespent";
+      JSONObject userBaseObj2 = new JSONObject();
+      userBaseObj2.put("note",noteTxs.getJSONObject("note"));
+      userBaseObj2.put("ak",accountInfo.getString("ak"));
+      userBaseObj2.put("nk",accountInfo.getString("nk"));
+      userBaseObj2.put("position",noteTxs.containsKey("position") ? noteTxs.getInteger("position") : 0);
+      userBaseObj2.put("visible", true);
+      userBaseObj2.put("shielded_TRC20_contract_address", shieldAddress);
+      logger.info(userBaseObj2.toString());
+      response = HttpMethed.createConnectForShieldTrc20(requestUrl,userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    return responseContent.containsKey("is_spent") ? responseContent.getBoolean("is_spent") : false;
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getTriggerInputForShieldedTrc20Contract(String httpNode,JSONObject shieldedTrc20Parameters,JSONArray spendAuthoritySignature) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/gettriggerinputforshieldedtrc20contract";
+      JSONObject userBaseObj2 = new JSONObject();
+      userBaseObj2.put("shielded_TRC20_Parameters",shieldedTrc20Parameters);
+      userBaseObj2.put("spend_authority_signature",spendAuthoritySignature);
+
+      logger.info("gettriggerinputforshieldedtrc20contract:" + userBaseObj2.toString());
+      response = HttpMethed.createConnectForShieldTrc20(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+
+
+
+
 
 
 
