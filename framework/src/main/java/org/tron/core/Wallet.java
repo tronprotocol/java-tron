@@ -22,6 +22,8 @@ import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ChainConstant.WITNESS_STANDBY_LENGTH;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
@@ -34,11 +36,13 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -91,6 +95,7 @@ import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -100,6 +105,7 @@ import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.consensus.ConsensusDelegate;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
@@ -149,6 +155,7 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.store.DelegationStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -172,6 +179,7 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.Vote;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
@@ -200,6 +208,8 @@ public class Wallet {
   private TronNetDelegate tronNetDelegate;
   @Autowired
   private Manager dbManager;
+  @Autowired
+  private ConsensusDelegate consensusDelegate;
 
   @Autowired
   private ChainBaseManager chainBaseManager;
@@ -631,43 +641,43 @@ public class Wallet {
             .setKey("getMaintenanceTimeInterval")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getMaintenanceTimeInterval())
             .build());
-    //    ACCOUNT_UPGRADE_COST, //drop ,1
+    //    ACCOUNT_UPGRADE_COST, //SUN ,1
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAccountUpgradeCost")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getAccountUpgradeCost())
             .build());
-    //    CREATE_ACCOUNT_FEE, //drop ,2
+    //    CREATE_ACCOUNT_FEE, //SUN ,2
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getCreateAccountFee")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getCreateAccountFee())
             .build());
-    //    TRANSACTION_FEE, //drop ,3
+    //    TRANSACTION_FEE, //SUN ,3
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getTransactionFee")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getTransactionFee())
             .build());
-    //    ASSET_ISSUE_FEE, //drop ,4
+    //    ASSET_ISSUE_FEE, //SUN ,4
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAssetIssueFee")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee())
             .build());
-    //    WITNESS_PAY_PER_BLOCK, //drop ,5
+    //    WITNESS_PAY_PER_BLOCK, //SUN ,5
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getWitnessPayPerBlock")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getWitnessPayPerBlock())
             .build());
-    //    WITNESS_STANDBY_ALLOWANCE, //drop ,6
+    //    WITNESS_STANDBY_ALLOWANCE, //SUN ,6
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getWitnessStandbyAllowance")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getWitnessStandbyAllowance())
             .build());
-    //    CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT, //drop ,7
+    //    CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT, //SUN ,7
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getCreateNewAccountFeeInSystemContract")
@@ -692,13 +702,13 @@ public class Wallet {
             .setKey("getRemoveThePowerOfTheGr")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr())
             .build());
-    //    ENERGY_FEE, // drop, 11
+    //    ENERGY_FEE, // SUN, 11
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getEnergyFee")
             .setValue(chainBaseManager.getDynamicPropertiesStore().getEnergyFee())
             .build());
-    //    EXCHANGE_CREATE_FEE, // drop, 12
+    //    EXCHANGE_CREATE_FEE, // SUN, 12
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getExchangeCreateFee")
@@ -2286,6 +2296,187 @@ public class Wallet {
     return builder.build();
   }
 
+  public List<Vote> getVoteList(byte[] address, long cycle) {
+    long current = dbManager.getDynamicPropertiesStore()
+        .getCurrentCycleNumber();
+    for (long i = cycle; i <= current; i++) {
+      AccountCapsule accountCapsule = dbManager.getDelegationStore()
+          .getAccountVote(i, address);
+      if (accountCapsule != null) {
+        return accountCapsule.getVotesList();
+      }
+      BytesCapsule remark = dbManager.getDelegationStore()
+          .getRemark(i, address);
+
+      if (remark != null) {
+        return null;
+      }
+    }
+
+    return dbManager.getAccountStore()
+        .get(address) == null ? null : dbManager.getAccountStore()
+        .get(address).getVotesList();
+  }
+
+  public HashMap<String, Long> computeUnwithdrawReward(byte[] address) {
+    HashMap<String, Long> rewardMap = new HashMap<>();
+    long beginCycle =  dbManager.getDelegationStore()
+        .getLastWithdrawCycle(address);
+    long endCycle =    dbManager.getDynamicPropertiesStore()
+        .getCurrentCycleNumber();
+    if (address.length == 0) {
+      return rewardMap;
+    }
+
+    for (long cycle = beginCycle + 1; cycle <= endCycle; cycle++) {
+      List<Vote> voteList = getVoteList(address, cycle);
+      if (voteList != null) {
+        for (Vote vote : voteList) {
+          byte[] srAddress = vote.getVoteAddress().toByteArray();
+          long totalReward = dbManager.getDelegationStore().getReward(cycle, srAddress);
+          long totalVote = dbManager.getDelegationStore()
+              .getWitnessVote(cycle, srAddress);
+          if (totalVote == DelegationStore.REMARK || totalVote == 0) {
+            continue;
+          }
+          long userVote = vote.getVoteCount();
+          double voteRate = (double) userVote / totalVote;
+          String SR = StringUtil
+              .encode58Check(srAddress);
+          if (!rewardMap.containsKey(SR)) {
+            rewardMap.put(SR, (long)(voteRate * totalReward));
+          } else {
+            long reward = rewardMap.get(SR) + (long)(voteRate * totalReward);
+            rewardMap.put(SR, reward);
+          }
+        }
+      }
+    }
+    return rewardMap;
+  }
+
+  public HashMap<String, Long> computeRewardByCycle(byte[] address,
+      long beginCycle, long endCycle) {
+    HashMap<String, Long> rewardMap = new HashMap<>();
+    if (address.length == 0) {
+      return rewardMap;
+    }
+
+    for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
+      List<Vote> voteList = getVoteList(address, cycle);
+      if (voteList != null) {
+        for (Vote vote : voteList) {
+          byte[] srAddress = vote.getVoteAddress().toByteArray();
+          long totalReward = dbManager.getDelegationStore().getReward(cycle, srAddress);
+          long totalVote = dbManager.getDelegationStore()
+              .getWitnessVote(cycle, srAddress);
+          if (totalVote == DelegationStore.REMARK || totalVote == 0) {
+            continue;
+          }
+          long userVote = vote.getVoteCount();
+          double voteRate = (double) userVote / totalVote;
+          String SR = StringUtil
+              .encode58Check(srAddress);
+
+          logger.debug("Account-userVote: {}, Account-totalVote: {},Account-SR: {},",
+              userVote,totalVote,SR);
+
+          if (!rewardMap.containsKey(SR)) {
+            rewardMap.put(SR, (long)(voteRate * totalReward));
+          } else {
+            long reward = rewardMap.get(SR) + (long)(voteRate * totalReward);
+            rewardMap.put(SR, reward);
+          }
+        }
+      }
+    }
+    logger.debug("Account-rewardMap: {}",
+        rewardMap);
+    return rewardMap;
+  }
+
+  public HashMap<String, Long> queryPayByCycle(byte[] address,
+      long beginCycle, long endCycle) {
+    HashMap<String, Long> rewardMap = new HashMap<>();
+    if (!dbManager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      return rewardMap;
+    }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long reward = 0;
+    if (accountCapsule == null) {
+      return rewardMap;
+    }
+
+    long blockPayReward = 0;
+    if (beginCycle <= endCycle) {
+      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
+        int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
+        blockPayReward += dbManager.getDelegationStore().getBlockReward(cycle, address);
+        if (brokerage == 100) {
+          reward += dbManager.getDelegationStore().getBlockReward(cycle, address) + dbManager
+              .getDelegationStore().getVoteReward(cycle, address);
+        } else {
+          double brokerageRate = (double) brokerage / 100;
+          reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
+        }
+      }
+    }
+    rewardMap.put("total", reward);
+    rewardMap.put("produceBlock", blockPayReward);
+    rewardMap.put("vote", reward - blockPayReward);
+
+    return rewardMap;
+  }
+
+  public double percentageOfBlockReward(long beginCycle, long endCycle, byte[] address) {
+    long reward = 0;
+    long blockPayReward = 0;
+    if (beginCycle <= endCycle) {
+      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
+        int brokerage = dbManager.getDelegationStore().getBrokerage(cycle, address);
+        if (brokerage == 100) {
+          continue;
+        }
+
+        double brokerageRate = (double) brokerage / 100;
+        reward += dbManager.getDelegationStore().getReward(cycle, address) / (1 - brokerageRate);
+        blockPayReward += dbManager.getDelegationStore().getBlockReward(cycle, address);
+      }
+    }
+
+    if (reward == 0 || blockPayReward == 0) {
+      return 0;
+    }
+    return (double) blockPayReward / (double)reward;
+  }
+
+  public HashMap<String, Long> queryRewardByCycle(byte[] address,
+      long beginCycle, long endCycle) {
+    HashMap<String, Long> rewardMap = new HashMap<>();
+    if (!dbManager.getDynamicPropertiesStore().allowChangeDelegation()) {
+      return rewardMap;
+    }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long bonus = 0;
+    if (accountCapsule == null) {
+      return rewardMap;
+    }
+    if (beginCycle <= endCycle) {
+      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
+        bonus += dbManager.getDelegationStore().getReward(cycle, address);
+      }
+    }
+    double percentage = percentageOfBlockReward(beginCycle, endCycle, address);
+    Double blockBonus = new Double(bonus * percentage);
+
+    rewardMap.put("total", bonus);
+    rewardMap.put("produceBlock", blockBonus.longValue());
+    rewardMap.put("vote", bonus - blockBonus.longValue());
+    return rewardMap;
+  }
+
   public ExchangeList getPaginatedExchangeList(long offset, long limit) {
     if (limit < 0 || offset < 0) {
       return null;
@@ -2318,6 +2509,85 @@ public class Wallet {
             .addExchanges(exchangeCapsule.getInstance()));
     return builder.build();
 
+  }
+
+  public double queryVoteNumber(byte[] address, long beginCycle, long endCycle) {
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    long voteNumber = 0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle <= endCycle) {
+      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
+        voteNumber += dbManager.getDelegationStore().getWitnessVote(cycle,address);
+      }
+      voteNumber = voteNumber / (endCycle - beginCycle + 1);
+    }
+    return voteNumber;
+  }
+
+  public double queryTotalVoteNumber(long beginCycle, long endCycle) {
+    AtomicLong voteNumber = new AtomicLong();
+    double voteNumberTotal = 0;
+
+    if (beginCycle <= endCycle) {
+      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
+        List<WitnessCapsule> allWitnesses = dbManager.getWitnessStore().getAllWitnesses();
+        long finalCycle = cycle;
+        allWitnesses.forEach(witness -> {
+          voteNumber.addAndGet(dbManager.getDelegationStore()
+              .getWitnessVote(finalCycle, witness.getAddress().toByteArray()));
+        });
+      }
+      voteNumberTotal = voteNumber.doubleValue() / (double)(endCycle - beginCycle + 1);
+    }
+    return voteNumberTotal;
+  }
+
+  public double querySrRatio(byte[] address, long beginCycle, long endCycle) {
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    double borkerage = 0;
+    if (accountCapsule == null) {
+      return 0;
+    }
+    if (beginCycle <= endCycle) {
+      for (long cycle = beginCycle; cycle <= endCycle; cycle++) {
+        borkerage += dbManager.getDelegationStore().getBrokerage(cycle, address);
+      }
+    }
+    borkerage = borkerage / (endCycle - beginCycle + 1);
+    return 100 - borkerage;
+  }
+
+  public long getRewardOfVoteEachBlock() {
+    return dbManager.getDynamicPropertiesStore().getWitness127PayPerBlock();
+  }
+
+  public long getRewardOfBlockEachBlock() {
+    return dbManager.getDynamicPropertiesStore().getWitnessPayPerBlock();
+  }
+
+  public int getSrNumber() {
+    return dbManager.getWitnessStore().getAllWitnesses().size();
+  }
+
+  public double queryNowVoteNumber(byte[] address) {
+    return dbManager.getWitnessStore().get(address).getVoteCount();
+  }
+
+  public double queryNowTotalVoteNumber() {
+    AtomicLong voteNumber = new AtomicLong();
+    List<ByteString> allWitnesses = getStandbyWitness();
+    allWitnesses.forEach(witness -> {
+      voteNumber.addAndGet(dbManager.getWitnessStore()
+          .get(witness.toByteArray()).getVoteCount());
+    });
+    return voteNumber.doubleValue();
+  }
+
+  public double queryNowSrRatio(byte[] address) {
+    return 100 - dbManager.getDelegationStore().getBrokerage(address);
   }
 
   /*
@@ -2534,6 +2804,65 @@ public class Wallet {
       } // end of transaction
     } //end of block list
     return builder.build();
+  }
+
+  public double getBlockNumberEachDay() {
+    long maintenanceTimeInterval = CommonParameter.getInstance().getMaintenanceTimeInterval();
+    if (maintenanceTimeInterval == 0) {
+      maintenanceTimeInterval = 21600000L;
+    }
+    double blockNumberEachDay = FROZEN_PERIOD / BLOCK_PRODUCED_INTERVAL
+        - 2 * (FROZEN_PERIOD / maintenanceTimeInterval);
+    return blockNumberEachDay;
+  }
+
+  public double getAnnualizedRateOfReturn(long rewardOfBlockEachBlock, double blockNumberEachDay,
+                                          double srNumber, double srVote, double totalVote,
+                                          long rewardOfVoteEachBlock,double ratio)
+      throws Exception {
+    if ((int)srVote == 0) {
+      return 0;
+    }
+    if (totalVote < srVote || totalVote <= 0 || srVote <= 0 || ratio > 100 || ratio < 0) {
+      throw new Exception("bad parameters");
+    }
+    double annualizedRateOfReturn = (rewardOfBlockEachBlock / srNumber / srVote
+        + rewardOfVoteEachBlock / totalVote) * blockNumberEachDay * ratio * 365;
+    return annualizedRateOfReturn;
+  }
+
+  public boolean checkAddress(byte[] address) {
+    return consensusDelegate.getActiveWitnesses().contains(ByteString.copyFrom(address));
+  }
+
+  public boolean existAddress(byte[] address) {
+    WitnessCapsule witnessCapsule = dbManager.getWitnessStore().get(address);
+    if (witnessCapsule != null) {
+      return true;
+    }
+    return false;
+  }
+
+  public List<ByteString> getStandbyWitness() {
+    List<ByteString> witnessAddressList = new ArrayList<>();
+    for (WitnessCapsule witnessCapsule : consensusDelegate.getAllWitnesses()) {
+      witnessAddressList.add(witnessCapsule.getAddress());
+    }
+    witnessAddressList.sort(Comparator.comparingLong((ByteString b) ->
+        consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
+        .reversed()
+        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+
+    if (witnessAddressList.size() > WITNESS_STANDBY_LENGTH) {
+      witnessAddressList = witnessAddressList.subList(0, WITNESS_STANDBY_LENGTH);
+    }
+    return witnessAddressList;
+
+  }
+
+  public boolean checkStandbyWitness(byte[] address) {
+    boolean contains = getStandbyWitness().contains(ByteString.copyFrom(address));
+    return contains;
   }
 }
 

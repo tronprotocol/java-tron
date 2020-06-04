@@ -15,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -81,6 +82,25 @@ public class Util {
 
   public static String printBlock(Block block, boolean selfType) {
     return printBlockToJSON(block, selfType).toJSONString();
+  }
+
+  public static JSONObject printMapToJSON(HashMap<String, Long> map) {
+    JSONObject jsonObject = new JSONObject();
+    for (HashMap.Entry<String, Long> entry : map.entrySet()) {
+      jsonObject.put(entry.getKey(), entry.getValue());
+    }
+    return jsonObject;
+  }
+
+  public static JSONObject printRewardMapToJSON(HashMap<String, Long> rewardMap) {
+    JSONObject jsonObject = new JSONObject();
+    long totalReward = 0;
+    for (HashMap.Entry<String, Long> entry : rewardMap.entrySet()) {
+      jsonObject.put(entry.getKey(), entry.getValue());
+      totalReward += entry.getValue();
+    }
+    jsonObject.put("totalReward", totalReward);
+    return jsonObject;
   }
 
   public static JSONObject printBlockToJSON(Block block, boolean selfType) {

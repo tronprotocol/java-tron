@@ -1,6 +1,5 @@
 package stest.tron.wallet.dailybuild.manual;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Random;
@@ -17,7 +16,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -25,15 +23,15 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class WalletTestAccount015 {
 
+  private static final long now = System.currentTimeMillis();
+  private static long amount = 100000000L;
+  private static String accountId = "accountid_" + Long.toString(now);
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] account015Address = ecKey1.getAddress();
   String account015Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  private static final long now = System.currentTimeMillis();
-  private static long amount = 100000000L;
-  private static String accountId = "accountid_" + Long.toString(now);
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
   private ManagedChannel channelSoliInFull = null;
@@ -102,7 +100,7 @@ public class WalletTestAccount015 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethed.setAccountId(accountId.getBytes(),
-        account015Address,account015Key,blockingStubFull));
+        account015Address, account015Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
@@ -110,27 +108,27 @@ public class WalletTestAccount015 {
   @Test(enabled = true, description = "Get account by id")
   public void test02GetAccountById() {
     Assert.assertEquals(amount, PublicMethed.getAccountById(
-        accountId,blockingStubFull).getBalance());
+        accountId, blockingStubFull).getBalance());
   }
 
 
   @Test(enabled = true, description = "Get account by id from solidity")
   public void test03GetAccountByIdFromSolidity() {
-    Assert.assertEquals(amount,PublicMethed.getAccountByIdFromSolidity(
-        accountId,blockingStubSoliInFull).getBalance());
+    Assert.assertEquals(amount, PublicMethed.getAccountByIdFromSolidity(
+        accountId, blockingStubSoliInFull).getBalance());
   }
 
   @Test(enabled = true, description = "Get account by id from PBFT")
   public void test04GetAccountByIdFromPbft() {
-    Assert.assertEquals(amount,PublicMethed.getAccountByIdFromSolidity(
-        accountId,blockingStubPbft).getBalance());
+    Assert.assertEquals(amount, PublicMethed.getAccountByIdFromSolidity(
+        accountId, blockingStubPbft).getBalance());
   }
 
 
   @Test(enabled = true, description = "Get account from PBFT")
   public void test05GetAccountFromPbft() {
-    Assert.assertEquals(amount,PublicMethed.queryAccount(
-        account015Address,blockingStubPbft).getBalance());
+    Assert.assertEquals(amount, PublicMethed.queryAccount(
+        account015Address, blockingStubPbft).getBalance());
   }
 
 
@@ -153,11 +151,6 @@ public class WalletTestAccount015 {
     Assert.assertTrue(PublicMethed.listWitnessesFromSolidity(blockingStubPbft)
         .get().getWitnessesCount() >= 2);
   }
-
-
-
-
-
 
 
   /**

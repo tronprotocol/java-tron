@@ -88,6 +88,7 @@ public class Constant {
   public static final String NODE_HTTP_SOLIDITY_PORT = "node.http.solidityPort";
   public static final String NODE_HTTP_FULLNODE_ENABLE = "node.http.fullNodeEnable";
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
+  public static final String NODE_HTTP_STATISTICS_SR_REWARD_SWITCH = "node.http.statisticsSRRewardSwitch";
   public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
 
   public static final String NODE_RPC_THREAD = "node.rpc.thread";

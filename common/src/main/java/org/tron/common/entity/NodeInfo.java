@@ -205,7 +205,7 @@ public class NodeInfo {
       machineBuilder.setCpuRate(machineInfo.getCpuRate());
       machineBuilder.setJavaVersion(machineInfo.getJavaVersion());
       machineBuilder.setOsName(machineInfo.getOsName());
-      machineBuilder.setJvmTotalMemoery(machineInfo.getJvmTotalMemoery());
+      machineBuilder.setJvmTotalMemory(machineInfo.getJvmTotalMemory());
       machineBuilder.setJvmFreeMemory(machineInfo.getJvmFreeMemory());
       machineBuilder.setProcessCpuRate(machineInfo.getProcessCpuRate());
       for (MemoryDescInfo memoryDescInfo : machineInfo.getMemoryDescInfoList()) {
@@ -247,7 +247,7 @@ public class NodeInfo {
     private double cpuRate;
     private String javaVersion;
     private String osName;
-    private long jvmTotalMemoery;
+    private long jvmTotalMemory;
     private long jvmFreeMemory;
     private double processCpuRate;
     private List<MemoryDescInfo> memoryDescInfoList = new ArrayList<>();
@@ -316,12 +316,12 @@ public class NodeInfo {
       return this;
     }
 
-    public long getJvmTotalMemoery() {
-      return jvmTotalMemoery;
+    public long getJvmTotalMemory() {
+      return jvmTotalMemory;
     }
 
-    public MachineInfo setJvmTotalMemoery(long jvmTotalMemoery) {
-      this.jvmTotalMemoery = jvmTotalMemoery;
+    public MachineInfo setJvmTotalMemory(long jvmTotalMemory) {
+      this.jvmTotalMemory = jvmTotalMemory;
       return this;
     }
 

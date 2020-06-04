@@ -2,8 +2,8 @@ package org.tron.core.trie;
 
 import static org.apache.commons.lang3.concurrent.ConcurrentUtils.constantFuture;
 import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
+import static org.tron.common.utils.ByteArray.toHexString;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.common.utils.ByteUtil.toHexString;
 import static org.tron.core.capsule.utils.RLP.EMPTY_ELEMENT_RLP;
 import static org.tron.core.capsule.utils.RLP.encodeList;
 

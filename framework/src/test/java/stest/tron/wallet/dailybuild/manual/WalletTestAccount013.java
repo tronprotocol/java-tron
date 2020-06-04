@@ -107,7 +107,7 @@ public class WalletTestAccount013 {
     blockingStubPbft = WalletSolidityGrpc.newBlockingStub(channelPbft);
   }
 
-  @Test(enabled = true,description = "Delegate resource for bandwidth and energy")
+  @Test(enabled = true, description = "Delegate resource for bandwidth and energy")
   public void test1DelegateResourceForBandwidthAndEnergy() {
     //Create account013
     ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -225,7 +225,7 @@ public class WalletTestAccount013 {
     logger.info("After receiver net limit is " + receiverResource.getNetLimit());
   }
 
-  @Test(enabled = true,description = "Get delegate resource  index")
+  @Test(enabled = true, description = "Get delegate resource  index")
   public void test2getDelegatedResourceAndDelegateResourceAccountIndex() {
     //Create Account4
     ECKey ecKey4 = new ECKey(Utils.getRandom());
@@ -333,7 +333,7 @@ public class WalletTestAccount013 {
             account5DelegatedResourceAddress, blockingStubFull));
   }
 
-  @Test(enabled = true,description = "Prepare delegate resource token")
+  @Test(enabled = true, description = "Prepare delegate resource token")
   public void test3PrepareToken() {
     //Create Account7
     ECKey ecKey7 = new ECKey(Utils.getRandom());
@@ -362,7 +362,7 @@ public class WalletTestAccount013 {
 
   }
 
-  @Test(enabled = true,description = "Delegate resource about transfer asset")
+  @Test(enabled = true, description = "Delegate resource about transfer asset")
   public void test4DelegateResourceAboutTransferAsset() {
     //Wait for 3s
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -421,7 +421,7 @@ public class WalletTestAccount013 {
     Assert.assertTrue(account5CurrentBandwidth == account5CurrentBandwidthAfterTrans);
   }
 
-  @Test(enabled = true,description = "Can't delegate resource for contract")
+  @Test(enabled = true, description = "Can't delegate resource for contract")
   public void test5CanNotDelegateResourceToContract() {
     //Create Account6
     ECKey ecKey6 = new ECKey(Utils.getRandom());
@@ -456,7 +456,7 @@ public class WalletTestAccount013 {
   }
 
 
-  @Test(enabled = true,description = "Get delegate resource from solidity")
+  @Test(enabled = true, description = "Get delegate resource from solidity")
   public void test6GetDelegateResourceFromSolidity() {
     Optional<GrpcAPI.DelegatedResourceList> delegateResource = PublicMethed
         .getDelegatedResourceFromSolidity(account013Address, receiverDelegateAddress,
@@ -467,7 +467,7 @@ public class WalletTestAccount013 {
         .getFrozenBalanceForBandwidth() == 10000000);
   }
 
-  @Test(enabled = true,description = "Get delegate resource from PBFT")
+  @Test(enabled = true, description = "Get delegate resource from PBFT")
   public void test7GetDelegateResourceFromPbft() {
     Optional<GrpcAPI.DelegatedResourceList> delegateResource = PublicMethed
         .getDelegatedResourceFromSolidity(account013Address, receiverDelegateAddress,
@@ -478,23 +478,21 @@ public class WalletTestAccount013 {
         .getFrozenBalanceForBandwidth() == 10000000);
   }
 
-  @Test(enabled = true,description = "Get delegate resource index from solidity")
+  @Test(enabled = true, description = "Get delegate resource index from solidity")
   public void test8GetDelegateResourceIndexFromSolidity() {
-    Optional<Protocol.DelegatedResourceAccountIndex>  delegateResourceIndex = PublicMethed
+    Optional<Protocol.DelegatedResourceAccountIndex> delegateResourceIndex = PublicMethed
         .getDelegatedResourceAccountIndexFromSolidity(account013Address,
             blockingStubSolidity);
     Assert.assertTrue(delegateResourceIndex.get().getToAccountsCount() == 2);
   }
 
-  @Test(enabled = true,description = "Get delegate resource index from PBFT")
+  @Test(enabled = true, description = "Get delegate resource index from PBFT")
   public void test9GetDelegateResourceIndexFromPbft() {
-    Optional<Protocol.DelegatedResourceAccountIndex>  delegateResourceIndex = PublicMethed
+    Optional<Protocol.DelegatedResourceAccountIndex> delegateResourceIndex = PublicMethed
         .getDelegatedResourceAccountIndexFromSolidity(account013Address,
             blockingStubSolidity);
     Assert.assertTrue(delegateResourceIndex.get().getToAccountsCount() == 2);
   }
-
-
 
 
   /**

@@ -179,13 +179,13 @@ public class WalletTestAssetIssue016 {
   @Test(enabled = true, description = "Get asset issue by name from Solidity")
   public void test02GetAssetIssueByNameFromSolidity() {
     Assert.assertEquals(PublicMethed.getAssetIssueByNameFromSolidity(name,
-        blockingStubSolidity).getTotalSupply(),totalSupply);
+        blockingStubSolidity).getTotalSupply(), totalSupply);
   }
 
   @Test(enabled = true, description = "Get asset issue by name from PBFT")
   public void test03GetAssetIssueByNameFromPbft() {
     Assert.assertEquals(PublicMethed.getAssetIssueByNameFromSolidity(name,
-        blockingStubPbft).getTotalSupply(),totalSupply);
+        blockingStubPbft).getTotalSupply(), totalSupply);
   }
 
   @Test(enabled = true, description = "Get asset issue list from PBFT")
@@ -206,21 +206,17 @@ public class WalletTestAssetIssue016 {
   @Test(enabled = true, description = "Get asset issue list paginated from PBFT")
   public void test06GetAssetIssetListPaginatedFromPbft() {
     Assert.assertTrue(PublicMethed.listAssetIssuepaginatedFromSolidity(
-        blockingStubPbft,0L,1L).get().getAssetIssueCount() == 1);
+        blockingStubPbft, 0L, 1L).get().getAssetIssueCount() == 1);
   }
 
 
   @Test(enabled = true, description = "Get asset issue list paginated from Solidity")
   public void test05GetAssetIssueListPaginatedFromSolidity() {
     Assert.assertTrue(PublicMethed.listAssetIssuepaginatedFromSolidity(
-        blockingStubSolidity,0L,1L).get().getAssetIssueCount() == 1);
+        blockingStubSolidity, 0L, 1L).get().getAssetIssueCount() == 1);
     Assert.assertTrue(PublicMethed.listAssetIssuepaginatedFromSolidity(
-        blockingStubSoliInFull,0L,1L).get().getAssetIssueCount() == 1);
+        blockingStubSoliInFull, 0L, 1L).get().getAssetIssueCount() == 1);
   }
-
-
-
-
 
 
   /**

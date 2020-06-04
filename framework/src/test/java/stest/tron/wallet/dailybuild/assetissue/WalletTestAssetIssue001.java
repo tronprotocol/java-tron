@@ -314,9 +314,9 @@ public class WalletTestAssetIssue001 {
 
     UnfreezeAssetContract.Builder builder = UnfreezeAssetContract
         .newBuilder();
-    ByteString byteAddreess = ByteString.copyFrom(address);
+    ByteString byteAddress = ByteString.copyFrom(address);
 
-    builder.setOwnerAddress(byteAddreess);
+    builder.setOwnerAddress(byteAddress);
 
     UnfreezeAssetContract contract = builder.build();
 
