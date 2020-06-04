@@ -407,9 +407,10 @@ public class Wallet {
     return new TransactionCapsule(contract, accountStore).getInstance();
   }
 
-  public TransactionCapsule createTransactionCapsuleWithoutValidate(
+  private TransactionCapsule createTransactionCapsuleWithoutValidateWithTimeout(
       com.google.protobuf.Message message,
-      ContractType contractType) {
+      ContractType contractType,
+      long timeout) {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
     try {
       BlockId blockId = dbManager.getHeadBlockId();
@@ -417,15 +418,35 @@ public class Wallet {
         blockId = dbManager.getSolidBlockId();
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
-      long expiration =
-          dbManager.getHeadBlockTimeStamp() + Args.getInstance()
-              .getTrxExpirationTimeInMilliseconds();
+
+      long expiration;
+      if (timeout > 0) {
+        expiration =
+            dbManager.getHeadBlockTimeStamp() + timeout * 1000;
+      } else {
+        expiration =
+            dbManager.getHeadBlockTimeStamp() + Args.getInstance()
+                .getTrxExpirationTimeInMilliseconds();
+      }
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
       logger.error("Create transaction capsule failed.", e);
     }
     return trx;
+  }
+
+  public TransactionCapsule createTransactionCapsuleWithoutValidate(
+      com.google.protobuf.Message message,
+      ContractType contractType,
+      long timeout) {
+    return createTransactionCapsuleWithoutValidateWithTimeout(message, contractType, timeout);
+  }
+
+  public TransactionCapsule createTransactionCapsuleWithoutValidate(
+      com.google.protobuf.Message message,
+      ContractType contractType) {
+    return createTransactionCapsuleWithoutValidateWithTimeout(message, contractType, 0);
   }
 
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
@@ -1737,6 +1758,13 @@ public class Wallet {
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
+    // set timeout
+    long timeout = request.getTimeout();
+    if (timeout < 0) {
+      throw new ContractValidateException("Timeout must >= 0");
+    }
+    builder.setTimeout(timeout);
+
     byte[] transparentFromAddress = request.getTransparentFromAddress().toByteArray();
     byte[] ask = request.getAsk().toByteArray();
     byte[] nsk = request.getNsk().toByteArray();
@@ -1840,6 +1868,13 @@ public class Wallet {
     checkFullNodeAllowShieldedTransaction();
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
+
+    // set timeout
+    long timeout = request.getTimeout();
+    if (timeout < 0) {
+      throw new ContractValidateException("Timeout must >= 0");
+    }
+    builder.setTimeout(timeout);
 
     byte[] transparentFromAddress = request.getTransparentFromAddress().toByteArray();
     byte[] ak = request.getAk().toByteArray();
