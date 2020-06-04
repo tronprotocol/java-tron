@@ -1,5 +1,7 @@
 package org.tron.core.zen;
 
+import static org.tron.core.utils.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
+
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.contract.ShieldContract;
 
+
 @Slf4j
 public class ShieldedTRC20ParametersBuilder {
 
@@ -45,6 +48,7 @@ public class ShieldedTRC20ParametersBuilder {
   private ShieldedTRC20Parameters.Builder builder = ShieldedTRC20Parameters.newBuilder();
   @Getter
   private long valueBalance = 0;
+  @Getter
   @Setter
   private ShieldedTRC20ParametersType shieldedTRC20ParametersType;
   @Setter
@@ -55,6 +59,8 @@ public class ShieldedTRC20ParametersBuilder {
   private byte[] transparentToAddress;
   @Setter
   private BigInteger transparentToAmount;
+  @Setter
+  byte[] burnCiphertext = new byte[ZC_OUTCIPHERTEXT_SIZE];
 
   public ShieldedTRC20ParametersBuilder() {
 
@@ -282,7 +288,7 @@ public class ShieldedTRC20ParametersBuilder {
     }
     dataHashToBeSigned = Sha256Hash.of(true, mergedBytes).getBytes();
     if (dataHashToBeSigned == null) {
-      throw new ZksnarkException("cal transaction hash failed");
+      throw new ZksnarkException("calculate transaction hash failed");
     }
     if (withAsk) {
       createSpendAuth(dataHashToBeSigned);
@@ -305,6 +311,9 @@ public class ShieldedTRC20ParametersBuilder {
       builder.setTriggerContractInput(
           getTriggerContractInput(shieldedTRC20Parameters, null, value, true,
               transparentToAddress));
+    }
+    if (!withAsk && shieldedTRC20ParametersType == ShieldedTRC20ParametersType.BURN) {
+      builder.setTriggerContractInput(Hex.toHexString(burnCiphertext));
     }
     return builder.build();
   }
@@ -450,7 +459,9 @@ public class ShieldedTRC20ParametersBuilder {
         spendAuthSign,
         ByteUtil.bigIntegerToBytes(value, 32),
         burnParams.getBindingSignature().toByteArray(),
-        payTo
+        payTo,
+        burnCiphertext,
+        new byte[12]
     ));
   }
 

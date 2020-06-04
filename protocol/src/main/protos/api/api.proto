@@ -1405,6 +1405,8 @@ message DecryptNotesTRC20 {
     bool is_spent = 3;
     bytes txid = 4;
     int32 index = 5; //the index of note in txid
+    string to_amount = 6;
+    bytes transparent_to_address = 7;
   }
   repeated NoteTx noteTxs = 1;
 }
