@@ -1822,6 +1822,21 @@ public class HttpMethed {
     return parseResponseContent(response).getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
   }
 
+  /**
+   * constructor.
+   */
+  public static Long getNowBlockNumOnSolidity(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/walletsolidity/getnowblock";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return parseResponseContent(response).getJSONObject("block_header").getJSONObject("raw_data").getLong("number");
+  }
+
 
   /**
    * constructor.

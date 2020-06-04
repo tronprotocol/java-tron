@@ -16,6 +16,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.DecryptNotesTRC20;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -26,6 +27,8 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 public class ShieldTrc20Token006 extends ZenTrc20Base {
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
   Optional<ShieldedAddressInfo> shieldAddressInfo1;
   Optional<ShieldedAddressInfo> shieldAddressInfo2;
   String shieldAddress1;
@@ -51,6 +54,12 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
     publicFromAmount = getRandomAmount();
 
     //Generate new shiled account for sender and receiver
@@ -339,9 +348,37 @@ public class ShieldTrc20Token006 extends ZenTrc20Base {
     Assert.assertEquals(shield2Note.getNoteTxs(0).getNote().getPaymentAddress(),
         shieldAddressInfo1.get().getAddress());
 
+  }
 
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Scan shield trc20 note by ivk and ovk on solidity")
+  public void test04ScanShieldTrc20NoteByIvkAndOvkOnSolidity() throws Exception {
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    shield1Note = scanShieldedTrc20NoteByIvk(shieldAddressInfo1.get(),
+        blockingStubFull);
+    GrpcAPI.DecryptNotesTRC20 shield1NoteOnSolidity
+        = scanShieldedTrc20NoteByIvk(shieldAddressInfo1.get(), blockingStubFull,blockingStubSolidity);
+    Assert.assertEquals(shield1Note,shield1NoteOnSolidity);
 
+    shield2Note = scanShieldedTrc20NoteByIvk(shieldAddressInfo2.get(),
+        blockingStubFull);
+    GrpcAPI.DecryptNotesTRC20 shield2NoteOnSolidity
+        = scanShieldedTrc20NoteByIvk(shieldAddressInfo2.get(), blockingStubFull,blockingStubSolidity);
+    Assert.assertEquals(shield2Note,shield2NoteOnSolidity);
 
+    shield1Note = scanShieldedTrc20NoteByOvk(shieldAddressInfo1.get(),
+        blockingStubFull);
+    shield1NoteOnSolidity
+        = scanShieldedTrc20NoteByOvk(shieldAddressInfo1.get(), blockingStubFull,blockingStubSolidity);
+    Assert.assertEquals(shield1Note,shield1NoteOnSolidity);
+
+    shield2Note = scanShieldedTrc20NoteByOvk(shieldAddressInfo2.get(),
+        blockingStubFull);
+    shield2NoteOnSolidity
+        = scanShieldedTrc20NoteByOvk(shieldAddressInfo2.get(), blockingStubFull,blockingStubSolidity);
+    Assert.assertEquals(shield2Note,shield2NoteOnSolidity);
   }
 
 

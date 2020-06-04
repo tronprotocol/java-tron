@@ -37,7 +37,6 @@ public class HttpShieldTrc20Token002 extends ZenTrc20Base {
   private JSONArray noteTxs;
   private Long publicFromAmount = getRandomLongAmount();
   JSONArray shieldedReceives = new JSONArray();
-  String rcm;
   String txid;
 
 
@@ -60,12 +59,12 @@ public class HttpShieldTrc20Token002 extends ZenTrc20Base {
     response = HttpMethed.getRcm(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    rcm = responseContent.getString("value");
   }
 
   @Test(enabled = true, description = "Create mint parameters by http")
   public void test02MintByHttp() {
-    shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives,publicFromAmount,shieldAccountInfo.getString("payment_address"),rcm);
+    shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives,publicFromAmount,
+        shieldAccountInfo.getString("payment_address"),getRcm((httpnode)));
     response = createShieldContractParameters(httpnode,publicFromAmount,shieldAccountInfo,shieldedReceives);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -82,6 +81,29 @@ public class HttpShieldTrc20Token002 extends ZenTrc20Base {
     Assert.assertTrue(responseContent.getJSONObject("receipt").getLong("energy_usage_total") > 300000L);
     Assert.assertEquals(responseContent.getString("contract_address"),shieldAddress);
     Assert.assertEquals(responseContent.getJSONObject("receipt").getString("result"),"SUCCESS");
+
+    shieldedReceives.clear();
+    shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives,publicFromAmount,
+        shieldAccountInfo.getString("payment_address"),getRcm(httpnode));
+    response = createShieldContractParameters(httpnode,publicFromAmount,shieldAccountInfo,shieldedReceives);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+
+    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
+        zenTrc20TokenOwnerAddressString,shieldAddress,mint,responseContent
+            .getString("trigger_contract_input"),maxFeeLimit,0L,0,0L,
+        zenTrc20TokenOwnerKey);
+
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed.getTransactionInfoById(httpnode,txid,true);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.getJSONObject("receipt").getLong("energy_usage_total") > 300000L);
+    Assert.assertEquals(responseContent.getString("contract_address"),shieldAddress);
+    Assert.assertEquals(responseContent.getJSONObject("receipt").getString("result"),"SUCCESS");
+
+
+
   }
 
 
@@ -89,18 +111,18 @@ public class HttpShieldTrc20Token002 extends ZenTrc20Base {
   public void test03ScanTrc20NodeByHttp() {
     noteTxs = scanShieldTrc20NoteByIvk(httpnode,shieldAccountInfo);
     logger.info(noteTxs.toJSONString());
-    Assert.assertEquals(noteTxs.size(),1);
-    Assert.assertEquals(noteTxs.getJSONObject(0)
+    Assert.assertEquals(noteTxs.size(),2);
+    Assert.assertEquals(noteTxs.getJSONObject(1)
         .getJSONObject("note").getLong("value"),publicFromAmount);
-    Assert.assertEquals(noteTxs.getJSONObject(0)
+    Assert.assertEquals(noteTxs.getJSONObject(1)
         .getJSONObject("note").getString("payment_address"),
         shieldAccountInfo.getString("payment_address"));
-    Assert.assertEquals(noteTxs.getJSONObject(0)
+    Assert.assertEquals(noteTxs.getJSONObject(1)
         .getString("txid"),txid);
   }
 
   @Test(enabled = true, description = "Shield trc20 burn by http")
-  public void test04GetNotePathByHttp() {
+  public void test04ShiledTrc20BurnByHttp() {
     JSONArray shieldSpends = new JSONArray();
     shieldSpends = createAndSetShieldedSpends(httpnode,shieldSpends,noteTxs.getJSONObject(0));
 
@@ -125,6 +147,49 @@ public class HttpShieldTrc20Token002 extends ZenTrc20Base {
     Assert.assertEquals(responseContent.getJSONObject("receipt").getString("result"),"SUCCESS");
 
   }
+
+
+  @Test(enabled = true, description = "Shield trc20 burn by http")
+  public void test05ShiledTrc20BurnWithoutAskByHttp() {
+    noteTxs = scanShieldTrc20NoteByIvk(httpnode,shieldAccountInfo);
+    JSONArray shieldSpends = new JSONArray();
+    shieldSpends = createAndSetShieldedSpends(httpnode,shieldSpends,noteTxs.getJSONObject(1));
+
+    logger.info(shieldSpends.toJSONString());
+
+    response = createShieldContractParametersWithoutAskForBurn(httpnode,shieldAccountInfo,shieldSpends,zenTrc20TokenOwnerAddressString,publicFromAmount);
+    JSONObject shieldedTrc20Parameters = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(shieldedTrc20Parameters);
+    JSONObject spendAuthSig = createSpendAuthSig(httpnode,shieldAccountInfo,
+        shieldedTrc20Parameters.getString("message_hash"),noteTxs.getJSONObject(1)
+            .getJSONObject("note").getString("rcm"));
+    HttpMethed.printJsonContent(spendAuthSig);
+    JSONArray spendAuthSigArray = new JSONArray();
+    spendAuthSigArray.add(spendAuthSig);
+
+
+    response = getTriggerInputForShieldedTrc20BurnContract(httpnode,
+        shieldedTrc20Parameters,spendAuthSigArray,publicFromAmount,zenTrc20TokenOwnerAddressString);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+
+    txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
+        zenTrc20TokenOwnerAddressString,shieldAddress,burn,responseContent
+            .getString("value"),maxFeeLimit,0L,0,0L,
+        zenTrc20TokenOwnerKey);
+
+
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed.getTransactionInfoById(httpnode,txid,true);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.getJSONObject("receipt").getLong("energy_usage_total") > 150000L);
+    Assert.assertEquals(responseContent.getString("contract_address"),shieldAddress);
+    Assert.assertEquals(responseContent.getJSONObject("receipt").getString("result"),"SUCCESS");
+
+  }
+
+
 
    /**
    * constructor.

@@ -117,6 +117,7 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
 
   @Test(enabled = true, description = "Transfer type with 1V2 without ask by http")
   public void test02TransferTypeWith1V2WithoutAskByHttp() {
+
     account1IvkNoteTxs = scanShieldTrc20NoteByIvk(httpnode,shieldAccountInfo1);
 
     Assert.assertTrue(isShieldedTrc20ContractNoteSpent(httpnode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(0)));
@@ -278,6 +279,35 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
     account1IvkNoteTxs = scanShieldTrc20NoteByIvk(httpnode,shieldAccountInfo1);
     Assert.assertTrue(isShieldedTrc20ContractNoteSpent(httpnode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(2)));
     Assert.assertTrue(isShieldedTrc20ContractNoteSpent(httpnode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(3)));
+
+  }
+
+
+  @Test(enabled = true, description = "Scan note by ivk and ovk on solidity by http")
+  public void test05ScanNoteByIvkAndOvkOnSOlidityByHttp() {
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSolidityNode);
+    JSONArray account1IvkNoteTxsOnSolidity = new JSONArray();
+    JSONArray account2IvkNoteTxsOnSolidity = new JSONArray();
+    JSONArray account1OvkNoteTxsOnSolidity = new JSONArray();
+    JSONArray account2OvkNoteTxsOnSolidity = new JSONArray();
+
+    account1IvkNoteTxs = scanShieldTrc20NoteByIvk(httpnode,shieldAccountInfo1);
+    account1IvkNoteTxsOnSolidity = scanShieldTrc20NoteByIvkOnSolidity(httpSolidityNode,shieldAccountInfo1);
+    Assert.assertEquals(account1IvkNoteTxs,account1IvkNoteTxsOnSolidity);
+
+
+    account1OvkNoteTxs = scanShieldTrc20NoteByOvk(httpnode,shieldAccountInfo1);
+    account1OvkNoteTxsOnSolidity = scanShieldTrc20NoteByOvkOnSolidity(httpSolidityNode,shieldAccountInfo1);
+    Assert.assertEquals(account1OvkNoteTxs,account1OvkNoteTxsOnSolidity);
+
+    account2IvkNoteTxs = scanShieldTrc20NoteByIvk(httpnode,shieldAccountInfo2);
+    account2IvkNoteTxsOnSolidity = scanShieldTrc20NoteByIvkOnSolidity(httpSolidityNode,shieldAccountInfo2);
+    Assert.assertEquals(account2IvkNoteTxs,account2IvkNoteTxsOnSolidity);
+
+    account2OvkNoteTxs = scanShieldTrc20NoteByOvk(httpnode,shieldAccountInfo2);
+    account2OvkNoteTxsOnSolidity = scanShieldTrc20NoteByOvkOnSolidity(httpSolidityNode,shieldAccountInfo2);
+    Assert.assertEquals(account2OvkNoteTxs,account2OvkNoteTxsOnSolidity);
+
 
   }
 
