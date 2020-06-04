@@ -178,12 +178,14 @@ public class Chainbase implements IRevokingDB {
           .collect(Collectors.toList());
     }
 
+    long numInLeveldb = limit + collectionList.size();//for delete operation
+
     List<WrappedByteArray> levelDBList = new ArrayList<>();
     if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
-      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, limit)
+      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, numInLeveldb)
           .forEach(e -> levelDBList.add(WrappedByteArray.of(e)));
     } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
-      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, limit)
+      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, numInLeveldb)
           .forEach(e -> levelDBList.add(WrappedByteArray.of(e)));
     }
 
