@@ -90,7 +90,7 @@ public class ShieldTrc20Token005 extends ZenTrc20Base {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Shield TRC20 transaction with type burn and without")
+  @Test(enabled = true, description = "Shield TRC20 transaction with type burn and without ask")
   public void test01ShieldTrc20TransactionWithTypeTurnWithoutAsk() throws Exception {
     //Query account before mint balance
     final Long beforeBurnAccountBalance = getBalanceOfShieldTrc20(receiverAddressString,

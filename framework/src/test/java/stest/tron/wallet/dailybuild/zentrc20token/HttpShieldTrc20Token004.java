@@ -82,12 +82,12 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
     shieldSpends = createAndSetShieldedSpends(httpnode,shieldSpends,account1IvkNoteTxs.getJSONObject(0));
     shieldedReceives.clear();
     shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives,publicFromAmount,shieldAccountInfo2.getString("payment_address"),getRcm(httpnode));
-    response = createShieldContractParametersWithAskForTransfer(httpnode,shieldAccountInfo1,shieldSpends,shieldedReceives);
+    response = createShieldContractParametersWithoutAskForTransfer(httpnode,shieldAccountInfo1,shieldSpends,shieldedReceives);
     JSONObject shieldedTrc20Parameters = HttpMethed.parseResponseContent(response);
-    logger.info("--------------shieldedTrc20Parameters--------------");
     HttpMethed.printJsonContent(shieldedTrc20Parameters);
-    JSONObject spendAuthSig = createSpendAuthSig(httpnode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(0));
-    logger.info("--------------spendAuthSig--------------");
+    JSONObject spendAuthSig = createSpendAuthSig(httpnode,shieldAccountInfo1,
+        shieldedTrc20Parameters.getString("message_hash"),account1IvkNoteTxs.getJSONObject(0)
+    .getJSONObject("note").getString("rcm"));
     HttpMethed.printJsonContent(spendAuthSig);
     JSONArray spendAuthSigArray = new JSONArray();
     spendAuthSigArray.add(spendAuthSig);
@@ -115,8 +115,8 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
     Assert.assertEquals(account1OvkNoteTxs.size(),1);
   }
 
-  @Test(enabled = false, description = "Transfer type with 1V2 by http")
-  public void test02TransferTypeWith1V2ByHttp() {
+  @Test(enabled = true, description = "Transfer type with 1V2 without ask by http")
+  public void test02TransferTypeWith1V2WithoutAskByHttp() {
     account1IvkNoteTxs = scanShieldTrc20NoteByIvk(httpnode,shieldAccountInfo1);
 
     Assert.assertTrue(isShieldedTrc20ContractNoteSpent(httpnode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(0)));
@@ -127,14 +127,30 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
     shieldedReceives.clear();
     shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives,account1Receive1V2Amount,shieldAccountInfo1.getString("payment_address"),getRcm(httpnode));
     shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives,account2Receive1V2Amount,shieldAccountInfo2.getString("payment_address"),getRcm(httpnode));
-    response = createShieldContractParametersForTransfer(httpnode,shieldAccountInfo1,shieldSpends,shieldedReceives);
+    response = createShieldContractParametersWithoutAskForTransfer(httpnode,shieldAccountInfo1,shieldSpends,shieldedReceives);
+    JSONObject shieldedTrc20Parameters = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(shieldedTrc20Parameters);
+    JSONObject spendAuthSig1 = createSpendAuthSig(httpnode,shieldAccountInfo1,
+        shieldedTrc20Parameters.getString("message_hash"),account1IvkNoteTxs.getJSONObject(1)
+            .getJSONObject("note").getString("rcm"));
+    HttpMethed.printJsonContent(spendAuthSig1);
+/*    JSONObject spendAuthSig2 = createSpendAuthSig(httpnode,shieldAccountInfo1,
+        shieldedTrc20Parameters.getString("message_hash"),account1IvkNoteTxs.getJSONObject(1)
+            .getJSONObject("note").getString("rcm"));*/
+    HttpMethed.printJsonContent(spendAuthSig1);
+    HttpMethed.printJsonContent(spendAuthSig1);
+    JSONArray spendAuthSigArray = new JSONArray();
+    spendAuthSigArray.add(spendAuthSig1);
+    //spendAuthSigArray.add(spendAuthSig2);
+
+    response = getTriggerInputForShieldedTrc20Contract(httpnode,shieldedTrc20Parameters,spendAuthSigArray);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(responseContent.containsKey("trigger_contract_input"));
+
 
     txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
         zenTrc20TokenOwnerAddressString,shieldAddress,transfer,responseContent
-            .getString("trigger_contract_input"),maxFeeLimit,0L,0,0L,
+            .getString("value"),maxFeeLimit,0L,0,0L,
         zenTrc20TokenOwnerKey);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -151,8 +167,8 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
   }
 
 
-  @Test(enabled = false, description = "Transfer type with 2V2 by http")
-  public void test03TransferTypeWith2V2ByHttp() {
+  @Test(enabled = true, description = "Transfer type with 2V2 without ask by http")
+  public void test03TransferTypeWith2V2WithoutAskByHttp() {
     account2IvkNoteTxs = scanShieldTrc20NoteByIvk(httpnode,shieldAccountInfo2);
 
     Assert.assertFalse(isShieldedTrc20ContractNoteSpent(httpnode,shieldAccountInfo2,account2IvkNoteTxs.getJSONObject(0)));
@@ -163,14 +179,30 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
     shieldedReceives.clear();
     shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives,account1Receive2V2Amount,shieldAccountInfo1.getString("payment_address"),getRcm(httpnode));
     shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives,account2Receive2V2Amount,shieldAccountInfo2.getString("payment_address"),getRcm(httpnode));
-    response = createShieldContractParametersForTransfer(httpnode,shieldAccountInfo2,shieldSpends,shieldedReceives);
+    response = createShieldContractParametersWithoutAskForTransfer(httpnode,shieldAccountInfo2,shieldSpends,shieldedReceives);
+    JSONObject shieldedTrc20Parameters = HttpMethed.parseResponseContent(response);
+
+    JSONObject spendAuthSig1 = createSpendAuthSig(httpnode,shieldAccountInfo2,
+        shieldedTrc20Parameters.getString("message_hash"),account2IvkNoteTxs.getJSONObject(0)
+            .getJSONObject("note").getString("rcm"));
+    HttpMethed.printJsonContent(spendAuthSig1);
+
+    JSONObject spendAuthSig2 = createSpendAuthSig(httpnode,shieldAccountInfo2,
+        shieldedTrc20Parameters.getString("message_hash"),account2IvkNoteTxs.getJSONObject(1)
+            .getJSONObject("note").getString("rcm"));
+    JSONArray spendAuthSigArray = new JSONArray();
+    spendAuthSigArray.add(spendAuthSig1);
+    spendAuthSigArray.add(spendAuthSig2);
+
+
+    response = getTriggerInputForShieldedTrc20Contract(httpnode,shieldedTrc20Parameters,spendAuthSigArray);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(responseContent.containsKey("trigger_contract_input"));
+
 
     txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
         zenTrc20TokenOwnerAddressString,shieldAddress,transfer,responseContent
-            .getString("trigger_contract_input"),maxFeeLimit,0L,0,0L,
+            .getString("value"),maxFeeLimit,0L,0,0L,
         zenTrc20TokenOwnerKey);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -191,8 +223,8 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
 
   }
 
-  @Test(enabled = false, description = "Transfer type with 2V1 by http")
-  public void test04TransferTypeWith2V1ByHttp() {
+  @Test(enabled = true, description = "Transfer type with 2V1 without ask by http")
+  public void test04TransferTypeWith2V1WithoutAskByHttp() {
     account1IvkNoteTxs = scanShieldTrc20NoteByIvk(httpnode,shieldAccountInfo1);
 
     Assert.assertFalse(isShieldedTrc20ContractNoteSpent(httpnode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(2)));
@@ -204,14 +236,30 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
         + account1IvkNoteTxs.getJSONObject(3).getJSONObject("note").getLong("value");
     shieldedReceives.clear();
     shieldedReceives = getHttpShieldedReceivesJsonArray(shieldedReceives,account1Receive2V1Amount,shieldAccountInfo1.getString("payment_address"),getRcm(httpnode));
-    response = createShieldContractParametersForTransfer(httpnode,shieldAccountInfo1,shieldSpends,shieldedReceives);
+    response = createShieldContractParametersWithoutAskForTransfer(httpnode,shieldAccountInfo1,shieldSpends,shieldedReceives);
+    JSONObject shieldedTrc20Parameters = HttpMethed.parseResponseContent(response);
+
+    JSONObject spendAuthSig1 = createSpendAuthSig(httpnode,shieldAccountInfo1,
+        shieldedTrc20Parameters.getString("message_hash"),account1IvkNoteTxs.getJSONObject(2)
+            .getJSONObject("note").getString("rcm"));
+    HttpMethed.printJsonContent(spendAuthSig1);
+
+    JSONObject spendAuthSig2 = createSpendAuthSig(httpnode,shieldAccountInfo1,
+        shieldedTrc20Parameters.getString("message_hash"),account1IvkNoteTxs.getJSONObject(3)
+            .getJSONObject("note").getString("rcm"));
+    HttpMethed.printJsonContent(spendAuthSig2);
+
+    JSONArray spendAuthSigArray = new JSONArray();
+    spendAuthSigArray.add(spendAuthSig1);
+    spendAuthSigArray.add(spendAuthSig2);
+
+    response = getTriggerInputForShieldedTrc20Contract(httpnode,shieldedTrc20Parameters,spendAuthSigArray);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(responseContent.containsKey("trigger_contract_input"));
 
     txid = HttpMethed.triggerContractGetTxidWithVisibleTrue(httpnode,
         zenTrc20TokenOwnerAddressString,shieldAddress,transfer,responseContent
-            .getString("trigger_contract_input"),maxFeeLimit,0L,0,0L,
+            .getString("value"),maxFeeLimit,0L,0,0L,
         zenTrc20TokenOwnerKey);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -232,13 +280,6 @@ public class HttpShieldTrc20Token004 extends ZenTrc20Base {
     Assert.assertTrue(isShieldedTrc20ContractNoteSpent(httpnode,shieldAccountInfo1,account1IvkNoteTxs.getJSONObject(3)));
 
   }
-
-
-
-
-
-
-
 
   /**
    * constructor.

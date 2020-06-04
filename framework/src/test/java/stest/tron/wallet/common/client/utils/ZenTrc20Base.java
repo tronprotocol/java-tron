@@ -937,7 +937,7 @@ public class ZenTrc20Base {
   /**
    * constructor.
    */
-  public static HttpResponse createShieldContractParametersWithAskForTransfer(String httpNode,
+  public static HttpResponse createShieldContractParametersWithoutAskForTransfer(String httpNode,
       JSONObject shieldAccountInfo, JSONArray shieldedSpends,JSONArray shieldedReceives) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/createshieldedcontractparameterswithoutask";
@@ -963,15 +963,13 @@ public class ZenTrc20Base {
    * constructor.
    */
   public static JSONObject createSpendAuthSig(String httpNode,
-      JSONObject shieldAccountInfo, JSONObject noteTxs) {
+      JSONObject shieldAccountInfo, String message_hash,String alpha) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/createspendauthsig";
       JSONObject rawBody = new JSONObject();
       rawBody.put("ask",shieldAccountInfo.getString("ask"));
-      rawBody.put("tx_hash",noteTxs.getString("txid"));
-      rawBody.put("alpha",noteTxs.getJSONObject("note").getString("rcm"));
-
-      //rawBody.put("visible",true);
+      rawBody.put("tx_hash",message_hash);
+      rawBody.put("alpha",alpha);
       logger.info("createSpendAuthSig:" + rawBody.toString());
       response = HttpMethed.createConnectForShieldTrc20(requestUrl, rawBody);
     } catch (Exception e) {

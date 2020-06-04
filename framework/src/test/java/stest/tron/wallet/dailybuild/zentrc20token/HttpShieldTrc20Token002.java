@@ -99,7 +99,7 @@ public class HttpShieldTrc20Token002 extends ZenTrc20Base {
         .getString("txid"),txid);
   }
 
-  @Test(enabled = true, description = "Get note path by http")
+  @Test(enabled = true, description = "Shield trc20 burn by http")
   public void test04GetNotePathByHttp() {
     JSONArray shieldSpends = new JSONArray();
     shieldSpends = createAndSetShieldedSpends(httpnode,shieldSpends,noteTxs.getJSONObject(0));
