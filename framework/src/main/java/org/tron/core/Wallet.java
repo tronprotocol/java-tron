@@ -985,26 +985,26 @@ public class Wallet {
         .build());
 
     // ALLOW_SHIELDED_TRANSACTION
-    // builder.addChainParameter(
-    //     Protocol.ChainParameters.ChainParameter.newBuilder()
-    //         .setKey("getAllowShieldedTransaction")
-    //         .setValue(dbManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
-    //         .build());
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowShieldedTransaction")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
+            .build());
 
     // SHIELDED_TRANSACTION_FEE
-    // builder.addChainParameter(
-    //     Protocol.ChainParameters.ChainParameter.newBuilder()
-    //         .setKey("getShieldedTransactionFee")
-    //         .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
-    //         .build());
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getShieldedTransactionFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
+            .build());
 
     // ShieldedTransactionCreateAccountFee
-    // builder.addChainParameter(
-    //     Protocol.ChainParameters.ChainParameter.newBuilder()
-    //         .setKey("getShieldedTransactionCreateAccountFee")
-    //         .setValue(
-    //             dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
-    //         .build());
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getShieldedTransactionCreateAccountFee")
+            .setValue(
+                dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee())
+            .build());
 
     // ALLOW_SHIELDED_TRC20_TRANSACTION
     builder.addChainParameter(

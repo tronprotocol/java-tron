@@ -391,21 +391,21 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getDiversifierServlet), "/getdiversifier");
       context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
       context.addServlet(new ServletHolder(getZenPaymentAddressServlet), "/getzenpaymentaddress");
-      // context.addServlet(new ServletHolder(createShieldedTransactionServlet),
-      //     "/createshieldedtransaction");
-      // context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
-      //     "/createshieldedtransactionwithoutspendauthsig");
-      // context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/scannotebyivk");
-      // context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet), "/scanandmarknotebyivk");
-      // context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/scannotebyovk");
+      context.addServlet(new ServletHolder(createShieldedTransactionServlet),
+          "/createshieldedtransaction");
+      context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
+          "/createshieldedtransactionwithoutspendauthsig");
+      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/scannotebyivk");
+      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet), "/scanandmarknotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/scannotebyovk");
       context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
-      // context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
-      //     "/getmerkletreevoucherinfo");
-      // context.addServlet(new ServletHolder(isSpendServlet), "/isspend");
+      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
+          "/getmerkletreevoucherinfo");
+      context.addServlet(new ServletHolder(isSpendServlet), "/isspend");
       context.addServlet(new ServletHolder(createSpendAuthSigServlet), "/createspendauthsig");
-      // context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
-      // context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
-      //     "/getshieldtransactionhash");
+      context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
+      context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
+          "/getshieldtransactionhash");
       // for shielded contract
       context
           .addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),

@@ -444,9 +444,9 @@ public class Args {
   @Setter
   private int minEffectiveConnection;
 
-//  @Getter
-//  @Setter
-//  private long allowShieldedTransaction; //committee parameter
+  @Getter
+  @Setter
+  private long allowShieldedTransaction; //committee parameter
 
   // full node used this parameter to close shielded transaction
   @Getter
@@ -606,7 +606,7 @@ public class Args {
     INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
-//    INSTANCE.allowShieldedTransaction = 0;
+    INSTANCE.allowShieldedTransaction = 0;
     INSTANCE.allowShieldedTRC20Transaction = 0;
     INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
@@ -1034,9 +1034,9 @@ public class Args {
     INSTANCE.saveInternalTx =
         config.hasPath(Constant.VM_SAVE_INTERNAL_TX) && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
 
-//    INSTANCE.allowShieldedTransaction =
-//        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
-//            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
+    INSTANCE.allowShieldedTransaction =
+        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
+            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
 
     INSTANCE.allowShieldedTRC20Transaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) ? config
@@ -1514,7 +1514,7 @@ public class Args {
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
-//    DBConfig.setECKeyCryptoEngine(cfgArgs.isECKeyCryptoEngine());
+    DBConfig.setECKeyCryptoEngine(cfgArgs.isECKeyCryptoEngine());
     DBConfig.setECKeyCryptoEngine(cfgArgs.isEckey());
   }
 
