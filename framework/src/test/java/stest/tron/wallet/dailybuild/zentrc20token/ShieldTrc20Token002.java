@@ -25,6 +25,8 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 public class ShieldTrc20Token002 extends ZenTrc20Base {
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(1);
   Optional<ShieldedAddressInfo> receiverShieldAddressInfo;
   private BigInteger publicFromAmount;
   List<Note> shieldOutList = new ArrayList<>();
@@ -80,7 +82,7 @@ public class ShieldTrc20Token002 extends ZenTrc20Base {
 
     logger.info(mint + ":" + txid);
     logger.info(mint + infoById.get().getReceipt().getEnergyUsageTotal());
-    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 300000);
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 250000);
     Assert.assertTrue(infoById.get().getReceipt().getResultValue() == 1);
 
 
