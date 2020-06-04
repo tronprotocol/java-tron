@@ -178,25 +178,29 @@ public class Chainbase implements IRevokingDB {
           .collect(Collectors.toList());
     }
 
-    long numInLeveldb = limit + collectionList.size();//for delete operation
+    // for delete operation
+    long limitLevelDB = limit + collectionList.size();
 
     List<WrappedByteArray> levelDBList = new ArrayList<>();
     if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
-      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, numInLeveldb)
+      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, limitLevelDB)
           .forEach(e -> levelDBList.add(WrappedByteArray.of(e)));
     } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
-      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, numInLeveldb)
+      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getKeysNext(key, limitLevelDB)
           .forEach(e -> levelDBList.add(WrappedByteArray.of(e)));
     }
 
     List<WrappedByteArray> keyList = new ArrayList<>();
     keyList.addAll(levelDBList);
-    snapshotList.forEach(key1 -> {
-      if (!keyList.contains(key1)) {
-        keyList.add(key1);
+
+    // snapshot and levelDB will have duplicated key, so need to check it before,
+    // and remove the key which has been deleted
+    snapshotList.forEach(ssKey -> {
+      if (!keyList.contains(ssKey)) {
+        keyList.add(ssKey);
       }
-      if (collectionList.get(key1) == Operator.DELETE) {
-        keyList.remove(key1);
+      if (collectionList.get(ssKey) == Operator.DELETE) {
+        keyList.remove(ssKey);
       }
     });
 

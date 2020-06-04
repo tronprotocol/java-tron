@@ -120,6 +120,8 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
    * In the snapshot, there may be same keys.
    * If we use Map to get all the data, the later will overwrite the previous value.
    * So, if we use list, we need to exclude duplicate keys.
+   * More than that, there will be some item which has been deleted, but just assigned in Operator,
+   * so we need Operator value to determine next step.
    * */
   synchronized void collectUnique(Map<WrappedByteArray, Operator> all) {
     Snapshot next = getRoot().getNext();
