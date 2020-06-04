@@ -1,4 +1,4 @@
-pragma solidity ^0.5.12;
+pragma solidity ^0.5.8;
 pragma experimental ABIEncoderV2;
 
 import "./SafeMath.sol";
@@ -26,7 +26,7 @@ contract ShieldedTRC20 {
  
     event NewLeaf(uint256 position, bytes32 cm, bytes32 cv, bytes32 epk, bytes32[21] c);
     event TokenMint(address from, uint256 value);
-    event TokenBurn(address to, uint256 value);
+    event TokenBurn(address to, uint256 value, bytes32[3] ciphertext);
     
     constructor (address trc20ContractAddress, uint256 scalingFactorLogarithm) public {
         require(scalingFactorLogarithm < 77, "The scalingFactorLogarithm is out of range!");
@@ -116,7 +116,7 @@ contract ShieldedTRC20 {
         }
     }
     //input: nf, anchor, cv, rk, proof
-    function burn(bytes32[10] calldata input, bytes32[2] calldata spendAuthoritySignature, uint256 rawValue, bytes32[2] calldata bindingSignature, address payTo) external {
+    function burn(bytes32[10] calldata input, bytes32[2] calldata spendAuthoritySignature, uint256 rawValue, bytes32[2] calldata bindingSignature, address payTo, bytes32[3] calldata c) external {
         uint64 value = rawValueToValue(rawValue);
         bytes32 nf = input[0];
         bytes32 anchor = input[1];
@@ -129,7 +129,7 @@ contract ShieldedTRC20 {
         //Finally, transfer trc20Token from this contract to the nominated address
         bool transferResult = trc20Token.transfer(payTo, rawValue);
         require(transferResult, "Transfer failed!");
-        emit TokenBurn(payTo, rawValue);
+        emit TokenBurn(payTo, rawValue, c);
     }
     //position: index of leafnode, start from 0
     function getPath(uint256 position) public view returns (bytes32, bytes32[32] memory) {
