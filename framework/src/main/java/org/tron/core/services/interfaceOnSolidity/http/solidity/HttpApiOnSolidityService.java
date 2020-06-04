@@ -171,16 +171,16 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumOnSolidityServlet),
           "/walletsolidity/getblockbylatestnum");
-      // context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnSolidityServlet),
-      //     "/walletsolidity/getmerkletreevoucherinfo");
-      // context.addServlet(new ServletHolder(scanAndMarkNoteByIvkOnSolidityServlet),
-      //     "/walletsolidity/scanandmarknotebyivk");
-      // context.addServlet(new ServletHolder(scanNoteByIvkOnSolidityServlet),
-      //     "/walletsolidity/scannotebyivk");
-      // context.addServlet(new ServletHolder(scanNoteByOvkOnSolidityServlet),
-      //     "/walletsolidity/scannotebyovk");
-      // context.addServlet(new ServletHolder(isSpendOnSolidityServlet),
-      //     "/walletsolidity/isspend");
+      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnSolidityServlet),
+          "/walletsolidity/getmerkletreevoucherinfo");
+      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkOnSolidityServlet),
+          "/walletsolidity/scanandmarknotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByIvkOnSolidityServlet),
+          "/walletsolidity/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkOnSolidityServlet),
+          "/walletsolidity/scannotebyovk");
+      context.addServlet(new ServletHolder(isSpendOnSolidityServlet),
+          "/walletsolidity/isspend");
       context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyIvkServlet),
           "/walletsolidity/scanshieldedtrc20notesbyivk");
       context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyOvkServlet),
@@ -191,7 +191,6 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/triggerconstantcontract");
       context.addServlet(new ServletHolder(getTransactionInfoByBlockNumOnSolidityServlet),
           "/walletsolidity/gettransactioninfobyblocknum");
-
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),
