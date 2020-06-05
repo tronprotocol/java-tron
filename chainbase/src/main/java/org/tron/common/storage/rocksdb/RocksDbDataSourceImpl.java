@@ -330,7 +330,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
           batch.put(entry.getKey(), entry.getValue());
         }
       }
-      database.write(new WriteOptions(), batch);
+      database.write(options, batch);
     }
   }
 
