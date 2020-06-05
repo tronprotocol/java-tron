@@ -1,7 +1,5 @@
 package org.tron.core.zen;
 
-import static org.tron.core.utils.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
-
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -60,7 +58,7 @@ public class ShieldedTRC20ParametersBuilder {
   @Setter
   private BigInteger transparentToAmount;
   @Setter
-  byte[] burnCiphertext = new byte[ZC_OUTCIPHERTEXT_SIZE];
+  byte[] burnCiphertext = new byte[80];
 
   public ShieldedTRC20ParametersBuilder() {
 
@@ -461,7 +459,7 @@ public class ShieldedTRC20ParametersBuilder {
         burnParams.getBindingSignature().toByteArray(),
         payTo,
         burnCiphertext,
-        new byte[12]
+        new byte[16]
     ));
   }
 
