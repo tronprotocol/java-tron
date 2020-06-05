@@ -15,6 +15,7 @@ public class ProposalUtil {
   private static final String PRE_VALUE_NOT_ONE_ERROR = "This value[";
   private static final String VALUE_NOT_ONE_ERROR = "] is only allowed to be 1";
   private static final long MAX_SUPPLY = 100_000_000_000L;
+  private static final String MAX_SUPPLY_ERROR = "Bad chain parameter value, valid range is [0, 100_000_000_000L]";
 
   public static void validator(DynamicPropertiesStore dynamicPropertiesStore, ForkController forkController,
       long code, long value)
@@ -148,8 +149,7 @@ public class ProposalUtil {
               "Bad chain parameter id: UPDATE_ACCOUNT_PERMISSION_FEE");
         }
         if (value < 0 || value > MAX_SUPPLY) {
-          throw new ContractValidateException(
-              "Bad chain parameter value, valid range is [0,"+ MAX_SUPPLY +"]");
+          throw new ContractValidateException(MAX_SUPPLY_ERROR);
         }
         break;
       }
@@ -158,8 +158,7 @@ public class ProposalUtil {
           throw new ContractValidateException("Bad chain parameter id: MULTI_SIGN_FEE");
         }
         if (value < 0 || value > MAX_SUPPLY) {
-          throw new ContractValidateException(
-              "Bad chain parameter value, valid range is [0,"+ MAX_SUPPLY +"]");
+          throw new ContractValidateException(MAX_SUPPLY_ERROR);
         }
         break;
       }
