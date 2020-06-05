@@ -1254,6 +1254,7 @@ message PrivateParameters {
   repeated ReceiveNote shielded_receives = 7;
   bytes transparent_to_address = 8;
   int64 to_amount = 9;
+  int64 timeout = 10;  // timeout in seconds, it works only when it bigger than 0
 }
 
 message PrivateParametersWithoutAsk {
@@ -1266,6 +1267,7 @@ message PrivateParametersWithoutAsk {
   repeated ReceiveNote shielded_receives = 7;
   bytes transparent_to_address = 8;
   int64 to_amount = 9;
+  int64 timeout = 10;  // timeout in seconds, it works only when it bigger than 0
 }
 
 message SpendAuthSigParameters {

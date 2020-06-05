@@ -1151,26 +1151,31 @@ public class PrecompiledContracts {
       byte[][] receiveCv = new byte[receiveCount][32];
       byte[][] receiveEpk = new byte[receiveCount][32];
       byte[][] receiveProof = new byte[receiveCount][192];
-      //spend
-      spendOffset += 32;
-      for (int i = 0; i < spendCount; i++) {
-        System.arraycopy(data, spendOffset + 320 * i, nullifier[i], 0, 32);
-        System.arraycopy(data, spendOffset + 320 * i + 32, anchor[i], 0, 32);
-        System.arraycopy(data, spendOffset + 320 * i + 64, spendCv[i], 0, 32);
-        System.arraycopy(data, spendOffset + 320 * i + 96, rk[i], 0, 32);
-        System.arraycopy(data, spendOffset + 320 * i + 128, spendProof[i], 0, 192);
-      }
-      spendAuthSigOffset += 32;
-      for (int i = 0; i < spendCount; i++) {
-        System.arraycopy(data, spendAuthSigOffset + 64 * i, spendAuthSig[i], 0, 64);
-      }
-      //output
-      receiveOffset += 32;
-      for (int i = 0; i < receiveCount; i++) {
-        System.arraycopy(data, receiveOffset + 288 * i, receiveCm[i], 0, 32);
-        System.arraycopy(data, receiveOffset + 288 * i + 32, receiveCv[i], 0, 32);
-        System.arraycopy(data, receiveOffset + 288 * i + 64, receiveEpk[i], 0, 32);
-        System.arraycopy(data, receiveOffset + 288 * i + 96, receiveProof[i], 0, 192);
+      try {
+        //spend
+        spendOffset += 32;
+        for (int i = 0; i < spendCount; i++) {
+          System.arraycopy(data, spendOffset + 320 * i, nullifier[i], 0, 32);
+          System.arraycopy(data, spendOffset + 320 * i + 32, anchor[i], 0, 32);
+          System.arraycopy(data, spendOffset + 320 * i + 64, spendCv[i], 0, 32);
+          System.arraycopy(data, spendOffset + 320 * i + 96, rk[i], 0, 32);
+          System.arraycopy(data, spendOffset + 320 * i + 128, spendProof[i], 0, 192);
+        }
+        spendAuthSigOffset += 32;
+        for (int i = 0; i < spendCount; i++) {
+          System.arraycopy(data, spendAuthSigOffset + 64 * i, spendAuthSig[i], 0, 64);
+        }
+        //output
+        receiveOffset += 32;
+        for (int i = 0; i < receiveCount; i++) {
+          System.arraycopy(data, receiveOffset + 288 * i, receiveCm[i], 0, 32);
+          System.arraycopy(data, receiveOffset + 288 * i + 32, receiveCv[i], 0, 32);
+          System.arraycopy(data, receiveOffset + 288 * i + 64, receiveEpk[i], 0, 32);
+          System.arraycopy(data, receiveOffset + 288 * i + 96, receiveProof[i], 0, 192);
+        }
+      } catch (Throwable any) {
+        logger.info("copy data exception:{}" + any.getMessage());
+        return Pair.of(true, DataWord.ZERO().getData());
       }
       //copy each spendCv(receiveCv) into spendCvs(receiveCvs)
       byte[] spendCvs = new byte[spendCount * 32];
@@ -1208,28 +1213,28 @@ public class PrecompiledContracts {
         workers = workersInNonConstantCall;
       }
       long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
-      // submit check spend task
-      for (int i = 0; i < spendCount; i++) {
-        Future<Boolean> futureCheckSpend = workers
-            .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
-                nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
-        futures.add(futureCheckSpend);
-      }
-      //submit check output task
-      for (int i = 0; i < receiveCount; i++) {
-        Future<Boolean> futureCheckOutput = workers
-            .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
-                receiveEpk[i], receiveProof[i]));
-        futures.add(futureCheckOutput);
-      }
-      // submit check binding signature
-      Future<Boolean> futureCheckBindingSig = workers
-          .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
-              signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
-      futures.add(futureCheckBindingSig);
-
       boolean checkResult = true;
       try {
+        // submit check spend task
+        for (int i = 0; i < spendCount; i++) {
+          Future<Boolean> futureCheckSpend = workers
+              .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
+                  nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
+          futures.add(futureCheckSpend);
+        }
+        //submit check output task
+        for (int i = 0; i < receiveCount; i++) {
+          Future<Boolean> futureCheckOutput = workers
+              .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
+                  receiveEpk[i], receiveProof[i]));
+          futures.add(futureCheckOutput);
+        }
+        // submit check binding signature
+        Future<Boolean> futureCheckBindingSig = workers
+            .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
+                signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
+        futures.add(futureCheckBindingSig);
+
         countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
         for (Future<Boolean> future : futures) {
           boolean eachTaskResult = future.get();
