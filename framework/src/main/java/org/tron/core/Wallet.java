@@ -2705,14 +2705,14 @@ public class Wallet {
   private void checkShieldedTRC20NoteValue(
       List<GrpcAPI.SpendNoteTRC20> spendNoteTRC20s, List<ReceiveNote> receiveNotes)
       throws ContractValidateException {
-    if (spendNoteTRC20s != null) {
+    if (!Objects.isNull(spendNoteTRC20s)) {
       for (GrpcAPI.SpendNoteTRC20 spendNote : spendNoteTRC20s) {
         if (spendNote.getNote().getValue() < 0) {
           throw new ContractValidateException("The value in SpendNoteTRC20 must >= 0");
         }
       }
     }
-    if (receiveNotes != null) {
+    if (!Objects.isNull(receiveNotes)) {
       for (ReceiveNote receiveNote : receiveNotes) {
         if (receiveNote.getNote().getValue() < 0) {
           throw new ContractValidateException("The value in ReceiveNote must >= 0");
@@ -2727,7 +2727,7 @@ public class Wallet {
       throws ZksnarkException {
     GrpcAPI.Note note = spendNote.getNote();
     PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(note.getPaymentAddress());
-    if (paymentAddress == null) {
+    if (Objects.isNull(paymentAddress)) {
       throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
     }
     Note baseNote = new Note(paymentAddress.getD(),
@@ -2745,7 +2745,7 @@ public class Wallet {
       ReceiveNote receiveNote, byte[] ovk) throws ZksnarkException {
     PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
         receiveNote.getNote().getPaymentAddress());
-    if (paymentAddress == null) {
+    if (Objects.isNull(paymentAddress)) {
       throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
     }
     builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
@@ -2840,7 +2840,7 @@ public class Wallet {
       byte[] ak, byte[] nsk, byte[] ovk) throws ZksnarkException {
     GrpcAPI.Note note = spendNote.getNote();
     PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(note.getPaymentAddress());
-    if (paymentAddress == null) {
+    if (Objects.isNull(paymentAddress)) {
       throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
     }
 
@@ -2937,31 +2937,14 @@ public class Wallet {
     return builder.build(false);
   }
 
-  private boolean isShieldedTRC20LogForIvk(TransactionInfo.Log log) {
+  private boolean isShieldedTRC20Log(TransactionInfo.Log log) {
     List<ByteString> topicsList = log.getTopicsList();
     byte[] topicsBytes = new byte[0];
     for (ByteString bs : topicsList) {
       topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
     }
-    if (Hex.toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  private boolean isShieldedTRC20LogForOvk(TransactionInfo.Log log) {
-    List<ByteString> topicsList = log.getTopicsList();
-    byte[] topicsBytes = new byte[0];
-    for (ByteString bs : topicsList) {
-      topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
-    }
-    if (Hex.toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS) || Hex
-        .toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS_FOR_BURN)) {
-      return true;
-    } else {
-      return false;
-    }
+    return Hex.toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS) || Hex
+        .toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS_FOR_BURN);
   }
 
   private Optional<DecryptNotesTRC20.NoteTx> getNoteTxFromLogListByIvk(
@@ -2969,7 +2952,7 @@ public class Wallet {
       TransactionInfo.Log log, byte[] ivk, byte[] ak, byte[] nk, byte[] contractAddress)
       throws ZksnarkException, ContractExeException {
     byte[] logData = log.getData().toByteArray();
-    if (!ArrayUtils.isEmpty(logData)) {
+    if (logData.length == 800) {
       // Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
       long pos = ByteArray.toLong(ByteArray.subArray(logData, 0, 32));
       byte[] cm = ByteArray.subArray(logData, 32, 64);
@@ -3024,7 +3007,7 @@ public class Wallet {
           Optional<DecryptNotesTRC20.NoteTx> noteTx;
           int index = 0;
           for (TransactionInfo.Log log : logList) {
-            if (isShieldedTRC20LogForIvk(log)) {
+            if (isShieldedTRC20Log(log)) {
               noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
               noteBuilder.setTxid(ByteString.copyFrom(txId));
               noteBuilder.setIndex(index);
@@ -3044,6 +3027,9 @@ public class Wallet {
       byte[] nk, byte[] contractAddress)
       throws ZksnarkException, ContractExeException {
     byte[] nf = getShieldedTRC20Nullifier(note, pos, ak, nk);
+    if (Objects.isNull(nf)) {
+      throw new ZksnarkException("compute nullifier error");
+    }
     String methodSign = "nullifiers(bytes32)";
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
@@ -3088,7 +3074,7 @@ public class Wallet {
       listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
     }
     if (code.equals("SUCCESS")) {
-      return ByteUtil.compare(nf, listBytes) == 0;
+      return ByteUtil.toHexString(nf).equals(ByteUtil.toHexString(listBytes));
     } else {
       throw new ContractExeException(
           "trigger contract error.");
@@ -3108,70 +3094,63 @@ public class Wallet {
   private Optional<DecryptNotesTRC20.NoteTx> getNoteTxFromLogListByOvk(
       DecryptNotesTRC20.NoteTx.Builder builder,
       TransactionInfo.Log log, byte[] ovk) throws ZksnarkException {
-    List<ByteString> topicsList = log.getTopicsList();
-    byte[] topicsBytes = new byte[0];
-    for (ByteString bs : topicsList) {
-      topicsBytes = ByteUtil.merge(topicsBytes, bs.toByteArray());
-    }
     byte[] logData = log.getData().toByteArray();
-    if (!ArrayUtils.isEmpty(logData)) {
-      if (Hex.toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS)) {
-        //Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
-        byte[] cm = ByteArray.subArray(logData, 32, 64);
-        byte[] cv = ByteArray.subArray(logData, 64, 96);
-        byte[] epk = ByteArray.subArray(logData, 96, 128);
-        byte[] cenc = ByteArray.subArray(logData, 128, 708);
-        byte[] coutText = ByteArray.subArray(logData, 708, 788);
-        Encryption.OutCiphertext cout = new Encryption.OutCiphertext();
-        cout.setData(coutText);
-        Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(cout,//ciphertext
-            ovk, cv, cm, epk);
-        if (notePlaintext.isPresent()) {
-          OutgoingPlaintext decryptedOutCtUnwrapped = notePlaintext.get();
-          //decode c_enc with pkd、esk
-          Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
-          ciphertext.setData(cenc);
-          Optional<Note> foo = Note.decrypt(ciphertext,
-              epk,
-              decryptedOutCtUnwrapped.getEsk(),
-              decryptedOutCtUnwrapped.getPkD(),
-              cm);
-          if (foo.isPresent()) {
-            Note bar = foo.get();
-            String paymentAddress = KeyIo.encodePaymentAddress(
-                new PaymentAddress(bar.getD(), decryptedOutCtUnwrapped.getPkD()));
-            GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
-                .setPaymentAddress(paymentAddress)
-                .setValue(bar.getValue())
-                .setRcm(ByteString.copyFrom(bar.getRcm()))
-                .setMemo(ByteString.copyFrom(stripRightZero(bar.getMemo())))
-                .build();
-            builder.setNote(note);
-            return Optional.of(builder.build());
-          }
+    if (logData.length == 800) {
+      //Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
+      byte[] cm = ByteArray.subArray(logData, 32, 64);
+      byte[] cv = ByteArray.subArray(logData, 64, 96);
+      byte[] epk = ByteArray.subArray(logData, 96, 128);
+      byte[] cenc = ByteArray.subArray(logData, 128, 708);
+      byte[] coutText = ByteArray.subArray(logData, 708, 788);
+      Encryption.OutCiphertext cout = new Encryption.OutCiphertext();
+      cout.setData(coutText);
+      Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(cout,//ciphertext
+          ovk, cv, cm, epk);
+      if (notePlaintext.isPresent()) {
+        OutgoingPlaintext decryptedOutCtUnwrapped = notePlaintext.get();
+        //decode c_enc with pkd、esk
+        Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
+        ciphertext.setData(cenc);
+        Optional<Note> foo = Note.decrypt(ciphertext,
+            epk,
+            decryptedOutCtUnwrapped.getEsk(),
+            decryptedOutCtUnwrapped.getPkD(),
+            cm);
+        if (foo.isPresent()) {
+          Note bar = foo.get();
+          String paymentAddress = KeyIo.encodePaymentAddress(
+              new PaymentAddress(bar.getD(), decryptedOutCtUnwrapped.getPkD()));
+          GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
+              .setPaymentAddress(paymentAddress)
+              .setValue(bar.getValue())
+              .setRcm(ByteString.copyFrom(bar.getRcm()))
+              .setMemo(ByteString.copyFrom(stripRightZero(bar.getMemo())))
+              .build();
+          builder.setNote(note);
+          return Optional.of(builder.build());
         }
-      } else if (Hex.toHexString(topicsBytes).equals(SHIELDED_TRC20_LOG_TOPICS_FOR_BURN)) {
-        //Data = toAddress(32) + value(32) + ciphertext(80) + padding(16)
-        byte[] logToAddress = ByteArray.subArray(logData, 12, 32);
-        byte[] logAmountArray = ByteArray.subArray(logData, 32, 64);
-        byte[] cipher = ByteArray.subArray(logData, 64, 144);
-        BigInteger logAmount = ByteUtil.bytesToBigInteger(logAmountArray);
-        byte[] plaintext = new byte[64];
-        byte[] amountArray = new byte[32];
-        byte[] decryptedAddress = new byte[20];
-        Optional<byte[]> decryptedText = NoteEncryption.Encryption
-            .decryptBurnMessageByOvk(ovk, cipher);
-        if (decryptedText.isPresent()) {
-          plaintext = decryptedText.get();
-          System.arraycopy(plaintext, 0, amountArray, 0, 32);
-          System.arraycopy(plaintext, 33, decryptedAddress, 0, 20);
-          BigInteger decryptedAmount = ByteUtil.bytesToBigInteger(amountArray);
-          if (logAmount.equals(decryptedAmount) && Hex.toHexString(logToAddress)
-              .equals(Hex.toHexString(decryptedAddress))) {
-            builder.setToAmount(logAmount.toString(10))
-                .setTransparentToAddress(ByteString.copyFrom(logToAddress));
-            return Optional.of(builder.build());
-          }
+      }
+    } else if (logData.length == 160) {
+      //Data = toAddress(32) + value(32) + ciphertext(80) + padding(16)
+      byte[] logToAddress = ByteArray.subArray(logData, 12, 32);
+      byte[] logAmountArray = ByteArray.subArray(logData, 32, 64);
+      byte[] cipher = ByteArray.subArray(logData, 64, 144);
+      BigInteger logAmount = ByteUtil.bytesToBigInteger(logAmountArray);
+      byte[] plaintext = new byte[64];
+      byte[] amountArray = new byte[32];
+      byte[] decryptedAddress = new byte[20];
+      Optional<byte[]> decryptedText = NoteEncryption.Encryption
+          .decryptBurnMessageByOvk(ovk, cipher);
+      if (decryptedText.isPresent()) {
+        plaintext = decryptedText.get();
+        System.arraycopy(plaintext, 0, amountArray, 0, 32);
+        System.arraycopy(plaintext, 33, decryptedAddress, 0, 20);
+        BigInteger decryptedAmount = ByteUtil.bytesToBigInteger(amountArray);
+        if (logAmount.equals(decryptedAmount) && Hex.toHexString(logToAddress)
+            .equals(Hex.toHexString(decryptedAddress))) {
+          builder.setToAmount(logAmount.toString(10))
+              .setTransparentToAddress(ByteString.copyFrom(logToAddress));
+          return Optional.of(builder.build());
         }
       }
     }
@@ -3201,7 +3180,7 @@ public class Wallet {
           Optional<DecryptNotesTRC20.NoteTx> noteTx;
           int index = 0;
           for (TransactionInfo.Log log : logList) {
-            if (isShieldedTRC20LogForOvk(log)) {
+            if (isShieldedTRC20Log(log)) {
               noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
               noteBuilder.setTxid(ByteString.copyFrom(txid));
               noteBuilder.setIndex(index);
@@ -3221,7 +3200,9 @@ public class Wallet {
     byte[] result = new byte[32]; // 256
     PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
         note.getPaymentAddress());
-    assert paymentAddress != null;
+    if (Objects.isNull(paymentAddress)) {
+      throw new ZksnarkException(PAYMENT_ADDRESS_FORMAT_WRONG);
+    }
     ComputeNfParams computeNfParams = new ComputeNfParams(
         paymentAddress.getD().getData(),
         paymentAddress.getPkD(),
@@ -3374,6 +3355,9 @@ public class Wallet {
     String input = parametersBuilder
         .getTriggerContractInput(shieldedTRC20Parameters, spendAuthoritySignature, value, false,
             transparentToAddressTvm);
+    if (Objects.isNull(input)) {
+      throw new ZksnarkException("generate the trigger contract parameters error");
+    }
     BytesMessage.Builder bytesBuilder = BytesMessage.newBuilder();
     return bytesBuilder.setValue(ByteString.copyFrom(Hex.decode(input))).build();
   }
