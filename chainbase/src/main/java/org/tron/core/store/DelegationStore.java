@@ -50,7 +50,7 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
     }
   }
 
-  public void addVodeReward(long cycle, byte[] address, long value) {
+  public void addVoteReward(long cycle, byte[] address, long value) {
     byte[] key = buildRewardVoteKey(cycle, address);
     BytesCapsule bytesCapsule = get(key);
 
