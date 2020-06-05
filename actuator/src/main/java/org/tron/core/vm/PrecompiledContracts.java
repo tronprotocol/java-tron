@@ -1207,29 +1207,31 @@ public class PrecompiledContracts {
       } else {
         workers = workersInNonConstantCall;
       }
+
       long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
-      // submit check spend task
-      for (int i = 0; i < spendCount; i++) {
-        Future<Boolean> futureCheckSpend = workers
-            .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
-                nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
-        futures.add(futureCheckSpend);
-      }
-      //submit check output task
-      for (int i = 0; i < receiveCount; i++) {
-        Future<Boolean> futureCheckOutput = workers
-            .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
-                receiveEpk[i], receiveProof[i]));
-        futures.add(futureCheckOutput);
-      }
-      // submit check binding signature
-      Future<Boolean> futureCheckBindingSig = workers
-          .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
-              signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
-      futures.add(futureCheckBindingSig);
 
       boolean checkResult = true;
       try {
+        // submit check spend task
+        for (int i = 0; i < spendCount; i++) {
+          Future<Boolean> futureCheckSpend = workers
+              .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
+                  nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
+          futures.add(futureCheckSpend);
+        }
+        //submit check output task
+        for (int i = 0; i < receiveCount; i++) {
+          Future<Boolean> futureCheckOutput = workers
+              .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
+                  receiveEpk[i], receiveProof[i]));
+          futures.add(futureCheckOutput);
+        }
+        // submit check binding signature
+        Future<Boolean> futureCheckBindingSig = workers
+            .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
+                signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
+        futures.add(futureCheckBindingSig);
+
         countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
         for (Future<Boolean> future : futures) {
           boolean eachTaskResult = future.get();
