@@ -301,6 +301,8 @@ public class ShieldedTRC20ParametersBuilder {
               bindingSig)
       );
       builder.setBindingSignature(ByteString.copyFrom(bindingSig));
+    } catch (Exception e) {
+      throw new ZksnarkException("build the shielded TRC-20 parameters error: " + e.getMessage());
     } finally {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     }
