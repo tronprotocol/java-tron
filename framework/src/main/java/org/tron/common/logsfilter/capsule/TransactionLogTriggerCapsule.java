@@ -47,7 +47,7 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     transactionLogTrigger.setTimeStamp(blockCapsule.getTimeStamp());
     transactionLogTrigger.setBlockNumber(trxCasule.getBlockNum());
     transactionLogTrigger.setData(Hex.toHexString(trxCasule
-        .getInstance().getRawData().getData().toByteArray());
+        .getInstance().getRawData().getData().toByteArray()));
 
     TransactionTrace trxTrace = trxCasule.getTrxTrace();
 
