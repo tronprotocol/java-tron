@@ -3257,6 +3257,9 @@ public class PublicMethed {
     Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
         .toBuilder();
     rawBuilder.setFeeLimit(feeLimit);
+
+
+
     transBuilder.setRawData(rawBuilder);
     for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
       ByteString s = transactionExtention.getTransaction().getSignature(i);
@@ -3269,6 +3272,7 @@ public class PublicMethed {
     texBuilder.setTransaction(transBuilder);
     texBuilder.setResult(transactionExtention.getResult());
     texBuilder.setTxid(transactionExtention.getTxid());
+
     transactionExtention = texBuilder.build();
     if (transactionExtention == null) {
       return null;

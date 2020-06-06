@@ -97,6 +97,7 @@ public class ZenTrc20Base {
   static HttpResponse response;
   static HttpPost httppost;
   static JSONObject responseContent;
+  Integer scalingFactorLogarithm = 0;
 
 
   /**
@@ -120,7 +121,7 @@ public class ZenTrc20Base {
     String code = Configuration.getByPath("testng.conf")
         .getString("code.code_shieldTrc20Token");
     String constructorStr = "constructor(uint256,string,string)";
-    String data = "100000000000" + "," + "\"TokenTRC20\"" + "," + "\"zen20\"";
+    String data = "1000000000000" + "," + "\"TokenTRC20\"" + "," + "\"zen20\"";
     logger.info("data:" + data);
     deployShieldTrc20Txid = PublicMethed
         .deployContractWithConstantParame(contractName, abi, code, constructorStr, data, "",
@@ -142,7 +143,7 @@ public class ZenTrc20Base {
         .getString("abi.abi_shield");
     code = Configuration.getByPath("testng.conf")
         .getString("code.code_shield");
-    data = "\"" + contractAddress + "\"" + "," + "0";
+    data = "\"" + contractAddress + "\"" + "," + scalingFactorLogarithm;
     constructorStr = "constructor(address,uint256)";
     deployShieldTxid = PublicMethed
         .deployContractWithConstantParame(contractName, abi, code, constructorStr, data, "",
