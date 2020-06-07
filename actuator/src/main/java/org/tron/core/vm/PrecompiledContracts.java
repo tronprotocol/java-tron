@@ -1212,20 +1212,19 @@ public class PrecompiledContracts {
       } else {
         workers = workersInNonConstantCall;
       }
-      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
       boolean checkResult = true;
       try {
         // submit check spend task
         for (int i = 0; i < spendCount; i++) {
           Future<Boolean> futureCheckSpend = workers
-              .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
+              .submit(new SaplingCheckSpendTask(countDownLatch, spendCv[i], anchor[i],
                   nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
           futures.add(futureCheckSpend);
         }
         //submit check output task
         for (int i = 0; i < receiveCount; i++) {
           Future<Boolean> futureCheckOutput = workers
-              .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
+              .submit(new SaplingCheckOutputTask(countDownLatch, receiveCv[i], receiveCm[i],
                   receiveEpk[i], receiveProof[i]));
           futures.add(futureCheckOutput);
         }
@@ -1242,10 +1241,11 @@ public class PrecompiledContracts {
         }
       } catch (Throwable any) {
         checkResult = false;
-        logger.info("Parallel check proof interrupted exception:{}", any.getMessage());
-        Thread.currentThread().interrupt();
-      } finally {
-        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+        String errorMsg = any.getMessage();
+        if (errorMsg == null && any.getCause() != null) {
+          errorMsg = any.getCause().getMessage();
+        }
+        logger.info("Parallel check proof interrupted exception " + errorMsg);
       }
 
       if (checkResult) {
@@ -1257,7 +1257,6 @@ public class PrecompiledContracts {
 
     private static class SaplingCheckSpendTask implements Callable<Boolean> {
 
-      private long ctx;
       private byte[] cv;
       private byte[] anchor;
       private byte[] nullifier;
@@ -1269,9 +1268,8 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckSpendTask(CountDownLatch countDownLatch,
-                            long ctx, byte[] cv, byte[] anchor, byte[] nullifier,
-                            byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
-        this.ctx = ctx;
+                            byte[] cv, byte[] anchor, byte[] nullifier, byte[] rk,
+                            byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
         this.cv = cv;
         this.anchor = anchor;
         this.nullifier = nullifier;
@@ -1286,9 +1284,9 @@ public class PrecompiledContracts {
       public Boolean call() throws ZksnarkException {
         boolean result;
         try {
-          result = JLibrustzcash.librustzcashSaplingCheckSpend(
-              new LibrustzcashParam.CheckSpendParams(this.ctx, this.cv, this.anchor,
-                  this.nullifier, this.rk, this.zkproof, this.spendAuthSig, this.signHash));
+          result = JLibrustzcash.librustzcashSaplingCheckSpendNew(
+              new LibrustzcashParam.CheckSpendNewParams(this.cv, this.anchor, this.nullifier,
+                  this.rk, this.zkproof, this.spendAuthSig, this.signHash));
         } catch (ZksnarkException e) {
           throw e;
         } finally {
@@ -1298,9 +1296,8 @@ public class PrecompiledContracts {
       }
     }
 
-    private static class SaplingCheckOutput implements Callable<Boolean> {
+    private static class SaplingCheckOutputTask implements Callable<Boolean> {
 
-      private long ctx;
       private byte[] cv;
       private byte[] cm;
       private byte[] ephemeralKey;
@@ -1308,9 +1305,8 @@ public class PrecompiledContracts {
 
       private CountDownLatch countDownLatch;
 
-      SaplingCheckOutput(CountDownLatch countDownLatch, long ctx, byte[] cv, byte[] cm,
+      SaplingCheckOutputTask(CountDownLatch countDownLatch, byte[] cv, byte[] cm,
                          byte[] ephemeralKey, byte[] zkproof) {
-        this.ctx = ctx;
         this.cv = cv;
         this.cm = cm;
         this.ephemeralKey = ephemeralKey;
@@ -1322,8 +1318,8 @@ public class PrecompiledContracts {
       public Boolean call() throws ZksnarkException {
         boolean result;
         try {
-          result = JLibrustzcash.librustzcashSaplingCheckOutput(
-              new LibrustzcashParam.CheckOutputParams(this.ctx, this.cv, this.cm,
+          result = JLibrustzcash.librustzcashSaplingCheckOutputNew(
+              new LibrustzcashParam.CheckOutputNewParams(this.cv, this.cm,
                   this.ephemeralKey, this.zkproof));
         } catch (ZksnarkException e) {
           throw e;
