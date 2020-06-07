@@ -1,8 +1,6 @@
 package stest.tron.wallet.onlinestress;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
@@ -12,14 +10,12 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
-import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.WalletGrpc;
-import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -28,6 +24,7 @@ import stest.tron.wallet.common.client.utils.ZenTrc20Base;
 
 @Slf4j
 public class ShieldTrc20Stress extends ZenTrc20Base {
+
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
@@ -58,7 +55,7 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
   /**
    * constructor.
    */
-  @Test(enabled = true, threadPoolSize = 15, invocationCount = 15)
+  @Test(enabled = true, threadPoolSize = 30, invocationCount = 6000)
   public void test01ShieldTrc20TransactionByTypeMint() throws Exception {
     ManagedChannel channelFull = null;
     WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -74,25 +71,23 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
-
-
     BigInteger publicFromAmount = getRandomAmount();
     Optional<ShieldedAddressInfo> sendShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
-    Optional<ShieldedAddressInfo> receiverShieldAddressInfo = getNewShieldedAddress(blockingStubFull);
+    Optional<ShieldedAddressInfo> receiverShieldAddressInfo = getNewShieldedAddress(
+        blockingStubFull);
     String memo = "Shield trc20 from T account to shield account in" + System.currentTimeMillis();
     String sendShieldAddress = sendShieldAddressInfo.get().getAddress();
 
     List<Note> shieldOutList = new ArrayList<>();
     shieldOutList.clear();
     shieldOutList = addShieldTrc20OutputList(shieldOutList, sendShieldAddress,
-        "" + publicFromAmount, memo,blockingStubFull);
+        "" + publicFromAmount, memo, blockingStubFull);
 
     //Create shiled trc20 parameters
     GrpcAPI.ShieldedTRC20Parameters shieldedTrc20Parameters
         = createShieldedTrc20Parameters(publicFromAmount,
-        null,null,shieldOutList,"",0L,blockingStubFull
+        null, null, shieldOutList, "", 0L, blockingStubFull
     );
-
 
     String data = encodeMintParamsToHexString(shieldedTrc20Parameters, publicFromAmount);
 
@@ -108,14 +103,13 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     List<GrpcAPI.DecryptNotesTRC20> inputList = new ArrayList<>();
     inputShieldAddressList.add(sendShieldAddressInfo.get());
 
-
     sendNote = scanShieldedTrc20NoteByIvk(sendShieldAddressInfo.get(),
         blockingStubFull1);
 
-          while (sendNote.getNoteTxsCount() == 0) {
-        sendNote = scanShieldedTrc20NoteByIvk(sendShieldAddressInfo.get(),
-            blockingStubFull1);
-      }
+    while (sendNote.getNoteTxsCount() == 0) {
+      sendNote = scanShieldedTrc20NoteByIvk(sendShieldAddressInfo.get(),
+          blockingStubFull1);
+    }
 
     Integer times = 20;
     while (times-- > 0) {
@@ -136,17 +130,16 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
 
       shieldOutList.clear();
       shieldOutList = addShieldTrc20OutputList(shieldOutList, sendShieldAddress,
-          "" + publicFromAmount, transferMemo,blockingStubFull);
+          "" + publicFromAmount, transferMemo, blockingStubFull);
 
       logger.info("send note size:" + sendNote.getNoteTxsCount());
-
 
       GrpcAPI.DecryptNotesTRC20 inputNoteFor2to2 = GrpcAPI.DecryptNotesTRC20.newBuilder()
           .addNoteTxs(sendNote.getNoteTxs(sendNote.getNoteTxsCount() - 1)).build();
       //Create transfer parameters
       shieldedTrc20Parameters
           = createShieldedTrc20Parameters(BigInteger.valueOf(0),
-          inputNoteFor2to2,inputShieldAddressList,shieldOutList,"",0L,blockingStubFull1
+          inputNoteFor2to2, inputShieldAddressList, shieldOutList, "", 0L, blockingStubFull1
       );
 
       Integer exit = 7;
@@ -160,7 +153,6 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
           zenTrc20TokenOwnerKey, blockingStubFull);
 
       //sendShieldAddressInfo = receiverShieldAddressInfo;
-
 
     }
 
@@ -176,13 +168,14 @@ public class ShieldTrc20Stress extends ZenTrc20Base {
     startNum = 31012L;
     endNum = 31095L;
     while (startNum < endNum) {
-      HttpResponse response = HttpMethed.getTransactionInfoByBlocknum(httpnode,startNum++);
+      HttpResponse response = HttpMethed.getTransactionInfoByBlocknum(httpnode, startNum++);
       List<JSONObject> responseContentByBlocknum = HttpMethed
           .parseResponseContentArray(response);
-      for (int i = 0; i < responseContentByBlocknum.size();i++) {
+      for (int i = 0; i < responseContentByBlocknum.size(); i++) {
         logger.info(responseContentByBlocknum.get(i).toString());
         logger.info(responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result"));
-        if (responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result").equals("SUCCESS")) {
+        if (responseContentByBlocknum.get(i).getJSONObject("receipt").getString("result")
+            .equals("SUCCESS")) {
           success++;
         } else {
           failed++;
