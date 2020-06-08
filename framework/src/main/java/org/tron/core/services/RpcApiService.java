@@ -791,7 +791,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request,
-        StreamObserver<GrpcAPI.NoteTRC20SpendResult> responseObserver) {
+        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
       try {
         checkSupportShieldedTRC20Transaction();
         responseObserver.onNext(wallet.isShieldedTRC20ContractNoteSpent(request));
@@ -2386,11 +2386,11 @@ public class RpcApiService implements Service {
 
     @Override
     public void isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request,
-        StreamObserver<GrpcAPI.NoteTRC20SpendResult> responseObserver) {
+        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
       try {
         checkSupportShieldedTRC20Transaction();
 
-        GrpcAPI.NoteTRC20SpendResult nf = wallet
+        GrpcAPI.NullifierResult nf = wallet
             .isShieldedTRC20ContractNoteSpent(request);
         responseObserver.onNext(nf);
       } catch (ZksnarkException | ContractExeException e) {

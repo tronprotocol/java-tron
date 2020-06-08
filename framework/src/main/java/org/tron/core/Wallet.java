@@ -70,7 +70,6 @@ import org.tron.api.GrpcAPI.NfTRC20Parameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
-import org.tron.api.GrpcAPI.NoteTRC20SpendResult;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
@@ -3098,9 +3097,9 @@ public class Wallet {
     return builder.build();
   }
 
-  private NoteTRC20SpendResult isShieldedTRC20NoteSpent(GrpcAPI.Note note, long pos, byte[] ak,
+  private boolean isShieldedTRC20NoteSpent(GrpcAPI.Note note, long pos, byte[] ak,
       byte[] nk, byte[] contractAddress)
-      throws ZksnarkException {
+      throws ZksnarkException, ContractExeException {
     byte[] nf = getShieldedTRC20Nullifier(note, pos, ak, nk);
     if (Objects.isNull(nf)) {
       throw new ZksnarkException("compute nullifier error");
@@ -3148,7 +3147,6 @@ public class Wallet {
     }
 
     String code = trxExt.getResult().getCode().toString();
-    NoteTRC20SpendResult spendResult;
     if (code.equals("SUCCESS")) {
       List<ByteString> list = trxExt.getConstantResultList();
       byte[] listBytes = new byte[0];
@@ -3156,25 +3154,11 @@ public class Wallet {
         listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
       }
 
-      if (ByteUtil.toHexString(nf).equals(ByteUtil.toHexString(listBytes))) {
-        spendResult = NoteTRC20SpendResult.newBuilder()
-            .setIsSpent(true)
-            .setMessage("note has been spent")
-            .build();
-      } else {
-        spendResult = NoteTRC20SpendResult.newBuilder()
-            .setIsSpent(false)
-            .setMessage("note has not been spent")
-            .build();
-      }
+      return ByteUtil.toHexString(nf).equals(ByteUtil.toHexString(listBytes));
     } else {
       // trigger contract failed
-      spendResult = NoteTRC20SpendResult.newBuilder()
-          .setMessage("unknown spent status")
-          .build();
+      throw new ContractExeException("trigger contract error.");
     }
-
-    return spendResult;
   }
 
   public DecryptNotesTRC20 scanShieldedTRC20NotesByIvk(
@@ -3316,15 +3300,17 @@ public class Wallet {
     return result;
   }
 
-  public GrpcAPI.NoteTRC20SpendResult isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request) throws
+  public GrpcAPI.NullifierResult isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request) throws
       ZksnarkException, ContractExeException {
     checkFullNodeAllowShieldedTransaction();
 
-    return isShieldedTRC20NoteSpent(request.getNote(),
-        request.getPosition(),
-        request.getAk().toByteArray(),
-        request.getNk().toByteArray(),
-        request.getShieldedTRC20ContractAddress().toByteArray());
+    return GrpcAPI.NullifierResult.newBuilder()
+        .setIsSpent(isShieldedTRC20NoteSpent(request.getNote(),
+            request.getPosition(),
+            request.getAk().toByteArray(),
+            request.getNk().toByteArray(),
+            request.getShieldedTRC20ContractAddress().toByteArray()))
+        .build();
   }
 
   private BigInteger getBigIntegerFromString(String in) {

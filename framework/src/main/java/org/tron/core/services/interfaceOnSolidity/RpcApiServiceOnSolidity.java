@@ -469,7 +469,7 @@ public class RpcApiServiceOnSolidity implements Service {
 
     @Override
     public void isShieldedTRC20ContractNoteSpent(GrpcAPI.NfTRC20Parameters request,
-        StreamObserver<GrpcAPI.NoteTRC20SpendResult> responseObserver) {
+        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
       walletOnSolidity.futureGet(
           () -> rpcApiService.getWalletSolidityApi()
               .isShieldedTRC20ContractNoteSpent(request, responseObserver)

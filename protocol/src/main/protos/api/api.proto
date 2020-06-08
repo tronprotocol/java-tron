@@ -719,7 +719,7 @@ service Wallet {
   rpc ScanShieldedTRC20NotesByOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NoteTRC20SpendResult) {
+  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
   };
 
   rpc GetTriggerInputForShieldedTRC20Contract (ShieldedTRC20TriggerContractParameters) returns (BytesMessage) {
@@ -884,7 +884,7 @@ service WalletSolidity {
   rpc ScanShieldedTRC20NotesByOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NoteTRC20SpendResult) {
+  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
   };
 
   rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
@@ -1404,7 +1404,7 @@ message DecryptNotesTRC20 {
   message NoteTx {
     Note note = 1;
     int64 position = 2;
-    NoteTRC20SpendResult is_spent = 3;
+    bool is_spent = 3;
     bytes txid = 4;
     int32 index = 5; //the index of note in txid
     string to_amount = 6;
@@ -1423,11 +1423,6 @@ message NfTRC20Parameters {
 
 message NullifierResult {
   bool is_spent = 1;
-}
-
-message NoteTRC20SpendResult {
-  bool is_spent = 1;
-  string message = 2;
 }
 
 message ShieldedTRC20TriggerContractParameters {

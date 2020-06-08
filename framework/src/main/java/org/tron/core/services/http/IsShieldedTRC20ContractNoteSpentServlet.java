@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.NfTRC20Parameters;
 import org.tron.core.Wallet;
 
@@ -29,7 +28,7 @@ public class IsShieldedTRC20ContractNoteSpentServlet extends RateLimiterServlet 
       boolean visible = Util.getVisiblePost(input);
       NfTRC20Parameters.Builder build = NfTRC20Parameters.newBuilder();
       JsonFormat.merge(input, build, visible);
-      GrpcAPI.NoteTRC20SpendResult result = wallet.isShieldedTRC20ContractNoteSpent(build.build());
+      GrpcAPI.NullifierResult result = wallet.isShieldedTRC20ContractNoteSpent(build.build());
       response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {
       Util.processError(e, response);

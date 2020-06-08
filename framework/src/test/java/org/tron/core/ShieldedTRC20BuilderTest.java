@@ -2001,7 +2001,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
       NfBuilfer.setNote(scannedNotes.getNoteTxs(0).getNote());
     }
 
-    GrpcAPI.NoteTRC20SpendResult result = wallet
+    GrpcAPI.NullifierResult result = wallet
         .isShieldedTRC20ContractNoteSpent(NfBuilfer.build());
     Assert.assertTrue(result.getIsSpent());
   }
