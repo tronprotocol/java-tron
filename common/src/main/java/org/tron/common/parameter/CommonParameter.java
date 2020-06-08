@@ -302,7 +302,7 @@ public class CommonParameter {
   public boolean fullNodeAllowShieldedTransactionArgs;
   @Getter
   @Setter
-  public long blockNumForEneryLimit;
+  public long blockNumForEnergyLimit;
   @Getter
   @Setter
   @Parameter(names = {"--es"})
