@@ -450,26 +450,26 @@ public class RpcApiServiceOnSolidity implements Service {
     }
 
     @Override
-    public void scanShieldedTRC20NotesbyIvk(GrpcAPI.IvkDecryptTRC20Parameters request,
+    public void scanShieldedTRC20NotesByIvk(GrpcAPI.IvkDecryptTRC20Parameters request,
         StreamObserver<GrpcAPI.DecryptNotesTRC20> responseObserver) {
       walletOnSolidity.futureGet(
           () -> rpcApiService.getWalletSolidityApi()
-              .scanShieldedTRC20NotesbyIvk(request, responseObserver)
+              .scanShieldedTRC20NotesByIvk(request, responseObserver)
       );
     }
 
     @Override
-    public void scanShieldedTRC20NotesbyOvk(GrpcAPI.OvkDecryptTRC20Parameters request,
+    public void scanShieldedTRC20NotesByOvk(GrpcAPI.OvkDecryptTRC20Parameters request,
         StreamObserver<GrpcAPI.DecryptNotesTRC20> responseObserver) {
       walletOnSolidity.futureGet(
           () -> rpcApiService.getWalletSolidityApi()
-              .scanShieldedTRC20NotesbyOvk(request, responseObserver)
+              .scanShieldedTRC20NotesByOvk(request, responseObserver)
       );
     }
 
     @Override
     public void isShieldedTRC20ContractNoteSpent(GrpcAPI.NfTRC20Parameters request,
-        StreamObserver<GrpcAPI.NullifierResult> responseObserver) {
+        StreamObserver<GrpcAPI.NoteTRC20SpendResult> responseObserver) {
       walletOnSolidity.futureGet(
           () -> rpcApiService.getWalletSolidityApi()
               .isShieldedTRC20ContractNoteSpent(request, responseObserver)

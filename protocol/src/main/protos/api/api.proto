@@ -713,13 +713,13 @@ service Wallet {
   rpc CreateShieldedContractParametersWithoutAsk (PrivateShieldedTRC20ParametersWithoutAsk) returns (ShieldedTRC20Parameters) {
   };
 
-  rpc ScanShieldedTRC20NotesbyIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  rpc ScanShieldedTRC20NotesByIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc ScanShieldedTRC20NotesbyOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  rpc ScanShieldedTRC20NotesByOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
+  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NoteTRC20SpendResult) {
   };
 
   rpc GetTriggerInputForShieldedTRC20Contract (ShieldedTRC20TriggerContractParameters) returns (BytesMessage) {
@@ -878,13 +878,13 @@ service WalletSolidity {
   rpc IsSpend (NoteParameters) returns (SpendResult) {
   }
 
-  rpc ScanShieldedTRC20NotesbyIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  rpc ScanShieldedTRC20NotesByIvk (IvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc ScanShieldedTRC20NotesbyOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
+  rpc ScanShieldedTRC20NotesByOvk (OvkDecryptTRC20Parameters) returns (DecryptNotesTRC20) {
   };
 
-  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NullifierResult) {
+  rpc IsShieldedTRC20ContractNoteSpent (NfTRC20Parameters) returns (NoteTRC20SpendResult) {
   };
 
   rpc GetRewardInfo (BytesMessage) returns (NumberMessage) {
@@ -1404,7 +1404,7 @@ message DecryptNotesTRC20 {
   message NoteTx {
     Note note = 1;
     int64 position = 2;
-    bool is_spent = 3;
+    NoteTRC20SpendResult is_spent = 3;
     bytes txid = 4;
     int32 index = 5; //the index of note in txid
     string to_amount = 6;
@@ -1423,6 +1423,11 @@ message NfTRC20Parameters {
 
 message NullifierResult {
   bool is_spent = 1;
+}
+
+message NoteTRC20SpendResult {
+  bool is_spent = 1;
+  string message = 2;
 }
 
 message ShieldedTRC20TriggerContractParameters {

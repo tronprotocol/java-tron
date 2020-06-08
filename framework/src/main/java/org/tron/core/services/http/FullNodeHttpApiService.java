@@ -232,9 +232,9 @@ public class FullNodeHttpApiService implements Service {
   private CreateShieldedContractParametersWithoutAskServlet
       createShieldedContractParametersWithoutAskServlet;
   @Autowired
-  private ScanShieldedTRC20NotesbyIvkServlet scanShieldedTRC20NotesbyIvkServlet;
+  private ScanShieldedTRC20NotesByIvkServlet scanShieldedTRC20NotesByIvkServlet;
   @Autowired
-  private ScanShieldedTRC20NotesbyOvkServlet scanShieldedTRC20NotesbyOvkServlet;
+  private ScanShieldedTRC20NotesByOvkServlet scanShieldedTRC20NotesByOvkServlet;
   @Autowired
   private GetTriggerInputForShieldedTRC20ContractServlet
       getTriggerInputForShieldedTRC20ContractServlet;
@@ -414,9 +414,9 @@ public class FullNodeHttpApiService implements Service {
           "/createshieldedcontractparameters");
       context.addServlet(new ServletHolder(createShieldedContractParametersWithoutAskServlet),
           "/createshieldedcontractparameterswithoutask");
-      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyIvkServlet),
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByIvkServlet),
           "/scanshieldedtrc20notesbyivk");
-      context.addServlet(new ServletHolder(scanShieldedTRC20NotesbyOvkServlet),
+      context.addServlet(new ServletHolder(scanShieldedTRC20NotesByOvkServlet),
           "/scanshieldedtrc20notesbyovk");
       context.addServlet(new ServletHolder(getTriggerInputForShieldedTRC20ContractServlet),
           "/gettriggerinputforshieldedtrc20contract");

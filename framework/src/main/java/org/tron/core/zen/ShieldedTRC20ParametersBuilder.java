@@ -151,11 +151,13 @@ public class ShieldedTRC20ParametersBuilder {
     if (ByteArray.isEmpty(cm)) {
       throw new ZksnarkException("Output is invalid");
     }
+
     Optional<Note.NotePlaintextEncryptionResult> res = output.getNote()
         .encrypt(output.getNote().getPkD());
     if (!res.isPresent()) {
       throw new ZksnarkException("Failed to encrypt note");
     }
+
     Note.NotePlaintextEncryptionResult enc = res.get();
     NoteEncryption encryptor = enc.getNoteEncryption();
     byte[] cv = new byte[32];
@@ -171,21 +173,25 @@ public class ShieldedTRC20ParametersBuilder {
             zkProof))) {
       throw new ZksnarkException("Output proof failed");
     }
+
     if (ArrayUtils.isEmpty(output.ovk) || output.ovk.length != 32) {
       throw new ZksnarkException("ovk is null or invalid and ovk should be 32 bytes (256 bit)");
     }
+
     ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
     receiveDescriptionCapsule.setValueCommitment(cv);
     receiveDescriptionCapsule.setNoteCommitment(cm);
     receiveDescriptionCapsule.setEpk(encryptor.getEpk());
     receiveDescriptionCapsule.setCEnc(enc.getEncCiphertext());
     receiveDescriptionCapsule.setZkproof(zkProof);
+
     OutgoingPlaintext outPlaintext =
         new OutgoingPlaintext(output.getNote().getPkD(), encryptor.getEsk());
     receiveDescriptionCapsule.setCOut(outPlaintext
         .encrypt(output.ovk, receiveDescriptionCapsule.getValueCommitment().toByteArray(),
             receiveDescriptionCapsule.getCm().toByteArray(),
             encryptor).getData());
+
     return receiveDescriptionCapsule;
   }
 
@@ -226,8 +232,7 @@ public class ShieldedTRC20ParametersBuilder {
         padding);
   }
 
-  public ShieldedTRC20Parameters build(boolean withAsk)
-      throws ZksnarkException {
+  public ShieldedTRC20Parameters build(boolean withAsk) throws ZksnarkException {
     // Empty output script
     byte[] mergedBytes;
     byte[] dataHashToBeSigned; //256
@@ -236,6 +241,7 @@ public class ShieldedTRC20ParametersBuilder {
     ShieldContract.ReceiveDescription receiveDescription;
     ShieldedTRC20Parameters shieldedTRC20Parameters;
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
+
     try {
       switch (shieldedTRC20ParametersType) {
         case MINT:
@@ -258,6 +264,7 @@ public class ShieldedTRC20ParametersBuilder {
             mergedBytes = ByteUtil.merge(mergedBytes,
                 encodeSpendDescriptionWithoutSpendAuthSig(spendDescription));
           }
+
           // Create OutputDescriptions
           byte[] cencCout = new byte[0];
           for (ReceiveDescriptionInfo receiveD : receives) {
@@ -282,12 +289,14 @@ public class ShieldedTRC20ParametersBuilder {
           builder.setParameterType("burn");
           break;
         default:
-          mergedBytes = null;
+          throw new ZksnarkException("unknown parameters type");
       }
+
       dataHashToBeSigned = Sha256Hash.of(true, mergedBytes).getBytes();
       if (dataHashToBeSigned == null) {
         throw new ZksnarkException("calculate transaction hash failed");
       }
+
       if (withAsk) {
         createSpendAuth(dataHashToBeSigned);
       }
@@ -306,12 +315,14 @@ public class ShieldedTRC20ParametersBuilder {
     } finally {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     }
+
     if (withAsk || shieldedTRC20ParametersType == ShieldedTRC20ParametersType.MINT) {
       shieldedTRC20Parameters = builder.build();
       builder.setTriggerContractInput(
           getTriggerContractInput(shieldedTRC20Parameters, null, value, true,
               transparentToAddress));
     }
+
     if (!withAsk && shieldedTRC20ParametersType == ShieldedTRC20ParametersType.BURN) {
       builder.setTriggerContractInput(Hex.toHexString(burnCiphertext));
     }
