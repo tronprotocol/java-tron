@@ -67,9 +67,9 @@ public class MaintenanceManager {
       }
       consensusDelegate.updateNextMaintenanceTime(blockTime);
       if (blockNum != 1) {
-        nextMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
         //pbft sr msg
-        pbftManager.srPrePrepare(blockCapsule, currentWitness, nextMaintenanceTime);
+        pbftManager.srPrePrepare(blockCapsule, currentWitness,
+            consensusDelegate.getNextMaintenanceTime());
       }
     }
     consensusDelegate.saveStateFlag(flag ? 1 : 0);
