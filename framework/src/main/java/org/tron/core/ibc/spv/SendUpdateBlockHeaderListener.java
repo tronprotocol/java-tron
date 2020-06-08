@@ -75,13 +75,11 @@ public class SendUpdateBlockHeaderListener implements EventListener<PbftBlockCom
     });
   }
 
-  protected void setSrList(Builder builder, long blockTime) {
+  protected synchronized void setSrList(Builder builder, long blockTime) {
     //
-    long genBlockTime = manager.getGenesisBlock().getTimeStamp();
-    long round = (blockTime - genBlockTime) / DBConfig
-        .getMaintenanceTimeInterval() * DBConfig.getMaintenanceTimeInterval();
+    long round = blockTime / DBConfig.getMaintenanceTimeInterval();
     long maintenanceTime = round * DBConfig.getMaintenanceTimeInterval();
-    if (maintenanceTime != latestMaintenanceTime) {
+    if (maintenanceTime > latestMaintenanceTime) {
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
@@ -89,6 +87,8 @@ public class SendUpdateBlockHeaderListener implements EventListener<PbftBlockCom
       }
       PbftSignCapsule srSignCapsule = chainBaseManager.getPbftSignDataStore()
           .getSrSignData(maintenanceTime);
+      logger.info("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}, srSignCapsule:{}",
+          maintenanceTime, latestMaintenanceTime, srSignCapsule);
       if (srSignCapsule != null) {
         latestMaintenanceTime = maintenanceTime;
         builder.setSrList(srSignCapsule.getInstance());

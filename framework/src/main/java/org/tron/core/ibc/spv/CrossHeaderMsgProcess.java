@@ -4,6 +4,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.ibc.connect.CrossChainConnectPool;
 import org.tron.core.ibc.spv.message.BlockHeaderInventoryMesasge;
 import org.tron.core.ibc.spv.message.BlockHeaderRequestMessage;
@@ -79,7 +81,7 @@ public class CrossHeaderMsgProcess {
   }
 
   public void handleCrossUpdatedNotice(PeerConnection peer, TronMessage msg)
-      throws BadBlockException {
+      throws BadBlockException, InvalidProtocolBufferException, ValidateSignatureException {
     BlockHeaderUpdatedNoticeMessage noticeMessage = (BlockHeaderUpdatedNoticeMessage) msg;
     ByteString chainId = ByteString.copyFrom(noticeMessage.getChainId());
     String chainIdStr = ByteArray.toHexString(chainId.toByteArray());
@@ -178,17 +180,17 @@ public class CrossHeaderMsgProcess {
 
   protected void setSrList(Builder builder, String chainIdString, long blockTime) {
     //
-    long genBlockTime = manager.getGenesisBlock().getTimeStamp();
-    long round = (blockTime - genBlockTime) / DBConfig
-        .getMaintenanceTimeInterval() * DBConfig.getMaintenanceTimeInterval();
+    long round = blockTime / DBConfig.getMaintenanceTimeInterval();
     long maintenanceTime = round * DBConfig.getMaintenanceTimeInterval();
     Long latestMaintenanceTime = latestMaintenanceTimeMap.get(chainIdString);
     latestMaintenanceTime = latestMaintenanceTime == null ? 0 : latestMaintenanceTime;
-    if (maintenanceTime != latestMaintenanceTime) {
-      latestMaintenanceTimeMap.put(chainIdString, maintenanceTime);
+    logger.info("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
+        latestMaintenanceTime);
+    if (maintenanceTime > latestMaintenanceTime) {
       PbftSignCapsule srSignCapsule = chainBaseManager.getPbftSignDataStore()
           .getSrSignData(maintenanceTime);
       if (srSignCapsule != null) {
+        latestMaintenanceTimeMap.put(chainIdString, maintenanceTime);
         builder.setSrList(srSignCapsule.getInstance());
       }
     }
@@ -288,7 +290,7 @@ public class CrossHeaderMsgProcess {
           }
         } catch (InterruptedException e) {
           logger.error("", e);
-        } catch (BadBlockException e) {
+        } catch (BadBlockException | ValidateSignatureException | InvalidProtocolBufferException e) {
           chainHeaderCache.get(chainId).invalidate(localLatestHeight + 1);
           logger.error("", e);
         } catch (Exception e) {

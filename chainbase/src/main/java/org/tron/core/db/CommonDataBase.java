@@ -3,10 +3,8 @@ package org.tron.core.db;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.math.BigInteger;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
@@ -132,20 +130,21 @@ public class CommonDataBase extends TronDatabase<byte[]> {
 
   public Protocol.SRL getSRL(String chainId, long epoch) {
     byte[] value = get(buildKey(ByteArray.fromLong(epoch), chainId));
-    if (value == null || value.length == 0) {
-      return Protocol.SRL.newBuilder().build();
+    if (ByteUtil.isNullOrZeroArray(value)) {
+      return null;
     } else {
       try {
         return Protocol.SRL.parseFrom(value);
       } catch (InvalidProtocolBufferException e) {
-        return Protocol.SRL.newBuilder().build();
+        logger.error("", e);
+        return null;
       }
     }
   }
 
   public void saveSRL(String chainId, long epoch, Protocol.SRL srl) {
     Protocol.SRL value = getSRL(chainId, epoch);
-    if (value.getSrAddressCount() == 0) {
+    if (value == null) {
       put(buildKey(ByteArray.fromLong(epoch), chainId), srl.toByteArray());
     }
   }

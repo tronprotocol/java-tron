@@ -344,7 +344,7 @@ public class BlockHeaderSyncHandler2 {
   }
 
   public boolean verifyBlockPbftSign(BlockHeader blockHeader) throws BadBlockException {
-    return headerManager.validBlockPbftSign(blockHeader, null);
+    return headerManager.validBlockPbftSign(blockHeader, null, null);
   }
 
   public void updateBlockHeader() {

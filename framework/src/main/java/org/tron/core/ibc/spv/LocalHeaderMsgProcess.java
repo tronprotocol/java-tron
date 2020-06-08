@@ -76,6 +76,8 @@ public class LocalHeaderMsgProcess {
     long maintenanceTime = round * DBConfig.getMaintenanceTimeInterval();
     Long latestMaintenanceTime = latestMaintenanceTimeMap.get(chainIdString);
     latestMaintenanceTime = latestMaintenanceTime == null ? 0 : latestMaintenanceTime;
+    logger.info("set sr list, maintenanceTime:{}, latestMaintenanceTime:{}", maintenanceTime,
+        latestMaintenanceTime);
     if (maintenanceTime > latestMaintenanceTime) {
       PbftSignCapsule srSignCapsule = chainBaseManager.getPbftSignDataStore()
           .getCrossSrSignData(chainIdString, maintenanceTime);
