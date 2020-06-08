@@ -21,11 +21,15 @@ package org.tron.core;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static stest.tron.wallet.common.client.utils.PublicMethed.decode58Check;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -42,18 +46,21 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
@@ -81,6 +88,8 @@ public class WalletTest {
   public static final long BLOCK_NUM_THREE = 3;
   public static final long BLOCK_NUM_FOUR = 4;
   public static final long BLOCK_NUM_FIVE = 5;
+  public static final long CYCLE_NUM_ONE = 1;
+  public static final long CYCLE_NUM_TWO = 2;
   public static final long BLOCK_TIMESTAMP_ONE = DateTime.now().minusDays(4).getMillis();
   public static final long BLOCK_TIMESTAMP_TWO = DateTime.now().minusDays(3).getMillis();
   public static final long BLOCK_TIMESTAMP_THREE = DateTime.now().minusDays(2).getMillis();
@@ -517,4 +526,127 @@ public class WalletTest {
     System.out.printf(builder.build().toString());
   }
 
+  @Test
+  public void getRewardOfVoteEachBlock() {
+    long l = wallet.getRewardOfVoteEachBlock();
+    System.out.println(l);
+    Assert.assertEquals(16000000L,l);
+  }
+
+  @Test
+  public void getRewardOfBlockEachBlock() {
+    long l = wallet.getRewardOfBlockEachBlock();
+    Assert.assertEquals(32000000L,l);
+  }
+
+  @Test
+  public void queryVoteNumberZero() {
+    double v = wallet.queryVoteNumber(ACCOUNT_ADDRESS_ONE.getBytes(),
+        CYCLE_NUM_ONE, CYCLE_NUM_TWO);
+    Assert.assertEquals(0.0,v,0);
+  }
+
+  @Test
+  public void queryTotalVoteNumber() {
+    double v = wallet.queryTotalVoteNumber(CYCLE_NUM_ONE, CYCLE_NUM_ONE);
+    int srNumber = wallet.getSrNumber();
+    Assert.assertEquals(-srNumber,v,0);
+  }
+
+  @Test
+  public void getBlockNumberEachDay() {
+    double v = wallet.getBlockNumberEachDay();
+    Assert.assertEquals(28792,v,0);
+  }
+
+  @Test
+  public void getAnnualizedRateOfReturn() throws Exception {
+    double v = wallet.getAnnualizedRateOfReturn(1,1,
+        1,1,1,1,1);
+    Assert.assertEquals(730,v,0);
+    double v1 = wallet.getAnnualizedRateOfReturn(1,1,
+        1,0,1,1,1);
+    Assert.assertEquals(0,v1,0);
+  }
+
+  @Test
+  public void getVoteList() {
+    long currentcycle = 10;
+    String OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+
+    AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+        110_000_000L);
+    chainBaseManager.getDelegationStore()
+        .setAccountVote(currentcycle, ACCOUNT_ADDRESS_ONE.getBytes(), ownerCapsule);
+    chainBaseManager.getDynamicPropertiesStore()
+        .saveCurrentCycleNumber(currentcycle + 10);
+
+    Assert.assertNotNull(
+        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle));
+    Assert.assertNull(
+        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle + 1));
+    Assert.assertNotNull(
+        wallet.getVoteList(ACCOUNT_ADDRESS_ONE.getBytes(), currentcycle - 1));
+  }
+
+  @Test
+  public void testQueryPayByCycle() {
+    String OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    long start = 10;
+    long end = start + 60;
+    {
+      chainBaseManager.getDynamicPropertiesStore().saveChangeDelegation(0);
+      Assert.assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+          .getBytes(), start, end).size(), 0);
+    }
+    {
+      chainBaseManager.getDynamicPropertiesStore().saveChangeDelegation(1);
+      Assert.assertEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+          .getBytes(), start, end).size(), 0);
+    }
+    {
+      AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
+          ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
+          110_000_000L);
+      chainBaseManager.getAccountStore().put(OWNER_ADDRESS
+          .getBytes(), ownerCapsule);
+      Assert.assertNotEquals(wallet.queryPayByCycle(OWNER_ADDRESS
+          .getBytes(), start, end).size(), 0);
+    }
+  }
+
+  @Test
+  public void testPercentageOfBlockReward() {
+    String OWNER_ADDRESS =
+        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+    long beginCycle = 60;
+    long endCycle = 10;
+    double result = 0;
+    Assert.assertEquals(wallet.percentageOfBlockReward(beginCycle, endCycle, OWNER_ADDRESS
+        .getBytes()), result, 10);
+  }
+
+  @Test
+  public void checkAddress() {
+    List<ByteString> witnessAddresses = new ArrayList<>();
+    byte[] address = decode58Check("TT1smsmhxype64boboU8xTuNZVCKP1w6qT");
+    witnessAddresses.add(ByteString.copyFrom(address));
+    chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(witnessAddresses);
+    Assert.assertTrue(wallet.checkAddress(address));
+  }
+
+  @Test
+  public void existAddress() {
+    byte[] address = decode58Check("TT1smsmhxype64boboU8xTuNZVCKP1w6qT");
+    byte[] address1 = decode58Check("TB4B1RMhoPeivkj4Hebm6tttHjRY9yQFes");
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+    chainBaseManager.getWitnessStore().put(address, witnessCapsule);
+    Assert.assertTrue(wallet.existAddress(address));
+    Assert.assertFalse(wallet.existAddress(address1));
+  }
+
 }
+

@@ -11,6 +11,7 @@ public class Parameter {
     VERSION_3_6(8),
     VERSION_3_6_5(9),
     VERSION_3_6_6(10),
+    VERSION_3_8(16),
     VERSION_4_0(15);
 
     @Getter
@@ -44,7 +45,7 @@ public class Parameter {
     public static final int SINGLE_REPEAT = 1;
     public static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
     public static final int MAX_FROZEN_NUMBER = 1;
-    public static final int BLOCK_VERSION = 15;
+    public static final int BLOCK_VERSION = 16;
     public static final long FROZEN_PERIOD = 86_400_000L;
     public static final long TRX_PRECISION = 1000_000L;
   }

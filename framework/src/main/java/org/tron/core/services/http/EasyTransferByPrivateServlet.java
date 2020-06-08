@@ -37,12 +37,10 @@ public class EasyTransferByPrivateServlet extends RateLimiterServlet {
     EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
     boolean visible = false;
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
+      visible = params.isVisible();
       EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
+      JsonFormat.merge(params.getParams(), build, visible);
       byte[] privateKey = build.getPrivateKey().toByteArray();
       SignInterface ecKey = SignUtils.fromPrivate(privateKey, Args.getInstance()
           .isECKeyCryptoEngine());

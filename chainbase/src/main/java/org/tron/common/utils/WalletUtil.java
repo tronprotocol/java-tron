@@ -1,9 +1,7 @@
 package org.tron.common.utils;
 
-
 import static org.tron.common.utils.StringUtil.encode58Check;
 
-import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import org.tron.common.crypto.Hash;

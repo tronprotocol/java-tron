@@ -121,7 +121,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_SHIELDED_TRANSACTION = "ALLOW_SHIELDED_TRANSACTION".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
   private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
-  private static final byte[] FORBID_TRANSFER_TO_CONTRACT = "FORBID_TRANSFER_TO_CONTRACT".getBytes();
+  private static final byte[] FORBID_TRANSFER_TO_CONTRACT = "FORBID_TRANSFER_TO_CONTRACT"
+      .getBytes();
   //Used only for protobuf data filter , once，value is 0,1
   private static final byte[] ALLOW_PROTO_FILTER_NUM = "ALLOW_PROTO_FILTER_NUM"
       .getBytes();
@@ -131,6 +132,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
+  private static final byte[] ALLOW_PBFT = "ALLOW_PBFT".getBytes();
+  private static final byte[] CURRENT_CYCLE_TIMESTAMP = "CURRENT_CYCLE_TIMESTAMP".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -505,13 +508,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getForbidTransferToContract();
-    } catch (IllegalArgumentException e) {
-      this.saveForbidTransferToContract(CommonParameter.getInstance()
-          .getForbidTransferToContract());
-    }
-
-    try {
       this.getAvailableContractType();
     } catch (IllegalArgumentException e) {
       String contractType = "7fff1fc0037e0000000000000000000000000000000000000000000000000000";
@@ -624,6 +620,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveChangeDelegation(CommonParameter.getInstance()
           .getChangedDelegation());
+    }
+
+    try {
+      this.getAllowPBFT();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowPBFT(CommonParameter.getInstance().getAllowPBFT());
     }
 
   }
@@ -1099,7 +1101,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE"));
+            () -> new IllegalArgumentException(
+                "not found SHIELDED_TRANSACTION_CREATE_ACCOUNT_FEE"));
   }
 
   public void saveShieldedTransactionCreateAccountFee(long fee) {
@@ -1809,6 +1812,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_STATE_ROOT"));
   }
 
+  public void saveCurrentCycleTiimeStamp(long timeStamp) {
+    this.put(CURRENT_CYCLE_TIMESTAMP, new BytesCapsule(ByteArray.fromLong(timeStamp)));
+
+  }
+
+  public long getCurrentCycleTimeStamp() {
+    return Optional.ofNullable(getUnchecked(CURRENT_CYCLE_TIMESTAMP))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
   public boolean allowAccountStateRoot() {
     return getAllowAccountStateRoot() == 1;
   }
@@ -1838,6 +1853,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowChangeDelegation() {
     return getChangeDelegation() == 1;
+  }
+
+  public void saveAllowPBFT(long number) {
+    this.put(ALLOW_PBFT,
+        new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getAllowPBFT() {
+    return Optional.ofNullable(getUnchecked(ALLOW_PBFT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_PBFT"));
+  }
+
+  public boolean allowPBFT() {
+    return getAllowPBFT() == 1;
   }
 
   private static class DynamicResourceProperties {

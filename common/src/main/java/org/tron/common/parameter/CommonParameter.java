@@ -371,11 +371,31 @@ public class CommonParameter {
   public boolean solidityNodeHttpEnable = true;
   @Getter
   @Setter
+  public boolean nodeHttpStatisticsSRRewardEnable = false;
+  @Getter
+  @Setter
   public int maxTransactionPendingSize;
 
   @Getter
   @Setter
   public boolean nodeMetricsEnable = true;
+
+  @Getter
+  @Setter
+  public int agreeNodeCount;
+
+  @Getter
+  @Setter
+  public long allowPBFT;
+  @Getter
+  @Setter
+  public int rpcOnPBFTPort;
+  @Getter
+  @Setter
+  public int pBFTHttpPort;
+  @Getter
+  @Setter
+  public long oldSolidityBlockNum = -1;
 
   private static double calcMaxTimeRatio() {
     //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));

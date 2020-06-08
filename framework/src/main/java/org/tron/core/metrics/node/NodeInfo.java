@@ -1,6 +1,7 @@
 package org.tron.core.metrics.node;
 
 public class NodeInfo {
+
   private String ip;
   private int nodeType;
   private String version;

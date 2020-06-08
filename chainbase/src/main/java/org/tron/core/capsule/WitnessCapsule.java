@@ -5,8 +5,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Protocol.Witness;
-
-import static org.tron.common.crypto.Hash.computeAddress;
 import static org.tron.common.crypto.Hash.computeAddress;
 
 @Slf4j(topic = "capsule")

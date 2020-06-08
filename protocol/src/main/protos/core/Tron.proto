@@ -606,7 +606,7 @@ message NodeInfo {
     double cpuRate = 6;
     string javaVersion = 7;
     string osName = 8;
-    int64 jvmTotalMemoery = 9;
+    int64 jvmTotalMemory = 9;
     int64 jvmFreeMemory = 10;
     double processCpuRate = 11;
     repeated MemoryDescInfo memoryDescInfoList = 12;
@@ -736,3 +736,34 @@ message MetricsInfo {
   }
 }
 
+message PBFTMessage {
+  enum MsgType {
+    VIEW_CHANGE = 0;
+    REQUEST = 1;
+    PREPREPARE = 2;
+    PREPARE = 3;
+    COMMIT = 4;
+  }
+  enum DataType {
+    BLOCK = 0;
+    SRL = 1;
+  }
+  message Raw {
+    MsgType msg_type = 1;
+    DataType data_type = 2;
+    int64 view_n = 3;
+    int64 epoch = 4;
+    bytes data = 5;
+  }
+  Raw raw_data = 1;
+  bytes signature = 2;
+}
+
+message PBFTCommitResult {
+  bytes data = 1;
+  repeated bytes signature = 2;
+}
+
+message SRL {
+  repeated bytes srAddress = 1;
+}

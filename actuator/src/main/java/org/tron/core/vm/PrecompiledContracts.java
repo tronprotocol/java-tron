@@ -48,6 +48,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignUtils;
+import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
 import org.tron.common.crypto.zksnark.BN128G1;
@@ -347,6 +348,7 @@ public class PrecompiledContracts {
       if (data == null) {
         data = EMPTY_BYTE_ARRAY;
       }
+
       byte[] orig = Sha256Hash.hash(CommonParameter.getInstance()
           .isECKeyCryptoEngine(), data);
       System.arraycopy(orig, 0, target, 0, 20);

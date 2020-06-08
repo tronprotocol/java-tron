@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -47,11 +48,16 @@ import org.tron.common.args.GenesisBlock;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
+import org.tron.common.logsfilter.capsule.ContractLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.trigger.ContractEventTrigger;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
@@ -83,6 +89,7 @@ import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.ISession;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -760,7 +767,7 @@ public class Manager {
       TransactionExpirationException, NonCommonBlockException, ReceiptCheckErrException,
       VMIllegalException, ZksnarkException, BadBlockException {
 
-    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FORK_COUNT, 1);
+    MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FORK_COUNT);
 
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
@@ -768,7 +775,7 @@ public class Manager {
           khaosDb.getBranch(
               newHead.getBlockId(), getDynamicPropertiesStore().getLatestBlockHeaderHash());
     } catch (NonCommonBlockException e) {
-      MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT, 1);
+      MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT);
       logger.info(
           "this is not the most recent common ancestor, "
               + "need to remove all blocks in the fork chain.");
@@ -797,7 +804,7 @@ public class Manager {
         Exception exception = null;
         // todo  process the exception carefully later
         try (ISession tmpSession = revokingStore.buildSession()) {
-          applyBlock(item.getBlk());
+          applyBlock(item.getBlk().setSwitch(true));
           tmpSession.commit();
         } catch (AccountResourceInsufficientException
             | ValidateSignatureException
@@ -818,7 +825,7 @@ public class Manager {
           throw e;
         } finally {
           if (exception != null) {
-            MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT, 1);
+            MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT);
             logger.warn("switch back because exception thrown while switching forks. " + exception
                     .getMessage(),
                 exception);
@@ -836,7 +843,7 @@ public class Manager {
             for (KhaosBlock khaosBlock : second) {
               // todo  process the exception carefully later
               try (ISession tmpSession = revokingStore.buildSession()) {
-                applyBlock(khaosBlock.getBlk());
+                applyBlock(khaosBlock.getBlk().setSwitch(true));
                 tmpSession.commit();
               } catch (AccountResourceInsufficientException
                   | ValidateSignatureException
@@ -1361,6 +1368,37 @@ public class Manager {
     }
   }
 
+  private void postSolitityLogContractTrigger(Long blockNum) {
+    if (Args.getSolidityContractLogTriggerList().get(blockNum) == null) {
+      return;
+    }
+    for (ContractLogTrigger logTriggerCapsule : Args
+        .getSolidityContractLogTriggerList().get(blockNum)) {
+      if (chainBaseManager.getTransactionStore().getUnchecked(ByteArray.fromHexString(
+          logTriggerCapsule.getTransactionId())) != null) {
+        logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
+        EventPluginLoader.getInstance().postSolidityLogTrigger(logTriggerCapsule);
+      }
+    }
+    Args.getSolidityContractLogTriggerList().remove(blockNum);
+  }
+
+  private void postSolitityEventContractTrigger(Long blockNum) {
+    if (Args.getSolidityContractEventTriggerList().get(blockNum) == null) {
+      return;
+    }
+    for (ContractEventTrigger eventTriggerCapsule : Args
+        .getSolidityContractEventTriggerList().get(blockNum)) {
+      if (chainBaseManager.getTransactionStore()
+          .getUnchecked(ByteArray.fromHexString(eventTriggerCapsule
+          .getTransactionId())) != null) {
+        eventTriggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
+        EventPluginLoader.getInstance().postSolidityEventTrigger(eventTriggerCapsule);
+      }
+    }
+    Args.getSolidityContractEventTriggerList().remove(blockNum);
+  }
+
   private void updateTransHashCache(BlockCapsule block) {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       this.transactionIdCache.put(transactionCapsule.getTransactionId(), true);
@@ -1481,8 +1519,22 @@ public class Manager {
     }
   }
 
-  public void setMode(boolean mode) {
-    revokingStore.setMode(mode);
+  public long getHeadBlockNum() {
+    return getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+  }
+
+  public void setCursor(Chainbase.Cursor cursor) {
+    if (cursor == Chainbase.Cursor.PBFT) {
+      long headNum = getHeadBlockNum();
+      long pbftNum = chainBaseManager.getCommonDataBase().getLatestPbftBlockNum();
+      revokingStore.setCursor(cursor, headNum - pbftNum);
+    } else {
+      revokingStore.setCursor(cursor);
+    }
+  }
+
+  public void resetCursor() {
+    revokingStore.setCursor(Chainbase.Cursor.HEAD, 0L);
   }
 
   private void startEventSubscribing() {
@@ -1506,13 +1558,25 @@ public class Manager {
   }
 
   private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
       SolidityTriggerCapsule solidityTriggerCapsule
           = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
       boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
       if (!result) {
         logger.info("too many trigger, lost solidified trigger, "
             + "block number: {}", latestSolidifiedBlockNumber);
+      }
+    }
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+      for (long i = Args.getInstance()
+          .getOldSolidityBlockNum() + 1; i <= latestSolidifiedBlockNumber; i++) {
+        postSolitityLogContractTrigger(i);
+      }
+    }
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
+      for (long i = Args.getInstance()
+          .getOldSolidityBlockNum() + 1; i <= latestSolidifiedBlockNumber; i++) {
+        postSolitityEventContractTrigger(i);
       }
     }
   }
@@ -1565,16 +1629,21 @@ public class Manager {
   }
 
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
+    boolean isContractTriggerEnable = EventPluginLoader.getInstance()
+        .isContractEventTriggerEnable() || EventPluginLoader
+        .getInstance().isContractLogTriggerEnable();
+    boolean isSolidityContractTriggerEnable = EventPluginLoader.getInstance()
+        .isSolidityEventTriggerEnable() || EventPluginLoader
+        .getInstance().isSolidityLogTriggerEnable();
     if (eventPluginLoaded
-        && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-        || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
+        && (isContractTriggerEnable || isSolidityContractTriggerEnable)) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
-        ContractTriggerCapsule contractEventTriggerCapsule = new ContractTriggerCapsule(trigger);
-        contractEventTriggerCapsule.getContractTrigger().setRemoved(remove);
-        contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
+        ContractTriggerCapsule contractTriggerCapsule = new ContractTriggerCapsule(trigger);
+        contractTriggerCapsule.getContractTrigger().setRemoved(remove);
+        contractTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
             .getLatestSolidifiedBlockNum());
-        if (!triggerCapsuleQueue.offer(contractEventTriggerCapsule)) {
+        if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
           logger
               .info("too many triggers, contract log trigger lost: {}", trigger.getTransactionId());
         }

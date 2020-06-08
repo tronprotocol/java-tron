@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.System.exit;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.beust.jcommander.JCommander;
 import com.typesafe.config.Config;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,6 +32,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.args.Account;
 import org.tron.common.args.GenesisBlock;
@@ -39,6 +42,8 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
+import org.tron.common.logsfilter.trigger.ContractEventTrigger;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.parameter.RateLimiterInitialization;
@@ -65,6 +70,16 @@ public class Args extends CommonParameter {
   @Getter
   @Setter
   private static LocalWitnesses localWitnesses = new LocalWitnesses();
+
+  @Autowired(required = false)
+  @Getter
+  private static ConcurrentHashMap<Long, List<ContractLogTrigger>>
+      solidityContractLogTriggerList =  new ConcurrentHashMap<>();
+
+  @Autowired(required = false)
+  @Getter
+  private static ConcurrentHashMap<Long, List<ContractEventTrigger>>
+      solidityContractEventTriggerList =  new ConcurrentHashMap<>();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
@@ -108,8 +123,10 @@ public class Args extends CommonParameter {
     PARAMETER.nodeP2pVersion = 0;
     PARAMETER.rpcPort = 0;
     PARAMETER.rpcOnSolidityPort = 0;
+    PARAMETER.rpcOnPBFTPort = 0;
     PARAMETER.fullNodeHttpPort = 0;
     PARAMETER.solidityHttpPort = 0;
+    PARAMETER.pBFTHttpPort = 0;
     PARAMETER.maintenanceTimeInterval = 0;
     PARAMETER.proposalExpireTime = 0;
     PARAMETER.checkFrozenTime = 1;
@@ -152,6 +169,8 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeHttpEnable = true;
     PARAMETER.solidityNodeHttpEnable = true;
     PARAMETER.nodeMetricsEnable = true;
+    PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    PARAMETER.allowPBFT = 0;
   }
 
   /**
@@ -275,6 +294,11 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(Constant.NODE_HTTP_SOLIDITY_ENABLE)) {
       PARAMETER.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
+    }
+
+    if (config.hasPath(Constant.NODE_HTTP_STATISTICS_SR_REWARD_SWITCH)) {
+      PARAMETER.nodeHttpStatisticsSRRewardEnable = config
+          .getBoolean(Constant.NODE_HTTP_STATISTICS_SR_REWARD_SWITCH);
     }
 
     if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {
@@ -418,6 +442,10 @@ public class Args extends CommonParameter {
         config.hasPath(Constant.NODE_RPC_SOLIDITY_PORT)
             ? config.getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50061;
 
+    PARAMETER.rpcOnPBFTPort =
+        config.hasPath(Constant.NODE_RPC_PBFT_PORT)
+            ? config.getInt(Constant.NODE_RPC_PBFT_PORT) : 50071;
+
     PARAMETER.fullNodeHttpPort =
         config.hasPath(Constant.NODE_HTTP_FULLNODE_PORT)
             ? config.getInt(Constant.NODE_HTTP_FULLNODE_PORT) : 8090;
@@ -425,6 +453,10 @@ public class Args extends CommonParameter {
     PARAMETER.solidityHttpPort =
         config.hasPath(Constant.NODE_HTTP_SOLIDITY_PORT)
             ? config.getInt(Constant.NODE_HTTP_SOLIDITY_PORT) : 8091;
+
+    PARAMETER.pBFTHttpPort =
+        config.hasPath(Constant.NODE_HTTP_PBFT_PORT)
+            ? config.getInt(Constant.NODE_HTTP_PBFT_PORT) : 8092;
 
     PARAMETER.rpcThreadNum =
         config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
@@ -642,6 +674,18 @@ public class Args extends CommonParameter {
     PARAMETER.changedDelegation =
         config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
             .getInt(Constant.COMMITTEE_CHANGED_DELEGATION) : 0;
+
+    PARAMETER.allowPBFT =
+        config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
+            .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
+
+    PARAMETER.agreeNodeCount = config.hasPath("node.agreeNodeCount") ? config
+        .getInt("node.agreeNodeCount") : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
+        ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
+    if (PARAMETER.isWitness()) {
+    //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    }
 
     initBackupProperty(config);
     if (Constant.ROCKSDB.equals(CommonParameter
@@ -1005,3 +1049,4 @@ public class Args extends CommonParameter {
     return this.outputDirectory;
   }
 }
+
