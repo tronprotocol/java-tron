@@ -12,6 +12,7 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.services.http.JsonFormat;
+import org.tron.core.services.http.PostParams;
 import org.tron.core.services.http.RateLimiterServlet;
 import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -29,8 +30,8 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
     try {
       boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
-      TransactionInfo transInfo = wallet.getTransactionInfoById(ByteString.copyFrom(
-          ByteArray.fromHexString(input)));
+      TransactionInfo transInfo = wallet
+          .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (transInfo == null) {
         response.getWriter().println("{}");
       } else {
@@ -49,17 +50,15 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
-      Util.checkBodySize(input);
-      boolean visible = Util.getVisiblePost(input);
+      PostParams params = PostParams.getPostParams(request);
+
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
+      JsonFormat.merge(params.getParams(), build, params.isVisible());
       TransactionInfo transInfo = wallet.getTransactionInfoById(build.build().getValue());
       if (transInfo == null) {
         response.getWriter().println("{}");
       } else {
-        response.getWriter().println(JsonFormat.printToString(transInfo, visible));
+        response.getWriter().println(JsonFormat.printToString(transInfo, params.isVisible()));
       }
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
@@ -70,4 +69,5 @@ public class GetTransactionInfoByIdSolidityServlet extends RateLimiterServlet {
       }
     }
   }
+
 }

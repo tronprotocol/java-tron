@@ -2298,7 +2298,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
 
       `osName`: os name.
 
-      `jvmTotalMemoery`: jvm total memory.
+      `jvmTotalMemory`: jvm total memory.
 
       `jvmFreeMemory`: jvm unused memory.
 
@@ -2368,7 +2368,7 @@ message `SmartContract` has mutiple attributes and nested message `ABI`
         double cpuRate = 6;
         string javaVersion = 7;
         string osName = 8;
-        int64 jvmTotalMemoery = 9;
+        int64 jvmTotalMemory = 9;
         int64 jvmFreeMemory = 10;
         double processCpuRate = 11;
         repeated MemoryDescInfo memoryDescInfoList = 12;

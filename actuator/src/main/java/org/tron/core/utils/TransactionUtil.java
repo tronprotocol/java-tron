@@ -23,7 +23,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.security.SignatureException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -35,7 +34,6 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -49,102 +47,68 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "capsule")
 @Component
 public class TransactionUtil {
 
+  private static final int maxAccountNameLen = 200;
+  private static final int maxAccountIdLen = 32;
+  private static final int minAccountIdLen = 8;
+  private static final int maxAssetNameLen = 32;
+  private static final int maxTokenAbbrNameLen = 5;
+  private static final int maxAssetDescriptionLen = 200;
+  private static final int maxUrlLen = 256;
+
   @Autowired
   private ChainBaseManager chainBaseManager;
 
   public static boolean validAccountName(byte[] accountName) {
-    if (ArrayUtils.isEmpty(accountName)) {
-      return true;   //account name can be empty
-    }
-
-    return accountName.length <= 200;
+    return validBytes(accountName, maxAccountNameLen, true);
   }
-
-  public static boolean validAccountId(byte[] accountId) {
-    if (ArrayUtils.isEmpty(accountId)) {
-      return false;
-    }
-
-    if (accountId.length < 8) {
-      return false;
-    }
-
-    if (accountId.length > 32) {
-      return false;
-    }
-    // b must read able.
-    for (byte b : accountId) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
-  }
-
-  public static boolean validAssetName(byte[] assetName) {
-    if (ArrayUtils.isEmpty(assetName)) {
-      return false;
-    }
-    if (assetName.length > 32) {
-      return false;
-    }
-    // b must read able.
-    for (byte b : assetName) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
-  }
-
-  public static boolean validTokenAbbrName(byte[] abbrName) {
-    if (ArrayUtils.isEmpty(abbrName)) {
-      return false;
-    }
-    if (abbrName.length > 5) {
-      return false;
-    }
-    // b must read able.
-    for (byte b : abbrName) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
-  }
-
 
   public static boolean validAssetDescription(byte[] description) {
-    if (ArrayUtils.isEmpty(description)) {
-      return true;   //description can empty
-    }
-
-    return description.length <= 200;
+    return validBytes(description, maxAssetDescriptionLen, true);
   }
 
   public static boolean validUrl(byte[] url) {
-    if (ArrayUtils.isEmpty(url)) {
+    return validBytes(url, maxUrlLen, false);
+  }
+
+  public static boolean validAccountId(byte[] accountId) {
+    return validReadableBytes(accountId, maxAccountIdLen) && accountId.length >= minAccountIdLen;
+  }
+
+  public static boolean validAssetName(byte[] assetName) {
+    return validReadableBytes(assetName, maxAssetNameLen);
+  }
+
+  public static boolean validTokenAbbrName(byte[] abbrName) {
+    return validReadableBytes(abbrName, maxTokenAbbrNameLen);
+  }
+
+  private static boolean validBytes(byte[] bytes, int maxLength, boolean allowEmpty) {
+    if (ArrayUtils.isEmpty(bytes)) {
+      return allowEmpty;
+    }
+    return bytes.length <= maxLength;
+  }
+
+  private static boolean validReadableBytes(byte[] bytes, int maxLength) {
+    if (ArrayUtils.isEmpty(bytes) || bytes.length > maxLength) {
       return false;
     }
-    return url.length <= 256;
+    // b must be readable
+    for (byte b : bytes) {
+      if (b < 0x21) {
+        return false; // 0x21 = '!'
+      }
+      if (b > 0x7E) {
+        return false; // 0x7E = '~'
+      }
+    }
+    return true;
   }
 
   public static boolean isNumber(byte[] id) {
@@ -191,42 +155,6 @@ public class TransactionUtil {
     }
   }
 
-  public static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
-
-    if (selector == null || selector.length != 4
-        || abi.getEntrysList().size() == 0) {
-      return false;
-    }
-
-    for (int i = 0; i < abi.getEntrysCount(); i++) {
-      ABI.Entry entry = abi.getEntrys(i);
-      if (entry.getType() != ABI.Entry.EntryType.Function) {
-        continue;
-      }
-
-      int inputCount = entry.getInputsCount();
-      StringBuilder sb = new StringBuilder();
-      sb.append(entry.getName());
-      sb.append("(");
-      for (int k = 0; k < inputCount; k++) {
-        ABI.Entry.Param param = entry.getInputs(k);
-        sb.append(param.getType());
-        if (k + 1 < inputCount) {
-          sb.append(",");
-        }
-      }
-      sb.append(")");
-
-      byte[] funcSelector = new byte[4];
-      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
-      if (Arrays.equals(funcSelector, selector)) {
-        return entry.getConstant() || entry.getStateMutability().equals(StateMutabilityType.View);
-      }
-    }
-
-    return false;
-  }
-
   public static byte[] generateContractAddress(byte[] ownerAddress, byte[] txRawDataHash) {
 
     byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
@@ -247,7 +175,7 @@ public class TransactionUtil {
     return sha3omit12(combined);
   }
 
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+  public static boolean checkPermissionOperations(Permission permission, Contract contract)
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
@@ -306,7 +234,7 @@ public class TransactionUtil {
           throw new PermissionException("Permission type is wrong!");
         }
         //check operations
-        if (!checkPermissionOprations(permission, contract)) {
+        if (!checkPermissionOperations(permission, contract)) {
           throw new PermissionException("Permission denied!");
         }
       }

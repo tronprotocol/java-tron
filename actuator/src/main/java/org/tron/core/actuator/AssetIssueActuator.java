@@ -291,7 +291,4 @@ public class AssetIssueActuator extends AbstractActuator {
     return chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee();
   }
 
-  public long calcUsage() {
-    return 0;
-  }
 }

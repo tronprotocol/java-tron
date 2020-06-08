@@ -27,7 +27,7 @@ import org.tron.common.parameter.CommonParameter;
  */
 public class VMConfig {
 
-  public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 trx
+  public static final int MAX_FEE_LIMIT = 1_000_000_000; //1000 TRX
 
   private static boolean vmTraceCompressed = false;
 

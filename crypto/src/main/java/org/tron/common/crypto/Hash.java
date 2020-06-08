@@ -120,21 +120,7 @@ public class Hash {
       throw new RuntimeException(e);
     }
   }
-
-  public static byte[] sha512(byte[] input) {
-    MessageDigest digest;
-    try {
-      digest = MessageDigest.getInstance(HASH_512_ALGORITHM_NAME,
-          CRYPTO_PROVIDER);
-      digest.update(input);
-      return digest.digest();
-    } catch (NoSuchAlgorithmException e) {
-      logger.error(ALGORITHM_NOT_FOUND, e);
-      throw new RuntimeException(e);
-    }
-  }
-
-
+  
   public static byte[] encodeElement(byte[] srcData) {
 
     // [0x80]

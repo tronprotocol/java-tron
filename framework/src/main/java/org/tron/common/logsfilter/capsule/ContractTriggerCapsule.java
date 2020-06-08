@@ -2,9 +2,11 @@ package org.tron.common.logsfilter.capsule;
 
 import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -14,11 +16,13 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.config.args.Args;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
+@Slf4j(topic = "DB")
 public class ContractTriggerCapsule extends TriggerCapsule {
 
   @Getter
@@ -88,9 +92,6 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     }
 
     if (isEvent) {
-      if (!EventPluginLoader.getInstance().isContractEventTriggerEnable()) {
-        return;
-      }
       event = new ContractEventTrigger();
       ((ContractEventTrigger) event).setEventSignature(eventSignature);
       ((ContractEventTrigger) event).setEventSignatureFull(eventSignatureFull);
@@ -104,9 +105,6 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       ((ContractEventTrigger) event)
           .setDataMap(ContractEventParserAbi.parseEventData(data, topicList, eventEntry));
     } else {
-      if (!EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
-        return;
-      }
       event = new ContractLogTrigger();
       ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
       ((ContractLogTrigger) event).setData(logInfo.getHexData());
@@ -129,9 +127,24 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
     if (matchFilter(contractTrigger)) {
       if (isEvent) {
-        EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) event);
+        if (EventPluginLoader.getInstance().isContractEventTriggerEnable()) {
+          EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) event);
+        }
+
+        if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
+          Args.getSolidityContractEventTriggerList().computeIfAbsent(event
+              .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractEventTrigger) event);
+        }
+
       } else {
-        EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
+        if (EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
+          EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
+        }
+
+        if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+          Args.getSolidityContractLogTriggerList().computeIfAbsent(event
+              .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractLogTrigger) event);
+        }
       }
     }
   }
