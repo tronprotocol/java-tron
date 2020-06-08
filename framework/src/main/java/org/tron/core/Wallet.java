@@ -2858,8 +2858,8 @@ public class Wallet {
         throw new ContractValidateException("No shielded TRC-20 ask, nsk or ovk");
       }
       byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
-      if (ArrayUtils.isEmpty(transparentToAddress)) {
-        throw new ContractValidateException("No transparent TRC-20 output address");
+      if (ArrayUtils.isEmpty(transparentToAddress) || transparentToAddress.length != 21) {
+        throw new ContractValidateException("No valid transparent TRC-20 output address");
       }
       byte[] transparentToAddressTvm = new byte[20];
       System.arraycopy(transparentToAddress, 1, transparentToAddressTvm, 0, 20);
@@ -2968,7 +2968,7 @@ public class Wallet {
         throw new ContractValidateException("No shielded TRC-20 ak, nsk or ovk");
       }
       byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
-      if (ArrayUtils.isEmpty(transparentToAddress)) {
+      if (ArrayUtils.isEmpty(transparentToAddress) || transparentToAddress.length != 21) {
         throw new ContractValidateException("No transparent TRC-20 output address");
       }
       byte[] transparentToAddressTvm = new byte[20];
@@ -3395,8 +3395,8 @@ public class Wallet {
     ShieldedTRC20ParametersBuilder parametersBuilder = new ShieldedTRC20ParametersBuilder(
         parameterType);
     if (parametersBuilder.getShieldedTRC20ParametersType() == ShieldedTRC20ParametersType.BURN) {
-      byte[] burnCiper = Hex.decode(shieldedTRC20Parameters.getTriggerContractInput());
-      if (burnCiper.length == 80) {
+      byte[] burnCiper = ByteArray.fromHexString(shieldedTRC20Parameters.getTriggerContractInput());
+      if (!ArrayUtils.isEmpty(burnCiper) && burnCiper.length == 80) {
         parametersBuilder.setBurnCiphertext(burnCiper);
       } else {
         throw new ZksnarkException(
