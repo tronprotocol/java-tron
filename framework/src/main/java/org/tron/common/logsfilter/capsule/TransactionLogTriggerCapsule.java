@@ -46,6 +46,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     transactionLogTrigger.setTransactionId(trxCasule.getTransactionId().toString());
     transactionLogTrigger.setTimeStamp(blockCapsule.getTimeStamp());
     transactionLogTrigger.setBlockNumber(trxCasule.getBlockNum());
+    transactionLogTrigger.setData(Hex.toHexString(trxCasule
+        .getInstance().getRawData().getData().toByteArray()));
 
     TransactionTrace trxTrace = trxCasule.getTrxTrace();
 
@@ -113,17 +115,6 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
               }
               transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
             }
-          } else if (contract.getType() == CreateSmartContract) {
-            CreateSmartContract contractTransfer = contractParameter
-                 .unpack(CreateSmartContract.class);
-            transactionLogTrigger.setData(
-                ByteArray.toHexString(contractTransfer
-                     .getNewContract().getBytecode().toByteArray()));
-          } else if (contract.getType() == TriggerSmartContract) {
-            SmartContractOuterClass.TriggerSmartContract triggerSmart = contractParameter
-                .unpack(TriggerSmartContract.class);
-            transactionLogTrigger.setData(ByteArray.toHexString(triggerSmart
-                .getData().toByteArray()));
           }
         } catch (Exception e) {
           logger.error("failed to load transferAssetContract, error'{}'", e);
